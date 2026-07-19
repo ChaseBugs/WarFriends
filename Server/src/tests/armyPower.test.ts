@@ -32,18 +32,22 @@ function playerDocument(): PlayerDocument {
 }
 
 test("Army Power extraction covers rank rows and every normal weapon power row", () => {
-  assert.equal(generatedArmyPowerCatalog.schemaVersion, 1);
+  assert.equal(generatedArmyPowerCatalog.schemaVersion, 2);
   assert.equal(generatedArmyPowerCatalog.clientVersion, "4.9.5");
   assert.match(generatedArmyPowerCatalog.sourceSha256, /^[0-9a-f]{64}$/);
   assert.equal(generatedArmyPowerCatalog.rankLevels.length, 58);
   assert.deepEqual(generatedArmyPowerCatalog.rankLevels[0], {
     index: 0,
     displayLevel: 1,
+    experience: 50_000,
+    rewardGold: 5,
     armyPower: 93,
   });
   assert.deepEqual(generatedArmyPowerCatalog.rankLevels.at(-1), {
     index: 57,
     displayLevel: 58,
+    experience: 845_433_656,
+    rewardGold: 60,
     armyPower: 1_060,
   });
   assert.equal(generatedArmyPowerCatalog.weapons.length, 84);

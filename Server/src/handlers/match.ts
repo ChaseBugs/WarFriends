@@ -130,6 +130,7 @@ export const matchHandlers: Record<number, HandlerEntry> = {
     // client's end-screen parser.
     const responseWinner = report.settlement?.winnerId ?? winnerId;
     const resultAvailable = report.status === "confirmed" || report.status === "finished";
+    const rewardReceipt = report.settlement?.rewards?.[player!.id];
     return ok(DbAction.GameEnded, {
       Settled: report.settlement?.rewarded ?? false,
       ResultStatus: report.status,
@@ -137,13 +138,18 @@ export const matchHandlers: Record<number, HandlerEntry> = {
       // DMGJCGJDDID constructs IIGFODGJBFA from GameReward before it handles Skill.
       // Always return a valid object, including a zero-XP pending/conflict result, to avoid
       // dereferencing a null ServerResultsCache.lastGameReward on the stock end screen.
-      GameReward: pvpGameReward(player!.id, responseWinner, resultAvailable),
+      GameReward: pvpGameReward(
+        player!.id,
+        responseWinner,
+        resultAvailable,
+        rewardReceipt?.gold ?? 0,
+      ),
       // Level is not a normal snapshot field in this callback: its presence means level-up.
       // Omit it while the level is unchanged, but always provide LevelExperience.
       ...pvpLevelFields(
-        player!.player.level,
-        updated?.player.level ?? player!.player.level,
-        progression?.levelExperience ?? 0,
+        rewardReceipt?.levelFrom ?? player!.player.level,
+        rewardReceipt?.levelTo ?? updated?.player.level ?? player!.player.level,
+        rewardReceipt?.levelExperience ?? progression?.levelExperience ?? 0,
       ),
       Skill: updated?.player.skill ?? player!.player.skill,
       MedalsBalance: updated?.player.medalsBalance ?? player!.player.medalsBalance,

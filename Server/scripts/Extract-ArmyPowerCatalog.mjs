@@ -197,27 +197,39 @@ let levelMatch;
 while ((levelMatch = levelPattern.exec(levelsSection)) !== null) {
   const index = Number(levelMatch[1]);
   const displayLevelMatch = /^      LEVEL: (\d+)$/m.exec(levelMatch[2]);
+  const experienceMatch = /^      EXPERIENCE: (\d+)$/m.exec(levelMatch[2]);
+  const rewardGoldMatch = /^      REWARDGOLD: (\d+)$/m.exec(levelMatch[2]);
   const powerMatch = /^      ARMYPOWER: (-?\d+)$/m.exec(levelMatch[2]);
-  if (!displayLevelMatch || !powerMatch) {
-    throw new Error(`Level row ${index} is missing LEVEL or ARMYPOWER.`);
+  if (!displayLevelMatch || !experienceMatch || !rewardGoldMatch || !powerMatch) {
+    throw new Error(`Level row ${index} is missing LEVEL, EXPERIENCE, REWARDGOLD, or ARMYPOWER.`);
   }
   rankLevels.push({
     index,
     displayLevel: Number(displayLevelMatch[1]),
+    experience: Number(experienceMatch[1]),
+    rewardGold: Number(rewardGoldMatch[1]),
     armyPower: Number(powerMatch[1]),
   });
 }
 rankLevels.sort((left, right) => left.index - right.index);
 for (let index = 0; index < rankLevels.length; index++) {
   const row = rankLevels[index];
-  if (row.index !== index || row.displayLevel !== index + 1 || row.armyPower < 0) {
-    throw new Error(`Level row ${index} is not contiguous or contains invalid Army Power.`);
+  if (
+    row.index !== index
+    || row.displayLevel !== index + 1
+    || !Number.isSafeInteger(row.experience)
+    || row.experience < 1
+    || !Number.isSafeInteger(row.rewardGold)
+    || row.rewardGold < 0
+    || row.armyPower < 0
+  ) {
+    throw new Error(`Level row ${index} is not contiguous or contains invalid progression balancing.`);
   }
 }
 if (rankLevels.length < 2) throw new Error("Too few player-level Army Power rows were extracted.");
 
 const artifact = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   clientVersion: "4.9.5",
   source: "Client/ExportedProject/Assets/Scenes/MainScene.unity",
   sourceSha256: createHash("sha256").update(sceneBuffer).digest("hex"),

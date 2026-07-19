@@ -56,6 +56,8 @@ test("material database joins every recovered gameplay inventory family", () => 
   assert.deepEqual(firstRank?.data.definition, {
     index: 0,
     displayLevel: 1,
+    experience: 50_000,
+    rewardGold: 5,
     armyPower: 93,
   });
 

@@ -340,16 +340,19 @@ test("PvP EndReason inference agrees from winner and loser perspectives", () => 
 });
 
 test("PvP GameReward keeps the stock result parser non-null and exposes only settled XP", () => {
-  assert.deepEqual(pvpGameReward("winner", "winner", true), {
+  assert.deepEqual(pvpGameReward("winner", "winner", true, 5), {
     Xp: { BattleRewards: 30, ExtraRewards: 0, Winstreak: 0, Time: 0, offerMult: 1 },
+    GameGold: { BattleRewards: 5, League: 0, offerMult: 1 },
     IsVip: false,
   });
   assert.deepEqual(pvpGameReward("loser", "winner", true), {
     Xp: { BattleRewards: 10, ExtraRewards: 0, Winstreak: 0, Time: 0, offerMult: 1 },
+    GameGold: { BattleRewards: 0, League: 0, offerMult: 1 },
     IsVip: false,
   });
-  assert.deepEqual(pvpGameReward("winner", "winner", false), {
+  assert.deepEqual(pvpGameReward("winner", "winner", false, 5), {
     Xp: { BattleRewards: 0, ExtraRewards: 0, Winstreak: 0, Time: 0, offerMult: 1 },
+    GameGold: { BattleRewards: 0, League: 0, offerMult: 1 },
     IsVip: false,
   });
 });

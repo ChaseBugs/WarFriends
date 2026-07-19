@@ -75,20 +75,39 @@ therefore includes the minimum exact object:
     "Time": 0,
     "offerMult": 1
   },
+  "GameGold": {
+    "BattleRewards": 5,
+    "League": 0,
+    "offerMult": 1
+  },
   "IsVip": false
 }
 ```
 
 Confirmed winners receive 30 battle XP and confirmed losers receive 10, matching the atomic
-settlement constants. A finished retry returns the same deterministic display amount. Pending,
-conflicting, or invalid reports still receive a structurally valid object with zero battle XP, so
-the stock end screen remains safe without displaying an uncommitted reward.
+settlement constants. `GameGold.BattleRewards` contains only Gold earned by crossing level
+thresholds, so its normal value is zero. A finished retry returns the original XP and Gold receipt.
+Pending, conflicting, or invalid reports still receive structurally valid zero values, so the stock
+end screen remains safe without displaying an uncommitted reward.
 
 `LevelExperience` is returned on every outcome because the parser reads it unconditionally.
 `Level` is different: its presence is a transition marker, and the client sets
 `LevelManager.isLevelUp = true` whenever the key exists. The server therefore emits `Level` only
 when the authoritative level index actually increases; returning the unchanged level would create
 a false level-up after every PvP battle.
+
+The server uses all 58 `LevelManager.levels` rows extracted from the 4.9.5 MainScene. Each row
+contains the exact XP threshold, level-up Gold reward, and rank Army Power. Settlement adds the
+player's 30/10 XP to current `LevelExperience`; every crossed row subtracts its threshold, advances
+the zero-based `DatabasePlayer.Level`, and credits its `REWARDGOLD`. The new level's rank power is
+then included in a full authoritative Army Power recomputation.
+
+Level progress, Gold, public level, Army Power, card consumption, match rewards, and the terminal
+match state share the same MongoDB transaction. The match stores an immutable per-player receipt
+containing XP, Gold, old/new level, and remaining level XP. A finished `GameEnded` retry can
+therefore reproduce the original `GameReward.GameGold` and conditional `Level` response without
+granting anything twice. At source level 58 there is no next row, so XP may continue accumulating
+but no repeated max-level Gold is granted.
 
 ## Current limitations
 

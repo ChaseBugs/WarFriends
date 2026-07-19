@@ -2,9 +2,11 @@
 
 ## Player levels and experience
 
-The client stores a zero-based level index and separate progress within the current level. Durable
-match and mission rewards update progression through server-owned mutations. Level gates for shop
-items, units, promotions, and feature unlocks must use the same zero-based/display-level conversion
+The client stores a zero-based level index and separate progress within the current level. The
+backend extracts all 58 exact MainScene rows containing `EXPERIENCE`, `REWARDGOLD`, and
+`ARMYPOWER`. Confirmed PvP rewards cross those thresholds transactionally, subtract per-level XP,
+grant source Gold once, advance the player level, and recompute rank Army Power. Level gates for
+shop items, units, promotions, and feature unlocks use the same zero-based/display-level conversion
 as `LevelManager`.
 
 ## Dog-tag energy

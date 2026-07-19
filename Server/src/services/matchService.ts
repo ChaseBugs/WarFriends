@@ -8,6 +8,8 @@ import { recordPvpAssignmentProgress } from "./assignmentService";
 import { recordRankedPvpAchievements } from "./achievementService";
 import { consumePvpUsedCardsState } from "./cardInventoryService";
 import { progressionForPlayer } from "./playerStateService";
+import { applyLevelExperienceState } from "./levelProgressionService";
+import { calculateArmyPower } from "./armyPowerService";
 
 /**
  * Persistent PvP match lifecycle and reward settlement.
@@ -45,6 +47,8 @@ export interface MatchDoc {
   resultReports?: Record<string, string>;
   /** Authenticated reporter's own card IDs; never accepted for the opponent. */
   usedCardsReports?: Record<string, string[]>;
+  /** Immutable core reward receipts returned unchanged by finished GameEnded retries. */
+  rewardReceipts?: Record<string, MatchPlayerReward>;
   createdAt: Date;
   /** Terminal timestamp for both normal completion and cancellation. */
   endedAt?: Date;
@@ -107,6 +111,7 @@ export function pvpGameReward(
   playerId: string,
   winnerId: string,
   resultAvailable: boolean,
+  gameGold = 0,
 ): Record<string, unknown> {
   const experience = resultAvailable
     ? (playerId === winnerId ? REWARDS.winExperience : REWARDS.loseExperience)
@@ -117,6 +122,11 @@ export function pvpGameReward(
       ExtraRewards: 0,
       Winstreak: 0,
       Time: 0,
+      offerMult: 1,
+    },
+    GameGold: {
+      BattleRewards: resultAvailable ? gameGold : 0,
+      League: 0,
       offerMult: 1,
     },
     IsVip: false,
@@ -162,6 +172,15 @@ interface CoreGrant {
   won: boolean;
   squadName: string;
   squadPoints: number;
+  reward: MatchPlayerReward;
+}
+
+export interface MatchPlayerReward {
+  experience: number;
+  gold: number;
+  levelFrom: number;
+  levelTo: number;
+  levelExperience: number;
 }
 
 function progressionRevisionFilter(player: { progression?: PlayerProgressionState }): Record<string, unknown> {
@@ -196,10 +215,16 @@ async function settlePlayerCore(
   const medalDelta = won ? REWARDS.winMedals : REWARDS.loseMedals;
   const squadPoints = won && player.player.squadName ? REWARDS.winSquadPoints : 0;
   const consumed = consumePvpUsedCardsState(progressionForPlayer(player), usedCards);
-  const canonical = canonicalProgression({
-    ...consumed.state,
-    levelExperience: consumed.state.levelExperience + experience,
-  });
+  const leveled = applyLevelExperienceState(consumed.state, player.player.level, experience);
+  const canonical = canonicalProgression(leveled.state);
+  const levelChanged = leveled.levelTo !== leveled.levelFrom;
+  const nextArmyPower = levelChanged
+    ? calculateArmyPower({
+      ...player,
+      progression: canonical,
+      player: { ...player.player, level: leveled.levelTo },
+    }).total
+    : player.player.armyPower;
 
   const update = await players().updateOne(
     { id: playerId, ...progressionRevisionFilter(player) },
@@ -214,6 +239,9 @@ async function settlePlayerCore(
           "player.medalsBalance": {
             $max: [0, { $add: [{ $ifNull: ["$player.medalsBalance", 0] }, medalDelta] }],
           },
+          "player.level": leveled.levelTo,
+          "player.armyPower": nextArmyPower,
+          armyPower: nextArmyPower,
           "player.status": PlayerStatus.Online,
           updatedAt: "$$NOW",
         },
@@ -222,7 +250,19 @@ async function settlePlayerCore(
     { session },
   );
   if (update.modifiedCount !== 1) throw new Error(`Concurrent settlement rejected player ${playerId}.`);
-  return { playerId, won, squadName: player.player.squadName, squadPoints };
+  return {
+    playerId,
+    won,
+    squadName: player.player.squadName,
+    squadPoints,
+    reward: {
+      experience,
+      gold: leveled.goldGranted,
+      levelFrom: leveled.levelFrom,
+      levelTo: leveled.levelTo,
+      levelExperience: leveled.levelExperience,
+    },
+  };
 }
 
 async function grantSecondaryProgress(grant: CoreGrant): Promise<void> {
@@ -333,7 +373,12 @@ export async function reportMatchResult(
   if (match.state === "finished") {
     return {
       status: "finished",
-      settlement: { matchId, winnerId: match.winnerId ?? winnerId, rewarded: false },
+      settlement: {
+        matchId,
+        winnerId: match.winnerId ?? winnerId,
+        rewarded: false,
+        rewards: match.rewardReceipts,
+      },
     };
   }
   if (match.state !== "active") return { status: "invalid" };
@@ -375,6 +420,7 @@ export interface SettlementResult {
   matchId: string;
   winnerId: string;
   rewarded: boolean;
+  rewards?: Record<string, MatchPlayerReward>;
 }
 
 /**
@@ -388,7 +434,12 @@ export async function settleResult(matchId: string, winnerId: string, reportedBy
     if (!match) return { result: { matchId, winnerId, rewarded: false }, grants: [] as CoreGrant[], unknown: true };
     if (match.state === "finished") {
       return {
-        result: { matchId, winnerId: match.winnerId ?? winnerId, rewarded: false },
+        result: {
+          matchId,
+          winnerId: match.winnerId ?? winnerId,
+          rewarded: false,
+          rewards: match.rewardReceipts,
+        },
         grants: [] as CoreGrant[],
         unknown: false,
       };
@@ -410,13 +461,20 @@ export async function settleResult(matchId: string, winnerId: string, reportedBy
         cards,
       ));
     }
+    const rewardReceipts = Object.fromEntries(
+      grants.map((grant) => [grant.playerId, grant.reward]),
+    );
     const finish = await matches().updateOne(
       { matchId, state: "active" },
-      { $set: { state: "finished", winnerId, endedAt: new Date() } },
+      { $set: { state: "finished", winnerId, rewardReceipts, endedAt: new Date() } },
       { session },
     );
     if (finish.modifiedCount !== 1) throw new Error(`Concurrent settlement rejected match ${matchId}.`);
-    return { result: { matchId, winnerId, rewarded: true }, grants, unknown: false };
+    return {
+      result: { matchId, winnerId, rewarded: true, rewards: rewardReceipts },
+      grants,
+      unknown: false,
+    };
   });
 
   if (transaction.unknown) logger.match.error("Result for unknown match", { matchId });

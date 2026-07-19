@@ -41,6 +41,9 @@ Normal PvP responses now also include the recovered `IIGFODGJBFA` `GameReward` s
 the stock result parser from dereferencing a null reward object when `Skill` is returned. The
 response always includes `LevelExperience` but emits `Level` only for a real level transition, so
 ordinary matches no longer trigger the client's level-up branch.
+All 58 source level thresholds and Gold rewards are now extracted with rank power. Confirmed PvP
+settlement applies level changes, Gold, remaining level XP, and recomputed Army Power atomically,
+and persists per-player match receipts for exact finished-request replay.
 
 ## Progression and live operations
 

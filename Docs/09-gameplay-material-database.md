@@ -51,7 +51,7 @@ the same revision and upserts the same keys, making startup synchronization idem
 
 - 84 playable weapons and 9 unresolved weapon rows;
 - 5,781 weapon upgrade transitions;
-- 5,865 playable weapon DPS rows, 58 rank-power rows, and 11 weapon-feature category rows;
+- 5,865 playable weapon DPS rows, 58 player-level XP/Gold/rank-power rows, and 11 weapon-feature category rows;
 - 24 playable units, 3 helper units, and 18 unresolved unit rows;
 - 4,124 normal, 684 special, and 216 Elite unit rows;
 - 146 playable visual rows across four categories and 1 unresolved visual row;

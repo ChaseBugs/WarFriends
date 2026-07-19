@@ -50,8 +50,9 @@ value restored at boot. The backend ignores that claimed value, reloads one cons
 revision, recomputes all three components, and writes the sum to both the indexed player field and
 the public DTO. A concurrent inventory mutation makes the revision check fail and causes a reload.
 
-The checked-in power artifact contains 5,865 normal weapon DPS rows, 58 rank rows, all nine feature
-coefficients for each of 11 weapon categories, and an exact MainScene SHA-256.
+The checked-in power artifact contains 5,865 normal weapon DPS rows, 58 player-level rows with XP,
+Gold, and rank power, all nine feature coefficients for each of 11 weapon categories, and an exact
+MainScene SHA-256.
 `npm run verify:army-power` proves that it still matches the recovered scene. Feature rows remain
 reference-only until black-market acquisition is server authoritative.
 
@@ -68,5 +69,6 @@ reference-only until black-market acquisition is server authoritative.
 - Recovered client: `LevelManager.cs`, `WeaponLevelsSetup.cs`, and `UpgradeSlots.cs`.
 - Server: `Server/src/services/unitInventoryService.ts`.
 - `Server/src/services/armyPowerService.ts`
+- `Server/src/services/levelProgressionService.ts`
 - `Server/scripts/Extract-ArmyPowerCatalog.mjs`
 - `Server/src/handlers/player.ts` (`UpdateArmyPower`)

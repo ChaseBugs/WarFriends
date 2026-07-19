@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "clientVersion": "4.9.5",
   "source": "Client/ExportedProject/Assets/Scenes/MainScene.unity",
   "sourceSha256": "eb33be9c3801b9e15cc1306e8a111f88ca80665bd403517a9e9645edf450ee41",
@@ -7,291 +7,407 @@
     {
       "index": 0,
       "displayLevel": 1,
+      "experience": 50000,
+      "rewardGold": 5,
       "armyPower": 93
     },
     {
       "index": 1,
       "displayLevel": 2,
+      "experience": 50000,
+      "rewardGold": 5,
       "armyPower": 97
     },
     {
       "index": 2,
       "displayLevel": 3,
+      "experience": 50000,
+      "rewardGold": 5,
       "armyPower": 104
     },
     {
       "index": 3,
       "displayLevel": 4,
+      "experience": 65960,
+      "rewardGold": 5,
       "armyPower": 112
     },
     {
       "index": 4,
       "displayLevel": 5,
+      "experience": 96684,
+      "rewardGold": 5,
       "armyPower": 120
     },
     {
       "index": 5,
       "displayLevel": 6,
+      "experience": 146147,
+      "rewardGold": 5,
       "armyPower": 130
     },
     {
       "index": 6,
       "displayLevel": 7,
+      "experience": 204483,
+      "rewardGold": 5,
       "armyPower": 140
     },
     {
       "index": 7,
       "displayLevel": 8,
+      "experience": 289023,
+      "rewardGold": 5,
       "armyPower": 151
     },
     {
       "index": 8,
       "displayLevel": 9,
+      "experience": 405994,
+      "rewardGold": 5,
       "armyPower": 163
     },
     {
       "index": 9,
       "displayLevel": 10,
+      "experience": 485137,
+      "rewardGold": 10,
       "armyPower": 175
     },
     {
       "index": 10,
       "displayLevel": 11,
+      "experience": 575997,
+      "rewardGold": 10,
       "armyPower": 188
     },
     {
       "index": 11,
       "displayLevel": 12,
+      "experience": 680121,
+      "rewardGold": 10,
       "armyPower": 201
     },
     {
       "index": 12,
       "displayLevel": 13,
+      "experience": 799249,
+      "rewardGold": 10,
       "armyPower": 214
     },
     {
       "index": 13,
       "displayLevel": 14,
+      "experience": 935333,
+      "rewardGold": 10,
       "armyPower": 228
     },
     {
       "index": 14,
       "displayLevel": 15,
+      "experience": 1090567,
+      "rewardGold": 10,
       "armyPower": 242
     },
     {
       "index": 15,
       "displayLevel": 16,
+      "experience": 1370176,
+      "rewardGold": 10,
       "armyPower": 257
     },
     {
       "index": 16,
       "displayLevel": 17,
+      "experience": 1694576,
+      "rewardGold": 10,
       "armyPower": 271
     },
     {
       "index": 17,
       "displayLevel": 18,
+      "experience": 2069905,
+      "rewardGold": 10,
       "armyPower": 287
     },
     {
       "index": 18,
       "displayLevel": 19,
+      "experience": 2503083,
+      "rewardGold": 10,
       "armyPower": 302
     },
     {
       "index": 19,
       "displayLevel": 20,
+      "experience": 3001897,
+      "rewardGold": 15,
       "armyPower": 318
     },
     {
       "index": 20,
       "displayLevel": 21,
+      "experience": 3575114,
+      "rewardGold": 15,
       "armyPower": 334
     },
     {
       "index": 21,
       "displayLevel": 22,
+      "experience": 4232594,
+      "rewardGold": 15,
       "armyPower": 351
     },
     {
       "index": 22,
       "displayLevel": 23,
+      "experience": 4985421,
+      "rewardGold": 15,
       "armyPower": 367
     },
     {
       "index": 23,
       "displayLevel": 24,
+      "experience": 5846051,
+      "rewardGold": 15,
       "armyPower": 384
     },
     {
       "index": 24,
       "displayLevel": 25,
+      "experience": 7631823,
+      "rewardGold": 15,
       "armyPower": 401
     },
     {
       "index": 25,
       "displayLevel": 26,
+      "experience": 9714700,
+      "rewardGold": 15,
       "armyPower": 419
     },
     {
       "index": 26,
       "displayLevel": 27,
+      "experience": 12136089,
+      "rewardGold": 15,
       "armyPower": 437
     },
     {
       "index": 27,
       "displayLevel": 28,
+      "experience": 14942690,
+      "rewardGold": 15,
       "armyPower": 455
     },
     {
       "index": 28,
       "displayLevel": 29,
+      "experience": 18187143,
+      "rewardGold": 15,
       "armyPower": 473
     },
     {
       "index": 29,
       "displayLevel": 30,
+      "experience": 21283780,
+      "rewardGold": 20,
       "armyPower": 491
     },
     {
       "index": 30,
       "displayLevel": 31,
+      "experience": 24107144,
+      "rewardGold": 20,
       "armyPower": 510
     },
     {
       "index": 31,
       "displayLevel": 32,
+      "experience": 27281417,
+      "rewardGold": 20,
       "armyPower": 529
     },
     {
       "index": 32,
       "displayLevel": 33,
+      "experience": 30848455,
+      "rewardGold": 20,
       "armyPower": 548
     },
     {
       "index": 33,
       "displayLevel": 34,
+      "experience": 34854966,
+      "rewardGold": 20,
       "armyPower": 567
     },
     {
       "index": 34,
       "displayLevel": 35,
+      "experience": 39353066,
+      "rewardGold": 20,
       "armyPower": 587
     },
     {
       "index": 35,
       "displayLevel": 36,
+      "experience": 44400883,
+      "rewardGold": 25,
       "armyPower": 607
     },
     {
       "index": 36,
       "displayLevel": 37,
+      "experience": 50063248,
+      "rewardGold": 25,
       "armyPower": 627
     },
     {
       "index": 37,
       "displayLevel": 38,
+      "experience": 56412445,
+      "rewardGold": 25,
       "armyPower": 647
     },
     {
       "index": 38,
       "displayLevel": 39,
+      "experience": 63529053,
+      "rewardGold": 25,
       "armyPower": 667
     },
     {
       "index": 39,
       "displayLevel": 40,
+      "experience": 71502887,
+      "rewardGold": 30,
       "armyPower": 688
     },
     {
       "index": 40,
       "displayLevel": 41,
+      "experience": 82262077,
+      "rewardGold": 30,
       "armyPower": 708
     },
     {
       "index": 41,
       "displayLevel": 42,
+      "experience": 96462924,
+      "rewardGold": 30,
       "armyPower": 729
     },
     {
       "index": 42,
       "displayLevel": 43,
+      "experience": 117091962,
+      "rewardGold": 30,
       "armyPower": 750
     },
     {
       "index": 43,
       "displayLevel": 44,
+      "experience": 128723878,
+      "rewardGold": 40,
       "armyPower": 768
     },
     {
       "index": 44,
       "displayLevel": 45,
+      "experience": 141511308,
+      "rewardGold": 40,
       "armyPower": 790
     },
     {
       "index": 45,
       "displayLevel": 46,
+      "experience": 155569041,
+      "rewardGold": 40,
       "armyPower": 811
     },
     {
       "index": 46,
       "displayLevel": 47,
+      "experience": 171023270,
+      "rewardGold": 40,
       "armyPower": 833
     },
     {
       "index": 47,
       "displayLevel": 48,
+      "experience": 188012721,
+      "rewardGold": 40,
       "armyPower": 855
     },
     {
       "index": 48,
       "displayLevel": 49,
+      "experience": 206689905,
+      "rewardGold": 40,
       "armyPower": 876
     },
     {
       "index": 49,
       "displayLevel": 50,
+      "experience": 227222480,
+      "rewardGold": 40,
       "armyPower": 899
     },
     {
       "index": 50,
       "displayLevel": 51,
+      "experience": 237464618,
+      "rewardGold": 50,
       "armyPower": 919
     },
     {
       "index": 51,
       "displayLevel": 52,
+      "experience": 279120771,
+      "rewardGold": 50,
       "armyPower": 936
     },
     {
       "index": 52,
       "displayLevel": 53,
+      "experience": 483733014,
+      "rewardGold": 50,
       "armyPower": 957
     },
     {
       "index": 53,
       "displayLevel": 54,
+      "experience": 541195742,
+      "rewardGold": 50,
       "armyPower": 977
     },
     {
       "index": 54,
       "displayLevel": 55,
+      "experience": 605301477,
+      "rewardGold": 50,
       "armyPower": 998
     },
     {
       "index": 55,
       "displayLevel": 56,
+      "experience": 676802985,
+      "rewardGold": 60,
       "armyPower": 1018
     },
     {
       "index": 56,
       "displayLevel": 57,
+      "experience": 756537033,
+      "rewardGold": 60,
       "armyPower": 1039
     },
     {
       "index": 57,
       "displayLevel": 58,
+      "experience": 845433656,
+      "rewardGold": 60,
       "armyPower": 1060
     }
   ],
