@@ -6,16 +6,29 @@ import logger from "../utils/logger";
 import { recordPvpAssignmentProgress } from "./assignmentService";
 import { recordRankedPvpAchievements } from "./achievementService";
 
-// Persistent PvP match lifecycle and reward settlement. The hub owns transient sockets and
-// room membership; this service owns durable pairing state, player presence, atomic terminal
-// transitions, and rewards. Normal WebSocket settlement requires matching participant result
-// reports. It is consensus validation rather than authoritative combat simulation, which is
-// still pending recovery of the original Photon RPC/event schema.
+/**
+ * Persistent PvP match lifecycle and reward settlement.
+ *
+ * `gameHub` and `RoomManager` own transient WebSocket connections; this service owns the
+ * durable match row, player presence, result reports, terminal state, and rewards. A match is
+ * created before either profile is marked InGame. Settlement then atomically claims
+ * `active -> settling`, grants each participant once, and finally marks the row `finished`.
+ * Competing reports or timeout handlers cannot claim the same match after that transition.
+ *
+ * Normal settlement requires both authenticated participants to report the same winner. This
+ * prevents one client from unilaterally awarding itself a win, but it is consensus validation,
+ * not authoritative combat simulation. Damage, deployment, and hit events remain opaque
+ * until the original Photon RPC/event schema is recovered and validated by the backend.
+ */
 
 export interface MatchPlayer {
+  /** Stable authenticated player ID; never taken from a later result payload. */
   playerId: string;
+  /** Snapshot used for the MatchFound/room UI. */
   name: string;
+  /** Matchmaking snapshot; reward settlement does not trust or recalculate it. */
   armyPower: number;
+  /** League snapshot used by the queue's widening compatibility window. */
   leagueTier: number;
 }
 
@@ -23,10 +36,12 @@ export interface MatchDoc {
   matchId: string;
   players: MatchPlayer[];
   state: "active" | "settling" | "finished" | "cancelled";
+  /** Written only by the atomic settlement claim and preserved for idempotent retries. */
   winnerId?: string;
   /** Durable REST reports, keyed by authenticated reporter player ID. */
   resultReports?: Record<string, string>;
   createdAt: Date;
+  /** Terminal timestamp for both normal completion and cancellation. */
   endedAt?: Date;
 }
 

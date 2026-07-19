@@ -8,23 +8,35 @@ import logger from "../utils/logger";
 // coordinator (for example Redis pub/sub) so players connected to different nodes can meet.
 
 export interface Participant {
+  /** Authenticated database player ID used as the stable room key. */
   playerId: string;
+  /** Current socket ID; replaced when the same player reconnects. */
   clientId: string;
 }
 
 export interface MatchRoom {
+  /** Durable match identifier created by matchService before room join. */
   matchId: string;
+  /** Transient socket lifecycle; reward settlement lives outside this class. */
   state: RoomState;
+  /** Currently connected assigned players, keyed by stable player ID. */
   participants: Map<string, Participant>; // keyed by playerId
+  /** Immutable pair copied from the persistent match and used as the admission allowlist. */
   allowedPlayerIds: Set<string>;
+  /** Per-participant winner reports used to detect agreement or conflict. */
   resultReports: Map<string, string>; // reporter playerId -> winner playerId
+  /** Local creation time used by diagnostics; it is not a durable match timestamp. */
   createdAt: number;
 }
 
 export interface EvictedParticipant {
+  /** Room whose socket disappeared. */
   matchId: string;
+  /** Authenticated player associated with the disconnected socket. */
   playerId: string;
+  /** Assigned peer, if present, used by timeout/forfeit resolution. */
   opponentId?: string;
+  /** Distinguishes an active-match disconnect from leaving a not-yet-full room. */
   wasActive: boolean;
 }
 

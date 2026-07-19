@@ -6,6 +6,21 @@ import type {
 } from "../db";
 import { mutateProgression } from "./progressionMutationService";
 
+/**
+ * Server-authoritative achievement progression.
+ *
+ * The recovered client stores four values for each achievement group: the lifetime value,
+ * the already-claimed tier index, a UI acknowledgement offset, and the currently displayed
+ * progress. Only the lifetime value and reward claim affect the economy. Those values are
+ * advanced from backend-observed events such as a settled PvP match or a claimed daily
+ * reward; the client's buffered progress message is treated only as a consistency check.
+ *
+ * Every `*State` function below is a pure transition over `PlayerProgressionState`. The
+ * exported database wrappers run that transition through `mutateProgression`, so concurrent
+ * rewards cannot overwrite one another and a failed validation never partially credits a
+ * currency balance.
+ */
+
 // Exact errors recovered from IJEAJGCCHEF.cs. The stock RequestBuffer parser has dedicated
 // UI/relogin handling for these two ClaimAchievement failures.
 export const ACHIEVEMENT_ALREADY_CLAIMED = 21800;

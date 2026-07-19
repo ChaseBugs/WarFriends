@@ -17,11 +17,25 @@ import logger from "./utils/logger";
 import { PlayerStatus } from "./constants";
 import { config } from "./config";
 
-// WebSocket hub for the reconstructed PvP transport. The recovered client originally used
-// Photon, while this server exposes the same high-level lifecycle over /hub: authenticate,
-// search, receive MatchFound, join the assigned room, exchange match events, and report a
-// result. Match events remain opaque until the original RPC/event schema is fully recovered,
-// so the hub currently validates identity, room membership, lifecycle, and result consensus.
+/**
+ * WebSocket coordinator for the reconstructed PvP transport.
+ *
+ * The recovered client originally used Photon. This server exposes the same high-level flow
+ * over `/hub`: authenticate, enter matchmaking, receive MatchFound, join the assigned room,
+ * relay match events, and report a result. The hub owns sockets and timers only; persistent
+ * match state and rewards are delegated to `matchService`, while process-local room membership
+ * is delegated to `RoomManager`.
+ *
+ * Every message after Identify is bound to the authenticated player stored on the connection.
+ * Player IDs supplied inside later payloads are never accepted as identity. Queue, join, and
+ * reconnect timers cover different lifecycle gaps: queue timeout removes an unpaired player,
+ * join timeout cancels a pair that never forms a live room, and reconnect timeout resolves an
+ * active disconnect without letting a third party claim the vacant slot.
+ *
+ * Match event payloads remain opaque until the original Photon RPC/event schema is fully
+ * recovered. The current authority boundary validates authentication, assigned membership,
+ * room lifecycle, and two-party result consensus, but does not simulate combat.
+ */
 
 interface Client {
   id: string;

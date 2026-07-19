@@ -8,6 +8,22 @@ import type {
   SavedWeaponState,
 } from "../db";
 
+/**
+ * Recovered weapon ownership and loadout logic.
+ *
+ * The Unity client changes its local inventory before sending BuyWeapon or EquipWeapon. The
+ * server must therefore both validate the requested transition and return a complete rollback
+ * snapshot on failure. Catalog name, LevelManager index, category mask, unlock threshold,
+ * and price all come from recovered 4.9.5 resources; request values are assertions and never
+ * become balancing authority.
+ *
+ * State helpers clone every nested inventory object before mutation. A rejected request can
+ * then safely build recovery fields from the last successful state in the same RequestBuffer,
+ * while the outer progression transaction commits wallet and inventory changes atomically.
+ * Delivery-bearing and discounted purchase paths remain closed until their full activation
+ * and offer-entitlement lifecycles are implemented.
+ */
+
 // Exact IJEAJGCCHEF values handled by the stock RequestBuffer result parser.
 export const ITEM_NOT_ENOUGH_WARBUCKS = 100;
 export const ITEM_NOT_ENOUGH_LEVEL = 101;
@@ -72,19 +88,30 @@ export const WEAPON_CATALOG: Readonly<Record<string, WeaponDefinition>> = Object
 const WEAPON_SLOT_MASKS = [263, 1064, 592, 128] as const;
 
 export interface WeaponPurchasePayload {
+  /** Recovered Google2u runtime type name used as the catalog key. */
   name: string;
+  /** Client-echoed soft-currency price; it must equal the server catalog value. */
   warBucks: number;
+  /** Client-echoed premium-currency price; it must equal the server catalog value. */
   gold: number;
+  /** Display unlock level echoed by WeaponScreen, not the authoritative level gate. */
   unlockLevel: number;
+  /** Client purchase timestamp retained for protocol validation; it does not order writes. */
   startTime: number;
+  /** Offer discount percentage. Only zero is accepted until server offers are recovered. */
   discount: number;
 }
 
 export interface WeaponEquipPayload {
+  /** Recovered Google2u runtime type name of the weapon being equipped. */
   name: string;
+  /** Position in LevelManager.weaponLevelsSetups, encoded as a string by the stock client. */
   index: number;
+  /** Destination PlayerInventory slot, validated against its recovered category mask. */
   slotIndex: number;
+  /** Client-computed display value; checked for shape but never persisted as authority. */
   armyPower: number;
+  /** Must match the special feature already stored on the owned weapon record. */
   specialFeature: number;
 }
 

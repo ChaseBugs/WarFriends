@@ -8,6 +8,24 @@ import {
   warArenaConfiguration,
 } from "./warArenaContract";
 
+/**
+ * War Arena run state, entry costs, lives, and replay-safe rewards.
+ *
+ * A run belongs to the current server-generated Arena ID. Entry starts or re-enters that run,
+ * `startWarArenaBattleState` issues a battle receipt, and `settleWarArenaBattleState` consumes
+ * the receipt once. Currency prices and run limits are always read from `arenaPolicy`; values
+ * echoed by Unity are validated but cannot select a cheaper price or larger reward.
+ *
+ * Response snapshots are stored for operations that the mobile client may retry after a lost
+ * connection. Replaying a stored response is as important as avoiding a second database debit:
+ * the client subtracts some returned spend fields locally and would double-charge its visible
+ * wallet if the server rebuilt a semantically similar response with different fields.
+ *
+ * Combat is currently client-reported. The service is authoritative for lifecycle, receipt
+ * ownership, result enum validation, lives, entry costs, and reward idempotency, but it does
+ * not yet verify individual combat events.
+ */
+
 const MAX_RECENT_SETTLEMENTS = 20;
 const BATTLE_RECEIPT_LIFETIME_SECONDS = 4 * 60 * 60;
 const HEART_REPLAY_WINDOW_SECONDS = 60;
@@ -15,24 +33,34 @@ const ARENA_WIN = new Set([2, 3]); // Win and WinByForfeit in GameController.HKG
 const ARENA_LOSS = new Set([1, 5, 8]); // Killed, Forfeit, and Kia.
 
 export interface ArenaMutationResult {
+  /** Complete progression snapshot to commit through optimistic concurrency control. */
   state: PlayerProgressionState;
+  /** Public arena state after the transition, including server-only receipts internally. */
   arena: WarArenaState;
+  /** Exact Beanstalk response fields consumed by the recovered callback for this action. */
   response: Record<string, unknown>;
+  /** True when no economy/lifecycle effect was applied because the request was a retry. */
   replayed: boolean;
 }
 
 export interface ArenaEntryInput {
+  /** Gold amount echoed by Unity when it chooses premium-currency re-entry. */
   usedGold: number;
+  /** Client display list, deduplicated and capped; it never controls match rewards. */
   opponents: string[];
 }
 
 export interface ArenaHeartInput {
+  /** Ticket price field uses the client's original `hearth` spelling on the wire. */
   hearthPrice?: number;
+  /** Present instead of `hearthPrice` when the Gold fallback is selected. */
   usedGold?: number;
 }
 
 export interface ArenaSettlementInput {
+  /** Receipt ID previously issued by the start-battle action. */
   battleId: string;
+  /** Recovered GameController end-reason enum; only explicit win/loss values are accepted. */
   endReason: number;
 }
 

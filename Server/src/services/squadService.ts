@@ -5,15 +5,21 @@ import { newSquad, type SquadDTO, type SquadMemberDTO } from "../dtos";
 import { findById, updatePlayerFields } from "./playerService";
 import logger from "../utils/logger";
 
-// Squad membership is authoritative in squads.members and denormalized onto the player so
-// the recovered client can render its profile without loading a second document. Every
-// membership mutation updates the squad first and then its player mirror. Those two writes
-// are intentionally visible in this service instead of being hidden in DTO conversion: a
-// production deployment should run them in a MongoDB transaction (or an idempotent repair
-// workflow) before relying on multiple server instances.
-//
-// Client rank order is not numeric authority order: Leader(2) outranks Coleader(3). Never
-// compare the raw enum values when deciding whether an actor may modify another member.
+/**
+ * Squad membership, admission, rank authority, and denormalized player mirrors.
+ *
+ * `squads.members` is the membership source of truth. Squad name and rank are also copied to
+ * each player document because the recovered client expects to render them from a standalone
+ * DatabasePlayer response. Every mutation therefore changes the squad document first and the
+ * player mirror second. Those writes are intentionally visible here: a multi-instance
+ * production deployment should wrap them in a MongoDB transaction or add an idempotent repair
+ * worker before treating the mirror as strongly consistent.
+ *
+ * Admission capabilities are created only inside this service. A public join request cannot
+ * set `allowPrivate`; only an already-authorized manager acceptance can pass it to `joinSquad`.
+ * Rank checks use `squadRankAuthority` because the recovered wire enum is not ordered by
+ * privilege: Leader(2) outranks Coleader(3), despite its smaller numeric value.
+ */
 
 function cleanName(name: string): string {
   return name.trim().replace(/\s+/g, " ");

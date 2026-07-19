@@ -10,6 +10,21 @@ import type {
 import { advanceAchievementState } from "./achievementService";
 import { mutateProgression } from "./progressionMutationService";
 
+/**
+ * Persistent daily/heroic mission lifecycle reconstructed from the Unity client contract.
+ *
+ * Mission selection and balancing are server-owned. Starting a mission creates a short-lived
+ * receipt containing its generated battle ID, mission mode, selected index, and reward row.
+ * `GameEnded` may settle only that receipt, exactly once. Recent settlement responses are
+ * cached so a retry after a dropped connection returns the original reward instead of
+ * crediting the player a second time.
+ *
+ * This is authoritative for entry validation, completion state, currency rewards, and replay
+ * protection, but not for combat simulation. Until the recovered unit/RPC protocol can be
+ * validated server-side, the result still originates from the authenticated client. That
+ * limitation is deliberately kept visible rather than disguised as anti-cheat authority.
+ */
+
 // GameController.HKGHCIEPGEL serializes these exact EndReason values in 1.6.0. Keeping the
 // numeric values local to this module prevents generic PvP outcomes (Win=2, Forfeit=5, etc.)
 // from accidentally being interpreted as mission completion.

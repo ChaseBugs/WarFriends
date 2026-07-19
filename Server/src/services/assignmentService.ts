@@ -28,6 +28,23 @@ import {
   weaponRecoveryFields,
 } from "./itemInventoryService";
 
+/**
+ * Daily assignments and the recovered RequestBuffer transaction boundary.
+ *
+ * This module has two closely related responsibilities. First, it creates the UTC daily
+ * assignment cycle and advances objectives only from facts already established by the
+ * backend. Second, it decodes the client's batched RequestBuffer, executes supported actions
+ * in their original order, and returns one result object per action. Several managers share
+ * that buffer, so weapon purchases, starter rewards, achievements, chat cursors, and normal
+ * assignment claims all meet here even though their state transitions live in separate
+ * services.
+ *
+ * A `BufferId` is an idempotency key. The complete serialized response is persisted after
+ * processing and returned unchanged on retry. This is essential because the Unity client
+ * can resend a whole batch after losing the HTTP response; recomputing the batch would grant
+ * successful rewards twice or make a previously successful claim appear to fail.
+ */
+
 const SUCCESS = 1; // IJEAJGCCHEF.Success
 const ASSIGNMENT_NOT_FOUND = 11201;
 const ASSIGNMENT_INCORRECT_REWARD = 11203;
@@ -367,6 +384,10 @@ export function processAssignmentBufferState(
 ): AssignmentBufferResult {
   const replay = state.processedRequestBuffers?.find((entry) => entry.id === bufferId);
   if (replay) {
+    // Do not execute any subrequest again. Even deterministic validation is insufficient
+    // here: a successful item earlier in the original batch may already have changed the
+    // wallet, so recalculating later items against the new balance could produce a different
+    // response array. Return the exact bytes stored for the original attempt instead.
     const assignments = assignmentStateFor(state, now);
     return {
       state: { ...state, revision: state.revision + 1, assignments },
@@ -379,6 +400,10 @@ export function processAssignmentBufferState(
   let working = state;
   const responses: Record<string, unknown>[] = [];
   for (const request of requests) {
+    // `working` is advanced only by successful subrequests. A rejected item contributes an
+    // error result but does not abort the remaining batch, matching the stock parser's
+    // one-result-per-action contract. The outer optimistic transaction commits the final
+    // working snapshot and the replay record together.
     if (request.action === DbAction.BuyWeapon || request.action === DbAction.EquipWeapon) {
       try {
         if (request.action === DbAction.BuyWeapon) {
@@ -517,6 +542,9 @@ export function processAssignmentBufferState(
 
   const assignments = assignmentStateFor(working, now);
   const requestsResults = JSON.stringify(responses);
+  // Cache only a bounded tail. Buffer IDs protect short-term transport retries, not an
+  // unbounded audit history; retaining every mobile request forever would make the embedded
+  // progression document grow without limit.
   const processedRequestBuffers = boundedReplayCache(working.processedRequestBuffers, {
     id: bufferId,
     result: requestsResults,
