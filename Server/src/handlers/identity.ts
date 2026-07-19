@@ -4,7 +4,6 @@ import type { PlayerDocument } from "../db";
 import { DbAction } from "../dbActions";
 import { ok } from "../dtos";
 import {
-  authenticateIdentity,
   findIdentity,
   linkIdentity,
   unlinkIdentity,
@@ -12,7 +11,7 @@ import {
 } from "../services/identityService";
 import { findById } from "../services/playerService";
 import { buildDatabasePlayer, buildPlayerStateResponse } from "../services/playerStateService";
-import { createGameCenterAccount, ensureSessionToken, type CreatedAccount } from "../services/authService";
+import { createGameCenterAccount, type CreatedAccount } from "../services/authService";
 import { buildPlayerLeaderboardItem } from "../services/leaderboardService";
 import { authed, open, type HandlerEntry } from "./types";
 
@@ -193,31 +192,6 @@ export const identityHandlers: Record<number, HandlerEntry> = {
   [DbAction.ExistGCAccount]: gameCenterExistence,
   [DbAction.TutorialCheckFBAccount]: tutorialExistenceAction(DbAction.TutorialCheckFBAccount, "facebook"),
   [DbAction.TutorialCheckGPGSAccount]: tutorialExistenceAction(DbAction.TutorialCheckGPGSAccount, "googlePlay"),
-
-  [DbAction.SwitchToFacebook]: authed(async ({ req }) => {
-    // Switching accounts is authentication, not ownership transfer. The currently signed-
-    // in player is allowed to request the switch, but only the Facebook credential can
-    // unlock the target account; no identity record is moved between players.
-    const target = await authenticateIdentity(
-      "facebook",
-      identityId(req, "facebook"),
-      identityCredential(req, "facebook"),
-    );
-    if (!target) throw new ApiError(ApiErrorCode.RequestNotAuthorized, "Facebook credentials are invalid.");
-    const sessionToken = await ensureSessionToken(target);
-    return ok(DbAction.SwitchToFacebook, {
-      Switched: true,
-      id: target.id,
-      Id: target.id,
-      PlayerId: target.id,
-      // SwitchToFacebook is followed by GetPlayerData, but first GameLoginManager must save
-      // a valid internal session token and the Facebook credential in different fields.
-      Token: sessionToken,
-      Password: identityCredential(req, "facebook"),
-      AccountType: AccountType.Facebook,
-      Player: buildDatabasePlayer(target),
-    });
-  }),
 
   [DbAction.RemoveOrUpdateGC]: authed(async ({ player, req }) => {
     // The client sends haveGcId=0 to remove Game Center and haveGcId=1 with fresh

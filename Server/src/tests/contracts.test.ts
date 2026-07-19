@@ -128,6 +128,9 @@ test("account types map only to their matching external identity provider", () =
 
 test("identity mutations require auth while pre-login existence checks remain open", () => {
   assert.equal(identityHandlers[DbAction.CreateGcAccount]?.requiresAuth, false);
+  // The stock 1.6.0 account chooser sends LoginToCustomAccount, not action 53. Keeping
+  // SwitchToFacebook unregistered prevents a response the client has no account parser for.
+  assert.equal(identityHandlers[DbAction.SwitchToFacebook], undefined);
   assert.equal(identityHandlers[DbAction.AddFacebook]?.requiresAuth, true);
   assert.equal(identityHandlers[DbAction.RemoveGooglePlay]?.requiresAuth, true);
   assert.equal(identityHandlers[DbAction.RemoveOrUpdateGC]?.requiresAuth, true);

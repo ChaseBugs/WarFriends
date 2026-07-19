@@ -38,6 +38,20 @@ duplicate response.
 The distinction between a durable login credential and a short-lived gameplay session prevents a
 stale password field from bypassing token rotation.
 
+### Facebook account selection
+
+`DatabaseAction.SwitchToFacebook` exists in the recovered enum, and several UI components listen
+for it as a generic refresh signal. However, the 1.6.0 `BeanstalkServerManager` has no outbound
+request for action 53 and `OGLEHLIPEFM` has no response branch that saves a returned target player.
+Returning success for action 53 would therefore leave the old local credentials active.
+
+The authoritative stock path starts from the existing-account dialog. When the player selects the
+other Facebook account, the client clears its local account and calls `LoginToCustomAccount` with
+`Id`, `Password`, and `AccountType = 2`. That implemented handler verifies the Facebook identity,
+returns the shared account payload, saves separate provider/session credentials, and then triggers
+`GetPlayerData`. Action 53 remains intentionally unregistered instead of reporting a false switch;
+a future patched-client adapter may add it only together with an explicit account-payload parser.
+
 ## Public and private state
 
 `DatabasePlayerDTO` contains information that may appear in profiles, squads, matchmaking, and
