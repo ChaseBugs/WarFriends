@@ -1,0 +1,88 @@
+import cors from "cors";
+import compression from "compression";
+import express, { type NextFunction, type Request, type Response } from "express";
+import { createServer } from "http";
+import { apiRouter } from "./routes";
+import { config } from "./config";
+import { connectMongo, disconnectMongo } from "./db";
+import { connectRedis, disconnectRedis, isRedisEnabled } from "./redis";
+import { createGameHub } from "./gameHub";
+import logger from "./utils/logger";
+
+const app = express();
+
+app.use(cors());
+app.use(compression({ threshold: 1024 }));
+// strict:false so the client's non-object JSON bodies (if any) still parse.
+app.use(express.json({ strict: false, limit: "2mb" }));
+
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const startedAt = Date.now();
+  const requestPath = req.originalUrl;
+  logger.api.request(req.method, requestPath);
+  res.on("finish", () => {
+    logger.api.response(req.method, requestPath, res.statusCode, { duration: `${Date.now() - startedAt}ms` });
+  });
+  next();
+});
+
+app.get("/health", (_req, res) => {
+  res.json({
+    status: "ok",
+    pid: process.pid,
+    uptime: Math.floor(process.uptime()),
+    redis: isRedisEnabled() ? "enabled" : "disabled",
+    memory: process.memoryUsage().rss,
+  });
+});
+
+app.use(apiRouter);
+
+app.use((req: Request, res: Response) => {
+  res.status(404).json({ Code: 0, Message: `No route for ${req.method} ${req.originalUrl}` });
+});
+
+app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {
+  const error = err instanceof Error ? err : new Error(String(err));
+  logger.errorWithEmoji("❌", "Unhandled request error", "API", {
+    method: req.method,
+    path: req.originalUrl,
+    error: error.message,
+  });
+  res.status(500).json({ Code: 0, Message: "Internal server error." });
+});
+
+const httpServer = createServer(app);
+// Let Unity's BestHTTP reuse keep-alive sockets; headersTimeout must exceed keepAliveTimeout.
+httpServer.keepAliveTimeout = 65_000;
+httpServer.headersTimeout = 66_000;
+
+async function start(): Promise<void> {
+  await connectMongo();
+  logger.db.connect("MongoDB connected", { provider: "mongodb", database: config.mongoDbName });
+
+  await connectRedis();
+  createGameHub(httpServer);
+
+  httpServer.listen(config.port, () => {
+    logger.server.start(config.port, process.env.NODE_ENV ?? "development");
+    logger.infoWithEmoji("🌐", `Public URL: ${config.publicUrl}`, "SERVER");
+    logger.infoWithEmoji("🔌", `WebSocket hub: ${config.publicUrl.replace(/^http/, "ws")}/hub`, "SERVER");
+  });
+}
+
+async function shutdown(signal: string): Promise<void> {
+  logger.server.shutdown(signal);
+  httpServer.close();
+  await disconnectRedis();
+  await disconnectMongo();
+  process.exit(0);
+}
+
+process.on("SIGINT", () => void shutdown("SIGINT"));
+process.on("SIGTERM", () => void shutdown("SIGTERM"));
+
+start().catch((err: Error) => {
+  logger.errorWithEmoji("❌", "Failed to start server", "SERVER", { error: err.message, stack: err.stack });
+  process.exit(1);
+});
