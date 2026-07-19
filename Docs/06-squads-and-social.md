@@ -39,6 +39,14 @@ inventory. A founder of a multi-member squad must still transfer leadership firs
 completed leave is harmless, while a legacy player-only mirror is repaired when its squad no
 longer exists.
 
+Promotion, demotion, leadership transfer, and kick also use snapshot transactions. Each operation
+checks the actor's current roster rank, applies one allowed transition, and updates the target
+player mirror together with the roster. Leadership transfer updates both player mirrors and keeps
+exactly one founder. The recovered `PromotePlayerToFounder` callback immediately changes the old
+leader to `Veteran`, so the backend uses that exact result; the earlier reconstruction's
+`Coleader` result was incorrect. Kick clears the target's membership/deposits and returns their
+normal deposited cards to authoritative inventory in the same commit.
+
 ## Squad creation economy
 
 Squad creation is a paid, server-authoritative operation. The recovered
@@ -102,9 +110,11 @@ client protocol task.
 ## Missing squad systems
 
 - squad events, divisions, milestones, and wars;
-- atomic multi-document transactions for rank, kick, and leadership mutations (creation,
-  admission, and leave are already transactional);
 - chat delivery and moderation.
+
+All currently implemented multi-document membership changes are transactional. An operational
+integrity scan is still desirable for accounts written before these transaction boundaries were
+introduced.
 
 Unrecovered actions remain rejected rather than mutating guessed card or event state.
 

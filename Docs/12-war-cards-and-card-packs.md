@@ -147,7 +147,9 @@ expands stored amounts into the exact `DepositedCards` JSON list of repeated car
 the stock callback. A deposited Buddy is a temporary dynamic loadout projection, not normal-card
 ownership; its dynamic ID is cleared rather than passed to `CardManager.AddCard`, which can resolve
 only catalog card IDs. This prevents deposits from leaking into a later squad or becoming
-inaccessible after departure.
+inaccessible after departure. Manager kick performs the same server-side inventory return for the
+removed player, even though the manager-facing success response contains only the updated player
+snapshot.
 
 `NotifyPlayerToDeposit` (action 178) sends a persistent card-pool reminder to another current
 squad member. The request contains only `SquadMemberId`; the server derives the squad from the

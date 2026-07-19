@@ -19,10 +19,10 @@ import logger from "../utils/logger";
  *
  * `squads.members` is the membership source of truth. Squad name and rank are also copied to
  * each player document because the recovered client expects to render them from a standalone
- * DatabasePlayer response. Creation commits both documents and its WarBucks debit in one
- * transaction. The remaining membership mutations still change the squad first and player
- * mirror second; they must be migrated to the same transaction boundary before that mirror is
- * strongly consistent in a multi-instance production deployment.
+ * DatabasePlayer response. Every cross-document membership mutation now commits the roster and
+ * player mirrors in one MongoDB transaction. Creation includes its WarBucks debit, while leave
+ * and kick also return normal card deposits and clear the pool mirror in that same boundary.
+ * Squad-only settings, invitations, and pending-request edits remain single-document writes.
  *
  * Admission capabilities are created only inside this service. A public join request cannot
  * set `allowPrivate`; only an already-authorized manager acceptance can pass it to `joinSquad`.
@@ -575,66 +575,210 @@ export async function leaveSquad(playerId: string, requestedName: string): Promi
   return { returnedCardIds: result.returnedCardIds };
 }
 
-export async function promoteMember(actorId: string, targetId: string, name: string): Promise<SquadDTO> {
-  const squad = await getByName(name);
-  if (!squad) throw new ApiError(ApiErrorCode.SquadNotFound, "Squad not found.");
+export interface SquadRankChangePlan {
+  squad: SquadDTO;
+  rank: SquadRank;
+}
+
+/** Apply one validated promotion/demotion step without mutating the supplied squad snapshot. */
+export function planSquadRankChange(
+  squad: SquadDTO,
+  actorId: string,
+  targetId: string,
+  direction: "promote" | "demote",
+): SquadRankChangePlan {
   const actor = requireManager(squad, actorId);
   const target = member(squad, targetId);
-  // Promotions move one step only and never reach Leader. Leadership has a separate founder-
-  // only transfer action, which prevents a coleader from creating a second leader.
-  const next = target.rank === SquadRank.Member ? SquadRank.Veteran : target.rank === SquadRank.Veteran ? SquadRank.Coleader : null;
-  if (next === null || squadRankAuthority(actor.rank) <= squadRankAuthority(next)) {
-    throw new ApiError(ApiErrorCode.InsufficientRank, "Member cannot be promoted by this actor.");
+  let next: SquadRank | null;
+  if (direction === "promote") {
+    // Promotions move one step and never reach Leader. Leadership has a separate founder-only
+    // action, preventing a coleader from creating a second leader.
+    next = target.rank === SquadRank.Member
+      ? SquadRank.Veteran
+      : target.rank === SquadRank.Veteran
+        ? SquadRank.Coleader
+        : null;
+    if (next === null || squadRankAuthority(actor.rank) <= squadRankAuthority(next)) {
+      throw new ApiError(ApiErrorCode.InsufficientRank, "Member cannot be promoted by this actor.");
+    }
+  } else {
+    // An actor may affect only a strictly lower authority. Founder identity is checked in
+    // addition to rank because a damaged legacy roster could contain the wrong founder rank.
+    if (targetId === squad.founderId || squadRankAuthority(actor.rank) <= squadRankAuthority(target.rank)) {
+      throw new ApiError(ApiErrorCode.InsufficientRank, "Member cannot be demoted by this actor.");
+    }
+    next = target.rank === SquadRank.Coleader
+      ? SquadRank.Veteran
+      : target.rank === SquadRank.Veteran
+        ? SquadRank.Member
+        : null;
+    if (next === null) throw new ApiError(ApiErrorCode.InsufficientRank, "Member cannot be demoted further.");
   }
-  target.rank = next;
-  await persist(squad);
-  await updatePlayerFields(targetId, { squadRank: next });
-  return squad;
+
+  return {
+    squad: {
+      ...squad,
+      members: squad.members.map((candidate) =>
+        candidate.playerId === targetId ? { ...candidate, rank: next! } : { ...candidate }),
+    },
+    rank: next,
+  };
+}
+
+function requireCompatiblePlayerSquad(player: PlayerDocument, squadName: string): void {
+  const mirrorName = consistentPlayerSquadName(player);
+  if (mirrorName && mirrorName !== squadName) {
+    throw new ApiError(ApiErrorCode.NotSquadMember, "Player belongs to a different squad.");
+  }
+}
+
+async function changeMemberRankTransaction(
+  actorId: string,
+  targetId: string,
+  requestedName: string,
+  direction: "promote" | "demote",
+): Promise<SquadDTO> {
+  const name = cleanName(requestedName);
+  return withMongoTransaction(async (session) => {
+    const [squad, targetPlayer] = await Promise.all([
+      squads().findOne({ name }, { session }),
+      players().findOne({ id: targetId }, { session }),
+    ]);
+    if (!squad) throw new ApiError(ApiErrorCode.SquadNotFound, "Squad not found.");
+    if (!targetPlayer) throw new ApiError(ApiErrorCode.PlayerNotFound, "Squad member not found.");
+    const plan = planSquadRankChange(squad, actorId, targetId, direction);
+    requireCompatiblePlayerSquad(targetPlayer, squad.name);
+    const now = new Date();
+
+    const squadUpdate = await squads().updateOne(
+      { name: squad.name, updatedAt: squad.updatedAt },
+      { $set: { members: plan.squad.members, updatedAt: now } },
+      { session },
+    );
+    if (squadUpdate.modifiedCount !== 1) {
+      throw new ApiError(ApiErrorCode.InternalServerError, "Squad rank changed concurrently.");
+    }
+    const playerUpdate = await players().updateOne(
+      {
+        id: targetPlayer.id,
+        squadName: targetPlayer.squadName,
+        "player.squadName": targetPlayer.player.squadName,
+        "player.squadRank": targetPlayer.player.squadRank,
+      },
+      {
+        $set: {
+          squadName: squad.name,
+          "player.squadName": squad.name,
+          "player.squadRank": plan.rank,
+          updatedAt: now,
+        },
+      },
+      { session },
+    );
+    if (playerUpdate.modifiedCount !== 1) {
+      throw new ApiError(ApiErrorCode.InternalServerError, "Player rank changed concurrently.");
+    }
+    return plan.squad;
+  });
+}
+
+export async function promoteMember(actorId: string, targetId: string, name: string): Promise<SquadDTO> {
+  return changeMemberRankTransaction(actorId, targetId, name, "promote");
 }
 
 export async function demoteMember(actorId: string, targetId: string, name: string): Promise<SquadDTO> {
-  const squad = await getByName(name);
-  if (!squad) throw new ApiError(ApiErrorCode.SquadNotFound, "Squad not found.");
-  const actor = requireManager(squad, actorId);
-  const target = member(squad, targetId);
-  // An actor may affect only a strictly lower authority. The founder is protected even if a
-  // legacy document contains an incorrect mirrored rank.
-  if (targetId === squad.founderId || squadRankAuthority(actor.rank) <= squadRankAuthority(target.rank)) {
-    throw new ApiError(ApiErrorCode.InsufficientRank, "Member cannot be demoted by this actor.");
-  }
-  const next = target.rank === SquadRank.Coleader ? SquadRank.Veteran : target.rank === SquadRank.Veteran ? SquadRank.Member : null;
-  if (next === null) throw new ApiError(ApiErrorCode.InsufficientRank, "Member cannot be demoted further.");
-  target.rank = next;
-  await persist(squad);
-  await updatePlayerFields(targetId, { squadRank: next });
-  return squad;
+  return changeMemberRankTransaction(actorId, targetId, name, "demote");
 }
 
-export async function transferLeadership(actorId: string, targetId: string, name: string): Promise<SquadDTO> {
-  const squad = await getByName(name);
-  if (!squad) throw new ApiError(ApiErrorCode.SquadNotFound, "Squad not found.");
+export interface LeadershipTransferPlan {
+  squad: SquadDTO;
+  formerLeaderRank: SquadRank.Veteran;
+}
+
+/** Reproduce the stock leadership callback's Leader -> Veteran transition. */
+export function planLeadershipTransfer(squad: SquadDTO, actorId: string, targetId: string): LeadershipTransferPlan {
   if (squad.founderId !== actorId || actorId === targetId) {
     throw new ApiError(ApiErrorCode.InsufficientRank, "Only the squad leader can transfer leadership.");
   }
-  // Update the roster ranks and founderId in one squad-document write, then synchronize both
-  // player mirrors. This preserves one authoritative leader in the squad document even if a
-  // later mirror write needs operational repair.
-  const actor = member(squad, actorId);
-  const target = member(squad, targetId);
-  actor.rank = SquadRank.Coleader;
-  target.rank = SquadRank.Leader;
-  squad.founderId = targetId;
-  await persist(squad);
-  await Promise.all([
-    updatePlayerFields(actorId, { squadRank: SquadRank.Coleader }),
-    updatePlayerFields(targetId, { squadRank: SquadRank.Leader }),
-  ]);
-  return squad;
+  member(squad, actorId);
+  member(squad, targetId);
+  return {
+    squad: {
+      ...squad,
+      founderId: targetId,
+      members: squad.members.map((candidate) => {
+        if (candidate.playerId === actorId) return { ...candidate, rank: SquadRank.Veteran };
+        if (candidate.playerId === targetId) return { ...candidate, rank: SquadRank.Leader };
+        return { ...candidate };
+      }),
+    },
+    formerLeaderRank: SquadRank.Veteran,
+  };
 }
 
-export async function kickMember(actorId: string, targetId: string, name: string): Promise<SquadDTO> {
-  const squad = await getByName(name);
-  if (!squad) throw new ApiError(ApiErrorCode.SquadNotFound, "Squad not found.");
+export async function transferLeadership(actorId: string, targetId: string, requestedName: string): Promise<SquadDTO> {
+  const name = cleanName(requestedName);
+  return withMongoTransaction(async (session) => {
+    const [squad, actorPlayer, targetPlayer] = await Promise.all([
+      squads().findOne({ name }, { session }),
+      players().findOne({ id: actorId }, { session }),
+      players().findOne({ id: targetId }, { session }),
+    ]);
+    if (!squad) throw new ApiError(ApiErrorCode.SquadNotFound, "Squad not found.");
+    if (!actorPlayer || !targetPlayer) throw new ApiError(ApiErrorCode.PlayerNotFound, "Squad member not found.");
+    const plan = planLeadershipTransfer(squad, actorId, targetId);
+    requireCompatiblePlayerSquad(actorPlayer, squad.name);
+    requireCompatiblePlayerSquad(targetPlayer, squad.name);
+    const now = new Date();
+
+    const squadUpdate = await squads().updateOne(
+      { name: squad.name, updatedAt: squad.updatedAt },
+      {
+        $set: {
+          founderId: plan.squad.founderId,
+          members: plan.squad.members,
+          updatedAt: now,
+        },
+      },
+      { session },
+    );
+    if (squadUpdate.modifiedCount !== 1) {
+      throw new ApiError(ApiErrorCode.InternalServerError, "Squad leadership changed concurrently.");
+    }
+
+    const updateMirror = async (player: PlayerDocument, rank: SquadRank): Promise<void> => {
+      const update = await players().updateOne(
+        {
+          id: player.id,
+          squadName: player.squadName,
+          "player.squadName": player.player.squadName,
+          "player.squadRank": player.player.squadRank,
+        },
+        {
+          $set: {
+            squadName: squad.name,
+            "player.squadName": squad.name,
+            "player.squadRank": rank,
+            updatedAt: now,
+          },
+        },
+        { session },
+      );
+      if (update.modifiedCount !== 1) {
+        throw new ApiError(ApiErrorCode.InternalServerError, "Leadership mirror changed concurrently.");
+      }
+    };
+    await updateMirror(actorPlayer, plan.formerLeaderRank);
+    await updateMirror(targetPlayer, SquadRank.Leader);
+    return plan.squad;
+  });
+}
+
+export interface SquadKickPlan {
+  squad: SquadDTO;
+}
+
+export function planSquadKick(squad: SquadDTO, actorId: string, targetId: string): SquadKickPlan {
   const actor = requireManager(squad, actorId);
   const target = member(squad, targetId);
   // Self-removal uses LeaveSquad, which enforces the founder rule. Kick is reserved for
@@ -642,10 +786,66 @@ export async function kickMember(actorId: string, targetId: string, name: string
   if (targetId === actorId || targetId === squad.founderId || squadRankAuthority(actor.rank) <= squadRankAuthority(target.rank)) {
     throw new ApiError(ApiErrorCode.InsufficientRank, "Member cannot be removed by this actor.");
   }
-  squad.members = squad.members.filter((candidate) => candidate.playerId !== targetId);
-  await persist(squad);
-  await updatePlayerFields(targetId, { squadName: "", squadRank: SquadRank.None });
-  return squad;
+  return {
+    squad: {
+      ...squad,
+      members: squad.members.filter((candidate) => candidate.playerId !== targetId).map((candidate) => ({ ...candidate })),
+    },
+  };
+}
+
+export async function kickMember(actorId: string, targetId: string, requestedName: string): Promise<SquadDTO> {
+  const name = cleanName(requestedName);
+  return withMongoTransaction(async (session) => {
+    const [squad, targetPlayer] = await Promise.all([
+      squads().findOne({ name }, { session }),
+      players().findOne({ id: targetId }, { session }),
+    ]);
+    if (!squad) throw new ApiError(ApiErrorCode.SquadNotFound, "Squad not found.");
+    if (!targetPlayer) throw new ApiError(ApiErrorCode.PlayerNotFound, "Squad member not found.");
+    const plan = planSquadKick(squad, actorId, targetId);
+    requireCompatiblePlayerSquad(targetPlayer, squad.name);
+    const reclaim = reclaimDepositedCardsForDepartureState(
+      progressionForPlayer(targetPlayer),
+      targetPlayer.player.depositedCardsDic ?? {},
+    );
+    const progressionChanged = reclaim.returnedCardIds.length > 0;
+    const { dogTags: _legacyDogTags, ...canonicalState } = reclaim.state;
+    const now = new Date();
+
+    const squadUpdate = await squads().updateOne(
+      { name: squad.name, updatedAt: squad.updatedAt },
+      { $set: { members: plan.squad.members, updatedAt: now } },
+      { session },
+    );
+    if (squadUpdate.modifiedCount !== 1) {
+      throw new ApiError(ApiErrorCode.InternalServerError, "Squad removal changed concurrently.");
+    }
+    const playerUpdate = await players().updateOne(
+      {
+        id: targetPlayer.id,
+        squadName: targetPlayer.squadName,
+        "player.squadName": targetPlayer.player.squadName,
+        "player.squadRank": targetPlayer.player.squadRank,
+        ...(progressionChanged ? progressionRevisionFilter(targetPlayer) : {}),
+      },
+      {
+        $set: {
+          ...(progressionChanged ? { progression: canonicalState } : {}),
+          squadName: "",
+          "player.squadName": "",
+          "player.squadRank": SquadRank.None,
+          "player.depositedCardsDic": {},
+          updatedAt: now,
+        },
+      },
+      { session },
+    );
+    if (playerUpdate.modifiedCount !== 1) {
+      throw new ApiError(ApiErrorCode.InternalServerError, "Removed player state changed concurrently.");
+    }
+    return plan.squad;
+  });
 }
 
 export interface UpdateSquadOptions {

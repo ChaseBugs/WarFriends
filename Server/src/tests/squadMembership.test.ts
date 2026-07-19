@@ -6,7 +6,13 @@ import type { PlayerDocument } from "../db";
 import { newPlayer, newSquad, type SquadDTO } from "../dtos";
 import { createInitialProgression } from "../services/playerStateService";
 import { reclaimDepositedCardsForDepartureState } from "../services/squadCardPoolService";
-import { planSquadJoin, planSquadLeave } from "../services/squadService";
+import {
+  planLeadershipTransfer,
+  planSquadJoin,
+  planSquadKick,
+  planSquadLeave,
+  planSquadRankChange,
+} from "../services/squadService";
 
 const NOW = Date.UTC(2026, 6, 20, 12, 0, 0);
 
@@ -222,4 +228,92 @@ test("departure clears a temporary Buddy projection without granting its dynamic
 
   assert.deepEqual(result.returnedCardIds, []);
   assert.equal(result.state, initial);
+});
+
+test("rank planning applies exactly one promotion or demotion step", () => {
+  const squad = squadDocument();
+  squad.members.push({
+    playerId: "member",
+    name: "Player-member",
+    rank: SquadRank.Member,
+    squadPoints: 0,
+    joinedAt: NOW,
+    lastSeenChatTimestamp: 0,
+  });
+  const promoted = planSquadRankChange(squad, "leader", "member", "promote");
+  const promotedRank = promoted.squad.members.find((member) => member.playerId === "member")?.rank;
+  const demoted = planSquadRankChange(promoted.squad, "leader", "member", "demote");
+
+  assert.equal(promoted.rank, SquadRank.Veteran);
+  assert.equal(promotedRank, SquadRank.Veteran);
+  assert.equal(demoted.rank, SquadRank.Member);
+  assert.equal(squad.members.find((member) => member.playerId === "member")?.rank, SquadRank.Member);
+});
+
+test("rank planning enforces explicit authority instead of numeric enum order", () => {
+  const squad = squadDocument();
+  squad.members.push(
+    {
+      playerId: "coleader",
+      name: "Player-coleader",
+      rank: SquadRank.Coleader,
+      squadPoints: 0,
+      joinedAt: NOW,
+      lastSeenChatTimestamp: 0,
+    },
+    {
+      playerId: "veteran",
+      name: "Player-veteran",
+      rank: SquadRank.Veteran,
+      squadPoints: 0,
+      joinedAt: NOW,
+      lastSeenChatTimestamp: 0,
+    },
+  );
+  assert.throws(
+    () => planSquadRankChange(squad, "coleader", "veteran", "promote"),
+    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.InsufficientRank,
+  );
+  assert.throws(
+    () => planSquadRankChange(squad, "coleader", "leader", "demote"),
+    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.InsufficientRank,
+  );
+});
+
+test("leadership transfer uses the stock Leader-to-Veteran result", () => {
+  const squad = squadDocument();
+  squad.members.push({
+    playerId: "successor",
+    name: "Player-successor",
+    rank: SquadRank.Coleader,
+    squadPoints: 0,
+    joinedAt: NOW,
+    lastSeenChatTimestamp: 0,
+  });
+  const plan = planLeadershipTransfer(squad, "leader", "successor");
+
+  assert.equal(plan.squad.founderId, "successor");
+  assert.equal(plan.formerLeaderRank, SquadRank.Veteran);
+  assert.equal(plan.squad.members.find((member) => member.playerId === "leader")?.rank, SquadRank.Veteran);
+  assert.equal(plan.squad.members.find((member) => member.playerId === "successor")?.rank, SquadRank.Leader);
+  assert.equal(squad.founderId, "leader");
+});
+
+test("kick planning removes only a strictly lower-ranked non-founder target", () => {
+  const squad = squadDocument();
+  squad.members.push({
+    playerId: "member",
+    name: "Player-member",
+    rank: SquadRank.Member,
+    squadPoints: 0,
+    joinedAt: NOW,
+    lastSeenChatTimestamp: 0,
+  });
+  const plan = planSquadKick(squad, "leader", "member");
+  assert.deepEqual(plan.squad.members.map((member) => member.playerId), ["leader"]);
+  assert.equal(squad.members.length, 2);
+  assert.throws(
+    () => planSquadKick(squad, "leader", "leader"),
+    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.InsufficientRank,
+  );
 });
