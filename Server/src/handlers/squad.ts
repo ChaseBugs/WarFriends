@@ -19,6 +19,10 @@ import {
   updateSquad,
 } from "../services/squadService";
 import { authed, type HandlerEntry } from "./types";
+import { buildDatabaseSquad } from "../services/squadWireService";
+import { buildDatabasePlayer } from "../services/playerStateService";
+import { findById } from "../services/playerService";
+import { informSquadLeaderAboutEvent, saveSquadChatCursor } from "../services/squadSocialService";
 
 // Squad system — BACKEND.md §2.5. Every handler is authenticated; rank checks live in the
 // service layer.
@@ -63,9 +67,35 @@ function emblem(req: Record<string, unknown>): Record<string, unknown> | undefin
 }
 
 export const squadHandlers: Record<number, HandlerEntry> = {
+  [DbAction.SaveLastSeenSquadChatTimeStamp]: authed(async ({ player, req }) => {
+    // The stock 1.6.0 client normally submits the cursor as RequestBuffer.data. This direct
+    // form remains useful for repaired clients and diagnostics, but accepts only explicit
+    // timestamp aliases and never derives a value from the server receive time.
+    const timestamp = integer(
+      req.LastSeenSquadChatTimeStamp ?? req.Timestamp ?? req.TimeStamp,
+      Number.NaN,
+    );
+    const result = await saveSquadChatCursor(player!.id, timestamp);
+    return ok(DbAction.SaveLastSeenSquadChatTimeStamp, {
+      LastSeenSquadChatTimeStamp: result.timestamp,
+    });
+  }),
+
+  [DbAction.InformSquadLeaderAboutEvent]: authed(async ({ player, req }) => {
+    const name = squadName(req) || player!.player.squadName;
+    const message = await informSquadLeaderAboutEvent(player!.id, name);
+    return ok(DbAction.InformSquadLeaderAboutEvent, {
+      Informed: Boolean(message),
+      ...(message ? { MessageId: message.messageId } : {}),
+    });
+  }),
+
   [DbAction.CheckUniqueSquadName]: authed(async ({ req }) => {
     const available = await isNameAvailable(squadName(req));
-    return ok(available ? DbAction.UniqueSquadNameSuccess : DbAction.UniqueSquadNameFailure, { Available: available });
+    // EBDNFFCCKEP reads IsUnique from the CheckUniqueSquadName response and then emits the
+    // local UniqueSquadNameSuccess/Failure event itself. Changing the response action or
+    // returning only Available bypasses that callback and leaves the creation dialog waiting.
+    return ok(DbAction.CheckUniqueSquadName, { IsUnique: available, Available: available });
   }),
 
   [DbAction.CreateSquad]: authed(async ({ player, req }) => {
@@ -75,33 +105,37 @@ export const squadHandlers: Record<number, HandlerEntry> = {
       joinPolicy: joinPolicy(req),
       requiredMedals: integer(req.RequiredMedals ?? req.SkillRequirement),
     });
-    return ok(DbAction.CreateSquad, { Squad: squad, SquadId: squad.name, PlayerRank: 2 });
+    return ok(DbAction.CreateSquad, { Squad: buildDatabaseSquad(squad), SquadId: squad.name, PlayerRank: 2 });
   }),
 
   [DbAction.JoinSquad]: authed(async ({ player, req }) => {
     const squad = await joinSquad(player!.id, squadName(req));
-    return ok(DbAction.JoinSquad, { Squad: squad, SquadId: squad.name, PlayerRank: 0 });
+    return ok(DbAction.JoinSquad, { Squad: buildDatabaseSquad(squad), SquadId: squad.name, PlayerRank: 0 });
   }),
 
   [DbAction.JoinSquadRequest]: authed(async ({ player, req }) => {
     const squad = await requestToJoin(player!.id, squadName(req));
-    return ok(DbAction.JoinSquadRequest, { Squad: squad });
+    return ok(DbAction.JoinSquadRequest, { Squad: buildDatabaseSquad(squad) });
   }),
 
   [DbAction.AcceptSquadJoinRequest]: authed(async ({ player, req }) => {
     const name = squadName(req) || player!.player.squadName;
     const squad = await acceptJoinRequest(player!.id, targetId(req), name);
-    return ok(DbAction.AcceptSquadJoinRequest, { Squad: squad });
+    const joined = await findById(targetId(req));
+    return ok(DbAction.AcceptSquadJoinRequest, {
+      Squad: buildDatabaseSquad(squad),
+      ...(joined ? { joinedPlayer: buildDatabasePlayer(joined) } : {}),
+    });
   }),
 
   [DbAction.DeclineSquadJoinRequest]: authed(async ({ player, req }) => {
     const squad = await declineJoinRequest(player!.id, targetId(req), squadName(req) || player!.player.squadName);
-    return ok(DbAction.DeclineSquadJoinRequest, { Squad: squad });
+    return ok(DbAction.DeclineSquadJoinRequest, { Squad: buildDatabaseSquad(squad) });
   }),
 
   [DbAction.InvitePlayerToSquad]: authed(async ({ player, req }) => {
     const squad = await invitePlayer(player!.id, targetId(req), squadName(req) || player!.player.squadName);
-    return ok(DbAction.InvitePlayerToSquad, { Squad: squad });
+    return ok(DbAction.InvitePlayerToSquad, { Squad: buildDatabaseSquad(squad) });
   }),
 
   [DbAction.LeaveSquad]: authed(async ({ player, req }) => {
@@ -111,52 +145,75 @@ export const squadHandlers: Record<number, HandlerEntry> = {
 
   [DbAction.PromotePlayer]: authed(async ({ player, req }) => {
     const squad = await promoteMember(player!.id, targetId(req), squadName(req) || player!.player.squadName);
-    return ok(DbAction.PromotePlayer, { Squad: squad });
+    const promoted = await findById(targetId(req));
+    return ok(DbAction.PromotePlayer, {
+      Squad: buildDatabaseSquad(squad),
+      ...(promoted ? { PromotedPlayer: buildDatabasePlayer(promoted) } : {}),
+    });
   }),
 
   [DbAction.PromotePlayerToFounder]: authed(async ({ player, req }) => {
     const squad = await transferLeadership(player!.id, targetId(req), squadName(req) || player!.player.squadName);
-    return ok(DbAction.PromotePlayerToFounder, { Squad: squad });
+    const promoted = await findById(targetId(req));
+    return ok(DbAction.PromotePlayerToFounder, {
+      Squad: buildDatabaseSquad(squad),
+      ...(promoted ? { PromotedPlayer: buildDatabasePlayer(promoted) } : {}),
+    });
   }),
 
   [DbAction.DemotePlayer]: authed(async ({ player, req }) => {
     const squad = await demoteMember(player!.id, targetId(req), squadName(req) || player!.player.squadName);
-    return ok(DbAction.DemotePlayer, { Squad: squad });
+    const demoted = await findById(targetId(req));
+    return ok(DbAction.DemotePlayer, {
+      Squad: buildDatabaseSquad(squad),
+      ...(demoted ? { DemotedPlayer: buildDatabasePlayer(demoted) } : {}),
+    });
   }),
 
   [DbAction.KickPlayer]: authed(async ({ player, req }) => {
     const squad = await kickMember(player!.id, targetId(req), squadName(req) || player!.player.squadName);
-    return ok(DbAction.KickPlayer, { Squad: squad });
+    const kicked = await findById(targetId(req));
+    return ok(DbAction.KickPlayer, {
+      Squad: buildDatabaseSquad(squad),
+      ...(kicked ? { Player: buildDatabasePlayer(kicked) } : {}),
+    });
   }),
 
   [DbAction.RemoveUserFromSquad]: authed(async ({ player, req }) => {
     const squad = await kickMember(player!.id, targetId(req), squadName(req) || player!.player.squadName);
-    return ok(DbAction.RemoveUserFromSquad, { Squad: squad });
+    const removed = await findById(targetId(req));
+    return ok(DbAction.RemoveUserFromSquad, {
+      Squad: buildDatabaseSquad(squad),
+      ...(removed ? { Player: buildDatabasePlayer(removed) } : {}),
+    });
   }),
 
   [DbAction.GetSquadDetails]: authed(async ({ player, req }) => {
     const squad = await getByName(squadName(req) || player!.player.squadName);
-    return ok(DbAction.GetSquadDetails, { Squad: squad });
+    return ok(DbAction.GetSquadDetails, { Squad: squad ? buildDatabaseSquad(squad) : null });
   }),
 
   [DbAction.GetFullSquadInfo]: authed(async ({ player, req }) => {
     const squad = await getByName(squadName(req) || player!.player.squadName);
-    return ok(DbAction.GetFullSquadInfo, { Squad: squad });
+    return ok(DbAction.GetFullSquadInfo, { Squad: squad ? buildDatabaseSquad(squad) : null });
   }),
 
   [DbAction.GetAllSquadMembers]: authed(async ({ player, req }) => {
-    const members = await getSquadMemberPlayers(squadName(req) || player!.player.squadName);
-    return ok(DbAction.GetAllSquadMembers, { SquadMembers: members, Members: members });
+    const name = squadName(req) || player!.player.squadName;
+    const members = (await getSquadMemberPlayers(name)).map(buildDatabasePlayer);
+    return ok(DbAction.GetAllSquadMembers, { SquadId: name, SquadMembers: members, Members: members });
   }),
 
-  [DbAction.GetSquads]: authed(async () => ok(DbAction.GetSquads, { Squads: await listByExperience() })),
+  [DbAction.GetSquads]: authed(async () =>
+    ok(DbAction.GetSquads, { Items: (await listByExperience()).map(buildDatabaseSquad) }),
+  ),
 
   [DbAction.GetSquadsByExperience]: authed(async () =>
-    ok(DbAction.GetSquadsByExperience, { Squads: await listByExperience() }),
+    ok(DbAction.GetSquadsByExperience, { Items: (await listByExperience()).map(buildDatabaseSquad) }),
   ),
 
   [DbAction.FindSuggestedSquads]: authed(async () =>
-    ok(DbAction.FindSuggestedSquads, { Squads: await listByExperience(20) }),
+    ok(DbAction.FindSuggestedSquads, { Items: (await listByExperience(20)).map(buildDatabaseSquad) }),
   ),
 
   [DbAction.UpdateSquad]: authed(async ({ player, req }) => {
@@ -165,11 +222,11 @@ export const squadHandlers: Record<number, HandlerEntry> = {
       joinPolicy: joinPolicy(req),
       requiredMedals: req.RequiredMedals === undefined ? undefined : integer(req.RequiredMedals),
     });
-    return ok(DbAction.UpdateSquad, { Squad: squad });
+    return ok(DbAction.UpdateSquad, { Squad: buildDatabaseSquad(squad) });
   }),
 
   [DbAction.UpdateSquadEmblem]: authed(async ({ player, req }) => {
     const squad = await updateSquad(player!.id, squadName(req) || player!.player.squadName, { emblem: emblem(req) });
-    return ok(DbAction.UpdateSquadEmblem, { Squad: squad });
+    return ok(DbAction.UpdateSquadEmblem, { Squad: buildDatabaseSquad(squad) });
   }),
 };

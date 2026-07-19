@@ -16,6 +16,8 @@ export const ApiErrorCode = {
   InsufficientRank: 64,
   NotEnoughCurrency: 70,
   UnknownAction: 90,
+  DailyRewardWrongIndex: 1000001,
+  DailyRewardAlreadyClaimed: 1000002,
 } as const;
 
 export type ApiErrorPayload = { Code: number; Message: string };

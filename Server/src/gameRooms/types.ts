@@ -1,8 +1,7 @@
-// Wire envelope for the WebSocket match relay (replaces the client's Photon room traffic).
-// The client connects to /hub, identifies, then joins a match room; in-match turn/action
-// messages are relayed to the opponent. Exact in-match payload schema is ⚠ RE-NEEDED
-// (BACKEND.md §5, §3.2) — until the Photon RPC/event set is extracted, `MatchEvent.data`
-// is passed through opaquely.
+// Wire contracts for the WebSocket match relay that currently replaces Photon room traffic.
+// A client identifies before using match operations, then joins only the MatchId assigned by
+// matchmaking. The exact recovered in-match action/RPC schema is still incomplete, so Event
+// and Data are relayed opaquely and must not yet be treated as authoritative combat input.
 
 export interface ClientEnvelope {
   Type: string;

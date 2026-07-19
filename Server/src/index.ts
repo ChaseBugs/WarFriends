@@ -8,6 +8,7 @@ import { connectMongo, disconnectMongo } from "./db";
 import { connectRedis, disconnectRedis, isRedisAvailable, isRedisEnabled } from "./redis";
 import { createGameHub } from "./gameHub";
 import logger from "./utils/logger";
+import { recoverInterruptedMatches } from "./services/matchService";
 
 const app = express();
 
@@ -65,6 +66,7 @@ async function start(): Promise<void> {
   }
   await connectMongo();
   logger.db.connect("MongoDB connected", { provider: "mongodb", database: config.mongoDbName });
+  await recoverInterruptedMatches();
 
   await connectRedis();
   createGameHub(httpServer);

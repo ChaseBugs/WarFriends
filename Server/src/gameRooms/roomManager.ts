@@ -1,10 +1,11 @@
 import type { RoomState } from "./types";
 import logger from "../utils/logger";
 
-// In-memory registry of active PvP match rooms. A room pairs exactly two players and
-// relays match traffic between them. Result recording/rewards are handled by the hub via
-// the onResult callback (wired to matchService later). Single-process for now; a
-// Redis-backed variant can shard this across hub instances (see redis.ts pub/sub).
+// In-memory registry for live PvP rooms. Persistent match ownership and rewards live in
+// matchService; this class owns only the socket-facing state: which of the two assigned
+// players are connected, whether both have joined, event relay, and result-report consensus.
+// It is intentionally process-local for now. Horizontal scaling will require a shared room
+// coordinator (for example Redis pub/sub) so players connected to different nodes can meet.
 
 export interface Participant {
   playerId: string;
@@ -18,6 +19,13 @@ export interface MatchRoom {
   allowedPlayerIds: Set<string>;
   resultReports: Map<string, string>; // reporter playerId -> winner playerId
   createdAt: number;
+}
+
+export interface EvictedParticipant {
+  matchId: string;
+  playerId: string;
+  opponentId?: string;
+  wasActive: boolean;
 }
 
 type SendToPlayer = (clientId: string, envelope: unknown) => void;
@@ -35,7 +43,12 @@ export class RoomManager {
     return this.rooms.get(matchId);
   }
 
-  /** Join (creating on first arrival). Returns the room, or null if it is already full. */
+  /**
+   * Attach an authenticated player to the room, creating its in-memory representation on
+   * first arrival. The persistent match supplies allowedPlayerIds; checking that immutable
+   * pair prevents an unrelated authenticated account from guessing a MatchId and joining.
+   * Rejoining replaces only that player's socket ID, which supports reconnect safely.
+   */
   join(matchId: string, playerId: string, clientId: string, allowedPlayerIds: readonly string[]): MatchRoom | null {
     if (!allowedPlayerIds.includes(playerId)) return null;
     let room = this.rooms.get(matchId);
@@ -66,7 +79,11 @@ export class RoomManager {
     return room;
   }
 
-  /** Relay an in-match event to the OTHER participant. */
+  /**
+   * Relay an in-match event only after both assigned players are present. The sender must be
+   * a current room participant, and the event is delivered only to the opponent. Payload
+   * semantics remain opaque until authoritative combat validation is implemented.
+   */
   relay(matchId: string, fromPlayerId: string, envelope: unknown): boolean {
     const room = this.rooms.get(matchId);
     if (!room || room.state !== "active" || !room.participants.has(fromPlayerId)) return false;
@@ -81,6 +98,8 @@ export class RoomManager {
   }
 
   recordResult(matchId: string, reporterId: string, winnerId: string): "pending" | "confirmed" | "conflict" | "invalid" {
+    // Both the reporter and proposed winner must belong to the immutable assigned pair.
+    // Rewards are not settled until every assigned player reports the same winner.
     const room = this.rooms.get(matchId);
     if (!room || !room.participants.has(reporterId) || !room.allowedPlayerIds.has(winnerId)) return "invalid";
     room.resultReports.set(reporterId, winnerId);
@@ -104,17 +123,27 @@ export class RoomManager {
     return room;
   }
 
-  /** Remove a disconnected client; notify the opponent so the match can resolve. */
-  evictClient(clientId: string): void {
+  /**
+   * Detach a disconnected socket without immediately deleting the room. The hub uses the
+   * returned match/player identity to start a reconnect grace timer. Keeping the room and
+   * its allowed-player set makes a legitimate reconnect possible while still preventing a
+   * third party from taking the vacant participant slot.
+   */
+  evictClient(clientId: string): EvictedParticipant | null {
     for (const room of this.rooms.values()) {
       const entry = [...room.participants.values()].find((p) => p.clientId === clientId);
       if (!entry) continue;
+      const wasActive = room.state === "active";
+      const opponentId = [...room.allowedPlayerIds].find((id) => id !== entry.playerId);
       room.participants.delete(entry.playerId);
       this.playerRoom.delete(entry.playerId);
-      this.broadcast(room.matchId, { Type: "OpponentLeft", Payload: { PlayerId: entry.playerId } });
-      if (room.participants.size === 0) this.finish(room.matchId);
-      return;
+      this.broadcast(room.matchId, {
+        Type: "OpponentDisconnected",
+        Payload: { MatchId: room.matchId, PlayerId: entry.playerId },
+      });
+      return { matchId: room.matchId, playerId: entry.playerId, opponentId, wasActive };
     }
+    return null;
   }
 }
 

@@ -34,3 +34,25 @@ test("match results require matching reports from both participants", () => {
   assert.equal(manager.recordResult("m3", "p1", "p1"), "pending");
   assert.equal(manager.recordResult("m3", "p2", "p2"), "conflict");
 });
+
+test("disconnect keeps the authorized room available for a legitimate reconnect", () => {
+  const manager = new RoomManager();
+  const sent: Array<{ clientId: string; envelope: unknown }> = [];
+  manager.setSender((clientId, envelope) => sent.push({ clientId, envelope }));
+  manager.join("m4", "p1", "c1", ["p1", "p2"]);
+  manager.join("m4", "p2", "c2", ["p1", "p2"]);
+
+  sent.length = 0;
+  assert.deepEqual(manager.evictClient("c1"), {
+    matchId: "m4",
+    playerId: "p1",
+    opponentId: "p2",
+    wasActive: true,
+  });
+  assert.equal(manager.getRoom("m4")?.state, "active");
+  assert.equal(manager.isParticipant("m4", "p1"), false);
+  assert.equal(manager.join("m4", "attacker", "c3", ["p1", "p2"]), null);
+  assert.ok(manager.join("m4", "p1", "c4", ["p1", "p2"]));
+  assert.equal(manager.isParticipant("m4", "p1"), true);
+  assert.equal(manager.relay("m4", "p1", { Type: "after-reconnect" }), true);
+});

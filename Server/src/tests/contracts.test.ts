@@ -1,8 +1,87 @@
 import assert from "node:assert/strict";
+import { createHmac } from "node:crypto";
 import test from "node:test";
+import { config } from "../config";
 import { AccountType, League, PlayerStatus, SquadRank } from "../constants";
 import { configurationResponse, normalizeEnvelope } from "../routes";
 import { squadRankAuthority } from "../services/squadService";
+import { providerForAccountType } from "../services/identityService";
+import { identityHandlers } from "../handlers/identity";
+import { authHandlers } from "../handlers/auth";
+import { DbAction } from "../dbActions";
+import type { PlayerDocument } from "../db";
+import { newPlayer, newSquad } from "../dtos";
+import {
+  buildDatabasePlayer,
+  buildPlayerData,
+  buildPlayerStateResponse,
+  createInitialProgression,
+} from "../services/playerStateService";
+
+function contractPlayer(): PlayerDocument {
+  const player = newPlayer("player-contract", "ContractPlayer", AccountType.Facebook);
+  player.facebookId = "12345678901234567";
+  player.level = 7;
+  player.experience = 4321;
+  player.armyPower = 321;
+  player.skill = 77;
+  player.medalsBalance = 55;
+  player.notificationSettings.maintenance = true;
+  return {
+    id: player.id,
+    accountName: player.accountName,
+    authToken: "session-token",
+    accountType: player.accountType,
+    leagueTier: player.leagueTier,
+    armyPower: player.armyPower,
+    experience: player.experience,
+    squadPoints: player.squadPoints,
+    squadName: player.squadName,
+    player,
+    progression: {
+      ...createInitialProgression(1_700_000_000),
+      gold: 100,
+      warBucks: 20,
+      levelExperience: 12,
+    },
+    createdAt: new Date("2023-11-14T22:13:20Z"),
+    updatedAt: new Date("2023-11-14T22:13:20Z"),
+  };
+}
+import { normalizeCountry, normalizeLocale, normalizePlayerName, parseNotificationSettings } from "../services/playerSettingsService";
+import { normalizeReportInput } from "../services/reportService";
+import { reportHandlers } from "../handlers/reports";
+import { challengeIsExpired, toClientMessage, type MessageDoc } from "../services/socialService";
+import {
+  currentDogTagCount,
+  dogTagRefillPrice,
+  materializeDogTags,
+  refillDogTagsState,
+  spendOneDogTagState,
+} from "../services/economyService";
+import { economyHandlers } from "../handlers/economy";
+import {
+  buildDailyRewardConfig,
+  buildDailyRewardWireData,
+  checkDailyRewardState,
+  claimDailyRewardState,
+  dailyRewardGoldForDay,
+} from "../services/dailyRewardService";
+import { dailyRewardHandlers } from "../handlers/dailyRewards";
+import {
+  assignmentStateFor,
+  claimAssignmentState,
+  ensureAssignmentsState,
+  processAssignmentBufferState,
+  recordPvpAssignmentProgressState,
+  serializeAssignmentData,
+  skipAssignmentState,
+} from "../services/assignmentService";
+import { assignmentHandlers } from "../handlers/assignments";
+import { winnerFromEndReason } from "../services/matchService";
+import { buildDatabaseSquad } from "../services/squadWireService";
+import { buildPlayerLeaderboardItem } from "../services/leaderboardService";
+import { playerCredentialMatches } from "../services/authService";
 
 test("wire enums match the recovered 1.6.0 client", () => {
   assert.equal(AccountType.Guest, 0);
@@ -34,4 +113,368 @@ test("request normalization accepts JSON envelopes and BestHTTP form fields", ()
 test("configuration response matches the recovered raw client parser", () => {
   assert.equal(configurationResponse({ DbAction: 157, SheetConfiguraton: "prod" }), "success;prod;{};");
   assert.equal(configurationResponse({ DbAction: 157, SheetConfig: "bad;value" }), "success;badvalue;{};");
+});
+
+test("account types map only to their matching external identity provider", () => {
+  assert.equal(providerForAccountType(AccountType.Guest), null);
+  assert.equal(providerForAccountType(AccountType.Facebook), "facebook");
+  assert.equal(providerForAccountType(AccountType.GooglePlay), "googlePlay");
+  assert.equal(providerForAccountType(AccountType.GameCenter), "gameCenter");
+});
+
+test("identity mutations require auth while pre-login existence checks remain open", () => {
+  assert.equal(identityHandlers[DbAction.AddFacebook]?.requiresAuth, true);
+  assert.equal(identityHandlers[DbAction.RemoveGooglePlay]?.requiresAuth, true);
+  assert.equal(identityHandlers[DbAction.RemoveOrUpdateGC]?.requiresAuth, true);
+  assert.equal(identityHandlers[DbAction.ExistFBAccount]?.requiresAuth, false);
+  assert.equal(identityHandlers[DbAction.TutorialCheckGPGSAccount]?.requiresAuth, false);
+});
+
+test("player data uses the recovered DynamoDB attribute wire format", () => {
+  const data = buildPlayerData(contractPlayer());
+  assert.deepEqual(data.Gold, { N: "100" });
+  assert.deepEqual(data.WarBucks, { N: "20" });
+  assert.deepEqual(data.Level, { N: "7" });
+  assert.deepEqual(data.Experience, { N: "4321" });
+  assert.deepEqual(data.DogTagLastUpdate, { N: "1700000000" });
+  assert.deepEqual(data.DogTagSeconds, { N: "4500" });
+  assert.deepEqual(data.DogTagMax, { N: "4500" });
+  assert.equal(JSON.parse((data.Settings as { S: string }).S).maintenance, true);
+  const starter = JSON.parse((data.StarterAssignmentsData as { S: string }).S);
+  assert.equal(starter.deadline, 1_700_604_800);
+  assert.deepEqual(starter.assignments, {});
+});
+
+test("dog-tag state uses accumulated seconds and recovered 900-second balancing", () => {
+  const initial = createInitialProgression(1_000, 900, 5);
+  assert.equal(initial.dogTagSeconds, 4_500);
+  assert.equal(initial.dogTagMax, 4_500);
+  assert.equal(initial.dogTagRefillSeconds, 900);
+  assert.equal(currentDogTagCount(initial), 5);
+
+  const partiallyEmpty = { ...initial, dogTagSeconds: 1_800, dogTagLastUpdate: 1_000 };
+  const regenerated = materializeDogTags(partiallyEmpty, 1_450);
+  assert.equal(regenerated.dogTagSeconds, 2_250);
+  assert.equal(currentDogTagCount(regenerated), 2);
+});
+
+test("dog-tag spend and refill transitions preserve partial time and charge server price", () => {
+  const state = {
+    ...createInitialProgression(1_000, 900, 5),
+    gold: 100,
+    dogTagSeconds: 1_800,
+  };
+  const spent = spendOneDogTagState(state, 1_100);
+  assert.equal(spent.state.dogTagSeconds, 1_000);
+  assert.equal(spent.currentDogTags, 1);
+  assert.equal(spent.state.revision, 1);
+
+  assert.equal(dogTagRefillPrice(1), 33);
+  const refilled = refillDogTagsState(spent.state, 1_100);
+  assert.equal(refilled.goldSpent, 33);
+  assert.equal(refilled.state.gold, 67);
+  assert.equal(refilled.state.dogTagSeconds, 4_500);
+  assert.equal(refilled.currentDogTags, 5);
+  assert.equal(economyHandlers[DbAction.PayOneDogTag]?.requiresAuth, true);
+  assert.equal(economyHandlers[DbAction.RefillDogtags]?.requiresAuth, true);
+});
+
+test("dog-tag transitions reject empty spends, full refills, and insufficient gold", () => {
+  const initial = createInitialProgression(1_000, 900, 5);
+  assert.throws(() => spendOneDogTagState({ ...initial, dogTagSeconds: 0 }, 1_000));
+  assert.throws(() => refillDogTagsState(initial, 1_000));
+  assert.throws(() => refillDogTagsState({ ...initial, dogTagSeconds: 0, gold: 0 }, 1_000));
+});
+
+test("daily reward checks unlock at most one ordered claim per UTC login day", () => {
+  const noon = Date.parse("2026-07-19T12:00:00Z") / 1000;
+  const initial = createInitialProgression(noon);
+  const firstCheck = checkDailyRewardState(initial, noon);
+  assert.deepEqual(firstCheck.calendar, {
+    year: 2026,
+    month: 7,
+    canClaim: 1,
+    claimReward: 0,
+    lastCheckDay: "2026-07-19",
+  });
+
+  const repeatedCheck = checkDailyRewardState(firstCheck.state, noon + 60);
+  assert.equal(repeatedCheck.calendar.canClaim, 1);
+
+  const claim = claimDailyRewardState(repeatedCheck.state, noon + 120, 1);
+  assert.equal(claim.calendar.claimReward, 1);
+  assert.equal(claim.goldAdded, dailyRewardGoldForDay(1));
+  assert.equal(claim.state.gold, dailyRewardGoldForDay(1));
+
+  const nextDayCheck = checkDailyRewardState(claim.state, noon + 86_400);
+  assert.equal(nextDayCheck.calendar.canClaim, 2);
+  assert.equal(nextDayCheck.calendar.claimReward, 1);
+});
+
+test("daily reward claims reject replays and locked future indexes", () => {
+  const now = Date.parse("2026-07-19T12:00:00Z") / 1000;
+  const available = checkDailyRewardState(createInitialProgression(now), now);
+  const claimed = claimDailyRewardState(available.state, now, 1);
+
+  assert.throws(
+    () => claimDailyRewardState(claimed.state, now, 1),
+    (error: unknown) => error instanceof Error && "code" in error && error.code === 1000002,
+  );
+  assert.throws(
+    () => claimDailyRewardState(claimed.state, now, 2),
+    (error: unknown) => error instanceof Error && "code" in error && error.code === 1000001,
+  );
+});
+
+test("daily reward wire data matches the recovered Unity calendar parser", () => {
+  const now = Date.parse("2026-02-10T23:59:00Z") / 1000;
+  const checked = checkDailyRewardState(createInitialProgression(now), now);
+  const wire = buildDailyRewardWireData(checked.calendar, now);
+  const monthConfig = buildDailyRewardConfig(2026, 2);
+
+  assert.equal(wire.month, 2);
+  assert.equal(wire.year, 2026);
+  assert.equal(wire.nextDay, 60);
+  assert.equal(Object.keys(monthConfig).length, 28);
+  assert.deepEqual(monthConfig.Day1, {
+    Type: 1,
+    Double: 0,
+    Count: dailyRewardGoldForDay(1),
+    Param: "",
+  });
+  assert.equal(dailyRewardHandlers[DbAction.CheckDailyReward]?.requiresAuth, true);
+  assert.equal(dailyRewardHandlers[DbAction.ClaimDailyReward]?.requiresAuth, true);
+});
+
+test("daily assignments use the recovered three-difficulty PvP contract and UTC reset", () => {
+  const now = Date.parse("2026-07-19T12:00:00Z") / 1000;
+  const result = ensureAssignmentsState(createInitialProgression(now), now);
+
+  assert.deepEqual(result.assignments.assignments.map((assignment) => [assignment.id, assignment.target]), [
+    [5, 2_000],
+    [8, 6],
+    [7, 3],
+  ]);
+  assert.equal(result.assignments.tomorrow, Date.parse("2026-07-20T00:00:00Z") / 1000);
+  assert.equal(result.assignments.megaReward, 0);
+  assert.equal(result.assignments.skipUsed, false);
+  assert.equal(JSON.parse(serializeAssignmentData(result.assignments)).dayKey, undefined);
+});
+
+test("confirmed PvP progress completes only server-derived assignment counters", () => {
+  const now = Date.parse("2026-07-19T12:00:00Z") / 1000;
+  let result = ensureAssignmentsState(createInitialProgression(now), now);
+  result = recordPvpAssignmentProgressState(result.state, now, false);
+  result = recordPvpAssignmentProgressState(result.state, now, true);
+
+  const [score, played, wins] = result.assignments.assignments;
+  assert.equal(score.done, true);
+  assert.equal(score.completeFract, 1);
+  assert.equal(played.completeFract, 2 / 6);
+  assert.equal(wins.completeFract, 1 / 3);
+});
+
+test("assignment claim and skip mutations enforce completion, reward, and replay rules", () => {
+  const now = Date.parse("2026-07-19T12:00:00Z") / 1000;
+  const initial = ensureAssignmentsState(createInitialProgression(now), now);
+  assert.throws(
+    () => claimAssignmentState(initial.state, now, 5, 2),
+    (error: unknown) => error instanceof Error && "code" in error && error.code === 11201,
+  );
+
+  let completed = recordPvpAssignmentProgressState(initial.state, now, false);
+  completed = recordPvpAssignmentProgressState(completed.state, now, false);
+  assert.throws(
+    () => claimAssignmentState(completed.state, now, 5, 5),
+    (error: unknown) => error instanceof Error && "code" in error && error.code === 11203,
+  );
+
+  const claim = claimAssignmentState(completed.state, now, 5, 2);
+  assert.equal(claim.state.gold, 2);
+  assert.equal(claim.assignments.completed, 1);
+  assert.equal(claim.assignments.megaReward, 1);
+  assert.throws(
+    () => claimAssignmentState(claim.state, now, 5, 2),
+    (error: unknown) => error instanceof Error && "code" in error && error.code === 11201,
+  );
+
+  const skipped = skipAssignmentState(claim.state, now, 1);
+  assert.equal(skipped.assignments.skipUsed, true);
+  assert.throws(() => skipAssignmentState(skipped.state, now, 2));
+});
+
+test("assignment RequestBuffer result is cached by BufferId without duplicate gold", () => {
+  const now = Date.parse("2026-07-19T12:00:00Z") / 1000;
+  let progression = ensureAssignmentsState(createInitialProgression(now), now).state;
+  progression = recordPvpAssignmentProgressState(progression, now, false).state;
+  progression = recordPvpAssignmentProgressState(progression, now, true).state;
+
+  const request = [{ action: DbAction.ClaimAssignment, data: JSON.stringify({ AssignmentId: 5, Reward: 2 }) }];
+  const first = processAssignmentBufferState(progression, now, "buffer-1", request);
+  assert.equal(first.state.gold, 2);
+  assert.equal(JSON.parse(first.requestsResults)[0].Result, 1);
+  assert.equal(first.replayed, false);
+
+  const replay = processAssignmentBufferState(first.state, now + 1, "buffer-1", request);
+  assert.equal(replay.state.gold, 2);
+  assert.equal(replay.requestsResults, first.requestsResults);
+  assert.equal(replay.replayed, true);
+  assert.equal(assignmentHandlers[DbAction.SendRequestBuffer]?.requiresAuth, true);
+  assert.equal(assignmentHandlers[DbAction.GetNewAssignments]?.requiresAuth, true);
+});
+
+test("PvP EndReason inference agrees from winner and loser perspectives", () => {
+  const participants = ["master", "client"];
+  assert.equal(winnerFromEndReason(participants, "master", 2), "master");
+  assert.equal(winnerFromEndReason(participants, "client", 1), "master");
+  assert.equal(winnerFromEndReason(participants, "master", 5), "client");
+  assert.equal(winnerFromEndReason(participants, "outsider", 2), null);
+  assert.equal(winnerFromEndReason(participants, "master", 10), null);
+});
+
+test("database player snapshots use the field names and wrappers parsed by Unity", () => {
+  const player = buildDatabasePlayer(contractPlayer());
+  assert.deepEqual(player.Id, { S: "player-contract" });
+  assert.deepEqual(player.Name, { S: "ContractPlayer" });
+  assert.deepEqual(player.Level, { N: "7" });
+  assert.deepEqual(player.FacebookId, { S: "12345678901234567" });
+  assert.deepEqual(player.EligibleLeagueId, { N: String(League.Bronze3) });
+  assert.equal(player.id, undefined);
+});
+
+test("squad snapshots use the recovered AANECPGDMGM field contract", () => {
+  const squad = newSquad("Alpha Team", "founder");
+  squad.description = "Ready for battle";
+  squad.requiredMedals = 25;
+  squad.members.push({
+    playerId: "founder",
+    name: "Founder",
+    rank: SquadRank.Leader,
+    squadPoints: 10,
+    joinedAt: 1,
+    lastSeenChatTimestamp: 0,
+  });
+  const wire = buildDatabaseSquad(squad);
+  assert.equal(wire.Id, "Alpha Team");
+  assert.equal(wire.Message, "Ready for battle");
+  assert.equal(wire.Size, 1);
+  assert.equal(wire.SkillRequirement, 25);
+  assert.equal(wire.name, undefined);
+});
+
+test("experience leaderboard items use the FHIPGDADNFG field contract", () => {
+  const wire = buildPlayerLeaderboardItem(contractPlayer(), 4);
+  assert.deepEqual(wire.PlayerId, { S: "player-contract" });
+  assert.deepEqual(wire.PlayerName, { S: "ContractPlayer" });
+  assert.deepEqual(wire.Experience, { N: "4321" });
+  assert.deepEqual(wire.Position, { N: "4" });
+  assert.equal(wire.Id, undefined);
+});
+
+test("boot state contains every field read unconditionally by GetPlayerData", () => {
+  const response = buildPlayerStateResponse(contractPlayer(), 1_700_000_100);
+  assert.equal(response.Time, 1_700_000_100);
+  assert.equal(response.Skill, 77);
+  assert.equal(response.MedalsBalance, 55);
+  assert.ok(response.PlayerData);
+});
+
+test("custom login returns distinct session and provider credentials", async () => {
+  const entry = authHandlers[DbAction.LoginToCustomAccount];
+  const response = await entry.handler({
+    player: contractPlayer(),
+    req: {
+      DbAction: DbAction.LoginToCustomAccount,
+      AccountType: AccountType.Facebook,
+      Password: "facebook-credential",
+    },
+  });
+  assert.equal(response.AccountType, AccountType.Facebook);
+  assert.equal(response.Token, "session-token");
+  assert.equal(response.Password, "facebook-credential");
+  assert.ok(response.PlayerData);
+  assert.deepEqual((response.Player as Record<string, unknown>).Id, { S: "player-contract" });
+});
+
+test("custom password login works while gameplay routes still require the session token", () => {
+  const player = contractPlayer();
+  const password = "correct-horse-battery-staple";
+  player.authToken = "rotated-session-token";
+  player.authTokenHash = createHmac("sha256", config.authSecret)
+    .update(`custom:${player.id}:${password}`)
+    .digest("hex");
+
+  assert.equal(playerCredentialMatches(player, player.authToken, false), true);
+  assert.equal(playerCredentialMatches(player, password, false), false);
+  assert.equal(playerCredentialMatches(player, password, true), true);
+  assert.equal(playerCredentialMatches(player, "wrong-password", true), false);
+});
+
+test("player settings parser accepts only the recovered boolean preference contract", () => {
+  const parsed = parseNotificationSettings(JSON.stringify({ challenge: false, squadEvents: false }));
+  assert.equal(parsed.challenge, false);
+  assert.equal(parsed.squadEvents, false);
+  assert.equal(parsed.playerLeague, true);
+  assert.throws(() => parseNotificationSettings(JSON.stringify({ challenge: "false" })));
+  assert.throws(() => parseNotificationSettings("not-json"));
+});
+
+test("profile normalization preserves localized names and validates locale/country fields", () => {
+  assert.equal(normalizePlayerName("  Игрок  "), "Игрок");
+  assert.equal(normalizeLocale("pt-BR"), "pt-BR");
+  assert.equal(normalizeCountry("us"), "US");
+  assert.throws(() => normalizePlayerName("  "));
+  assert.throws(() => normalizeLocale("../../etc"));
+  assert.throws(() => normalizeCountry("USA"));
+});
+
+test("moderation report contract preserves recovered fields and requires authentication", () => {
+  const report = normalizeReportInput(
+    {
+      ReportedPlayerId: "target-1",
+      ReportType: "2",
+      Message: " abusive name ",
+      MyArmyPower: "1200",
+      OpponentRank: "5",
+    },
+    true,
+  );
+  assert.equal(report.reportedPlayerId, "target-1");
+  assert.equal(report.reportType, 2);
+  assert.equal(report.message, "abusive name");
+  assert.equal(report.evidence.MyArmyPower, "1200");
+  assert.equal(reportHandlers[DbAction.SendPlayerReport]?.requiresAuth, true);
+  assert.equal(reportHandlers[DbAction.ReportCheater]?.requiresAuth, true);
+  assert.throws(() => normalizeReportInput({ ReportedPlayerId: "target-1", ReportType: 2 }, true));
+});
+
+test("challenge inbox adapter emits the DynamoDB attribute wrappers parsed by Unity", () => {
+  const message: MessageDoc = {
+    messageId: "challenger-1700000000000",
+    toPlayerId: "target",
+    fromPlayerId: "challenger",
+    fromName: "Challenger",
+    body: "",
+    messageType: 0,
+    payload: { MapName: "map_1", GameType: 2, Region: 1, roomName: "room" },
+    otherPlayerJson: "{\"id\":\"challenger\"}",
+    read: false,
+    ignored: false,
+    accepted: false,
+    createdAt: new Date(1_700_000_000_000),
+  };
+  const wire = toClientMessage(message);
+  assert.deepEqual(wire.MessageType, { N: "0" });
+  assert.deepEqual(wire.MessageId, { S: message.messageId });
+  assert.deepEqual(wire.MapName, { S: "map_1" });
+  assert.deepEqual(wire.GameType, { N: "2" });
+  assert.deepEqual(wire.OtherPlayer, { S: message.otherPlayerJson });
+});
+
+test("challenge expiry is enforced independently of MongoDB TTL cleanup timing", () => {
+  const deadline = new Date("2026-07-20T12:00:00Z");
+  assert.equal(challengeIsExpired({ messageType: 0, expiresAt: deadline }, new Date(deadline.getTime() - 1)), false);
+  assert.equal(challengeIsExpired({ messageType: 0, expiresAt: deadline }, deadline), true);
+  assert.equal(challengeIsExpired({ messageType: 0 }, new Date()), true);
+  assert.equal(challengeIsExpired({ messageType: 27 }, new Date("2099-01-01T00:00:00Z")), false);
 });

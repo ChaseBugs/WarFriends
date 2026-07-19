@@ -2,41 +2,92 @@ import { players, squads, type PlayerDocument } from "../db";
 import { RedisKeys } from "../constants";
 import { config } from "../config";
 import { redisZRevRange, redisZAdd } from "../redis";
+import { progressionForPlayer } from "./playerStateService";
+import { buildDatabaseSquad } from "./squadWireService";
+import { serializeWarArenaData } from "./warArenaContract";
 
-// Leaderboards (BACKEND.md §2.4). MongoDB is authoritative (indexed on experience); Redis
-// sorted sets act as a short-TTL cache. Every entry is projected to the shape the client's
-// ServerResultsCache expects for player/squad leaderboard reads.
+// MongoDB is authoritative; Redis is only an opportunistic rank cache. Wire conversion is
+// performed here because the experience leaderboard uses FHIPGDADNFG, which has different
+// field names from DatabasePlayer even though both describe the same account.
 
-export interface LeaderboardEntry {
-  id: string;
-  Name: string;
-  Experience: number;
-  Level: number;
-  ArmyPower: number;
-  LeagueId: string;
-  SquadId: string;
+type StringAttribute = { S: string };
+type NumberAttribute = { N: string };
+export type PlayerLeaderboardItem = Record<string, StringAttribute | NumberAttribute>;
+
+function s(value: unknown): StringAttribute {
+  return { S: String(value ?? "") };
 }
 
-function toEntry(doc: PlayerDocument): LeaderboardEntry {
-  return {
-    id: doc.id,
-    Name: doc.player.accountName,
-    Experience: doc.player.experience,
-    Level: doc.player.level,
-    ArmyPower: doc.player.armyPower,
-    LeagueId: doc.player.leagueId,
-    SquadId: doc.player.squadName,
+function n(value: number): NumberAttribute {
+  return { N: String(Math.trunc(Number.isFinite(value) ? value : 0)) };
+}
+
+/** Build the exact item parsed by FHIPGDADNFG.MAINIENLLIL. */
+export function buildPlayerLeaderboardItem(doc: PlayerDocument, position: number): PlayerLeaderboardItem {
+  const player = doc.player;
+  const progression = progressionForPlayer(doc);
+  const item: PlayerLeaderboardItem = {
+    PlayerId: s(player.id),
+    PlayerName: s(player.accountName),
+    Experience: n(player.experience),
+    Level: n(player.level),
+    LevelExperience: n(progression.levelExperience),
+    ArmyPower: n(player.armyPower),
+    Skill: n(player.skill),
+    Position: n(position),
+    Country: s(player.country),
+    DecalManagerData: s(JSON.stringify({ slots: player.playerVisuals })),
   };
+  if (player.facebookId !== -1) item.FacebookId = s(player.facebookId);
+  if (player.squadName) item.SquadId = s(player.squadName);
+  if (player.leagueId) item.LeagueId = s(player.leagueId);
+  else item.BeginnersLeague = n(player.beginnersLeague);
+  return item;
 }
 
-export async function topPlayersByExperience(limit = 100): Promise<LeaderboardEntry[]> {
-  const docs = await players().find().sort({ experience: -1 }).limit(limit).toArray();
-  // Warm the Redis cache opportunistically (no-op when Redis is disabled).
-  for (const d of docs) void redisZAdd(RedisKeys.leaderboardExperience, d.experience, d.id);
-  return docs.map(toEntry);
+export async function topPlayersByExperience(limit = 100, country?: string): Promise<PlayerLeaderboardItem[]> {
+  const filter = country ? { "player.country": country } : {};
+  const docs = await players().find(filter).sort({ experience: -1 }).limit(limit).toArray();
+  if (!country) {
+    // Cache warming is deliberately fire-and-forget: a Redis outage must never make the
+    // authoritative MongoDB leaderboard unavailable.
+    for (const doc of docs) void redisZAdd(RedisKeys.leaderboardExperience, doc.experience, doc.id);
+  }
+  return docs.map((doc, index) => buildPlayerLeaderboardItem(doc, index + 1));
 }
 
-/** 1-based global rank by experience (players strictly ahead + 1). */
+/**
+ * Build the FHIPGDADNFG item used by GEKJKNLPJIL's Arena leaderboard parser.
+ * The parser reuses normal player fields and additionally deserializes the exact string
+ * attribute `WarArenaData`; a bare object or different key silently loses crown/run data.
+ */
+export function buildArenaLeaderboardItem(doc: PlayerDocument, position: number): PlayerLeaderboardItem {
+  const item = buildPlayerLeaderboardItem(doc, position);
+  const arena = progressionForPlayer(doc).warArena;
+  if (arena) item.WarArenaData = s(serializeWarArenaData(arena));
+  return item;
+}
+
+export async function topArenaPlayers(limit = 100): Promise<PlayerLeaderboardItem[]> {
+  const docs = await players()
+    .find({ "progression.warArena.played": true })
+    .sort({
+      "progression.warArena.topRun": -1,
+      "progression.warArena.flawless": -1,
+      "progression.warArena.wins": -1,
+      updatedAt: 1,
+    })
+    .limit(limit)
+    .toArray();
+  return docs.map((doc, index) => buildArenaLeaderboardItem(doc, index + 1));
+}
+
+/** Return full documents for the recovered league-member DatabasePlayer parser. */
+export async function playersInLeague(leagueTier: number, limit = 100): Promise<PlayerDocument[]> {
+  return players().find({ leagueTier }).sort({ experience: -1 }).limit(limit).toArray();
+}
+
+/** 1-based global rank by experience (players strictly ahead plus one). */
 export async function playerRank(playerId: string): Promise<number> {
   const doc = await players().findOne({ id: playerId });
   if (!doc) return 0;
@@ -44,30 +95,15 @@ export async function playerRank(playerId: string): Promise<number> {
   return ahead + 1;
 }
 
-export interface SquadLeaderboardEntry {
-  Name: string;
-  Experience: number;
-  SquadPoints: number;
-  Level: number;
-  Members: number;
-}
-
-export async function topSquads(limit = 100): Promise<SquadLeaderboardEntry[]> {
+export async function topSquads(limit = 100): Promise<Record<string, unknown>[]> {
   const docs = await squads().find().sort({ experience: -1 }).limit(limit).toArray();
-  return docs.map((s) => ({
-    Name: s.name,
-    Experience: s.experience,
-    SquadPoints: s.squadPoints,
-    Level: s.level,
-    Members: s.members.length,
-  }));
+  return docs.map(buildDatabaseSquad);
 }
 
-/** Cached top-N ids from Redis if available (else null → caller uses Mongo). */
+/** Cached top-N ids from Redis if available; callers fall back to MongoDB on null. */
 export async function cachedTopPlayerIds(limit = 100): Promise<string[] | null> {
   const flat = await redisZRevRange(RedisKeys.leaderboardExperience, limit);
   if (!flat) return null;
-  // WITHSCORES returns [member, score, member, score, ...]; keep members only.
   const ids: string[] = [];
   for (let i = 0; i < flat.length; i += 2) ids.push(flat[i]!);
   return ids;

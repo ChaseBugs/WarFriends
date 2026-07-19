@@ -4,7 +4,7 @@ import { WebSocket, WebSocketServer } from "ws";
 import { authenticate } from "./services/authService";
 import { findById } from "./services/playerService";
 import { enqueue, remove as leaveQueue } from "./services/matchmakingService";
-import { createMatch, getMatch, settleResult, type MatchPlayer } from "./services/matchService";
+import { cancelMatch, createMatch, getMatch, settleResult, type MatchPlayer } from "./services/matchService";
 import { roomManager } from "./gameRooms/roomManager";
 import type {
   ClientEnvelope,
@@ -15,11 +15,13 @@ import type {
 } from "./gameRooms/types";
 import logger from "./utils/logger";
 import { PlayerStatus } from "./constants";
+import { config } from "./config";
 
-// WebSocket hub — the live PvP relay that stands in for Photon (BACKEND.md §3). A client
-// connects to /hub, Identifies with its id+token, joins a match room by MatchId, then
-// exchanges opaque MatchEvent messages that are relayed to the opponent. MatchResult is
-// where reward/league validation will hook in (matchService, next phase).
+// WebSocket hub for the reconstructed PvP transport. The recovered client originally used
+// Photon, while this server exposes the same high-level lifecycle over /hub: authenticate,
+// search, receive MatchFound, join the assigned room, exchange match events, and report a
+// result. Match events remain opaque until the original RPC/event schema is fully recovered,
+// so the hub currently validates identity, room membership, lifecycle, and result consensus.
 
 interface Client {
   id: string;
@@ -28,8 +30,152 @@ interface Client {
 }
 
 const clients = new Map<string, Client>();
-// playerId → clientId, so matchmaking can push MatchFound to a paired opponent's socket.
+// Maps a player ID to the player's current socket client ID. This lets matchmaking push a
+// MatchFound notification to the opponent that was already waiting in the queue.
 const onlinePlayers = new Map<string, string>();
+// A disconnected participant keeps the right to reclaim their match slot for a short,
+// configurable window. Timers are keyed by match+player so reconnects cancel only their
+// own pending forfeit and cannot affect the opponent's disconnect state.
+const disconnectTimers = new Map<string, NodeJS.Timeout>();
+// Queue timers apply before pairing. Join timers apply after pairing, when the persistent
+// match already exists and both player records have been moved to InGame.
+const matchmakingTimers = new Map<string, NodeJS.Timeout>();
+const matchJoinTimers = new Map<string, NodeJS.Timeout>();
+
+function clearMatchmakingTimer(playerId: string): void {
+  const timer = matchmakingTimers.get(playerId);
+  if (!timer) return;
+  clearTimeout(timer);
+  matchmakingTimers.delete(playerId);
+}
+
+function scheduleMatchmakingTimeout(playerId: string): void {
+  clearMatchmakingTimer(playerId);
+  const delayMs = Math.max(1, config.matchmakingTimeout) * 1000;
+  const timer = setTimeout(() => {
+    matchmakingTimers.delete(playerId);
+    // remove returns false when the player was paired just before this callback. In that
+    // race, suppressing MatchSearchTimedOut prevents a stale timeout after MatchFound.
+    if (!leaveQueue(playerId)) return;
+    sendToPlayer(playerId, {
+      Type: "MatchSearchTimedOut",
+      Payload: { TimeoutSeconds: Math.max(1, config.matchmakingTimeout) },
+    });
+  }, delayMs);
+  timer.unref();
+  matchmakingTimers.set(playerId, timer);
+}
+
+function disconnectKey(matchId: string, playerId: string): string {
+  return `${matchId}:${playerId}`;
+}
+
+function clearDisconnectTimer(matchId: string, playerId: string): boolean {
+  const key = disconnectKey(matchId, playerId);
+  const timer = disconnectTimers.get(key);
+  if (!timer) return false;
+  clearTimeout(timer);
+  disconnectTimers.delete(key);
+  return true;
+}
+
+function clearMatchDisconnectTimers(matchId: string): void {
+  for (const [key, timer] of disconnectTimers) {
+    if (!key.startsWith(`${matchId}:`)) continue;
+    clearTimeout(timer);
+    disconnectTimers.delete(key);
+  }
+}
+
+function clearMatchJoinTimer(matchId: string): void {
+  const timer = matchJoinTimers.get(matchId);
+  if (!timer) return;
+  clearTimeout(timer);
+  matchJoinTimers.delete(matchId);
+}
+
+/**
+ * Bound the interval between MatchFound and an active two-player room. A match record is
+ * created before either client joins, so relying on socket-disconnect handling is not enough:
+ * neither player may ever send JoinMatch and therefore no RoomManager participant exists to
+ * evict. Cancelling here restores both persistent player statuses without awarding a winner.
+ */
+function scheduleMatchJoinTimeout(matchId: string, playerIds: readonly string[]): void {
+  clearMatchJoinTimer(matchId);
+  const timeoutSeconds = Math.max(1, config.matchJoinTimeoutSeconds);
+  const timer = setTimeout(() => {
+    matchJoinTimers.delete(matchId);
+    void (async () => {
+      const room = roomManager.getRoom(matchId);
+
+      // The second player may have activated the room at the same moment this callback was
+      // queued. Re-checking live room state avoids cancelling a match that already started.
+      if (room?.state === "active") return;
+
+      const cancelled = await cancelMatch(matchId, "join_timeout");
+      if (!cancelled) return;
+
+      const ended: ClientEnvelope = {
+        Type: "MatchEnded",
+        Payload: { MatchId: matchId, Reason: "JoinTimeout" },
+      };
+      for (const playerId of playerIds) sendToPlayer(playerId, ended);
+
+      clearMatchDisconnectTimers(matchId);
+      roomManager.finish(matchId);
+    })().catch((error: unknown) => {
+      const message = error instanceof Error ? error.message : String(error);
+      logger.match.error("Match join timeout resolution failed", { matchId, error: message });
+    });
+  }, timeoutSeconds * 1000);
+  timer.unref();
+  matchJoinTimers.set(matchId, timer);
+}
+
+function scheduleDisconnectResolution(eviction: {
+  matchId: string;
+  playerId: string;
+  opponentId?: string;
+  wasActive: boolean;
+}): void {
+  clearDisconnectTimer(eviction.matchId, eviction.playerId);
+  const delayMs = Math.max(1, config.matchDisconnectGraceSeconds) * 1000;
+  const timer = setTimeout(() => {
+    disconnectTimers.delete(disconnectKey(eviction.matchId, eviction.playerId));
+    void (async () => {
+      const room = roomManager.getRoom(eviction.matchId);
+      if (!room || roomManager.isParticipant(eviction.matchId, eviction.playerId)) return;
+
+      const opponentConnected = eviction.opponentId
+        ? roomManager.isParticipant(eviction.matchId, eviction.opponentId)
+        : false;
+
+      if (eviction.wasActive && opponentConnected && eviction.opponentId) {
+        // Only a match that had actually started can be won by disconnect. The connected
+        // opponent is both reporter and winner, satisfying match participation checks while
+        // the atomic settlement claim prevents a late result from paying rewards twice.
+        const settlement = await settleResult(eviction.matchId, eviction.opponentId, eviction.opponentId);
+        roomManager.broadcast(eviction.matchId, {
+          Type: "MatchEnded",
+          Payload: { MatchId: eviction.matchId, WinnerId: settlement.winnerId, Reason: "OpponentForfeit" },
+        });
+      } else {
+        // If the room never started or both players disappeared, nobody receives rewards.
+        // Both DatabasePlayer status values are restored by cancelMatch.
+        await cancelMatch(eviction.matchId, eviction.wasActive ? "both_players_disconnected" : "join_timeout");
+      }
+
+      clearMatchDisconnectTimers(eviction.matchId);
+      clearMatchJoinTimer(eviction.matchId);
+      roomManager.finish(eviction.matchId);
+    })().catch((error: unknown) => {
+      const message = error instanceof Error ? error.message : String(error);
+      logger.match.error("Disconnect resolution failed", { matchId: eviction.matchId, error: message });
+    });
+  }, delayMs);
+  timer.unref();
+  disconnectTimers.set(disconnectKey(eviction.matchId, eviction.playerId), timer);
+}
 
 function send(client: Client, envelope: ClientEnvelope): void {
   if (client.socket.readyState === WebSocket.OPEN) {
@@ -78,9 +224,11 @@ export function createGameHub(httpServer: HttpServer): WebSocketServer {
     });
 
     socket.on("close", () => {
-      roomManager.evictClient(client.id);
+      const eviction = roomManager.evictClient(client.id);
+      if (eviction) scheduleDisconnectResolution(eviction);
       if (client.playerId) {
         leaveQueue(client.playerId);
+        clearMatchmakingTimer(client.playerId);
         if (onlinePlayers.get(client.playerId) === client.id) onlinePlayers.delete(client.playerId);
       }
       clients.delete(client.id);
@@ -131,21 +279,26 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
         leagueTier: doc.player.leagueTier,
       });
       if (!opponentId) {
+        scheduleMatchmakingTimeout(doc.id);
         send(client, { Type: "Searching", Payload: {} });
         return;
       }
+      clearMatchmakingTimer(doc.id);
+      clearMatchmakingTimer(opponentId);
       const opponent = await findById(opponentId);
       const opponentClientId = onlinePlayers.get(opponentId);
       const opponentClient = opponentClientId ? clients.get(opponentClientId) : undefined;
       if (!opponent || !opponentClient || opponentClient.socket.readyState !== WebSocket.OPEN) {
         // Opponent vanished between queueing and pairing; requeue this player.
         enqueue({ playerId: doc.id, armyPower: doc.player.armyPower, leagueTier: doc.player.leagueTier });
+        scheduleMatchmakingTimeout(doc.id);
         send(client, { Type: "Searching", Payload: {} });
         return;
       }
       const self: MatchPlayer = { playerId: doc.id, name: doc.player.accountName, armyPower: doc.player.armyPower, leagueTier: doc.player.leagueTier };
       const other: MatchPlayer = { playerId: opponent.id, name: opponent.player.accountName, armyPower: opponent.player.armyPower, leagueTier: opponent.player.leagueTier };
       const matchId = await createMatch(self, other);
+      scheduleMatchJoinTimeout(matchId, [self.playerId, other.playerId]);
       const found = (opponentName: string) => ({ Type: "MatchFound", Payload: { MatchId: matchId, Opponent: opponentName } });
       send(client, found(other.name));
       sendToPlayer(opponent.id, found(self.name));
@@ -153,7 +306,10 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
     }
 
     case "CancelMatch": {
-      if (client.playerId) leaveQueue(client.playerId);
+      if (client.playerId) {
+        leaveQueue(client.playerId);
+        clearMatchmakingTimer(client.playerId);
+      }
       send(client, { Type: "MatchCancelled", Payload: {} });
       return;
     }
@@ -167,6 +323,16 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
       if (!room) {
         return send(client, { Type: "MatchError", Payload: { MatchId: p?.MatchId, Reason: "NotParticipantOrFull" } });
       }
+      const reconnected = clearDisconnectTimer(p.MatchId, client.playerId);
+      if (reconnected) {
+        roomManager.broadcast(p.MatchId, {
+          Type: "OpponentReconnected",
+          Payload: { MatchId: p.MatchId, PlayerId: client.playerId },
+        });
+      }
+      // The room becomes active only when both assigned players have joined. At that exact
+      // transition the pre-game deadline no longer owns the match and must be cancelled.
+      if (room.state === "active") clearMatchJoinTimer(p.MatchId);
       send(client, {
         Type: "MatchJoined",
         Payload: { MatchId: p.MatchId, State: room.state, Participants: room.participants.size },
@@ -201,13 +367,18 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
 
       const settlement = await settleResult(p.MatchId, p.WinnerId, client.playerId);
       roomManager.broadcast(p.MatchId, { Type: "MatchEnded", Payload: { MatchId: p.MatchId, WinnerId: settlement.winnerId } });
+      clearMatchJoinTimer(p.MatchId);
       roomManager.finish(p.MatchId);
+      clearMatchDisconnectTimers(p.MatchId);
       logger.match.event("Match result received", { matchId: p.MatchId, winnerId: p.WinnerId, rewarded: settlement.rewarded });
       return;
     }
 
     default:
-      send(client, { Type: "Ack", Payload: { Type: envelope.Type } });
+      // Never acknowledge an unknown mutation as successful. Returning a protocol error
+      // makes client/server version drift observable and prevents false-success gameplay UI.
+      logger.websocket.error("Unknown message type", { clientId: client.id, type: envelope.Type });
+      send(client, { Type: "ProtocolError", Payload: { Message: "Unknown message type.", Type: envelope.Type } });
       return;
   }
 }

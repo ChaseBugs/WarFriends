@@ -25,6 +25,19 @@ export async function insertPlayer(doc: Omit<PlayerDocument, "createdAt" | "upda
   return full;
 }
 
+/** Persist the new password digest and its independently rotated gameplay session token. */
+export async function updateAuthCredentials(id: string, authTokenHash: string, authToken: string): Promise<void> {
+  await players().updateOne(
+    { id },
+    { $set: { authTokenHash, authToken, updatedAt: new Date() } },
+  );
+}
+
+/** Persist a rotated session token without changing the account's login password digest. */
+export async function updateSessionToken(id: string, authToken: string): Promise<void> {
+  await players().updateOne({ id }, { $set: { authToken, updatedAt: new Date() } });
+}
+
 /** Persist a mutated player snapshot, re-syncing the denormalized top-level fields. */
 export async function savePlayer(id: string, player: DatabasePlayerDTO): Promise<void> {
   await players().updateOne(
@@ -49,7 +62,27 @@ export async function updatePlayerFields(id: string, fields: Partial<DatabasePla
   const set: Record<string, unknown> = { updatedAt: new Date() };
   for (const [key, value] of Object.entries(fields)) set[`player.${key}`] = value;
 
-  if (fields.accountName !== undefined) set.accountName = fields.accountName;
+  if (fields.accountName !== undefined) {
+    set.accountName = fields.accountName;
+    set.normalizedAccountName = fields.accountName.toLocaleLowerCase("en-US");
+  }
+  if (fields.accountType !== undefined) set.accountType = fields.accountType;
+  // Provider ids are duplicated at the document root only for indexed lookup. Empty values
+  // must be removed rather than stored. An unrelated partial update must not unset these
+  // ids, so each key is handled only when it is explicitly present in `fields`.
+  const unset: Record<string, ""> = {};
+  if (fields.facebookId !== undefined) {
+    if (fields.facebookId === -1) unset.facebookId = "";
+    else set.facebookId = String(fields.facebookId);
+  }
+  if (fields.googlePlayId !== undefined) {
+    if (fields.googlePlayId) set.googlePlayId = fields.googlePlayId;
+    else unset.googlePlayId = "";
+  }
+  if (fields.gameCenterId !== undefined) {
+    if (fields.gameCenterId) set.gameCenterId = fields.gameCenterId;
+    else unset.gameCenterId = "";
+  }
   if (fields.leagueTier !== undefined) set.leagueTier = fields.leagueTier;
   if (fields.armyPower !== undefined) set.armyPower = fields.armyPower;
   if (fields.experience !== undefined) set.experience = fields.experience;
@@ -57,5 +90,5 @@ export async function updatePlayerFields(id: string, fields: Partial<DatabasePla
   if (fields.squadName !== undefined) set.squadName = fields.squadName;
   if (fields.deviceToken !== undefined) set.deviceToken = fields.deviceToken;
 
-  await players().updateOne({ id }, { $set: set });
+  await players().updateOne({ id }, { $set: set, ...(Object.keys(unset).length ? { $unset: unset } : {}) });
 }

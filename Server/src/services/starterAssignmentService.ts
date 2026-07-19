@@ -1,0 +1,235 @@
+import { ApiError } from "../apiErrors";
+import { config } from "../config";
+import type {
+  PlayerProgressionState,
+  StarterAssignmentRecordState,
+  StarterAssignmentState,
+} from "../db";
+import { findById } from "./playerService";
+import { mutateProgression } from "./progressionMutationService";
+
+/** Exact IJEAJGCCHEF values handled by the recovered RequestBuffer response parser. */
+export const STARTER_ASSIGNMENTS_INCORRECT = 18501;
+export const STARTER_ASSIGNMENT_REWARD_INCORRECT = 18502;
+
+export interface StarterAssignmentDefinition {
+  id: string;
+  target: number;
+  gold: number;
+  warBucks: number;
+  order: number;
+  authority: "rankedWins" | "medals" | "level" | "squadPoints" | "heroicPoints" | "unrecovered";
+}
+
+/**
+ * Complete balancing table serialized on the Starter Assignments Manager in the recovered
+ * 4.9.5 MainScene. The 1.6.0 scripts consume the same ID/VALUE/REWARD/ORDER schema.
+ *
+ * Keeping even currently unsupported rows in this table matters: the server can validate a
+ * claim against the real reward and order without ever accepting the Gold/WarBucks values
+ * sent by the client. `authority` explicitly records whether this backend can prove the
+ * completion fact. Unit deployment, war-card play, weapon upgrades, and card crafting remain
+ * rejected until their authoritative inventory/gameplay paths are rebuilt. ID_6 is proven
+ * by the first replay-safe daily/co-op mission settlement, matching
+ * StarterAssignmentWinMissionFirst's `heroicPoints > 0` check.
+ */
+export const STARTER_ASSIGNMENT_DEFINITIONS: readonly StarterAssignmentDefinition[] = [
+  { id: "ID_1", target: 1, gold: 2, warBucks: 0, order: 1, authority: "rankedWins" },
+  { id: "ID_2", target: 3, gold: 6, warBucks: 0, order: 10, authority: "unrecovered" },
+  { id: "ID_3", target: -1, gold: 3, warBucks: 0, order: 3, authority: "unrecovered" },
+  { id: "ID_4", target: 35, gold: 0, warBucks: 2_000, order: 2, authority: "medals" },
+  { id: "ID_5", target: 5, gold: 4, warBucks: 0, order: 5, authority: "level" },
+  { id: "ID_6", target: 1, gold: 0, warBucks: 4_000, order: 6, authority: "heroicPoints" },
+  { id: "ID_7", target: 3, gold: 0, warBucks: 3_000, order: 4, authority: "unrecovered" },
+  { id: "ID_8", target: -1, gold: 0, warBucks: 5_000, order: 9, authority: "unrecovered" },
+  { id: "ID_9", target: 6, gold: 5, warBucks: 0, order: 8, authority: "level" },
+  { id: "ID_10", target: 3, gold: 0, warBucks: 6_000, order: 7, authority: "squadPoints" },
+];
+
+export interface StarterAssignmentFacts {
+  medalsBalance: number;
+  level: number;
+  squadPointsTotal: number;
+}
+
+export interface StarterAssignmentMutationResult {
+  state: PlayerProgressionState;
+  starterAssignments: StarterAssignmentState;
+  reward?: { gold: number; warBucks: number };
+}
+
+function cloneAssignments(assignments: StarterAssignmentState): StarterAssignmentState {
+  return {
+    deadline: assignments.deadline,
+    assignments: Object.fromEntries(
+      Object.entries(assignments.assignments).map(([id, value]) => [id, { ...value }]),
+    ),
+  };
+}
+
+/**
+ * Materialize the client object without silently renewing an expired legacy account.
+ * `issuedAt` is account creation time, because choosing request time would let deletion of
+ * the field restart a limited offer. Existing persisted state always wins and is cloned so
+ * pure transitions never mutate a caller's snapshot in place.
+ */
+export function starterAssignmentStateFor(
+  state: PlayerProgressionState,
+  issuedAt: number,
+): StarterAssignmentState {
+  if (state.starterAssignments) return cloneAssignments(state.starterAssignments);
+  const duration = Math.max(0, Math.floor(config.starterAssignmentDurationSeconds));
+  return { deadline: Math.floor(issuedAt) + duration, assignments: {} };
+}
+
+export function starterAssignmentWireData(value: StarterAssignmentState): StarterAssignmentState {
+  // The persisted shape already uses the exact lower-camel-case fields expected by
+  // Newtonsoft.Json, but returning a clone prevents response construction from exposing a
+  // mutable reference to the optimistic-concurrency transition.
+  return cloneAssignments(value);
+}
+
+export function serializeStarterAssignmentsData(value: StarterAssignmentState): string {
+  return JSON.stringify(starterAssignmentWireData(value));
+}
+
+function definitionFor(id: string): StarterAssignmentDefinition {
+  const definition = STARTER_ASSIGNMENT_DEFINITIONS.find((candidate) => candidate.id === id);
+  if (!definition) throw new ApiError(STARTER_ASSIGNMENTS_INCORRECT, "Starter assignment was not found.");
+  return definition;
+}
+
+function rankedWins(state: PlayerProgressionState): number {
+  // Achievement group 2 is advanced only by confirmed ranked PvP settlement. Reusing that
+  // server-owned counter avoids maintaining two sources of truth for the same client stat.
+  return state.achievements?.data.find((group) => group.id === 2)?.value ?? 0;
+}
+
+function isServerConfirmed(
+  definition: StarterAssignmentDefinition,
+  state: PlayerProgressionState,
+  facts: StarterAssignmentFacts,
+): boolean {
+  switch (definition.authority) {
+    case "rankedWins": return rankedWins(state) >= definition.target;
+    case "medals": return facts.medalsBalance >= definition.target;
+    case "level": return facts.level >= definition.target;
+    case "squadPoints": return facts.squadPointsTotal >= definition.target;
+    case "heroicPoints": return (state.dailyMissions?.heroicPoints ?? 0) >= definition.target;
+    case "unrecovered": return false;
+  }
+}
+
+/**
+ * Accept the client's completion notification only when every requested ID is independently
+ * provable from current server state. Validation happens before mutation, preserving the
+ * original request's all-or-nothing behavior when Evaluate submits several newly completed
+ * IDs together. Already-completed IDs are idempotent retries after a lost HTTP response.
+ */
+export function completeStarterAssignmentsState(
+  state: PlayerProgressionState,
+  now: number,
+  issuedAt: number,
+  facts: StarterAssignmentFacts,
+  requestedIds: readonly string[],
+): StarterAssignmentMutationResult {
+  const starterAssignments = starterAssignmentStateFor(state, issuedAt);
+  if (now > starterAssignments.deadline) {
+    throw new ApiError(STARTER_ASSIGNMENTS_INCORRECT, "Starter assignments have expired.");
+  }
+  if (requestedIds.length < 1 || new Set(requestedIds).size !== requestedIds.length) {
+    throw new ApiError(STARTER_ASSIGNMENTS_INCORRECT, "Starter assignment IDs are empty or duplicated.");
+  }
+
+  const definitions = requestedIds.map(definitionFor);
+  for (const definition of definitions) {
+    const existing = starterAssignments.assignments[definition.id];
+    if (!existing?.completed && !isServerConfirmed(definition, state, facts)) {
+      const reason = definition.authority === "unrecovered"
+        ? "does not yet have an authoritative server event"
+        : "has not reached its server-owned target";
+      throw new ApiError(STARTER_ASSIGNMENTS_INCORRECT, `Starter assignment ${definition.id} ${reason}.`);
+    }
+  }
+
+  for (const definition of definitions) {
+    const existing = starterAssignments.assignments[definition.id];
+    starterAssignments.assignments[definition.id] = {
+      completed: true,
+      claimed: existing?.claimed ?? false,
+    };
+  }
+  return {
+    state: { ...state, revision: state.revision + 1, starterAssignments },
+    starterAssignments,
+  };
+}
+
+/**
+ * Claim exactly one completed onboarding reward. Both currency amounts supplied by the old
+ * client are treated as assertions, never authority. Enforcing the recovered display order
+ * prevents a modified APK from skipping the onboarding chain to a later, larger reward.
+ */
+export function claimStarterAssignmentState(
+  state: PlayerProgressionState,
+  now: number,
+  assignmentId: string,
+  requestedGold: number,
+  requestedWarBucks: number,
+): StarterAssignmentMutationResult {
+  const starterAssignments = starterAssignmentStateFor(state, now);
+  const definition = definitionFor(assignmentId);
+  const record = starterAssignments.assignments[assignmentId];
+  if (now > starterAssignments.deadline || !record?.completed || record.claimed) {
+    throw new ApiError(STARTER_ASSIGNMENTS_INCORRECT, "Starter assignment is not completed, is expired, or was claimed.");
+  }
+  if (requestedGold !== definition.gold || requestedWarBucks !== definition.warBucks) {
+    throw new ApiError(STARTER_ASSIGNMENT_REWARD_INCORRECT, "Starter assignment reward does not match server balancing.");
+  }
+
+  const firstUnclaimed = STARTER_ASSIGNMENT_DEFINITIONS
+    .filter((candidate) => !starterAssignments.assignments[candidate.id]?.claimed)
+    .sort((left, right) => left.order - right.order)[0];
+  if (firstUnclaimed?.id !== assignmentId) {
+    throw new ApiError(STARTER_ASSIGNMENTS_INCORRECT, "Starter assignment rewards must be claimed in order.");
+  }
+
+  record.claimed = true;
+  return {
+    state: {
+      ...state,
+      revision: state.revision + 1,
+      gold: state.gold + definition.gold,
+      warBucks: state.warBucks + definition.warBucks,
+      starterAssignments,
+    },
+    starterAssignments,
+    reward: { gold: definition.gold, warBucks: definition.warBucks },
+  };
+}
+
+export async function completeStarterAssignments(
+  playerId: string,
+  requestedIds: readonly string[],
+): Promise<StarterAssignmentMutationResult> {
+  const player = await findById(playerId);
+  if (!player) throw new ApiError(STARTER_ASSIGNMENTS_INCORRECT, "Player was not found.");
+  const issuedAt = Math.floor(player.createdAt.getTime() / 1_000);
+  const facts: StarterAssignmentFacts = {
+    medalsBalance: player.player.medalsBalance,
+    level: player.player.level,
+    squadPointsTotal: player.player.squadPoints,
+  };
+  return mutateProgression(playerId, (state, now) =>
+    completeStarterAssignmentsState(state, now, issuedAt, facts, requestedIds));
+}
+
+export function claimStarterAssignment(
+  playerId: string,
+  assignmentId: string,
+  requestedGold: number,
+  requestedWarBucks: number,
+): Promise<StarterAssignmentMutationResult> {
+  return mutateProgression(playerId, (state, now) =>
+    claimStarterAssignmentState(state, now, assignmentId, requestedGold, requestedWarBucks));
+}

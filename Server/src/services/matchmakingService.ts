@@ -57,9 +57,11 @@ export function enqueue(entry: Omit<QueueEntry, "enqueuedAt">): string | null {
   return null;
 }
 
-export function remove(playerId: string): void {
+export function remove(playerId: string): boolean {
   const index = queue.findIndex((e) => e.playerId === playerId);
-  if (index >= 0) queue.splice(index, 1);
+  if (index < 0) return false;
+  queue.splice(index, 1);
+  return true;
 }
 
 export function queueSize(): number {

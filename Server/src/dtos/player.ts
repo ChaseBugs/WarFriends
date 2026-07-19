@@ -1,5 +1,15 @@
 import { AccountType, League, PlayerStatus, SquadRank } from "../constants";
 
+/** Push-notification preferences serialized by the recovered SettingsManager.Settings. */
+export interface NotificationSettingsDTO {
+  challenge: boolean;
+  squadStatus: boolean;
+  squadEvents: boolean;
+  maintenance: boolean;
+  playerLeague: boolean;
+  dailyRewardNotification: boolean;
+}
+
 // Mirrors the recovered client's DatabasePlayer.cs. Fields the server treats as opaque
 // (client-serialized blobs) are typed `unknown` for now — they round-trip untouched until
 // we need to reason about their contents.
@@ -9,7 +19,9 @@ export interface DatabasePlayerDTO {
   id: string;
   accountName: string;
   accountType: AccountType;
-  facebookId: number;
+  // Facebook ids are signed 64-bit values in C#. Large ids remain strings in Node so they
+  // cannot be rounded above Number.MAX_SAFE_INTEGER before reaching the client.
+  facebookId: number | string;
   googlePlayId: string;
   gameCenterId: string;
 
@@ -46,6 +58,9 @@ export interface DatabasePlayerDTO {
 
   deviceToken: string;
   sendLogsValue: number;
+  locale: string;
+  renameCount: number;
+  notificationSettings: NotificationSettingsDTO;
 
   // Opaque client-serialized blobs (round-tripped, not modeled yet)
   inventoryData: unknown;
@@ -89,6 +104,16 @@ export function newPlayer(id: string, accountName: string, accountType: AccountT
     connectionType: 0,
     deviceToken: "",
     sendLogsValue: 0,
+    locale: "en",
+    renameCount: 0,
+    notificationSettings: {
+      challenge: true,
+      squadStatus: true,
+      squadEvents: true,
+      maintenance: false,
+      playerLeague: true,
+      dailyRewardNotification: true,
+    },
     inventoryData: null,
     levelManagerData: null,
     statisticsData: null,

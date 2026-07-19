@@ -32,7 +32,8 @@ other implemented actions return JSON. The replacement realtime layer connects t
 # Create a guest account (DatabaseAction 118) using the recovered BestHTTP shape
 curl -X POST localhost:8080/PC/8b004c04-6921-4613-9815-e63b42db4a7c/118/1-6-0 \
   -d 'requestId=118&Version=1.6.0&Os=android&DeviceToken=dev-A'
-# → { id, token, Player }  — replay id+token on every authed action
+# Response includes id, Token, Password, AccountType, typed Player, and typed PlayerData.
+# Replay PlayerId + Token on every authenticated action.
 ```
 
 ## Layout
@@ -61,6 +62,12 @@ Working end-to-end (verified live):
 
 - **Accounts / player**: `CreateAccount`, `CreateFullAccount`, `LoginToCustomAccount`,
   `GetPlayerData`/`GetPlayerInfo`, and player settings (name/country/status/device token).
+  Login/profile snapshots and private progression use the exact DynamoDB-style attribute
+  wrappers parsed by the recovered 1.6.0 client. Passwords/provider credentials remain
+  separate from the rotated internal gameplay session token.
+- **Platform identities**: Facebook, Google Play, and Game Center identities have unique
+  ownership, HMAC-protected credentials, provider login, collision-safe link/update, and
+  unlink behavior. Remaining response-contract work is tracked in `BACKEND_FEATURES.md`.
 - **Squads (core membership)**: create / unique-name check / public or requested join /
   invite / accept / decline / promote / demote / kick / leadership transfer / guarded
   leave, plus details and full member snapshots. Client ranks exactly mirror
@@ -70,27 +77,85 @@ Working end-to-end (verified live):
   `MatchEvent` relay to the opponent → `MatchResult`. Room joins/events are restricted to
   recorded match participants, WebSocket settlement requires matching reports from both
   participants, and the database settlement claim is idempotent. Players move from
-  `InGame` back to `Online`. `GameEnded` (REST) only accepts a match participant's report.
+  `InGame` back to `Online`. Disconnects allow a configurable reconnect grace period,
+  then resolve as a forfeit or no-reward cancellation; interrupted matches are recovered
+  on server restart. Photon-era `GameEnded` reports interpret the recovered `EndReason`
+  enum and require matching durable reports from both assigned participants before rewards.
 
 - **Leaderboards / leagues**: `GetPlayersByExperience` (global player board),
   `GetPlayerLeaguesDivision` (league + 1-based global rank), squad board via
   `GetSquadsByExperience` / `LeagueLeaderboardShown`. MongoDB-authoritative (indexed on
   `experience`), Redis sorted-set cache warmed opportunistically.
-- **Social / messaging**: `SearchPlayers` (name prefix), `GetAllPlayers`, `MessageSent` /
-  `GetAllMessages` / `ReadMessage` (per-recipient inbox).
+- **Social / messaging**: `SearchPlayers` (name prefix), `GetAllPlayers`, challenge and normal
+  `MessageSent`, `GetAllMessages`, `ReadMessage`, `IgnoreMessage`, and `AcceptChallenge`
+  (recipient-owned persistent inbox). Challenges expire logically and through MongoDB TTL;
+  identical retries are deduplicated and player-generated traffic has a rolling sender limit.
+- **Moderation reports**: authenticated player/cheater reports are validated, rate-limited,
+  deduplicated for safe retries, and stored with review status and evidence metadata.
+- **Energy economy**: server-owned dog-tag seconds, passive regeneration, atomic
+  `PayOneDogTag`, and gold-validated `RefillDogtags` using the recovered 900-second/5-tag
+  balancing and refill-price formula.
+- **Weapon inventory foundation**: private and public player snapshots now serialize the
+  exact recovered `InventoryData.slots` and `LevelManagerData.savedWeapons` structures with
+  the 4.9.5 starter loadout. Stock buffered `BuyWeapon`/`EquipWeapon` supports the recovered
+  FAMAS Gold transaction end-to-end: server price/level/discount validation, atomic ownership
+  grant, category-safe equipment, Unity rollback fields, and `BufferId` replay protection.
+  Unknown catalog rows and delivery/upgrade actions still fail closed.
+- **Daily rewards**: `CheckDailyReward` and `ClaimDailyReward` provide the recovered monthly
+  `dailyRewardData` calendar contract, one UTC-day unlock, ordered atomic Gold grants, and
+  replay-safe claim cursors. Reward amounts are conservative environment-tunable defaults
+  because the original remote live-ops reward sheet is not present in the recovered APK.
+- **Assignments**: `GetNewAssignments`, both skip actions, assignment/mega claims, and the
+  stock `SendRequestBuffer` path use a persistent UTC cycle. Only objectives derived from
+  confirmed PvP settlement advance; buffered claim retries are idempotent by `BufferId`.
+- **Daily/co-op/heroic missions**: actions `67`-`69`, `215`, `216`, and mission-flavoured
+  `GameEnded` use the exact `DailyMissionsData`, `SavedMission`, and compact `MissionUnit`
+  fields. UTC issuance, start receipts, consumed failure receipts, mode/index/order checks,
+  separate solo/co-op completion, response replay, the 30-point heroic gate, and recovered
+  currency rewards are persisted atomically. The archived server's random selection and
+  normal per-battle reward formula are explicitly reconstructed gaps; card-pack/elite-part
+  delivery remains disabled until inventory IDs are authoritative.
+- **Starter assignments (authoritative subset)**: actions `185`/`186` restore the exact
+  `StarterAssignmentsData` object and the MainScene-defined thresholds, order, Gold, and
+  WarBucks rewards. Ranked wins, medal balance, level, lifetime squad points, and the first
+  replay-safe mission completion are checked against server state; buffered claims are
+  ordered, atomic, reward-validated, and replay safe. Unit/card/weapon completions remain
+  disabled until those event sources exist.
+- **Achievements (authoritative subset)**: actions `218`-`220` use the recovered
+  `AchievementsData`/RequestBuffer contract. Solo missions, ranked wins, assignment
+  completion, squad points, and daily-reward claims advance only from accepted server
+  settlements; tier rewards come from the serialized MainScene table and are granted
+  atomically and replay-safely.
+- **Squad social state**: action `193` persists the monotonic Photon Chat unread cursor through
+  the stock request buffer and restores it as `PlayerAnalyticsData`; squad-event notices are
+  membership-validated, founder-targeted, durable, and duplicate-suppressed.
+- **War Arena (persistent core)**: login supplies the recovered Dynamo-style
+  `WarArenaConfig`, while `EnterArena`, action-64/65 starts, Arena `GameEnded`, heart/life
+  actions, scraps claims, rollover, and `GetArenaLeaderboards` use the exact `WarArenaData`
+  contract. Runs and prices are server-owned, battle IDs are receipt-bound, and result/reward
+  retries are idempotent. The retired remote price/lootbox tables are absent from both APKs,
+  so entry/heart/scraps values are environment-tunable and final lootboxes currently use a
+  documented scraps fallback rather than fabricated inventory objects.
 
 Unimplemented state-changing `DbAction` values return error code `90`; only an explicit
 allowlist of analytics/impression actions is safely ignored.
 
 ### Next
 
-- **Squad extensions** — card pool, squad events/wars, and squad chat are not implemented.
-- **Economy** — `Buy*`/`Activate*`/`Equip*`, packs, VIP. **Blocked**: these mutate the
-  client-serialized `inventoryData` / `levelManagerData` blobs, whose schema is still
-  `⚠ RE-NEEDED`; currently rejected as unimplemented. Currency-only ops can land sooner.
-- **Arena** — `EnterArena` / lives / `GetArenaLeaderboards`; league promotion/relegation on
-  `FinishPlayerLeague`. Mutating actions without a real implementation are rejected.
-- **Assignments / daily / achievements**, **hit list**.
+- **Squad extensions** — card pool and squad events/wars are not implemented. Chat unread
+  state is persistent, but actual channel delivery still requires Photon Chat repointing or
+  a compatible replacement transport.
+- **Item economy expansion** — extract the remaining 4.9.5 weapon/unit rows, implement
+  WarBucks delivery/activation and upgrades, then add decals, cards, packs, and VIP. Only the
+  verified FAMAS Gold purchase/equip path is currently enabled; unknown or discount-bearing
+  purchase requests remain rejected instead of receiving guessed prices.
+- **Arena fidelity / leagues** — recover production arena prices, rules, opponent weighting,
+  lootbox/crown inventory payloads, and authoritative combat evidence; implement league
+  promotion/relegation on `FinishPlayerLeague`. Arena debug mutations remain rejected.
+- **Mission fidelity** — recover the original mission-selection weighting and normal battle
+  reward formula, add combat-result validation, restore the missing recovered-client
+  `MissionsSettings`/`UnitsInMissionsConfig` references, and deliver heroic inventory rewards.
+  Remaining achievement groups stay unclaimable until their gameplay events are authoritative.
 - **Reward tuning** — `matchService.REWARDS` is placeholder; wire to the client's
   MatchMakingConstants / reward config once extracted.
 - **Client integration** — form request routing is implemented, but exact response keys for

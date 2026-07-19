@@ -1,6 +1,6 @@
 import { ApiError, apiError } from "../apiErrors";
 import { config } from "../config";
-import { dbActionName } from "../dbActions";
+import { DbAction, dbActionName } from "../dbActions";
 import type { RequestEnvelope, ResponseEnvelope } from "../dtos";
 import { ok } from "../dtos";
 import { authenticate } from "../services/authService";
@@ -11,11 +11,17 @@ import { squadHandlers } from "./squad";
 import { matchHandlers } from "./match";
 import { leaderboardHandlers } from "./leaderboard";
 import { socialHandlers } from "./social";
+import { identityHandlers } from "./identity";
+import { reportHandlers } from "./reports";
+import { economyHandlers } from "./economy";
+import { dailyRewardHandlers } from "./dailyRewards";
+import { assignmentHandlers } from "./assignments";
+import { dailyMissionHandlers } from "./dailyMissions";
+import { warArenaHandlers } from "./warArena";
 import type { HandlerEntry } from "./types";
 import logger from "../utils/logger";
 
 const benignNoOpActions = new Set<number>([
-  67, 68, 69, // campaign/co-op start telemetry
   92, // client error report
   104, 105, 108, // content impression telemetry
   119, 120, // tutorial start/end telemetry
@@ -33,6 +39,13 @@ const registry: Record<number, HandlerEntry> = {
   ...matchHandlers,
   ...leaderboardHandlers,
   ...socialHandlers,
+  ...identityHandlers,
+  ...reportHandlers,
+  ...economyHandlers,
+  ...dailyRewardHandlers,
+  ...assignmentHandlers,
+  ...dailyMissionHandlers,
+  ...warArenaHandlers,
 };
 
 function clientVersion(req: RequestEnvelope): number {
@@ -65,12 +78,27 @@ export async function dispatch(req: RequestEnvelope): Promise<ResponseEnvelope> 
 
     // Attach the player: required handlers authenticate strictly; others attach best-effort.
     const id = [req.PlayerId, req.id, req.Id].find((value): value is string => typeof value === "string" && value !== "null");
-    const token = [req.Token, req.token, req.Password, req.password].find(
+    // LoginToCustomAccount is the one route where the durable human/provider password is
+    // the primary credential. All gameplay routes prefer Token so a stale Password field
+    // cannot silently bypass a rotated session. The authentication service separately gates
+    // custom-password hash checks to this exact action.
+    const credentialCandidates = action === DbAction.LoginToCustomAccount
+      ? [req.Password, req.password, req.Token, req.token]
+      : [req.Token, req.token, req.Password, req.password];
+    const token = credentialCandidates.find(
       (value): value is string => typeof value === "string" && value !== "null",
     );
 
+    // AccountType is only meaningful during platform login. Normal authenticated form
+    // requests omit it and therefore use the guest/server token path.
+    const accountType = Number(req.AccountType);
     const player = entry.requiresAuth
-      ? await authenticate(id, token)
+      ? await authenticate(
+        id,
+        token,
+        Number.isInteger(accountType) ? accountType : undefined,
+        action === DbAction.LoginToCustomAccount,
+      )
       : id && token
         ? await findByIdOptional(id, token)
         : null;
