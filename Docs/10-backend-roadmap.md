@@ -38,7 +38,9 @@ Cards together with both players' core rewards and the terminal match row. This 
 assignment `ID_2`; detecting card plays omitted by a modified stock APK still requires live Photon
 or replacement-relay event validation.
 Normal PvP responses now also include the recovered `IIGFODGJBFA` `GameReward` shape, preventing
-the stock result parser from dereferencing a null reward object when `Skill` is returned.
+the stock result parser from dereferencing a null reward object when `Skill` is returned. The
+response always includes `LevelExperience` but emits `Level` only for a real level transition, so
+ordinary matches no longer trigger the client's level-up branch.
 
 ## Progression and live operations
 

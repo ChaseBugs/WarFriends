@@ -123,6 +123,24 @@ export function pvpGameReward(
   };
 }
 
+/**
+ * Emit Level only for a real server-side level transition.
+ *
+ * DMGJCGJDDID treats the mere presence of `Level` as proof of a level-up and sets
+ * LevelManager.isLevelUp. Returning the unchanged level after every match therefore opens
+ * level-up UI and tutorials incorrectly. LevelExperience is unconditional, while Level is a
+ * conditional transition marker in this wire contract.
+ */
+export function pvpLevelFields(
+  previousLevel: number,
+  currentLevel: number,
+  levelExperience: number,
+): Record<string, number> {
+  return currentLevel > previousLevel
+    ? { LevelExperience: levelExperience, Level: currentLevel }
+    : { LevelExperience: levelExperience };
+}
+
 export async function createMatch(a: MatchPlayer, b: MatchPlayer): Promise<string> {
   const matchId = randomUUID();
   const doc: MatchDoc = { matchId, players: [a, b], state: "active", createdAt: new Date() };

@@ -5,6 +5,7 @@ import { ok } from "../dtos";
 import {
   getMatch,
   pvpGameReward,
+  pvpLevelFields,
   reportMatchResult,
   winnerFromEndReason,
 } from "../services/matchService";
@@ -137,8 +138,13 @@ export const matchHandlers: Record<number, HandlerEntry> = {
       // Always return a valid object, including a zero-XP pending/conflict result, to avoid
       // dereferencing a null ServerResultsCache.lastGameReward on the stock end screen.
       GameReward: pvpGameReward(player!.id, responseWinner, resultAvailable),
-      LevelExperience: progression?.levelExperience ?? 0,
-      Level: updated?.player.level ?? player!.player.level,
+      // Level is not a normal snapshot field in this callback: its presence means level-up.
+      // Omit it while the level is unchanged, but always provide LevelExperience.
+      ...pvpLevelFields(
+        player!.player.level,
+        updated?.player.level ?? player!.player.level,
+        progression?.levelExperience ?? 0,
+      ),
       Skill: updated?.player.skill ?? player!.player.skill,
       MedalsBalance: updated?.player.medalsBalance ?? player!.player.medalsBalance,
       PlacementMatchesRequired: updated?.player.remainingMatches ?? player!.player.remainingMatches,

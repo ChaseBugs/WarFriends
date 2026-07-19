@@ -84,6 +84,12 @@ settlement constants. A finished retry returns the same deterministic display am
 conflicting, or invalid reports still receive a structurally valid object with zero battle XP, so
 the stock end screen remains safe without displaying an uncommitted reward.
 
+`LevelExperience` is returned on every outcome because the parser reads it unconditionally.
+`Level` is different: its presence is a transition marker, and the client sets
+`LevelManager.isLevelUp = true` whenever the key exists. The server therefore emits `Level` only
+when the authoritative level index actually increases; returning the unchanged level would create
+a false level-up after every PvP battle.
+
 ## Current limitations
 
 The WebSocket layer is a controlled relay, not an authoritative combat simulation. It does not

@@ -78,7 +78,7 @@ import {
   skipAssignmentState,
 } from "../services/assignmentService";
 import { assignmentHandlers } from "../handlers/assignments";
-import { pvpGameReward, winnerFromEndReason } from "../services/matchService";
+import { pvpGameReward, pvpLevelFields, winnerFromEndReason } from "../services/matchService";
 import { buildDatabaseSquad } from "../services/squadWireService";
 import { buildPlayerLeaderboardItem } from "../services/leaderboardService";
 import { playerCredentialMatches } from "../services/authService";
@@ -352,6 +352,11 @@ test("PvP GameReward keeps the stock result parser non-null and exposes only set
     Xp: { BattleRewards: 0, ExtraRewards: 0, Winstreak: 0, Time: 0, offerMult: 1 },
     IsVip: false,
   });
+});
+
+test("PvP Level is emitted only when the server actually advances the level", () => {
+  assert.deepEqual(pvpLevelFields(4, 4, 120), { LevelExperience: 120 });
+  assert.deepEqual(pvpLevelFields(4, 5, 3), { LevelExperience: 3, Level: 5 });
 });
 
 test("database player snapshots use the field names and wrappers parsed by Unity", () => {
