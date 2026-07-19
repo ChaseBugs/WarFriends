@@ -47,6 +47,16 @@ leader to `Veteran`, so the backend uses that exact result; the earlier reconstr
 `Coleader` result was incorrect. Kick clears the target's membership/deposits and returns their
 normal deposited cards to authoritative inventory in the same commit.
 
+## Client error contracts
+
+Squad failures use the recovered `IJEAJGCCHEF` values rather than reconstruction-only generic
+codes. Admission returns `3801` for full, `3803` for insufficient medals, `3804` for a private
+squad, and `3805` when the squad disappeared. Pending-request conflicts use `13201`, `13301`, and
+`13302`; the last two include the exact `PlayerId` and optional current `Name` fields consumed by
+the awaiting-member UI. Leave uses `4901`; promote, founder transfer, demote, and kick use `5501`,
+`5701`, `5801`, and `5802`. Promote/demote failures also return a fresh `SquadMembers` array because
+the stock error parser reloads that snapshot to roll back its optimistic rank display.
+
 ## Squad creation economy
 
 Squad creation is a paid, server-authoritative operation. The recovered

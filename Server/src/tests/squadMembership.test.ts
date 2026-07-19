@@ -49,6 +49,20 @@ function squadDocument(joinPolicy = 0): SquadDTO {
   return squad;
 }
 
+test("squad failures use the exact recovered IJEAJGCCHEF numeric contract", () => {
+  assert.equal(ApiErrorCode.SquadIsFull, 3801);
+  assert.equal(ApiErrorCode.NotEnoughSquadSkill, 3803);
+  assert.equal(ApiErrorCode.SquadIsNotPublic, 3804);
+  assert.equal(ApiErrorCode.SquadNoLongerExists, 3805);
+  assert.equal(ApiErrorCode.SquadLeaveError, 4901);
+  assert.equal(ApiErrorCode.PromotePlayerError, 5501);
+  assert.equal(ApiErrorCode.PromoteToFounderError, 5701);
+  assert.equal(ApiErrorCode.DemotePlayerError, 5801);
+  assert.equal(ApiErrorCode.KickPlayerError, 5802);
+  assert.equal(ApiErrorCode.PlayerAlreadyInSquad, 13301);
+  assert.equal(ApiErrorCode.SquadJoinRequestNotExists, 13302);
+});
+
 test("open squad admission adds one member and leaves its input snapshots unchanged", () => {
   const squad = squadDocument();
   const player = playerDocument("member");
@@ -73,7 +87,7 @@ test("private squad admission requires and consumes a stored invitation", () => 
   assert.deepEqual(plan.squad.joinRequests, []);
   assert.throws(
     () => planSquadJoin(squadDocument(2), playerDocument("outsider")),
-    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.InsufficientRank,
+    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.SquadIsNotPublic,
   );
 });
 
@@ -86,11 +100,11 @@ test("manager approval validates current authority and the target request in one
   assert.deepEqual(accepted.squad.joinRequests, []);
   assert.throws(
     () => planSquadJoin(squad, playerDocument("member"), "outsider"),
-    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.NotSquadMember,
+    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.NotLeaderOfSquad,
   );
   assert.throws(
     () => planSquadJoin(squadDocument(1), playerDocument("member"), "leader"),
-    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.NotSquadMember,
+    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.SquadJoinRequestNotExists,
   );
 });
 
@@ -99,14 +113,14 @@ test("capacity and medal requirements are rechecked at the admission snapshot", 
   full.maxMembers = 1;
   assert.throws(
     () => planSquadJoin(full, playerDocument("member")),
-    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.SquadFull,
+    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.SquadIsFull,
   );
 
   const gated = squadDocument();
   gated.requiredMedals = 10;
   assert.throws(
     () => planSquadJoin(gated, playerDocument("member")),
-    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.InsufficientRank,
+    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.NotEnoughSquadSkill,
   );
 });
 
@@ -132,14 +146,14 @@ test("admission never overwrites either mirror of membership in another squad", 
   const nestedConflict = playerDocument("nested", "Other Squad", SquadRank.Member);
   assert.throws(
     () => planSquadJoin(squadDocument(), nestedConflict),
-    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.NotSquadMember,
+    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.PlayerAlreadyInSquadCantJoin,
   );
 
   const rootConflict = playerDocument("root");
   rootConflict.squadName = "Other Squad";
   assert.throws(
     () => planSquadJoin(squadDocument(), rootConflict),
-    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.NotSquadMember,
+    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.PlayerAlreadyInSquadCantJoin,
   );
 });
 
@@ -179,7 +193,7 @@ test("last member deletes the squad while a multi-member founder must transfer l
   });
   assert.throws(
     () => planSquadLeave(multi, leader, multi.name),
-    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.InsufficientRank,
+    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.SquadLeaveError,
   );
 });
 
@@ -194,7 +208,7 @@ test("leave replay repairs stale mirrors but cannot clear membership in another 
   assert.equal(planSquadLeave(null, clean, "Deleted Squad").departed, false);
   assert.throws(
     () => planSquadLeave(null, stale, "Forged Squad"),
-    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.NotSquadMember,
+    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.SquadLeaveError,
   );
 });
 
@@ -272,11 +286,11 @@ test("rank planning enforces explicit authority instead of numeric enum order", 
   );
   assert.throws(
     () => planSquadRankChange(squad, "coleader", "veteran", "promote"),
-    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.InsufficientRank,
+    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.PromotePlayerError,
   );
   assert.throws(
     () => planSquadRankChange(squad, "coleader", "leader", "demote"),
-    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.InsufficientRank,
+    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.DemotePlayerError,
   );
 });
 
@@ -314,6 +328,6 @@ test("kick planning removes only a strictly lower-ranked non-founder target", ()
   assert.equal(squad.members.length, 2);
   assert.throws(
     () => planSquadKick(squad, "leader", "leader"),
-    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.InsufficientRank,
+    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.KickPlayerError,
   );
 });

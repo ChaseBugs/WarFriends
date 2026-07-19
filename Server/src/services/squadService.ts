@@ -81,7 +81,9 @@ async function persist(squad: SquadDTO): Promise<void> {
   // Match by the immutable squad name and require an existing document. Silently upserting
   // here would allow a delayed mutation to recreate a squad after its last member left.
   const result = await squads().updateOne({ name: squad.name }, { $set: { ...squad, updatedAt: new Date() } });
-  if (result.matchedCount !== 1) throw new ApiError(ApiErrorCode.SquadNotFound, "Squad no longer exists.");
+  if (result.matchedCount !== 1) {
+    throw new ApiError(ApiErrorCode.SquadNoLongerExists, "Squad no longer exists.");
+  }
 }
 
 export interface CreateSquadOptions {
@@ -164,7 +166,7 @@ export async function createSquad(
       const founder = await players().findOne({ id: founderId }, { session });
       if (!founder) throw new ApiError(ApiErrorCode.PlayerNotFound, "Founder not found.");
       if (founder.player.squadName) {
-        throw new ApiError(ApiErrorCode.NotSquadMember, "Player already belongs to a squad.");
+        throw new ApiError(ApiErrorCode.SquadAlreadyExists, "Player already belongs to a squad.");
       }
 
       const economy = applySquadCreationEconomyState(progressionForPlayer(founder));
@@ -254,9 +256,16 @@ export function planSquadJoin(
   approvedBy?: string,
 ): SquadJoinPlan {
   if (approvedBy) {
-    requireManager(squad, approvedBy);
+    try {
+      requireManager(squad, approvedBy);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw new ApiError(ApiErrorCode.NotLeaderOfSquad, "Only a squad manager can approve requests.");
+      }
+      throw error;
+    }
     if (!(squad.joinRequests ?? []).some((request) => request.playerId === player.id)) {
-      throw new ApiError(ApiErrorCode.NotSquadMember, "Join request not found.");
+      throw new ApiError(ApiErrorCode.SquadJoinRequestNotExists, "Join request not found.");
     }
   }
 
@@ -266,21 +275,24 @@ export function planSquadJoin(
   if (conflictingSquadName) {
     // A roster entry in one squad must never overwrite a player mirror already owned by a
     // different squad. Treat that as conflicting state and require an explicit repair.
-    throw new ApiError(ApiErrorCode.NotSquadMember, "Player already belongs to another squad.");
+    throw new ApiError(
+      approvedBy ? ApiErrorCode.PlayerAlreadyInSquad : ApiErrorCode.PlayerAlreadyInSquadCantJoin,
+      "Player already belongs to another squad.",
+    );
   }
 
   if (!existingMember) {
     if (squad.members.length >= (squad.maxMembers || 15)) {
-      throw new ApiError(ApiErrorCode.SquadFull, "Squad is full.");
+      throw new ApiError(ApiErrorCode.SquadIsFull, "Squad is full.");
     }
     if (player.player.medalsBalance < (squad.requiredMedals || 0)) {
-      throw new ApiError(ApiErrorCode.InsufficientRank, "Player does not meet the squad medal requirement.");
+      throw new ApiError(ApiErrorCode.NotEnoughSquadSkill, "Player does not meet the squad medal requirement.");
     }
     // Policy zero is open. A non-open squad requires either a persisted invitation or an
     // approval actor whose authority and pending request were verified above.
     const invited = (squad.invitedPlayerIds ?? []).includes(player.id);
     if (squad.joinPolicy !== 0 && !approvedBy && !invited) {
-      throw new ApiError(ApiErrorCode.InsufficientRank, "This squad requires an invitation or approved request.");
+      throw new ApiError(ApiErrorCode.SquadIsNotPublic, "This squad requires an invitation or approved request.");
     }
   }
 
@@ -325,7 +337,7 @@ async function joinSquadTransaction(playerId: string, requestedName: string, app
       squads().findOne({ name }, { session }),
       players().findOne({ id: playerId }, { session }),
     ]);
-    if (!squad) throw new ApiError(ApiErrorCode.SquadNotFound, "Squad not found.");
+    if (!squad) throw new ApiError(ApiErrorCode.SquadNoLongerExists, "Squad not found.");
     if (!player) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
 
     const plan = planSquadJoin(squad, player, approvedBy);
@@ -385,14 +397,18 @@ export async function joinSquad(playerId: string, name: string): Promise<SquadDT
 
 export async function requestToJoin(playerId: string, name: string): Promise<SquadDTO> {
   const squad = await getByName(name);
-  if (!squad) throw new ApiError(ApiErrorCode.SquadNotFound, "Squad not found.");
+  if (!squad) throw new ApiError(ApiErrorCode.SquadNoLongerExists, "Squad not found.");
   if (squad.joinPolicy === 0) return joinSquad(playerId, name);
   const player = await findById(playerId);
   if (!player) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
-  if (player.player.squadName) throw new ApiError(ApiErrorCode.NotSquadMember, "Player already belongs to a squad.");
-  if (squad.members.length >= (squad.maxMembers || 15)) throw new ApiError(ApiErrorCode.SquadFull, "Squad is full.");
+  if (player.player.squadName) {
+    throw new ApiError(ApiErrorCode.PlayerAlreadyInSquadCantJoin, "Player already belongs to a squad.");
+  }
+  if (squad.members.length >= (squad.maxMembers || 15)) {
+    throw new ApiError(ApiErrorCode.SquadIsFull, "Squad is full.");
+  }
   if (player.player.medalsBalance < (squad.requiredMedals || 0)) {
-    throw new ApiError(ApiErrorCode.InsufficientRank, "Player does not meet the squad medal requirement.");
+    throw new ApiError(ApiErrorCode.NotEnoughSquadSkill, "Player does not meet the squad medal requirement.");
   }
   // A player has at most one pending request per squad. Repeated taps are idempotent and do
   // not grow the embedded request list or reset its original creation time.
@@ -409,8 +425,15 @@ export async function acceptJoinRequest(actorId: string, targetId: string, name:
 
 export async function declineJoinRequest(actorId: string, targetId: string, name: string): Promise<SquadDTO> {
   const squad = await getByName(name);
-  if (!squad) throw new ApiError(ApiErrorCode.SquadNotFound, "Squad not found.");
-  requireManager(squad, actorId);
+  if (!squad) throw new ApiError(ApiErrorCode.SquadNoLongerExists, "Squad not found.");
+  try {
+    requireManager(squad, actorId);
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw new ApiError(ApiErrorCode.NotLeaderOfSquad, "Only a squad manager can decline requests.");
+    }
+    throw error;
+  }
   squad.joinRequests = squad.joinRequests.filter((request) => request.playerId !== targetId);
   await persist(squad);
   return squad;
@@ -418,8 +441,15 @@ export async function declineJoinRequest(actorId: string, targetId: string, name
 
 export async function invitePlayer(actorId: string, targetId: string, name: string): Promise<SquadDTO> {
   const squad = await getByName(name);
-  if (!squad) throw new ApiError(ApiErrorCode.SquadNotFound, "Squad not found.");
-  requireManager(squad, actorId);
+  if (!squad) throw new ApiError(ApiErrorCode.SquadNoLongerExists, "Squad not found.");
+  try {
+    requireManager(squad, actorId);
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw new ApiError(ApiErrorCode.OnlyLeaderCanSendInvites, "Only a squad manager can invite players.");
+    }
+    throw error;
+  }
   if (!(await findById(targetId))) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
   squad.invitedPlayerIds ??= [];
   if (!squad.invitedPlayerIds.includes(targetId)) squad.invitedPlayerIds.push(targetId);
@@ -448,22 +478,28 @@ export function planSquadLeave(
   player: PlayerDocument,
   requestedName: string,
 ): SquadLeavePlan {
-  const mirrorName = consistentPlayerSquadName(player);
+  let mirrorName: string;
+  try {
+    mirrorName = consistentPlayerSquadName(player);
+  } catch (error) {
+    if (error instanceof ApiError) throw new ApiError(ApiErrorCode.SquadLeaveError, error.message);
+    throw error;
+  }
   const name = cleanName(requestedName) || mirrorName;
   if (mirrorName && name !== mirrorName) {
     // The old implementation cleared the real mirror when a modified client supplied any
     // nonexistent SquadId. Binding the request to current server state closes that corruption.
-    throw new ApiError(ApiErrorCode.NotSquadMember, "Leave request does not match the player's squad.");
+    throw new ApiError(ApiErrorCode.SquadLeaveError, "Leave request does not match the player's squad.");
   }
   if (squad && squad.name !== name) {
-    throw new ApiError(ApiErrorCode.SquadNotFound, "Leave request resolved to a different squad.");
+    throw new ApiError(ApiErrorCode.SquadLeaveError, "Leave request resolved to a different squad.");
   }
 
   const rosterMember = squad?.members.find((candidate) => candidate.playerId === player.id);
   if (rosterMember && squad?.founderId === player.id && squad.members.length > 1) {
     // A multi-member squad must always retain exactly one leader/founder. The explicit transfer
     // action updates both leaders together and is required before the founder may leave.
-    throw new ApiError(ApiErrorCode.InsufficientRank, "Transfer squad leadership before leaving.");
+    throw new ApiError(ApiErrorCode.SquadLeaveError, "Transfer squad leadership before leaving.");
   }
 
   const playerMirrorChanged = Boolean(
@@ -505,7 +541,13 @@ export async function leaveSquad(playerId: string, requestedName: string): Promi
   const result = await withMongoTransaction(async (session) => {
     const player = await players().findOne({ id: playerId }, { session });
     if (!player) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
-    const mirrorName = consistentPlayerSquadName(player);
+    let mirrorName: string;
+    try {
+      mirrorName = consistentPlayerSquadName(player);
+    } catch (error) {
+      if (error instanceof ApiError) throw new ApiError(ApiErrorCode.SquadLeaveError, error.message);
+      throw error;
+    }
     const name = cleanName(requestedName) || mirrorName;
     const squad = name ? await squads().findOne({ name }, { session }) : null;
     const plan = planSquadLeave(squad, player, name);
@@ -587,8 +629,18 @@ export function planSquadRankChange(
   targetId: string,
   direction: "promote" | "demote",
 ): SquadRankChangePlan {
-  const actor = requireManager(squad, actorId);
-  const target = member(squad, targetId);
+  const failureCode = direction === "promote"
+    ? ApiErrorCode.PromotePlayerError
+    : ApiErrorCode.DemotePlayerError;
+  let actor: SquadMemberDTO;
+  let target: SquadMemberDTO;
+  try {
+    actor = requireManager(squad, actorId);
+    target = member(squad, targetId);
+  } catch (error) {
+    if (error instanceof ApiError) throw new ApiError(failureCode, error.message);
+    throw error;
+  }
   let next: SquadRank | null;
   if (direction === "promote") {
     // Promotions move one step and never reach Leader. Leadership has a separate founder-only
@@ -599,20 +651,20 @@ export function planSquadRankChange(
         ? SquadRank.Coleader
         : null;
     if (next === null || squadRankAuthority(actor.rank) <= squadRankAuthority(next)) {
-      throw new ApiError(ApiErrorCode.InsufficientRank, "Member cannot be promoted by this actor.");
+      throw new ApiError(failureCode, "Member cannot be promoted by this actor.");
     }
   } else {
     // An actor may affect only a strictly lower authority. Founder identity is checked in
     // addition to rank because a damaged legacy roster could contain the wrong founder rank.
     if (targetId === squad.founderId || squadRankAuthority(actor.rank) <= squadRankAuthority(target.rank)) {
-      throw new ApiError(ApiErrorCode.InsufficientRank, "Member cannot be demoted by this actor.");
+      throw new ApiError(failureCode, "Member cannot be demoted by this actor.");
     }
     next = target.rank === SquadRank.Coleader
       ? SquadRank.Veteran
       : target.rank === SquadRank.Veteran
         ? SquadRank.Member
         : null;
-    if (next === null) throw new ApiError(ApiErrorCode.InsufficientRank, "Member cannot be demoted further.");
+    if (next === null) throw new ApiError(failureCode, "Member cannot be demoted further.");
   }
 
   return {
@@ -644,10 +696,18 @@ async function changeMemberRankTransaction(
       squads().findOne({ name }, { session }),
       players().findOne({ id: targetId }, { session }),
     ]);
-    if (!squad) throw new ApiError(ApiErrorCode.SquadNotFound, "Squad not found.");
-    if (!targetPlayer) throw new ApiError(ApiErrorCode.PlayerNotFound, "Squad member not found.");
+    const failureCode = direction === "promote"
+      ? ApiErrorCode.PromotePlayerError
+      : ApiErrorCode.DemotePlayerError;
+    if (!squad) throw new ApiError(failureCode, "Squad not found.");
+    if (!targetPlayer) throw new ApiError(failureCode, "Squad member not found.");
     const plan = planSquadRankChange(squad, actorId, targetId, direction);
-    requireCompatiblePlayerSquad(targetPlayer, squad.name);
+    try {
+      requireCompatiblePlayerSquad(targetPlayer, squad.name);
+    } catch (error) {
+      if (error instanceof ApiError) throw new ApiError(failureCode, error.message);
+      throw error;
+    }
     const now = new Date();
 
     const squadUpdate = await squads().updateOne(
@@ -698,10 +758,15 @@ export interface LeadershipTransferPlan {
 /** Reproduce the stock leadership callback's Leader -> Veteran transition. */
 export function planLeadershipTransfer(squad: SquadDTO, actorId: string, targetId: string): LeadershipTransferPlan {
   if (squad.founderId !== actorId || actorId === targetId) {
-    throw new ApiError(ApiErrorCode.InsufficientRank, "Only the squad leader can transfer leadership.");
+    throw new ApiError(ApiErrorCode.PromoteToFounderError, "Only the squad leader can transfer leadership.");
   }
-  member(squad, actorId);
-  member(squad, targetId);
+  try {
+    member(squad, actorId);
+    member(squad, targetId);
+  } catch (error) {
+    if (error instanceof ApiError) throw new ApiError(ApiErrorCode.PromoteToFounderError, error.message);
+    throw error;
+  }
   return {
     squad: {
       ...squad,
@@ -724,11 +789,18 @@ export async function transferLeadership(actorId: string, targetId: string, requ
       players().findOne({ id: actorId }, { session }),
       players().findOne({ id: targetId }, { session }),
     ]);
-    if (!squad) throw new ApiError(ApiErrorCode.SquadNotFound, "Squad not found.");
-    if (!actorPlayer || !targetPlayer) throw new ApiError(ApiErrorCode.PlayerNotFound, "Squad member not found.");
+    if (!squad) throw new ApiError(ApiErrorCode.PromoteToFounderError, "Squad not found.");
+    if (!actorPlayer || !targetPlayer) {
+      throw new ApiError(ApiErrorCode.PromoteToFounderError, "Squad member not found.");
+    }
     const plan = planLeadershipTransfer(squad, actorId, targetId);
-    requireCompatiblePlayerSquad(actorPlayer, squad.name);
-    requireCompatiblePlayerSquad(targetPlayer, squad.name);
+    try {
+      requireCompatiblePlayerSquad(actorPlayer, squad.name);
+      requireCompatiblePlayerSquad(targetPlayer, squad.name);
+    } catch (error) {
+      if (error instanceof ApiError) throw new ApiError(ApiErrorCode.PromoteToFounderError, error.message);
+      throw error;
+    }
     const now = new Date();
 
     const squadUpdate = await squads().updateOne(
@@ -779,12 +851,19 @@ export interface SquadKickPlan {
 }
 
 export function planSquadKick(squad: SquadDTO, actorId: string, targetId: string): SquadKickPlan {
-  const actor = requireManager(squad, actorId);
-  const target = member(squad, targetId);
+  let actor: SquadMemberDTO;
+  let target: SquadMemberDTO;
+  try {
+    actor = requireManager(squad, actorId);
+    target = member(squad, targetId);
+  } catch (error) {
+    if (error instanceof ApiError) throw new ApiError(ApiErrorCode.KickPlayerError, error.message);
+    throw error;
+  }
   // Self-removal uses LeaveSquad, which enforces the founder rule. Kick is reserved for
   // strictly lower-ranked targets and can never remove the founder.
   if (targetId === actorId || targetId === squad.founderId || squadRankAuthority(actor.rank) <= squadRankAuthority(target.rank)) {
-    throw new ApiError(ApiErrorCode.InsufficientRank, "Member cannot be removed by this actor.");
+    throw new ApiError(ApiErrorCode.KickPlayerError, "Member cannot be removed by this actor.");
   }
   return {
     squad: {
@@ -801,10 +880,15 @@ export async function kickMember(actorId: string, targetId: string, requestedNam
       squads().findOne({ name }, { session }),
       players().findOne({ id: targetId }, { session }),
     ]);
-    if (!squad) throw new ApiError(ApiErrorCode.SquadNotFound, "Squad not found.");
-    if (!targetPlayer) throw new ApiError(ApiErrorCode.PlayerNotFound, "Squad member not found.");
+    if (!squad) throw new ApiError(ApiErrorCode.KickPlayerError, "Squad not found.");
+    if (!targetPlayer) throw new ApiError(ApiErrorCode.KickPlayerError, "Squad member not found.");
     const plan = planSquadKick(squad, actorId, targetId);
-    requireCompatiblePlayerSquad(targetPlayer, squad.name);
+    try {
+      requireCompatiblePlayerSquad(targetPlayer, squad.name);
+    } catch (error) {
+      if (error instanceof ApiError) throw new ApiError(ApiErrorCode.KickPlayerError, error.message);
+      throw error;
+    }
     const reclaim = reclaimDepositedCardsForDepartureState(
       progressionForPlayer(targetPlayer),
       targetPlayer.player.depositedCardsDic ?? {},
@@ -857,8 +941,15 @@ export interface UpdateSquadOptions {
 
 export async function updateSquad(actorId: string, name: string, values: UpdateSquadOptions): Promise<SquadDTO> {
   const squad = await getByName(name);
-  if (!squad) throw new ApiError(ApiErrorCode.SquadNotFound, "Squad not found.");
-  requireManager(squad, actorId);
+  if (!squad) throw new ApiError(ApiErrorCode.SquadNoLongerExists, "Squad not found.");
+  try {
+    requireManager(squad, actorId);
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw new ApiError(ApiErrorCode.NotLeaderOfSquad, "Only a squad manager can update squad settings.");
+    }
+    throw error;
+  }
   // Apply only fields explicitly present in the request. This patch behavior prevents an
   // emblem-only update from resetting the description, join policy, or medal requirement.
   if (values.description !== undefined) squad.description = values.description.trim().slice(0, 250);

@@ -19,7 +19,7 @@ import {
   transferLeadership,
   updateSquad,
 } from "../services/squadService";
-import { ApiError } from "../apiErrors";
+import { ApiError, ApiErrorCode } from "../apiErrors";
 import { authed, type HandlerEntry } from "./types";
 import { buildDatabaseSquad } from "../services/squadWireService";
 import { buildDatabasePlayer, progressionForPlayer } from "../services/playerStateService";
@@ -143,12 +143,31 @@ export const squadHandlers: Record<number, HandlerEntry> = {
 
   [DbAction.AcceptSquadJoinRequest]: authed(async ({ player, req }) => {
     const name = squadName(req) || player!.player.squadName;
-    const squad = await acceptJoinRequest(player!.id, targetId(req), name);
-    const joined = await findById(targetId(req));
-    return ok(DbAction.AcceptSquadJoinRequest, {
-      Squad: buildDatabaseSquad(squad),
-      ...(joined ? { joinedPlayer: buildDatabasePlayer(joined) } : {}),
-    });
+    const target = targetId(req);
+    try {
+      const squad = await acceptJoinRequest(player!.id, target, name);
+      const joined = await findById(target);
+      return ok(DbAction.AcceptSquadJoinRequest, {
+        Squad: buildDatabaseSquad(squad),
+        ...(joined ? { joinedPlayer: buildDatabasePlayer(joined) } : {}),
+      });
+    } catch (error) {
+      if (!(error instanceof ApiError)
+        || (error.code !== ApiErrorCode.PlayerAlreadyInSquad
+          && error.code !== ApiErrorCode.SquadJoinRequestNotExists)) throw error;
+      const targetPlayer = await findById(target);
+      return {
+        DbAction: DbAction.AcceptSquadJoinRequest,
+        Code: error.code,
+        Message: error.message,
+        // LEDNENKKDJM removes this stale row from AwaitingSquadMembersManager. Error 13301
+        // additionally displays the target's current squad name in its conflict dialog.
+        PlayerId: target,
+        ...(error.code === ApiErrorCode.PlayerAlreadyInSquad
+          ? { Name: targetPlayer?.player.squadName ?? "" }
+          : {}),
+      };
+    }
   }),
 
   [DbAction.DeclineSquadJoinRequest]: authed(async ({ player, req }) => {
@@ -173,12 +192,25 @@ export const squadHandlers: Record<number, HandlerEntry> = {
   }),
 
   [DbAction.PromotePlayer]: authed(async ({ player, req }) => {
-    const squad = await promoteMember(player!.id, targetId(req), squadName(req) || player!.player.squadName);
-    const promoted = await findById(targetId(req));
-    return ok(DbAction.PromotePlayer, {
-      Squad: buildDatabaseSquad(squad),
-      ...(promoted ? { PromotedPlayer: buildDatabasePlayer(promoted) } : {}),
-    });
+    const name = squadName(req) || player!.player.squadName;
+    try {
+      const squad = await promoteMember(player!.id, targetId(req), name);
+      const promoted = await findById(targetId(req));
+      return ok(DbAction.PromotePlayer, {
+        Squad: buildDatabaseSquad(squad),
+        ...(promoted ? { PromotedPlayer: buildDatabasePlayer(promoted) } : {}),
+      });
+    } catch (error) {
+      if (!(error instanceof ApiError) || error.code !== ApiErrorCode.PromotePlayerError) throw error;
+      const members = (await getSquadMemberPlayers(name)).map(buildDatabasePlayer);
+      return {
+        DbAction: DbAction.PromotePlayer,
+        Code: error.code,
+        Message: error.message,
+        // The stock 5501 parser calls LoadSquadMembers to undo an optimistic rank display.
+        SquadMembers: members,
+      };
+    }
   }),
 
   [DbAction.PromotePlayerToFounder]: authed(async ({ player, req }) => {
@@ -191,12 +223,24 @@ export const squadHandlers: Record<number, HandlerEntry> = {
   }),
 
   [DbAction.DemotePlayer]: authed(async ({ player, req }) => {
-    const squad = await demoteMember(player!.id, targetId(req), squadName(req) || player!.player.squadName);
-    const demoted = await findById(targetId(req));
-    return ok(DbAction.DemotePlayer, {
-      Squad: buildDatabaseSquad(squad),
-      ...(demoted ? { DemotedPlayer: buildDatabasePlayer(demoted) } : {}),
-    });
+    const name = squadName(req) || player!.player.squadName;
+    try {
+      const squad = await demoteMember(player!.id, targetId(req), name);
+      const demoted = await findById(targetId(req));
+      return ok(DbAction.DemotePlayer, {
+        Squad: buildDatabaseSquad(squad),
+        ...(demoted ? { DemotedPlayer: buildDatabasePlayer(demoted) } : {}),
+      });
+    } catch (error) {
+      if (!(error instanceof ApiError) || error.code !== ApiErrorCode.DemotePlayerError) throw error;
+      const members = (await getSquadMemberPlayers(name)).map(buildDatabasePlayer);
+      return {
+        DbAction: DbAction.DemotePlayer,
+        Code: error.code,
+        Message: error.message,
+        SquadMembers: members,
+      };
+    }
   }),
 
   [DbAction.KickPlayer]: authed(async ({ player, req }) => {
