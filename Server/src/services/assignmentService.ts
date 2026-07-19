@@ -33,6 +33,14 @@ import {
   startWeaponUpgradeState,
   weaponRecoveryFields,
 } from "./itemInventoryService";
+import {
+  activateUnitState,
+  parseUnitActivateData,
+  parseUnitPurchaseData,
+  purchaseUnitState,
+  requestedUnitName,
+  unitRecoveryFields,
+} from "./unitInventoryService";
 
 /**
  * Daily assignments and the recovered RequestBuffer transaction boundary.
@@ -375,11 +383,11 @@ function boundedReplayCache(
  * after a lost response return the original result without crediting Gold again.
  *
  * SaveLastSeenSquadChatTimeStamp, ClaimStarterAssignment, achievement actions 218-220, and
- * the recovered weapon purchase/equip/upgrade actions are also supported because their managers
- * append them to this same transport. Client progress, price, reward, ownership, and army-
- * power fields are validation assertions, not authority. Other buffered economy actions
- * remain explicit per-item failures until their resource rows and inventory lifecycles are
- * recovered to the same standard.
+ * the recovered weapon lifecycle and zero-delivery unit purchase actions are also supported
+ * because their managers append them to this same transport. Client progress, price, reward,
+ * ownership, and army-power fields are validation assertions, not authority. Other buffered
+ * economy actions remain explicit per-item failures until their resource rows and inventory
+ * lifecycles are recovered to the same standard.
  */
 export function processAssignmentBufferState(
   state: PlayerProgressionState,
@@ -476,6 +484,38 @@ export function processAssignmentBufferState(
           Result: code,
           // JIMIKHFDEFC consumes these fields to undo the client's optimistic local change.
           ...weaponRecoveryFields(working, requestedWeaponName(request.data)),
+        });
+      }
+      continue;
+    }
+
+    if (request.action === DbAction.BuyUnit || request.action === DbAction.ActivateUnit) {
+      try {
+        if (request.action === DbAction.BuyUnit) {
+          // ArmyScreen calls UpgradeSlots.Buy() before transport, so a failure must later
+          // return the authoritative unit and wallet for rollback. The server independently
+          // verifies the recovered roster row, zero-based level gate, exact price, display
+          // unlock level, and unsupported discount before granting SavedArmySlots ownership.
+          working = purchaseUnitState(
+            working,
+            playerLevel,
+            parseUnitPurchaseData(request.data),
+          ).state;
+        } else {
+          // All supported 4.9.5 purchase rows have zero delivery time. Unity therefore queues
+          // ActivateUnit immediately after BuyUnit; this validates that the earlier subrequest
+          // really created ownership but does not debit or grant a second time.
+          working = activateUnitState(working, parseUnitActivateData(request.data)).state;
+        }
+        responses.push({ ActionId: request.action, Result: SUCCESS });
+      } catch (error) {
+        const code = error instanceof ApiError ? error.code : ApiErrorCode.InternalServerError;
+        responses.push({
+          ActionId: request.action,
+          Result: code,
+          // The client already changed UpgradeSlots locally; these exact fields restore the
+          // last committed state while allowing later subrequests in the batch to continue.
+          ...unitRecoveryFields(working, requestedUnitName(request.data)),
         });
       }
       continue;

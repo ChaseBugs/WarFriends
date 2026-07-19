@@ -121,6 +121,18 @@ Working end-to-end (verified live):
   paths increment `boughtIndex` once, clear delivery atomically, return Unity rollback fields
   on failure, and inherit `BufferId` replay protection. Run `npm run verify:weapon-upgrades`
   to compare the generated price/time catalog with MainScene.
+- **Unit purchase foundation**: `../Tools/Extract-UnitCatalog.ps1` joins the recovered
+  `LevelManager.behaviours` and `additionalBehaviours` arrays through each behaviour's
+  `UpgradeSlots` GameObject to the `Google2u.ArmyUpgrades` master row. The checked-in artifact
+  records 24 player-roster units, three non-purchasable turret helpers, and 18 newer table rows
+  that have no LevelManager object in this client. Buffered `BuyUnit`/`ActivateUnit` now supports
+  the 23 non-tutorial player rows with exact XOR-decoded Gold/WarBucks prices, zero-based level
+  gates, display unlock checks, initial tier state, atomic wallet/ownership writes, Unity rollback
+  fields, and `BufferId` replay protection. All supported rows have `DELIVERTIME=0`, so BuyUnit
+  grants ownership and the stock client's immediate ActivateUnit is a validated idempotent
+  acknowledgement rather than a fabricated timer. The tutorial Assaulter, helper rows, unresolved
+  rows, discounts, upgrades, promotions, and equipped-army mutation remain fail-closed. Run
+  `npm run verify:unit-catalog` to compare the artifact with MainScene and recovered assemblies.
 - **Daily rewards**: `CheckDailyReward` and `ClaimDailyReward` provide the recovered monthly
   `dailyRewardData` calendar contract, one UTC-day unlock, ordered atomic Gold grants, and
   replay-safe claim cursors. Reward amounts are conservative environment-tunable defaults
@@ -166,11 +178,14 @@ allowlist of analytics/impression actions is safely ignored.
 - **Squad extensions** — card pool and squad events/wars are not implemented. Chat unread
   state is persistent, but actual channel delivery still requires Photon Chat repointing or
   a compatible replacement transport.
-- **Item economy expansion** — recover the 4.9.5 unit rows and lifecycle, then add decals,
-  cards, packs, and VIP. All 84 resolvable shop weapons support exact Gold or WarBucks
-  purchase/equip plus server-owned upgrade delivery/activation; the nine null-reference Pulse
-  Rifle rows, unknown items, and discount-bearing requests remain rejected instead of
-  receiving guessed prices or unusable inventory records.
+- **Item economy expansion** — recover unit normal/special upgrade, promotion, deployment,
+  equipped-category/cap, and army-power rules, then add decals, cards, packs, and VIP. Normal
+  purchase is authoritative for 23 non-tutorial roster units; the tutorial unit, three helper
+  rows, and 18 ArmyUpgrades rows without LevelManager objects remain closed. All 84 resolvable
+  shop weapons support exact Gold or WarBucks purchase/equip plus server-owned upgrade
+  delivery/activation; the nine null-reference Pulse Rifle rows, unknown items, and
+  discount-bearing requests remain rejected instead of receiving guessed prices or unusable
+  inventory records.
 - **Arena fidelity / leagues** — recover production arena prices, rules, opponent weighting,
   lootbox/crown inventory payloads, and authoritative combat evidence; implement league
   promotion/relegation on `FinishPlayerLeague`. Arena debug mutations remain rejected.

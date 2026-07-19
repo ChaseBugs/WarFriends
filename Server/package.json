@@ -12,6 +12,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "verify:weapon-catalog": "powershell -NoProfile -ExecutionPolicy Bypass -File ../Tools/Extract-WeaponCatalog.ps1 -Check",
     "verify:weapon-upgrades": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/Extract-WeaponUpgradeCatalog.ps1 -Check",
+    "verify:unit-catalog": "powershell -NoProfile -ExecutionPolicy Bypass -File ../Tools/Extract-UnitCatalog.ps1 -Check",
     "test": "npm run build && node --test \"dist/tests/*.test.js\""
   },
   "dependencies": {

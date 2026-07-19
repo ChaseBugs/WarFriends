@@ -153,6 +153,27 @@ export interface SavedWeaponState {
   specialFeature: number;
 }
 
+/**
+ * LevelManager.SavedArmySlots from the recovered client.
+ *
+ * These names intentionally follow the Unity/Newtonsoft wire contract rather than normal
+ * TypeScript naming conventions. In particular, `tier` is the unit's starting/active tier,
+ * while `boughtIndex` is its normal-upgrade cursor; treating those fields as interchangeable
+ * would make a newly purchased high-tier unit appear to have completed the wrong upgrades.
+ */
+export interface SavedArmyState {
+  bought: boolean;
+  boughtIndex: number;
+  specialSlot: number;
+  showed: boolean;
+  tier: number;
+  borrowed: boolean;
+  wasEquipped: boolean;
+  equipped: boolean;
+  eliteSlot: number;
+  parts: number;
+}
+
 /** LevelManager.ItemDelivery, retained even for zero-duration premium purchases. */
 export interface ItemDeliveryState {
   activationNeeded: boolean;
@@ -166,12 +187,12 @@ export interface ItemDeliveryState {
 /**
  * Public subset of LevelManager.LevelManagerData currently owned by the server.
  *
- * savedArmies and unitDelivery remain present in the exact wire shape so Unity can load the
- * object without schema branching. Unit mutations stay disabled until their 4.9.5 resource
- * rows and equipped-unit power rules are recovered with the same authority as weapons.
+ * Unit and weapon collections remain in the exact wire shape Unity loads. Unit ownership is
+ * now server-owned for the recovered zero-delivery purchase path; promotion, upgrade, and
+ * equipped-unit power mutations remain disabled until their additional rules are recovered.
  */
 export interface LevelManagerDataState {
-  savedArmies: Record<string, Record<string, unknown>>;
+  savedArmies: Record<string, SavedArmyState>;
   savedWeapons: Record<string, SavedWeaponState>;
   unitDelivery: ItemDeliveryState;
   weaponDelivery: ItemDeliveryState;
