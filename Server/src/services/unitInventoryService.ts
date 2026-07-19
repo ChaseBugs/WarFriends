@@ -32,6 +32,23 @@ export const UNIT_NOT_ENOUGH_LEVEL_FOR_PROMOTE = 11405;
 export const UNIT_ELITE_NOT_ENOUGH_PARTS = 20902;
 /** IJEAJGCCHEF.IncorrectValuesOnClient, which forces a relog after an elite mismatch. */
 export const UNIT_ELITE_INCORRECT_VALUES = 20903;
+/** IJEAJGCCHEF.NotEnoughScraps, handled by ConvertScrapsToParts. */
+export const UNIT_ELITE_NOT_ENOUGH_SCRAPS = 20701;
+/** IJEAJGCCHEF.EliteSlotLocked, handled by ConvertPartsToScraps. */
+export const UNIT_ELITE_SLOT_LOCKED = 20801;
+/** IJEAJGCCHEF.IncorrectPartsAmount, handled by ConvertPartsToScraps. */
+export const UNIT_ELITE_INCORRECT_PARTS_AMOUNT = 20802;
+
+/**
+ * Exact 4.9.5 Constants rows used by UpgradeSlotElite and ConvertToScrapsDialog.
+ *
+ * The MainScene stores CodeStage ObscuredFloat values as a little-endian encrypted integer.
+ * XORing `PartToScrapsSell` (`e785a340`) and `PartToScrapsUpgrade` (`e785c341`) with key
+ * 230887 yields IEEE-754 values 5 and 24. They are deliberately server constants: accepting
+ * either conversion amount from the request would let a modified APK mint Scraps or parts.
+ */
+export const UNIT_PART_TO_SCRAPS_SELL_RATE = 5;
+export const UNIT_SCRAPS_TO_PART_UPGRADE_RATE = 24;
 
 /**
  * Authoritative unit purchase logic recovered from the 4.9.5 MainScene.
@@ -216,6 +233,19 @@ export interface UnitEliteUpgradePayload {
   spentParts: number;
 }
 
+export interface UnitScrapsToPartsPayload {
+  /** Raw Google2u sheet name sent as RequestBuffer.data by action 207. */
+  name: string;
+}
+
+export interface UnitPartsToScrapsPayload {
+  name: string;
+  /** The stock dialog always converts the complete current balance. */
+  partsToConvert: number;
+  /** Client echo checked against partsToConvert * the recovered sell rate. */
+  scraps: number;
+}
+
 export interface UnitEquipDetailPayload {
   wasEquipped: boolean;
   equipped: boolean;
@@ -369,6 +399,37 @@ export function parseUnitEliteUpgradeData(value: string): UnitEliteUpgradePayloa
       // IncorrectValuesOnClient is its source-defined malformed/stale-payload result and
       // deliberately forces a full relog so Unity discards every optimistic elite mutation.
       throw new ApiError(UNIT_ELITE_INCORRECT_VALUES, error.message);
+    }
+    throw error;
+  }
+}
+
+/** Decode action 207, whose data is the raw unit sheet name rather than JSON. */
+export function parseUnitScrapsToPartsData(value: string): UnitScrapsToPartsPayload {
+  try {
+    return { name: unitName(value) };
+  } catch (error) {
+    if (error instanceof ApiError) {
+      // Action 207 exposes only NotEnoughScraps in the stock response parser. Returning that
+      // source code makes the client relog and restore its optimistic wallet/parts mutation.
+      throw new ApiError(UNIT_ELITE_NOT_ENOUGH_SCRAPS, error.message);
+    }
+    throw error;
+  }
+}
+
+/** Decode the exact dictionary queued by ConvertToScrapsDialog for action 208. */
+export function parseUnitPartsToScrapsData(value: string): UnitPartsToScrapsPayload {
+  try {
+    const data = parseObjectJson(value);
+    return {
+      name: unitName(data.LevelName),
+      partsToConvert: integer(data.PartsToConvert, "PartsToConvert"),
+      scraps: integer(data.Scraps, "Scraps"),
+    };
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw new ApiError(UNIT_ELITE_INCORRECT_PARTS_AMOUNT, error.message);
     }
     throw error;
   }
@@ -894,6 +955,111 @@ export function upgradeUnitEliteState(
     ...state,
     revision: state.revision + 1,
     warBucks: state.warBucks - level.warBucks,
+    itemInventory,
+  };
+  return { state: next, itemInventory, unit, definition };
+}
+
+/**
+ * Fill the current Elite level's missing unit parts by spending server-owned Scraps.
+ *
+ * The stock client sends only the unit name, then immediately spends Scraps and sets its local
+ * part count to `upgradePriceParts`. The server therefore derives the target from the current
+ * elite cursor and the generated 4.9.5 row. It never trusts a client-selected quantity. The
+ * first Elite level may be filled before it is bought, matching the ArmyLeftBuffDialog button;
+ * a permanently owned, non-borrowed unit and a real Elite table are still required.
+ */
+export function convertScrapsToUnitPartsState(
+  state: PlayerProgressionState,
+  payload: UnitScrapsToPartsPayload,
+): UnitInventoryMutationResult {
+  let context: ReturnType<typeof unitUpgradeContext>;
+  try {
+    context = unitUpgradeContext(state, payload.name);
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw new ApiError(UNIT_ELITE_NOT_ENOUGH_SCRAPS, error.message);
+    }
+    throw error;
+  }
+  const { definition, upgrades, itemInventory, unit } = context;
+  const level = upgrades.eliteLevels[unit.eliteSlot];
+  if (
+    definition.startingElite <= 0
+    || !level
+    || unit.eliteSlot < 0
+    || unit.eliteSlot >= upgrades.eliteLevels.length - 1
+    || level.sourceIndex !== definition.startingElite + unit.eliteSlot
+  ) {
+    throw new ApiError(UNIT_ELITE_NOT_ENOUGH_SCRAPS, "The current Elite part target is unavailable.");
+  }
+
+  const missingParts = level.parts - unit.parts;
+  const scrapsToSpend = missingParts * UNIT_SCRAPS_TO_PART_UPGRADE_RATE;
+  if (
+    missingParts <= 0
+    || !Number.isSafeInteger(scrapsToSpend)
+    || scrapsToSpend <= 0
+    || state.scraps < scrapsToSpend
+  ) {
+    throw new ApiError(UNIT_ELITE_NOT_ENOUGH_SCRAPS, "Not enough Scraps for the current Elite part target.");
+  }
+
+  unit.parts = level.parts;
+  const next: PlayerProgressionState = {
+    ...state,
+    revision: state.revision + 1,
+    scraps: state.scraps - scrapsToSpend,
+    itemInventory,
+  };
+  return { state: next, itemInventory, unit, definition };
+}
+
+/**
+ * Sell every stored part for one already-bought Elite slot at the recovered 5:1 rate.
+ *
+ * ConvertToScrapsDialog optimistically clears the unit's complete part balance and credits
+ * Scraps before transport. Both echoed values must therefore equal the last committed unit
+ * state exactly. Partial sales, zero-value calls, stale dialogs, and fabricated rewards use
+ * the client's dedicated IncorrectPartsAmount response and cause a full player-data reload.
+ */
+export function convertUnitPartsToScrapsState(
+  state: PlayerProgressionState,
+  payload: UnitPartsToScrapsPayload,
+): UnitInventoryMutationResult {
+  let context: ReturnType<typeof unitUpgradeContext>;
+  try {
+    context = unitUpgradeContext(state, payload.name);
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw new ApiError(UNIT_ELITE_SLOT_LOCKED, error.message);
+    }
+    throw error;
+  }
+  const { definition, upgrades, itemInventory, unit } = context;
+  if (definition.startingElite <= 0 || upgrades.eliteLevels.length < 2 || unit.eliteSlot <= 0) {
+    // FPPPLPHDBMO exposes the sell button only after UpgradeSlotElite.isBought is true.
+    throw new ApiError(UNIT_ELITE_SLOT_LOCKED, "The unit's Elite slot has not been bought.");
+  }
+
+  const authoritativeReward = unit.parts * UNIT_PART_TO_SCRAPS_SELL_RATE;
+  if (
+    unit.parts <= 0
+    || payload.partsToConvert !== unit.parts
+    || payload.scraps !== authoritativeReward
+    || !Number.isSafeInteger(authoritativeReward)
+  ) {
+    throw new ApiError(
+      UNIT_ELITE_INCORRECT_PARTS_AMOUNT,
+      "Converted parts or Scraps do not match the server-owned unit state.",
+    );
+  }
+
+  unit.parts = 0;
+  const next: PlayerProgressionState = {
+    ...state,
+    revision: state.revision + 1,
+    scraps: state.scraps + authoritativeReward,
     itemInventory,
   };
   return { state: next, itemInventory, unit, definition };

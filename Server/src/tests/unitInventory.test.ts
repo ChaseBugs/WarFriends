@@ -21,13 +21,17 @@ import { createInitialProgression } from "../services/playerStateService";
 import {
   activateUnitState,
   activateUnitUpgradeState,
+  convertScrapsToUnitPartsState,
+  convertUnitPartsToScrapsState,
   equippedUnitPower,
   instantUnitUpgradeState,
   parseUnitActivateData,
   parseUnitEquipData,
   parseUnitEliteUpgradeData,
+  parseUnitPartsToScrapsData,
   parseUnitPromoteData,
   parseUnitPurchaseData,
+  parseUnitScrapsToPartsData,
   parseUnitUpgradeActivateData,
   parseUnitUpgradeInstantData,
   parseUnitUpgradePurchaseData,
@@ -37,8 +41,13 @@ import {
   UNIT_CANT_EQUIP,
   UNIT_CATALOG,
   UNIT_ELITE_INCORRECT_VALUES,
+  UNIT_ELITE_INCORRECT_PARTS_AMOUNT,
   UNIT_ELITE_NOT_ENOUGH_PARTS,
+  UNIT_ELITE_NOT_ENOUGH_SCRAPS,
+  UNIT_ELITE_SLOT_LOCKED,
   UNIT_NOT_ENOUGH_LEVEL_FOR_PROMOTE,
+  UNIT_PART_TO_SCRAPS_SELL_RATE,
+  UNIT_SCRAPS_TO_PART_UPGRADE_RATE,
   unitArmyPower,
   upgradeUnitEliteState,
   updateEquippedUnitsState,
@@ -134,6 +143,14 @@ function eliteUpgradeData(
     SpentParts: level?.parts ?? 0,
     ...overrides,
   });
+}
+
+function partsToScrapsData(
+  name = SHOTGUNNER,
+  partsToConvert = 10,
+  scraps = partsToConvert * UNIT_PART_TO_SCRAPS_SELL_RATE,
+): string {
+  return JSON.stringify({ LevelName: name, PartsToConvert: partsToConvert, Scraps: scraps });
 }
 
 function equippedData(
@@ -627,6 +644,110 @@ test("buffered elite upgrade is exactly-once and malformed payloads use the clie
   assert.equal(failure.Result, UNIT_ELITE_INCORRECT_VALUES);
   assert.equal(JSON.parse(String(failure.Unit)).eliteSlot, 0);
   assert.equal(JSON.parse(String(failure.Unit)).parts, 50);
+});
+
+test("Scraps-to-parts conversion derives the full Elite target and recovered 24:1 price", () => {
+  assert.equal(UNIT_SCRAPS_TO_PART_UPGRADE_RATE, 24);
+  assert.equal(UNIT_PART_TO_SCRAPS_SELL_RATE, 5);
+  const owned = purchaseUnitState(createInitialProgression(NOW), 0, parseUnitPurchaseData(buyData()));
+  owned.unit.parts = 20;
+  const funded = { ...owned.state, scraps: 1_000 };
+
+  const converted = convertScrapsToUnitPartsState(
+    funded,
+    parseUnitScrapsToPartsData(SHOTGUNNER),
+  );
+  assert.equal(converted.unit.parts, 50);
+  assert.equal(converted.state.scraps, 280);
+
+  assert.throws(
+    () => convertScrapsToUnitPartsState(
+      { ...owned.state, scraps: 719 },
+      parseUnitScrapsToPartsData(SHOTGUNNER),
+    ),
+    (error: unknown) => (error as { code?: number }).code === UNIT_ELITE_NOT_ENOUGH_SCRAPS,
+  );
+});
+
+test("parts-to-Scraps conversion requires a bought Elite slot and exact full-balance echoes", () => {
+  const owned = purchaseUnitState(createInitialProgression(NOW), 0, parseUnitPurchaseData(buyData()));
+  owned.unit.parts = 50;
+  const elite = upgradeUnitEliteState(owned.state, parseUnitEliteUpgradeData(eliteUpgradeData()));
+  elite.unit.parts = 10;
+
+  const converted = convertUnitPartsToScrapsState(
+    elite.state,
+    parseUnitPartsToScrapsData(partsToScrapsData()),
+  );
+  assert.equal(converted.unit.parts, 0);
+  assert.equal(converted.state.scraps, 50);
+
+  owned.unit.parts = 10;
+  assert.throws(
+    () => convertUnitPartsToScrapsState(
+      owned.state,
+      parseUnitPartsToScrapsData(partsToScrapsData()),
+    ),
+    (error: unknown) => (error as { code?: number }).code === UNIT_ELITE_SLOT_LOCKED,
+  );
+  assert.throws(
+    () => convertUnitPartsToScrapsState(
+      elite.state,
+      parseUnitPartsToScrapsData(partsToScrapsData(SHOTGUNNER, 9, 45)),
+    ),
+    (error: unknown) => (error as { code?: number }).code === UNIT_ELITE_INCORRECT_PARTS_AMOUNT,
+  );
+});
+
+test("buffered Elite-part conversions are atomic, replay-safe, and return stock error codes", () => {
+  const owned = purchaseUnitState(createInitialProgression(NOW), 0, parseUnitPurchaseData(buyData()));
+  const funded = { ...owned.state, scraps: 1_200 };
+  const fillRequest = [{ action: DbAction.ConvertScrapsToParts, data: SHOTGUNNER }];
+  const filled = processAssignmentBufferState(funded, NOW, "elite-fill-1", fillRequest, 0);
+  assert.deepEqual(JSON.parse(filled.requestsResults), [
+    { ActionId: DbAction.ConvertScrapsToParts, Result: 1 },
+  ]);
+  assert.equal(filled.state.scraps, 0);
+  assert.equal(filled.state.itemInventory?.levelManagerData.savedArmies[SHOTGUNNER]?.parts, 50);
+
+  const replay = processAssignmentBufferState(filled.state, NOW + 1, "elite-fill-1", fillRequest, 0);
+  assert.equal(replay.replayed, true);
+  assert.equal(replay.requestsResults, filled.requestsResults);
+  assert.equal(replay.state.scraps, 0);
+
+  const elite = processAssignmentBufferState(
+    filled.state,
+    NOW + 2,
+    "elite-buy-after-fill",
+    [{ action: DbAction.UpgradeEliteSlot, data: eliteUpgradeData() }],
+    0,
+  );
+  const withParts = elite.state.itemInventory!.levelManagerData.savedArmies[SHOTGUNNER]!;
+  withParts.parts = 10;
+  const sold = processAssignmentBufferState(
+    elite.state,
+    NOW + 3,
+    "elite-sell-1",
+    [{ action: DbAction.ConvertPartsToScraps, data: partsToScrapsData() }],
+    0,
+  );
+  assert.deepEqual(JSON.parse(sold.requestsResults), [
+    { ActionId: DbAction.ConvertPartsToScraps, Result: 1 },
+  ]);
+  assert.equal(sold.state.scraps, 50);
+  assert.equal(sold.state.itemInventory?.levelManagerData.savedArmies[SHOTGUNNER]?.parts, 0);
+
+  const stale = processAssignmentBufferState(
+    elite.state,
+    NOW + 4,
+    "elite-sell-stale",
+    [{ action: DbAction.ConvertPartsToScraps, data: partsToScrapsData(SHOTGUNNER, 9, 45) }],
+    0,
+  );
+  assert.deepEqual(JSON.parse(stale.requestsResults), [
+    { ActionId: DbAction.ConvertPartsToScraps, Result: UNIT_ELITE_INCORRECT_PARTS_AMOUNT },
+  ]);
+  assert.equal(stale.state.itemInventory?.levelManagerData.savedArmies[SHOTGUNNER]?.parts, 10);
 });
 
 test("unit ArmyPower follows normal, promoted special, and bought elite rows", () => {

@@ -73,6 +73,39 @@ The 216 Elite rows use a separate relative cursor. Elite upgrades are immediate 
 unit-specific parts plus, on later levels, WarBucks. The historical source column named
 `NextUpgradePriceGold` is interpreted as parts because that is how the recovered client reads it.
 
+## Elite-part conversions
+
+The stock Army screen supports both directions between the global Scraps wallet and a unit's
+private Elite parts. These operations use the same replay-safe `SendRequestBuffer` transaction as
+unit purchases and upgrades.
+
+`ConvertScrapsToParts` (action 207) sends only the raw Google2u unit sheet name. The server obtains
+the current Elite cursor, selects that cursor's `NextUpgradePriceGold` part target, subtracts the
+unit's existing parts, and charges 24 Scraps for each missing part. It then fills exactly that
+target. The client cannot choose the number of parts or the price. This conversion is available
+before the first Elite level is bought, which matches the button state in `ArmyLeftBuffDialog`.
+
+`ConvertPartsToScraps` (action 208) sends `LevelName`, `PartsToConvert`, and `Scraps`. The stock
+dialog always sells the complete current balance after the Elite slot has been bought. The server
+requires the submitted balance to equal the stored unit parts and requires the reward to equal
+five Scraps per part. Partial, zero-value, stale, or inflated requests are rejected.
+
+The two rates come from the 4.9.5 `Constants` rows in `MainScene.unity`. Their CodeStage
+`ObscuredFloat` payloads are decrypted with serialized key 230887: `PartToScrapsUpgrade` resolves
+to 24 and `PartToScrapsSell` resolves to 5. Keeping the recovered constants on the server prevents
+a modified APK from inventing a better exchange rate.
+
+Conversion failures use the exact result codes handled by the 1.6.0 client:
+
+- `20701` (`NotEnoughScraps`) for a missing/invalid purchase target or insufficient Scraps;
+- `20801` (`EliteSlotLocked`) when parts are sold before the Elite slot is bought;
+- `20802` (`IncorrectPartsAmount`) for a stale balance or incorrect Scraps reward.
+
+The client changes its local wallet and parts before sending the buffer. A rejected conversion
+does not partially mutate MongoDB; the stock warning path relogs and `GetPlayerData` restores the
+last committed values. A successful buffer stores its exact response under `BufferId`, so a lost
+HTTP response cannot charge or reward the conversion twice.
+
 ## Replay safety and rollback
 
 Buffered economy requests carry a `BufferId`. The server stores a bounded result cache and returns

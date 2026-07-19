@@ -36,13 +36,17 @@ import {
 import {
   activateUnitState,
   activateUnitUpgradeState,
+  convertScrapsToUnitPartsState,
+  convertUnitPartsToScrapsState,
   equippedUnitsRecoveryFields,
   instantUnitUpgradeState,
   parseUnitActivateData,
   parseUnitEquipData,
   parseUnitEliteUpgradeData,
+  parseUnitPartsToScrapsData,
   parseUnitPromoteData,
   parseUnitPurchaseData,
+  parseUnitScrapsToPartsData,
   parseUnitUpgradeActivateData,
   parseUnitUpgradeInstantData,
   parseUnitUpgradePurchaseData,
@@ -412,11 +416,11 @@ function boundedReplayCache(
  * after a lost response return the original result without crediting Gold again.
  *
  * SaveLastSeenSquadChatTimeStamp, ClaimStarterAssignment, achievement actions 218-220, and
- * the recovered weapon lifecycle and zero-delivery unit purchase/equip actions are also supported
- * because their managers append them to this same transport. Client progress, price, reward,
- * ownership, and army-power fields are validation assertions, not authority. Other buffered
- * economy actions remain explicit per-item failures until their resource rows and inventory
- * lifecycles are recovered to the same standard.
+ * the recovered weapon lifecycle, zero-delivery unit purchase/equip actions, and Elite-part
+ * conversions are also supported because their managers append them to this same transport.
+ * Client progress, price, reward, ownership, and army-power fields are validation assertions,
+ * not authority. Other buffered economy actions remain explicit per-item failures until their
+ * resource rows and inventory lifecycles are recovered to the same standard.
  */
 export function processAssignmentBufferState(
   state: PlayerProgressionState,
@@ -653,6 +657,39 @@ export function processAssignmentBufferState(
           // self-contained while BufferId replay protection preserves exactly-once spending.
           ...unitRecoveryFields(working, requestedUnitName(request.data)),
         });
+      }
+      continue;
+    }
+
+    if (
+      request.action === DbAction.ConvertScrapsToParts
+      || request.action === DbAction.ConvertPartsToScraps
+    ) {
+      try {
+        if (request.action === DbAction.ConvertScrapsToParts) {
+          // ArmyLeftBuffDialog sends only the unit sheet name, then optimistically spends
+          // Scraps and fills the current Elite requirement. The server selects that target
+          // from the current cursor and recovered 24-Scraps-per-part constant.
+          working = convertScrapsToUnitPartsState(
+            working,
+            parseUnitScrapsToPartsData(request.data),
+          ).state;
+        } else {
+          // The sell dialog sends all current parts plus its expected reward. Validate both
+          // against the stored unit and the recovered 5-Scraps-per-part rate before clearing
+          // parts and crediting the wallet in the same RequestBuffer transaction.
+          working = convertUnitPartsToScrapsState(
+            working,
+            parseUnitPartsToScrapsData(request.data),
+          ).state;
+        }
+        responses.push({ ActionId: request.action, Result: SUCCESS });
+      } catch (error) {
+        const code = error instanceof ApiError ? error.code : ApiErrorCode.InternalServerError;
+        // The stock parser has dedicated conversion warnings and then relogs. It does not
+        // consume inline rollback fields, so the last committed state remains untouched and
+        // GetPlayerData restores the optimistic client mutation after the warning closes.
+        responses.push({ ActionId: request.action, Result: code });
       }
       continue;
     }
