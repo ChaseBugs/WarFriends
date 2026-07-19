@@ -4,7 +4,8 @@ import { WebSocket, WebSocketServer } from "ws";
 import { authenticate } from "./services/authService";
 import { findById } from "./services/playerService";
 import { enqueue, remove as leaveQueue } from "./services/matchmakingService";
-import { cancelMatch, createMatch, getMatch, settleResult, type MatchPlayer } from "./services/matchService";
+import { cancelMatch, createMatch, getMatch, reportMatchResult, settleResult, type MatchPlayer } from "./services/matchService";
+import { parsePvpUsedCards } from "./services/cardInventoryService";
 import { roomManager } from "./gameRooms/roomManager";
 import type {
   ClientEnvelope,
@@ -371,15 +372,29 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
       if (report === "invalid") {
         return send(client, { Type: "MatchError", Payload: { MatchId: p?.MatchId, Reason: "InvalidResult" } });
       }
-      if (report === "conflict") {
+      let durable;
+      try {
+        durable = await reportMatchResult(
+          p.MatchId,
+          client.playerId,
+          p.WinnerId,
+          parsePvpUsedCards(p.UsedCards ?? []),
+        );
+      } catch {
+        return send(client, { Type: "MatchError", Payload: { MatchId: p?.MatchId, Reason: "InvalidUsedCards" } });
+      }
+      if (report === "conflict" || durable.status === "conflict") {
         roomManager.broadcast(p.MatchId, { Type: "MatchError", Payload: { MatchId: p.MatchId, Reason: "ResultConflict" } });
         return;
       }
-      if (report === "pending") {
+      if (report === "pending" || durable.status === "pending") {
         return send(client, { Type: "ResultPending", Payload: { MatchId: p.MatchId } });
       }
 
-      const settlement = await settleResult(p.MatchId, p.WinnerId, client.playerId);
+      const settlement = durable.settlement;
+      if (!settlement) {
+        return send(client, { Type: "MatchError", Payload: { MatchId: p.MatchId, Reason: "InvalidResult" } });
+      }
       roomManager.broadcast(p.MatchId, { Type: "MatchEnded", Payload: { MatchId: p.MatchId, WinnerId: settlement.winnerId } });
       clearMatchJoinTimer(p.MatchId);
       roomManager.finish(p.MatchId);

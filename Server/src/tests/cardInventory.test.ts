@@ -17,8 +17,10 @@ import {
   CRAFTED_CARD_NOT_READY,
   WITHDRAW_NOT_YET_AVAILABLE,
   claimCraftedCardState,
+  consumePvpUsedCardsState,
   createInitialCardCrafting,
   createInitialCardInventory,
+  parsePvpUsedCards,
   purchaseCardPackState,
   startCardCraftingState,
 } from "../services/cardInventoryService";
@@ -122,6 +124,46 @@ test("new accounts serialize the exact empty CardManagerData contract", () => {
     JSON.parse((wire.CraftData as { S: string }).S),
     createInitialCardCrafting(),
   );
+});
+
+test("PvP settlement parses, validates, and consumes normal and Buddy War Cards once", () => {
+  assert.deepEqual(parsePvpUsedCards('["AMMOCRATE","buddy-player-1700000000"]'), [
+    "AMMOCRATE",
+    "buddy-player-1700000000",
+  ]);
+  assert.deepEqual(parsePvpUsedCards([]), []);
+  assert.deepEqual(parsePvpUsedCards('["AMMOCRATE","AMMOCRATE"]'), ["AMMOCRATE", "AMMOCRATE"]);
+  assert.throws(() => parsePvpUsedCards(JSON.stringify(Array.from({ length: 7 }, (_, index) => `card-${index}`))));
+
+  const initial = createInitialProgression(NOW);
+  initial.cardInventory = {
+    ...createInitialCardInventory(),
+    cardData: { AMMOCRATE: { amount: 2 } },
+    buddyCardData: {
+      "buddy-player-1700000000": {
+        amount: 1,
+        buddyName: "Buddy",
+        equippedVisuals: {},
+        unityType: 0,
+        primaryWeapon: 0,
+        secondaryWeapon: 0,
+        armypower: 100,
+        level: 4,
+      },
+    },
+  };
+  const consumed = consumePvpUsedCardsState(initial, [
+    "AMMOCRATE",
+    "AMMOCRATE",
+    "buddy-player-1700000000",
+  ]);
+  assert.equal(consumed.cardInventory.cardData.AMMOCRATE, undefined);
+  assert.equal(consumed.cardInventory.buddyCardData["buddy-player-1700000000"], undefined);
+  assert.equal(consumed.state.warCardsPlayed, 3);
+  assert.equal(consumed.state.revision, initial.revision + 1);
+  assert.throws(() => consumePvpUsedCardsState(consumed.state, ["buddy-player-1700000000"]));
+  assert.throws(() => consumePvpUsedCardsState(initial, ["AMMOCRATE", "AMMOCRATE", "AMMOCRATE"]));
+  assert.throws(() => consumePvpUsedCardsState(initial, ["AIRSTRIKE"]));
 });
 
 test("timed Bronze and Silver recipes consume three cards and grant one server-selected next-rarity card", () => {

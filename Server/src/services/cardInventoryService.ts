@@ -12,6 +12,7 @@ export const CARD_ALREADY_WITHDRAWN = 17501;
 export const WITHDRAW_NOT_YET_AVAILABLE = 17502;
 export const ALREADY_CRAFTING = 17601;
 export const CRAFTED_CARD_NOT_READY = 17701;
+export const MAX_PVP_CARDS_PER_MATCH = 6;
 
 export interface CardDefinition {
   name: string;
@@ -132,6 +133,91 @@ export function cardInventoryStateFor(state: PlayerProgressionState): CardInvent
 export function cardCraftingStateFor(state: PlayerProgressionState): CardCraftingState {
   const value = state.cardCrafting ?? createInitialCardCrafting();
   return { cards: [...value.cards], start: value.start, end: value.end };
+}
+
+/**
+ * Decode the card-usage proof carried by GameEnded and the replacement WebSocket relay.
+ *
+ * The recovered REST client serializes `UsedCards` as a JSON string; the replacement relay
+ * can carry the same IDs as a native JSON array. CardSelectionScreen exposes three normal
+ * slots plus VIP, extra, and Buddy slots, so six entries is the largest valid one-match set.
+ * The selection screen can place the same normal Card object in multiple slots when its
+ * amount is greater than one, so repeated IDs are preserved and charged per occurrence.
+ */
+export function parsePvpUsedCards(value: unknown): string[] {
+  let parsed = value;
+  if (typeof value === "string") {
+    if (value.length < 2 || value.length > 4_096) {
+      throw new ApiError(CARD_NOT_FOUND, "UsedCards is missing or too large.");
+    }
+    try {
+      parsed = JSON.parse(value);
+    } catch {
+      throw new ApiError(CARD_NOT_FOUND, "UsedCards is invalid JSON.");
+    }
+  }
+  if (
+    !Array.isArray(parsed)
+    || parsed.length > MAX_PVP_CARDS_PER_MATCH
+    || parsed.some((card) => typeof card !== "string" || card.length < 1 || card.length > 128)
+  ) {
+    throw new ApiError(CARD_NOT_FOUND, "UsedCards contains an invalid battle-card list.");
+  }
+  return [...parsed as string[]];
+}
+
+export interface PvpCardConsumptionResult {
+  state: PlayerProgressionState;
+  cardInventory: CardInventoryState;
+  usedCards: string[];
+}
+
+/**
+ * Consume the authenticated player's reported PvP cards from one progression snapshot.
+ *
+ * Normal IDs must be playable catalog cards with a positive owned amount. Buddy IDs must
+ * name an exact positive snapshot in `buddyCardData`; consuming a Buddy removes that unique
+ * snapshot rather than leaving an amount-zero entry that would incorrectly count toward
+ * CardManager.BuddyCardsOwned(). Validation and all decrements happen on a clone, so a bad
+ * ID cannot partially consume an earlier valid ID. The caller commits this state in the same
+ * MongoDB transaction as match rewards and the terminal match state.
+ */
+export function consumePvpUsedCardsState(
+  state: PlayerProgressionState,
+  usedCards: readonly string[],
+): PvpCardConsumptionResult {
+  const cards = parsePvpUsedCards([...usedCards]);
+  const cardInventory = cardInventoryStateFor(state);
+  for (const cardId of cards) {
+    const definition = CARD_CATALOG[cardId];
+    if (definition?.implemented) {
+      const current = cardInventory.cardData[cardId]?.amount ?? 0;
+      if (!Number.isSafeInteger(current) || current < 1) {
+        throw new ApiError(CARD_NOT_FOUND, `War Card ${cardId} is not owned.`);
+      }
+      if (current === 1) delete cardInventory.cardData[cardId];
+      else cardInventory.cardData[cardId] = { amount: current - 1 };
+      continue;
+    }
+
+    const buddy = cardInventory.buddyCardData[cardId];
+    if (!buddy || buddy.amount !== 1) {
+      throw new ApiError(CARD_NOT_FOUND, `Buddy War Card ${cardId} is not owned.`);
+    }
+    delete cardInventory.buddyCardData[cardId];
+  }
+
+  const previousPlayed = state.warCardsPlayed ?? 0;
+  if (!Number.isSafeInteger(previousPlayed) || previousPlayed < 0 || previousPlayed > Number.MAX_SAFE_INTEGER - cards.length) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "War Card play counter is invalid.");
+  }
+  const next: PlayerProgressionState = {
+    ...state,
+    revision: state.revision + 1,
+    cardInventory,
+    warCardsPlayed: previousPlayed + cards.length,
+  };
+  return { state: next, cardInventory, usedCards: cards };
 }
 
 /** Decode the `Cards` JSON form field used by CraftCard and CraftAndClaimCard. */

@@ -27,6 +27,8 @@ export interface MatchEventPayload {
 export interface MatchResultPayload {
   MatchId: string;
   WinnerId: string;
+  /** Authenticated sender's own consumed War Card IDs. */
+  UsedCards?: string[];
   /** Opaque per-side stats the server will later validate before granting rewards. */
   Stats?: unknown;
 }

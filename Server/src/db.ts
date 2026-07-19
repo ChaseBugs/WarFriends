@@ -109,6 +109,14 @@ export interface PlayerProgressionState {
   cardInventory?: CardInventoryState;
   /** Timed three-for-one recipe consumed by CardCraftingManager.CraftData. */
   cardCrafting?: CardCraftingState;
+  /**
+   * Number of War Cards consumed by confirmed PvP settlements.
+   *
+   * The stock client keeps the equivalent lifetime value in StatsManager.cardsPlayed, but
+   * that serialized client counter is not authoritative. This backend counter advances only
+   * while the matching inventory cards and PvP rewards commit together.
+   */
+  warCardsPlayed?: number;
   /** Private proof used by StarterAssignmentCraftCard; never serialized inside CraftData. */
   goldCardsCrafted?: number;
   /**

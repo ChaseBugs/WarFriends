@@ -1,19 +1,22 @@
 import { randomUUID } from "crypto";
-import { matches, players, squads } from "../db";
+import type { ClientSession } from "mongodb";
+import { matches, players, squads, withMongoTransaction, type PlayerProgressionState } from "../db";
 import { findById, updatePlayerFields } from "./playerService";
 import { PlayerStatus } from "../constants";
 import logger from "../utils/logger";
 import { recordPvpAssignmentProgress } from "./assignmentService";
 import { recordRankedPvpAchievements } from "./achievementService";
+import { consumePvpUsedCardsState } from "./cardInventoryService";
+import { progressionForPlayer } from "./playerStateService";
 
 /**
  * Persistent PvP match lifecycle and reward settlement.
  *
  * `gameHub` and `RoomManager` own transient WebSocket connections; this service owns the
  * durable match row, player presence, result reports, terminal state, and rewards. A match is
- * created before either profile is marked InGame. Settlement then atomically claims
- * `active -> settling`, grants each participant once, and finally marks the row `finished`.
- * Competing reports or timeout handlers cannot claim the same match after that transition.
+ * created before either profile is marked InGame. Settlement atomically commits both player
+ * rewards and the direct `active -> finished` match transition in one MongoDB transaction.
+ * Competing reports or timeout handlers cannot commit the same match after that transition.
  *
  * Normal settlement requires both authenticated participants to report the same winner. This
  * prevents one client from unilaterally awarding itself a win, but it is consensus validation,
@@ -40,6 +43,8 @@ export interface MatchDoc {
   winnerId?: string;
   /** Durable REST reports, keyed by authenticated reporter player ID. */
   resultReports?: Record<string, string>;
+  /** Authenticated reporter's own card IDs; never accepted for the opponent. */
+  usedCardsReports?: Record<string, string[]>;
   createdAt: Date;
   /** Terminal timestamp for both normal completion and cancellation. */
   endedAt?: Date;
@@ -107,44 +112,80 @@ export async function createMatch(a: MatchPlayer, b: MatchPlayer): Promise<strin
   return matchId;
 }
 
-async function grant(playerId: string, won: boolean): Promise<void> {
-  const player = await findById(playerId);
-  if (!player) return;
+interface CoreGrant {
+  playerId: string;
+  won: boolean;
+  squadName: string;
+  squadPoints: number;
+}
+
+function progressionRevisionFilter(player: { progression?: PlayerProgressionState }): Record<string, unknown> {
+  if (!player.progression) return { progression: { $exists: false } };
+  return player.progression.revision === undefined
+    ? { "progression.revision": { $exists: false } }
+    : { "progression.revision": player.progression.revision };
+}
+
+function canonicalProgression(state: PlayerProgressionState): PlayerProgressionState {
+  const { dogTags: _legacyDogTags, ...canonical } = state;
+  return canonical;
+}
+
+/**
+ * Commit one participant's core settlement inside the enclosing match transaction.
+ *
+ * Inventory consumption, lifetime card-play proof, XP, medals, squad points, presence, and
+ * progression XP use one document write guarded by the progression revision. The match row
+ * becomes finished in that same MongoDB transaction, eliminating the old crash window where
+ * one player could be rewarded while the other player or terminal match state was missing.
+ */
+async function settlePlayerCore(
+  session: ClientSession,
+  playerId: string,
+  won: boolean,
+  usedCards: readonly string[],
+): Promise<CoreGrant> {
+  const player = await players().findOne({ id: playerId }, { session });
+  if (!player) throw new Error(`Match participant ${playerId} was not found.`);
   const experience = won ? REWARDS.winExperience : REWARDS.loseExperience;
   const medalDelta = won ? REWARDS.winMedals : REWARDS.loseMedals;
   const squadPoints = won && player.player.squadName ? REWARDS.winSquadPoints : 0;
+  const consumed = consumePvpUsedCardsState(progressionForPlayer(player), usedCards);
+  const canonical = canonicalProgression({
+    ...consumed.state,
+    levelExperience: consumed.state.levelExperience + experience,
+  });
 
-  // MongoDB's update pipeline derives every balance from the stored value in one write. This
-  // prevents a concurrent request from overwriting XP, medals, or squad points with a stale
-  // read-modify-write snapshot. Medals are clamped at zero to preserve the client invariant.
-  await players().updateOne(
-    { id: playerId },
+  const update = await players().updateOne(
+    { id: playerId, ...progressionRevisionFilter(player) },
     [
       {
         $set: {
-          experience: { $add: ["$experience", experience] },
-          squadPoints: { $add: ["$squadPoints", squadPoints] },
-          "player.experience": { $add: ["$player.experience", experience] },
-          "player.squadPoints": { $add: ["$player.squadPoints", squadPoints] },
-          "player.medalsBalance": { $max: [0, { $add: ["$player.medalsBalance", medalDelta] }] },
-          "player.status": PlayerStatus.Online,
-          // LevelExperience is the value read unconditionally by the GameEnded callback.
-          // Incrementing the progression revision also makes an overlapping economy write
-          // fail its optimistic-concurrency filter and retry instead of losing this reward.
-          "progression.levelExperience": {
-            $add: [{ $ifNull: ["$progression.levelExperience", 0] }, experience],
+          progression: { $literal: canonical },
+          experience: { $add: [{ $ifNull: ["$experience", 0] }, experience] },
+          squadPoints: { $add: [{ $ifNull: ["$squadPoints", 0] }, squadPoints] },
+          "player.experience": { $add: [{ $ifNull: ["$player.experience", 0] }, experience] },
+          "player.squadPoints": { $add: [{ $ifNull: ["$player.squadPoints", 0] }, squadPoints] },
+          "player.medalsBalance": {
+            $max: [0, { $add: [{ $ifNull: ["$player.medalsBalance", 0] }, medalDelta] }],
           },
-          "progression.revision": { $add: [{ $ifNull: ["$progression.revision", 0] }, 1] },
+          "player.status": PlayerStatus.Online,
           updatedAt: "$$NOW",
         },
       },
     ],
+    { session },
   );
+  if (update.modifiedCount !== 1) throw new Error(`Concurrent settlement rejected player ${playerId}.`);
+  return { playerId, won, squadName: player.player.squadName, squadPoints };
+}
 
+async function grantSecondaryProgress(grant: CoreGrant): Promise<void> {
+  const { playerId, won, squadName, squadPoints } = grant;
   // Assignment progress is derived only after the match row has won the idempotent
-  // active-to-settling claim. A duplicate result therefore cannot advance objectives twice.
-  // Keep this secondary feature from stranding the core match in `settling` if its bounded
-  // optimistic-concurrency retries are exhausted; the warning is actionable and the next
+  // terminal transaction. A duplicate result therefore cannot advance objectives twice.
+  // Keep this secondary projection from failing an already-committed core transaction if its
+  // bounded optimistic-concurrency retries are exhausted; the warning is actionable and the next
   // legitimate match can still continue the player's objectives.
   try {
     await recordPvpAssignmentProgress(playerId, won);
@@ -167,16 +208,27 @@ async function grant(playerId: string, won: boolean): Promise<void> {
     });
   }
 
-  if (squadPoints > 0) {
+  if (squadPoints > 0 && squadName) {
     // Keep the squad aggregate and embedded member contribution aligned with the player's
     // mirrored squadPoints field. Only winners that currently belong to a squad contribute.
-    await squads().updateOne(
-      { name: player.player.squadName, "members.playerId": playerId },
-      {
-        $inc: { experience: squadPoints, squadPoints, "members.$.squadPoints": squadPoints },
-        $set: { updatedAt: new Date() },
-      },
-    );
+    try {
+      await squads().updateOne(
+        { name: squadName, "members.playerId": playerId },
+        {
+          $inc: { experience: squadPoints, squadPoints, "members.$.squadPoints": squadPoints },
+          $set: { updatedAt: new Date() },
+        },
+      );
+    } catch (error) {
+      // The player's authoritative points already committed with the core match. Do not turn
+      // a squad projection outage into a failed GameEnded response that invites a pointless
+      // settlement retry; log the mismatch for an operations reconciliation job instead.
+      logger.warnWithEmoji("âš ï¸", "Could not project squad points", "MATCH", {
+        playerId,
+        squadName,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
 }
 
@@ -220,7 +272,7 @@ export function winnerFromEndReason(
  * Record a REST/Photon result without trusting either client alone.
  *
  * Each authenticated player may overwrite only their own report key. Once both assigned
- * players agree, settleResult's active-to-settling claim grants rewards exactly once. If
+ * players agree, settleResult's terminal MongoDB transaction grants rewards exactly once. If
  * both reports conflict, the match is cancelled without rewards so neither account remains
  * stuck InGame and neither side benefits from inventing a winner.
  */
@@ -228,6 +280,7 @@ export async function reportMatchResult(
   matchId: string,
   reporterId: string,
   winnerId: string,
+  usedCards: readonly string[] = [],
 ): Promise<MatchReportResult> {
   const match = await getMatch(matchId);
   if (!match || !match.players.some((player) => player.playerId === reporterId)) return { status: "invalid" };
@@ -240,9 +293,22 @@ export async function reportMatchResult(
   }
   if (match.state !== "active") return { status: "invalid" };
 
+  // Validate only the authenticated reporter's own list before persisting it. Replaying a
+  // report may overwrite that same key, but cannot submit cards on behalf of the opponent.
+  // The pure transition is repeated inside the final MongoDB transaction so an overlapping
+  // economy mutation cannot make this stale ownership check authoritative.
+  const reporter = await findById(reporterId);
+  if (!reporter) return { status: "invalid" };
+  consumePvpUsedCardsState(progressionForPlayer(reporter), usedCards);
+
   await matches().updateOne(
     { matchId, state: "active", "players.playerId": reporterId },
-    { $set: { [`resultReports.${reporterId}`]: winnerId } },
+    {
+      $set: {
+        [`resultReports.${reporterId}`]: winnerId,
+        [`usedCardsReports.${reporterId}`]: [...usedCards],
+      },
+    },
   );
   const updated = await getMatch(matchId);
   if (!updated || updated.state !== "active") return { status: "invalid" };
@@ -268,42 +334,49 @@ export interface SettlementResult {
 
 /**
  * Settle a finished match. Idempotent: a second call for an already-finished match is a
- * no-op. Returns whether rewards were granted this call.
+ * no-op. Core rewards, reported War Card consumption, and the terminal match row commit in
+ * one transaction. Secondary assignment/achievement projections run only after that commit.
  */
 export async function settleResult(matchId: string, winnerId: string, reportedById?: string): Promise<SettlementResult> {
-  const match = await getMatch(matchId);
-  if (!match) {
-    logger.match.error("Result for unknown match", { matchId });
-    return { matchId, winnerId, rewarded: false };
-  }
-  if (match.state === "finished") {
-    return { matchId, winnerId: match.winnerId ?? winnerId, rewarded: false };
-  }
-  const isParticipant = match.players.some((p) => p.playerId === winnerId);
-  if (!isParticipant) {
-    logger.match.error("Winner is not a participant", { matchId, winnerId });
-    return { matchId, winnerId, rewarded: false };
-  }
+  const transaction = await withMongoTransaction(async (session) => {
+    const match = await matches().findOne({ matchId }, { session }) as unknown as MatchDoc | null;
+    if (!match) return { result: { matchId, winnerId, rewarded: false }, grants: [] as CoreGrant[], unknown: true };
+    if (match.state === "finished") {
+      return {
+        result: { matchId, winnerId: match.winnerId ?? winnerId, rewarded: false },
+        grants: [] as CoreGrant[],
+        unknown: false,
+      };
+    }
+    if (match.state !== "active" || !match.players.some((participant) => participant.playerId === winnerId)) {
+      return { result: { matchId, winnerId, rewarded: false }, grants: [] as CoreGrant[], unknown: false };
+    }
+    if (reportedById && !match.players.some((participant) => participant.playerId === reportedById)) {
+      return { result: { matchId, winnerId, rewarded: false }, grants: [] as CoreGrant[], unknown: false };
+    }
 
-  if (reportedById && !match.players.some((p) => p.playerId === reportedById)) {
-    logger.match.error("Result reporter is not a participant", { matchId, reportedById });
-    return { matchId, winnerId, rewarded: false };
-  }
+    const grants: CoreGrant[] = [];
+    for (const participant of match.players) {
+      const cards = match.usedCardsReports?.[participant.playerId] ?? [];
+      grants.push(await settlePlayerCore(
+        session,
+        participant.playerId,
+        participant.playerId === winnerId,
+        cards,
+      ));
+    }
+    const finish = await matches().updateOne(
+      { matchId, state: "active" },
+      { $set: { state: "finished", winnerId, endedAt: new Date() } },
+      { session },
+    );
+    if (finish.modifiedCount !== 1) throw new Error(`Concurrent settlement rejected match ${matchId}.`);
+    return { result: { matchId, winnerId, rewarded: true }, grants, unknown: false };
+  });
 
-  // Claim settlement atomically so concurrent result reports cannot grant twice.
-  const claim = await matches().updateOne(
-    { matchId, state: "active" },
-    { $set: { state: "settling", winnerId, endedAt: new Date() } },
-  );
-  if (claim.modifiedCount !== 1) {
-    const current = await getMatch(matchId);
-    return { matchId, winnerId: current?.winnerId ?? winnerId, rewarded: false };
-  }
-
-  for (const p of match.players) {
-    await grant(p.playerId, p.playerId === winnerId);
-  }
-  await matches().updateOne({ matchId, state: "settling" }, { $set: { state: "finished" } });
+  if (transaction.unknown) logger.match.error("Result for unknown match", { matchId });
+  if (!transaction.result.rewarded) return transaction.result;
+  await Promise.all(transaction.grants.map(grantSecondaryProgress));
   logger.match.event("Match settled", { matchId, winnerId });
-  return { matchId, winnerId, rewarded: true };
+  return transaction.result;
 }

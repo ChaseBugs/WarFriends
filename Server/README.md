@@ -19,9 +19,10 @@ npm run dev               # ts-node-dev, watch mode
 ```
 
 Requires MongoDB (`:27017`) and, optionally, Redis (`:6379`). Set `REDIS_ENABLED=false` to
-run Mongo-only. Cross-player squad-card withdrawal uses a multi-document transaction, so enable a
-single-node replica set for local development (or use a replicated/sharded managed deployment)
-and include `replicaSet` in `MONGO_URL`. Health check: `GET /health`.
+run Mongo-only. Cross-player squad-card withdrawal and confirmed PvP core settlement use
+multi-document transactions, so enable a single-node replica set for local development (or use a
+replicated/sharded managed deployment) and include `replicaSet` in `MONGO_URL`. Health check:
+`GET /health`.
 
 ## How the client talks to it
 

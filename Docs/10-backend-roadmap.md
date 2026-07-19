@@ -33,6 +33,10 @@ from server-owned weapon, visual, Army Power, name, and level state and enforce 
 the stock client still selects its random unit type locally.
 Card-pool contribution reminders use the exact recovered type-28 inbox message, same-roster
 authorization, and persistent daily actor/target idempotency.
+Confirmed PvP settlement now validates and atomically consumes each reporter's normal/Buddy War
+Cards together with both players' core rewards and the terminal match row. This also proves starter
+assignment `ID_2`; detecting card plays omitted by a modified stock APK still requires live Photon
+or replacement-relay event validation.
 
 ## Progression and live operations
 

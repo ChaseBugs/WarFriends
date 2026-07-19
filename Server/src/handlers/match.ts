@@ -11,6 +11,7 @@ import { settleDailyMission } from "../services/dailyMissionService";
 import { settleWarArenaBattle, startWarArenaBattle } from "../services/warArenaService";
 import { findById } from "../services/playerService";
 import { progressionForPlayer, unixNow } from "../services/playerStateService";
+import { parsePvpUsedCards } from "../services/cardInventoryService";
 import { authed, type HandlerEntry } from "./types";
 
 // PvP match lifecycle reported to the meta server. Live event traffic runs over /hub, while
@@ -112,8 +113,12 @@ export const matchHandlers: Record<number, HandlerEntry> = {
       ? winnerFromEndReason(match.players.map((participant) => participant.playerId), player!.id, endReason)
       : null;
     const winnerId = explicitWinner || inferredWinner || "";
+    // Stock 1.6.0 always sends a JSON-string UsedCards field. An omitted field is accepted as
+    // the replacement transport's empty-list shorthand; malformed, over-limit,
+    // unknown, or unowned IDs are rejected by the card inventory service before consensus.
+    const usedCards = parsePvpUsedCards(req.UsedCards ?? []);
     const report = id && winnerId
-      ? await reportMatchResult(id, player!.id, winnerId)
+      ? await reportMatchResult(id, player!.id, winnerId, usedCards)
       : { status: "invalid" as const };
 
     const updated = await findById(player!.id);

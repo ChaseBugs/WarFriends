@@ -32,18 +32,32 @@ must describe the same winner/loser outcome as the other.
 Settlement is idempotent. Once a match ID is consumed, a retry returns the stored outcome rather
 than granting experience, medals, squad progress, or assignment progress again.
 
+Each `GameEnded` report also carries the authenticated player's own `UsedCards` JSON array. The
+server accepts at most six entries exposed by the recovered three normal, VIP, extra, and Buddy
+selection slots. Repeated normal IDs are valid when the player owns enough copies and are charged
+once per occurrence. Every normal ID must be playable; every Buddy ID must name the player's exact
+positive Buddy snapshot. A reporter cannot submit the opponent's usage list.
+
 ## Durable effects
 
 A confirmed ranked result can update:
 
 - player experience and level-experience progress;
 - medal balance and squad points;
+- normal-card counts and unique Buddy-card ownership;
+- the server-owned lifetime War Card play counter used by starter assignment `ID_2`;
 - supported assignment and starter-assignment counters;
 - supported achievement groups;
 - online/in-game presence state.
 
 Only facts confirmed by settlement enter progression systems. Raw client battle statistics are not
 sufficient authority for rewards.
+
+The two player documents and terminal match row commit in one MongoDB transaction. Card
+consumption, lifetime card-play proof, XP, medals, squad points, presence, and level experience
+therefore cannot be partially persisted across a process failure. Assignment, achievement, and
+squad aggregate projections run after the core transaction and cannot cause duplicate core
+rewards.
 
 ## Current limitations
 
@@ -52,6 +66,11 @@ independently reproduce shooting, cover, damage, unit AI, ability cooldowns, or 
 A colluding pair could still submit matching false results. Production fidelity therefore requires
 at least authoritative event validation and ideally a server simulation or trusted Photon room
 plugin.
+
+The stock request reports only cards the sender admits using. The opponent observes Photon card
+RPCs but does not echo those IDs to the meta server, so a modified APK can omit a play. Ownership,
+shape, and exactly-once consumption are authoritative for reported IDs; proof that no usage was
+omitted requires a Photon plugin or replacement relay that validates live card-play events.
 
 The unmodified recovered APK also expects Photon APIs, so it requires a client adapter or a
 Photon-compatible endpoint to use the replacement WebSocket protocol.

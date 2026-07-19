@@ -19,7 +19,7 @@ export interface StarterAssignmentDefinition {
   gold: number;
   warBucks: number;
   order: number;
-  authority: "rankedWins" | "medals" | "level" | "squadPoints" | "heroicPoints" | "weaponLevel" | "craftedGold" | "unrecovered";
+  authority: "rankedWins" | "medals" | "level" | "squadPoints" | "heroicPoints" | "weaponLevel" | "craftedGold" | "warCardsPlayed" | "unrecovered";
 }
 
 /**
@@ -29,15 +29,17 @@ export interface StarterAssignmentDefinition {
  * Keeping even currently unsupported rows in this table matters: the server can validate a
  * claim against the real reward and order without ever accepting the Gold/WarBucks values
  * sent by the client. `authority` explicitly records whether this backend can prove the
- * completion fact. Unit deployment and war-card play remain rejected until their
- * authoritative gameplay paths are rebuilt. ID_8 is proven only when ClaimCraftedCard
+ * completion fact. Unit deployment remains rejected until its authoritative gameplay path
+ * is rebuilt. Recovered class registration proves ID_2 is PlayWarcard and ID_3 is
+ * DeployUnit; ID_2 uses only cards actually consumed by confirmed PvP settlement. ID_8 is
+ * proven only when ClaimCraftedCard
  * atomically grants a Gold result. ID_6 is proven
  * by the first replay-safe daily/co-op mission settlement, matching
  * StarterAssignmentWinMissionFirst's `heroicPoints > 0` check.
  */
 export const STARTER_ASSIGNMENT_DEFINITIONS: readonly StarterAssignmentDefinition[] = [
   { id: "ID_1", target: 1, gold: 2, warBucks: 0, order: 1, authority: "rankedWins" },
-  { id: "ID_2", target: 3, gold: 6, warBucks: 0, order: 10, authority: "unrecovered" },
+  { id: "ID_2", target: 3, gold: 6, warBucks: 0, order: 10, authority: "warCardsPlayed" },
   { id: "ID_3", target: -1, gold: 3, warBucks: 0, order: 3, authority: "unrecovered" },
   { id: "ID_4", target: 35, gold: 0, warBucks: 2_000, order: 2, authority: "medals" },
   { id: "ID_5", target: 5, gold: 4, warBucks: 0, order: 5, authority: "level" },
@@ -138,6 +140,7 @@ function isServerConfirmed(
     case "heroicPoints": return (state.dailyMissions?.heroicPoints ?? 0) >= definition.target;
     case "weaponLevel": return equippedSecondaryWeaponLevel(state) >= definition.target;
     case "craftedGold": return (state.goldCardsCrafted ?? 0) > 0;
+    case "warCardsPlayed": return (state.warCardsPlayed ?? 0) >= definition.target;
     case "unrecovered": return false;
   }
 }

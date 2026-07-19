@@ -37,7 +37,7 @@ test("starter assignment table preserves recovered thresholds, rewards, and disp
   );
 });
 
-test("starter completion accepts server-owned facts and rejects unrecovered client-only facts", () => {
+test("starter completion accepts server-owned facts and rejects unrecovered unit deployment", () => {
   const initial = createInitialProgression(NOW);
   initial.achievements = {
     data: [{ id: 2, offset: 0, value: 1, progress: [{ claimed: false }] }],
@@ -66,6 +66,16 @@ test("starter completion accepts server-owned facts and rejects unrecovered clie
     ["ID_8"],
   );
   assert.equal(craftedCompleted.starterAssignments.assignments.ID_8.completed, true);
+
+  const cardsPlayed = { ...craftedCompleted.state, warCardsPlayed: 3 };
+  const cardsCompleted = completeStarterAssignmentsState(
+    cardsPlayed,
+    NOW + 18,
+    NOW,
+    FACTS,
+    ["ID_2"],
+  );
+  assert.equal(cardsCompleted.starterAssignments.assignments.ID_2.completed, true);
 
   assert.throws(
     () => completeStarterAssignmentsState(completed.state, NOW + 20, NOW, FACTS, ["ID_3"]),

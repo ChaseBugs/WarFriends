@@ -150,6 +150,32 @@ exact compact sender snapshot parsed by `BOAFLMMKCGB`: `PlayerName`, `Level`, `S
 unique idempotency key, so HTTP retries return the first message and modified clients cannot spam
 the same member. This is an inbox message; device push fan-out remains a separate operations task.
 
+## PvP card consumption
+
+The stock `GameEnded` action 62 sends `UsedCards` as the JSON array built by
+`CardManager.GetUsedCards()`. The replacement WebSocket `MatchResult` accepts the same list as a
+native JSON array. The backend validates at most six entries, matching the recovered three normal
+slots plus VIP, extra, and Buddy slots. Repeated normal IDs are allowed because the selection UI can
+fill multiple slots from a multi-copy card; each occurrence consumes one owned copy. Normal IDs
+must be playable catalog entries, and Buddy IDs must resolve to an exact positive snapshot owned by
+the reporter.
+
+Each authenticated participant can write only its own durable usage report. When both participants
+agree on the winner, one MongoDB transaction consumes both usage lists, increments the
+server-owned lifetime play counters, grants XP/medals/squad points, restores presence, and changes
+the match directly from active to finished. Any invalid or concurrently unavailable card aborts
+the complete transaction; a retry of a finished match cannot consume or reward twice. A consumed
+Buddy snapshot is removed completely so the client's dictionary-count-based Buddy ownership cap
+does not retain a spent amount-zero entry.
+
+This counter supplies the authoritative completion fact for starter assignment `ID_2`
+(PlayWarcard, target three). `StatsManager.cardsPlayed` remains client-owned and is ignored.
+
+The old protocol cannot prove omitted usage: a player submits only its own list, while the opponent
+sees Photon `PlayCardRPC` traffic but does not report the opponent's IDs to this server. Reported
+ownership and consumption are authoritative, but detecting a modified client that sends an empty
+list requires live card-play event validation in a Photon plugin or replacement transport.
+
 ## Compatibility and trust boundary
 
 The unmodified client chooses card identities locally and adds them to its local inventory before
@@ -172,8 +198,8 @@ must remain explicit in anti-cheat and economy reviews.
 
 The following systems are still fail-closed or incomplete:
 
-- consuming War Cards during an authoritative PvP battle;
 - granting cards or card packs from missions, Arena, assignments, offers, and achievements;
+- validating live card-play events so a client cannot omit a used ID;
 - a server-selected Buddy unit-type RNG protocol compatible with a modified client;
 - purchase/entitlement logic for the battle-card `extraSlot` flag;
 - subscription-backed instant `CraftAndClaimCard`;

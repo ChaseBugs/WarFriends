@@ -36,11 +36,14 @@ skip retries idempotent.
 
 The limited onboarding chain uses recovered MainScene thresholds, order, and currency rewards.
 Supported completion facts include ranked wins, medal balance, level, lifetime squad points, first
-mission completion, and the equipped secondary-weapon level.
+mission completion, the equipped secondary-weapon level, and War Cards consumed by confirmed PvP
+settlement.
 
-Unit deployment and war-card play remain disabled until those event sources are server
-authoritative. Gold-card crafting now completes starter assignment `ID_8` only from an accepted
-server-owned craft claim.
+Recovered class registration maps `ID_2` to PlayWarcard and `ID_3` to DeployUnit. `ID_2` completes
+only after three inventory-backed card consumptions have committed with confirmed match results;
+the client `StatsManager.cardsPlayed` value is never trusted. Unit deployment (`ID_3`) remains
+disabled until that event source is server-authoritative. Gold-card crafting completes `ID_8` only
+from an accepted server-owned craft claim.
 
 ## Daily, co-op, and heroic missions
 
