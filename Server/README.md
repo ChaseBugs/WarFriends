@@ -16,6 +16,8 @@ npm install
 npm run dev               # ts-node-dev, watch mode
 # or: npm run build && npm start
 # optional explicit catalog publication: npm run sync:catalog
+# read-only legacy squad/player integrity scan: npm run audit:squads
+# apply only unambiguous mirror/card repairs: npm run repair:squads
 ```
 
 Requires MongoDB (`:27017`) and, optionally, Redis (`:6379`). Set `REDIS_ENABLED=false` to
@@ -78,7 +80,10 @@ Working end-to-end (verified live):
 - **Squads (core membership)**: create / unique-name check / public or requested join /
   invite / accept / decline / promote / demote / kick / leadership transfer / guarded
   leave, plus details and full member snapshots. Client ranks exactly mirror
-  `Member`, `Veteran`, `Leader`, and `Coleader`.
+  `Member`, `Veteran`, `Leader`, and `Coleader`. Kick persists the exact type-3 offline
+  notification in the membership transaction. The operational integrity audit reports duplicate
+  rosters, broken founders/leaders, and missing accounts; repair mode changes only unambiguous
+  player mirrors and safely returns orphaned normal card deposits.
 - **PvP (WebSocket `/hub`)**: identify → `FindMatch` (matchmaking pairs by army-power within
   a widening league window) → `MatchFound` → `JoinMatch` → `MatchStart` → in-match
   `MatchEvent` relay to the opponent → `MatchResult`. Room joins/events are restricted to

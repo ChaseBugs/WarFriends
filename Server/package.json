@@ -20,6 +20,8 @@
     "generate:card-catalog": "node scripts/Extract-CardCatalog.mjs",
     "verify:card-catalog": "node scripts/Extract-CardCatalog.mjs --check",
     "sync:catalog": "npm run build && node --env-file=.env dist/scripts/syncGameCatalog.js",
+    "audit:squads": "npm run build && node --env-file=.env dist/scripts/auditSquadIntegrity.js",
+    "repair:squads": "npm run build && node --env-file=.env dist/scripts/auditSquadIntegrity.js --repair",
     "test": "npm run build && node --test \"dist/tests/*.test.js\""
   },
   "dependencies": {

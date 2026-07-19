@@ -62,6 +62,20 @@ the awaiting-member UI. Leave uses `4901`; promote, founder transfer, demote, an
 `5701`, `5801`, and `5802`. Promote/demote failures also return a fresh `SquadMembers` array because
 the stock error parser reloads that snapshot to roll back its optimistic rank display.
 
+## Legacy integrity audit
+
+`npm run audit:squads` in `Server` performs a read-only comparison of every squad roster and
+player document. It reports duplicate roster rows, cross-squad membership, missing accounts,
+founders outside the roster, invalid leader sets/ranks, player mirror drift, and deposited cards
+left on a player who has no roster membership. Add `--json` after `--` for machine-readable output.
+
+`npm run repair:squads` applies only deterministic player-side repairs: `squads.members` supplies
+the single authoritative name/rank, or an absent roster clears stale mirrors and returns valid
+normal deposits before clearing the pool dictionary. Every write matches the audited `updatedAt`,
+so a concurrent gameplay mutation becomes a reported conflict instead of being overwritten.
+Ambiguous roster/founder/leader problems remain manual by design; the tool never guesses which
+squad or manager should own a player.
+
 ## Squad creation economy
 
 Squad creation is a paid, server-authoritative operation. The recovered
