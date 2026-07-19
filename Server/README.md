@@ -3,6 +3,7 @@
 Private backend for the recovered WarFriends client — a **REST meta server** (accounts,
 players, squads) plus a **WebSocket match relay** that stands in for Photon PvP. Design and
 protocol notes: [`../BACKEND.md`](../BACKEND.md).
+Core gameplay logic guides: [`../Docs/README.md`](../Docs/README.md).
 
 Stack: Node.js + Express + TypeScript, MongoDB (native driver), Redis (optional), `ws`.
 Structure mirrors the sibling recovery backend (`Heyworks/Backend`).
