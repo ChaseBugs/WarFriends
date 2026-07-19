@@ -6,7 +6,11 @@ import { AccountType, League, PlayerStatus, SquadRank } from "../constants";
 import { configurationResponse, normalizeEnvelope } from "../routes";
 import { squadRankAuthority } from "../services/squadService";
 import { providerForAccountType } from "../services/identityService";
-import { identityHandlers } from "../handlers/identity";
+import {
+  buildExistingGameCenterPayload,
+  buildGameCenterAccountPayload,
+  identityHandlers,
+} from "../handlers/identity";
 import { authHandlers } from "../handlers/auth";
 import { DbAction } from "../dbActions";
 import type { PlayerDocument } from "../db";
@@ -123,11 +127,42 @@ test("account types map only to their matching external identity provider", () =
 });
 
 test("identity mutations require auth while pre-login existence checks remain open", () => {
+  assert.equal(identityHandlers[DbAction.CreateGcAccount]?.requiresAuth, false);
   assert.equal(identityHandlers[DbAction.AddFacebook]?.requiresAuth, true);
   assert.equal(identityHandlers[DbAction.RemoveGooglePlay]?.requiresAuth, true);
   assert.equal(identityHandlers[DbAction.RemoveOrUpdateGC]?.requiresAuth, true);
   assert.equal(identityHandlers[DbAction.ExistFBAccount]?.requiresAuth, false);
   assert.equal(identityHandlers[DbAction.TutorialCheckGPGSAccount]?.requiresAuth, false);
+});
+
+test("Game Center account creation matches the shared stock account parser", () => {
+  const doc = contractPlayer();
+  doc.accountType = AccountType.GameCenter;
+  doc.gameCenterId = "gc-player-1";
+  doc.player.accountType = AccountType.GameCenter;
+  doc.player.gameCenterId = "gc-player-1";
+  const payload = buildGameCenterAccountPayload({
+    doc,
+    player: doc.player,
+    authToken: "new-session-token",
+  }, "gc-platform-credential");
+
+  assert.equal(payload.AccountType, AccountType.GameCenter);
+  assert.equal(payload.Token, "new-session-token");
+  assert.equal(payload.Password, "gc-platform-credential");
+  assert.ok(payload.PlayerData);
+  assert.deepEqual((payload.Player as Record<string, unknown>).GameCenterId, { S: "gc-player-1" });
+});
+
+test("duplicate Game Center creation returns the existing public profile for UserExistsDialog", () => {
+  const payload = buildExistingGameCenterPayload(contractPlayer(), "gc-existing");
+  assert.equal(payload.Code, 15400);
+  assert.equal(payload.GameCenterId, "gc-existing");
+  const publicData = payload.PlayerData as Record<string, unknown>;
+  assert.deepEqual(publicData.PlayerId, { S: "player-contract" });
+  assert.deepEqual(publicData.PlayerName, { S: "ContractPlayer" });
+  assert.deepEqual(publicData.Level, { N: "7" });
+  assert.equal(publicData.Token, undefined);
 });
 
 test("player data uses the recovered DynamoDB attribute wire format", () => {

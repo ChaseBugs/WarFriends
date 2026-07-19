@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "crypto";
+import type { ClientSession } from "mongodb";
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import { config } from "../config";
 import { AccountType } from "../constants";
@@ -48,6 +49,45 @@ function normalize(value: string, label: string, maxLength: number): string {
 export async function findIdentity(provider: IdentityProvider, externalId: string): Promise<IdentityDocument | null> {
   const normalized = externalId.trim();
   return normalized ? identities().findOne({ provider, externalId: normalized }) : null;
+}
+
+/**
+ * Insert the first platform identity for a player being created in the same transaction.
+ *
+ * This is intentionally narrower than `linkIdentity`: the caller has not committed the new
+ * player yet, so a normal out-of-transaction owner lookup could not see it. The unique
+ * `(provider, externalId)` index remains the final race-safe ownership check. Mapping a
+ * duplicate Game Center id to 15400 is required because the recovered client uses that exact
+ * error to open its existing-account chooser instead of treating the response as a login fault.
+ */
+export async function insertIdentityForNewPlayer(
+  playerId: string,
+  provider: IdentityProvider,
+  externalIdValue: string,
+  credentialValue: string,
+  session: ClientSession,
+  displayName = "",
+): Promise<{ externalId: string }> {
+  const externalId = normalize(externalIdValue, "External account id", 256);
+  const credential = normalize(credentialValue, "External account credential", 4096);
+  const now = new Date();
+  try {
+    await identities().insertOne({
+      provider,
+      externalId,
+      playerId,
+      credentialHash: hashCredential(provider, externalId, credential),
+      displayName: displayName.trim().slice(0, 100),
+      createdAt: now,
+      updatedAt: now,
+    }, { session });
+  } catch (error) {
+    if ((error as { code?: number }).code === 11000 && provider === "gameCenter") {
+      throw new ApiError(ApiErrorCode.GameCenterAlreadyCreated, "Game Center account already exists.");
+    }
+    throw error;
+  }
+  return { externalId };
 }
 
 export async function linkIdentity(

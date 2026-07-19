@@ -1,12 +1,17 @@
 import { createHmac, randomBytes, randomUUID, timingSafeEqual } from "crypto";
+import type { ClientSession } from "mongodb";
 import { config } from "../config";
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import { AccountType } from "../constants";
 import { newPlayer, type DatabasePlayerDTO } from "../dtos";
 import { findById, insertPlayer, updateAuthCredentials, updateSessionToken } from "./playerService";
-import type { PlayerDocument } from "../db";
+import { withMongoTransaction, type PlayerDocument } from "../db";
 import logger from "../utils/logger";
-import { authenticateIdentity, providerForAccountType } from "./identityService";
+import {
+  authenticateIdentity,
+  insertIdentityForNewPlayer,
+  providerForAccountType,
+} from "./identityService";
 import { normalizePlayerName } from "./playerSettingsService";
 import { createInitialProgression } from "./playerStateService";
 
@@ -59,6 +64,21 @@ export interface CreatedAccount {
   authToken: string;
 }
 
+interface CreateAccountOptions {
+  /** Join a wider identity/account transaction instead of committing the player alone. */
+  session?: ClientSession;
+  /** Platform id mirrored into both the indexed document and DatabasePlayer response. */
+  gameCenterId?: string;
+  /** Transactional callers log only after the complete identity/account commit succeeds. */
+  deferLogging?: boolean;
+}
+
+function logCreatedAccount(created: CreatedAccount, deviceToken?: string): void {
+  logger.auth.register(deviceToken ?? created.doc.id, true, { playerId: created.doc.id });
+  logger.player.create(created.doc.id, created.player.accountName);
+  logger.auth.token("issued", { playerId: created.doc.id });
+}
+
 /**
  * MongoDB is the final authority for account-name uniqueness. A separate "does this name
  * exist?" query would still have a race: two requests could both observe an unused name and
@@ -82,6 +102,7 @@ export async function createCustomAccount(
   accountName: string,
   accountType: AccountType,
   deviceToken?: string,
+  options: CreateAccountOptions = {},
 ): Promise<CreatedAccount> {
   const id = randomUUID();
   const salt = randomBytes(16).toString("hex");
@@ -92,6 +113,7 @@ export async function createCustomAccount(
   const resolvedName = accountName ? normalizePlayerName(accountName) : `Recruit-${id.slice(0, 6)}`;
   const player = newPlayer(id, resolvedName, accountType);
   player.deviceToken = deviceToken ?? "";
+  if (options.gameCenterId) player.gameCenterId = options.gameCenterId;
 
   let doc: PlayerDocument;
   try {
@@ -101,6 +123,7 @@ export async function createCustomAccount(
       normalizedAccountName: player.accountName.toLocaleLowerCase("en-US"),
       authToken,
       accountType,
+      ...(options.gameCenterId ? { gameCenterId: options.gameCenterId } : {}),
       deviceToken,
       leagueTier: player.leagueTier,
       armyPower: player.armyPower,
@@ -109,7 +132,7 @@ export async function createCustomAccount(
       squadName: player.squadName,
       player,
       progression: createInitialProgression(),
-    });
+    }, options.session);
   } catch (error) {
     if (isDuplicateAccountName(error)) {
       throw new ApiError(ApiErrorCode.UnknownAction, "Player name is already in use.");
@@ -117,10 +140,43 @@ export async function createCustomAccount(
     throw error;
   }
 
-  logger.auth.register(deviceToken ?? id, true, { playerId: id });
-  logger.player.create(id, player.accountName);
-  logger.auth.token("issued", { playerId: id });
-  return { doc, player, authToken };
+  const created = { doc, player, authToken };
+  if (!options.deferLogging) logCreatedAccount(created, deviceToken);
+  return created;
+}
+
+/**
+ * Create the first WarFriends account for a Game Center identity.
+ *
+ * `CreateGcAccount` is an unauthenticated first-boot route, so the platform credential must
+ * establish identity ownership while the backend still issues a separate internal session
+ * token for ordinary gameplay calls. Player and identity rows commit together. If two devices
+ * race with the same Game Center id, the unique identity index aborts the losing transaction;
+ * no unreachable Recruit player is left behind.
+ */
+export async function createGameCenterAccount(
+  externalIdValue: string,
+  credentialValue: string,
+  deviceToken?: string,
+): Promise<CreatedAccount> {
+  const gameCenterId = externalIdValue.trim();
+  const created = await withMongoTransaction(async (session) => {
+    const account = await createCustomAccount("", AccountType.GameCenter, deviceToken, {
+      session,
+      gameCenterId,
+      deferLogging: true,
+    });
+    await insertIdentityForNewPlayer(
+      account.doc.id,
+      "gameCenter",
+      gameCenterId,
+      credentialValue,
+      session,
+    );
+    return account;
+  });
+  logCreatedAccount(created, deviceToken);
+  return created;
 }
 
 /**

@@ -1,3 +1,4 @@
+import type { ClientSession } from "mongodb";
 import { players, type PlayerDocument } from "../db";
 import type { DatabasePlayerDTO } from "../dtos";
 
@@ -18,10 +19,13 @@ export async function findByIdOptional(id: string, authToken: string): Promise<P
   return players().findOne({ id, authToken });
 }
 
-export async function insertPlayer(doc: Omit<PlayerDocument, "createdAt" | "updatedAt">): Promise<PlayerDocument> {
+export async function insertPlayer(
+  doc: Omit<PlayerDocument, "createdAt" | "updatedAt">,
+  session?: ClientSession,
+): Promise<PlayerDocument> {
   const now = new Date();
   const full: PlayerDocument = { ...doc, createdAt: now, updatedAt: now };
-  await players().insertOne(full);
+  await players().insertOne(full, session ? { session } : undefined);
   return full;
 }
 

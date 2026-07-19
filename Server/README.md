@@ -72,7 +72,9 @@ Working end-to-end (verified live):
   separate from the rotated internal gameplay session token.
 - **Platform identities**: Facebook, Google Play, and Game Center identities have unique
   ownership, HMAC-protected credentials, provider login, collision-safe link/update, and
-  unlink behavior. Remaining response-contract work is tracked in `BACKEND_FEATURES.md`.
+  unlink behavior. First-time `CreateGcAccount` commits the player and identity in one transaction,
+  returns separate platform/session credentials, and supplies the recovered `15400` existing-account
+  profile contract. Remaining response-contract work is tracked in `BACKEND_FEATURES.md`.
 - **Squads (core membership)**: create / unique-name check / public or requested join /
   invite / accept / decline / promote / demote / kick / leadership transfer / guarded
   leave, plus details and full member snapshots. Client ranks exactly mirror

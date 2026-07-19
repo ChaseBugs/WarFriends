@@ -1,5 +1,6 @@
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import { AccountType } from "../constants";
+import type { PlayerDocument } from "../db";
 import { DbAction } from "../dbActions";
 import { ok } from "../dtos";
 import {
@@ -10,8 +11,9 @@ import {
   type IdentityProvider,
 } from "../services/identityService";
 import { findById } from "../services/playerService";
-import { buildDatabasePlayer } from "../services/playerStateService";
-import { ensureSessionToken } from "../services/authService";
+import { buildDatabasePlayer, buildPlayerStateResponse } from "../services/playerStateService";
+import { createGameCenterAccount, ensureSessionToken, type CreatedAccount } from "../services/authService";
+import { buildPlayerLeaderboardItem } from "../services/leaderboardService";
 import { authed, open, type HandlerEntry } from "./types";
 
 // Platform-account actions recovered from BeanstalkServerManager. Identity records are
@@ -37,6 +39,42 @@ function identityCredential(req: Record<string, unknown>, provider: IdentityProv
 
 function identityName(req: Record<string, unknown>): string {
   return text(req.Name ?? req.PlayerName);
+}
+
+/** Build every field read unconditionally by OGLEHLIPEFM.JLMICAJOHIK. */
+export function buildGameCenterAccountPayload(
+  created: CreatedAccount,
+  gameCenterCredential: string,
+): Record<string, unknown> {
+  return {
+    id: created.doc.id,
+    Id: created.doc.id,
+    PlayerId: created.doc.id,
+    token: created.authToken,
+    Token: created.authToken,
+    password: gameCenterCredential,
+    Password: gameCenterCredential,
+    AccountType: AccountType.GameCenter,
+    Player: buildDatabasePlayer(created.doc),
+    ...buildPlayerStateResponse(created.doc),
+  };
+}
+
+/**
+ * Build error 15400 in the FHIPGDADNFG attribute shape consumed by UserExistsDialog.
+ * The public profile identifies the existing owner without exposing its session token or
+ * the irreversible Game Center credential HMAC.
+ */
+export function buildExistingGameCenterPayload(
+  player: PlayerDocument,
+  gameCenterId: string,
+): Record<string, unknown> {
+  return {
+    Code: ApiErrorCode.GameCenterAlreadyCreated,
+    Message: "Game Center account already exists.",
+    GameCenterId: gameCenterId,
+    PlayerData: buildPlayerLeaderboardItem(player, 0),
+  };
 }
 
 function linkAction(action: DbAction, provider: IdentityProvider): HandlerEntry {
@@ -119,6 +157,31 @@ const gameCenterExistence: HandlerEntry = open(async ({ req }) => {
 });
 
 export const identityHandlers: Record<number, HandlerEntry> = {
+  [DbAction.CreateGcAccount]: open(async ({ req }) => {
+    const gameCenterId = identityId(req, "gameCenter");
+    const credential = identityCredential(req, "gameCenter");
+    try {
+      const created = await createGameCenterAccount(gameCenterId, credential, text(req.DeviceToken));
+      return ok(
+        DbAction.CreateGcAccount,
+        buildGameCenterAccountPayload(created, credential),
+      );
+    } catch (error) {
+      if (!(error instanceof ApiError) || error.code !== ApiErrorCode.GameCenterAlreadyCreated) {
+        throw error;
+      }
+      // A duplicate may be observed either before this request or through the unique-index
+      // race in the transaction. Read after the aborted transaction so the winner is visible.
+      const identity = await findIdentity("gameCenter", gameCenterId);
+      const existing = identity ? await findById(identity.playerId) : null;
+      if (!existing) throw error;
+      return ok(
+        DbAction.CreateGcAccount,
+        buildExistingGameCenterPayload(existing, gameCenterId),
+      );
+    }
+  }),
+
   [DbAction.AddFacebook]: linkAction(DbAction.AddFacebook, "facebook"),
   [DbAction.AddGooglePlay]: linkAction(DbAction.AddGooglePlay, "googlePlay"),
   [DbAction.AddGameCenter]: linkAction(DbAction.AddGameCenter, "gameCenter"),

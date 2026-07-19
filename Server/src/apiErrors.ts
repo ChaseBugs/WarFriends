@@ -16,6 +16,8 @@ export const ApiErrorCode = {
   InsufficientRank: 64,
   NotEnoughCurrency: 70,
   UnknownAction: 90,
+  /** IJEAJGCCHEF.GameCenterAlreadyCreated; the stock client opens UserExistsDialog. */
+  GameCenterAlreadyCreated: 15400,
   DailyRewardWrongIndex: 1000001,
   DailyRewardAlreadyClaimed: 1000002,
 } as const;

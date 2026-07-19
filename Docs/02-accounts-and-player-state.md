@@ -10,6 +10,22 @@ One provider identity may belong to only one WarFriends account, and one player 
 one identity per provider. MongoDB unique indexes enforce both rules in addition to service-level
 checks.
 
+### First-time Game Center creation
+
+The recovered iOS path calls `CreateGcAccount` before any WarFriends session exists. It sends
+`GameCenterId` and `GameCenterPassword`, then routes a successful response through the same account
+parser used by `CreateAccount`. The backend therefore returns the full `Player`, DynamoDB-style
+`PlayerData`, `AccountType = 3`, an internal gameplay `Token`, and the original platform credential
+as `Password`. The two credentials are deliberately different: only the internal token authorizes
+normal gameplay requests.
+
+The new player row and its Game Center identity row are inserted in one MongoDB transaction. The
+unique provider/external-id index decides simultaneous creation races, so the losing request cannot
+leave an unreachable Recruit account. An existing identity returns recovered error `15400` with
+`GameCenterId` and the owner's public FHIPGDADNFG `PlayerData`; this is the exact shape used by the
+stock `UserExistsDialog`. Session credentials and stored HMAC values are never included in that
+duplicate response.
+
 ## Authentication lifecycle
 
 1. Account creation produces a player ID and an opaque session credential.
@@ -74,4 +90,4 @@ were persisted. The next authoritative mutation writes the canonical schema.
 - `Server/src/services/playerService.ts`
 - `Server/src/services/playerStateService.ts`
 - `Server/src/services/progressionMutationService.ts`
-- `Server/src/handlers/auth.ts` and `Server/src/handlers/player.ts`
+- `Server/src/handlers/auth.ts`, `Server/src/handlers/identity.ts`, and `Server/src/handlers/player.ts`
