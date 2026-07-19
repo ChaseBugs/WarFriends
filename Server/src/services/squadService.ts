@@ -229,47 +229,157 @@ export async function createSquad(
     }
     throw error;
   }
-
 }
 
-export async function joinSquad(playerId: string, name: string, allowPrivate = false): Promise<SquadDTO> {
-  const squad = await getByName(name);
-  if (!squad) throw new ApiError(ApiErrorCode.SquadNotFound, "Squad not found.");
-  if (squad.members.some((candidate) => candidate.playerId === playerId)) return squad;
+export interface SquadJoinPlan {
+  squad: SquadDTO;
+  rank: SquadRank;
+  rosterChanged: boolean;
+  admissionStateChanged: boolean;
+  playerMirrorChanged: boolean;
+}
 
-  const player = await findById(playerId);
-  if (!player) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
-  if (player.player.squadName && player.player.squadName !== squad.name) {
+/**
+ * Validate and calculate a squad admission without writing either MongoDB document.
+ *
+ * `approvedBy` is a server-internal actor ID, never a request flag. When present, manager
+ * authority and the target's stored join request are checked against the same squad snapshot
+ * used for capacity and roster changes. This closes the old time-of-check/time-of-use gap in
+ * which a demoted manager could still approve a waiting player.
+ */
+export function planSquadJoin(
+  squad: SquadDTO,
+  player: PlayerDocument,
+  approvedBy?: string,
+): SquadJoinPlan {
+  if (approvedBy) {
+    requireManager(squad, approvedBy);
+    if (!(squad.joinRequests ?? []).some((request) => request.playerId === player.id)) {
+      throw new ApiError(ApiErrorCode.NotSquadMember, "Join request not found.");
+    }
+  }
+
+  const existingMember = squad.members.find((candidate) => candidate.playerId === player.id);
+  const conflictingSquadName = [player.squadName, player.player.squadName]
+    .find((candidate) => candidate && candidate !== squad.name);
+  if (conflictingSquadName) {
+    // A roster entry in one squad must never overwrite a player mirror already owned by a
+    // different squad. Treat that as conflicting state and require an explicit repair.
     throw new ApiError(ApiErrorCode.NotSquadMember, "Player already belongs to another squad.");
   }
-  if (squad.members.length >= (squad.maxMembers || 15)) throw new ApiError(ApiErrorCode.SquadFull, "Squad is full.");
-  if (player.player.medalsBalance < (squad.requiredMedals || 0)) {
-    throw new ApiError(ApiErrorCode.InsufficientRank, "Player does not meet the squad medal requirement.");
-  }
-  // joinPolicy 0 is open. Non-open squads require either a stored invitation or the
-  // `allowPrivate` capability passed only by the manager-controlled accept-request path.
-  // The public JoinSquad handler never obtains that capability from request data.
-  const invited = (squad.invitedPlayerIds ?? []).includes(playerId);
-  if (squad.joinPolicy !== 0 && !allowPrivate && !invited) {
-    throw new ApiError(ApiErrorCode.InsufficientRank, "This squad requires an invitation or approved request.");
+
+  if (!existingMember) {
+    if (squad.members.length >= (squad.maxMembers || 15)) {
+      throw new ApiError(ApiErrorCode.SquadFull, "Squad is full.");
+    }
+    if (player.player.medalsBalance < (squad.requiredMedals || 0)) {
+      throw new ApiError(ApiErrorCode.InsufficientRank, "Player does not meet the squad medal requirement.");
+    }
+    // Policy zero is open. A non-open squad requires either a persisted invitation or an
+    // approval actor whose authority and pending request were verified above.
+    const invited = (squad.invitedPlayerIds ?? []).includes(player.id);
+    if (squad.joinPolicy !== 0 && !approvedBy && !invited) {
+      throw new ApiError(ApiErrorCode.InsufficientRank, "This squad requires an invitation or approved request.");
+    }
   }
 
-  squad.members.push({
-    playerId,
-    name: player.player.accountName,
-    rank: SquadRank.Member,
-    squadPoints: player.player.squadPoints,
-    joinedAt: Date.now(),
-    lastSeenChatTimestamp: 0,
+  const rank = existingMember?.rank ?? SquadRank.Member;
+  const members = existingMember
+    ? [...squad.members]
+    : [
+        ...squad.members,
+        {
+          playerId: player.id,
+          name: player.player.accountName,
+          rank,
+          squadPoints: player.player.squadPoints,
+          joinedAt: Date.now(),
+          lastSeenChatTimestamp: 0,
+        },
+      ];
+  // A successful admission consumes all pending state. Removing both forms prevents a stale
+  // manager approval or invitation from becoming a reusable authorization capability later.
+  const joinRequests = (squad.joinRequests ?? []).filter((request) => request.playerId !== player.id);
+  const invitedPlayerIds = (squad.invitedPlayerIds ?? []).filter((id) => id !== player.id);
+  const admissionStateChanged =
+    joinRequests.length !== (squad.joinRequests ?? []).length
+    || invitedPlayerIds.length !== (squad.invitedPlayerIds ?? []).length;
+
+  return {
+    squad: { ...squad, members, joinRequests, invitedPlayerIds },
+    rank,
+    rosterChanged: !existingMember,
+    admissionStateChanged,
+    playerMirrorChanged:
+      player.squadName !== squad.name
+      || player.player.squadName !== squad.name
+      || player.player.squadRank !== rank,
+  };
+}
+
+async function joinSquadTransaction(playerId: string, requestedName: string, approvedBy?: string): Promise<SquadDTO> {
+  const name = cleanName(requestedName);
+  const result = await withMongoTransaction(async (session) => {
+    const [squad, player] = await Promise.all([
+      squads().findOne({ name }, { session }),
+      players().findOne({ id: playerId }, { session }),
+    ]);
+    if (!squad) throw new ApiError(ApiErrorCode.SquadNotFound, "Squad not found.");
+    if (!player) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
+
+    const plan = planSquadJoin(squad, player, approvedBy);
+    const now = new Date();
+    if (plan.rosterChanged || plan.admissionStateChanged) {
+      const squadUpdate = await squads().updateOne(
+        { name: squad.name, updatedAt: squad.updatedAt },
+        {
+          $set: {
+            members: plan.squad.members,
+            joinRequests: plan.squad.joinRequests,
+            invitedPlayerIds: plan.squad.invitedPlayerIds,
+            updatedAt: now,
+          },
+        },
+        { session },
+      );
+      if (squadUpdate.modifiedCount !== 1) {
+        throw new ApiError(ApiErrorCode.InternalServerError, "Squad admission changed concurrently.");
+      }
+    }
+
+    if (plan.playerMirrorChanged) {
+      const playerUpdate = await players().updateOne(
+        {
+          id: player.id,
+          squadName: player.squadName,
+          "player.squadName": player.player.squadName,
+          "player.squadRank": player.player.squadRank,
+        },
+        {
+          $set: {
+            squadName: squad.name,
+            "player.squadName": squad.name,
+            "player.squadRank": plan.rank,
+            updatedAt: now,
+          },
+        },
+        { session },
+      );
+      if (playerUpdate.modifiedCount !== 1) {
+        // The surrounding transaction also rolls back the roster/pending-state update.
+        throw new ApiError(ApiErrorCode.InternalServerError, "Player squad state changed concurrently.");
+      }
+    }
+    return { squad: plan.squad, joined: plan.rosterChanged };
   });
-  // Membership consumes all pending admission state. Leaving these entries behind would
-  // let a later manager action replay an already accepted application or invitation.
-  squad.joinRequests = (squad.joinRequests ?? []).filter((request) => request.playerId !== playerId);
-  squad.invitedPlayerIds = (squad.invitedPlayerIds ?? []).filter((id) => id !== playerId);
-  await persist(squad);
-  await updatePlayerFields(playerId, { squadName: squad.name, squadRank: SquadRank.Member });
-  logger.squad.event("Player joined squad", { name: squad.name, playerId });
-  return squad;
+
+  if (result.joined) logger.squad.event("Player joined squad", { name: result.squad.name, playerId });
+  return result.squad;
+}
+
+/** Public join path: privacy can be satisfied only by an open policy or stored invitation. */
+export async function joinSquad(playerId: string, name: string): Promise<SquadDTO> {
+  return joinSquadTransaction(playerId, name);
 }
 
 export async function requestToJoin(playerId: string, name: string): Promise<SquadDTO> {
@@ -293,16 +403,7 @@ export async function requestToJoin(playerId: string, name: string): Promise<Squ
 }
 
 export async function acceptJoinRequest(actorId: string, targetId: string, name: string): Promise<SquadDTO> {
-  const squad = await getByName(name);
-  if (!squad) throw new ApiError(ApiErrorCode.SquadNotFound, "Squad not found.");
-  requireManager(squad, actorId);
-  if (!squad.joinRequests.some((request) => request.playerId === targetId)) {
-    throw new ApiError(ApiErrorCode.NotSquadMember, "Join request not found.");
-  }
-  // `true` is a service-internal authorization result, not a client-controlled privacy
-  // override. joinSquad still repeats capacity, medal, and existing-membership validation
-  // because those facts may have changed while the request was waiting.
-  return joinSquad(targetId, squad.name, true);
+  return joinSquadTransaction(targetId, name, actorId);
 }
 
 export async function declineJoinRequest(actorId: string, targetId: string, name: string): Promise<SquadDTO> {

@@ -24,6 +24,13 @@ Implemented flows include:
 Every mutation verifies actor membership, actor authority, target membership, capacity, and join
 policy. A leader cannot accidentally leave a squad without a valid succession path.
 
+Public joins, invitation joins, and manager-approved join requests use one admission transaction.
+The transaction reads the squad and target player from one snapshot, rechecks capacity, medal
+requirements, privacy, invitation/request state, and the approving manager's current rank, then
+commits the roster, consumes pending admission records, and updates the player's squad mirror
+together. A replay cannot duplicate the roster, and an older roster-only partial state is repaired
+without changing an existing member's rank.
+
 ## Squad creation economy
 
 Squad creation is a paid, server-authoritative operation. The recovered
@@ -87,8 +94,8 @@ client protocol task.
 ## Missing squad systems
 
 - squad events, divisions, milestones, and wars;
-- atomic multi-document transactions for join, leave, invite acceptance, rank, and leadership
-  mutations (creation is already transactional);
+- atomic multi-document transactions for leave, rank, kick, and leadership mutations (creation
+  and all successful admission paths are already transactional);
 - chat delivery and moderation.
 
 Unrecovered actions remain rejected rather than mutating guessed card or event state.
