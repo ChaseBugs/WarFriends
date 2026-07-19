@@ -14,14 +14,17 @@ Each entry is keyed by:
 
 - `clientVersion`;
 - deterministic `catalogRevision`;
-- `kind` (`weapon` or `unit`);
+- `kind` (`weapon`, `unit`, `rank`, or `weaponFeature`);
 - Google2u `key`.
 
 An entry also stores availability, source path/SHA-256/schema version, an entry content hash, and a
 joined data payload.
 
-Weapon payloads contain the shop definition and all normal upgrade transitions. Unit payloads
-contain roster, behavior, deployment, purchase, tier, and normal/special/Elite level information.
+Weapon payloads contain the shop definition, all normal upgrade transitions, and every playable
+DPS row. Unit payloads contain roster, behavior, deployment, purchase, tier, and
+normal/special/Elite level information. Rank documents contain the zero-based index, display level,
+and exact `ARMYPOWER` value. Weapon-feature reference documents preserve nine DPS coefficients for
+each of 11 categories without making the incomplete black-market acquisition path playable.
 
 ### `gameCatalogReleases`
 
@@ -41,6 +44,7 @@ the same revision and upserts the same keys, making startup synchronization idem
 
 - 84 playable weapons and 9 unresolved weapon rows;
 - 5,781 weapon upgrade transitions;
+- 5,865 playable weapon DPS rows, 58 rank-power rows, and 11 weapon-feature category rows;
 - 24 playable units, 3 helper units, and 18 unresolved unit rows;
 - 4,124 normal, 684 special, and 216 Elite unit rows.
 
@@ -61,7 +65,7 @@ and entry count.
 
 ## Extension rules
 
-Future extractors should follow the same model for decals, cards, packs, rank power, mission tables,
+Future extractors should follow the same model for decals, cards, packs, mission tables,
 achievements, Arena loot, and archived live-ops sheets:
 
 1. record client version and exact source hash;

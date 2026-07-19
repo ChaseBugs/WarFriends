@@ -7,14 +7,6 @@ remaining work by gameplay dependency rather than duplicating every `DatabaseAct
 
 ## Highest priority
 
-### Complete authoritative Army Power
-
-- extract every playable weapon DPS row;
-- extract player-level `ARMYPOWER` rows;
-- include only equipped, owned, supported weapons;
-- recompute `UpdateArmyPower` from server-owned state;
-- stop accepting the client value as authority.
-
 ### Improve PvP authority
 
 - provide a Photon-compatible client path or complete the WebSocket adapter;

@@ -5,6 +5,7 @@ import { ApiError, ApiErrorCode } from "../apiErrors";
 import { updatePlayerFields } from "../services/playerService";
 import { replaceCustomCredential } from "../services/authService";
 import { buildDatabasePlayer, buildPlayerStateResponse } from "../services/playerStateService";
+import { recomputePlayerArmyPower } from "../services/armyPowerService";
 import {
   ensurePlayerNameAvailable,
   normalizeCountry,
@@ -90,13 +91,19 @@ export const playerHandlers: Record<number, HandlerEntry> = {
     return ok(DbAction.ChangePlayerCountry, { Country: country, NewCountryCode: country });
   }),
 
-  [DbAction.UpdateArmyPower]: authed(async ({ player, req }) => {
-    const armyPower = Math.max(0, Math.floor(Number(req.ArmyPower)));
-    if (Number.isFinite(armyPower)) {
-      player!.player.armyPower = armyPower;
-      await updatePlayerFields(player!.id, { armyPower });
-    }
-    return ok(DbAction.UpdateArmyPower, { ArmyPower: player!.player.armyPower });
+  [DbAction.UpdateArmyPower]: authed(async ({ player }) => {
+    // The recovered client normally echoes ArmyPower after detecting a boot mismatch, but
+    // InstantBattle also invokes this action with no value. Neither form is authoritative:
+    // recompute all three LevelManager components from the latest persisted revision and use
+    // the client request only as a signal that the public/indexed cache should be refreshed.
+    const power = await recomputePlayerArmyPower(player!.id);
+    player!.player.armyPower = power.total;
+    return ok(DbAction.UpdateArmyPower, {
+      ArmyPower: power.total,
+      UnitPower: power.unitPower,
+      WeaponPower: power.weaponPower,
+      RankPower: power.rankPower,
+    });
   }),
 
   [DbAction.UpdateSettings]: authed(async ({ player, req }) => {

@@ -15,12 +15,15 @@ test("material database joins every recovered weapon and unit family", () => {
 
   assert.equal(catalog.clientVersion, GAME_CATALOG_CLIENT_VERSION);
   assert.match(catalog.catalogRevision, /^[0-9a-f]{64}$/);
-  assert.equal(catalog.entries.length, 138);
+  assert.equal(catalog.entries.length, 207);
   assert.deepEqual(catalog.counts, {
     weapons: 93,
     playableWeapons: 84,
     unresolvedWeapons: 9,
     weaponUpgradeLevels: 5_781,
+    weaponPowerLevels: 5_865,
+    rankPowerLevels: 58,
+    weaponFeatureRows: 11,
     units: 45,
     playableUnits: 24,
     helperUnits: 3,
@@ -38,6 +41,23 @@ test("material database joins every recovered weapon and unit family", () => {
     warBucks: 500,
     deliverySeconds: 60,
   });
+  assert.equal((ak47?.data.powerByLevel as number[])[0], 68.544);
+
+  const firstRank = catalog.entries.find((entry) =>
+    entry.kind === "rank" && entry.key === "Level.1");
+  assert.deepEqual(firstRank?.data.definition, {
+    index: 0,
+    displayLevel: 1,
+    armyPower: 93,
+  });
+
+  const assaultFeatures = catalog.entries.find((entry) =>
+    entry.kind === "weaponFeature" && entry.key === "WeaponFeature.AssaultRifle");
+  assert.equal(assaultFeatures?.availability, "reference");
+  assert.equal(
+    ((assaultFeatures?.data.definition as { dpsByFeature: unknown[] }).dpsByFeature).length,
+    9,
+  );
 
   const shotgunner = catalog.entries.find((entry) =>
     entry.kind === "unit" && entry.key === "Google2u.DBUpgradeSlotsShotgunner");
@@ -97,5 +117,5 @@ test("catalog sync writes all immutable entries before publishing the release po
   assert.deepEqual(calls, ["entries", "release"]);
   assert.equal(entryOperations, built.entries.length);
   assert.equal(publishedRelease?.catalogRevision, built.catalogRevision);
-  assert.equal(publishedRelease?.entryCount, 138);
+  assert.equal(publishedRelease?.entryCount, 207);
 });

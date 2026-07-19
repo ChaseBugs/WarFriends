@@ -43,16 +43,17 @@ path until that system is implemented.
 serialized `levels[index].row.ARMYPOWER` value is therefore the rank contribution. Display level is
 `index + 1` and must not be used as an array index without conversion.
 
-## Update flow and current boundary
+## Update flow
 
 The recovered client sends `UpdateArmyPower` when its locally calculated value differs from the
-value restored at boot. The final backend must recompute all three components from server-owned
-inventory and catalog data and persist that result; a client-provided value is only a diagnostic
-assertion.
+value restored at boot. The backend ignores that claimed value, reloads one consistent progression
+revision, recomputes all three components, and writes the sum to both the indexed player field and
+the public DTO. A concurrent inventory mutation makes the revision check fail and causes a reload.
 
-The unit component is authoritative. Weapon DPS and rank-level catalog extraction are the remaining
-work before the public player value can be replaced entirely by a server recomputation. Until then,
-inventory mutation services do not persist a client-calculated Army Power total.
+The checked-in power artifact contains 5,865 normal weapon DPS rows, 58 rank rows, all nine feature
+coefficients for each of 11 weapon categories, and an exact MainScene SHA-256.
+`npm run verify:army-power` proves that it still matches the recovered scene. Feature rows remain
+reference-only until black-market acquisition is server authoritative.
 
 ## Security invariants
 
@@ -66,4 +67,6 @@ inventory mutation services do not persist a client-calculated Army Power total.
 
 - Recovered client: `LevelManager.cs`, `WeaponLevelsSetup.cs`, and `UpgradeSlots.cs`.
 - Server: `Server/src/services/unitInventoryService.ts`.
-- Pending integration point: `Server/src/handlers/player.ts` (`UpdateArmyPower`).
+- `Server/src/services/armyPowerService.ts`
+- `Server/scripts/Extract-ArmyPowerCatalog.mjs`
+- `Server/src/handlers/player.ts` (`UpdateArmyPower`)
