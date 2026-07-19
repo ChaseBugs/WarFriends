@@ -1,0 +1,188 @@
+scene=Assets/Scenes/MainScene.unity
+
+component=AssetBundleManager path=Managers/Assets Bundle Manager
+  CPCHMFPCEOP =list(count=227, nulls=0)
+
+component=AssignmentsManager path=Managers/Assignments Manager
+  data =<null>
+
+component=CamosManager path=Managers/Camos Manager
+  playerVisualCategories =list(count=4, nulls=0)
+  mainPlayer =PlayerController:Player
+  visualVisibility =list(count=1229, nulls=0)
+  camoHairConfiguration =list(count=0, nulls=0)
+  loadPaths =False
+  data =<null>
+
+component=CardManagerDeathmatchOffline path=Managers/Card Manager Offline DM
+  GNIOLPEKCIL =System.Collections.Generic.Dictionary`2[System.String,Card]
+  LHFEAHHMHPG =list(count=0, nulls=0)
+  OPMLIHKMOLJ =list(count=0, nulls=0)
+
+component=EventTrackingManager path=Managers/Event Tracking Manager
+
+component=GameController path=Managers/Game Controllers
+  FJODNDELMBL =GameControllerCampaign:GameControllerCampaing
+  GEBDKFCNCAC =GameControllerCoop:GameControllerCoop
+  GMNKFFNFEHG =GameControllerDeathMatch:GameControllerDeathMatch
+  NOPKOCCCFIM =GameControllerDeathMatchOffline:GameControllerDeathMatchOffline
+  CBAPHFGNLLH =GameControllerTutorial:GameControllerTutorial
+  MBPKLMKBJAB =GameControllerWarArena:GameControllerWararena
+  MNMLNIMFMJP =None
+  ALPBOGHGLGK =<destroyed-or-missing>
+  KKHKAJPNDEC =<null>
+  KMJGIGDJKMH =
+  JIMEEFOHFCC =<destroyed-or-missing>
+  FHABFFKPODN =PlayerController:Player
+
+component=GameVariables path=GameVariables
+  AHNKJAAIHBM =
+  IBJLJJEALDM =
+  MLEKEMGDJMG =
+
+component=LevelBehaviourManager path=Managers/Level Behaviour Manager
+  DHKKHDABING =list(count=28, nulls=0)
+  ODBNDAPJJKO =System.Collections.Generic.Dictionary`2[System.String,LevelBehaviour]
+  HHACPHOMPIL =System.Collections.Generic.Dictionary`2[LevelBehaviour,System.Collections.Generic.List`1[AIObject]]
+
+component=LevelManager path=Managers/Levels Manager
+  weaponLevelsSetups =list(count=211, nulls=18, null_indices=176;177;178;179;180;181;182;183, null_object_members=0.JMFBJIJINKN;1.JMFBJIJINKN;2.JMFBJIJINKN;3.JMFBJIJINKN;4.JMFBJIJINKN;5.JMFBJIJINKN;6.JMFBJIJINKN;7.JMFBJIJINKN;8.JMFBJIJINKN;9.JMFBJIJINKN;10.JMFBJIJINKN;11.JMFBJIJINKN)
+  behaviours =list(count=41, nulls=17, null_indices=24;25;26;27;28;29;30;31, null_object_members=0.BMNHHCCBAAN;0.LMNPOINIJBD;0.KHKAAGCIJPO;1.BMNHHCCBAAN;1.LMNPOINIJBD;1.KHKAAGCIJPO;2.BMNHHCCBAAN;2.LMNPOINIJBD;2.KHKAAGCIJPO;3.BMNHHCCBAAN;3.LMNPOINIJBD;3.KHKAAGCIJPO)
+  additionalBehaviours =list(count=5, nulls=2, null_indices=3;4)
+  levelExperience =0
+  experience =7500
+  levels =list(count=58, nulls=0)
+  data =<null>
+
+component=MatchManager path=Managers/Game Controllers
+
+component=NetworkObjectPool path=Pools/NetworkPool
+  LNHBALFMHOM =list(count=38, nulls=0)
+  EMNLEPPGPBD =list(count=51, nulls=0)
+  CALAKLNMEFF =<null>
+  JEAFHEHKIKK =<null>
+  APCGDLEHGKL =<null>
+
+component=ObjectPool path=GUIStuff/UIRoot/2D Camera/GUiManager
+  LNHBALFMHOM =list(count=40, nulls=0)
+  EMNLEPPGPBD =list(count=54, nulls=0)
+  CALAKLNMEFF =<null>
+  JEAFHEHKIKK =<null>
+  APCGDLEHGKL =<null>
+
+component=ObjectPool path=Pools/AmmoPool
+  LNHBALFMHOM =list(count=7, nulls=0)
+  EMNLEPPGPBD =list(count=12, nulls=0)
+  CALAKLNMEFF =<null>
+  JEAFHEHKIKK =<null>
+  APCGDLEHGKL =<null>
+
+component=ObjectPool path=Pools/ObjectPool
+  LNHBALFMHOM =list(count=12, nulls=0)
+  EMNLEPPGPBD =list(count=12, nulls=0)
+  CALAKLNMEFF =<null>
+  JEAFHEHKIKK =<null>
+  APCGDLEHGKL =<null>
+
+component=OfferManager path=Managers/Offer Manager
+  HAMCICHNEDB =300
+  FLELEOEKFLI =
+  CENJLHLBBDM =0
+
+component=PlayerController path=ArmyUnitRig/player texture camera/Player For Rendering
+  LMIHBNGHEHM =<null>
+  FMLNJGIHJOK =list(count=2, nulls=0, null_object_members=0.KDICJBJCOOD;1.KDICJBJCOOD)
+  FOCIOKMPCAG =DestroyableObjectPlayer:Player For Rendering
+  KPIGIEPMLLC =False
+  FEHCCGEGPLH =<null>
+  EFFIOHJHFHI =<null>
+  NAGAHNHAKBJ =0
+  EHHHBEMKGOE =CHEIFOOIMEH
+  JEHDCCKBPPD =AimTarget:AimTargetSwipe
+  KCGNHJOLNKD =KinematicRagdoll:character_assault_1
+  mMeshChanger =SoldierMeshChanger:Player For Rendering
+  JPMHIGNOPBL =<null>
+  AGOGEJNFGEL =0
+  JODNNABEFDH =False
+  COHFDCGJECK =False
+  GIDLKCONHAC =False
+  ODCLPMADGFC =Enemies
+  JFECKJEDJNJ =False
+  EAOOLOIHKPP =1
+  KIIHLIPAGIH =False
+  CDBNKOPKCJB =False
+  OPCGNNFGFOD =1
+  DDGBIBMPEOE =list(count=10, nulls=0)
+  FAOHFEPIFGJ =True
+  LAADDLGBFIG =<null>
+  KJMFJFCDEDH =HudObjectIndicator:Player For Rendering
+  OMKPDDNOJEF =False
+
+component=PlayerController path=MainSceneRootNew/Player
+  LMIHBNGHEHM =<null>
+  FMLNJGIHJOK =list(count=2, nulls=0, null_object_members=0.KDICJBJCOOD;1.KDICJBJCOOD)
+  FOCIOKMPCAG =DestroyableObjectPlayer:Player
+  KPIGIEPMLLC =False
+  FEHCCGEGPLH =<null>
+  EFFIOHJHFHI =<null>
+  NAGAHNHAKBJ =0
+  EHHHBEMKGOE =CHEIFOOIMEH
+  JEHDCCKBPPD =AimTarget:AimTargetSwipe
+  KCGNHJOLNKD =KinematicRagdoll:character_assault_1
+  mMeshChanger =SoldierMeshChanger:Player
+  JPMHIGNOPBL =<null>
+  AGOGEJNFGEL =0
+  JODNNABEFDH =False
+  COHFDCGJECK =False
+  GIDLKCONHAC =False
+  ODCLPMADGFC =Enemies
+  JFECKJEDJNJ =False
+  EAOOLOIHKPP =1
+  KIIHLIPAGIH =False
+  CDBNKOPKCJB =False
+  OPCGNNFGFOD =1
+  DDGBIBMPEOE =list(count=10, nulls=0)
+  FAOHFEPIFGJ =True
+  LAADDLGBFIG =<null>
+  KJMFJFCDEDH =HudObjectIndicator:Player
+  OMKPDDNOJEF =False
+
+component=PlayerTexturePool path=Pools/PlayerTexturePool
+  FNKHCBMODPB =20
+
+component=PushNotificationManager path=Managers/Push Notification Manager
+  data =<null>
+
+component=ReminderManager path=Managers/Remainder Manager
+  weaponForUpgrade =<null>
+  unitForUpgrade =<null>
+  data =<null>
+
+component=ScoreManager path=Managers/Score Manager
+  LDAAJEFHFAH =<destroyed-or-missing>
+  DMDMFCENCOJ =1.1
+  FJPNILFKIAB =0.075
+  KFPGCFFPIJK =False
+  HOHGDIKCKFM =0
+  IAOLLEBPOLK =0
+  OONJGPCEJMJ =System.Collections.Generic.Dictionary`2[SkillShot+SkillShotType,System.Int32]
+  KDBOEKLEPLG =System.Collections.Generic.Dictionary`2[SkillShot+SkillShotType,System.Int32]
+
+component=SettingsManager path=Managers/Settings Manager
+  data =<null>
+
+component=WeaponInventory path=ArmyUnitRig/player texture camera/Player For Rendering
+  KCGKDDDNONB =list(count=212, nulls=18, null_indices=177;178;179;180;181;182;183;184)
+  COHKHNALDPH =Mine:Mine
+  LIEDNEJPLMA =0
+  LAGONJMBJMM =list(count=0, nulls=0)
+  HKGLMFFAHFN =False
+  FBAIIPAKIJD =0
+
+component=WeaponInventory path=MainSceneRootNew/Player
+  KCGKDDDNONB =list(count=212, nulls=18, null_indices=177;178;179;180;181;182;183;184)
+  COHKHNALDPH =Mine:Mine
+  LIEDNEJPLMA =0
+  LAGONJMBJMM =list(count=0, nulls=0)
+  HKGLMFFAHFN =False
+  FBAIIPAKIJD =0

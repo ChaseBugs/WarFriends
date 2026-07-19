@@ -1,0 +1,2034 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1895453043511160
+GameObject:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Component:
+  - component: {fileID: 4663417314893803}
+  - component: {fileID: 114352511337315063}
+  m_Layer: 0
+  m_Name: GuiAtlasCommon
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4663417314893803
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1895453043511160}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: -0, z: -0}
+--- !u!114 &114352511337315063
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1895453043511160}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1582492658, guid: a6a460bc9cda68a8c89553f1ec5be757, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  material: {fileID: 2100000, guid: db31eff813002c64cb1de6342d4e271b, type: 2}
+  sprites:
+  - name: brackets-universal-horizontal
+    outer:
+      serializedVersion: 2
+      x: 809
+      y: 155
+      width: 43
+      height: 43
+    inner:
+      serializedVersion: 2
+      x: 822
+      y: 170
+      width: 22
+      height: 15
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: whiteRectangle
+    outer:
+      serializedVersion: 2
+      x: 1011
+      y: 883
+      width: 10
+      height: 10
+    inner:
+      serializedVersion: 2
+      x: 1014
+      y: 886
+      width: 4
+      height: 4
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-loadingcircle
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 401
+      width: 280
+      height: 280
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 401
+      width: 280
+      height: 280
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-header
+    outer:
+      serializedVersion: 2
+      x: 442
+      y: 323
+      width: 35
+      height: 54
+    inner:
+      serializedVersion: 2
+      x: 444
+      y: 353
+      width: 3
+      height: 19
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-noammo
+    outer:
+      serializedVersion: 2
+      x: 720
+      y: 932
+      width: 93
+      height: 92
+    inner:
+      serializedVersion: 2
+      x: 720
+      y: 932
+      width: 93
+      height: 92
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-heal
+    outer:
+      serializedVersion: 2
+      x: 766
+      y: 13
+      width: 46
+      height: 46
+    inner:
+      serializedVersion: 2
+      x: 766
+      y: 13
+      width: 46
+      height: 46
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-lightbox-bg
+    outer:
+      serializedVersion: 2
+      x: 562
+      y: 577
+      width: 59
+      height: 90
+    inner:
+      serializedVersion: 2
+      x: 590
+      y: 621
+      width: 3
+      height: 2
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-button-small
+    outer:
+      serializedVersion: 2
+      x: 537
+      y: 774
+      width: 79
+      height: 124
+    inner:
+      serializedVersion: 2
+      x: 567
+      y: 809
+      width: 19
+      height: 39
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-bg-bronze
+    outer:
+      serializedVersion: 2
+      x: 376
+      y: 209
+      width: 104
+      height: 104
+    inner:
+      serializedVersion: 2
+      x: 376
+      y: 209
+      width: 104
+      height: 104
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-bg-silver
+    outer:
+      serializedVersion: 2
+      x: 427
+      y: 684
+      width: 104
+      height: 104
+    inner:
+      serializedVersion: 2
+      x: 427
+      y: 684
+      width: 104
+      height: 104
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-bg-gold
+    outer:
+      serializedVersion: 2
+      x: 442
+      y: 378
+      width: 104
+      height: 104
+    inner:
+      serializedVersion: 2
+      x: 442
+      y: 378
+      width: 104
+      height: 104
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-shielddestroyed
+    outer:
+      serializedVersion: 2
+      x: 557
+      y: 5
+      width: 54
+      height: 54
+    inner:
+      serializedVersion: 2
+      x: 557
+      y: 5
+      width: 54
+      height: 54
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-dead
+    outer:
+      serializedVersion: 2
+      x: 951
+      y: 972
+      width: 47
+      height: 52
+    inner:
+      serializedVersion: 2
+      x: 951
+      y: 972
+      width: 47
+      height: 52
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-ammo
+    outer:
+      serializedVersion: 2
+      x: 929
+      y: 879
+      width: 59
+      height: 41
+    inner:
+      serializedVersion: 2
+      x: 929
+      y: 879
+      width: 59
+      height: 41
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-healthup
+    outer:
+      serializedVersion: 2
+      x: 648
+      y: 63
+      width: 52
+      height: 45
+    inner:
+      serializedVersion: 2
+      x: 648
+      y: 63
+      width: 52
+      height: 45
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-shieldup
+    outer:
+      serializedVersion: 2
+      x: 721
+      y: 10
+      width: 44
+      height: 49
+    inner:
+      serializedVersion: 2
+      x: 721
+      y: 10
+      width: 44
+      height: 49
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-shieldregen
+    outer:
+      serializedVersion: 2
+      x: 770
+      y: 149
+      width: 38
+      height: 49
+    inner:
+      serializedVersion: 2
+      x: 770
+      y: 149
+      width: 38
+      height: 49
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-hourglass
+    outer:
+      serializedVersion: 2
+      x: 809
+      y: 110
+      width: 42
+      height: 44
+    inner:
+      serializedVersion: 2
+      x: 809
+      y: 110
+      width: 42
+      height: 44
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-card
+    outer:
+      serializedVersion: 2
+      x: 893
+      y: 416
+      width: 42
+      height: 40
+    inner:
+      serializedVersion: 2
+      x: 893
+      y: 416
+      width: 42
+      height: 40
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-emptyclip
+    outer:
+      serializedVersion: 2
+      x: 831
+      y: 457
+      width: 68
+      height: 47
+    inner:
+      serializedVersion: 2
+      x: 831
+      y: 457
+      width: 68
+      height: 47
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-bulletsponge
+    outer:
+      serializedVersion: 2
+      x: 870
+      y: 630
+      width: 50
+      height: 59
+    inner:
+      serializedVersion: 2
+      x: 870
+      y: 630
+      width: 50
+      height: 59
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-freeze
+    outer:
+      serializedVersion: 2
+      x: 612
+      y: 8
+      width: 57
+      height: 51
+    inner:
+      serializedVersion: 2
+      x: 612
+      y: 8
+      width: 57
+      height: 51
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-immortality
+    outer:
+      serializedVersion: 2
+      x: 874
+      y: 889
+      width: 54
+      height: 52
+    inner:
+      serializedVersion: 2
+      x: 874
+      y: 889
+      width: 54
+      height: 52
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-reload
+    outer:
+      serializedVersion: 2
+      x: 897
+      y: 972
+      width: 53
+      height: 52
+    inner:
+      serializedVersion: 2
+      x: 897
+      y: 972
+      width: 53
+      height: 52
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-rateoffire
+    outer:
+      serializedVersion: 2
+      x: 929
+      y: 790
+      width: 69
+      height: 31
+    inner:
+      serializedVersion: 2
+      x: 929
+      y: 790
+      width: 69
+      height: 31
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-pistol
+    outer:
+      serializedVersion: 2
+      x: 768
+      y: 71
+      width: 53
+      height: 37
+    inner:
+      serializedVersion: 2
+      x: 768
+      y: 71
+      width: 53
+      height: 37
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-slowed
+    outer:
+      serializedVersion: 2
+      x: 901
+      y: 546
+      width: 39
+      height: 40
+    inner:
+      serializedVersion: 2
+      x: 901
+      y: 546
+      width: 39
+      height: 40
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-crosshair
+    outer:
+      serializedVersion: 2
+      x: 481
+      y: 213
+      width: 57
+      height: 58
+    inner:
+      serializedVersion: 2
+      x: 481
+      y: 213
+      width: 57
+      height: 58
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-tutorial-hand
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 164
+      width: 177
+      height: 236
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 164
+      width: 177
+      height: 236
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-tutorial-circle
+    outer:
+      serializedVersion: 2
+      x: 427
+      y: 789
+      width: 109
+      height: 109
+    inner:
+      serializedVersion: 2
+      x: 427
+      y: 789
+      width: 109
+      height: 109
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: whiteDot
+    outer:
+      serializedVersion: 2
+      x: 573
+      y: 286
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 573
+      y: 286
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-streakboost
+    outer:
+      serializedVersion: 2
+      x: 874
+      y: 694
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 874
+      y: 694
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-bomb
+    outer:
+      serializedVersion: 2
+      x: 726
+      y: 261
+      width: 43
+      height: 58
+    inner:
+      serializedVersion: 2
+      x: 726
+      y: 261
+      width: 43
+      height: 58
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-button-small-white
+    outer:
+      serializedVersion: 2
+      x: 548
+      y: 900
+      width: 79
+      height: 124
+    inner:
+      serializedVersion: 2
+      x: 578
+      y: 930
+      width: 19
+      height: 44
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-plague
+    outer:
+      serializedVersion: 2
+      x: 665
+      y: 376
+      width: 51
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 665
+      y: 376
+      width: 51
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-meatheads
+    outer:
+      serializedVersion: 2
+      x: 831
+      y: 405
+      width: 61
+      height: 51
+    inner:
+      serializedVersion: 2
+      x: 831
+      y: 405
+      width: 61
+      height: 51
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-crateblocker
+    outer:
+      serializedVersion: 2
+      x: 929
+      y: 921
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 929
+      y: 921
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-sickness
+    outer:
+      serializedVersion: 2
+      x: 972
+      y: 832
+      width: 46
+      height: 46
+    inner:
+      serializedVersion: 2
+      x: 972
+      y: 832
+      width: 46
+      height: 46
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-explosivepistol
+    outer:
+      serializedVersion: 2
+      x: 787
+      y: 328
+      width: 73
+      height: 45
+    inner:
+      serializedVersion: 2
+      x: 787
+      y: 328
+      width: 73
+      height: 45
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-supershields
+    outer:
+      serializedVersion: 2
+      x: 479
+      y: 488
+      width: 64
+      height: 74
+    inner:
+      serializedVersion: 2
+      x: 479
+      y: 488
+      width: 64
+      height: 74
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-cat-shooter
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 38
+      width: 120
+      height: 125
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 38
+      width: 120
+      height: 125
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-cat-explosive
+    outer:
+      serializedVersion: 2
+      x: 427
+      y: 899
+      width: 120
+      height: 125
+    inner:
+      serializedVersion: 2
+      x: 427
+      y: 899
+      width: 120
+      height: 125
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-cat-rusher
+    outer:
+      serializedVersion: 2
+      x: 306
+      y: 899
+      width: 120
+      height: 125
+    inner:
+      serializedVersion: 2
+      x: 306
+      y: 899
+      width: 120
+      height: 125
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-cat-defender
+    outer:
+      serializedVersion: 2
+      x: 306
+      y: 773
+      width: 120
+      height: 125
+    inner:
+      serializedVersion: 2
+      x: 306
+      y: 773
+      width: 120
+      height: 125
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-powerband-damage
+    outer:
+      serializedVersion: 2
+      x: 178
+      y: 201
+      width: 197
+      height: 199
+    inner:
+      serializedVersion: 2
+      x: 178
+      y: 201
+      width: 197
+      height: 199
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-powerband-health
+    outer:
+      serializedVersion: 2
+      x: 281
+      y: 483
+      width: 197
+      height: 198
+    inner:
+      serializedVersion: 2
+      x: 281
+      y: 483
+      width: 197
+      height: 198
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-powerband-damage-ico
+    outer:
+      serializedVersion: 2
+      x: 929
+      y: 822
+      width: 42
+      height: 56
+    inner:
+      serializedVersion: 2
+      x: 929
+      y: 822
+      width: 42
+      height: 56
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-powerband-health-ico
+    outer:
+      serializedVersion: 2
+      x: 813
+      y: 26
+      width: 44
+      height: 44
+    inner:
+      serializedVersion: 2
+      x: 813
+      y: 26
+      width: 44
+      height: 44
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-cardpool-buddycardplaceholder
+    outer:
+      serializedVersion: 2
+      x: 121
+      y: 23
+      width: 44
+      height: 140
+    inner:
+      serializedVersion: 2
+      x: 133
+      y: 63
+      width: 4
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-cardpool-soldier-ico
+    outer:
+      serializedVersion: 2
+      x: 874
+      y: 838
+      width: 54
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 874
+      y: 838
+      width: 54
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-cardpool-button-smallwithdraw
+    outer:
+      serializedVersion: 2
+      x: 861
+      y: 353
+      width: 33
+      height: 51
+    inner:
+      serializedVersion: 2
+      x: 870
+      y: 374
+      width: 5
+      height: 14
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-cardpool-depositarrow
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 3
+      width: 48
+      height: 34
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 3
+      width: 48
+      height: 34
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-cardpool-withdrawsmall-ico
+    outer:
+      serializedVersion: 2
+      x: 743
+      y: 444
+      width: 41
+      height: 30
+    inner:
+      serializedVersion: 2
+      x: 743
+      y: 444
+      width: 41
+      height: 30
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-cardpool-depositsmall-ico
+    outer:
+      serializedVersion: 2
+      x: 726
+      y: 230
+      width: 41
+      height: 30
+    inner:
+      serializedVersion: 2
+      x: 726
+      y: 230
+      width: 41
+      height: 30
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-cardpool-button-deposit
+    outer:
+      serializedVersion: 2
+      x: 804
+      y: 505
+      width: 46
+      height: 90
+    inner:
+      serializedVersion: 2
+      x: 813
+      y: 531
+      width: 9
+      height: 42
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-cardpool-button-withdraw
+    outer:
+      serializedVersion: 2
+      x: 823
+      y: 599
+      width: 46
+      height: 90
+    inner:
+      serializedVersion: 2
+      x: 829
+      y: 625
+      width: 14
+      height: 41
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-powerband-reload
+    outer:
+      serializedVersion: 2
+      x: 178
+      y: 1
+      width: 197
+      height: 199
+    inner:
+      serializedVersion: 2
+      x: 178
+      y: 1
+      width: 197
+      height: 199
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-tier-star
+    outer:
+      serializedVersion: 2
+      x: 897
+      y: 942
+      width: 30
+      height: 29
+    inner:
+      serializedVersion: 2
+      x: 897
+      y: 942
+      width: 30
+      height: 29
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-armypower-ico
+    outer:
+      serializedVersion: 2
+      x: 851
+      y: 537
+      width: 49
+      height: 61
+    inner:
+      serializedVersion: 2
+      x: 851
+      y: 537
+      width: 49
+      height: 61
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-deploy-ico
+    outer:
+      serializedVersion: 2
+      x: 874
+      y: 787
+      width: 54
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 874
+      y: 787
+      width: 54
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-crown-bronze
+    outer:
+      serializedVersion: 2
+      x: 858
+      y: 67
+      width: 43
+      height: 40
+    inner:
+      serializedVersion: 2
+      x: 858
+      y: 67
+      width: 43
+      height: 40
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-crown-gold
+    outer:
+      serializedVersion: 2
+      x: 858
+      y: 26
+      width: 43
+      height: 40
+    inner:
+      serializedVersion: 2
+      x: 858
+      y: 26
+      width: 43
+      height: 40
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-crown-silver
+    outer:
+      serializedVersion: 2
+      x: 831
+      y: 287
+      width: 43
+      height: 40
+    inner:
+      serializedVersion: 2
+      x: 831
+      y: 287
+      width: 43
+      height: 40
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arena-flawless-ico
+    outer:
+      serializedVersion: 2
+      x: 852
+      y: 108
+      width: 40
+      height: 46
+    inner:
+      serializedVersion: 2
+      x: 852
+      y: 108
+      width: 40
+      height: 46
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-influencer-ico
+    outer:
+      serializedVersion: 2
+      x: 989
+      y: 894
+      width: 32
+      height: 26
+    inner:
+      serializedVersion: 2
+      x: 989
+      y: 894
+      width: 32
+      height: 26
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-timer
+    outer:
+      serializedVersion: 2
+      x: 376
+      y: 3
+      width: 98
+      height: 98
+    inner:
+      serializedVersion: 2
+      x: 376
+      y: 3
+      width: 98
+      height: 98
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-bg
+    outer:
+      serializedVersion: 2
+      x: 814
+      y: 942
+      width: 82
+      height: 82
+    inner:
+      serializedVersion: 2
+      x: 814
+      y: 942
+      width: 82
+      height: 82
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-replaykit-ico
+    outer:
+      serializedVersion: 2
+      x: 721
+      y: 60
+      width: 46
+      height: 48
+    inner:
+      serializedVersion: 2
+      x: 721
+      y: 60
+      width: 46
+      height: 48
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-everyplay-ico
+    outer:
+      serializedVersion: 2
+      x: 900
+      y: 496
+      width: 40
+      height: 40
+    inner:
+      serializedVersion: 2
+      x: 900
+      y: 496
+      width: 40
+      height: 40
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-googleplay-ico2
+    outer:
+      serializedVersion: 2
+      x: 306
+      y: 688
+      width: 114
+      height: 84
+    inner:
+      serializedVersion: 2
+      x: 306
+      y: 688
+      width: 114
+      height: 84
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-tilegfx-facebook
+    outer:
+      serializedVersion: 2
+      x: 731
+      y: 596
+      width: 91
+      height: 91
+    inner:
+      serializedVersion: 2
+      x: 731
+      y: 596
+      width: 91
+      height: 91
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-commander-loyaltypoint-small
+    outer:
+      serializedVersion: 2
+      x: 901
+      y: 587
+      width: 38
+      height: 42
+    inner:
+      serializedVersion: 2
+      x: 901
+      y: 587
+      width: 38
+      height: 42
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-top
+    outer:
+      serializedVersion: 2
+      x: 166
+      y: 16
+      width: 5
+      height: 147
+    inner:
+      serializedVersion: 2
+      x: 166
+      y: 16
+      width: 5
+      height: 147
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-lightbox-dusty-angry
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 682
+      width: 305
+      height: 342
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 682
+      width: 305
+      height: 342
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-button-warpath
+    outer:
+      serializedVersion: 2
+      x: 376
+      y: 314
+      width: 65
+      height: 168
+    inner:
+      serializedVersion: 2
+      x: 406
+      y: 344
+      width: 6
+      height: 90
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-prestige-frame-p1
+    outer:
+      serializedVersion: 2
+      x: 479
+      y: 563
+      width: 82
+      height: 120
+    inner:
+      serializedVersion: 2
+      x: 514
+      y: 583
+      width: 12
+      height: 80
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-prestige-frame-p20
+    outer:
+      serializedVersion: 2
+      x: 475
+      y: 88
+      width: 80
+      height: 120
+    inner:
+      serializedVersion: 2
+      x: 510
+      y: 108
+      width: 10
+      height: 80
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-prestige-frame-p10
+    outer:
+      serializedVersion: 2
+      x: 648
+      y: 230
+      width: 77
+      height: 120
+    inner:
+      serializedVersion: 2
+      x: 683
+      y: 250
+      width: 7
+      height: 80
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-prestige-frame-p30
+    outer:
+      serializedVersion: 2
+      x: 665
+      y: 441
+      width: 77
+      height: 120
+    inner:
+      serializedVersion: 2
+      x: 700
+      y: 461
+      width: 7
+      height: 80
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-prestige-frame-p40
+    outer:
+      serializedVersion: 2
+      x: 746
+      y: 692
+      width: 66
+      height: 120
+    inner:
+      serializedVersion: 2
+      x: 773
+      y: 712
+      width: 12
+      height: 80
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-prestige-frame-p50
+    outer:
+      serializedVersion: 2
+      x: 648
+      y: 109
+      width: 60
+      height: 120
+    inner:
+      serializedVersion: 2
+      x: 675
+      y: 129
+      width: 6
+      height: 80
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-augs-utility
+    outer:
+      serializedVersion: 2
+      x: 376
+      y: 102
+      width: 92
+      height: 106
+    inner:
+      serializedVersion: 2
+      x: 376
+      y: 102
+      width: 92
+      height: 106
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-augs-defence
+    outer:
+      serializedVersion: 2
+      x: 639
+      y: 562
+      width: 91
+      height: 105
+    inner:
+      serializedVersion: 2
+      x: 639
+      y: 562
+      width: 91
+      height: 105
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-augs-attack
+    outer:
+      serializedVersion: 2
+      x: 573
+      y: 351
+      width: 91
+      height: 105
+    inner:
+      serializedVersion: 2
+      x: 573
+      y: 351
+      width: 91
+      height: 105
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-augs-attack-rare
+    outer:
+      serializedVersion: 2
+      x: 617
+      y: 794
+      width: 91
+      height: 105
+    inner:
+      serializedVersion: 2
+      x: 617
+      y: 794
+      width: 91
+      height: 105
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-augs-attack-epic
+    outer:
+      serializedVersion: 2
+      x: 481
+      y: 272
+      width: 91
+      height: 105
+    inner:
+      serializedVersion: 2
+      x: 481
+      y: 272
+      width: 91
+      height: 105
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-augs-attack-legendary
+    outer:
+      serializedVersion: 2
+      x: 562
+      y: 668
+      width: 91
+      height: 105
+    inner:
+      serializedVersion: 2
+      x: 562
+      y: 668
+      width: 91
+      height: 105
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-augs-defence-epic
+    outer:
+      serializedVersion: 2
+      x: 556
+      y: 166
+      width: 91
+      height: 105
+    inner:
+      serializedVersion: 2
+      x: 556
+      y: 166
+      width: 91
+      height: 105
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-augs-utility-legendary
+    outer:
+      serializedVersion: 2
+      x: 654
+      y: 688
+      width: 91
+      height: 105
+    inner:
+      serializedVersion: 2
+      x: 654
+      y: 688
+      width: 91
+      height: 105
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-augs-utility-rare
+    outer:
+      serializedVersion: 2
+      x: 709
+      y: 813
+      width: 91
+      height: 105
+    inner:
+      serializedVersion: 2
+      x: 709
+      y: 813
+      width: 91
+      height: 105
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-augs-utility-epic
+    outer:
+      serializedVersion: 2
+      x: 556
+      y: 60
+      width: 91
+      height: 105
+    inner:
+      serializedVersion: 2
+      x: 556
+      y: 60
+      width: 91
+      height: 105
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-augs-defence-legendary
+    outer:
+      serializedVersion: 2
+      x: 628
+      y: 919
+      width: 91
+      height: 105
+    inner:
+      serializedVersion: 2
+      x: 628
+      y: 919
+      width: 91
+      height: 105
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-augs-defence-rare
+    outer:
+      serializedVersion: 2
+      x: 547
+      y: 457
+      width: 91
+      height: 105
+    inner:
+      serializedVersion: 2
+      x: 547
+      y: 457
+      width: 91
+      height: 105
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-titan-progress-red
+    outer:
+      serializedVersion: 2
+      x: 547
+      y: 387
+      width: 18
+      height: 69
+    inner:
+      serializedVersion: 2
+      x: 550
+      y: 390
+      width: 12
+      height: 63
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-prestige-frame-p100
+    outer:
+      serializedVersion: 2
+      x: 709
+      y: 109
+      width: 60
+      height: 120
+    inner:
+      serializedVersion: 2
+      x: 736
+      y: 129
+      width: 6
+      height: 80
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-prestige-frame-p60
+    outer:
+      serializedVersion: 2
+      x: 813
+      y: 811
+      width: 60
+      height: 120
+    inner:
+      serializedVersion: 2
+      x: 840
+      y: 831
+      width: 6
+      height: 80
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-prestige-frame-p80
+    outer:
+      serializedVersion: 2
+      x: 770
+      y: 199
+      width: 60
+      height: 120
+    inner:
+      serializedVersion: 2
+      x: 797
+      y: 219
+      width: 6
+      height: 80
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-apple-button-background
+    outer:
+      serializedVersion: 2
+      x: 787
+      y: 374
+      width: 43
+      height: 100
+    inner:
+      serializedVersion: 2
+      x: 797
+      y: 389
+      width: 23
+      height: 70
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-apple-button-logo
+    outer:
+      serializedVersion: 2
+      x: 980
+      y: 921
+      width: 41
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 980
+      y: 921
+      width: 41
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-settings-facebook
+    outer:
+      serializedVersion: 2
+      x: 870
+      y: 599
+      width: 30
+      height: 30
+    inner:
+      serializedVersion: 2
+      x: 870
+      y: 599
+      width: 30
+      height: 30
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-settings-support
+    outer:
+      serializedVersion: 2
+      x: 822
+      y: 79
+      width: 30
+      height: 28
+    inner:
+      serializedVersion: 2
+      x: 822
+      y: 79
+      width: 30
+      height: 28
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-prestige-frame-p130
+    outer:
+      serializedVersion: 2
+      x: 813
+      y: 690
+      width: 60
+      height: 120
+    inner:
+      serializedVersion: 2
+      x: 838
+      y: 700
+      width: 10
+      height: 100
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-prestige-frame-p110
+    outer:
+      serializedVersion: 2
+      x: 743
+      y: 475
+      width: 60
+      height: 120
+    inner:
+      serializedVersion: 2
+      x: 768
+      y: 485
+      width: 10
+      height: 100
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-prestige-frame-p150
+    outer:
+      serializedVersion: 2
+      x: 726
+      y: 320
+      width: 60
+      height: 120
+    inner:
+      serializedVersion: 2
+      x: 754
+      y: 330
+      width: 4
+      height: 100
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-unitstats-replicachance
+    outer:
+      serializedVersion: 2
+      x: 989
+      y: 879
+      width: 21
+      height: 14
+    inner:
+      serializedVersion: 2
+      x: 989
+      y: 879
+      width: 21
+      height: 14
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-unitstats-replicahealth
+    outer:
+      serializedVersion: 2
+      x: 709
+      y: 798
+      width: 17
+      height: 14
+    inner:
+      serializedVersion: 2
+      x: 709
+      y: 798
+      width: 17
+      height: 14
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-covert-logo
+    outer:
+      serializedVersion: 2
+      x: 281
+      y: 401
+      width: 86
+      height: 81
+    inner:
+      serializedVersion: 2
+      x: 281
+      y: 401
+      width: 86
+      height: 81
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-supercharged-bg
+    outer:
+      serializedVersion: 2
+      x: 475
+      y: 5
+      width: 81
+      height: 54
+    inner:
+      serializedVersion: 2
+      x: 485
+      y: 13
+      width: 11
+      height: 36
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-supercharged-s
+    outer:
+      serializedVersion: 2
+      x: 874
+      y: 745
+      width: 63
+      height: 41
+    inner:
+      serializedVersion: 2
+      x: 874
+      y: 745
+      width: 63
+      height: 41
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-supercharged-triangle
+    outer:
+      serializedVersion: 2
+      x: 670
+      y: 17
+      width: 50
+      height: 45
+    inner:
+      serializedVersion: 2
+      x: 672
+      y: 17
+      width: 5
+      height: 45
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  mCoordinates: 0
+  mPixelSize: 1
+  mReplacement: {fileID: 0}
+  pngPath: GuiAtlasCommon
+  useBinaryData: 0
+  textureWidth: 1024
+  textureHeight: 1024

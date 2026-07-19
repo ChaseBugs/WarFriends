@@ -1,0 +1,165 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!43 &4300000
+Mesh:
+  serializedVersion: 10
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: mortar-elite_shoulderpad-R
+  m_SubMeshes:
+  - serializedVersion: 2
+    firstByte: 0
+    indexCount: 96
+    topology: 0
+    baseVertex: 0
+    firstVertex: 0
+    vertexCount: 40
+    localAABB:
+      m_Center: {x: -0.027924709, y: -0.027890347, z: 0.019226562}
+      m_Extent: {x: 0.021661729, y: 0.023151454, z: 0.026007961}
+  m_Shapes:
+    vertices: []
+    shapes: []
+    channels: []
+    fullWeights: []
+  m_BindPose: []
+  m_BoneNameHashes:
+  m_RootBoneNameHash: 0
+  m_BonesAABB: []
+  m_VariableBoneCountWeights:
+    m_Data:
+  m_MeshCompression: 3
+  m_IsReadable: 0
+  m_KeepVertices: 1
+  m_KeepIndices: 1
+  m_IndexFormat: 0
+  m_IndexBuffer:
+  m_VertexData:
+    serializedVersion: 3
+    m_VertexCount: 0
+    m_Channels:
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    m_DataSize: 0
+    _typelessdata:
+  m_CompressedMesh:
+    m_Vertices:
+      m_NumItems: 120
+      m_Range: 0.09627633
+      m_Start: -0.0510418
+      m_Data: 4724d2e613c764a88f14d68de3c192a76d20226300440ac337253f714c860fc0e4ae1b768d3e0777885364d7ff737087784cecd51f5b48fc73d759fea35981f7381e2cc91800916a6308d9b185c4ff1189b449915dffc3f04dc96ed8353a6300447ada06223ee748cca3598137779de51f5b48fc3fe748cc31b1573f779de5cf0f38169fb68188737087b83e5258f7004cee3e714c86
+      m_BitSize: 10
+    m_UV:
+      m_NumItems: 80
+      m_Range: 0.31884104
+      m_Start: 0.13270316
+      m_Data: 54ee50f762ff63f473fb73f054dd4cf34bdc54cb4cc664c550c362ba73c873bc72dc63f473f063dc73c854ee64c554dd54cb73f07af87add72dc7ac073c816860c7614770c861494037a0b9600860390
+      m_BitSize: 8
+    m_Normals:
+      m_NumItems: 80
+      m_Range: 1.8702464
+      m_Start: -0.9773496
+      m_Data: 44643c5551155ee00540673c8087948a99958a9995a2288a184211d8402519041955f42cd1e4433ef44f3ff55fffd5e62cbdd26deef6edecf66eeefa
+      m_BitSize: 6
+    m_Tangents:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data:
+      m_BitSize: 0
+    m_Weights:
+      m_NumItems: 0
+      m_Data:
+      m_BitSize: 0
+    m_NormalSigns:
+      m_NumItems: 40
+      m_Data: 40ffff7f00
+      m_BitSize: 1
+    m_TangentSigns:
+      m_NumItems: 0
+      m_Data:
+      m_BitSize: 0
+    m_FloatColors:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data:
+      m_BitSize: 0
+    m_BoneIndices:
+      m_NumItems: 0
+      m_Data:
+      m_BitSize: 0
+    m_Triangles:
+      m_NumItems: 96
+      m_Data: 402000c23008c44014c60118c8912046a2200b932c0de3348bf33450244153444dd0544594354d57655d93855d99b6651bc76d1dd7791f187e22287ea34882e2588a26698aa5599e
+      m_BitSize: 6
+    m_UVInfo: 5
+  m_LocalAABB:
+    m_Center: {x: -0.027924709, y: -0.027890347, z: 0.019226562}
+    m_Extent: {x: 0.021661729, y: 0.023151454, z: 0.026007961}
+  m_MeshUsageFlags: 0
+  m_BakedConvexCollisionMesh:
+  m_BakedTriangleCollisionMesh:
+  m_MeshMetrics[0]: 1
+  m_MeshMetrics[1]: 1
+  m_MeshOptimizationFlags: -1
+  m_StreamData:
+    offset: 0
+    size: 0
+    path:

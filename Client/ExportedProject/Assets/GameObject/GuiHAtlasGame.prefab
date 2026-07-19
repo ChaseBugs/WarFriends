@@ -1,0 +1,1854 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1077890471678901
+GameObject:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Component:
+  - component: {fileID: 4506505520819290}
+  - component: {fileID: 114674534887516735}
+  m_Layer: 0
+  m_Name: GuiHAtlasGame
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4506505520819290
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1077890471678901}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: -0, z: -0}
+--- !u!114 &114674534887516735
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1077890471678901}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1582492658, guid: a6a460bc9cda68a8c89553f1ec5be757, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  material: {fileID: 2100000, guid: 0c46c82021614df4f96abd5966b3114d, type: 2}
+  sprites:
+  - name: game-hit-indicator
+    outer:
+      serializedVersion: 2
+      x: 357
+      y: 949
+      width: 204
+      height: 75
+    inner:
+      serializedVersion: 2
+      x: 357
+      y: 949
+      width: 204
+      height: 75
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: whiteRectangle
+    outer:
+      serializedVersion: 2
+      x: 720
+      y: 11
+      width: 10
+      height: 10
+    inner:
+      serializedVersion: 2
+      x: 723
+      y: 14
+      width: 4
+      height: 4
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-reload-bg
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 261
+      width: 162
+      height: 162
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 261
+      width: 162
+      height: 162
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: brackets-universal-horizontal
+    outer:
+      serializedVersion: 2
+      x: 711
+      y: 189
+      width: 43
+      height: 43
+    inner:
+      serializedVersion: 2
+      x: 721
+      y: 203
+      width: 21
+      height: 14
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: whiteDot
+    outer:
+      serializedVersion: 2
+      x: 606
+      y: 286
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 606
+      y: 286
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-reload-fill
+    outer:
+      serializedVersion: 2
+      x: 164
+      y: 449
+      width: 162
+      height: 162
+    inner:
+      serializedVersion: 2
+      x: 164
+      y: 449
+      width: 162
+      height: 162
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-reload-main-bar
+    outer:
+      serializedVersion: 2
+      x: 480
+      y: 793
+      width: 56
+      height: 150
+    inner:
+      serializedVersion: 2
+      x: 505
+      y: 818
+      width: 6
+      height: 100
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-reload-main-bar-fill
+    outer:
+      serializedVersion: 2
+      x: 720
+      y: 27
+      width: 10
+      height: 114
+    inner:
+      serializedVersion: 2
+      x: 721
+      y: 28
+      width: 8
+      height: 112
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-button-small
+    outer:
+      serializedVersion: 2
+      x: 439
+      y: 125
+      width: 79
+      height: 124
+    inner:
+      serializedVersion: 2
+      x: 469
+      y: 155
+      width: 19
+      height: 49
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-button-small-white
+    outer:
+      serializedVersion: 2
+      x: 332
+      y: 526
+      width: 79
+      height: 124
+    inner:
+      serializedVersion: 2
+      x: 362
+      y: 556
+      width: 19
+      height: 49
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-lightbox-bg
+    outer:
+      serializedVersion: 2
+      x: 594
+      y: 523
+      width: 59
+      height: 90
+    inner:
+      serializedVersion: 2
+      x: 622
+      y: 567
+      width: 3
+      height: 2
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-top-box
+    outer:
+      serializedVersion: 2
+      x: 631
+      y: 437
+      width: 24
+      height: 24
+    inner:
+      serializedVersion: 2
+      x: 636
+      y: 442
+      width: 14
+      height: 14
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-stroke
+    outer:
+      serializedVersion: 2
+      x: 740
+      y: 934
+      width: 16
+      height: 16
+    inner:
+      serializedVersion: 2
+      x: 745
+      y: 939
+      width: 6
+      height: 6
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-cardselection-stroke
+    outer:
+      serializedVersion: 2
+      x: 355
+      y: 94
+      width: 78
+      height: 144
+    inner:
+      serializedVersion: 2
+      x: 375
+      y: 159
+      width: 18
+      height: 9
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-cardname-bg
+    outer:
+      serializedVersion: 2
+      x: 355
+      y: 14
+      width: 134
+      height: 74
+    inner:
+      serializedVersion: 2
+      x: 415
+      y: 19
+      width: 14
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-kill-environmental
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 617
+      width: 196
+      height: 196
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 617
+      width: 196
+      height: 196
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-rockettargeting-base
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 819
+      width: 205
+      height: 205
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 819
+      width: 205
+      height: 205
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-rockettargeting
+    outer:
+      serializedVersion: 2
+      x: 357
+      y: 822
+      width: 117
+      height: 121
+    inner:
+      serializedVersion: 2
+      x: 415
+      y: 881
+      width: 1
+      height: 3
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-reload-mag
+    outer:
+      serializedVersion: 2
+      x: 487
+      y: 591
+      width: 86
+      height: 88
+    inner:
+      serializedVersion: 2
+      x: 487
+      y: 591
+      width: 86
+      height: 88
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-connectionerror
+    outer:
+      serializedVersion: 2
+      x: 491
+      y: 512
+      width: 97
+      height: 73
+    inner:
+      serializedVersion: 2
+      x: 491
+      y: 512
+      width: 97
+      height: 73
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-noammo-icon
+    outer:
+      serializedVersion: 2
+      x: 211
+      y: 884
+      width: 140
+      height: 140
+    inner:
+      serializedVersion: 2
+      x: 211
+      y: 884
+      width: 140
+      height: 140
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: tutorial-actionbox-blue
+    outer:
+      serializedVersion: 2
+      x: 366
+      y: 668
+      width: 44
+      height: 44
+    inner:
+      serializedVersion: 2
+      x: 386
+      y: 688
+      width: 4
+      height: 4
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: tutorial-actionbox-bg
+    outer:
+      serializedVersion: 2
+      x: 515
+      y: 356
+      width: 70
+      height: 66
+    inner:
+      serializedVersion: 2
+      x: 545
+      y: 386
+      width: 10
+      height: 6
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: tutorial-actionbox-check
+    outer:
+      serializedVersion: 2
+      x: 304
+      y: 350
+      width: 118
+      height: 93
+    inner:
+      serializedVersion: 2
+      x: 304
+      y: 350
+      width: 118
+      height: 93
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-vs-vip-ico
+    outer:
+      serializedVersion: 2
+      x: 495
+      y: 45
+      width: 124
+      height: 74
+    inner:
+      serializedVersion: 2
+      x: 495
+      y: 45
+      width: 124
+      height: 74
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-explosivepistol-full
+    outer:
+      serializedVersion: 2
+      x: 261
+      y: 156
+      width: 82
+      height: 82
+    inner:
+      serializedVersion: 2
+      x: 261
+      y: 156
+      width: 82
+      height: 82
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: cardsclose
+    outer:
+      serializedVersion: 2
+      x: 202
+      y: 656
+      width: 158
+      height: 157
+    inner:
+      serializedVersion: 2
+      x: 202
+      y: 656
+      width: 158
+      height: 157
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-healthbar-bg
+    outer:
+      serializedVersion: 2
+      x: 666
+      y: 426
+      width: 60
+      height: 44
+    inner:
+      serializedVersion: 2
+      x: 667
+      y: 427
+      width: 9
+      height: 42
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-healthbar-white
+    outer:
+      serializedVersion: 2
+      x: 738
+      y: 288
+      width: 49
+      height: 36
+    inner:
+      serializedVersion: 2
+      x: 739
+      y: 289
+      width: 8
+      height: 34
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-healthbar-red
+    outer:
+      serializedVersion: 2
+      x: 747
+      y: 335
+      width: 49
+      height: 36
+    inner:
+      serializedVersion: 2
+      x: 748
+      y: 336
+      width: 8
+      height: 34
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-healthbar-green
+    outer:
+      serializedVersion: 2
+      x: 742
+      y: 246
+      width: 49
+      height: 36
+    inner:
+      serializedVersion: 2
+      x: 743
+      y: 247
+      width: 8
+      height: 34
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-scorestreak-bar-fill
+    outer:
+      serializedVersion: 2
+      x: 118
+      y: 127
+      width: 10
+      height: 20
+    inner:
+      serializedVersion: 2
+      x: 119
+      y: 128
+      width: 8
+      height: 18
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-scorestreak-bar-bg
+    outer:
+      serializedVersion: 2
+      x: 736
+      y: 8
+      width: 10
+      height: 20
+    inner:
+      serializedVersion: 2
+      x: 737
+      y: 11
+      width: 8
+      height: 14
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-deployment-selected-stroke
+    outer:
+      serializedVersion: 2
+      x: 591
+      y: 356
+      width: 69
+      height: 66
+    inner:
+      serializedVersion: 2
+      x: 633
+      y: 398
+      width: 3
+      height: 2
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-deployment-stroke-fill
+    outer:
+      serializedVersion: 2
+      x: 692
+      y: 238
+      width: 44
+      height: 43
+    inner:
+      serializedVersion: 2
+      x: 722
+      y: 268
+      width: 4
+      height: 3
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-deployment-stroke
+    outer:
+      serializedVersion: 2
+      x: 722
+      y: 377
+      width: 44
+      height: 43
+    inner:
+      serializedVersion: 2
+      x: 752
+      y: 407
+      width: 4
+      height: 3
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-deployment-bar-fill
+    outer:
+      serializedVersion: 2
+      x: 462
+      y: 757
+      width: 10
+      height: 59
+    inner:
+      serializedVersion: 2
+      x: 463
+      y: 758
+      width: 8
+      height: 57
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-gold
+    outer:
+      serializedVersion: 2
+      x: 676
+      y: 287
+      width: 56
+      height: 37
+    inner:
+      serializedVersion: 2
+      x: 676
+      y: 287
+      width: 56
+      height: 37
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-deployment-unit-bg
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 429
+      width: 158
+      height: 182
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 429
+      width: 158
+      height: 182
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-top
+    outer:
+      serializedVersion: 2
+      x: 689
+      y: 547
+      width: 5
+      height: 147
+    inner:
+      serializedVersion: 2
+      x: 691
+      y: 548
+      width: 1
+      height: 126
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-scorestreak-blue
+    outer:
+      serializedVersion: 2
+      x: 417
+      y: 453
+      width: 68
+      height: 119
+    inner:
+      serializedVersion: 2
+      x: 448
+      y: 493
+      width: 2
+      height: 39
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-scorestreak-white
+    outer:
+      serializedVersion: 2
+      x: 640
+      y: 917
+      width: 56
+      height: 107
+    inner:
+      serializedVersion: 2
+      x: 671
+      y: 957
+      width: -10
+      height: 27
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-scorestreak-blue-side
+    outer:
+      serializedVersion: 2
+      x: 818
+      y: 915
+      width: 36
+      height: 109
+    inner:
+      serializedVersion: 2
+      x: 818
+      y: 915
+      width: 36
+      height: 109
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-warpath-missiongoal-bar
+    outer:
+      serializedVersion: 2
+      x: 798
+      y: 934
+      width: 10
+      height: 36
+    inner:
+      serializedVersion: 2
+      x: 799
+      y: 935
+      width: 8
+      height: 34
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-assignments-type-kill
+    outer:
+      serializedVersion: 2
+      x: 118
+      y: 153
+      width: 137
+      height: 102
+    inner:
+      serializedVersion: 2
+      x: 118
+      y: 153
+      width: 137
+      height: 102
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-assignments-type-destroy
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 19
+      width: 137
+      height: 102
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 19
+      width: 137
+      height: 102
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-assignments-type-playvs
+    outer:
+      serializedVersion: 2
+      x: 168
+      y: 348
+      width: 130
+      height: 95
+    inner:
+      serializedVersion: 2
+      x: 168
+      y: 348
+      width: 130
+      height: 95
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-assignments-type-cards
+    outer:
+      serializedVersion: 2
+      x: 261
+      y: 244
+      width: 118
+      height: 98
+    inner:
+      serializedVersion: 2
+      x: 261
+      y: 244
+      width: 118
+      height: 98
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-assignments-type-deploy
+    outer:
+      serializedVersion: 2
+      x: 385
+      y: 255
+      width: 114
+      height: 89
+    inner:
+      serializedVersion: 2
+      x: 385
+      y: 255
+      width: 114
+      height: 89
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-assignments-type-win
+    outer:
+      serializedVersion: 2
+      x: 505
+      y: 272
+      width: 95
+      height: 76
+    inner:
+      serializedVersion: 2
+      x: 505
+      y: 272
+      width: 95
+      height: 76
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-assignments-type-ribbon
+    outer:
+      serializedVersion: 2
+      x: 625
+      y: 19
+      width: 89
+      height: 76
+    inner:
+      serializedVersion: 2
+      x: 625
+      y: 19
+      width: 89
+      height: 76
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-assignments-type-crateenemy
+    outer:
+      serializedVersion: 2
+      x: 515
+      y: 428
+      width: 78
+      height: 78
+    inner:
+      serializedVersion: 2
+      x: 515
+      y: 428
+      width: 78
+      height: 78
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-assignments-type-crate
+    outer:
+      serializedVersion: 2
+      x: 569
+      y: 790
+      width: 78
+      height: 78
+    inner:
+      serializedVersion: 2
+      x: 569
+      y: 790
+      width: 78
+      height: 78
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-assignments-type-skillshot
+    outer:
+      serializedVersion: 2
+      x: 579
+      y: 619
+      width: 74
+      height: 73
+    inner:
+      serializedVersion: 2
+      x: 579
+      y: 619
+      width: 74
+      height: 73
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-assignments-type-score
+    outer:
+      serializedVersion: 2
+      x: 524
+      y: 132
+      width: 91
+      height: 55
+    inner:
+      serializedVersion: 2
+      x: 524
+      y: 132
+      width: 91
+      height: 55
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-check-gold
+    outer:
+      serializedVersion: 2
+      x: 211
+      y: 819
+      width: 72
+      height: 59
+    inner:
+      serializedVersion: 2
+      x: 211
+      y: 819
+      width: 72
+      height: 59
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-assignments-bg
+    outer:
+      serializedVersion: 2
+      x: 760
+      y: 22
+      width: 6
+      height: 218
+    inner:
+      serializedVersion: 2
+      x: 761
+      y: 23
+      width: 4
+      height: 216
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-assignments-bar-gold
+    outer:
+      serializedVersion: 2
+      x: 748
+      y: 34
+      width: 6
+      height: 54
+    inner:
+      serializedVersion: 2
+      x: 750
+      y: 36
+      width: 2
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-assignments-bar-blue
+    outer:
+      serializedVersion: 2
+      x: 736
+      y: 34
+      width: 6
+      height: 54
+    inner:
+      serializedVersion: 2
+      x: 738
+      y: 36
+      width: 2
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-assignments-bar-red
+    outer:
+      serializedVersion: 2
+      x: 749
+      y: 113
+      width: 4
+      height: 28
+    inner:
+      serializedVersion: 2
+      x: 750
+      y: 115
+      width: 2
+      height: 24
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-stroke-1px
+    outer:
+      serializedVersion: 2
+      x: 505
+      y: 256
+      width: 10
+      height: 10
+    inner:
+      serializedVersion: 2
+      x: 508
+      y: 259
+      width: 4
+      height: 4
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-pause-briefingbox
+    outer:
+      serializedVersion: 2
+      x: 665
+      y: 476
+      width: 51
+      height: 58
+    inner:
+      serializedVersion: 2
+      x: 707
+      y: 525
+      width: 5
+      height: 5
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-pause-levelbg
+    outer:
+      serializedVersion: 2
+      x: 417
+      y: 578
+      width: 64
+      height: 134
+    inner:
+      serializedVersion: 2
+      x: 435
+      y: 595
+      width: 6
+      height: 81
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-neardeath-indicator
+    outer:
+      serializedVersion: 2
+      x: 625
+      y: 101
+      width: 80
+      height: 86
+    inner:
+      serializedVersion: 2
+      x: 625
+      y: 101
+      width: 80
+      height: 86
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-scorestreak-bar-crate
+    outer:
+      serializedVersion: 2
+      x: 666
+      y: 370
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 666
+      y: 370
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-autodeploy-bg
+    outer:
+      serializedVersion: 2
+      x: 764
+      y: 940
+      width: 28
+      height: 84
+    inner:
+      serializedVersion: 2
+      x: 773
+      y: 947
+      width: 12
+      height: 25
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-replaykit-rec-ico
+    outer:
+      serializedVersion: 2
+      x: 599
+      y: 467
+      width: 60
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 605
+      y: 472
+      width: 49
+      height: 40
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-heroic-wing
+    outer:
+      serializedVersion: 2
+      x: 567
+      y: 956
+      width: 66
+      height: 68
+    inner:
+      serializedVersion: 2
+      x: 567
+      y: 956
+      width: 66
+      height: 68
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-heroic-button
+    outer:
+      serializedVersion: 2
+      x: 659
+      y: 540
+      width: 24
+      height: 154
+    inner:
+      serializedVersion: 2
+      x: 667
+      y: 554
+      width: 8
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-energybar-bg
+    outer:
+      serializedVersion: 2
+      x: 332
+      y: 452
+      width: 78
+      height: 68
+    inner:
+      serializedVersion: 2
+      x: 365
+      y: 454
+      width: 12
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-energybar-headblue
+    outer:
+      serializedVersion: 2
+      x: 289
+      y: 823
+      width: 59
+      height: 55
+    inner:
+      serializedVersion: 2
+      x: 289
+      y: 823
+      width: 59
+      height: 55
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-energybar-headred
+    outer:
+      serializedVersion: 2
+      x: 627
+      y: 225
+      width: 59
+      height: 55
+    inner:
+      serializedVersion: 2
+      x: 627
+      y: 225
+      width: 59
+      height: 55
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-energybar-red
+    outer:
+      serializedVersion: 2
+      x: 798
+      y: 976
+      width: 8
+      height: 48
+    inner:
+      serializedVersion: 2
+      x: 800
+      y: 978
+      width: 4
+      height: 44
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-energybar-blue
+    outer:
+      serializedVersion: 2
+      x: 736
+      y: 94
+      width: 7
+      height: 47
+    inner:
+      serializedVersion: 2
+      x: 738
+      y: 96
+      width: 3
+      height: 43
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-deployment-bar-fill-deployready
+    outer:
+      serializedVersion: 2
+      x: 542
+      y: 809
+      width: 20
+      height: 59
+    inner:
+      serializedVersion: 2
+      x: 549
+      y: 815
+      width: 7
+      height: 47
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-7days-assignment-completed
+    outer:
+      serializedVersion: 2
+      x: 366
+      y: 718
+      width: 90
+      height: 98
+    inner:
+      serializedVersion: 2
+      x: 366
+      y: 718
+      width: 90
+      height: 98
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-missions-heroic-ico
+    outer:
+      serializedVersion: 2
+      x: 702
+      y: 956
+      width: 56
+      height: 68
+    inner:
+      serializedVersion: 2
+      x: 702
+      y: 956
+      width: 56
+      height: 68
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-missions-red-mission-ico-big
+    outer:
+      serializedVersion: 2
+      x: 143
+      y: 13
+      width: 100
+      height: 134
+    inner:
+      serializedVersion: 2
+      x: 143
+      y: 13
+      width: 100
+      height: 134
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-missions-red-mission-ico
+    outer:
+      serializedVersion: 2
+      x: 569
+      y: 698
+      width: 66
+      height: 86
+    inner:
+      serializedVersion: 2
+      x: 569
+      y: 698
+      width: 66
+      height: 86
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-missions-blue-mission-ico
+    outer:
+      serializedVersion: 2
+      x: 641
+      y: 700
+      width: 64
+      height: 84
+    inner:
+      serializedVersion: 2
+      x: 641
+      y: 700
+      width: 64
+      height: 84
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-missions-time-bg-small
+    outer:
+      serializedVersion: 2
+      x: 676
+      y: 330
+      width: 65
+      height: 34
+    inner:
+      serializedVersion: 2
+      x: 718
+      y: 338
+      width: 15
+      height: 18
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-missions-time-fill-big-simple
+    outer:
+      serializedVersion: 2
+      x: 491
+      y: 470
+      width: 15
+      height: 36
+    inner:
+      serializedVersion: 2
+      x: 492
+      y: 471
+      width: 13
+      height: 34
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-missions-red-fill-big-simple
+    outer:
+      serializedVersion: 2
+      x: 692
+      y: 196
+      width: 13
+      height: 36
+    inner:
+      serializedVersion: 2
+      x: 693
+      y: 197
+      width: 11
+      height: 34
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-missions-time-fill-small-simple
+    outer:
+      serializedVersion: 2
+      x: 479
+      y: 97
+      width: 10
+      height: 22
+    inner:
+      serializedVersion: 2
+      x: 480
+      y: 98
+      width: 8
+      height: 20
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arena-ticket
+    outer:
+      serializedVersion: 2
+      x: 249
+      y: 16
+      width: 100
+      height: 131
+    inner:
+      serializedVersion: 2
+      x: 249
+      y: 16
+      width: 100
+      height: 131
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arena-scrap-ico
+    outer:
+      serializedVersion: 2
+      x: 168
+      y: 261
+      width: 79
+      height: 81
+    inner:
+      serializedVersion: 2
+      x: 168
+      y: 261
+      width: 79
+      height: 81
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-assignments-type-mission
+    outer:
+      serializedVersion: 2
+      x: 487
+      y: 685
+      width: 76
+      height: 102
+    inner:
+      serializedVersion: 2
+      x: 487
+      y: 685
+      width: 76
+      height: 102
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-deployment-2-bg
+    outer:
+      serializedVersion: 2
+      x: 653
+      y: 859
+      width: 172
+      height: 23
+    inner:
+      serializedVersion: 2
+      x: 657
+      y: 863
+      width: 164
+      height: 15
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-deployment-4-bg
+    outer:
+      serializedVersion: 2
+      x: 653
+      y: 801
+      width: 172
+      height: 23
+    inner:
+      serializedVersion: 2
+      x: 657
+      y: 805
+      width: 164
+      height: 15
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-deployment-1-bg
+    outer:
+      serializedVersion: 2
+      x: 653
+      y: 830
+      width: 172
+      height: 23
+    inner:
+      serializedVersion: 2
+      x: 657
+      y: 834
+      width: 164
+      height: 15
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-deployment-3-bg
+    outer:
+      serializedVersion: 2
+      x: 640
+      y: 888
+      width: 172
+      height: 23
+    inner:
+      serializedVersion: 2
+      x: 644
+      y: 892
+      width: 164
+      height: 15
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-augs-active-cooldown
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 127
+      width: 112
+      height: 128
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 127
+      width: 112
+      height: 128
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-augs-cooldown-bg
+    outer:
+      serializedVersion: 2
+      x: 428
+      y: 354
+      width: 81
+      height: 93
+    inner:
+      serializedVersion: 2
+      x: 428
+      y: 354
+      width: 81
+      height: 93
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-augs-active-effect
+    outer:
+      serializedVersion: 2
+      x: 542
+      y: 874
+      width: 92
+      height: 69
+    inner:
+      serializedVersion: 2
+      x: 545
+      y: 904
+      width: 86
+      height: 9
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weaponstats-criticalchance
+    outer:
+      serializedVersion: 2
+      x: 711
+      y: 147
+      width: 36
+      height: 36
+    inner:
+      serializedVersion: 2
+      x: 711
+      y: 147
+      width: 36
+      height: 36
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weaponstats-accuracy
+    outer:
+      serializedVersion: 2
+      x: 702
+      y: 918
+      width: 32
+      height: 32
+    inner:
+      serializedVersion: 2
+      x: 702
+      y: 918
+      width: 32
+      height: 32
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weaponstats-rateoffire
+    outer:
+      serializedVersion: 2
+      x: 439
+      y: 99
+      width: 34
+      height: 20
+    inner:
+      serializedVersion: 2
+      x: 439
+      y: 99
+      width: 34
+      height: 20
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-unitstats-shotdamage
+    outer:
+      serializedVersion: 2
+      x: 599
+      y: 435
+      width: 26
+      height: 26
+    inner:
+      serializedVersion: 2
+      x: 599
+      y: 435
+      width: 26
+      height: 26
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weaponstats-shotvelocity
+    outer:
+      serializedVersion: 2
+      x: 740
+      y: 920
+      width: 36
+      height: 8
+    inner:
+      serializedVersion: 2
+      x: 740
+      y: 920
+      width: 36
+      height: 8
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-connectionwarning
+    outer:
+      serializedVersion: 2
+      x: 524
+      y: 193
+      width: 97
+      height: 73
+    inner:
+      serializedVersion: 2
+      x: 524
+      y: 193
+      width: 97
+      height: 73
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  mCoordinates: 0
+  mPixelSize: 1
+  mReplacement: {fileID: 0}
+  pngPath: GuiHAtlasGame
+  useBinaryData: 0
+  textureWidth: 1024
+  textureHeight: 1024

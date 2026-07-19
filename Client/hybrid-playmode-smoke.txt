@@ -1,0 +1,4 @@
+duration_seconds=46.0
+scene_history=SplashScene -> MainScene
+managed_error_count=0
+error_samples:

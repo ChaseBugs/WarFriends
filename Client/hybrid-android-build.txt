@@ -1,0 +1,11 @@
+result=Succeeded
+platform=Android
+output_path=E:\Github\Mobile\WarFriends\Client\Builds\WarFriends-Hybrid-4.9.5-resources-1.6.0-runtime.apk
+output_exists=True
+expansion_file_count=1
+expansion_files=E:\Github\Mobile\WarFriends\Client\Builds\main.495160.com.chillingo.warfriends.android.gplay.obb
+total_size_bytes=2673003402
+total_time=00:04:48.8806810
+warning_count=2
+error_count=2
+scene_count=14

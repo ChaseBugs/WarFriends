@@ -1,0 +1,88 @@
+public class FlameAmmoSetup : AmmoSetup
+{
+	public float PPNDNOHMBKH = 3f;
+
+	public float NKKHJFEDCPI = 10f;
+
+	public float DODAJKFAJMO = 30f;
+
+	public float NNNCAFEGNNC = 10f;
+
+	public float GJFCKILFOAE = 100f;
+
+	public float IHBGFNNAGPG = 20f;
+
+	public bool PDECAPKPLCC;
+
+	public virtual void FBLBKELDGPO(float IAJAILAGAKC)
+	{
+		NNNCAFEGNNC *= IAJAILAGAKC;
+		GJFCKILFOAE *= IAJAILAGAKC;
+	}
+
+	public virtual void DMIBNPLJJEN(float IAJAILAGAKC)
+	{
+		NNNCAFEGNNC *= IAJAILAGAKC;
+		GJFCKILFOAE *= IAJAILAGAKC;
+	}
+
+	public virtual void HOPFABDNEIF(float IAJAILAGAKC)
+	{
+		NNNCAFEGNNC *= IAJAILAGAKC;
+		GJFCKILFOAE *= IAJAILAGAKC;
+	}
+
+	public virtual void ECMEHEAHNJH(float IAJAILAGAKC)
+	{
+		NNNCAFEGNNC *= IAJAILAGAKC;
+		GJFCKILFOAE *= IAJAILAGAKC;
+	}
+
+	public virtual void CLDJABMFKBA(float IAJAILAGAKC)
+	{
+		NNNCAFEGNNC *= IAJAILAGAKC;
+		GJFCKILFOAE *= IAJAILAGAKC;
+	}
+
+	public virtual void EALJJIGDNGK(float IAJAILAGAKC)
+	{
+		NNNCAFEGNNC *= IAJAILAGAKC;
+		GJFCKILFOAE *= IAJAILAGAKC;
+	}
+
+	public override void ScaleDamage(float IAJAILAGAKC)
+	{
+		NNNCAFEGNNC *= IAJAILAGAKC;
+		GJFCKILFOAE *= IAJAILAGAKC;
+	}
+
+	public virtual void HCHKHLMMBKA(float IAJAILAGAKC)
+	{
+		NNNCAFEGNNC *= IAJAILAGAKC;
+		GJFCKILFOAE *= IAJAILAGAKC;
+	}
+
+	public virtual void KNAMNGLCAFE(float IAJAILAGAKC)
+	{
+		NNNCAFEGNNC *= IAJAILAGAKC;
+		GJFCKILFOAE *= IAJAILAGAKC;
+	}
+
+	public virtual void ILKCAKMOPDI(float IAJAILAGAKC)
+	{
+		NNNCAFEGNNC *= IAJAILAGAKC;
+		GJFCKILFOAE *= IAJAILAGAKC;
+	}
+
+	public virtual void NNKPNHDJHID(float IAJAILAGAKC)
+	{
+		NNNCAFEGNNC *= IAJAILAGAKC;
+		GJFCKILFOAE *= IAJAILAGAKC;
+	}
+
+	public virtual void HEBGIEHIMPP(float IAJAILAGAKC)
+	{
+		NNNCAFEGNNC *= IAJAILAGAKC;
+		GJFCKILFOAE *= IAJAILAGAKC;
+	}
+}

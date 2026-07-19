@@ -1,0 +1,14 @@
+namespace FuseMisc
+{
+	public enum GFLKKPFAFGC
+	{
+		NONE = 0,
+		NOT_CONNECTED = 1,
+		REQUEST_FAILED = 2,
+		SERVER_ERROR = 3,
+		BAD_DATA = 4,
+		SESSION_FAILURE = 5,
+		INVALID_REQUEST = 6,
+		UNDEFINED = 7
+	}
+}

@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -709410506, guid: da3348191866a384b95001cc2c6d51b2, type: 3}
+  m_Name: WarArenaRuleRandomWeaponPreset
+  m_EditorClassIdentifier:
+  data:
+    showRule: 1
+    weaponPresets:
+    - weapons:
+      - Google2u.AssaultRifle_Famas
+      - Google2u.SniperRifle_M110
+      - Google2u.Bazooka_FGM
+      - Google2u.Pistol_DesertEagle
+    - weapons:
+      - Google2u.AssaultRifle_G36
+      - Google2u.SniperRifle_M24
+      - Google2u.Bazooka_HMV
+      - Google2u.Pistol_M1911
+    - weapons:
+      - Google2u.AssaultRifle_M16
+      - Google2u.SniperRifle_M90
+      - Google2u.Bazooka_M202
+      - Google2u.Pistol_Magnum357

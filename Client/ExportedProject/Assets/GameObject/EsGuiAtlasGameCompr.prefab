@@ -1,0 +1,522 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1408203524527310
+GameObject:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Component:
+  - component: {fileID: 4024330941259045}
+  - component: {fileID: 114545083719262997}
+  m_Layer: 0
+  m_Name: EsGuiAtlasGameCompr
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4024330941259045
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1408203524527310}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: -0, z: -0}
+--- !u!114 &114545083719262997
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1408203524527310}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1582492658, guid: a6a460bc9cda68a8c89553f1ec5be757, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  material: {fileID: 2100000, guid: ef7249dc7353e1b44b1da6250ef1b889, type: 2}
+  sprites:
+  - name: bloodblur
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 1448
+      width: 800
+      height: 600
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 1448
+      width: 800
+      height: 600
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-tilegfx-tutorial
+    outer:
+      serializedVersion: 2
+      x: 806
+      y: 1472
+      width: 549
+      height: 576
+    inner:
+      serializedVersion: 2
+      x: 806
+      y: 1472
+      width: 549
+      height: 576
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-label-overtime
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 1202
+      width: 1770
+      height: 240
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 1202
+      width: 1770
+      height: 240
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-label-eliminated
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 956
+      width: 1309
+      height: 240
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 956
+      width: 1309
+      height: 240
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-label-fight
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 710
+      width: 1112
+      height: 240
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 710
+      width: 1112
+      height: 240
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: bullettime-overlay
+    outer:
+      serializedVersion: 2
+      x: 1315
+      y: 796
+      width: 400
+      height: 400
+    inner:
+      serializedVersion: 2
+      x: 1315
+      y: 796
+      width: 400
+      height: 400
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-label-lose
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 477
+      width: 970
+      height: 227
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 477
+      width: 970
+      height: 227
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-label-you-blue
+    outer:
+      serializedVersion: 2
+      x: 1361
+      y: 1596
+      width: 491
+      height: 223
+    inner:
+      serializedVersion: 2
+      x: 1361
+      y: 1596
+      width: 491
+      height: 223
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-label-you-red
+    outer:
+      serializedVersion: 2
+      x: 1361
+      y: 1825
+      width: 492
+      height: 223
+    inner:
+      serializedVersion: 2
+      x: 1361
+      y: 1825
+      width: 492
+      height: 223
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-label-won
+    outer:
+      serializedVersion: 2
+      x: 976
+      y: 481
+      width: 970
+      height: 223
+    inner:
+      serializedVersion: 2
+      x: 976
+      y: 481
+      width: 970
+      height: 223
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-label-vs
+    outer:
+      serializedVersion: 2
+      x: 1270
+      y: 235
+      width: 352
+      height: 240
+    inner:
+      serializedVersion: 2
+      x: 1270
+      y: 235
+      width: 352
+      height: 240
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-missions-blueshield
+    outer:
+      serializedVersion: 2
+      x: 1721
+      y: 819
+      width: 294
+      height: 377
+    inner:
+      serializedVersion: 2
+      x: 1721
+      y: 819
+      width: 294
+      height: 377
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-missions-redshield
+    outer:
+      serializedVersion: 2
+      x: 976
+      y: 108
+      width: 288
+      height: 367
+    inner:
+      serializedVersion: 2
+      x: 976
+      y: 108
+      width: 288
+      height: 367
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-missions-blueshield-check
+    outer:
+      serializedVersion: 2
+      x: 1118
+      y: 831
+      width: 149
+      height: 119
+    inner:
+      serializedVersion: 2
+      x: 1118
+      y: 831
+      width: 149
+      height: 119
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-augs-attack-epic-active
+    outer:
+      serializedVersion: 2
+      x: 1118
+      y: 720
+      width: 91
+      height: 105
+    inner:
+      serializedVersion: 2
+      x: 1118
+      y: 720
+      width: 91
+      height: 105
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-augs-attack-rare-active
+    outer:
+      serializedVersion: 2
+      x: 1215
+      y: 720
+      width: 91
+      height: 105
+    inner:
+      serializedVersion: 2
+      x: 1215
+      y: 720
+      width: 91
+      height: 105
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-augs-utility-epic-active
+    outer:
+      serializedVersion: 2
+      x: 1361
+      y: 1485
+      width: 91
+      height: 105
+    inner:
+      serializedVersion: 2
+      x: 1361
+      y: 1485
+      width: 91
+      height: 105
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-augs-defence-active
+    outer:
+      serializedVersion: 2
+      x: 1458
+      y: 1485
+      width: 91
+      height: 105
+    inner:
+      serializedVersion: 2
+      x: 1458
+      y: 1485
+      width: 91
+      height: 105
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-augs-attack-legendary-active
+    outer:
+      serializedVersion: 2
+      x: 1555
+      y: 1485
+      width: 91
+      height: 105
+    inner:
+      serializedVersion: 2
+      x: 1555
+      y: 1485
+      width: 91
+      height: 105
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-augs-attack-active
+    outer:
+      serializedVersion: 2
+      x: 1652
+      y: 1485
+      width: 91
+      height: 105
+    inner:
+      serializedVersion: 2
+      x: 1652
+      y: 1485
+      width: 91
+      height: 105
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-augs-defence-rare-active
+    outer:
+      serializedVersion: 2
+      x: 1749
+      y: 1485
+      width: 91
+      height: 105
+    inner:
+      serializedVersion: 2
+      x: 1749
+      y: 1485
+      width: 91
+      height: 105
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-augs-utility-active
+    outer:
+      serializedVersion: 2
+      x: 1776
+      y: 1374
+      width: 91
+      height: 105
+    inner:
+      serializedVersion: 2
+      x: 1776
+      y: 1374
+      width: 91
+      height: 105
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-augs-defence-epic-active
+    outer:
+      serializedVersion: 2
+      x: 1846
+      y: 1485
+      width: 91
+      height: 105
+    inner:
+      serializedVersion: 2
+      x: 1846
+      y: 1485
+      width: 91
+      height: 105
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-augs-defence-legendary-active
+    outer:
+      serializedVersion: 2
+      x: 1858
+      y: 1714
+      width: 91
+      height: 105
+    inner:
+      serializedVersion: 2
+      x: 1858
+      y: 1714
+      width: 91
+      height: 105
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-augs-utility-rare-active
+    outer:
+      serializedVersion: 2
+      x: 1858
+      y: 1603
+      width: 91
+      height: 105
+    inner:
+      serializedVersion: 2
+      x: 1858
+      y: 1603
+      width: 91
+      height: 105
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-augs-utility-legendary-active
+    outer:
+      serializedVersion: 2
+      x: 1943
+      y: 1492
+      width: 91
+      height: 105
+    inner:
+      serializedVersion: 2
+      x: 1943
+      y: 1492
+      width: 91
+      height: 105
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  mCoordinates: 0
+  mPixelSize: 1
+  mReplacement: {fileID: 0}
+  pngPath: EsGuiAtlasGameCompr
+  useBinaryData: 0
+  textureWidth: 2048
+  textureHeight: 2048

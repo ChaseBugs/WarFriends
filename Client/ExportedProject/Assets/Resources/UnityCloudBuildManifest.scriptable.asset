@@ -1,0 +1,15 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 832168659, guid: 90cc450315413ac881c1cbdcc2f4cf1f, type: 3}
+  m_Name: UnityCloudBuildManifest.scriptable
+  m_EditorClassIdentifier:
+  m_manifestJson: '{"cloudBuildTargetName":"android-production","buildNumber":"17","scmCommitId":"20139","buildStartTime":"5/24/2022 8:35:17 AM","projectId":"242418/3cdf7191-ce57-4e0e-8b5d-28042d5ef4e3","bundleId":"com.chillingo.warfriends.android.gplay","scmBranch":"/branches/4.9.5","unityVersion":"2019.4.21f1"}'

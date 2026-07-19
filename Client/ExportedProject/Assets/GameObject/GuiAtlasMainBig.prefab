@@ -1,0 +1,972 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1882003043600578
+GameObject:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Component:
+  - component: {fileID: 4584670133225297}
+  - component: {fileID: 114207870394710807}
+  m_Layer: 0
+  m_Name: GuiAtlasMainBig
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4584670133225297
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1882003043600578}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: -0, z: -0}
+--- !u!114 &114207870394710807
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1882003043600578}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1582492658, guid: a6a460bc9cda68a8c89553f1ec5be757, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  material: {fileID: 2100000, guid: 89f176381a1c30b4ea220dba79883333, type: 2}
+  sprites:
+  - name: menu-dusty-thumbsup
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 1514
+      width: 422
+      height: 534
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 1514
+      width: 422
+      height: 534
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-gold-big
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 1023
+      width: 402
+      height: 490
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 1023
+      width: 402
+      height: 490
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-silver-big
+    outer:
+      serializedVersion: 2
+      x: 403
+      y: 1023
+      width: 402
+      height: 490
+    inner:
+      serializedVersion: 2
+      x: 403
+      y: 1023
+      width: 402
+      height: 490
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-back
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 41
+      width: 402
+      height: 490
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 41
+      width: 402
+      height: 490
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-bronze-big
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 532
+      width: 402
+      height: 490
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 532
+      width: 402
+      height: 490
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-startervalue
+    outer:
+      serializedVersion: 2
+      x: 423
+      y: 1532
+      width: 378
+      height: 516
+    inner:
+      serializedVersion: 2
+      x: 423
+      y: 1532
+      width: 378
+      height: 516
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-cards-bronzepack
+    outer:
+      serializedVersion: 2
+      x: 802
+      y: 1519
+      width: 362
+      height: 529
+    inner:
+      serializedVersion: 2
+      x: 802
+      y: 1519
+      width: 362
+      height: 529
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-cards-goldpack
+    outer:
+      serializedVersion: 2
+      x: 403
+      y: 493
+      width: 362
+      height: 529
+    inner:
+      serializedVersion: 2
+      x: 403
+      y: 493
+      width: 362
+      height: 529
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-cards-silverpack
+    outer:
+      serializedVersion: 2
+      x: 766
+      y: 493
+      width: 362
+      height: 529
+    inner:
+      serializedVersion: 2
+      x: 766
+      y: 493
+      width: 362
+      height: 529
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-lootbox
+    outer:
+      serializedVersion: 2
+      x: 806
+      y: 1163
+      width: 366
+      height: 355
+    inner:
+      serializedVersion: 2
+      x: 806
+      y: 1163
+      width: 366
+      height: 355
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-crafting-bluecard
+    outer:
+      serializedVersion: 2
+      x: 1165
+      y: 1673
+      width: 319
+      height: 375
+    inner:
+      serializedVersion: 2
+      x: 1165
+      y: 1673
+      width: 319
+      height: 375
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-tilegfx-mission-briefingrender
+    outer:
+      serializedVersion: 2
+      x: 403
+      y: 63
+      width: 268
+      height: 429
+    inner:
+      serializedVersion: 2
+      x: 403
+      y: 63
+      width: 268
+      height: 429
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-augs-socket-full-noborder-notrans-border
+    outer:
+      serializedVersion: 2
+      x: 672
+      y: 156
+      width: 288
+      height: 336
+    inner:
+      serializedVersion: 2
+      x: 672
+      y: 156
+      width: 288
+      height: 336
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-unlock-instantbattle
+    outer:
+      serializedVersion: 2
+      x: 961
+      y: 209
+      width: 334
+      height: 283
+    inner:
+      serializedVersion: 2
+      x: 961
+      y: 209
+      width: 334
+      height: 283
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-tilegfx-bald-angry
+    outer:
+      serializedVersion: 2
+      x: 1129
+      y: 776
+      width: 230
+      height: 386
+    inner:
+      serializedVersion: 2
+      x: 1129
+      y: 776
+      width: 230
+      height: 386
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-tilegfx-swat-pistol
+    outer:
+      serializedVersion: 2
+      x: 1173
+      y: 1380
+      width: 287
+      height: 292
+    inner:
+      serializedVersion: 2
+      x: 1173
+      y: 1380
+      width: 287
+      height: 292
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-tilegfx-createclan
+    outer:
+      serializedVersion: 2
+      x: 1296
+      y: 437
+      width: 237
+      height: 338
+    inner:
+      serializedVersion: 2
+      x: 1296
+      y: 437
+      width: 237
+      height: 338
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-dogtag-big
+    outer:
+      serializedVersion: 2
+      x: 1296
+      y: 72
+      width: 206
+      height: 364
+    inner:
+      serializedVersion: 2
+      x: 1296
+      y: 72
+      width: 206
+      height: 364
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-crafting-bg-arrow
+    outer:
+      serializedVersion: 2
+      x: 1503
+      y: 144
+      width: 233
+      height: 292
+    inner:
+      serializedVersion: 2
+      x: 1503
+      y: 144
+      width: 233
+      height: 292
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-blackmarket-dealer-mainscreen
+    outer:
+      serializedVersion: 2
+      x: 1360
+      y: 1093
+      width: 228
+      height: 286
+    inner:
+      serializedVersion: 2
+      x: 1360
+      y: 1093
+      width: 228
+      height: 286
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-crafting-dragcardhere
+    outer:
+      serializedVersion: 2
+      x: 1461
+      y: 1396
+      width: 234
+      height: 276
+    inner:
+      serializedVersion: 2
+      x: 1461
+      y: 1396
+      width: 234
+      height: 276
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-membership-card
+    outer:
+      serializedVersion: 2
+      x: 961
+      y: 23
+      width: 311
+      height: 185
+    inner:
+      serializedVersion: 2
+      x: 961
+      y: 23
+      width: 311
+      height: 185
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-crafting-arrow-bg
+    outer:
+      serializedVersion: 2
+      x: 1485
+      y: 1756
+      width: 183
+      height: 292
+    inner:
+      serializedVersion: 2
+      x: 1485
+      y: 1756
+      width: 183
+      height: 292
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-augs-crate-pro-small
+    outer:
+      serializedVersion: 2
+      x: 1360
+      y: 898
+      width: 231
+      height: 194
+    inner:
+      serializedVersion: 2
+      x: 1360
+      y: 898
+      width: 231
+      height: 194
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-augs-crate-basic-small
+    outer:
+      serializedVersion: 2
+      x: 1669
+      y: 1854
+      width: 231
+      height: 194
+    inner:
+      serializedVersion: 2
+      x: 1669
+      y: 1854
+      width: 231
+      height: 194
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-augs-crate-advanced-small
+    outer:
+      serializedVersion: 2
+      x: 1589
+      y: 1201
+      width: 231
+      height: 194
+    inner:
+      serializedVersion: 2
+      x: 1589
+      y: 1201
+      width: 231
+      height: 194
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-crafting-arrow
+    outer:
+      serializedVersion: 2
+      x: 1696
+      y: 1569
+      width: 148
+      height: 284
+    inner:
+      serializedVersion: 2
+      x: 1696
+      y: 1569
+      width: 148
+      height: 284
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-crafting-background
+    outer:
+      serializedVersion: 2
+      x: 1534
+      y: 605
+      width: 142
+      height: 292
+    inner:
+      serializedVersion: 2
+      x: 1534
+      y: 605
+      width: 142
+      height: 292
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-augs-rankup-icon
+    outer:
+      serializedVersion: 2
+      x: 1592
+      y: 996
+      width: 203
+      height: 204
+    inner:
+      serializedVersion: 2
+      x: 1592
+      y: 996
+      width: 203
+      height: 204
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-packs-cardslot-ico
+    outer:
+      serializedVersion: 2
+      x: 1173
+      y: 1179
+      width: 164
+      height: 200
+    inner:
+      serializedVersion: 2
+      x: 1173
+      y: 1179
+      width: 164
+      height: 200
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-commander-render1
+    outer:
+      serializedVersion: 2
+      x: 1129
+      y: 565
+      width: 146
+      height: 210
+    inner:
+      serializedVersion: 2
+      x: 1129
+      y: 565
+      width: 146
+      height: 210
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-button-pvp-blue
+    outer:
+      serializedVersion: 2
+      x: 1677
+      y: 806
+      width: 160
+      height: 189
+    inner:
+      serializedVersion: 2
+      x: 1677
+      y: 806
+      width: 160
+      height: 189
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-booster-big-circlebg-b
+    outer:
+      serializedVersion: 2
+      x: 1796
+      y: 1028
+      width: 173
+      height: 172
+    inner:
+      serializedVersion: 2
+      x: 1796
+      y: 1028
+      width: 173
+      height: 172
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-commander-render2
+    outer:
+      serializedVersion: 2
+      x: 1821
+      y: 1354
+      width: 136
+      height: 214
+    inner:
+      serializedVersion: 2
+      x: 1821
+      y: 1354
+      width: 136
+      height: 214
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-missions-heroic-entrance-skull
+    outer:
+      serializedVersion: 2
+      x: 1845
+      y: 1685
+      width: 166
+      height: 168
+    inner:
+      serializedVersion: 2
+      x: 1845
+      y: 1685
+      width: 166
+      height: 168
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-blackmarket-logo
+    outer:
+      serializedVersion: 2
+      x: 1534
+      y: 447
+      width: 176
+      height: 157
+    inner:
+      serializedVersion: 2
+      x: 1534
+      y: 447
+      width: 176
+      height: 157
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-prestige-logo-small
+    outer:
+      serializedVersion: 2
+      x: 1677
+      y: 625
+      width: 151
+      height: 180
+    inner:
+      serializedVersion: 2
+      x: 1677
+      y: 625
+      width: 151
+      height: 180
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: af-logo
+    outer:
+      serializedVersion: 2
+      x: 1711
+      y: 464
+      width: 160
+      height: 160
+    inner:
+      serializedVersion: 2
+      x: 1711
+      y: 464
+      width: 160
+      height: 160
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-button-pvp-red
+    outer:
+      serializedVersion: 2
+      x: 1901
+      y: 1862
+      width: 137
+      height: 186
+    inner:
+      serializedVersion: 2
+      x: 1901
+      y: 1862
+      width: 137
+      height: 186
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-booster-button
+    outer:
+      serializedVersion: 2
+      x: 1821
+      y: 1201
+      width: 148
+      height: 152
+    inner:
+      serializedVersion: 2
+      x: 1821
+      y: 1201
+      width: 148
+      height: 152
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-crafting-border
+    outer:
+      serializedVersion: 2
+      x: 1838
+      y: 685
+      width: 64
+      height: 342
+    inner:
+      serializedVersion: 2
+      x: 1880
+      y: 735
+      width: 20
+      height: 292
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-crafting-questionmark
+    outer:
+      serializedVersion: 2
+      x: 1696
+      y: 1419
+      width: 95
+      height: 149
+    inner:
+      serializedVersion: 2
+      x: 1696
+      y: 1419
+      width: 95
+      height: 149
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-wftv-play-logo
+    outer:
+      serializedVersion: 2
+      x: 1360
+      y: 792
+      width: 129
+      height: 105
+    inner:
+      serializedVersion: 2
+      x: 1360
+      y: 792
+      width: 129
+      height: 105
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-piggybank
+    outer:
+      serializedVersion: 2
+      x: 672
+      y: 37
+      width: 105
+      height: 118
+    inner:
+      serializedVersion: 2
+      x: 672
+      y: 37
+      width: 105
+      height: 118
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weaponaugs-material
+    outer:
+      serializedVersion: 2
+      x: 1845
+      y: 1579
+      width: 105
+      height: 105
+    inner:
+      serializedVersion: 2
+      x: 1845
+      y: 1579
+      width: 105
+      height: 105
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-missions-heroic-skull
+    outer:
+      serializedVersion: 2
+      x: 1951
+      y: 1572
+      width: 92
+      height: 112
+    inner:
+      serializedVersion: 2
+      x: 1951
+      y: 1572
+      width: 92
+      height: 112
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-augs-crate-battle
+    outer:
+      serializedVersion: 2
+      x: 778
+      y: 71
+      width: 100
+      height: 84
+    inner:
+      serializedVersion: 2
+      x: 778
+      y: 71
+      width: 100
+      height: 84
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-shop-offers-ico
+    outer:
+      serializedVersion: 2
+      x: 1958
+      y: 1483
+      width: 88
+      height: 88
+    inner:
+      serializedVersion: 2
+      x: 1958
+      y: 1483
+      width: 88
+      height: 88
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weaponaugs-dismantle
+    outer:
+      serializedVersion: 2
+      x: 1129
+      y: 494
+      width: 90
+      height: 70
+    inner:
+      serializedVersion: 2
+      x: 1129
+      y: 494
+      width: 90
+      height: 70
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-chargetime-ico
+    outer:
+      serializedVersion: 2
+      x: 1792
+      y: 1536
+      width: 28
+      height: 32
+    inner:
+      serializedVersion: 2
+      x: 1792
+      y: 1536
+      width: 28
+      height: 32
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-super-division
+    outer:
+      serializedVersion: 2
+      x: 1220
+      y: 512
+      width: 52
+      height: 52
+    inner:
+      serializedVersion: 2
+      x: 1220
+      y: 512
+      width: 52
+      height: 52
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  mCoordinates: 0
+  mPixelSize: 1
+  mReplacement: {fileID: 0}
+  pngPath: GuiAtlasMainBig
+  useBinaryData: 0
+  textureWidth: 2048
+  textureHeight: 2048

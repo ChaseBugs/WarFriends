@@ -1,0 +1,65 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!78 &1
+TagManager:
+  serializedVersion: 2
+  tags:
+  - DestroyableEntity
+  - DestroyableObject
+  - MapDefinition
+  - Bullet
+  - Ennemy
+  - Ennemy_dead
+  - Ennemy_runner
+  - Ennemy_bullet
+  - Block_sideMove
+  - Bariera_block
+  - missile
+  - shield
+  - explosion
+  - ground
+  - breath
+  - FxTemporaire
+  - HerdChild
+  - Water
+  - Ground
+  layers:
+  - Default
+  - TransparentFX
+  - Ignore Raycast
+  - 
+  - Water
+  - UI
+  - 
+  - 
+  - DestroyableEntities
+  - HealthBar
+  - AimTarget
+  - Gui
+  - NavigationHelperColliders
+  - Static
+  - BulletsIgnore
+  - CollideOnlyEnviroment
+  - DontCollide
+  - WeaponPreview
+  - enemyTriggers
+  - DestroyableEntitiesSecondLayer
+  - Vegetation
+  - Herd
+  - DestroyableEntitiesAllies
+  - DestroyableEntitiesEnemies
+  - DestroyableEntitiesShield
+  - Parallax
+  - DestroyableEntitiesAlliesMech
+  - DestroyableEntitiesEnemiesMech
+  - Emptyyy
+  - Background
+  - T4MObj
+  - LootboxRig
+  m_SortingLayers:
+  - name: Default
+    uniqueID: 0
+    locked: 0
+  - name: Particles
+    uniqueID: 2256993833
+    locked: 0

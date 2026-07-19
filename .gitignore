@@ -104,3 +104,32 @@ InitTestScene*.unity*
 
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
+
+# Nested Unity projects produced during APK/XAPK recovery
+**/[Ll]ibrary/
+**/[Tt]emp/
+**/[Oo]bj/
+**/[Bb]uild/
+**/[Bb]uilds/
+**/[Ll]ogs/
+**/[Uu]ser[Ss]ettings/
+**/UnityPackageManager/
+
+# Recovery inputs, generated packages, and reproducible binary backups
+*.xapk
+*.obb
+*.apks
+**/[Aa]uxiliary[Ff]iles/
+
+# AssetRipper/local tooling output
+Recovery/
+Client-Hybrid-*-Test/
+assetripper_server.log
+*.fields.csv
+*.fields.csv.meta
+
+# Common local editor and OS files
+.idea/
+.vscode/
+Thumbs.db
+.DS_Store

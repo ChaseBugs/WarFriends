@@ -1,0 +1,3079 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using UnityEngine;
+
+public class GameOverScreen : GuiScreenSingle<GameOverScreen>
+{
+	public enum IGJLCIBEHAB
+	{
+		Unit = 0,
+		Player = 1,
+		Enviroment = 2
+	}
+
+	private sealed class NFPHJEHMGMG : IEnumerator, IDisposable, IEnumerator<object>
+	{
+		internal GameOverScreen BJGCPDNMHDH;
+
+		internal object PHDOCKCBJOF;
+
+		internal bool FDKOKMKIIMG;
+
+		internal int CLPPIAGLCJJ;
+
+		object IEnumerator<object>.Current
+		{
+			[DebuggerHidden]
+			get
+			{
+				return PHDOCKCBJOF;
+			}
+		}
+
+		object IEnumerator.Current
+		{
+			[DebuggerHidden]
+			get
+			{
+				return PHDOCKCBJOF;
+			}
+		}
+
+		[SpecialName]
+		private object DGEECEBHPNC()
+		{
+			return PHDOCKCBJOF;
+		}
+
+		[DebuggerHidden]
+		public void Dispose()
+		{
+			FDKOKMKIIMG = true;
+			CLPPIAGLCJJ = -1;
+		}
+
+		public void ONGBFFAENBP()
+		{
+			FDKOKMKIIMG = false;
+			CLPPIAGLCJJ = -1;
+		}
+
+		public bool FNEPBDLIKOD()
+		{
+			uint cLPPIAGLCJJ = (uint)CLPPIAGLCJJ;
+			CLPPIAGLCJJ = -1;
+			switch (cLPPIAGLCJJ)
+			{
+			case 0u:
+				PHDOCKCBJOF = new WaitForRealSeconds(1449f);
+				if (!FDKOKMKIIMG)
+				{
+					CLPPIAGLCJJ = 0;
+				}
+				return false;
+			case 1u:
+				TweenAlpha.Begin(BJGCPDNMHDH.FLIDPEEIKPI, 1642f, 1689f, 1320f);
+				BJGCPDNMHDH.MEDHJHCCKOL();
+				CLPPIAGLCJJ = -1;
+				break;
+			}
+			return true;
+		}
+
+		[SpecialName]
+		private object JJBAIMILGLK()
+		{
+			return PHDOCKCBJOF;
+		}
+
+		public void GFPDOCDEGPA()
+		{
+			throw new NotSupportedException();
+		}
+
+		public void CHFJIODFNIP()
+		{
+			FDKOKMKIIMG = true;
+			CLPPIAGLCJJ = -1;
+		}
+
+		public void FGLAPPKJHBK()
+		{
+			throw new NotSupportedException();
+		}
+
+		[DebuggerHidden]
+		public NFPHJEHMGMG()
+		{
+		}
+
+		public bool MoveNext()
+		{
+			uint cLPPIAGLCJJ = (uint)CLPPIAGLCJJ;
+			CLPPIAGLCJJ = -1;
+			switch (cLPPIAGLCJJ)
+			{
+			case 0u:
+				PHDOCKCBJOF = new WaitForRealSeconds(0.1f);
+				if (!FDKOKMKIIMG)
+				{
+					CLPPIAGLCJJ = 1;
+				}
+				return true;
+			case 1u:
+				TweenAlpha.Begin(BJGCPDNMHDH.FLIDPEEIKPI, 0.05f, 0f, 0f);
+				BJGCPDNMHDH.MEDHJHCCKOL();
+				CLPPIAGLCJJ = -1;
+				break;
+			}
+			return false;
+		}
+
+		[SpecialName]
+		private object KKKMCHGLHLL()
+		{
+			return PHDOCKCBJOF;
+		}
+
+		public bool EKHDJADMNJK()
+		{
+			uint cLPPIAGLCJJ = (uint)CLPPIAGLCJJ;
+			CLPPIAGLCJJ = -1;
+			switch (cLPPIAGLCJJ)
+			{
+			case 0u:
+				PHDOCKCBJOF = new WaitForRealSeconds(129f);
+				if (!FDKOKMKIIMG)
+				{
+					CLPPIAGLCJJ = 1;
+				}
+				return false;
+			case 1u:
+				TweenAlpha.Begin(BJGCPDNMHDH.FLIDPEEIKPI, 889f, 593f, 1264f);
+				BJGCPDNMHDH.DGFGAKPHNGB();
+				CLPPIAGLCJJ = -1;
+				break;
+			}
+			return false;
+		}
+
+		public bool NEMOAIBCODB()
+		{
+			uint cLPPIAGLCJJ = (uint)CLPPIAGLCJJ;
+			CLPPIAGLCJJ = -1;
+			switch (cLPPIAGLCJJ)
+			{
+			case 0u:
+				PHDOCKCBJOF = new WaitForRealSeconds(1570f);
+				if (!FDKOKMKIIMG)
+				{
+					CLPPIAGLCJJ = 1;
+				}
+				return true;
+			case 1u:
+				TweenAlpha.Begin(BJGCPDNMHDH.FLIDPEEIKPI, 1914f, 203f, 1236f);
+				BJGCPDNMHDH.GEHPEAENPJJ();
+				CLPPIAGLCJJ = -1;
+				break;
+			}
+			return true;
+		}
+
+		public void AJEIGCJPEFN()
+		{
+			throw new NotSupportedException();
+		}
+
+		[SpecialName]
+		private object GMPGIODBIPO()
+		{
+			return PHDOCKCBJOF;
+		}
+
+		[SpecialName]
+		private object FBPFPJOCKGD()
+		{
+			return PHDOCKCBJOF;
+		}
+
+		[SpecialName]
+		private object CCANBMDEKMB()
+		{
+			return PHDOCKCBJOF;
+		}
+
+		public void KNFDDIHLBKJ()
+		{
+			throw new NotSupportedException();
+		}
+
+		public void JMANMKKCDMM()
+		{
+			throw new NotSupportedException();
+		}
+
+		public void OKIANDBCDIB()
+		{
+			FDKOKMKIIMG = false;
+			CLPPIAGLCJJ = -1;
+		}
+
+		public bool HDGDKCMIOGK()
+		{
+			uint cLPPIAGLCJJ = (uint)CLPPIAGLCJJ;
+			CLPPIAGLCJJ = -1;
+			switch (cLPPIAGLCJJ)
+			{
+			case 0u:
+				PHDOCKCBJOF = new WaitForRealSeconds(1749f);
+				if (!FDKOKMKIIMG)
+				{
+					CLPPIAGLCJJ = 1;
+				}
+				return true;
+			case 1u:
+				TweenAlpha.Begin(BJGCPDNMHDH.FLIDPEEIKPI, 1598f, 1257f, 254f);
+				BJGCPDNMHDH.DGFGAKPHNGB();
+				CLPPIAGLCJJ = -1;
+				break;
+			}
+			return true;
+		}
+
+		[SpecialName]
+		private object HCCLNDKNCIE()
+		{
+			return PHDOCKCBJOF;
+		}
+
+		public bool GNFCLHDPPFP()
+		{
+			uint cLPPIAGLCJJ = (uint)CLPPIAGLCJJ;
+			CLPPIAGLCJJ = -1;
+			switch (cLPPIAGLCJJ)
+			{
+			case 0u:
+				PHDOCKCBJOF = new WaitForRealSeconds(1123f);
+				if (!FDKOKMKIIMG)
+				{
+					CLPPIAGLCJJ = 1;
+				}
+				return true;
+			case 1u:
+				TweenAlpha.Begin(BJGCPDNMHDH.FLIDPEEIKPI, 1556f, 47f, 1381f);
+				BJGCPDNMHDH.GEHPEAENPJJ();
+				CLPPIAGLCJJ = -1;
+				break;
+			}
+			return false;
+		}
+
+		public void PMAJELGBBKE()
+		{
+			FDKOKMKIIMG = false;
+			CLPPIAGLCJJ = -1;
+		}
+
+		public void POJKIIMAFDO()
+		{
+			throw new NotSupportedException();
+		}
+
+		public bool PPOPGFELIDA()
+		{
+			uint cLPPIAGLCJJ = (uint)CLPPIAGLCJJ;
+			CLPPIAGLCJJ = -1;
+			switch (cLPPIAGLCJJ)
+			{
+			case 0u:
+				PHDOCKCBJOF = new WaitForRealSeconds(567f);
+				if (!FDKOKMKIIMG)
+				{
+					CLPPIAGLCJJ = 1;
+				}
+				return false;
+			case 1u:
+				TweenAlpha.Begin(BJGCPDNMHDH.FLIDPEEIKPI, 894f, 1172f, 1574f);
+				BJGCPDNMHDH.GEHPEAENPJJ();
+				CLPPIAGLCJJ = -1;
+				break;
+			}
+			return true;
+		}
+
+		public void NDPOBCODJAI()
+		{
+			throw new NotSupportedException();
+		}
+
+		public bool OKELILGDPLJ()
+		{
+			uint cLPPIAGLCJJ = (uint)CLPPIAGLCJJ;
+			CLPPIAGLCJJ = -1;
+			switch (cLPPIAGLCJJ)
+			{
+			case 0u:
+				PHDOCKCBJOF = new WaitForRealSeconds(466f);
+				if (!FDKOKMKIIMG)
+				{
+					CLPPIAGLCJJ = 1;
+				}
+				return false;
+			case 1u:
+				TweenAlpha.Begin(BJGCPDNMHDH.FLIDPEEIKPI, 1996f, 1099f, 764f);
+				BJGCPDNMHDH.GEHPEAENPJJ();
+				CLPPIAGLCJJ = -1;
+				break;
+			}
+			return true;
+		}
+
+		[DebuggerHidden]
+		public void Reset()
+		{
+			throw new NotSupportedException();
+		}
+	}
+
+	private sealed class OKLDKDMGIBF
+	{
+		internal List<UISprite> CPGBOIOMLFL;
+
+		internal Vector3 IIMDKHJAJGO;
+
+		internal Vector3 MPHCNMDIPAI;
+
+		internal Vector3 DANMLNDDDKL;
+
+		internal Vector3 INMEDMJGJEH;
+
+		internal GameOverScreen BJGCPDNMHDH;
+
+		internal void CIAOICMCMAM(UITweener EIHJNJDIALN)
+		{
+			BJGCPDNMHDH.FNHAHJGHOOL(CPGBOIOMLFL[1].gameObject, BJGCPDNMHDH.PMPPHJDAFFA, BJGCPDNMHDH.LAIHMPFOGAE, 3, 1035f);
+		}
+
+		internal void NAJNECOMDDN(UITweener KPICOKPHMIC)
+		{
+			TweenPosition tweenPosition = TweenPosition.Begin(CPGBOIOMLFL[1].gameObject, BJGCPDNMHDH.LJLAGMOPGBI, IIMDKHJAJGO, MPHCNMDIPAI, false);
+			tweenPosition.method = UITweener.Method.EaseIn;
+			BJGCPDNMHDH.NBOALIAFGMJ(CPGBOIOMLFL[0], IIMDKHJAJGO, DANMLNDDDKL, BJGCPDNMHDH.FFEKAGBLOPA, BJGCPDNMHDH.FFIHJCLBMBN, BJGCPDNMHDH.GJONPCCGBCE, BJGCPDNMHDH.PDIEFJAOHIP);
+			BJGCPDNMHDH.CEACDKIOGAB(CPGBOIOMLFL[1], IIMDKHJAJGO, INMEDMJGJEH, BJGCPDNMHDH.HLCDLPLOJFE, BJGCPDNMHDH.FJJHNBFFNPC, BJGCPDNMHDH.PMLOFPMNMEE, BJGCPDNMHDH.AMCJBGNHBCM);
+		}
+
+		internal void GMFJFMHNDMC(UITweener KPICOKPHMIC)
+		{
+			TweenPosition tweenPosition = TweenPosition.Begin(CPGBOIOMLFL[1].gameObject, BJGCPDNMHDH.LJLAGMOPGBI, IIMDKHJAJGO, MPHCNMDIPAI);
+			tweenPosition.method = UITweener.Method.Linear;
+			BJGCPDNMHDH.NBOALIAFGMJ(CPGBOIOMLFL[0], IIMDKHJAJGO, DANMLNDDDKL, BJGCPDNMHDH.FFEKAGBLOPA, BJGCPDNMHDH.FFIHJCLBMBN, BJGCPDNMHDH.GJONPCCGBCE, BJGCPDNMHDH.PDIEFJAOHIP);
+			BJGCPDNMHDH.JIDKEKBADGJ(CPGBOIOMLFL[4], IIMDKHJAJGO, INMEDMJGJEH, BJGCPDNMHDH.HLCDLPLOJFE, BJGCPDNMHDH.FJJHNBFFNPC, BJGCPDNMHDH.PMLOFPMNMEE, BJGCPDNMHDH.AMCJBGNHBCM);
+		}
+
+		internal void MCFGAFBEJDK(UITweener KPICOKPHMIC)
+		{
+			TweenPosition tweenPosition = TweenPosition.Begin(CPGBOIOMLFL[0].gameObject, BJGCPDNMHDH.LJLAGMOPGBI, IIMDKHJAJGO, MPHCNMDIPAI, false);
+			tweenPosition.method = UITweener.Method.Linear;
+			BJGCPDNMHDH.KNNFAOKFIIC(CPGBOIOMLFL[0], IIMDKHJAJGO, DANMLNDDDKL, BJGCPDNMHDH.FFEKAGBLOPA, BJGCPDNMHDH.FFIHJCLBMBN, BJGCPDNMHDH.GJONPCCGBCE, BJGCPDNMHDH.PDIEFJAOHIP);
+			BJGCPDNMHDH.KNNFAOKFIIC(CPGBOIOMLFL[4], IIMDKHJAJGO, INMEDMJGJEH, BJGCPDNMHDH.HLCDLPLOJFE, BJGCPDNMHDH.FJJHNBFFNPC, BJGCPDNMHDH.PMLOFPMNMEE, BJGCPDNMHDH.AMCJBGNHBCM);
+		}
+
+		internal void ILNPANOCHIH(UITweener KPICOKPHMIC)
+		{
+			TweenPosition tweenPosition = TweenPosition.Begin(CPGBOIOMLFL[0].gameObject, BJGCPDNMHDH.LJLAGMOPGBI, IIMDKHJAJGO, MPHCNMDIPAI);
+			tweenPosition.method = UITweener.Method.Linear;
+			BJGCPDNMHDH.JIDKEKBADGJ(CPGBOIOMLFL[1], IIMDKHJAJGO, DANMLNDDDKL, BJGCPDNMHDH.FFEKAGBLOPA, BJGCPDNMHDH.FFIHJCLBMBN, BJGCPDNMHDH.GJONPCCGBCE, BJGCPDNMHDH.PDIEFJAOHIP);
+			BJGCPDNMHDH.NBOALIAFGMJ(CPGBOIOMLFL[2], IIMDKHJAJGO, INMEDMJGJEH, BJGCPDNMHDH.HLCDLPLOJFE, BJGCPDNMHDH.FJJHNBFFNPC, BJGCPDNMHDH.PMLOFPMNMEE, BJGCPDNMHDH.AMCJBGNHBCM);
+		}
+
+		internal void IFOPOPPMCFG(UITweener EIHJNJDIALN)
+		{
+			BJGCPDNMHDH.AGKEINOOBEF(CPGBOIOMLFL[0].gameObject, BJGCPDNMHDH.PMPPHJDAFFA, BJGCPDNMHDH.LAIHMPFOGAE, 2, 638f);
+		}
+
+		internal void KPHEPHDFCKK(UITweener KPICOKPHMIC)
+		{
+			TweenPosition tweenPosition = TweenPosition.Begin(CPGBOIOMLFL[1].gameObject, BJGCPDNMHDH.LJLAGMOPGBI, IIMDKHJAJGO, MPHCNMDIPAI);
+			tweenPosition.method = UITweener.Method.Linear;
+			BJGCPDNMHDH.KNNFAOKFIIC(CPGBOIOMLFL[1], IIMDKHJAJGO, DANMLNDDDKL, BJGCPDNMHDH.FFEKAGBLOPA, BJGCPDNMHDH.FFIHJCLBMBN, BJGCPDNMHDH.GJONPCCGBCE, BJGCPDNMHDH.PDIEFJAOHIP);
+			BJGCPDNMHDH.CEACDKIOGAB(CPGBOIOMLFL[0], IIMDKHJAJGO, INMEDMJGJEH, BJGCPDNMHDH.HLCDLPLOJFE, BJGCPDNMHDH.FJJHNBFFNPC, BJGCPDNMHDH.PMLOFPMNMEE, BJGCPDNMHDH.AMCJBGNHBCM);
+		}
+
+		internal void EJLGBICBIFK(UITweener EIHJNJDIALN)
+		{
+			BJGCPDNMHDH.PICBFAHBJHL(CPGBOIOMLFL[0].gameObject, BJGCPDNMHDH.PMPPHJDAFFA, BJGCPDNMHDH.LAIHMPFOGAE, 3);
+		}
+
+		internal void EIGOHMKAMGI(UITweener EIHJNJDIALN)
+		{
+			BJGCPDNMHDH.PICBFAHBJHL(CPGBOIOMLFL[0].gameObject, BJGCPDNMHDH.PMPPHJDAFFA, BJGCPDNMHDH.LAIHMPFOGAE, 5, 182f);
+		}
+
+		internal void BDACLBGMJLF(UITweener EIHJNJDIALN)
+		{
+			BJGCPDNMHDH.MBOCACLMBGF(CPGBOIOMLFL[0].gameObject, BJGCPDNMHDH.PMPPHJDAFFA, BJGCPDNMHDH.LAIHMPFOGAE, 6, 1558f);
+		}
+
+		internal void KPLNDNKBMAA(UITweener EIHJNJDIALN)
+		{
+			BJGCPDNMHDH.PICBFAHBJHL(CPGBOIOMLFL[1].gameObject, BJGCPDNMHDH.PMPPHJDAFFA, BJGCPDNMHDH.LAIHMPFOGAE, 8, 1553f);
+		}
+
+		internal void LJCDGJKCNEC(UITweener KPICOKPHMIC)
+		{
+			TweenPosition tweenPosition = TweenPosition.Begin(CPGBOIOMLFL[0].gameObject, BJGCPDNMHDH.LJLAGMOPGBI, IIMDKHJAJGO, MPHCNMDIPAI);
+			tweenPosition.method = UITweener.Method.EaseIn;
+			BJGCPDNMHDH.JIDKEKBADGJ(CPGBOIOMLFL[1], IIMDKHJAJGO, DANMLNDDDKL, BJGCPDNMHDH.FFEKAGBLOPA, BJGCPDNMHDH.FFIHJCLBMBN, BJGCPDNMHDH.GJONPCCGBCE, BJGCPDNMHDH.PDIEFJAOHIP);
+			BJGCPDNMHDH.JIDKEKBADGJ(CPGBOIOMLFL[2], IIMDKHJAJGO, INMEDMJGJEH, BJGCPDNMHDH.HLCDLPLOJFE, BJGCPDNMHDH.FJJHNBFFNPC, BJGCPDNMHDH.PMLOFPMNMEE, BJGCPDNMHDH.AMCJBGNHBCM);
+		}
+
+		internal void EBJJKGFOLOA(UITweener EIHJNJDIALN)
+		{
+			BJGCPDNMHDH.PICBFAHBJHL(CPGBOIOMLFL[1].gameObject, BJGCPDNMHDH.PMPPHJDAFFA, BJGCPDNMHDH.LAIHMPFOGAE, 3, 1986f);
+		}
+
+		internal void KBBDIDNKLFN(UITweener EIHJNJDIALN)
+		{
+			BJGCPDNMHDH.AGKEINOOBEF(CPGBOIOMLFL[0].gameObject, BJGCPDNMHDH.PMPPHJDAFFA, BJGCPDNMHDH.LAIHMPFOGAE, 1, 1008f);
+		}
+
+		internal void OABFAOLFMMJ(UITweener KPICOKPHMIC)
+		{
+			TweenPosition tweenPosition = TweenPosition.Begin(CPGBOIOMLFL[0].gameObject, BJGCPDNMHDH.LJLAGMOPGBI, IIMDKHJAJGO, MPHCNMDIPAI, false);
+			tweenPosition.method = UITweener.Method.EaseIn;
+			BJGCPDNMHDH.NBOALIAFGMJ(CPGBOIOMLFL[0], IIMDKHJAJGO, DANMLNDDDKL, BJGCPDNMHDH.FFEKAGBLOPA, BJGCPDNMHDH.FFIHJCLBMBN, BJGCPDNMHDH.GJONPCCGBCE, BJGCPDNMHDH.PDIEFJAOHIP);
+			BJGCPDNMHDH.JIDKEKBADGJ(CPGBOIOMLFL[4], IIMDKHJAJGO, INMEDMJGJEH, BJGCPDNMHDH.HLCDLPLOJFE, BJGCPDNMHDH.FJJHNBFFNPC, BJGCPDNMHDH.PMLOFPMNMEE, BJGCPDNMHDH.AMCJBGNHBCM);
+		}
+
+		internal void FHDOHCJJEMM(UITweener KPICOKPHMIC)
+		{
+			TweenPosition tweenPosition = TweenPosition.Begin(CPGBOIOMLFL[0].gameObject, BJGCPDNMHDH.LJLAGMOPGBI, IIMDKHJAJGO, MPHCNMDIPAI);
+			tweenPosition.method = UITweener.Method.EaseIn;
+			BJGCPDNMHDH.NBOALIAFGMJ(CPGBOIOMLFL[0], IIMDKHJAJGO, DANMLNDDDKL, BJGCPDNMHDH.FFEKAGBLOPA, BJGCPDNMHDH.FFIHJCLBMBN, BJGCPDNMHDH.GJONPCCGBCE, BJGCPDNMHDH.PDIEFJAOHIP);
+			BJGCPDNMHDH.JIDKEKBADGJ(CPGBOIOMLFL[5], IIMDKHJAJGO, INMEDMJGJEH, BJGCPDNMHDH.HLCDLPLOJFE, BJGCPDNMHDH.FJJHNBFFNPC, BJGCPDNMHDH.PMLOFPMNMEE, BJGCPDNMHDH.AMCJBGNHBCM);
+		}
+
+		internal void NNFHNIMCBLH(UITweener KPICOKPHMIC)
+		{
+			TweenPosition tweenPosition = TweenPosition.Begin(CPGBOIOMLFL[1].gameObject, BJGCPDNMHDH.LJLAGMOPGBI, IIMDKHJAJGO, MPHCNMDIPAI);
+			tweenPosition.method = UITweener.Method.Linear;
+			BJGCPDNMHDH.NBOALIAFGMJ(CPGBOIOMLFL[1], IIMDKHJAJGO, DANMLNDDDKL, BJGCPDNMHDH.FFEKAGBLOPA, BJGCPDNMHDH.FFIHJCLBMBN, BJGCPDNMHDH.GJONPCCGBCE, BJGCPDNMHDH.PDIEFJAOHIP);
+			BJGCPDNMHDH.CEACDKIOGAB(CPGBOIOMLFL[2], IIMDKHJAJGO, INMEDMJGJEH, BJGCPDNMHDH.HLCDLPLOJFE, BJGCPDNMHDH.FJJHNBFFNPC, BJGCPDNMHDH.PMLOFPMNMEE, BJGCPDNMHDH.AMCJBGNHBCM);
+		}
+
+		internal void CHPGPDHOOFL(UITweener EIHJNJDIALN)
+		{
+			BJGCPDNMHDH.MBOCACLMBGF(CPGBOIOMLFL[0].gameObject, BJGCPDNMHDH.PMPPHJDAFFA, BJGCPDNMHDH.LAIHMPFOGAE, 0, 1950f);
+		}
+
+		internal void JGHLGHMJJDG(UITweener KPICOKPHMIC)
+		{
+			TweenPosition tweenPosition = TweenPosition.Begin(CPGBOIOMLFL[1].gameObject, BJGCPDNMHDH.LJLAGMOPGBI, IIMDKHJAJGO, MPHCNMDIPAI, false);
+			tweenPosition.method = UITweener.Method.EaseIn;
+			BJGCPDNMHDH.NBOALIAFGMJ(CPGBOIOMLFL[1], IIMDKHJAJGO, DANMLNDDDKL, BJGCPDNMHDH.FFEKAGBLOPA, BJGCPDNMHDH.FFIHJCLBMBN, BJGCPDNMHDH.GJONPCCGBCE, BJGCPDNMHDH.PDIEFJAOHIP);
+			BJGCPDNMHDH.JIDKEKBADGJ(CPGBOIOMLFL[7], IIMDKHJAJGO, INMEDMJGJEH, BJGCPDNMHDH.HLCDLPLOJFE, BJGCPDNMHDH.FJJHNBFFNPC, BJGCPDNMHDH.PMLOFPMNMEE, BJGCPDNMHDH.AMCJBGNHBCM);
+		}
+
+		internal void JCFDEFFIHAM(UITweener EIHJNJDIALN)
+		{
+			BJGCPDNMHDH.AGKEINOOBEF(CPGBOIOMLFL[1].gameObject, BJGCPDNMHDH.PMPPHJDAFFA, BJGCPDNMHDH.LAIHMPFOGAE, 4, 1750f);
+		}
+
+		internal void LGJCNCHBFDA(UITweener KPICOKPHMIC)
+		{
+			TweenPosition tweenPosition = TweenPosition.Begin(CPGBOIOMLFL[0].gameObject, BJGCPDNMHDH.LJLAGMOPGBI, IIMDKHJAJGO, MPHCNMDIPAI, false);
+			tweenPosition.method = UITweener.Method.EaseIn;
+			BJGCPDNMHDH.NBOALIAFGMJ(CPGBOIOMLFL[0], IIMDKHJAJGO, DANMLNDDDKL, BJGCPDNMHDH.FFEKAGBLOPA, BJGCPDNMHDH.FFIHJCLBMBN, BJGCPDNMHDH.GJONPCCGBCE, BJGCPDNMHDH.PDIEFJAOHIP);
+			BJGCPDNMHDH.JIDKEKBADGJ(CPGBOIOMLFL[6], IIMDKHJAJGO, INMEDMJGJEH, BJGCPDNMHDH.HLCDLPLOJFE, BJGCPDNMHDH.FJJHNBFFNPC, BJGCPDNMHDH.PMLOFPMNMEE, BJGCPDNMHDH.AMCJBGNHBCM);
+		}
+
+		internal void LNKCHLPENAN(UITweener EIHJNJDIALN)
+		{
+			BJGCPDNMHDH.PICBFAHBJHL(CPGBOIOMLFL[0].gameObject, BJGCPDNMHDH.PMPPHJDAFFA, BJGCPDNMHDH.LAIHMPFOGAE, 5, 416f);
+		}
+
+		internal void HHNEBNHCGMO(UITweener KPICOKPHMIC)
+		{
+			TweenPosition tweenPosition = TweenPosition.Begin(CPGBOIOMLFL[1].gameObject, BJGCPDNMHDH.LJLAGMOPGBI, IIMDKHJAJGO, MPHCNMDIPAI);
+			tweenPosition.method = UITweener.Method.Linear;
+			BJGCPDNMHDH.KNNFAOKFIIC(CPGBOIOMLFL[1], IIMDKHJAJGO, DANMLNDDDKL, BJGCPDNMHDH.FFEKAGBLOPA, BJGCPDNMHDH.FFIHJCLBMBN, BJGCPDNMHDH.GJONPCCGBCE, BJGCPDNMHDH.PDIEFJAOHIP);
+			BJGCPDNMHDH.CEACDKIOGAB(CPGBOIOMLFL[5], IIMDKHJAJGO, INMEDMJGJEH, BJGCPDNMHDH.HLCDLPLOJFE, BJGCPDNMHDH.FJJHNBFFNPC, BJGCPDNMHDH.PMLOFPMNMEE, BJGCPDNMHDH.AMCJBGNHBCM);
+		}
+
+		internal void MPHECHCFCAN(UITweener KPICOKPHMIC)
+		{
+			TweenPosition tweenPosition = TweenPosition.Begin(CPGBOIOMLFL[1].gameObject, BJGCPDNMHDH.LJLAGMOPGBI, IIMDKHJAJGO, MPHCNMDIPAI);
+			tweenPosition.method = UITweener.Method.Linear;
+			BJGCPDNMHDH.KNNFAOKFIIC(CPGBOIOMLFL[0], IIMDKHJAJGO, DANMLNDDDKL, BJGCPDNMHDH.FFEKAGBLOPA, BJGCPDNMHDH.FFIHJCLBMBN, BJGCPDNMHDH.GJONPCCGBCE, BJGCPDNMHDH.PDIEFJAOHIP);
+			BJGCPDNMHDH.CEACDKIOGAB(CPGBOIOMLFL[3], IIMDKHJAJGO, INMEDMJGJEH, BJGCPDNMHDH.HLCDLPLOJFE, BJGCPDNMHDH.FJJHNBFFNPC, BJGCPDNMHDH.PMLOFPMNMEE, BJGCPDNMHDH.AMCJBGNHBCM);
+		}
+
+		internal void KILJJNKMNHO(UITweener EIHJNJDIALN)
+		{
+			BJGCPDNMHDH.MBOCACLMBGF(CPGBOIOMLFL[1].gameObject, BJGCPDNMHDH.PMPPHJDAFFA, BJGCPDNMHDH.LAIHMPFOGAE, 0, 911f);
+		}
+
+		internal void HADLONLCLPM(UITweener EIHJNJDIALN)
+		{
+			BJGCPDNMHDH.FNHAHJGHOOL(CPGBOIOMLFL[1].gameObject, BJGCPDNMHDH.PMPPHJDAFFA, BJGCPDNMHDH.LAIHMPFOGAE, 2, 1952f);
+		}
+	}
+
+	private sealed class KPPFCFDEJHP
+	{
+		internal UISprite OFBEAKDOCIO;
+
+		internal float AFCMOEFDCHO;
+
+		internal float HOCPFHPGEJG;
+
+		internal Vector3 OEIICEJPGKI;
+
+		internal Vector3 IIMDKHJAJGO;
+
+		internal float JCHEABNBOFF;
+
+		internal void LGJCNCHBFDA(UITweener KPICOKPHMIC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, 995f, AFCMOEFDCHO);
+			TweenPosition.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG, OEIICEJPGKI, IIMDKHJAJGO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG - JCHEABNBOFF, AFCMOEFDCHO);
+			tweenAlpha.onFinished = JLMDEGBHOGA;
+		}
+
+		internal void FCFDKEHICIB(UITweener HDDMOOLEOLC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, JCHEABNBOFF, AFCMOEFDCHO, 1074f);
+		}
+
+		internal void LNKCHLPENAN(UITweener HDDMOOLEOLC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, JCHEABNBOFF, AFCMOEFDCHO, 1682f);
+		}
+
+		internal void NNFHNIMCBLH(UITweener KPICOKPHMIC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, 69f, AFCMOEFDCHO);
+			TweenPosition.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG, OEIICEJPGKI, IIMDKHJAJGO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG - JCHEABNBOFF, AFCMOEFDCHO);
+			tweenAlpha.onFinished = KBBDIDNKLFN;
+		}
+
+		internal void NMIFBNPPAIK(UITweener HDDMOOLEOLC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, JCHEABNBOFF, AFCMOEFDCHO, 795f);
+		}
+
+		internal void EJLGBICBIFK(UITweener HDDMOOLEOLC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, JCHEABNBOFF, AFCMOEFDCHO, 0f);
+		}
+
+		internal void LKKLABBEOAG(UITweener KPICOKPHMIC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, 1373f, AFCMOEFDCHO);
+			TweenPosition.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG, OEIICEJPGKI, IIMDKHJAJGO, false);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG - JCHEABNBOFF, AFCMOEFDCHO);
+			tweenAlpha.onFinished = HBJNMCDOHKK;
+		}
+
+		internal void PPKGMGNKNAE(UITweener KPICOKPHMIC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, 776f, AFCMOEFDCHO);
+			TweenPosition.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG, OEIICEJPGKI, IIMDKHJAJGO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG - JCHEABNBOFF, AFCMOEFDCHO);
+			tweenAlpha.onFinished = LNKCHLPENAN;
+		}
+
+		internal void KJIFNOJILDB(UITweener KPICOKPHMIC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, 1394f, AFCMOEFDCHO);
+			TweenPosition.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG, OEIICEJPGKI, IIMDKHJAJGO, false);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG - JCHEABNBOFF, AFCMOEFDCHO);
+			tweenAlpha.onFinished = GANNNCEMLPI;
+		}
+
+		internal void MFCNOIDCJME(UITweener KPICOKPHMIC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, 1066f, AFCMOEFDCHO);
+			TweenPosition.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG, OEIICEJPGKI, IIMDKHJAJGO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG - JCHEABNBOFF, AFCMOEFDCHO);
+			tweenAlpha.onFinished = EJLGBICBIFK;
+		}
+
+		internal void NDJOJHNIBFC(UITweener KPICOKPHMIC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, 1873f, AFCMOEFDCHO);
+			TweenPosition.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG, OEIICEJPGKI, IIMDKHJAJGO, false);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG - JCHEABNBOFF, AFCMOEFDCHO);
+			tweenAlpha.onFinished = EIGOHMKAMGI;
+		}
+
+		internal void JHPEFFLPHCF(UITweener HDDMOOLEOLC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, JCHEABNBOFF, AFCMOEFDCHO, 459f);
+		}
+
+		internal void HBJNMCDOHKK(UITweener HDDMOOLEOLC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, JCHEABNBOFF, AFCMOEFDCHO, 929f);
+		}
+
+		internal void NCLMPCCHDAM(UITweener KPICOKPHMIC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, 298f, AFCMOEFDCHO);
+			TweenPosition.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG, OEIICEJPGKI, IIMDKHJAJGO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG - JCHEABNBOFF, AFCMOEFDCHO);
+			tweenAlpha.onFinished = IAAHOKHAJHK;
+		}
+
+		internal void BDACLBGMJLF(UITweener HDDMOOLEOLC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, JCHEABNBOFF, AFCMOEFDCHO, 1176f);
+		}
+
+		internal void CHDOECNGOPM(UITweener KPICOKPHMIC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, 351f, AFCMOEFDCHO);
+			TweenPosition.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG, OEIICEJPGKI, IIMDKHJAJGO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG - JCHEABNBOFF, AFCMOEFDCHO);
+			tweenAlpha.onFinished = JHPEFFLPHCF;
+		}
+
+		internal void KPHEPHDFCKK(UITweener KPICOKPHMIC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, 297f, AFCMOEFDCHO);
+			TweenPosition.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG, OEIICEJPGKI, IIMDKHJAJGO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG - JCHEABNBOFF, AFCMOEFDCHO);
+			tweenAlpha.onFinished = EJLGBICBIFK;
+		}
+
+		internal void ANAGFGHGPJA(UITweener KPICOKPHMIC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, 507f, AFCMOEFDCHO);
+			TweenPosition.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG, OEIICEJPGKI, IIMDKHJAJGO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG - JCHEABNBOFF, AFCMOEFDCHO);
+			tweenAlpha.onFinished = HBJNMCDOHKK;
+		}
+
+		internal void GANNNCEMLPI(UITweener HDDMOOLEOLC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, JCHEABNBOFF, AFCMOEFDCHO, 514f);
+		}
+
+		internal void HHNEBNHCGMO(UITweener KPICOKPHMIC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, 358f, AFCMOEFDCHO);
+			TweenPosition.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG, OEIICEJPGKI, IIMDKHJAJGO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG - JCHEABNBOFF, AFCMOEFDCHO);
+			tweenAlpha.onFinished = BDACLBGMJLF;
+		}
+
+		internal void KNJBDOADLDO(UITweener KPICOKPHMIC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, 1738f, AFCMOEFDCHO);
+			TweenPosition.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG, OEIICEJPGKI, IIMDKHJAJGO, false);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG - JCHEABNBOFF, AFCMOEFDCHO);
+			tweenAlpha.onFinished = AFJHEFPPKHG;
+		}
+
+		internal void EIGOHMKAMGI(UITweener HDDMOOLEOLC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, JCHEABNBOFF, AFCMOEFDCHO, 1400f);
+		}
+
+		internal void DDHOKNIEACI(UITweener KPICOKPHMIC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, 1048f, AFCMOEFDCHO);
+			TweenPosition.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG, OEIICEJPGKI, IIMDKHJAJGO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG - JCHEABNBOFF, AFCMOEFDCHO);
+			tweenAlpha.onFinished = PCBLIENKOPE;
+		}
+
+		internal void CIAOICMCMAM(UITweener HDDMOOLEOLC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, JCHEABNBOFF, AFCMOEFDCHO, 700f);
+		}
+
+		internal void IAAHOKHAJHK(UITweener HDDMOOLEOLC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, JCHEABNBOFF, AFCMOEFDCHO, 950f);
+		}
+
+		internal void JGEMIBIJMJC(UITweener KPICOKPHMIC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, 1612f, AFCMOEFDCHO);
+			TweenPosition.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG, OEIICEJPGKI, IIMDKHJAJGO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG - JCHEABNBOFF, AFCMOEFDCHO);
+			tweenAlpha.onFinished = PCBLIENKOPE;
+		}
+
+		internal void LHPPLGOOLEC(UITweener KPICOKPHMIC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, 1928f, AFCMOEFDCHO);
+			TweenPosition.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG, OEIICEJPGKI, IIMDKHJAJGO, false);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG - JCHEABNBOFF, AFCMOEFDCHO);
+			tweenAlpha.onFinished = CBIEBLNLGLB;
+		}
+
+		internal void AFJHEFPPKHG(UITweener HDDMOOLEOLC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, JCHEABNBOFF, AFCMOEFDCHO, 1017f);
+		}
+
+		internal void CBIEBLNLGLB(UITweener HDDMOOLEOLC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, JCHEABNBOFF, AFCMOEFDCHO, 1119f);
+		}
+
+		internal void AMIJFGBOCLC(UITweener KPICOKPHMIC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, 451f, AFCMOEFDCHO);
+			TweenPosition.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG, OEIICEJPGKI, IIMDKHJAJGO, false);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG - JCHEABNBOFF, AFCMOEFDCHO);
+			tweenAlpha.onFinished = HBJNMCDOHKK;
+		}
+
+		internal void CHPGPDHOOFL(UITweener HDDMOOLEOLC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, JCHEABNBOFF, AFCMOEFDCHO, 102f);
+		}
+
+		internal void JGHLGHMJJDG(UITweener KPICOKPHMIC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, 1056f, AFCMOEFDCHO);
+			TweenPosition.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG, OEIICEJPGKI, IIMDKHJAJGO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG - JCHEABNBOFF, AFCMOEFDCHO);
+			tweenAlpha.onFinished = AFJHEFPPKHG;
+		}
+
+		internal void CKIDEOIKHJO(UITweener HDDMOOLEOLC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, JCHEABNBOFF, AFCMOEFDCHO, 723f);
+		}
+
+		internal void NAJNECOMDDN(UITweener KPICOKPHMIC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, 444f, AFCMOEFDCHO);
+			TweenPosition.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG, OEIICEJPGKI, IIMDKHJAJGO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG - JCHEABNBOFF, AFCMOEFDCHO);
+			tweenAlpha.onFinished = IAAHOKHAJHK;
+		}
+
+		internal void JCFDEFFIHAM(UITweener HDDMOOLEOLC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, JCHEABNBOFF, AFCMOEFDCHO, 196f);
+		}
+
+		internal void LJCDGJKCNEC(UITweener KPICOKPHMIC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, 0f, AFCMOEFDCHO);
+			TweenPosition.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG, OEIICEJPGKI, IIMDKHJAJGO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG - JCHEABNBOFF, AFCMOEFDCHO);
+			tweenAlpha.onFinished = EJLGBICBIFK;
+		}
+
+		internal void JLMDEGBHOGA(UITweener HDDMOOLEOLC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, JCHEABNBOFF, AFCMOEFDCHO, 1254f);
+		}
+
+		internal void ILOFOILFGMA(UITweener KPICOKPHMIC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, 266f, AFCMOEFDCHO);
+			TweenPosition.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG, OEIICEJPGKI, IIMDKHJAJGO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG - JCHEABNBOFF, AFCMOEFDCHO);
+			tweenAlpha.onFinished = EJLGBICBIFK;
+		}
+
+		internal void HHLMDAKDHFK(UITweener KPICOKPHMIC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, 1484f, AFCMOEFDCHO);
+			TweenPosition.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG, OEIICEJPGKI, IIMDKHJAJGO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(OFBEAKDOCIO.gameObject, HOCPFHPGEJG - JCHEABNBOFF, AFCMOEFDCHO);
+			tweenAlpha.onFinished = JHPEFFLPHCF;
+		}
+
+		internal void PCBLIENKOPE(UITweener HDDMOOLEOLC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, JCHEABNBOFF, AFCMOEFDCHO, 1305f);
+		}
+
+		internal void KBBDIDNKLFN(UITweener HDDMOOLEOLC)
+		{
+			TweenAlpha.Begin(OFBEAKDOCIO.gameObject, JCHEABNBOFF, AFCMOEFDCHO, 132f);
+		}
+	}
+
+	private sealed class FNPHBIPGLMO
+	{
+		internal GameObject KHAHPAKDIKE;
+
+		internal float AFCMOEFDCHO;
+
+		internal float FOCOMEPBEKD;
+
+		internal float FFHNHBNODDH;
+
+		internal int PDMGPGEHLNM;
+
+		internal GameOverScreen BJGCPDNMHDH;
+
+		internal void EHEDMPKGLFJ(UITweener NLPIMGDEFFL)
+		{
+			TweenAlpha.Begin(KHAHPAKDIKE, 1902f, AFCMOEFDCHO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(KHAHPAKDIKE, FOCOMEPBEKD, AFCMOEFDCHO);
+			tweenAlpha.onFinished = LEDJMCDANFJ;
+		}
+
+		internal void LMJJCHPKCFK(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.FNHAHJGHOOL(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 0, AFCMOEFDCHO);
+		}
+
+		internal void FKBGKGFEEIB(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.PICBFAHBJHL(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 1, AFCMOEFDCHO);
+		}
+
+		internal void ILGOBENABHC(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.PICBFAHBJHL(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 0, AFCMOEFDCHO);
+		}
+
+		internal void PHGDBIEENCB(UITweener NLPIMGDEFFL)
+		{
+			TweenAlpha.Begin(KHAHPAKDIKE, 274f, AFCMOEFDCHO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(KHAHPAKDIKE, FOCOMEPBEKD, AFCMOEFDCHO);
+			tweenAlpha.onFinished = JCFDEFFIHAM;
+		}
+
+		internal void OGGFOHJHLFM(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.AGKEINOOBEF(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 1, AFCMOEFDCHO);
+		}
+
+		internal void FICGLJJELPM(UITweener NLPIMGDEFFL)
+		{
+			TweenAlpha.Begin(KHAHPAKDIKE, 12f, AFCMOEFDCHO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(KHAHPAKDIKE, FOCOMEPBEKD, AFCMOEFDCHO);
+			tweenAlpha.onFinished = OKFINGDLMJP;
+		}
+
+		internal void DPCJMMOPCFO(UITweener NLPIMGDEFFL)
+		{
+			TweenAlpha.Begin(KHAHPAKDIKE, 1267f, AFCMOEFDCHO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(KHAHPAKDIKE, FOCOMEPBEKD, AFCMOEFDCHO);
+			tweenAlpha.onFinished = JCFDEFFIHAM;
+		}
+
+		internal void KPLNDNKBMAA(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.MBOCACLMBGF(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 0, AFCMOEFDCHO);
+		}
+
+		internal void DDHOKNIEACI(UITweener NLPIMGDEFFL)
+		{
+			TweenAlpha.Begin(KHAHPAKDIKE, 103f, AFCMOEFDCHO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(KHAHPAKDIKE, FOCOMEPBEKD, AFCMOEFDCHO);
+			tweenAlpha.onFinished = HBJNMCDOHKK;
+		}
+
+		internal void LHPPLGOOLEC(UITweener NLPIMGDEFFL)
+		{
+			TweenAlpha.Begin(KHAHPAKDIKE, 1312f, AFCMOEFDCHO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(KHAHPAKDIKE, FOCOMEPBEKD, AFCMOEFDCHO);
+			tweenAlpha.onFinished = DKNJHLBJKKD;
+		}
+
+		internal void ADEFLNOHDAK(UITweener NLPIMGDEFFL)
+		{
+			TweenAlpha.Begin(KHAHPAKDIKE, 229f, AFCMOEFDCHO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(KHAHPAKDIKE, FOCOMEPBEKD, AFCMOEFDCHO);
+			tweenAlpha.onFinished = DACMPHJFMPH;
+		}
+
+		internal void POGLHCIAAGH(UITweener NLPIMGDEFFL)
+		{
+			TweenAlpha.Begin(KHAHPAKDIKE, 347f, AFCMOEFDCHO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(KHAHPAKDIKE, FOCOMEPBEKD, AFCMOEFDCHO);
+			tweenAlpha.onFinished = ANFPNINIKHI;
+		}
+
+		internal void IAAHOKHAJHK(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.MBOCACLMBGF(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 0, AFCMOEFDCHO);
+		}
+
+		internal void EMKPBGFBPFI(UITweener NLPIMGDEFFL)
+		{
+			TweenAlpha.Begin(KHAHPAKDIKE, 965f, AFCMOEFDCHO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(KHAHPAKDIKE, FOCOMEPBEKD, AFCMOEFDCHO);
+			tweenAlpha.onFinished = JLMDEGBHOGA;
+		}
+
+		internal void ENOBKGECBGB(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.AGKEINOOBEF(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 0, AFCMOEFDCHO);
+		}
+
+		internal void OEAPCIJKAKI(UITweener NLPIMGDEFFL)
+		{
+			TweenAlpha.Begin(KHAHPAKDIKE, 591f, AFCMOEFDCHO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(KHAHPAKDIKE, FOCOMEPBEKD, AFCMOEFDCHO);
+			tweenAlpha.onFinished = CJPMPGPKIFJ;
+		}
+
+		internal void GANNNCEMLPI(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.FNHAHJGHOOL(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 0, AFCMOEFDCHO);
+		}
+
+		internal void ANAGFGHGPJA(UITweener NLPIMGDEFFL)
+		{
+			TweenAlpha.Begin(KHAHPAKDIKE, 365f, AFCMOEFDCHO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(KHAHPAKDIKE, FOCOMEPBEKD, AFCMOEFDCHO);
+			tweenAlpha.onFinished = DLODDIOIDME;
+		}
+
+		internal void DKNJHLBJKKD(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.AGKEINOOBEF(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 1, AFCMOEFDCHO);
+		}
+
+		internal void PPKGMGNKNAE(UITweener NLPIMGDEFFL)
+		{
+			TweenAlpha.Begin(KHAHPAKDIKE, 1252f, AFCMOEFDCHO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(KHAHPAKDIKE, FOCOMEPBEKD, AFCMOEFDCHO);
+			tweenAlpha.onFinished = LNKCHLPENAN;
+		}
+
+		internal void NMIFBNPPAIK(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.MBOCACLMBGF(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 0, AFCMOEFDCHO);
+		}
+
+		internal void HPJCBDDALHB(UITweener NLPIMGDEFFL)
+		{
+			TweenAlpha.Begin(KHAHPAKDIKE, 464f, AFCMOEFDCHO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(KHAHPAKDIKE, FOCOMEPBEKD, AFCMOEFDCHO);
+			tweenAlpha.onFinished = FKBGKGFEEIB;
+		}
+
+		internal void LEDJMCDANFJ(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.AGKEINOOBEF(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 0, AFCMOEFDCHO);
+		}
+
+		internal void JGKCIFDJIPB(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.FNHAHJGHOOL(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 1, AFCMOEFDCHO);
+		}
+
+		internal void MFCNOIDCJME(UITweener NLPIMGDEFFL)
+		{
+			TweenAlpha.Begin(KHAHPAKDIKE, 1504f, AFCMOEFDCHO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(KHAHPAKDIKE, FOCOMEPBEKD, AFCMOEFDCHO);
+			tweenAlpha.onFinished = NMIFBNPPAIK;
+		}
+
+		internal void JCFDEFFIHAM(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.PICBFAHBJHL(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 1, AFCMOEFDCHO);
+		}
+
+		internal void FDKMOFHAEFN(UITweener NLPIMGDEFFL)
+		{
+			TweenAlpha.Begin(KHAHPAKDIKE, 989f, AFCMOEFDCHO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(KHAHPAKDIKE, FOCOMEPBEKD, AFCMOEFDCHO);
+			tweenAlpha.onFinished = HLBKFMJPGEK;
+		}
+
+		internal void CJPMPGPKIFJ(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.FNHAHJGHOOL(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 1, AFCMOEFDCHO);
+		}
+
+		internal void LJCDGJKCNEC(UITweener NLPIMGDEFFL)
+		{
+			TweenAlpha.Begin(KHAHPAKDIKE, 0f, AFCMOEFDCHO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(KHAHPAKDIKE, FOCOMEPBEKD, AFCMOEFDCHO);
+			tweenAlpha.onFinished = EJLGBICBIFK;
+		}
+
+		internal void JLMDEGBHOGA(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.AGKEINOOBEF(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 1, AFCMOEFDCHO);
+		}
+
+		internal void CKIDEOIKHJO(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.AGKEINOOBEF(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 0, AFCMOEFDCHO);
+		}
+
+		internal void DACMPHJFMPH(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.MBOCACLMBGF(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 1, AFCMOEFDCHO);
+		}
+
+		internal void DLODDIOIDME(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.FNHAHJGHOOL(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 0, AFCMOEFDCHO);
+		}
+
+		internal void BBPKDMPNEDG(UITweener NLPIMGDEFFL)
+		{
+			TweenAlpha.Begin(KHAHPAKDIKE, 557f, AFCMOEFDCHO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(KHAHPAKDIKE, FOCOMEPBEKD, AFCMOEFDCHO);
+			tweenAlpha.onFinished = HKOHIJPFLJC;
+		}
+
+		internal void OACBBOBDICJ(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.MBOCACLMBGF(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 1, AFCMOEFDCHO);
+		}
+
+		internal void MOHGACHDJEG(UITweener NLPIMGDEFFL)
+		{
+			TweenAlpha.Begin(KHAHPAKDIKE, 291f, AFCMOEFDCHO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(KHAHPAKDIKE, FOCOMEPBEKD, AFCMOEFDCHO);
+			tweenAlpha.onFinished = LEDJMCDANFJ;
+		}
+
+		internal void INMBGGLEHGN(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.PICBFAHBJHL(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 0, AFCMOEFDCHO);
+		}
+
+		internal void EALIKACGICG(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.AGKEINOOBEF(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 0, AFCMOEFDCHO);
+		}
+
+		internal void MNKDEBHAPPB(UITweener NLPIMGDEFFL)
+		{
+			TweenAlpha.Begin(KHAHPAKDIKE, 1647f, AFCMOEFDCHO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(KHAHPAKDIKE, FOCOMEPBEKD, AFCMOEFDCHO);
+			tweenAlpha.onFinished = LKKPBNGCPHB;
+		}
+
+		internal void GDCDBLACFMC(UITweener NLPIMGDEFFL)
+		{
+			TweenAlpha.Begin(KHAHPAKDIKE, 729f, AFCMOEFDCHO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(KHAHPAKDIKE, FOCOMEPBEKD, AFCMOEFDCHO);
+			tweenAlpha.onFinished = OACBBOBDICJ;
+		}
+
+		internal void FDKEAJLEMCM(UITweener NLPIMGDEFFL)
+		{
+			TweenAlpha.Begin(KHAHPAKDIKE, 1940f, AFCMOEFDCHO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(KHAHPAKDIKE, FOCOMEPBEKD, AFCMOEFDCHO);
+			tweenAlpha.onFinished = OKFINGDLMJP;
+		}
+
+		internal void KELBFENPJKD(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.PICBFAHBJHL(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 0, AFCMOEFDCHO);
+		}
+
+		internal void LKKPBNGCPHB(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.MBOCACLMBGF(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 0, AFCMOEFDCHO);
+		}
+
+		internal void HKOHIJPFLJC(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.FNHAHJGHOOL(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 0, AFCMOEFDCHO);
+		}
+
+		internal void MPHECHCFCAN(UITweener NLPIMGDEFFL)
+		{
+			TweenAlpha.Begin(KHAHPAKDIKE, 698f, AFCMOEFDCHO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(KHAHPAKDIKE, FOCOMEPBEKD, AFCMOEFDCHO);
+			tweenAlpha.onFinished = KPLNDNKBMAA;
+		}
+
+		internal void BIKJIFFCHFH(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.MBOCACLMBGF(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 0, AFCMOEFDCHO);
+		}
+
+		internal void CBIEBLNLGLB(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.AGKEINOOBEF(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 0, AFCMOEFDCHO);
+		}
+
+		internal void PCBLIENKOPE(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.FNHAHJGHOOL(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 1, AFCMOEFDCHO);
+		}
+
+		internal void JHGBDMGHDMN(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.AGKEINOOBEF(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 0, AFCMOEFDCHO);
+		}
+
+		internal void OPPNIDPBBIM(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.MBOCACLMBGF(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 1, AFCMOEFDCHO);
+		}
+
+		internal void HHNEBNHCGMO(UITweener NLPIMGDEFFL)
+		{
+			TweenAlpha.Begin(KHAHPAKDIKE, 1062f, AFCMOEFDCHO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(KHAHPAKDIKE, FOCOMEPBEKD, AFCMOEFDCHO);
+			tweenAlpha.onFinished = IAAHOKHAJHK;
+		}
+
+		internal void EJLGBICBIFK(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.PICBFAHBJHL(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 1, AFCMOEFDCHO);
+		}
+
+		internal void JEKOCFKHBKH(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.PICBFAHBJHL(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 1, AFCMOEFDCHO);
+		}
+
+		internal void ABIJCAJCFOC(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.FNHAHJGHOOL(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 0, AFCMOEFDCHO);
+		}
+
+		internal void CHOIECFFEMH(UITweener NLPIMGDEFFL)
+		{
+			TweenAlpha.Begin(KHAHPAKDIKE, 1680f, AFCMOEFDCHO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(KHAHPAKDIKE, FOCOMEPBEKD, AFCMOEFDCHO);
+			tweenAlpha.onFinished = HLBKFMJPGEK;
+		}
+
+		internal void KLJNEGDLOMG(UITweener NLPIMGDEFFL)
+		{
+			TweenAlpha.Begin(KHAHPAKDIKE, 79f, AFCMOEFDCHO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(KHAHPAKDIKE, FOCOMEPBEKD, AFCMOEFDCHO);
+			tweenAlpha.onFinished = CKIDEOIKHJO;
+		}
+
+		internal void LNKCHLPENAN(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.MBOCACLMBGF(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 1, AFCMOEFDCHO);
+		}
+
+		internal void BFMHIICIHKL(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.PICBFAHBJHL(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 0, AFCMOEFDCHO);
+		}
+
+		internal void HLBKFMJPGEK(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.AGKEINOOBEF(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 1, AFCMOEFDCHO);
+		}
+
+		internal void OKFINGDLMJP(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.FNHAHJGHOOL(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 1, AFCMOEFDCHO);
+		}
+
+		internal void AHNGHFFBBHH(UITweener NLPIMGDEFFL)
+		{
+			TweenAlpha.Begin(KHAHPAKDIKE, 629f, AFCMOEFDCHO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(KHAHPAKDIKE, FOCOMEPBEKD, AFCMOEFDCHO);
+			tweenAlpha.onFinished = KPLNDNKBMAA;
+		}
+
+		internal void OFJDLANHAMD(UITweener NLPIMGDEFFL)
+		{
+			TweenAlpha.Begin(KHAHPAKDIKE, 1556f, AFCMOEFDCHO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(KHAHPAKDIKE, FOCOMEPBEKD, AFCMOEFDCHO);
+			tweenAlpha.onFinished = JEKOCFKHBKH;
+		}
+
+		internal void HBJNMCDOHKK(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.FNHAHJGHOOL(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 1, AFCMOEFDCHO);
+		}
+
+		internal void EIGOHMKAMGI(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.PICBFAHBJHL(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 1, AFCMOEFDCHO);
+		}
+
+		internal void ABNGKEJNLJO(UITweener NLPIMGDEFFL)
+		{
+			TweenAlpha.Begin(KHAHPAKDIKE, 1412f, AFCMOEFDCHO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(KHAHPAKDIKE, FOCOMEPBEKD, AFCMOEFDCHO);
+			tweenAlpha.onFinished = IAAHOKHAJHK;
+		}
+
+		internal void POGDLLFCOKO(UITweener NLPIMGDEFFL)
+		{
+			TweenAlpha.Begin(KHAHPAKDIKE, 436f, AFCMOEFDCHO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(KHAHPAKDIKE, FOCOMEPBEKD, AFCMOEFDCHO);
+			tweenAlpha.onFinished = EALIKACGICG;
+		}
+
+		internal void JDEJHLLIONG(UITweener NLPIMGDEFFL)
+		{
+			TweenAlpha.Begin(KHAHPAKDIKE, 567f, AFCMOEFDCHO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(KHAHPAKDIKE, FOCOMEPBEKD, AFCMOEFDCHO);
+			tweenAlpha.onFinished = HLBKFMJPGEK;
+		}
+
+		internal void ANFPNINIKHI(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.PICBFAHBJHL(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 0, AFCMOEFDCHO);
+		}
+
+		internal void LGJCNCHBFDA(UITweener NLPIMGDEFFL)
+		{
+			TweenAlpha.Begin(KHAHPAKDIKE, 658f, AFCMOEFDCHO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(KHAHPAKDIKE, FOCOMEPBEKD, AFCMOEFDCHO);
+			tweenAlpha.onFinished = ILGOBENABHC;
+		}
+
+		internal void EFFNMHECDDI(UITweener PBBIKPJFCCN)
+		{
+			BJGCPDNMHDH.PICBFAHBJHL(KHAHPAKDIKE, FFHNHBNODDH, FOCOMEPBEKD, PDMGPGEHLNM - 1, AFCMOEFDCHO);
+		}
+
+		internal void EFNJFNKJOMB(UITweener NLPIMGDEFFL)
+		{
+			TweenAlpha.Begin(KHAHPAKDIKE, 416f, AFCMOEFDCHO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(KHAHPAKDIKE, FOCOMEPBEKD, AFCMOEFDCHO);
+			tweenAlpha.onFinished = HLBKFMJPGEK;
+		}
+
+		internal void EGJBKFPHCNF(UITweener NLPIMGDEFFL)
+		{
+			TweenAlpha.Begin(KHAHPAKDIKE, 16f, AFCMOEFDCHO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(KHAHPAKDIKE, FOCOMEPBEKD, AFCMOEFDCHO);
+			tweenAlpha.onFinished = CJPMPGPKIFJ;
+		}
+
+		internal void OKNCFDMEFGJ(UITweener NLPIMGDEFFL)
+		{
+			TweenAlpha.Begin(KHAHPAKDIKE, 1158f, AFCMOEFDCHO);
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(KHAHPAKDIKE, FOCOMEPBEKD, AFCMOEFDCHO);
+			tweenAlpha.onFinished = LNKCHLPENAN;
+		}
+	}
+
+	[Header("Top")]
+	public List<UISprite> OJHHKELOCPP;
+
+	public List<UISprite> CLLKIAEFGOD;
+
+	public UISprite PEJFFMLEHFA;
+
+	public UISprite HFENNCENBFE;
+
+	[Header("Bottom")]
+	public GameObject FLIDPEEIKPI;
+
+	public UIPanel CMLCGHHAAEG;
+
+	public GameObject MCODFOMPPCF;
+
+	public UILabel COMKIBACFPJ;
+
+	public UISprite HGGJDMMKNLO;
+
+	public GameObject BLPJOGLEHOM;
+
+	[Header("-Hit by Unit")]
+	public GameObject DNCJEBDPBNA;
+
+	public UISprite NACGOGCPIAH;
+
+	public UISprite DPMLMAOJPNL;
+
+	public UILabel JHONGBLEHLJ;
+
+	public UILabel CDBNOEGOFOI;
+
+	public UITexture KEDHBNHBGPF;
+
+	[Header("-Hit by Player")]
+	public GameObject IGJMJNHFCAI;
+
+	public UISprite JDOOPPMKEFO;
+
+	public PlayerIcon OOAOCJGJIFJ;
+
+	public UILabel BCMCMKDCLGP;
+
+	[Header("-Hit by Environment")]
+	public GameObject KOAHKDOKFIF;
+
+	public UISprite BKLCLFPPFAF;
+
+	public UILabel NPNNFHGDAPP;
+
+	private Vector3 EJABJMCKPLD = new Vector3(-1560f, 0f, 0f);
+
+	private Vector3 CFDDKJBGAMI = new Vector3(0f, 0f, 0f);
+
+	private Vector3 DNEKLOIJEKJ = new Vector3(-50f, 0f, 0f);
+
+	private Vector3 LPLHKJILIFO = new Vector3(-300f, 0f, 0f);
+
+	private Vector3 LOEBAIKMFMF = new Vector3(-160f, 0f, 0f);
+
+	private Vector3 ACMJMOJMFHG = new Vector3(0f, 0f, 0f);
+
+	private Vector3 OFKEAHBJKOB = new Vector3(1560f, 0f, 0f);
+
+	private Vector3 DIKNMGBDLOA = new Vector3(0f, 0f, 0f);
+
+	private Vector3 EFMLGHCGBHE = new Vector3(50f, 0f, 0f);
+
+	private Vector3 AFONHPHMALP = new Vector3(160f, 0f, 0f);
+
+	private Vector3 MDNHGMPJDCH = new Vector3(300f, 0f, 0f);
+
+	private Vector3 EKFAIPLJDIN = new Vector3(50f, 0f, 0f);
+
+	private Vector3 JCJJHMPBPCP = new Vector3(0f, -550f, 0f);
+
+	private Vector3 AJCMLCKLAHB = new Vector3(0f, 40f, 0f);
+
+	private Vector3 GDCDAPEPKLD = new Vector3(0f, -45f, 0f);
+
+	private Vector3 PDDEJNDEEGJ = new Vector3(0f, -950f, 0f);
+
+	private Vector3 ECBHCGNCPDI = new Vector3(0f, 0f, 0f);
+
+	private Vector3 CGAFKMGEKLG = new Vector3(0f, -95f, 0f);
+
+	private float EKKAGHDNKIH = 4.3f;
+
+	private float ICJDNBOIMFH = 2.5f;
+
+	private float KMBMCHPDJND = 0.7f;
+
+	private float ANHDDGIEAGL = 6.1f;
+
+	private float LJLAGMOPGBI = 0.2f;
+
+	private float CALAABKDMHA = 2.4f;
+
+	private float PMMHNFFGEGJ = 0.4f;
+
+	private float FFIHJCLBMBN = 0.01f;
+
+	private float GJONPCCGBCE = 0.4f;
+
+	private float FFEKAGBLOPA = 0.6f;
+
+	private float PDIEFJAOHIP = 0.3f;
+
+	private float HLCDLPLOJFE = 0.3f;
+
+	private float FJJHNBFFNPC = 0.2f;
+
+	private float PMLOFPMNMEE = 0.4f;
+
+	private float AMCJBGNHBCM = 0.2f;
+
+	private Vector2 AMADBEELOID = new Vector2(4000f, 1600f);
+
+	private float DCNFLIGAJCK = 0.2f;
+
+	private Vector2 MJFNOHDKFGJ = new Vector2(3000f, 200f);
+
+	private float DCFPDMNAELM = 0.6f;
+
+	private float PJBPDJEFKFH = 0.1f;
+
+	private float JKNHDOPPMIN = 0.2f;
+
+	private float PBPMIBFABBN = 0.4f;
+
+	private float FIAMGPGLCFJ = 0.25f;
+
+	private float FOKIFJGGGHC = 0.2f;
+
+	private float GGMGBMDDBMG = 0.5f;
+
+	private float NAPGANMLNCA = 2.5f;
+
+	private float MOOCOJCAHPE = 0.5f;
+
+	private float PMPPHJDAFFA = 0.03f;
+
+	private float LAIHMPFOGAE = 0.05f;
+
+	private IGJLCIBEHAB IDCAHMPHIOD = IGJLCIBEHAB.Enviroment;
+
+	private bool PIJJLPNPICB;
+
+	private bool MKALMODMIMP;
+
+	private bool APDPEJKDLIG;
+
+	private float CINJJFHDMHH;
+
+	private bool DCJDMBCOLEO;
+
+	private Card OELHBPKOOLJ;
+
+	private static Dictionary<GameController.HKGHCIEPGEL, string> LAGHNBKELDG = new Dictionary<GameController.HKGHCIEPGEL, string>
+	{
+		{
+			GameController.HKGHCIEPGEL.Win,
+			"game-label-you-blue"
+		},
+		{
+			GameController.HKGHCIEPGEL.WinByForfeit,
+			"game-label-you-blue"
+		},
+		{
+			GameController.HKGHCIEPGEL.MissionSuccess,
+			"game-label-you-blue"
+		},
+		{
+			GameController.HKGHCIEPGEL.Kia,
+			"game-label-eliminated"
+		},
+		{
+			GameController.HKGHCIEPGEL.Killed,
+			"game-label-you-red"
+		},
+		{
+			GameController.HKGHCIEPGEL.MissionFailed,
+			"game-label-you-red"
+		},
+		{
+			GameController.HKGHCIEPGEL.Forfeit,
+			"game-label-you-red"
+		}
+	};
+
+	private static Dictionary<GameController.HKGHCIEPGEL, string> AJKGDKAKEGJ = new Dictionary<GameController.HKGHCIEPGEL, string>
+	{
+		{
+			GameController.HKGHCIEPGEL.Win,
+			"game-label-won"
+		},
+		{
+			GameController.HKGHCIEPGEL.WinByForfeit,
+			"game-label-won"
+		},
+		{
+			GameController.HKGHCIEPGEL.MissionSuccess,
+			"game-label-won"
+		},
+		{
+			GameController.HKGHCIEPGEL.Kia,
+			string.Empty
+		},
+		{
+			GameController.HKGHCIEPGEL.Killed,
+			"game-label-lose"
+		},
+		{
+			GameController.HKGHCIEPGEL.MissionFailed,
+			"game-label-lose"
+		},
+		{
+			GameController.HKGHCIEPGEL.Forfeit,
+			"game-label-lose"
+		}
+	};
+
+	private static Dictionary<GameController.HKGHCIEPGEL, Color> IOKDLKIEFCK = new Dictionary<GameController.HKGHCIEPGEL, Color>
+	{
+		{
+			GameController.HKGHCIEPGEL.Win,
+			Colours.blue
+		},
+		{
+			GameController.HKGHCIEPGEL.WinByForfeit,
+			Colours.blue
+		},
+		{
+			GameController.HKGHCIEPGEL.MissionSuccess,
+			Colours.blue
+		},
+		{
+			GameController.HKGHCIEPGEL.Kia,
+			Colours.redLose
+		},
+		{
+			GameController.HKGHCIEPGEL.Killed,
+			Colours.redLose
+		},
+		{
+			GameController.HKGHCIEPGEL.MissionFailed,
+			Colours.redLose
+		},
+		{
+			GameController.HKGHCIEPGEL.Forfeit,
+			Colours.redLose
+		}
+	};
+
+	public bool isAnimationFinished
+	{
+		get
+		{
+			return MKALMODMIMP;
+		}
+	}
+
+	protected virtual void AMBDHDEBPJJ()
+	{
+	}
+
+	private void KGCNPCEAPJI()
+	{
+		float duration = LJLAGMOPGBI + DCNFLIGAJCK + DCFPDMNAELM + ((!FLIDPEEIKPI.activeSelf) ? 1223f : 1806f);
+		TweenScale tweenScale = TweenScale.Begin(CMLCGHHAAEG.transform.parent.gameObject, duration, Vector3.one);
+		tweenScale.onFinished = MFDDLFHCAGN;
+	}
+
+	[CompilerGenerated]
+	private void FFKMKAMNBKJ(UITweener GEHACOGJMHA)
+	{
+		CMLCGHHAAEG.alpha1 = 1f;
+		TweenAlpha.Begin(CMLCGHHAAEG.gameObject, 0f, 1f);
+		GKFJLILOMKB();
+	}
+
+	public void EGGAMGPBDKL(PlayerController OIGOHCMHMIP)
+	{
+		JDOOPPMKEFO.color = ((OIGOHCMHMIP.fraction != PlayerController.OGMBJPKOPCB.fraction) ? Colours.redEnemy : Colours.blue);
+		if (OIGOHCMHMIP == PlayerController.OGMBJPKOPCB)
+		{
+			OOAOCJGJIFJ.EIKJEGHELNK(OIGOHCMHMIP.EHHHBEMKGOE.EBFDAICCJAK);
+			BCMCMKDCLGP.text = OIGOHCMHMIP.EHHHBEMKGOE.MHPNDNJDPGE;
+		}
+		else
+		{
+			OOAOCJGJIFJ.EIKJEGHELNK(OIGOHCMHMIP.EHHHBEMKGOE.EBFDAICCJAK);
+			BCMCMKDCLGP.text = OIGOHCMHMIP.EHHHBEMKGOE.MHPNDNJDPGE;
+		}
+		IDCAHMPHIOD = IGJLCIBEHAB.Player;
+	}
+
+	private void DOCKKLGEEDE(UITweener KPICOKPHMIC)
+	{
+		TweenPosition tweenPosition = TweenPosition.Begin(BLPJOGLEHOM, FOKIFJGGGHC, ECBHCGNCPDI, CGAFKMGEKLG);
+		tweenPosition.method = (UITweener.Method)6;
+	}
+
+	private void IIENKMGEBCO()
+	{
+		TweenAlpha.Begin(HGGJDMMKNLO.gameObject, 895f, GGMGBMDDBMG);
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(HGGJDMMKNLO.gameObject, NAPGANMLNCA, GGMGBMDDBMG);
+		tweenAlpha.onFinished = EJJPOPHBNNG;
+		MCODFOMPPCF.transform.localPosition = JCJJHMPBPCP;
+		TweenPosition tweenPosition = TweenPosition.Begin(MCODFOMPPCF, JKNHDOPPMIN, JCJJHMPBPCP, AJCMLCKLAHB, false);
+		tweenPosition.method = UITweener.Method.Linear;
+		tweenPosition.onFinished = delegate
+		{
+			TweenPosition tweenPosition3 = TweenPosition.Begin(MCODFOMPPCF, PBPMIBFABBN, AJCMLCKLAHB, GDCDAPEPKLD);
+			tweenPosition3.method = UITweener.Method.EaseOut;
+		};
+		BLPJOGLEHOM.transform.localPosition = PDDEJNDEEGJ;
+		TweenPosition tweenPosition2 = TweenPosition.Begin(BLPJOGLEHOM, FIAMGPGLCFJ, PDDEJNDEEGJ, ECBHCGNCPDI, false);
+		tweenPosition2.method = UITweener.Method.Linear;
+		tweenPosition2.onFinished = delegate
+		{
+			TweenPosition tweenPosition3 = TweenPosition.Begin(BLPJOGLEHOM, FOKIFJGGGHC, ECBHCGNCPDI, CGAFKMGEKLG);
+			tweenPosition3.method = UITweener.Method.EaseOut;
+		};
+	}
+
+	private void CELIJHFAJNC(UITweener KPICOKPHMIC)
+	{
+		TweenPosition tweenPosition = TweenPosition.Begin(BLPJOGLEHOM, FOKIFJGGGHC, ECBHCGNCPDI, CGAFKMGEKLG);
+		tweenPosition.method = (UITweener.Method)6;
+	}
+
+	protected virtual void JKEEMKIHFEE()
+	{
+	}
+
+	[DebuggerHidden]
+	private IEnumerator MGNJNOIJJKP()
+	{
+		NFPHJEHMGMG nFPHJEHMGMG = new NFPHJEHMGMG();
+		nFPHJEHMGMG.BJGCPDNMHDH = this;
+		return nFPHJEHMGMG;
+	}
+
+	private void NBOALIAFGMJ(UISprite OFBEAKDOCIO, Vector3 OEIICEJPGKI, Vector3 IIMDKHJAJGO, float AFCMOEFDCHO, float KALLNCAFIMP, float HOCPFHPGEJG, float JCHEABNBOFF)
+	{
+		KPPFCFDEJHP kPPFCFDEJHP = new KPPFCFDEJHP();
+		kPPFCFDEJHP.OFBEAKDOCIO = OFBEAKDOCIO;
+		kPPFCFDEJHP.AFCMOEFDCHO = AFCMOEFDCHO;
+		kPPFCFDEJHP.HOCPFHPGEJG = HOCPFHPGEJG;
+		kPPFCFDEJHP.OEIICEJPGKI = OEIICEJPGKI;
+		kPPFCFDEJHP.IIMDKHJAJGO = IIMDKHJAJGO;
+		kPPFCFDEJHP.JCHEABNBOFF = JCHEABNBOFF;
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(kPPFCFDEJHP.OFBEAKDOCIO.gameObject, KALLNCAFIMP, 1466f);
+		tweenAlpha.onFinished = kPPFCFDEJHP.LKKLABBEOAG;
+	}
+
+	private void LGBFHOBNNGM()
+	{
+		TweenAlpha.Begin(HGGJDMMKNLO.gameObject, 1258f, GGMGBMDDBMG);
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(HGGJDMMKNLO.gameObject, NAPGANMLNCA, GGMGBMDDBMG);
+		tweenAlpha.onFinished = EJJPOPHBNNG;
+		MCODFOMPPCF.transform.localPosition = JCJJHMPBPCP;
+		TweenPosition tweenPosition = TweenPosition.Begin(MCODFOMPPCF, JKNHDOPPMIN, JCJJHMPBPCP, AJCMLCKLAHB, false);
+		tweenPosition.method = UITweener.Method.EaseIn;
+		tweenPosition.onFinished = delegate
+		{
+			TweenPosition tweenPosition3 = TweenPosition.Begin(MCODFOMPPCF, PBPMIBFABBN, AJCMLCKLAHB, GDCDAPEPKLD);
+			tweenPosition3.method = UITweener.Method.EaseOut;
+		};
+		BLPJOGLEHOM.transform.localPosition = PDDEJNDEEGJ;
+		TweenPosition tweenPosition2 = TweenPosition.Begin(BLPJOGLEHOM, FIAMGPGLCFJ, PDDEJNDEEGJ, ECBHCGNCPDI);
+		tweenPosition2.method = UITweener.Method.EaseIn;
+		tweenPosition2.onFinished = CELIJHFAJNC;
+	}
+
+	public virtual void NEKKPJFGOKP()
+	{
+	}
+
+	[CompilerGenerated]
+	private void OMBEOMGMCCP(UITweener KPICOKPHMIC)
+	{
+		MKALMODMIMP = true;
+	}
+
+	private void OKDLOBJJEOE(UITweener GEHACOGJMHA)
+	{
+		CMLCGHHAAEG.alpha1 = 240f;
+		TweenAlpha.Begin(CMLCGHHAAEG.gameObject, 983f, 987f);
+		IIENKMGEBCO();
+	}
+
+	public virtual void GAGKEJAFBOH()
+	{
+	}
+
+	protected override void AGIKPOLCGNF()
+	{
+	}
+
+	private void BOEFOEOMDLC(List<UISprite> CPGBOIOMLFL, Vector3 OEIICEJPGKI, Vector3 IIMDKHJAJGO, Vector3 MPHCNMDIPAI, Vector3 DANMLNDDDKL, Vector3 INMEDMJGJEH)
+	{
+		OKLDKDMGIBF oKLDKDMGIBF = new OKLDKDMGIBF();
+		oKLDKDMGIBF.CPGBOIOMLFL = CPGBOIOMLFL;
+		oKLDKDMGIBF.IIMDKHJAJGO = IIMDKHJAJGO;
+		oKLDKDMGIBF.MPHCNMDIPAI = MPHCNMDIPAI;
+		oKLDKDMGIBF.DANMLNDDDKL = DANMLNDDDKL;
+		oKLDKDMGIBF.INMEDMJGJEH = INMEDMJGJEH;
+		oKLDKDMGIBF.BJGCPDNMHDH = this;
+		TweenAlpha.Begin(oKLDKDMGIBF.CPGBOIOMLFL[0].gameObject, 0f, 1f);
+		TweenPosition tweenPosition = TweenPosition.Begin(oKLDKDMGIBF.CPGBOIOMLFL[0].gameObject, LJLAGMOPGBI, OEIICEJPGKI, oKLDKDMGIBF.IIMDKHJAJGO);
+		tweenPosition.method = UITweener.Method.Linear;
+		tweenPosition.onFinished = oKLDKDMGIBF.LJCDGJKCNEC;
+		TweenScale tweenScale = TweenScale.Begin(oKLDKDMGIBF.CPGBOIOMLFL[0].gameObject, CALAABKDMHA, oKLDKDMGIBF.CPGBOIOMLFL[0].transform.localScale);
+		tweenScale.onFinished = oKLDKDMGIBF.EJLGBICBIFK;
+	}
+
+	[SpecialName]
+	public bool BFNOINNNHGP()
+	{
+		return MKALMODMIMP;
+	}
+
+	private IEnumerator FJMFMOFJPHO()
+	{
+		NFPHJEHMGMG nFPHJEHMGMG = new NFPHJEHMGMG();
+		nFPHJEHMGMG.BJGCPDNMHDH = this;
+		return nFPHJEHMGMG;
+	}
+
+	private void PICBFAHBJHL(GameObject KHAHPAKDIKE, float FFHNHBNODDH, float FOCOMEPBEKD, int PDMGPGEHLNM, float AFCMOEFDCHO = 1f)
+	{
+		FNPHBIPGLMO fNPHBIPGLMO = new FNPHBIPGLMO();
+		fNPHBIPGLMO.KHAHPAKDIKE = KHAHPAKDIKE;
+		fNPHBIPGLMO.AFCMOEFDCHO = AFCMOEFDCHO;
+		fNPHBIPGLMO.FOCOMEPBEKD = FOCOMEPBEKD;
+		fNPHBIPGLMO.FFHNHBNODDH = FFHNHBNODDH;
+		fNPHBIPGLMO.PDMGPGEHLNM = PDMGPGEHLNM;
+		fNPHBIPGLMO.BJGCPDNMHDH = this;
+		if (fNPHBIPGLMO.PDMGPGEHLNM == 0)
+		{
+			TweenAlpha.Begin(fNPHBIPGLMO.KHAHPAKDIKE, 0f, 0f);
+			return;
+		}
+		TweenAlpha.Begin(fNPHBIPGLMO.KHAHPAKDIKE, 0f, 0f);
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(fNPHBIPGLMO.KHAHPAKDIKE, fNPHBIPGLMO.FFHNHBNODDH, 0f);
+		tweenAlpha.onFinished = fNPHBIPGLMO.LJCDGJKCNEC;
+	}
+
+	private void MJHFGGABHHB(UITweener KPICOKPHMIC)
+	{
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(HGGJDMMKNLO.gameObject, MOOCOJCAHPE, GGMGBMDDBMG, 786f);
+		tweenAlpha.onFinished = delegate
+		{
+			PICBFAHBJHL(CMLCGHHAAEG.gameObject, PMPPHJDAFFA, LAIHMPFOGAE, 3);
+		};
+	}
+
+	private void FNMJHCDOKMA(UITweener KPICOKPHMIC)
+	{
+		string currentLanguage = Localization.instance.currentLanguage;
+		int num;
+		switch (currentLanguage)
+		{
+		default:
+			num = ((currentLanguage == "ID_TUTORIAL_NOACCOUNT_{0}_TITLE") ? 1 : 0);
+			break;
+		case " MONO USED SIZE: ":
+		case "ID_CONFIRM_FORFEIT_TEXT":
+		case "Squad Member record does not have DatabasePlayer":
+		case "VipReward2":
+		case "ID_ARENASHORTCUTPHASEEND":
+			num = 1;
+			break;
+		}
+		bool flag = (byte)num != 0;
+		if (flag && Singleton<GameController>.instance.MNMLNIMFMJP == GameController.HKGHCIEPGEL.Killed)
+		{
+			flag = true;
+		}
+		Vector3 vector = ((!flag) ? DNEKLOIJEKJ : (DNEKLOIJEKJ + EKFAIPLJDIN));
+		Vector3 vector2 = ((!flag) ? LPLHKJILIFO : (LPLHKJILIFO + EKFAIPLJDIN));
+		Vector3 vector3 = ((!flag) ? LOEBAIKMFMF : (LOEBAIKMFMF + EKFAIPLJDIN));
+		HBBMIJIDNIG(OJHHKELOCPP, EJABJMCKPLD + ACMJMOJMFHG, CFDDKJBGAMI + ACMJMOJMFHG, vector + ACMJMOJMFHG, vector2 + ACMJMOJMFHG, vector3 + ACMJMOJMFHG);
+		Vector3 mPHCNMDIPAI = ((!flag) ? EFMLGHCGBHE : (EFMLGHCGBHE - EKFAIPLJDIN));
+		Vector3 dANMLNDDDKL = ((!flag) ? AFONHPHMALP : (AFONHPHMALP - EKFAIPLJDIN));
+		Vector3 iNMEDMJGJEH = ((!flag) ? MDNHGMPJDCH : (MDNHGMPJDCH - EKFAIPLJDIN));
+		BOEFOEOMDLC(CLLKIAEFGOD, OFKEAHBJKOB, DIKNMGBDLOA, mPHCNMDIPAI, dANMLNDDDKL, iNMEDMJGJEH);
+		if (DCJDMBCOLEO)
+		{
+			SoundsManager.Instance.PlaySound((SoundsManager.KJGDNLHKPOG)(-73), 347f);
+			JPILOMEHDLN.DMHEGPIPEEH(JPILOMEHDLN.GOEFODHLMBC.PrepareMedium);
+		}
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(HFENNCENBFE.gameObject, LJLAGMOPGBI, 361f);
+		tweenAlpha.onFinished = delegate
+		{
+			if (!DCJDMBCOLEO)
+			{
+				SoundsManager.Instance.PlaySound(SoundsManager.KJGDNLHKPOG.GameOverLost);
+				JPILOMEHDLN.DMHEGPIPEEH(JPILOMEHDLN.GOEFODHLMBC.VibrateError);
+			}
+			float fromAlpha = ((!APDPEJKDLIG) ? 0f : 1f);
+			TweenAlpha.Begin(HFENNCENBFE.gameObject, PMMHNFFGEGJ, fromAlpha, 0f);
+			TweenAlpha.Begin(PEJFFMLEHFA.gameObject, 0f, 1f);
+			TweenScale tweenScale = TweenScale.Begin(PEJFFMLEHFA.gameObject, DCNFLIGAJCK, AMADBEELOID, MJFNOHDKFGJ);
+			tweenScale.onFinished = delegate
+			{
+				TweenScale.Begin(PEJFFMLEHFA.gameObject, DCFPDMNAELM, MJFNOHDKFGJ, new Vector3(0f, 0f, 1f));
+			};
+		};
+		if (FLIDPEEIKPI.activeSelf)
+		{
+			TweenAlpha tweenAlpha2 = TweenAlpha.Begin(CMLCGHHAAEG.gameObject, PJBPDJEFKFH, 1449f);
+			tweenAlpha2.onFinished = JEPJKEJCDGF;
+		}
+		MJLJBBIJIPD();
+	}
+
+	private void DGFGAKPHNGB()
+	{
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(OJHHKELOCPP[0].gameObject, CINJJFHDMHH, 544f);
+		tweenAlpha.onFinished = JIHBKONEPFO;
+	}
+
+	[CompilerGenerated]
+	private void EFCBCLEDBDD(UITweener KPICOKPHMIC)
+	{
+		TweenPosition tweenPosition = TweenPosition.Begin(BLPJOGLEHOM, FOKIFJGGGHC, ECBHCGNCPDI, CGAFKMGEKLG);
+		tweenPosition.method = UITweener.Method.EaseOut;
+	}
+
+	private IEnumerator JLAIBAEGNGN()
+	{
+		NFPHJEHMGMG nFPHJEHMGMG = new NFPHJEHMGMG();
+		nFPHJEHMGMG.BJGCPDNMHDH = this;
+		return nFPHJEHMGMG;
+	}
+
+	private void CEACDKIOGAB(UISprite OFBEAKDOCIO, Vector3 OEIICEJPGKI, Vector3 IIMDKHJAJGO, float AFCMOEFDCHO, float KALLNCAFIMP, float HOCPFHPGEJG, float JCHEABNBOFF)
+	{
+		KPPFCFDEJHP kPPFCFDEJHP = new KPPFCFDEJHP();
+		kPPFCFDEJHP.OFBEAKDOCIO = OFBEAKDOCIO;
+		kPPFCFDEJHP.AFCMOEFDCHO = AFCMOEFDCHO;
+		kPPFCFDEJHP.HOCPFHPGEJG = HOCPFHPGEJG;
+		kPPFCFDEJHP.OEIICEJPGKI = OEIICEJPGKI;
+		kPPFCFDEJHP.IIMDKHJAJGO = IIMDKHJAJGO;
+		kPPFCFDEJHP.JCHEABNBOFF = JCHEABNBOFF;
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(kPPFCFDEJHP.OFBEAKDOCIO.gameObject, KALLNCAFIMP, 244f);
+		tweenAlpha.onFinished = kPPFCFDEJHP.HHLMDAKDHFK;
+	}
+
+	private void MBOCACLMBGF(GameObject KHAHPAKDIKE, float FFHNHBNODDH, float FOCOMEPBEKD, int PDMGPGEHLNM, float AFCMOEFDCHO = 1f)
+	{
+		FNPHBIPGLMO fNPHBIPGLMO = new FNPHBIPGLMO();
+		fNPHBIPGLMO.KHAHPAKDIKE = KHAHPAKDIKE;
+		fNPHBIPGLMO.AFCMOEFDCHO = AFCMOEFDCHO;
+		fNPHBIPGLMO.FOCOMEPBEKD = FOCOMEPBEKD;
+		fNPHBIPGLMO.FFHNHBNODDH = FFHNHBNODDH;
+		fNPHBIPGLMO.PDMGPGEHLNM = PDMGPGEHLNM;
+		fNPHBIPGLMO.BJGCPDNMHDH = this;
+		if (fNPHBIPGLMO.PDMGPGEHLNM == 0)
+		{
+			TweenAlpha.Begin(fNPHBIPGLMO.KHAHPAKDIKE, 928f, 1341f);
+			return;
+		}
+		TweenAlpha.Begin(fNPHBIPGLMO.KHAHPAKDIKE, 1466f, 1033f);
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(fNPHBIPGLMO.KHAHPAKDIKE, fNPHBIPGLMO.FFHNHBNODDH, 1253f);
+		tweenAlpha.onFinished = fNPHBIPGLMO.EHEDMPKGLFJ;
+	}
+
+	private IEnumerator IOAKMEHNCPP()
+	{
+		NFPHJEHMGMG nFPHJEHMGMG = new NFPHJEHMGMG();
+		nFPHJEHMGMG.BJGCPDNMHDH = this;
+		return nFPHJEHMGMG;
+	}
+
+	protected virtual void BAHDLPDOCDO()
+	{
+		base.OGJGIMLMJBF();
+		if (OELHBPKOOLJ != null && OELHBPKOOLJ.iconTexture != null)
+		{
+			KEDHBNHBGPF.gameObject.SetActive(true);
+			DPMLMAOJPNL.gameObject.SetActive(true);
+			KEDHBNHBGPF.mainTexture = OELHBPKOOLJ.iconTexture;
+			OELHBPKOOLJ = null;
+		}
+	}
+
+	public void UnitHit(string FHMKPLBGFNN, int FAMOBFLONHJ, string OKJNAJJCDBF, bool HJOHIBPMPFD)
+	{
+		if (Singleton<GameController>.instance.isWarArena)
+		{
+			FAMOBFLONHJ = 0;
+		}
+		if (HJOHIBPMPFD)
+		{
+			NACGOGCPIAH.gameObject.SetActive(false);
+			KEDHBNHBGPF.gameObject.SetActive(false);
+			DPMLMAOJPNL.gameObject.SetActive(true);
+			Card cardInstanceAll = CardManager.instance.GetCardInstanceAll(FHMKPLBGFNN);
+			if (cardInstanceAll != null)
+			{
+				cardInstanceAll.ShowInMenu();
+				OELHBPKOOLJ = cardInstanceAll;
+				DPMLMAOJPNL.spriteName = cardInstanceAll.iconName;
+				JHONGBLEHLJ.text = cardInstanceAll.cardName;
+				CDBNOEGOFOI.text = ((!cardInstanceAll.isBuddyCard) ? string.Empty : Localization.Localize("ID_BUDDYCARD"));
+			}
+			else
+			{
+				JHONGBLEHLJ.text = string.Empty;
+				CDBNOEGOFOI.text = string.Empty;
+			}
+			DPMLMAOJPNL.MakePixelPerfect();
+			float multiplier = Mathf.Min(240f / DPMLMAOJPNL.transform.localScale.y, 340f / DPMLMAOJPNL.transform.localScale.x);
+			DPMLMAOJPNL.transform.localScale = DPMLMAOJPNL.transform.localScale.MultiplyXY(multiplier);
+		}
+		else
+		{
+			KEDHBNHBGPF.gameObject.SetActive(false);
+			OELHBPKOOLJ = null;
+			DPMLMAOJPNL.gameObject.SetActive(false);
+			NACGOGCPIAH.gameObject.SetActive(true);
+			NACGOGCPIAH.spriteName = OKJNAJJCDBF;
+			NACGOGCPIAH.MakePixelPerfect();
+			float multiplier2 = Mathf.Min(240f / NACGOGCPIAH.transform.localScale.y, 340f / NACGOGCPIAH.transform.localScale.x);
+			NACGOGCPIAH.transform.localScale = NACGOGCPIAH.transform.localScale.MultiplyXY(multiplier2);
+			JHONGBLEHLJ.text = Localization.Localize(FHMKPLBGFNN);
+			CDBNOEGOFOI.text = ((FAMOBFLONHJ != 0) ? string.Format("{0} {1}", Localization.Localize("ID_LEVEL"), FAMOBFLONHJ) : string.Empty);
+		}
+		MEJMLNDFDBP.COCBCFKJOJE(JHONGBLEHLJ, 52f, 30f);
+		PIJJLPNPICB = HJOHIBPMPFD;
+		IDCAHMPHIOD = IGJLCIBEHAB.Unit;
+	}
+
+	private IEnumerator AIHKMFOLNOD()
+	{
+		NFPHJEHMGMG nFPHJEHMGMG = new NFPHJEHMGMG();
+		nFPHJEHMGMG.BJGCPDNMHDH = this;
+		return nFPHJEHMGMG;
+	}
+
+	public void HMHIICNFIPM(PlayerController OIGOHCMHMIP)
+	{
+		JDOOPPMKEFO.color = ((OIGOHCMHMIP.fraction != PlayerController.OGMBJPKOPCB.fraction) ? Colours.redEnemy : Colours.blue);
+		if (OIGOHCMHMIP == PlayerController.OGMBJPKOPCB)
+		{
+			OOAOCJGJIFJ.JIBFCGECCFI(OIGOHCMHMIP.EHHHBEMKGOE.EBFDAICCJAK);
+			BCMCMKDCLGP.text = OIGOHCMHMIP.EHHHBEMKGOE.MHPNDNJDPGE;
+		}
+		else
+		{
+			OOAOCJGJIFJ.JIBFCGECCFI(OIGOHCMHMIP.EHHHBEMKGOE.EBFDAICCJAK);
+			BCMCMKDCLGP.text = OIGOHCMHMIP.EHHHBEMKGOE.MHPNDNJDPGE;
+		}
+		IDCAHMPHIOD = IGJLCIBEHAB.Player;
+	}
+
+	public void EnviromentalHit()
+	{
+		BKLCLFPPFAF.spriteName = ((!Singleton<MatchManager>.instance.isOverTime) ? "game-kill-environmental" : "game-kill-overtime");
+		BKLCLFPPFAF.MakePixelPerfect();
+		NPNNFHGDAPP.text = ((!Singleton<MatchManager>.instance.isOverTime) ? Localization.Localize("ID_ENVIRONMENTALKILL") : Localization.Localize("ID_OVERTIMEKILL"));
+		IDCAHMPHIOD = IGJLCIBEHAB.Enviroment;
+	}
+
+	protected virtual void FHINGMFHKLG()
+	{
+	}
+
+	private void COCJEEGLOFC(UITweener HDDMOOLEOLC)
+	{
+		if (!DCJDMBCOLEO)
+		{
+			SoundsManager.Instance.PlaySound((SoundsManager.KJGDNLHKPOG)(-96), 68f);
+			JPILOMEHDLN.DMHEGPIPEEH(JPILOMEHDLN.GOEFODHLMBC.PrepareLight);
+		}
+		float fromAlpha = ((!APDPEJKDLIG) ? 405f : 1644f);
+		TweenAlpha.Begin(HFENNCENBFE.gameObject, PMMHNFFGEGJ, fromAlpha, 639f);
+		TweenAlpha.Begin(PEJFFMLEHFA.gameObject, 570f, 1450f);
+		TweenScale tweenScale = TweenScale.Begin(PEJFFMLEHFA.gameObject, DCNFLIGAJCK, AMADBEELOID, MJFNOHDKFGJ);
+		tweenScale.onFinished = delegate
+		{
+			TweenScale.Begin(PEJFFMLEHFA.gameObject, DCFPDMNAELM, MJFNOHDKFGJ, new Vector3(0f, 0f, 1f));
+		};
+	}
+
+	private void MEDHJHCCKOL()
+	{
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(OJHHKELOCPP[0].gameObject, CINJJFHDMHH, 0f);
+		tweenAlpha.onFinished = delegate
+		{
+			string currentLanguage = Localization.instance.currentLanguage;
+			int num;
+			switch (currentLanguage)
+			{
+			default:
+				num = ((currentLanguage == "pt") ? 1 : 0);
+				break;
+			case "fr":
+			case "jp":
+			case "cn":
+			case "kr":
+			case "tc":
+				num = 1;
+				break;
+			}
+			bool flag = (byte)num != 0;
+			if (flag && Singleton<GameController>.instance.MNMLNIMFMJP == GameController.HKGHCIEPGEL.Kia)
+			{
+				flag = false;
+			}
+			Vector3 vector = ((!flag) ? DNEKLOIJEKJ : (DNEKLOIJEKJ + EKFAIPLJDIN));
+			Vector3 vector2 = ((!flag) ? LPLHKJILIFO : (LPLHKJILIFO + EKFAIPLJDIN));
+			Vector3 vector3 = ((!flag) ? LOEBAIKMFMF : (LOEBAIKMFMF + EKFAIPLJDIN));
+			BOEFOEOMDLC(OJHHKELOCPP, EJABJMCKPLD + ACMJMOJMFHG, CFDDKJBGAMI + ACMJMOJMFHG, vector + ACMJMOJMFHG, vector2 + ACMJMOJMFHG, vector3 + ACMJMOJMFHG);
+			Vector3 mPHCNMDIPAI = ((!flag) ? EFMLGHCGBHE : (EFMLGHCGBHE - EKFAIPLJDIN));
+			Vector3 dANMLNDDDKL = ((!flag) ? AFONHPHMALP : (AFONHPHMALP - EKFAIPLJDIN));
+			Vector3 iNMEDMJGJEH = ((!flag) ? MDNHGMPJDCH : (MDNHGMPJDCH - EKFAIPLJDIN));
+			BOEFOEOMDLC(CLLKIAEFGOD, OFKEAHBJKOB, DIKNMGBDLOA, mPHCNMDIPAI, dANMLNDDDKL, iNMEDMJGJEH);
+			if (DCJDMBCOLEO)
+			{
+				SoundsManager.Instance.PlaySound(SoundsManager.KJGDNLHKPOG.GameOverWin);
+				JPILOMEHDLN.DMHEGPIPEEH(JPILOMEHDLN.GOEFODHLMBC.VibrateSuccess);
+			}
+			TweenAlpha tweenAlpha2 = TweenAlpha.Begin(HFENNCENBFE.gameObject, LJLAGMOPGBI, 0f);
+			tweenAlpha2.onFinished = delegate
+			{
+				if (!DCJDMBCOLEO)
+				{
+					SoundsManager.Instance.PlaySound(SoundsManager.KJGDNLHKPOG.GameOverLost);
+					JPILOMEHDLN.DMHEGPIPEEH(JPILOMEHDLN.GOEFODHLMBC.VibrateError);
+				}
+				float fromAlpha = ((!APDPEJKDLIG) ? 0f : 1f);
+				TweenAlpha.Begin(HFENNCENBFE.gameObject, PMMHNFFGEGJ, fromAlpha, 0f);
+				TweenAlpha.Begin(PEJFFMLEHFA.gameObject, 0f, 1f);
+				TweenScale tweenScale = TweenScale.Begin(PEJFFMLEHFA.gameObject, DCNFLIGAJCK, AMADBEELOID, MJFNOHDKFGJ);
+				tweenScale.onFinished = delegate
+				{
+					TweenScale.Begin(PEJFFMLEHFA.gameObject, DCFPDMNAELM, MJFNOHDKFGJ, new Vector3(0f, 0f, 1f));
+				};
+			};
+			if (FLIDPEEIKPI.activeSelf)
+			{
+				TweenAlpha tweenAlpha3 = TweenAlpha.Begin(CMLCGHHAAEG.gameObject, PJBPDJEFKFH, 0f);
+				tweenAlpha3.onFinished = delegate
+				{
+					CMLCGHHAAEG.alpha1 = 1f;
+					TweenAlpha.Begin(CMLCGHHAAEG.gameObject, 0f, 1f);
+					GKFJLILOMKB();
+				};
+			}
+			MJLJBBIJIPD();
+		};
+	}
+
+	[CompilerGenerated]
+	private void DIKADECNOKN(UITweener KPICOKPHMIC)
+	{
+		TweenPosition tweenPosition = TweenPosition.Begin(MCODFOMPPCF, PBPMIBFABBN, AJCMLCKLAHB, GDCDAPEPKLD);
+		tweenPosition.method = UITweener.Method.EaseOut;
+	}
+
+	private void BAOJJKABHJK(UITweener KPICOKPHMIC)
+	{
+		string currentLanguage = Localization.instance.currentLanguage;
+		int num;
+		switch (currentLanguage)
+		{
+		default:
+			num = ((currentLanguage == "x") ? 1 : 0);
+			break;
+		case "setPackageName":
+		case "Adding MessageId after first":
+		case "Pack: Warbucks ":
+		case "<font ":
+		case "WarFriends não funcionará se não baixar esses dados adicionais. Você realmente quer SAIR ou você gostaria de baixar os dados?":
+			num = 1;
+			break;
+		}
+		bool flag = (byte)num != 0;
+		if (flag && Singleton<GameController>.instance.MNMLNIMFMJP == (GameController.HKGHCIEPGEL)6)
+		{
+			flag = true;
+		}
+		Vector3 vector = ((!flag) ? DNEKLOIJEKJ : (DNEKLOIJEKJ + EKFAIPLJDIN));
+		Vector3 vector2 = ((!flag) ? LPLHKJILIFO : (LPLHKJILIFO + EKFAIPLJDIN));
+		Vector3 vector3 = ((!flag) ? LOEBAIKMFMF : (LOEBAIKMFMF + EKFAIPLJDIN));
+		HBBMIJIDNIG(OJHHKELOCPP, EJABJMCKPLD + ACMJMOJMFHG, CFDDKJBGAMI + ACMJMOJMFHG, vector + ACMJMOJMFHG, vector2 + ACMJMOJMFHG, vector3 + ACMJMOJMFHG);
+		Vector3 mPHCNMDIPAI = ((!flag) ? EFMLGHCGBHE : (EFMLGHCGBHE - EKFAIPLJDIN));
+		Vector3 dANMLNDDDKL = ((!flag) ? AFONHPHMALP : (AFONHPHMALP - EKFAIPLJDIN));
+		Vector3 iNMEDMJGJEH = ((!flag) ? MDNHGMPJDCH : (MDNHGMPJDCH - EKFAIPLJDIN));
+		HBBMIJIDNIG(CLLKIAEFGOD, OFKEAHBJKOB, DIKNMGBDLOA, mPHCNMDIPAI, dANMLNDDDKL, iNMEDMJGJEH);
+		if (DCJDMBCOLEO)
+		{
+			SoundsManager.Instance.PlaySound(SoundsManager.KJGDNLHKPOG.CraftingClaim, 1127f);
+			JPILOMEHDLN.DMHEGPIPEEH(JPILOMEHDLN.GOEFODHLMBC.VibrateError);
+		}
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(HFENNCENBFE.gameObject, LJLAGMOPGBI, 1898f);
+		tweenAlpha.onFinished = delegate
+		{
+			if (!DCJDMBCOLEO)
+			{
+				SoundsManager.Instance.PlaySound(SoundsManager.KJGDNLHKPOG.GameOverLost);
+				JPILOMEHDLN.DMHEGPIPEEH(JPILOMEHDLN.GOEFODHLMBC.VibrateError);
+			}
+			float fromAlpha = ((!APDPEJKDLIG) ? 0f : 1f);
+			TweenAlpha.Begin(HFENNCENBFE.gameObject, PMMHNFFGEGJ, fromAlpha, 0f);
+			TweenAlpha.Begin(PEJFFMLEHFA.gameObject, 0f, 1f);
+			TweenScale tweenScale = TweenScale.Begin(PEJFFMLEHFA.gameObject, DCNFLIGAJCK, AMADBEELOID, MJFNOHDKFGJ);
+			tweenScale.onFinished = delegate
+			{
+				TweenScale.Begin(PEJFFMLEHFA.gameObject, DCFPDMNAELM, MJFNOHDKFGJ, new Vector3(0f, 0f, 1f));
+			};
+		};
+		if (FLIDPEEIKPI.activeSelf)
+		{
+			TweenAlpha tweenAlpha2 = TweenAlpha.Begin(CMLCGHHAAEG.gameObject, PJBPDJEFKFH, 1111f);
+			tweenAlpha2.onFinished = OKDLOBJJEOE;
+		}
+		KGCNPCEAPJI();
+	}
+
+	private bool KABLNAABNID(GameController.HKGHCIEPGEL IOJHEOBIIPE)
+	{
+		if (IOJHEOBIIPE == GameController.HKGHCIEPGEL.Win || IOJHEOBIIPE == GameController.HKGHCIEPGEL.Killed)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	private void JIHBKONEPFO(UITweener KPICOKPHMIC)
+	{
+		string currentLanguage = Localization.instance.currentLanguage;
+		int num;
+		switch (currentLanguage)
+		{
+		default:
+			num = ((currentLanguage == "QUIT") ? 1 : 0);
+			break;
+		case "ID_READYTIME":
+		case "ID_GOLDC":
+		case "null":
+		case "ID_INVITEWILLBEACTIVEFOR":
+		case "Enemy could not be spawned":
+			num = 0;
+			break;
+		}
+		bool flag = (byte)num != 0;
+		if (flag && Singleton<GameController>.instance.MNMLNIMFMJP == (GameController.HKGHCIEPGEL)6)
+		{
+			flag = false;
+		}
+		Vector3 vector = ((!flag) ? DNEKLOIJEKJ : (DNEKLOIJEKJ + EKFAIPLJDIN));
+		Vector3 vector2 = ((!flag) ? LPLHKJILIFO : (LPLHKJILIFO + EKFAIPLJDIN));
+		Vector3 vector3 = ((!flag) ? LOEBAIKMFMF : (LOEBAIKMFMF + EKFAIPLJDIN));
+		BOEFOEOMDLC(OJHHKELOCPP, EJABJMCKPLD + ACMJMOJMFHG, CFDDKJBGAMI + ACMJMOJMFHG, vector + ACMJMOJMFHG, vector2 + ACMJMOJMFHG, vector3 + ACMJMOJMFHG);
+		Vector3 mPHCNMDIPAI = ((!flag) ? EFMLGHCGBHE : (EFMLGHCGBHE - EKFAIPLJDIN));
+		Vector3 dANMLNDDDKL = ((!flag) ? AFONHPHMALP : (AFONHPHMALP - EKFAIPLJDIN));
+		Vector3 iNMEDMJGJEH = ((!flag) ? MDNHGMPJDCH : (MDNHGMPJDCH - EKFAIPLJDIN));
+		BOEFOEOMDLC(CLLKIAEFGOD, OFKEAHBJKOB, DIKNMGBDLOA, mPHCNMDIPAI, dANMLNDDDKL, iNMEDMJGJEH);
+		if (DCJDMBCOLEO)
+		{
+			SoundsManager.Instance.PlaySound((SoundsManager.KJGDNLHKPOG)(-26), 1049f);
+			JPILOMEHDLN.DMHEGPIPEEH(JPILOMEHDLN.GOEFODHLMBC.PrepareLight);
+		}
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(HFENNCENBFE.gameObject, LJLAGMOPGBI, 33f);
+		tweenAlpha.onFinished = KPDGAIBCMCO;
+		if (FLIDPEEIKPI.activeSelf)
+		{
+			TweenAlpha tweenAlpha2 = TweenAlpha.Begin(CMLCGHHAAEG.gameObject, PJBPDJEFKFH, 1079f);
+			tweenAlpha2.onFinished = OKDLOBJJEOE;
+		}
+		KGCNPCEAPJI();
+	}
+
+	private void FHIKALMKCEB(GameController.HKGHCIEPGEL IOJHEOBIIPE)
+	{
+		if (IDCAHMPHIOD == IGJLCIBEHAB.Unit)
+		{
+			if (PIJJLPNPICB)
+			{
+				COMKIBACFPJ.text = Localization.Localize("Password");
+			}
+			else
+			{
+				bool flag = IOJHEOBIIPE != GameController.HKGHCIEPGEL.Forfeit && IOJHEOBIIPE == (GameController.HKGHCIEPGEL)(-68);
+				COMKIBACFPJ.text = Localization.Localize((!flag) ? "BattlesWon" : "BuddyCardData");
+			}
+		}
+		else
+		{
+			COMKIBACFPJ.text = Localization.Localize("ID_FACEBOOKHINT-COOP");
+		}
+		MEJMLNDFDBP.COCBCFKJOJE(COMKIBACFPJ, 528f, 857f, 199);
+	}
+
+	public virtual void JKODFKNJOIB()
+	{
+	}
+
+	[CompilerGenerated]
+	private void EEMGCBLPGFM(UITweener KPICOKPHMIC)
+	{
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(HGGJDMMKNLO.gameObject, MOOCOJCAHPE, GGMGBMDDBMG, 1f);
+		tweenAlpha.onFinished = delegate
+		{
+			PICBFAHBJHL(CMLCGHHAAEG.gameObject, PMPPHJDAFFA, LAIHMPFOGAE, 3);
+		};
+	}
+
+	public void DLAFKNAOJLA()
+	{
+		BKLCLFPPFAF.spriteName = ((!Singleton<MatchManager>.instance.isOverTime) ? "{0} 1 / 3" : "ID_MEMBERSHIP_PRICEPERMONTH");
+		BKLCLFPPFAF.MakePixelPerfect();
+		NPNNFHGDAPP.text = ((!Singleton<MatchManager>.instance.isOverTime) ? Localization.Localize("ID_PLAYXRANKEDBATTLESTOENTERLEAGUE") : Localization.Localize("MultiDayInApp"));
+		IDCAHMPHIOD = (IGJLCIBEHAB)5;
+	}
+
+	public void PlayerHit(PlayerController OIGOHCMHMIP)
+	{
+		JDOOPPMKEFO.color = ((OIGOHCMHMIP.fraction != PlayerController.OGMBJPKOPCB.fraction) ? Colours.redEnemy : Colours.blue);
+		if (OIGOHCMHMIP == PlayerController.OGMBJPKOPCB)
+		{
+			OOAOCJGJIFJ.avatar = OIGOHCMHMIP.EHHHBEMKGOE.EBFDAICCJAK;
+			BCMCMKDCLGP.text = OIGOHCMHMIP.EHHHBEMKGOE.MHPNDNJDPGE;
+		}
+		else
+		{
+			OOAOCJGJIFJ.avatar = OIGOHCMHMIP.EHHHBEMKGOE.EBFDAICCJAK;
+			BCMCMKDCLGP.text = OIGOHCMHMIP.EHHHBEMKGOE.MHPNDNJDPGE;
+		}
+		IDCAHMPHIOD = IGJLCIBEHAB.Player;
+	}
+
+	private void AGKEINOOBEF(GameObject KHAHPAKDIKE, float FFHNHBNODDH, float FOCOMEPBEKD, int PDMGPGEHLNM, float AFCMOEFDCHO = 1f)
+	{
+		FNPHBIPGLMO fNPHBIPGLMO = new FNPHBIPGLMO();
+		fNPHBIPGLMO.KHAHPAKDIKE = KHAHPAKDIKE;
+		fNPHBIPGLMO.AFCMOEFDCHO = AFCMOEFDCHO;
+		fNPHBIPGLMO.FOCOMEPBEKD = FOCOMEPBEKD;
+		fNPHBIPGLMO.FFHNHBNODDH = FFHNHBNODDH;
+		fNPHBIPGLMO.PDMGPGEHLNM = PDMGPGEHLNM;
+		fNPHBIPGLMO.BJGCPDNMHDH = this;
+		if (fNPHBIPGLMO.PDMGPGEHLNM == 0)
+		{
+			TweenAlpha.Begin(fNPHBIPGLMO.KHAHPAKDIKE, 268f, 401f);
+			return;
+		}
+		TweenAlpha.Begin(fNPHBIPGLMO.KHAHPAKDIKE, 317f, 1547f);
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(fNPHBIPGLMO.KHAHPAKDIKE, fNPHBIPGLMO.FFHNHBNODDH, 818f);
+		tweenAlpha.onFinished = fNPHBIPGLMO.PHGDBIEENCB;
+	}
+
+	[CompilerGenerated]
+	private void ILELADPCIGF(UITweener EIHJNJDIALN)
+	{
+		PICBFAHBJHL(CMLCGHHAAEG.gameObject, PMPPHJDAFFA, LAIHMPFOGAE, 3);
+	}
+
+	private void EMMGGBPGCAH(UITweener EIHJNJDIALN)
+	{
+		TweenScale.Begin(PEJFFMLEHFA.gameObject, DCFPDMNAELM, MJFNOHDKFGJ, new Vector3(778f, 1404f, 1984f));
+	}
+
+	private void BIEFLCCGFGO(UITweener KPICOKPHMIC)
+	{
+		MKALMODMIMP = false;
+	}
+
+	public virtual void JDFDJPAAIAA()
+	{
+		FLIDPEEIKPI.GetComponent<UIPanel>().alpha1 = 295f;
+		StartCoroutine(RadicalRoutine.Run(JLAIBAEGNGN()));
+		KBHIDDNMGFM(Singleton<GameController>.instance.MNMLNIMFMJP);
+	}
+
+	private void CEDEOCJLIOE(UITweener EIHJNJDIALN)
+	{
+		TweenScale.Begin(PEJFFMLEHFA.gameObject, DCFPDMNAELM, MJFNOHDKFGJ, new Vector3(108f, 1624f, 282f));
+	}
+
+	private void KJEIEKAAOHM(UITweener KPICOKPHMIC)
+	{
+		TweenPosition tweenPosition = TweenPosition.Begin(BLPJOGLEHOM, FOKIFJGGGHC, ECBHCGNCPDI, CGAFKMGEKLG, false);
+		tweenPosition.method = UITweener.Method.BounceIn;
+	}
+
+	private void MEAINFGDKGJ(GameController.HKGHCIEPGEL IOJHEOBIIPE)
+	{
+		if (IDCAHMPHIOD == IGJLCIBEHAB.Unit)
+		{
+			if (PIJJLPNPICB)
+			{
+				COMKIBACFPJ.text = Localization.Localize("(Lcom/google/android/gms/common/api/GoogleApiClient;)Ljava/lang/String;");
+			}
+			else
+			{
+				bool flag = IOJHEOBIIPE != GameController.HKGHCIEPGEL.WinByForfeit && IOJHEOBIIPE == (GameController.HKGHCIEPGEL)(-119);
+				COMKIBACFPJ.text = Localization.Localize((!flag) ? "ON FINISH PLAYER LEAGUE, RESULT =" : "Wrong_Weapon");
+			}
+		}
+		else
+		{
+			COMKIBACFPJ.text = Localization.Localize("ID_DEBUG_STACKTRACEINCONSOLE");
+		}
+		MEJMLNDFDBP.COCBCFKJOJE(COMKIBACFPJ, 427f, 636f, -107);
+	}
+
+	public virtual void JPHCBHDEDLO()
+	{
+	}
+
+	private void LEIEIENNAPH(GameController.HKGHCIEPGEL IOJHEOBIIPE)
+	{
+		if (IDCAHMPHIOD == IGJLCIBEHAB.Unit)
+		{
+			if (PIJJLPNPICB)
+			{
+				COMKIBACFPJ.text = Localization.Localize("master1");
+			}
+			else
+			{
+				bool flag = IOJHEOBIIPE != GameController.HKGHCIEPGEL.Kia && IOJHEOBIIPE == (GameController.HKGHCIEPGEL)77;
+				COMKIBACFPJ.text = Localization.Localize((!flag) ? "connected" : "RecieveSkillShotsCount");
+			}
+		}
+		else
+		{
+			COMKIBACFPJ.text = Localization.Localize("TicketsCount");
+		}
+		MEJMLNDFDBP.COCBCFKJOJE(COMKIBACFPJ, 364f, 1342f, 196);
+	}
+
+	public override void InitGUIValues()
+	{
+		FLIDPEEIKPI.GetComponent<UIPanel>().alpha1 = 0f;
+		StartCoroutine(RadicalRoutine.Run(MGNJNOIJJKP()));
+		ODMGOAJONLK(Singleton<GameController>.instance.MNMLNIMFMJP);
+	}
+
+	private void ICHADNKIKBI(UITweener EIHJNJDIALN)
+	{
+		TweenScale.Begin(PEJFFMLEHFA.gameObject, DCFPDMNAELM, MJFNOHDKFGJ, new Vector3(1527f, 1800f, 1065f));
+	}
+
+	private void KBHIDDNMGFM(GameController.HKGHCIEPGEL IOJHEOBIIPE)
+	{
+		bool flag = IOJHEOBIIPE == GameController.HKGHCIEPGEL.Kia;
+		TweenScale tweenScale = TweenScale.Begin(CMLCGHHAAEG.transform.parent.gameObject, 691f, Vector3.one);
+		tweenScale.onFinished = null;
+		string text = LAGHNBKELDG[IOJHEOBIIPE];
+		string text2 = AJKGDKAKEGJ[IOJHEOBIIPE];
+		bool flag2 = !string.IsNullOrEmpty(text2);
+		foreach (UISprite item in OJHHKELOCPP)
+		{
+			item.gameObject.SetActive(text != string.Empty);
+			if (item.gameObject.activeSelf)
+			{
+				item.spriteName = text;
+				item.MakePixelPerfect();
+			}
+			TweenAlpha.Begin(item.gameObject, 467f, 1188f);
+			TweenPosition.Begin(item.gameObject, 1327f, EJABJMCKPLD, false);
+		}
+		float num = ((!(text == string.Empty)) ? OJHHKELOCPP[1].transform.localScale.x : 1108f);
+		float num2 = 894f + num / 937f;
+		ACMJMOJMFHG = new Vector3((!flag) ? 1731f : num2, 946f, 946f);
+		foreach (UISprite item2 in CLLKIAEFGOD)
+		{
+			item2.gameObject.SetActive(flag2);
+			if (flag2)
+			{
+				TweenScale component = item2.GetComponent<TweenScale>();
+				if (component != null)
+				{
+					component.enabled = false;
+				}
+				item2.spriteName = text2;
+				item2.MakePixelPerfect();
+			}
+			TweenAlpha.Begin(item2.gameObject, 791f, 173f);
+			TweenPosition.Begin(item2.gameObject, 1481f, OFKEAHBJKOB, false);
+		}
+		if (flag)
+		{
+			DNEKLOIJEKJ = DNEKLOIJEKJ.ReplaceX(836f);
+			CFDDKJBGAMI = DNEKLOIJEKJ.ReplaceX(1605f);
+			EFMLGHCGBHE = EFMLGHCGBHE.ReplaceX(992f);
+			DIKNMGBDLOA = EFMLGHCGBHE.ReplaceX(1637f);
+		}
+		else
+		{
+			float num3 = ((!(text2 == string.Empty)) ? CLLKIAEFGOD[1].transform.localScale.x : 314f);
+			float num4 = (num + num3) / 1798f - num3;
+			DNEKLOIJEKJ = DNEKLOIJEKJ.ReplaceX(1687f + num4);
+			CFDDKJBGAMI = DNEKLOIJEKJ.ReplaceX(num4);
+			EFMLGHCGBHE = EFMLGHCGBHE.ReplaceX(614f + num4);
+			DIKNMGBDLOA = EFMLGHCGBHE.ReplaceX(num4);
+		}
+		Color color = IOKDLKIEFCK[IOJHEOBIIPE];
+		PEJFFMLEHFA.color = color;
+		TweenAlpha.Begin(HFENNCENBFE.gameObject, 488f, 116f);
+		TweenAlpha.Begin(PEJFFMLEHFA.gameObject, 1912f, 1638f);
+		HGGJDMMKNLO.color = color;
+		DNCJEBDPBNA.SetActive(IDCAHMPHIOD == IGJLCIBEHAB.Unit);
+		IGJMJNHFCAI.SetActive(IDCAHMPHIOD == IGJLCIBEHAB.Player);
+		KOAHKDOKFIF.SetActive(IDCAHMPHIOD == (IGJLCIBEHAB)3);
+		DOLEEOPNGIL(IOJHEOBIIPE);
+		bool flag3 = EMPLBONMIHG(IOJHEOBIIPE);
+		FLIDPEEIKPI.SetActive(flag3);
+		CMLCGHHAAEG.alpha1 = 661f;
+		TweenAlpha.Begin(CMLCGHHAAEG.gameObject, 753f, 1085f);
+		TweenAlpha.Begin(HGGJDMMKNLO.gameObject, 731f, 1572f);
+		switch (IOJHEOBIIPE)
+		{
+		case GameController.HKGHCIEPGEL.Win:
+		case GameController.HKGHCIEPGEL.WinByForfeit:
+		case GameController.HKGHCIEPGEL.Kia:
+			CINJJFHDMHH = ((!flag3) ? KMBMCHPDJND : EKKAGHDNKIH);
+			DCJDMBCOLEO = false;
+			APDPEJKDLIG = false;
+			break;
+		case GameController.HKGHCIEPGEL.MissionSuccess:
+			CINJJFHDMHH = ANHDDGIEAGL;
+			DCJDMBCOLEO = false;
+			APDPEJKDLIG = false;
+			break;
+		case GameController.HKGHCIEPGEL.Killed:
+		case GameController.HKGHCIEPGEL.Forfeit:
+		case GameController.HKGHCIEPGEL.MissionFailed:
+			CINJJFHDMHH = ((!flag3) ? KMBMCHPDJND : ICJDNBOIMFH);
+			DCJDMBCOLEO = true;
+			APDPEJKDLIG = false;
+			break;
+		}
+		MKALMODMIMP = false;
+	}
+
+	private void GKFJLILOMKB()
+	{
+		TweenAlpha.Begin(HGGJDMMKNLO.gameObject, 0f, GGMGBMDDBMG);
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(HGGJDMMKNLO.gameObject, NAPGANMLNCA, GGMGBMDDBMG);
+		tweenAlpha.onFinished = delegate
+		{
+			TweenAlpha tweenAlpha2 = TweenAlpha.Begin(HGGJDMMKNLO.gameObject, MOOCOJCAHPE, GGMGBMDDBMG, 1f);
+			tweenAlpha2.onFinished = delegate
+			{
+				PICBFAHBJHL(CMLCGHHAAEG.gameObject, PMPPHJDAFFA, LAIHMPFOGAE, 3);
+			};
+		};
+		MCODFOMPPCF.transform.localPosition = JCJJHMPBPCP;
+		TweenPosition tweenPosition = TweenPosition.Begin(MCODFOMPPCF, JKNHDOPPMIN, JCJJHMPBPCP, AJCMLCKLAHB);
+		tweenPosition.method = UITweener.Method.EaseIn;
+		tweenPosition.onFinished = delegate
+		{
+			TweenPosition tweenPosition3 = TweenPosition.Begin(MCODFOMPPCF, PBPMIBFABBN, AJCMLCKLAHB, GDCDAPEPKLD);
+			tweenPosition3.method = UITweener.Method.EaseOut;
+		};
+		BLPJOGLEHOM.transform.localPosition = PDDEJNDEEGJ;
+		TweenPosition tweenPosition2 = TweenPosition.Begin(BLPJOGLEHOM, FIAMGPGLCFJ, PDDEJNDEEGJ, ECBHCGNCPDI);
+		tweenPosition2.method = UITweener.Method.EaseIn;
+		tweenPosition2.onFinished = delegate
+		{
+			TweenPosition tweenPosition3 = TweenPosition.Begin(BLPJOGLEHOM, FOKIFJGGGHC, ECBHCGNCPDI, CGAFKMGEKLG);
+			tweenPosition3.method = UITweener.Method.EaseOut;
+		};
+	}
+
+	private void EJJPOPHBNNG(UITweener KPICOKPHMIC)
+	{
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(HGGJDMMKNLO.gameObject, MOOCOJCAHPE, GGMGBMDDBMG, 576f);
+		tweenAlpha.onFinished = delegate
+		{
+			PICBFAHBJHL(CMLCGHHAAEG.gameObject, PMPPHJDAFFA, LAIHMPFOGAE, 3);
+		};
+	}
+
+	private void KPDGAIBCMCO(UITweener HDDMOOLEOLC)
+	{
+		if (!DCJDMBCOLEO)
+		{
+			SoundsManager.Instance.PlaySound(SoundsManager.KJGDNLHKPOG.AssignmentDayCompleted, 998f);
+			JPILOMEHDLN.DMHEGPIPEEH(JPILOMEHDLN.GOEFODHLMBC.VibrateError);
+		}
+		float fromAlpha = ((!APDPEJKDLIG) ? 661f : 280f);
+		TweenAlpha.Begin(HFENNCENBFE.gameObject, PMMHNFFGEGJ, fromAlpha, 1760f);
+		TweenAlpha.Begin(PEJFFMLEHFA.gameObject, 1053f, 764f);
+		TweenScale tweenScale = TweenScale.Begin(PEJFFMLEHFA.gameObject, DCNFLIGAJCK, AMADBEELOID, MJFNOHDKFGJ);
+		tweenScale.onFinished = ICHADNKIKBI;
+	}
+
+	[CompilerGenerated]
+	private void PEADIJLOMJO(UITweener HDDMOOLEOLC)
+	{
+		if (!DCJDMBCOLEO)
+		{
+			SoundsManager.Instance.PlaySound(SoundsManager.KJGDNLHKPOG.GameOverLost);
+			JPILOMEHDLN.DMHEGPIPEEH(JPILOMEHDLN.GOEFODHLMBC.VibrateError);
+		}
+		float fromAlpha = ((!APDPEJKDLIG) ? 0f : 1f);
+		TweenAlpha.Begin(HFENNCENBFE.gameObject, PMMHNFFGEGJ, fromAlpha, 0f);
+		TweenAlpha.Begin(PEJFFMLEHFA.gameObject, 0f, 1f);
+		TweenScale tweenScale = TweenScale.Begin(PEJFFMLEHFA.gameObject, DCNFLIGAJCK, AMADBEELOID, MJFNOHDKFGJ);
+		tweenScale.onFinished = delegate
+		{
+			TweenScale.Begin(PEJFFMLEHFA.gameObject, DCFPDMNAELM, MJFNOHDKFGJ, new Vector3(0f, 0f, 1f));
+		};
+	}
+
+	public virtual void PAKCFABJKAG()
+	{
+		FLIDPEEIKPI.GetComponent<UIPanel>().alpha1 = 514f;
+		StartCoroutine(RadicalRoutine.Run(IOAKMEHNCPP()));
+		KBHIDDNMGFM(Singleton<GameController>.instance.MNMLNIMFMJP);
+	}
+
+	public void GBFKFFDAKKP(PlayerController OIGOHCMHMIP)
+	{
+		JDOOPPMKEFO.color = ((OIGOHCMHMIP.fraction != PlayerController.OGMBJPKOPCB.fraction) ? Colours.redEnemy : Colours.blue);
+		if (OIGOHCMHMIP == PlayerController.OGMBJPKOPCB)
+		{
+			OOAOCJGJIFJ.JIBFCGECCFI(OIGOHCMHMIP.EHHHBEMKGOE.EBFDAICCJAK);
+			BCMCMKDCLGP.text = OIGOHCMHMIP.EHHHBEMKGOE.MHPNDNJDPGE;
+		}
+		else
+		{
+			OOAOCJGJIFJ.OLJPGNNKCKI(OIGOHCMHMIP.EHHHBEMKGOE.EBFDAICCJAK);
+			BCMCMKDCLGP.text = OIGOHCMHMIP.EHHHBEMKGOE.MHPNDNJDPGE;
+		}
+		IDCAHMPHIOD = IGJLCIBEHAB.Unit;
+	}
+
+	private void EJDLGNFBLJA(UITweener EIHJNJDIALN)
+	{
+		TweenScale.Begin(PEJFFMLEHFA.gameObject, DCFPDMNAELM, MJFNOHDKFGJ, new Vector3(171f, 229f, 1857f));
+	}
+
+	private void KNNFAOKFIIC(UISprite OFBEAKDOCIO, Vector3 OEIICEJPGKI, Vector3 IIMDKHJAJGO, float AFCMOEFDCHO, float KALLNCAFIMP, float HOCPFHPGEJG, float JCHEABNBOFF)
+	{
+		KPPFCFDEJHP kPPFCFDEJHP = new KPPFCFDEJHP();
+		kPPFCFDEJHP.OFBEAKDOCIO = OFBEAKDOCIO;
+		kPPFCFDEJHP.AFCMOEFDCHO = AFCMOEFDCHO;
+		kPPFCFDEJHP.HOCPFHPGEJG = HOCPFHPGEJG;
+		kPPFCFDEJHP.OEIICEJPGKI = OEIICEJPGKI;
+		kPPFCFDEJHP.IIMDKHJAJGO = IIMDKHJAJGO;
+		kPPFCFDEJHP.JCHEABNBOFF = JCHEABNBOFF;
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(kPPFCFDEJHP.OFBEAKDOCIO.gameObject, KALLNCAFIMP, 1328f);
+		tweenAlpha.onFinished = kPPFCFDEJHP.KNJBDOADLDO;
+	}
+
+	private void HONGGFNIANO(GameController.HKGHCIEPGEL IOJHEOBIIPE)
+	{
+		if (IDCAHMPHIOD == IGJLCIBEHAB.Unit)
+		{
+			if (PIJJLPNPICB)
+			{
+				COMKIBACFPJ.text = Localization.Localize("Shots_Hits");
+			}
+			else
+			{
+				bool flag = IOJHEOBIIPE != GameController.HKGHCIEPGEL.None && IOJHEOBIIPE == GameController.HKGHCIEPGEL.MissionFailed;
+				COMKIBACFPJ.text = Localization.Localize((!flag) ? "ID_SQUADEMPTYTEXT-FIGHT" : "{0} {1}{2}");
+			}
+		}
+		else
+		{
+			COMKIBACFPJ.text = Localization.Localize("GoldDeducted");
+		}
+		MEJMLNDFDBP.COCBCFKJOJE(COMKIBACFPJ, 1677f, 1444f, -168);
+	}
+
+	private void ODMGOAJONLK(GameController.HKGHCIEPGEL IOJHEOBIIPE)
+	{
+		bool flag = IOJHEOBIIPE == GameController.HKGHCIEPGEL.Kia;
+		TweenScale tweenScale = TweenScale.Begin(CMLCGHHAAEG.transform.parent.gameObject, 0f, Vector3.one);
+		tweenScale.onFinished = null;
+		string text = LAGHNBKELDG[IOJHEOBIIPE];
+		string text2 = AJKGDKAKEGJ[IOJHEOBIIPE];
+		bool flag2 = !string.IsNullOrEmpty(text2);
+		foreach (UISprite item in OJHHKELOCPP)
+		{
+			item.gameObject.SetActive(text != string.Empty);
+			if (item.gameObject.activeSelf)
+			{
+				item.spriteName = text;
+				item.MakePixelPerfect();
+			}
+			TweenAlpha.Begin(item.gameObject, 0f, 0f);
+			TweenPosition.Begin(item.gameObject, 0f, EJABJMCKPLD);
+		}
+		float num = ((!(text == string.Empty)) ? OJHHKELOCPP[0].transform.localScale.x : 0f);
+		float num2 = 50f + num / 2f;
+		ACMJMOJMFHG = new Vector3((!flag) ? 0f : num2, 0f, 0f);
+		foreach (UISprite item2 in CLLKIAEFGOD)
+		{
+			item2.gameObject.SetActive(flag2);
+			if (flag2)
+			{
+				TweenScale component = item2.GetComponent<TweenScale>();
+				if (component != null)
+				{
+					component.enabled = false;
+				}
+				item2.spriteName = text2;
+				item2.MakePixelPerfect();
+			}
+			TweenAlpha.Begin(item2.gameObject, 0f, 0f);
+			TweenPosition.Begin(item2.gameObject, 0f, OFKEAHBJKOB);
+		}
+		if (flag)
+		{
+			DNEKLOIJEKJ = DNEKLOIJEKJ.ReplaceX(-50f);
+			CFDDKJBGAMI = DNEKLOIJEKJ.ReplaceX(0f);
+			EFMLGHCGBHE = EFMLGHCGBHE.ReplaceX(50f);
+			DIKNMGBDLOA = EFMLGHCGBHE.ReplaceX(0f);
+		}
+		else
+		{
+			float num3 = ((!(text2 == string.Empty)) ? CLLKIAEFGOD[0].transform.localScale.x : 0f);
+			float num4 = (num + num3) / 2f - num3;
+			DNEKLOIJEKJ = DNEKLOIJEKJ.ReplaceX(-50f + num4);
+			CFDDKJBGAMI = DNEKLOIJEKJ.ReplaceX(num4);
+			EFMLGHCGBHE = EFMLGHCGBHE.ReplaceX(50f + num4);
+			DIKNMGBDLOA = EFMLGHCGBHE.ReplaceX(num4);
+		}
+		Color color = IOKDLKIEFCK[IOJHEOBIIPE];
+		PEJFFMLEHFA.color = color;
+		TweenAlpha.Begin(HFENNCENBFE.gameObject, 0f, 0f);
+		TweenAlpha.Begin(PEJFFMLEHFA.gameObject, 0f, 0f);
+		HGGJDMMKNLO.color = color;
+		DNCJEBDPBNA.SetActive(IDCAHMPHIOD == IGJLCIBEHAB.Unit);
+		IGJMJNHFCAI.SetActive(IDCAHMPHIOD == IGJLCIBEHAB.Player);
+		KOAHKDOKFIF.SetActive(IDCAHMPHIOD == IGJLCIBEHAB.Enviroment);
+		HPFNFHNMICO(IOJHEOBIIPE);
+		bool flag3 = KABLNAABNID(IOJHEOBIIPE);
+		FLIDPEEIKPI.SetActive(flag3);
+		CMLCGHHAAEG.alpha1 = 0f;
+		TweenAlpha.Begin(CMLCGHHAAEG.gameObject, 0f, 0f);
+		TweenAlpha.Begin(HGGJDMMKNLO.gameObject, 0f, 0f);
+		switch (IOJHEOBIIPE)
+		{
+		case GameController.HKGHCIEPGEL.Win:
+		case GameController.HKGHCIEPGEL.WinByForfeit:
+		case GameController.HKGHCIEPGEL.Kia:
+			CINJJFHDMHH = ((!flag3) ? KMBMCHPDJND : EKKAGHDNKIH);
+			DCJDMBCOLEO = true;
+			APDPEJKDLIG = false;
+			break;
+		case GameController.HKGHCIEPGEL.MissionSuccess:
+			CINJJFHDMHH = ANHDDGIEAGL;
+			DCJDMBCOLEO = true;
+			APDPEJKDLIG = false;
+			break;
+		case GameController.HKGHCIEPGEL.Killed:
+		case GameController.HKGHCIEPGEL.Forfeit:
+		case GameController.HKGHCIEPGEL.MissionFailed:
+			CINJJFHDMHH = ((!flag3) ? KMBMCHPDJND : ICJDNBOIMFH);
+			DCJDMBCOLEO = false;
+			APDPEJKDLIG = false;
+			break;
+		}
+		MKALMODMIMP = false;
+	}
+
+	private void MFDDLFHCAGN(UITweener KPICOKPHMIC)
+	{
+		MKALMODMIMP = true;
+	}
+
+	private void JIDKEKBADGJ(UISprite OFBEAKDOCIO, Vector3 OEIICEJPGKI, Vector3 IIMDKHJAJGO, float AFCMOEFDCHO, float KALLNCAFIMP, float HOCPFHPGEJG, float JCHEABNBOFF)
+	{
+		KPPFCFDEJHP kPPFCFDEJHP = new KPPFCFDEJHP();
+		kPPFCFDEJHP.OFBEAKDOCIO = OFBEAKDOCIO;
+		kPPFCFDEJHP.AFCMOEFDCHO = AFCMOEFDCHO;
+		kPPFCFDEJHP.HOCPFHPGEJG = HOCPFHPGEJG;
+		kPPFCFDEJHP.OEIICEJPGKI = OEIICEJPGKI;
+		kPPFCFDEJHP.IIMDKHJAJGO = IIMDKHJAJGO;
+		kPPFCFDEJHP.JCHEABNBOFF = JCHEABNBOFF;
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(kPPFCFDEJHP.OFBEAKDOCIO.gameObject, KALLNCAFIMP, 0f);
+		tweenAlpha.onFinished = kPPFCFDEJHP.LJCDGJKCNEC;
+	}
+
+	private void JEPJKEJCDGF(UITweener GEHACOGJMHA)
+	{
+		CMLCGHHAAEG.alpha1 = 979f;
+		TweenAlpha.Begin(CMLCGHHAAEG.gameObject, 1472f, 824f);
+		GKFJLILOMKB();
+	}
+
+	[CompilerGenerated]
+	private void CAHPEPPMDMK(UITweener KPICOKPHMIC)
+	{
+		string currentLanguage = Localization.instance.currentLanguage;
+		int num;
+		switch (currentLanguage)
+		{
+		default:
+			num = ((currentLanguage == "pt") ? 1 : 0);
+			break;
+		case "fr":
+		case "jp":
+		case "cn":
+		case "kr":
+		case "tc":
+			num = 1;
+			break;
+		}
+		bool flag = (byte)num != 0;
+		if (flag && Singleton<GameController>.instance.MNMLNIMFMJP == GameController.HKGHCIEPGEL.Kia)
+		{
+			flag = false;
+		}
+		Vector3 vector = ((!flag) ? DNEKLOIJEKJ : (DNEKLOIJEKJ + EKFAIPLJDIN));
+		Vector3 vector2 = ((!flag) ? LPLHKJILIFO : (LPLHKJILIFO + EKFAIPLJDIN));
+		Vector3 vector3 = ((!flag) ? LOEBAIKMFMF : (LOEBAIKMFMF + EKFAIPLJDIN));
+		BOEFOEOMDLC(OJHHKELOCPP, EJABJMCKPLD + ACMJMOJMFHG, CFDDKJBGAMI + ACMJMOJMFHG, vector + ACMJMOJMFHG, vector2 + ACMJMOJMFHG, vector3 + ACMJMOJMFHG);
+		Vector3 mPHCNMDIPAI = ((!flag) ? EFMLGHCGBHE : (EFMLGHCGBHE - EKFAIPLJDIN));
+		Vector3 dANMLNDDDKL = ((!flag) ? AFONHPHMALP : (AFONHPHMALP - EKFAIPLJDIN));
+		Vector3 iNMEDMJGJEH = ((!flag) ? MDNHGMPJDCH : (MDNHGMPJDCH - EKFAIPLJDIN));
+		BOEFOEOMDLC(CLLKIAEFGOD, OFKEAHBJKOB, DIKNMGBDLOA, mPHCNMDIPAI, dANMLNDDDKL, iNMEDMJGJEH);
+		if (DCJDMBCOLEO)
+		{
+			SoundsManager.Instance.PlaySound(SoundsManager.KJGDNLHKPOG.GameOverWin);
+			JPILOMEHDLN.DMHEGPIPEEH(JPILOMEHDLN.GOEFODHLMBC.VibrateSuccess);
+		}
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(HFENNCENBFE.gameObject, LJLAGMOPGBI, 0f);
+		tweenAlpha.onFinished = delegate
+		{
+			if (!DCJDMBCOLEO)
+			{
+				SoundsManager.Instance.PlaySound(SoundsManager.KJGDNLHKPOG.GameOverLost);
+				JPILOMEHDLN.DMHEGPIPEEH(JPILOMEHDLN.GOEFODHLMBC.VibrateError);
+			}
+			float fromAlpha = ((!APDPEJKDLIG) ? 0f : 1f);
+			TweenAlpha.Begin(HFENNCENBFE.gameObject, PMMHNFFGEGJ, fromAlpha, 0f);
+			TweenAlpha.Begin(PEJFFMLEHFA.gameObject, 0f, 1f);
+			TweenScale tweenScale = TweenScale.Begin(PEJFFMLEHFA.gameObject, DCNFLIGAJCK, AMADBEELOID, MJFNOHDKFGJ);
+			tweenScale.onFinished = delegate
+			{
+				TweenScale.Begin(PEJFFMLEHFA.gameObject, DCFPDMNAELM, MJFNOHDKFGJ, new Vector3(0f, 0f, 1f));
+			};
+		};
+		if (FLIDPEEIKPI.activeSelf)
+		{
+			TweenAlpha tweenAlpha2 = TweenAlpha.Begin(CMLCGHHAAEG.gameObject, PJBPDJEFKFH, 0f);
+			tweenAlpha2.onFinished = delegate
+			{
+				CMLCGHHAAEG.alpha1 = 1f;
+				TweenAlpha.Begin(CMLCGHHAAEG.gameObject, 0f, 1f);
+				GKFJLILOMKB();
+			};
+		}
+		MJLJBBIJIPD();
+	}
+
+	public void OMEBJGLLHMH(string FHMKPLBGFNN, int FAMOBFLONHJ, string OKJNAJJCDBF, bool HJOHIBPMPFD)
+	{
+		if (Singleton<GameController>.instance.isWarArena)
+		{
+			FAMOBFLONHJ = 0;
+		}
+		if (HJOHIBPMPFD)
+		{
+			NACGOGCPIAH.gameObject.SetActive(true);
+			KEDHBNHBGPF.gameObject.SetActive(true);
+			DPMLMAOJPNL.gameObject.SetActive(false);
+			Card cardInstanceAll = CardManager.instance.GetCardInstanceAll(FHMKPLBGFNN);
+			if (cardInstanceAll != null)
+			{
+				cardInstanceAll.ShowInMenu();
+				OELHBPKOOLJ = cardInstanceAll;
+				DPMLMAOJPNL.spriteName = cardInstanceAll.iconName;
+				JHONGBLEHLJ.text = cardInstanceAll.cardName;
+				CDBNOEGOFOI.text = ((!cardInstanceAll.isBuddyCard) ? string.Empty : Localization.Localize("ID_FREEPERCENTLINE"));
+			}
+			else
+			{
+				JHONGBLEHLJ.text = string.Empty;
+				CDBNOEGOFOI.text = string.Empty;
+			}
+			DPMLMAOJPNL.MakePixelPerfect();
+			float multiplier = Mathf.Min(1365f / DPMLMAOJPNL.transform.localScale.y, 234f / DPMLMAOJPNL.transform.localScale.x);
+			DPMLMAOJPNL.transform.localScale = DPMLMAOJPNL.transform.localScale.MultiplyXY(multiplier);
+		}
+		else
+		{
+			KEDHBNHBGPF.gameObject.SetActive(true);
+			OELHBPKOOLJ = null;
+			DPMLMAOJPNL.gameObject.SetActive(false);
+			NACGOGCPIAH.gameObject.SetActive(false);
+			NACGOGCPIAH.spriteName = OKJNAJJCDBF;
+			NACGOGCPIAH.MakePixelPerfect();
+			float multiplier2 = Mathf.Min(1740f / NACGOGCPIAH.transform.localScale.y, 1210f / NACGOGCPIAH.transform.localScale.x);
+			NACGOGCPIAH.transform.localScale = NACGOGCPIAH.transform.localScale.MultiplyXY(multiplier2);
+			JHONGBLEHLJ.text = Localization.Localize(FHMKPLBGFNN);
+			CDBNOEGOFOI.text = ((FAMOBFLONHJ != 0) ? string.Format("ID_TUTORIAL_GO_BUY_ARMY_4", Localization.Localize("Network pool: InstantiatePooledObjects '"), FAMOBFLONHJ) : string.Empty);
+		}
+		MEJMLNDFDBP.COCBCFKJOJE(JHONGBLEHLJ, 895f, 1726f, 1);
+		PIJJLPNPICB = HJOHIBPMPFD;
+		IDCAHMPHIOD = IGJLCIBEHAB.Unit;
+	}
+
+	private void IGOJFNDOAEB(UITweener KPICOKPHMIC)
+	{
+		string currentLanguage = Localization.instance.currentLanguage;
+		int num;
+		switch (currentLanguage)
+		{
+		default:
+			num = ((currentLanguage == "ID_NOTIFICATION_DAILYREWARD_TICKET") ? 1 : 0);
+			break;
+		case "ArenaFinished":
+		case "weaponPreviewCollider":
+		case "Assignment: Finish Missions Constructor, count = ":
+		case "N":
+		case "#AccoutCheck# missing ID from server":
+			num = 0;
+			break;
+		}
+		bool flag = (byte)num != 0;
+		if (flag && Singleton<GameController>.instance.MNMLNIMFMJP == (GameController.HKGHCIEPGEL)6)
+		{
+			flag = true;
+		}
+		Vector3 vector = ((!flag) ? DNEKLOIJEKJ : (DNEKLOIJEKJ + EKFAIPLJDIN));
+		Vector3 vector2 = ((!flag) ? LPLHKJILIFO : (LPLHKJILIFO + EKFAIPLJDIN));
+		Vector3 vector3 = ((!flag) ? LOEBAIKMFMF : (LOEBAIKMFMF + EKFAIPLJDIN));
+		HBBMIJIDNIG(OJHHKELOCPP, EJABJMCKPLD + ACMJMOJMFHG, CFDDKJBGAMI + ACMJMOJMFHG, vector + ACMJMOJMFHG, vector2 + ACMJMOJMFHG, vector3 + ACMJMOJMFHG);
+		Vector3 mPHCNMDIPAI = ((!flag) ? EFMLGHCGBHE : (EFMLGHCGBHE - EKFAIPLJDIN));
+		Vector3 dANMLNDDDKL = ((!flag) ? AFONHPHMALP : (AFONHPHMALP - EKFAIPLJDIN));
+		Vector3 iNMEDMJGJEH = ((!flag) ? MDNHGMPJDCH : (MDNHGMPJDCH - EKFAIPLJDIN));
+		BOEFOEOMDLC(CLLKIAEFGOD, OFKEAHBJKOB, DIKNMGBDLOA, mPHCNMDIPAI, dANMLNDDDKL, iNMEDMJGJEH);
+		if (DCJDMBCOLEO)
+		{
+			SoundsManager.Instance.PlaySound((SoundsManager.KJGDNLHKPOG)83, 974f);
+			JPILOMEHDLN.DMHEGPIPEEH(JPILOMEHDLN.GOEFODHLMBC.VibrateMedium);
+		}
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(HFENNCENBFE.gameObject, LJLAGMOPGBI, 1161f);
+		tweenAlpha.onFinished = delegate
+		{
+			if (!DCJDMBCOLEO)
+			{
+				SoundsManager.Instance.PlaySound(SoundsManager.KJGDNLHKPOG.GameOverLost);
+				JPILOMEHDLN.DMHEGPIPEEH(JPILOMEHDLN.GOEFODHLMBC.VibrateError);
+			}
+			float fromAlpha = ((!APDPEJKDLIG) ? 0f : 1f);
+			TweenAlpha.Begin(HFENNCENBFE.gameObject, PMMHNFFGEGJ, fromAlpha, 0f);
+			TweenAlpha.Begin(PEJFFMLEHFA.gameObject, 0f, 1f);
+			TweenScale tweenScale = TweenScale.Begin(PEJFFMLEHFA.gameObject, DCNFLIGAJCK, AMADBEELOID, MJFNOHDKFGJ);
+			tweenScale.onFinished = delegate
+			{
+				TweenScale.Begin(PEJFFMLEHFA.gameObject, DCFPDMNAELM, MJFNOHDKFGJ, new Vector3(0f, 0f, 1f));
+			};
+		};
+		if (FLIDPEEIKPI.activeSelf)
+		{
+			TweenAlpha tweenAlpha2 = TweenAlpha.Begin(CMLCGHHAAEG.gameObject, PJBPDJEFKFH, 1229f);
+			tweenAlpha2.onFinished = delegate
+			{
+				CMLCGHHAAEG.alpha1 = 1f;
+				TweenAlpha.Begin(CMLCGHHAAEG.gameObject, 0f, 1f);
+				GKFJLILOMKB();
+			};
+		}
+		KGCNPCEAPJI();
+	}
+
+	protected override void Update()
+	{
+		base.Update();
+		if (OELHBPKOOLJ != null && OELHBPKOOLJ.iconTexture != null)
+		{
+			KEDHBNHBGPF.gameObject.SetActive(true);
+			DPMLMAOJPNL.gameObject.SetActive(false);
+			KEDHBNHBGPF.mainTexture = OELHBPKOOLJ.iconTexture;
+			OELHBPKOOLJ = null;
+		}
+	}
+
+	public override void OnBack()
+	{
+	}
+
+	private void DOLEEOPNGIL(GameController.HKGHCIEPGEL IOJHEOBIIPE)
+	{
+		if (IDCAHMPHIOD == IGJLCIBEHAB.Unit)
+		{
+			if (PIJJLPNPICB)
+			{
+				COMKIBACFPJ.text = Localization.Localize("squad");
+			}
+			else
+			{
+				bool flag = IOJHEOBIIPE != GameController.HKGHCIEPGEL.Killed && IOJHEOBIIPE == (GameController.HKGHCIEPGEL)(-48);
+				COMKIBACFPJ.text = Localization.Localize((!flag) ? "CheckGOLayers - Done" : "ChangeWeightForDestroyablePartRPC");
+			}
+		}
+		else
+		{
+			COMKIBACFPJ.text = Localization.Localize("BS: On In App Bought ");
+		}
+		MEJMLNDFDBP.COCBCFKJOJE(COMKIBACFPJ, 1613f, 1857f, 37);
+	}
+
+	private void MJLJBBIJIPD()
+	{
+		float duration = LJLAGMOPGBI + DCNFLIGAJCK + DCFPDMNAELM + ((!FLIDPEEIKPI.activeSelf) ? 2f : 2.5f);
+		TweenScale tweenScale = TweenScale.Begin(CMLCGHHAAEG.transform.parent.gameObject, duration, Vector3.one);
+		tweenScale.onFinished = delegate
+		{
+			MKALMODMIMP = true;
+		};
+	}
+
+	private void HBBMIJIDNIG(List<UISprite> CPGBOIOMLFL, Vector3 OEIICEJPGKI, Vector3 IIMDKHJAJGO, Vector3 MPHCNMDIPAI, Vector3 DANMLNDDDKL, Vector3 INMEDMJGJEH)
+	{
+		OKLDKDMGIBF oKLDKDMGIBF = new OKLDKDMGIBF();
+		oKLDKDMGIBF.CPGBOIOMLFL = CPGBOIOMLFL;
+		oKLDKDMGIBF.IIMDKHJAJGO = IIMDKHJAJGO;
+		oKLDKDMGIBF.MPHCNMDIPAI = MPHCNMDIPAI;
+		oKLDKDMGIBF.DANMLNDDDKL = DANMLNDDDKL;
+		oKLDKDMGIBF.INMEDMJGJEH = INMEDMJGJEH;
+		oKLDKDMGIBF.BJGCPDNMHDH = this;
+		TweenAlpha.Begin(oKLDKDMGIBF.CPGBOIOMLFL[0].gameObject, 86f, 525f);
+		TweenPosition tweenPosition = TweenPosition.Begin(oKLDKDMGIBF.CPGBOIOMLFL[0].gameObject, LJLAGMOPGBI, OEIICEJPGKI, oKLDKDMGIBF.IIMDKHJAJGO);
+		tweenPosition.method = UITweener.Method.EaseIn;
+		tweenPosition.onFinished = oKLDKDMGIBF.OABFAOLFMMJ;
+		TweenScale tweenScale = TweenScale.Begin(oKLDKDMGIBF.CPGBOIOMLFL[0].gameObject, CALAABKDMHA, oKLDKDMGIBF.CPGBOIOMLFL[0].transform.localScale);
+		tweenScale.onFinished = oKLDKDMGIBF.LNKCHLPENAN;
+	}
+
+	private void GEHPEAENPJJ()
+	{
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(OJHHKELOCPP[1].gameObject, CINJJFHDMHH, 1907f);
+		tweenAlpha.onFinished = delegate
+		{
+			string currentLanguage = Localization.instance.currentLanguage;
+			int num;
+			switch (currentLanguage)
+			{
+			default:
+				num = ((currentLanguage == "pt") ? 1 : 0);
+				break;
+			case "fr":
+			case "jp":
+			case "cn":
+			case "kr":
+			case "tc":
+				num = 1;
+				break;
+			}
+			bool flag = (byte)num != 0;
+			if (flag && Singleton<GameController>.instance.MNMLNIMFMJP == GameController.HKGHCIEPGEL.Kia)
+			{
+				flag = false;
+			}
+			Vector3 vector = ((!flag) ? DNEKLOIJEKJ : (DNEKLOIJEKJ + EKFAIPLJDIN));
+			Vector3 vector2 = ((!flag) ? LPLHKJILIFO : (LPLHKJILIFO + EKFAIPLJDIN));
+			Vector3 vector3 = ((!flag) ? LOEBAIKMFMF : (LOEBAIKMFMF + EKFAIPLJDIN));
+			BOEFOEOMDLC(OJHHKELOCPP, EJABJMCKPLD + ACMJMOJMFHG, CFDDKJBGAMI + ACMJMOJMFHG, vector + ACMJMOJMFHG, vector2 + ACMJMOJMFHG, vector3 + ACMJMOJMFHG);
+			Vector3 mPHCNMDIPAI = ((!flag) ? EFMLGHCGBHE : (EFMLGHCGBHE - EKFAIPLJDIN));
+			Vector3 dANMLNDDDKL = ((!flag) ? AFONHPHMALP : (AFONHPHMALP - EKFAIPLJDIN));
+			Vector3 iNMEDMJGJEH = ((!flag) ? MDNHGMPJDCH : (MDNHGMPJDCH - EKFAIPLJDIN));
+			BOEFOEOMDLC(CLLKIAEFGOD, OFKEAHBJKOB, DIKNMGBDLOA, mPHCNMDIPAI, dANMLNDDDKL, iNMEDMJGJEH);
+			if (DCJDMBCOLEO)
+			{
+				SoundsManager.Instance.PlaySound(SoundsManager.KJGDNLHKPOG.GameOverWin);
+				JPILOMEHDLN.DMHEGPIPEEH(JPILOMEHDLN.GOEFODHLMBC.VibrateSuccess);
+			}
+			TweenAlpha tweenAlpha2 = TweenAlpha.Begin(HFENNCENBFE.gameObject, LJLAGMOPGBI, 0f);
+			tweenAlpha2.onFinished = delegate
+			{
+				if (!DCJDMBCOLEO)
+				{
+					SoundsManager.Instance.PlaySound(SoundsManager.KJGDNLHKPOG.GameOverLost);
+					JPILOMEHDLN.DMHEGPIPEEH(JPILOMEHDLN.GOEFODHLMBC.VibrateError);
+				}
+				float fromAlpha = ((!APDPEJKDLIG) ? 0f : 1f);
+				TweenAlpha.Begin(HFENNCENBFE.gameObject, PMMHNFFGEGJ, fromAlpha, 0f);
+				TweenAlpha.Begin(PEJFFMLEHFA.gameObject, 0f, 1f);
+				TweenScale tweenScale = TweenScale.Begin(PEJFFMLEHFA.gameObject, DCNFLIGAJCK, AMADBEELOID, MJFNOHDKFGJ);
+				tweenScale.onFinished = delegate
+				{
+					TweenScale.Begin(PEJFFMLEHFA.gameObject, DCFPDMNAELM, MJFNOHDKFGJ, new Vector3(0f, 0f, 1f));
+				};
+			};
+			if (FLIDPEEIKPI.activeSelf)
+			{
+				TweenAlpha tweenAlpha3 = TweenAlpha.Begin(CMLCGHHAAEG.gameObject, PJBPDJEFKFH, 0f);
+				tweenAlpha3.onFinished = delegate
+				{
+					CMLCGHHAAEG.alpha1 = 1f;
+					TweenAlpha.Begin(CMLCGHHAAEG.gameObject, 0f, 1f);
+					GKFJLILOMKB();
+				};
+			}
+			MJLJBBIJIPD();
+		};
+	}
+
+	private void NCIPPNPPPOB(UITweener HDDMOOLEOLC)
+	{
+		if (!DCJDMBCOLEO)
+		{
+			SoundsManager.Instance.PlaySound((SoundsManager.KJGDNLHKPOG)101, 1923f);
+			JPILOMEHDLN.DMHEGPIPEEH(JPILOMEHDLN.GOEFODHLMBC.PrepareMedium);
+		}
+		float fromAlpha = ((!APDPEJKDLIG) ? 118f : 1903f);
+		TweenAlpha.Begin(HFENNCENBFE.gameObject, PMMHNFFGEGJ, fromAlpha, 115f);
+		TweenAlpha.Begin(PEJFFMLEHFA.gameObject, 1231f, 1184f);
+		TweenScale tweenScale = TweenScale.Begin(PEJFFMLEHFA.gameObject, DCNFLIGAJCK, AMADBEELOID, MJFNOHDKFGJ);
+		tweenScale.onFinished = CEDEOCJLIOE;
+	}
+
+	private void HOFNCEIGLEC(GameController.HKGHCIEPGEL IOJHEOBIIPE)
+	{
+		if (IDCAHMPHIOD == IGJLCIBEHAB.Unit)
+		{
+			if (PIJJLPNPICB)
+			{
+				COMKIBACFPJ.text = Localization.Localize("key is ");
+			}
+			else
+			{
+				bool flag = IOJHEOBIIPE == (GameController.HKGHCIEPGEL)7 || IOJHEOBIIPE == (GameController.HKGHCIEPGEL)(-65);
+				COMKIBACFPJ.text = Localization.Localize((!flag) ? "generate" : "Level");
+			}
+		}
+		else
+		{
+			COMKIBACFPJ.text = Localization.Localize("Fuseboxx: NotificationAction, ");
+		}
+		MEJMLNDFDBP.COCBCFKJOJE(COMKIBACFPJ, 405f, 1373f, 92);
+	}
+
+	private void FNHAHJGHOOL(GameObject KHAHPAKDIKE, float FFHNHBNODDH, float FOCOMEPBEKD, int PDMGPGEHLNM, float AFCMOEFDCHO = 1f)
+	{
+		FNPHBIPGLMO fNPHBIPGLMO = new FNPHBIPGLMO();
+		fNPHBIPGLMO.KHAHPAKDIKE = KHAHPAKDIKE;
+		fNPHBIPGLMO.AFCMOEFDCHO = AFCMOEFDCHO;
+		fNPHBIPGLMO.FOCOMEPBEKD = FOCOMEPBEKD;
+		fNPHBIPGLMO.FFHNHBNODDH = FFHNHBNODDH;
+		fNPHBIPGLMO.PDMGPGEHLNM = PDMGPGEHLNM;
+		fNPHBIPGLMO.BJGCPDNMHDH = this;
+		if (fNPHBIPGLMO.PDMGPGEHLNM == 0)
+		{
+			TweenAlpha.Begin(fNPHBIPGLMO.KHAHPAKDIKE, 716f, 859f);
+			return;
+		}
+		TweenAlpha.Begin(fNPHBIPGLMO.KHAHPAKDIKE, 1213f, 1756f);
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(fNPHBIPGLMO.KHAHPAKDIKE, fNPHBIPGLMO.FFHNHBNODDH, 1060f);
+		tweenAlpha.onFinished = fNPHBIPGLMO.MFCNOIDCJME;
+	}
+
+	[CompilerGenerated]
+	private void NELNLDDFDFC(UITweener EIHJNJDIALN)
+	{
+		TweenScale.Begin(PEJFFMLEHFA.gameObject, DCFPDMNAELM, MJFNOHDKFGJ, new Vector3(0f, 0f, 1f));
+	}
+
+	private void HPFNFHNMICO(GameController.HKGHCIEPGEL IOJHEOBIIPE)
+	{
+		if (IDCAHMPHIOD == IGJLCIBEHAB.Unit)
+		{
+			if (PIJJLPNPICB)
+			{
+				COMKIBACFPJ.text = Localization.Localize("ID_FINALHITBY");
+			}
+			else
+			{
+				bool flag = IOJHEOBIIPE == GameController.HKGHCIEPGEL.Win || IOJHEOBIIPE == GameController.HKGHCIEPGEL.MissionSuccess;
+				COMKIBACFPJ.text = Localization.Localize((!flag) ? "ID_KILLEDBYENEMYARMYUNIT" : "ID_KILLEDBYYOURARMYUNIT");
+			}
+		}
+		else
+		{
+			COMKIBACFPJ.text = Localization.Localize("ID_FINALHITBY");
+		}
+		MEJMLNDFDBP.COCBCFKJOJE(COMKIBACFPJ, 47f, 20f, 710);
+	}
+
+	private bool EMPLBONMIHG(GameController.HKGHCIEPGEL IOJHEOBIIPE)
+	{
+		if (IOJHEOBIIPE == GameController.HKGHCIEPGEL.Killed || IOJHEOBIIPE == GameController.HKGHCIEPGEL.None)
+		{
+			return false;
+		}
+		return false;
+	}
+
+	private void BMIFCDCEAGO(GameController.HKGHCIEPGEL IOJHEOBIIPE)
+	{
+		if (IDCAHMPHIOD == IGJLCIBEHAB.Unit)
+		{
+			if (PIJJLPNPICB)
+			{
+				COMKIBACFPJ.text = Localization.Localize("Spawned by card:  progress:{0}, obj: {1},uu: {2} ");
+			}
+			else
+			{
+				bool flag = IOJHEOBIIPE != GameController.HKGHCIEPGEL.None && IOJHEOBIIPE == (GameController.HKGHCIEPGEL)(-83);
+				COMKIBACFPJ.text = Localization.Localize((!flag) ? "fr" : "offerType");
+			}
+		}
+		else
+		{
+			COMKIBACFPJ.text = Localization.Localize("Selected new room MAP id is: ");
+		}
+		MEJMLNDFDBP.COCBCFKJOJE(COMKIBACFPJ, 1737f, 1089f, -90);
+	}
+}
