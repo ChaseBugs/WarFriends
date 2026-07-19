@@ -36,7 +36,9 @@ export function buildPlayerLeaderboardItem(doc: PlayerDocument, position: number
     Skill: n(player.skill),
     Position: n(position),
     Country: s(player.country),
-    DecalManagerData: s(JSON.stringify({ slots: player.playerVisuals })),
+    DecalManagerData: s(JSON.stringify({
+      slots: progression.visualInventory?.slots ?? player.playerVisuals,
+    })),
   };
   if (player.facebookId !== -1) item.FacebookId = s(player.facebookId);
   if (player.squadName) item.SquadId = s(player.squadName);

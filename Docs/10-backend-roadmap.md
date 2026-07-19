@@ -14,9 +14,9 @@ remaining work by gameplay dependency rather than duplicating every `DatabaseAct
 - validate combat event order, timing, damage, and result plausibility;
 - decide whether full authoritative combat simulation is required.
 
-### Complete inventory families
+### Complete remaining inventory families
 
-- decals and visuals;
+- non-shop visual rewards, parts, offers, and rentals;
 - war cards, card packs, crafting, and squad card pool;
 - lootboxes and Arena crowns;
 - offers, rentals, VIP, and subscriptions;

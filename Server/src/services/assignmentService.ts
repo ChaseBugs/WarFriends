@@ -55,6 +55,15 @@ import {
   upgradeUnitEliteState,
   updateEquippedUnitsState,
 } from "./unitInventoryService";
+import {
+  equipVisualState,
+  markVisualShownState,
+  parseVisualPurchaseData,
+  purchaseVisualState,
+  requestedVisualName,
+  visualRecoveryFields,
+  VISUAL_CATALOG,
+} from "./visualInventoryService";
 
 /**
  * Daily assignments and the recovered RequestBuffer transaction boundary.
@@ -409,6 +418,7 @@ export function processAssignmentBufferState(
   bufferId: string,
   requests: readonly BufferedRequestInput[],
   playerLevel = 1,
+  playerVipExpiration = 0,
 ): AssignmentBufferResult {
   const replay = state.processedRequestBuffers?.find((entry) => entry.id === bufferId);
   if (replay) {
@@ -661,6 +671,58 @@ export function processAssignmentBufferState(
       continue;
     }
 
+    if (
+      request.action === DbAction.BuyDecal
+      || request.action === DbAction.EquipDecal
+      || request.action === DbAction.DecalWasShown
+      || request.action === DbAction.VisualWasShown
+    ) {
+      try {
+        let response: Record<string, unknown> = { ActionId: request.action, Result: SUCCESS };
+        if (request.action === DbAction.BuyDecal) {
+          // CamosScreen marks the item bought and debits its local wallet before transport.
+          // Rebuild the price, unlock, VIP, duration, and shop eligibility from the extracted
+          // MainScene row; client values are assertions and cannot authorize hidden/event loot.
+          const result = purchaseVisualState(
+            working,
+            now,
+            playerLevel,
+            playerVipExpiration,
+            parseVisualPurchaseData(request.data),
+          );
+          working = result.state;
+          response = {
+            ActionId: request.action,
+            Result: SUCCESS,
+            DecalId: result.definition.name,
+            ExpiresOn: result.expiresOn,
+          };
+        } else if (request.action === DbAction.EquipDecal) {
+          // EquipDecal.data is the raw PlayerVisuals row name rather than a JSON object.
+          // Ownership includes free defaults and unexpired timed power bands, but never an
+          // unsupported borrowed/rental record.
+          working = equipVisualState(working, now, request.data).state;
+        } else if (request.action === DbAction.VisualWasShown || VISUAL_CATALOG[request.data]) {
+          // Current VisualWasShown carries the row ID. Historical builds also used
+          // DecalWasShown, but some recovered call sites attach unrelated impression data;
+          // persist the legacy acknowledgement only when it resolves to a real visual.
+          working = markVisualShownState(working, request.data).state;
+        }
+        responses.push(response);
+      } catch (error) {
+        const code = error instanceof ApiError ? error.code : ApiErrorCode.InternalServerError;
+        responses.push({
+          ActionId: request.action,
+          Result: code,
+          // BuyDecal and EquipDecal are optimistic locally; the recovered result parser uses
+          // this complete snapshot and both wallet balances to roll them back on failure.
+          ...visualRecoveryFields(working),
+          DecalId: requestedVisualName(request.data),
+        });
+      }
+      continue;
+    }
+
     if (request.action === DbAction.SaveLastSeenSquadChatTimeStamp) {
       try {
         const timestamp = Number(request.data);
@@ -820,7 +882,8 @@ export function processAssignmentBuffer(
   bufferId: string,
   requests: readonly BufferedRequestInput[],
   playerLevel = 1,
+  playerVipExpiration = 0,
 ): Promise<AssignmentBufferResult> {
   return mutateProgression(playerId, (state, now) =>
-    processAssignmentBufferState(state, now, bufferId, requests, playerLevel));
+    processAssignmentBufferState(state, now, bufferId, requests, playerLevel, playerVipExpiration));
 }

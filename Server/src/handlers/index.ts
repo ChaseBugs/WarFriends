@@ -18,15 +18,16 @@ import { dailyRewardHandlers } from "./dailyRewards";
 import { assignmentHandlers } from "./assignments";
 import { dailyMissionHandlers } from "./dailyMissions";
 import { warArenaHandlers } from "./warArena";
+import { visualHandlers } from "./visuals";
 import type { HandlerEntry } from "./types";
 import logger from "../utils/logger";
 
 const benignNoOpActions = new Set<number>([
   92, // client error report
-  104, 105, 108, // content impression telemetry
+  104, 105, // content impression telemetry
   119, 120, // tutorial start/end telemetry
   141, 163, 166, 168, 169, // crash/log/UI telemetry
-  179, 180, 183, 191, 194, // analytics and UI impression telemetry
+  179, 180, 183, 194, // analytics and UI impression telemetry
   212, 213, 1007, // feature/offer impression telemetry
 ]);
 
@@ -46,6 +47,7 @@ const registry: Record<number, HandlerEntry> = {
   ...assignmentHandlers,
   ...dailyMissionHandlers,
   ...warArenaHandlers,
+  ...visualHandlers,
 };
 
 function clientVersion(req: RequestEnvelope): number {

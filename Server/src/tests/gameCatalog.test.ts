@@ -15,7 +15,7 @@ test("material database joins every recovered weapon and unit family", () => {
 
   assert.equal(catalog.clientVersion, GAME_CATALOG_CLIENT_VERSION);
   assert.match(catalog.catalogRevision, /^[0-9a-f]{64}$/);
-  assert.equal(catalog.entries.length, 207);
+  assert.equal(catalog.entries.length, 354);
   assert.deepEqual(catalog.counts, {
     weapons: 93,
     playableWeapons: 84,
@@ -24,6 +24,10 @@ test("material database joins every recovered weapon and unit family", () => {
     weaponPowerLevels: 5_865,
     rankPowerLevels: 58,
     weaponFeatureRows: 11,
+    visuals: 147,
+    playableVisuals: 146,
+    unresolvedVisuals: 1,
+    shopVisuals: 84,
     units: 45,
     playableUnits: 24,
     helperUnits: 3,
@@ -58,6 +62,14 @@ test("material database joins every recovered weapon and unit family", () => {
     ((assaultFeatures?.data.definition as { dpsByFeature: unknown[] }).dpsByFeature).length,
     9,
   );
+
+  const defaultCamo = catalog.entries.find((entry) =>
+    entry.kind === "visual" && entry.key === "CAMOS_DEFAULT");
+  assert.equal(defaultCamo?.availability, "playable");
+  assert.equal((defaultCamo?.data.definition as { categoryId: number }).categoryId, 0);
+  const unresolvedVisual = catalog.entries.find((entry) =>
+    entry.kind === "visual" && entry.key === "HEAD_MASK_ROCKET");
+  assert.equal(unresolvedVisual?.availability, "unresolved");
 
   const shotgunner = catalog.entries.find((entry) =>
     entry.kind === "unit" && entry.key === "Google2u.DBUpgradeSlotsShotgunner");
@@ -117,5 +129,5 @@ test("catalog sync writes all immutable entries before publishing the release po
   assert.deepEqual(calls, ["entries", "release"]);
   assert.equal(entryOperations, built.entries.length);
   assert.equal(publishedRelease?.catalogRevision, built.catalogRevision);
-  assert.equal(publishedRelease?.entryCount, 207);
+  assert.equal(publishedRelease?.entryCount, 354);
 });

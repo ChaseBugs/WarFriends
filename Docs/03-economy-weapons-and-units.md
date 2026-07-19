@@ -79,11 +79,16 @@ Buffered economy requests carry a `BufferId`. The server stores a bounded result
 the original result for a retry instead of spending or granting twice. Client-compatible recovery
 fields restore the wallet, item, cursor, and delivery view after a rejected optimistic mutation.
 
+Player customization purchases and equipment use the same atomic buffer boundary. Their detailed
+catalog, ownership, expiry, VIP, slot, and rollback rules are documented in
+[Player visuals and decals](11-player-visuals-and-decals.md).
+
 ## Key implementation files
 
 - `Server/src/services/economyService.ts`
 - `Server/src/services/itemInventoryService.ts`
 - `Server/src/services/unitInventoryService.ts`
+- `Server/src/services/visualInventoryService.ts`
 - `Server/src/services/assignmentService.ts` (buffer dispatcher)
 - `Tools/Extract-WeaponCatalog.ps1`
 - `Server/scripts/Extract-WeaponUpgradeCatalog.ps1`

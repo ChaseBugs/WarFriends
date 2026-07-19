@@ -4,11 +4,12 @@ import generatedArmyPowerCatalog from "../data/armyPowerCatalog.generated.json";
 import generatedUnitCatalog from "../data/unitCatalog.generated.json";
 import generatedUnitUpgradeCatalog from "../data/unitUpgradeCatalog.generated.json";
 import generatedWeaponCatalog from "../data/weaponCatalog.generated.json";
+import generatedVisualCatalog from "../data/visualCatalog.generated.json";
 import { WEAPON_UPGRADE_CATALOG } from "../data/weaponUpgradeCatalog.generated";
 
 export const GAME_CATALOG_CLIENT_VERSION = "4.9.5";
 
-export type GameCatalogKind = "weapon" | "unit" | "rank" | "weaponFeature";
+export type GameCatalogKind = "weapon" | "unit" | "rank" | "weaponFeature" | "visual";
 export type GameCatalogAvailability = "playable" | "helper" | "reference" | "unresolved";
 
 export interface GameCatalogEntryDocument {
@@ -35,6 +36,10 @@ export interface GameCatalogCounts {
   weaponPowerLevels: number;
   rankPowerLevels: number;
   weaponFeatureRows: number;
+  visuals: number;
+  playableVisuals: number;
+  unresolvedVisuals: number;
+  shopVisuals: number;
   units: number;
   playableUnits: number;
   helperUnits: number;
@@ -104,10 +109,17 @@ interface ArmyPowerArtifact {
   weapons: Array<{ name: string; index: number; powerByLevel: number[] }>;
 }
 
+interface VisualCatalogArtifact extends CatalogArtifact<Record<string, unknown>> {
+  categories: Array<Record<string, unknown>>;
+  visuals: Array<Record<string, unknown>>;
+  unresolvedRows: Array<Record<string, unknown>>;
+}
+
 const weapons = generatedWeaponCatalog as unknown as WeaponArtifact;
 const units = generatedUnitCatalog as unknown as UnitArtifact;
 const unitUpgrades = generatedUnitUpgradeCatalog as unknown as UnitUpgradeArtifact;
 const armyPower = generatedArmyPowerCatalog as unknown as ArmyPowerArtifact;
+const visuals = generatedVisualCatalog as unknown as VisualCatalogArtifact;
 
 /**
  * JSON.stringify preserves insertion order, which is not a safe canonical form for hashes.
@@ -262,6 +274,29 @@ export function buildGameCatalog(): BuiltGameCatalog {
     });
   }
 
+  const visualSource = sourceFor(visuals);
+  for (const definition of visuals.visuals) {
+    const key = requiredName(definition, "Visual");
+    rawEntries.push({
+      kind: "visual",
+      key,
+      // Renderable rows include shop, event, Arena, loyalty, and hidden content. Runtime
+      // acquisition still checks the row's purchasable source; catalog presence is not a grant.
+      availability: "playable",
+      ...visualSource,
+      data: { definition },
+    });
+  }
+  for (const definition of visuals.unresolvedRows) {
+    rawEntries.push({
+      kind: "visual",
+      key: requiredName(definition, "Unresolved visual"),
+      availability: "unresolved",
+      ...visualSource,
+      data: { definition },
+    });
+  }
+
   rawEntries.sort((left, right) =>
     left.kind.localeCompare(right.kind) || left.key.localeCompare(right.key));
   const duplicateKeys = rawEntries.filter((entry, index) =>
@@ -303,6 +338,10 @@ export function buildGameCatalog(): BuiltGameCatalog {
     weaponPowerLevels: playableWeapons.reduce((total, entry) => total + countLevels(entry, "powerByLevel"), 0),
     rankPowerLevels: armyPower.rankLevels.length,
     weaponFeatureRows: armyPower.featureDpsCoefficients.length,
+    visuals: visuals.visuals.length + visuals.unresolvedRows.length,
+    playableVisuals: visuals.visuals.length,
+    unresolvedVisuals: visuals.unresolvedRows.length,
+    shopVisuals: visuals.visuals.filter((row) => row.purchasable === "shop").length,
     units: playableUnits.length + helperUnits.length + unresolvedUnits.length,
     playableUnits: playableUnits.length,
     helperUnits: helperUnits.length,
@@ -318,6 +357,7 @@ export function buildGameCatalog(): BuiltGameCatalog {
     { path: units.source, sha256: units.sourceSha256, schemaVersion: units.schemaVersion },
     { path: unitUpgrades.source, sha256: unitUpgrades.sourceSha256, schemaVersion: unitUpgrades.schemaVersion },
     { path: armyPower.source, sha256: armyPower.sourceSha256, schemaVersion: armyPower.schemaVersion },
+    { path: visuals.source, sha256: visuals.sourceSha256, schemaVersion: visuals.schemaVersion },
   ]) sourceMap.set(`${source.path}:${source.schemaVersion}`, source);
 
   return {

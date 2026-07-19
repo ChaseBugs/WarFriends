@@ -178,7 +178,13 @@ export const assignmentHandlers: Record<number, HandlerEntry> = {
     // Buffered item purchases need the authenticated profile level for the recovered
     // CANBEBOUGHT gate. Passing it from the loaded player prevents a request payload from
     // choosing its own unlock level while preserving one atomic buffer transaction.
-    const result = await processAssignmentBuffer(player!.id, id, requests, player!.player.level);
+    const result = await processAssignmentBuffer(
+      player!.id,
+      id,
+      requests,
+      player!.player.level,
+      player!.player.vipExpiration,
+    );
     return ok(DbAction.SendRequestBuffer, {
       BufferId: id,
       RequestsResults: result.requestsResults,

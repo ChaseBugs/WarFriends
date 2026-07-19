@@ -92,6 +92,14 @@ export interface PlayerProgressionState {
    */
   itemInventory?: ItemInventoryState;
   /**
+   * Authoritative player-customization ownership and equipped slots.
+   *
+   * The field names intentionally match CamosManager.DecalManagerData. Cosmetic purchases,
+   * temporary power-band expiry, notification flags, and all four equipped category slots
+   * therefore cross the wire without a second client-specific translation model.
+   */
+  visualInventory?: VisualInventoryState;
+  /**
    * Persistent War Arena run state consumed by WarArena.WarArenaData.
    *
    * The recovered client keeps this object in PlayerData and receives the same public shape
@@ -206,6 +214,28 @@ export interface LevelManagerDataState {
 export interface ItemInventoryState {
   inventoryData: PlayerInventoryDataState;
   levelManagerData: LevelManagerDataState;
+}
+
+/** CamosManager.SavedPlayerVisual from the recovered client. */
+export interface SavedVisualState {
+  bought: boolean;
+  showed: boolean;
+  expiresOn: number;
+  borrowed: boolean;
+  parts: number;
+  notificate: boolean;
+}
+
+/** CamosManager.SavedPlayerVisualSlot from the recovered client. */
+export interface SavedVisualSlotState {
+  equippedID: string;
+}
+
+/** CamosManager.DecalManagerData; numeric category keys serialize as JSON object keys. */
+export interface VisualInventoryState {
+  visuals: Record<string, SavedVisualState>;
+  slots: Record<string, SavedVisualSlotState>;
+  previousHeadDecal: string;
 }
 
 export interface AssignmentRecordState {

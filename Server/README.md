@@ -98,13 +98,14 @@ Working end-to-end (verified live):
   `PayOneDogTag`, and gold-validated `RefillDogtags` using the recovered 900-second/5-tag
   balancing and refill-price formula.
 - **Versioned client-data material database**: MongoDB collections `gameCatalogEntries` and
-  `gameCatalogReleases` persist the recovered 4.9.5 weapon, soldier/unit, rank, and upgrade data as
-  207 queryable records. Every playable weapon record joins its shop row to the full upgrade
-  table; every playable unit joins roster/deployment/purchase data to normal, special, and
-  elite level rows. Nine unresolved Pulse Rifles, three helper units, and 18 unresolved unit
-  rows are retained with explicit non-playable states instead of being discarded or silently
-  enabled. Per-entry SHA-256 hashes and a deterministic release hash make balancing changes
-  auditable. Startup idempotently writes all immutable revision entries before switching the
+  `gameCatalogReleases` persist the recovered 4.9.5 weapon, soldier/unit, rank, power, and player
+  visual data as 354 queryable records. Every playable weapon record joins its shop row to the full
+  upgrade table; every playable unit joins roster/deployment/purchase data to normal, special, and
+  elite level rows; every visual joins its price/effect row to a serialized client asset. Nine
+  unresolved Pulse Rifles, three helper units, 18 unresolved unit rows, and the assetless
+  `HEAD_MASK_ROCKET` visual are retained with explicit non-playable states instead of being
+  discarded or silently enabled. Per-entry SHA-256 hashes and a deterministic release hash make
+  balancing changes auditable. Startup idempotently writes all immutable revision entries before switching the
   current 4.9.5 release pointer, so readers cannot observe a partial synchronization. Run
   `npm run sync:catalog` to publish explicitly; normal server startup performs the same sync.
 - **Authoritative Army Power**: `scripts/Extract-ArmyPowerCatalog.mjs` reproduces 5,865 normal
@@ -116,6 +117,15 @@ Working end-to-end (verified live):
   rental and black-market acquisition remains closed, while all 11 category coefficient rows are
   retained as reference data for that future flow. Run `npm run verify:army-power` to compare the
   generated catalog with the recovered scene.
+- **Player visuals and decals**: `scripts/Extract-VisualCatalog.mjs` joins all four serialized
+  customization categories to the 4.9.5 PlayerVisuals sheet, producing 146 playable and one
+  unresolved row. `DecalManagerData` is server-owned and boot-safe; buffered `BuyDecal`,
+  `EquipDecal`, `DecalWasShown`, and `VisualWasShown` validate source, price, category, VIP,
+  ownership, expiry, and shop eligibility. Gold/WarBucks debit, permanent or timed ownership,
+  four-slot equipment, notification state, rollback data, and `BufferId` replay protection are
+  atomic. Event/Arena/loyalty/assignment/value-pack grants, parts, rentals, and unsupported
+  discounts remain fail-closed. Run `npm run verify:visual-catalog` to compare the artifact with
+  MainScene.
 - **Weapon inventory foundation**: private and public player snapshots now serialize the
   exact recovered `InventoryData.slots` and `LevelManagerData.savedWeapons` structures with
   the 4.9.5 starter loadout. Stock buffered `BuyWeapon`/`EquipWeapon` supports all 84
@@ -218,9 +228,9 @@ allowlist of analytics/impression actions is safely ignored.
 - **Squad extensions** — card pool and squad events/wars are not implemented. Chat unread
   state is persistent, but actual channel delivery still requires Photon Chat repointing or
   a compatible replacement transport.
-- **Item economy expansion** — unit Elite upgrades and complete normal-loadout ArmyPower are now
-  source-authoritative. Add decals, cards, packs, black-market features, rentals, and VIP. Normal
-  purchase is authoritative for 23
+- **Item economy expansion** — unit Elite upgrades, normal shop visuals, and complete normal-
+  loadout ArmyPower are now source-authoritative. Add cards, packs, black-market features, rentals,
+  VIP purchasing, and non-shop visual reward delivery. Normal unit purchase is authoritative for 23
   non-tutorial roster units, and the tutorial unit is persisted through its first equip event;
   three helper rows and 18 ArmyUpgrades rows without LevelManager objects remain closed. All 84 resolvable
   shop weapons support exact Gold or WarBucks purchase/equip plus server-owned upgrade

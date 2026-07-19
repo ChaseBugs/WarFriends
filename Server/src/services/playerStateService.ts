@@ -1,6 +1,7 @@
 import type { PlayerDocument, PlayerProgressionState } from "../db";
 import { config } from "../config";
 import { createInitialItemInventory } from "./itemInventoryService";
+import { createInitialVisualInventory } from "./visualInventoryService";
 import { warArenaConfiguration, warArenaWireData } from "./warArenaContract";
 
 /** Unix seconds are used throughout the recovered Beanstalk protocol. */
@@ -37,6 +38,7 @@ export function createInitialProgression(
     dogTagRefillSeconds: safeRefillSeconds,
     vipStart: 0,
     itemInventory: createInitialItemInventory(),
+    visualInventory: createInitialVisualInventory(),
     starterAssignments: {
       deadline: now + Math.max(0, Math.floor(config.starterAssignmentDurationSeconds)),
       assignments: {},
@@ -56,7 +58,11 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
     // Accounts written before typed inventory recovery have no server-owned item state.
     // Materialize the verified 4.9.5 starter loadout at the read boundary; the next buffered
     // inventory mutation persists it together with the currency transaction.
-    return state.itemInventory ? state : { ...state, itemInventory: createInitialItemInventory() };
+    return {
+      ...state,
+      itemInventory: state.itemInventory ?? createInitialItemInventory(),
+      visualInventory: state.visualInventory ?? createInitialVisualInventory(),
+    };
   }
 
   // An early unreleased reconstruction stored dogTags as a count. Convert that shape at the
@@ -73,6 +79,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
     dogTagMax: cap * refillSeconds,
     dogTagRefillSeconds: refillSeconds,
     itemInventory: state.itemInventory ?? createInitialItemInventory(),
+    visualInventory: state.visualInventory ?? createInitialVisualInventory(),
   };
 }
 
@@ -110,7 +117,8 @@ function addSerializedObject(target: PlayerDataMap, typeName: string, value: unk
  */
 export function buildDatabasePlayer(document: PlayerDocument): Record<string, unknown> {
   const dto = document.player;
-  const itemInventory = progressionForPlayer(document).itemInventory;
+  const progression = progressionForPlayer(document);
+  const itemInventory = progression.itemInventory;
   const wire: Record<string, unknown> = {
     Id: { S: dto.id },
     Name: { S: dto.accountName },
@@ -122,7 +130,10 @@ export function buildDatabasePlayer(document: PlayerDocument): Record<string, un
     SendLogs: numberAttribute(dto.sendLogsValue),
     DeviceToken: { S: dto.deviceToken },
     LastAction: numberAttribute(dto.lastAction),
-    PlayerVisuals: stringAttribute(dto.playerVisuals),
+    // DatabasePlayer expects exactly the four equipped CamosManager slots, not the full
+    // DecalManagerData ownership dictionary. Derive them from progression so opponent,
+    // challenge, and league snapshots reflect the last authoritative EquipDecal mutation.
+    PlayerVisuals: stringAttribute(progression.visualInventory?.slots ?? dto.playerVisuals),
     ArmyPower: numberAttribute(dto.armyPower),
     Status: numberAttribute(dto.status),
     BeginnersLeague: numberAttribute(dto.beginnersLeague),
@@ -200,6 +211,7 @@ export function buildPlayerData(player: PlayerDocument): PlayerDataMap {
   // copied onto the wire.
   addSerializedObject(data, "InventoryData", state.itemInventory?.inventoryData ?? dto.inventoryData);
   addSerializedObject(data, "LevelManagerData", state.itemInventory?.levelManagerData ?? dto.levelManagerData);
+  addSerializedObject(data, "DecalManagerData", state.visualInventory);
   addSerializedObject(data, "StatisticsData", dto.statisticsData);
 
   if (state.assignments) {
