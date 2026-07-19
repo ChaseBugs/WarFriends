@@ -10,6 +10,8 @@
                         "behaviourType":  "SoldierBehaviourAssaulter",
                         "upgradeType":  "UpgradeSlotsAssaulter",
                         "tutorialUnit":  true,
+                        "deploymentType":  0,
+                        "isSoldier":  true,
                         "unlockLevel":  3,
                         "canBuyLevelIndex":  0,
                         "warBucks":  1500,
@@ -17,8 +19,17 @@
                         "deliverySeconds":  0,
                         "startingTier":  1,
                         "startingLevel":  0,
+                        "startingSpecial":  201,
+                        "startingElite":  242,
                         "unitType":  1,
-                        "clientId":  0
+                        "clientId":  0,
+                        "unlockTierLevels":  [
+                                                 9,
+                                                 15,
+                                                 21,
+                                                 29,
+                                                 37
+                                             ]
                     },
                     {
                         "name":  "Google2u.DBUpgradeSlotsShotgunner",
@@ -27,6 +38,8 @@
                         "behaviourType":  "SoldierBehaviourShotgunner",
                         "upgradeType":  "UpgradeSlotsShotgunner",
                         "tutorialUnit":  false,
+                        "deploymentType":  3,
+                        "isSoldier":  true,
                         "unlockLevel":  1,
                         "canBuyLevelIndex":  0,
                         "warBucks":  0,
@@ -34,8 +47,17 @@
                         "deliverySeconds":  0,
                         "startingTier":  1,
                         "startingLevel":  0,
+                        "startingSpecial":  201,
+                        "startingElite":  242,
                         "unitType":  8,
-                        "clientId":  1
+                        "clientId":  1,
+                        "unlockTierLevels":  [
+                                                 11,
+                                                 19,
+                                                 27,
+                                                 31,
+                                                 39
+                                             ]
                     },
                     {
                         "name":  "Google2u.DBUpgradeSlotsSniper",
@@ -44,6 +66,8 @@
                         "behaviourType":  "SoldierBehaviourSniper",
                         "upgradeType":  "UpgradeSlotsSniper",
                         "tutorialUnit":  false,
+                        "deploymentType":  2,
+                        "isSoldier":  true,
                         "unlockLevel":  4,
                         "canBuyLevelIndex":  1,
                         "warBucks":  19999,
@@ -51,8 +75,17 @@
                         "deliverySeconds":  0,
                         "startingTier":  2,
                         "startingLevel":  5,
+                        "startingSpecial":  196,
+                        "startingElite":  232,
                         "unitType":  4,
-                        "clientId":  2
+                        "clientId":  2,
+                        "unlockTierLevels":  [
+                                                 4,
+                                                 13,
+                                                 25,
+                                                 33,
+                                                 43
+                                             ]
                     },
                     {
                         "name":  "Google2u.DBUpgradeSlotsSwat",
@@ -61,6 +94,8 @@
                         "behaviourType":  "SoldierBehaviourSwat",
                         "upgradeType":  "UpgradeSlotsSwat",
                         "tutorialUnit":  false,
+                        "deploymentType":  3,
+                        "isSoldier":  true,
                         "unlockLevel":  18,
                         "canBuyLevelIndex":  15,
                         "warBucks":  249999,
@@ -68,8 +103,17 @@
                         "deliverySeconds":  0,
                         "startingTier":  3,
                         "startingLevel":  15,
+                        "startingSpecial":  186,
+                        "startingElite":  217,
                         "unitType":  8,
-                        "clientId":  3
+                        "clientId":  3,
+                        "unlockTierLevels":  [
+                                                 0,
+                                                 18,
+                                                 27,
+                                                 31,
+                                                 39
+                                             ]
                     },
                     {
                         "name":  "Google2u.DBUpgradeSlotsBazooka",
@@ -78,6 +122,8 @@
                         "behaviourType":  "SoldierBehaviourBazooka",
                         "upgradeType":  "UpgradeSlotsBazooka",
                         "tutorialUnit":  false,
+                        "deploymentType":  1,
+                        "isSoldier":  true,
                         "unlockLevel":  6,
                         "canBuyLevelIndex":  3,
                         "warBucks":  25999,
@@ -85,8 +131,17 @@
                         "deliverySeconds":  0,
                         "startingTier":  2,
                         "startingLevel":  5,
+                        "startingSpecial":  196,
+                        "startingElite":  232,
                         "unitType":  2,
-                        "clientId":  4
+                        "clientId":  4,
+                        "unlockTierLevels":  [
+                                                 6,
+                                                 17,
+                                                 23,
+                                                 35,
+                                                 41
+                                             ]
                     },
                     {
                         "name":  "Google2u.DBUpgradeSlotsParachuter",
@@ -95,6 +150,8 @@
                         "behaviourType":  "SoldierBehaviourParachuter",
                         "upgradeType":  "UpgradeSlotsParachuter",
                         "tutorialUnit":  false,
+                        "deploymentType":  3,
+                        "isSoldier":  true,
                         "unlockLevel":  10,
                         "canBuyLevelIndex":  7,
                         "warBucks":  87999,
@@ -102,8 +159,17 @@
                         "deliverySeconds":  0,
                         "startingTier":  2,
                         "startingLevel":  5,
+                        "startingSpecial":  196,
+                        "startingElite":  232,
                         "unitType":  8,
-                        "clientId":  5
+                        "clientId":  5,
+                        "unlockTierLevels":  [
+                                                 10,
+                                                 19,
+                                                 27,
+                                                 31,
+                                                 39
+                                             ]
                     },
                     {
                         "name":  "Google2u.DBUpgradeSlotsGrennader",
@@ -112,6 +178,8 @@
                         "behaviourType":  "SoldierBehaviourGrennader",
                         "upgradeType":  "UpgradeSlotsGrennader",
                         "tutorialUnit":  false,
+                        "deploymentType":  1,
+                        "isSoldier":  true,
                         "unlockLevel":  1,
                         "canBuyLevelIndex":  0,
                         "warBucks":  0,
@@ -119,8 +187,17 @@
                         "deliverySeconds":  0,
                         "startingTier":  1,
                         "startingLevel":  0,
+                        "startingSpecial":  201,
+                        "startingElite":  242,
                         "unitType":  2,
-                        "clientId":  6
+                        "clientId":  6,
+                        "unlockTierLevels":  [
+                                                 7,
+                                                 17,
+                                                 23,
+                                                 35,
+                                                 41
+                                             ]
                     },
                     {
                         "name":  "Google2u.DBUpgradeSlotsMinigunner",
@@ -129,6 +206,8 @@
                         "behaviourType":  "SoldierBehaviourMinigunner",
                         "upgradeType":  "UpgradeSlotsMinigunner",
                         "tutorialUnit":  false,
+                        "deploymentType":  2,
+                        "isSoldier":  true,
                         "unlockLevel":  32,
                         "canBuyLevelIndex":  29,
                         "warBucks":  0,
@@ -136,8 +215,17 @@
                         "deliverySeconds":  0,
                         "startingTier":  5,
                         "startingLevel":  50,
+                        "startingSpecial":  151,
+                        "startingElite":  172,
                         "unitType":  4,
-                        "clientId":  7
+                        "clientId":  7,
+                        "unlockTierLevels":  [
+                                                 0,
+                                                 0,
+                                                 0,
+                                                 32,
+                                                 43
+                                             ]
                     },
                     {
                         "name":  "Google2u.DBUpgradeSlotsEngineer",
@@ -146,6 +234,8 @@
                         "behaviourType":  "SoldierBehaviourEngineer",
                         "upgradeType":  "UpgradeSlotsEngineer",
                         "tutorialUnit":  false,
+                        "deploymentType":  0,
+                        "isSoldier":  true,
                         "unlockLevel":  14,
                         "canBuyLevelIndex":  11,
                         "warBucks":  169999,
@@ -153,8 +243,17 @@
                         "deliverySeconds":  0,
                         "startingTier":  3,
                         "startingLevel":  15,
+                        "startingSpecial":  186,
+                        "startingElite":  217,
                         "unitType":  1,
-                        "clientId":  8
+                        "clientId":  8,
+                        "unlockTierLevels":  [
+                                                 0,
+                                                 14,
+                                                 21,
+                                                 29,
+                                                 37
+                                             ]
                     },
                     {
                         "name":  "Google2u.DBUpgradeSlotsMachineGunner",
@@ -163,6 +262,8 @@
                         "behaviourType":  "SoldierBehaviourMachineGunner",
                         "upgradeType":  "UpgradeSlotsMachineGunner",
                         "tutorialUnit":  false,
+                        "deploymentType":  2,
+                        "isSoldier":  true,
                         "unlockLevel":  1,
                         "canBuyLevelIndex":  0,
                         "warBucks":  0,
@@ -170,8 +271,17 @@
                         "deliverySeconds":  0,
                         "startingTier":  1,
                         "startingLevel":  0,
+                        "startingSpecial":  201,
+                        "startingElite":  242,
                         "unitType":  4,
-                        "clientId":  9
+                        "clientId":  9,
+                        "unlockTierLevels":  [
+                                                 5,
+                                                 13,
+                                                 25,
+                                                 33,
+                                                 43
+                                             ]
                     },
                     {
                         "name":  "Google2u.DBUpgradeSlotsDrone",
@@ -180,6 +290,8 @@
                         "behaviourType":  "DroneBehaviour",
                         "upgradeType":  "UpgradeSlotsDrone",
                         "tutorialUnit":  false,
+                        "deploymentType":  0,
+                        "isSoldier":  false,
                         "unlockLevel":  8,
                         "canBuyLevelIndex":  5,
                         "warBucks":  0,
@@ -187,8 +299,17 @@
                         "deliverySeconds":  0,
                         "startingTier":  2,
                         "startingLevel":  5,
+                        "startingSpecial":  196,
+                        "startingElite":  232,
                         "unitType":  17,
-                        "clientId":  10
+                        "clientId":  10,
+                        "unlockTierLevels":  [
+                                                 8,
+                                                 15,
+                                                 21,
+                                                 29,
+                                                 37
+                                             ]
                     },
                     {
                         "name":  "Google2u.DBUpgradeSlotsHelicopter",
@@ -197,6 +318,8 @@
                         "behaviourType":  "HelicopterBehaviour",
                         "upgradeType":  "UpgradeSlotsHelicopter",
                         "tutorialUnit":  false,
+                        "deploymentType":  0,
+                        "isSoldier":  false,
                         "unlockLevel":  20,
                         "canBuyLevelIndex":  17,
                         "warBucks":  0,
@@ -204,8 +327,17 @@
                         "deliverySeconds":  0,
                         "startingTier":  4,
                         "startingLevel":  30,
+                        "startingSpecial":  171,
+                        "startingElite":  197,
                         "unitType":  17,
-                        "clientId":  11
+                        "clientId":  11,
+                        "unlockTierLevels":  [
+                                                 0,
+                                                 0,
+                                                 20,
+                                                 29,
+                                                 37
+                                             ]
                     },
                     {
                         "name":  "Google2u.DBUpgradeSlotsTank",
@@ -214,6 +346,8 @@
                         "behaviourType":  "TankBehaviour",
                         "upgradeType":  "UpgradeSlotsTank",
                         "tutorialUnit":  false,
+                        "deploymentType":  1,
+                        "isSoldier":  false,
                         "unlockLevel":  34,
                         "canBuyLevelIndex":  31,
                         "warBucks":  0,
@@ -221,8 +355,17 @@
                         "deliverySeconds":  0,
                         "startingTier":  5,
                         "startingLevel":  50,
+                        "startingSpecial":  151,
+                        "startingElite":  172,
                         "unitType":  18,
-                        "clientId":  12
+                        "clientId":  12,
+                        "unlockTierLevels":  [
+                                                 0,
+                                                 0,
+                                                 0,
+                                                 34,
+                                                 41
+                                             ]
                     },
                     {
                         "name":  "Google2u.DBUpgradeSlotsTransporter",
@@ -231,6 +374,8 @@
                         "behaviourType":  "CarTransporterBehaviour",
                         "upgradeType":  "UpgradeSlotsCarTransporter",
                         "tutorialUnit":  false,
+                        "deploymentType":  2,
+                        "isSoldier":  false,
                         "unlockLevel":  24,
                         "canBuyLevelIndex":  21,
                         "warBucks":  0,
@@ -238,8 +383,17 @@
                         "deliverySeconds":  0,
                         "startingTier":  4,
                         "startingLevel":  30,
+                        "startingSpecial":  171,
+                        "startingElite":  197,
                         "unitType":  20,
-                        "clientId":  13
+                        "clientId":  13,
+                        "unlockTierLevels":  [
+                                                 0,
+                                                 0,
+                                                 24,
+                                                 33,
+                                                 43
+                                             ]
                     },
                     {
                         "name":  "Google2u.DBUpgradeSlotsSciFi",
@@ -248,6 +402,8 @@
                         "behaviourType":  "SoldierBehaviourSciFi",
                         "upgradeType":  "UpgradeSlotsSciFi",
                         "tutorialUnit":  false,
+                        "deploymentType":  1,
+                        "isSoldier":  true,
                         "unlockLevel":  22,
                         "canBuyLevelIndex":  19,
                         "warBucks":  719999,
@@ -255,8 +411,17 @@
                         "deliverySeconds":  0,
                         "startingTier":  4,
                         "startingLevel":  30,
+                        "startingSpecial":  171,
+                        "startingElite":  197,
                         "unitType":  2,
-                        "clientId":  14
+                        "clientId":  14,
+                        "unlockTierLevels":  [
+                                                 0,
+                                                 0,
+                                                 22,
+                                                 35,
+                                                 41
+                                             ]
                     },
                     {
                         "name":  "Google2u.DBUpgradeSlotsCarBuggy",
@@ -265,6 +430,8 @@
                         "behaviourType":  "CarBuggyBehaviour",
                         "upgradeType":  "UpgradeSlotsCarBuggy",
                         "tutorialUnit":  false,
+                        "deploymentType":  1,
+                        "isSoldier":  false,
                         "unlockLevel":  16,
                         "canBuyLevelIndex":  13,
                         "warBucks":  0,
@@ -272,8 +439,17 @@
                         "deliverySeconds":  0,
                         "startingTier":  3,
                         "startingLevel":  15,
+                        "startingSpecial":  186,
+                        "startingElite":  217,
                         "unitType":  18,
-                        "clientId":  15
+                        "clientId":  15,
+                        "unlockTierLevels":  [
+                                                 0,
+                                                 16,
+                                                 23,
+                                                 35,
+                                                 41
+                                             ]
                     },
                     {
                         "name":  "Google2u.DBUpgradeSlotsAssaultHeli",
@@ -282,6 +458,8 @@
                         "behaviourType":  "AssaultHelicopterBehaviour",
                         "upgradeType":  "UpgradeSlotsAssaultHelicopter",
                         "tutorialUnit":  false,
+                        "deploymentType":  2,
+                        "isSoldier":  false,
                         "unlockLevel":  12,
                         "canBuyLevelIndex":  9,
                         "warBucks":  0,
@@ -289,8 +467,17 @@
                         "deliverySeconds":  0,
                         "startingTier":  3,
                         "startingLevel":  15,
+                        "startingSpecial":  186,
+                        "startingElite":  217,
                         "unitType":  20,
-                        "clientId":  16
+                        "clientId":  16,
+                        "unlockTierLevels":  [
+                                                 0,
+                                                 12,
+                                                 25,
+                                                 33,
+                                                 43
+                                             ]
                     },
                     {
                         "name":  "Google2u.DBUpgradeSlotsCar",
@@ -299,6 +486,8 @@
                         "behaviourType":  "CarBehaviour",
                         "upgradeType":  "UpgradeSlotsCar",
                         "tutorialUnit":  false,
+                        "deploymentType":  0,
+                        "isSoldier":  false,
                         "unlockLevel":  28,
                         "canBuyLevelIndex":  25,
                         "warBucks":  0,
@@ -306,8 +495,17 @@
                         "deliverySeconds":  0,
                         "startingTier":  5,
                         "startingLevel":  50,
+                        "startingSpecial":  151,
+                        "startingElite":  172,
                         "unitType":  17,
-                        "clientId":  17
+                        "clientId":  17,
+                        "unlockTierLevels":  [
+                                                 0,
+                                                 0,
+                                                 0,
+                                                 28,
+                                                 37
+                                             ]
                     },
                     {
                         "name":  "Google2u.DBUpgradeSlotsFlamethrower",
@@ -316,6 +514,8 @@
                         "behaviourType":  "SoldierBehaviourFlamethrower",
                         "upgradeType":  "UpgradeSlotsFlamethrower",
                         "tutorialUnit":  false,
+                        "deploymentType":  3,
+                        "isSoldier":  true,
                         "unlockLevel":  30,
                         "canBuyLevelIndex":  27,
                         "warBucks":  0,
@@ -323,8 +523,17 @@
                         "deliverySeconds":  0,
                         "startingTier":  5,
                         "startingLevel":  50,
+                        "startingSpecial":  151,
+                        "startingElite":  172,
                         "unitType":  8,
-                        "clientId":  18
+                        "clientId":  18,
+                        "unlockTierLevels":  [
+                                                 0,
+                                                 0,
+                                                 0,
+                                                 30,
+                                                 39
+                                             ]
                     },
                     {
                         "name":  "Google2u.DBUpgradeSlotsCommando",
@@ -333,6 +542,8 @@
                         "behaviourType":  "SoldierBehaviourCommando",
                         "upgradeType":  "UpgradeSlotsCommando",
                         "tutorialUnit":  false,
+                        "deploymentType":  3,
+                        "isSoldier":  true,
                         "unlockLevel":  26,
                         "canBuyLevelIndex":  23,
                         "warBucks":  0,
@@ -340,8 +551,17 @@
                         "deliverySeconds":  0,
                         "startingTier":  4,
                         "startingLevel":  30,
+                        "startingSpecial":  171,
+                        "startingElite":  197,
                         "unitType":  8,
-                        "clientId":  19
+                        "clientId":  19,
+                        "unlockTierLevels":  [
+                                                 0,
+                                                 0,
+                                                 26,
+                                                 31,
+                                                 39
+                                             ]
                     },
                     {
                         "name":  "Google2u.DBUpgradeSlotsGunslinger",
@@ -350,6 +570,8 @@
                         "behaviourType":  "SoldierBehaviourGunslinger",
                         "upgradeType":  "UpgradeSlotsGunslicer",
                         "tutorialUnit":  false,
+                        "deploymentType":  0,
+                        "isSoldier":  true,
                         "unlockLevel":  36,
                         "canBuyLevelIndex":  32,
                         "warBucks":  0,
@@ -357,8 +579,17 @@
                         "deliverySeconds":  0,
                         "startingTier":  6,
                         "startingLevel":  75,
+                        "startingSpecial":  126,
+                        "startingElite":  142,
                         "unitType":  1,
-                        "clientId":  20
+                        "clientId":  20,
+                        "unlockTierLevels":  [
+                                                 0,
+                                                 0,
+                                                 0,
+                                                 0,
+                                                 36
+                                             ]
                     },
                     {
                         "name":  "Google2u.DBUpgradeSlotsMortar",
@@ -367,6 +598,8 @@
                         "behaviourType":  "SoldierBehaviourMortar",
                         "upgradeType":  "UpgradeSlotsMortar",
                         "tutorialUnit":  false,
+                        "deploymentType":  1,
+                        "isSoldier":  true,
                         "unlockLevel":  40,
                         "canBuyLevelIndex":  36,
                         "warBucks":  0,
@@ -374,8 +607,17 @@
                         "deliverySeconds":  0,
                         "startingTier":  6,
                         "startingLevel":  75,
+                        "startingSpecial":  126,
+                        "startingElite":  142,
                         "unitType":  2,
-                        "clientId":  21
+                        "clientId":  21,
+                        "unlockTierLevels":  [
+                                                 0,
+                                                 0,
+                                                 0,
+                                                 0,
+                                                 40
+                                             ]
                     },
                     {
                         "name":  "Google2u.DBUpgradeSlotsWarper",
@@ -384,6 +626,8 @@
                         "behaviourType":  "SoldierBehaviourWarper",
                         "upgradeType":  "UpgradeSlotsWarper",
                         "tutorialUnit":  false,
+                        "deploymentType":  3,
+                        "isSoldier":  true,
                         "unlockLevel":  38,
                         "canBuyLevelIndex":  34,
                         "warBucks":  0,
@@ -391,8 +635,17 @@
                         "deliverySeconds":  0,
                         "startingTier":  6,
                         "startingLevel":  75,
+                        "startingSpecial":  126,
+                        "startingElite":  142,
                         "unitType":  8,
-                        "clientId":  22
+                        "clientId":  22,
+                        "unlockTierLevels":  [
+                                                 0,
+                                                 0,
+                                                 0,
+                                                 0,
+                                                 38
+                                             ]
                     },
                     {
                         "name":  "Google2u.DBUpgradeSlotsMech",
@@ -401,6 +654,8 @@
                         "behaviourType":  "MechBehaviour",
                         "upgradeType":  "UpgradeSlotsMech",
                         "tutorialUnit":  false,
+                        "deploymentType":  2,
+                        "isSoldier":  false,
                         "unlockLevel":  42,
                         "canBuyLevelIndex":  38,
                         "warBucks":  0,
@@ -408,8 +663,17 @@
                         "deliverySeconds":  0,
                         "startingTier":  6,
                         "startingLevel":  75,
+                        "startingSpecial":  126,
+                        "startingElite":  142,
                         "unitType":  20,
-                        "clientId":  23
+                        "clientId":  23,
+                        "unlockTierLevels":  [
+                                                 0,
+                                                 0,
+                                                 0,
+                                                 0,
+                                                 42
+                                             ]
                     },
                     {
                         "name":  "Google2u.DBUpgradeSlotsHeavyTurret",
@@ -418,6 +682,8 @@
                         "behaviourType":  "HeavyTurretBehaviour",
                         "upgradeType":  "UpgradeSlotsTurret",
                         "tutorialUnit":  false,
+                        "deploymentType":  0,
+                        "isSoldier":  false,
                         "unlockLevel":  0,
                         "canBuyLevelIndex":  0,
                         "warBucks":  0,
@@ -425,8 +691,17 @@
                         "deliverySeconds":  0,
                         "startingTier":  0,
                         "startingLevel":  0,
+                        "startingSpecial":  0,
+                        "startingElite":  -1,
                         "unitType":  1,
-                        "clientId":  -1
+                        "clientId":  -1,
+                        "unlockTierLevels":  [
+                                                 -1,
+                                                 -1,
+                                                 -1,
+                                                 -1,
+                                                 -1
+                                             ]
                     },
                     {
                         "name":  "Google2u.DBUpgradeSlotsTurret",
@@ -435,6 +710,8 @@
                         "behaviourType":  "TurretBehaviour",
                         "upgradeType":  "UpgradeSlotsTurret",
                         "tutorialUnit":  false,
+                        "deploymentType":  0,
+                        "isSoldier":  false,
                         "unlockLevel":  0,
                         "canBuyLevelIndex":  0,
                         "warBucks":  0,
@@ -442,8 +719,17 @@
                         "deliverySeconds":  0,
                         "startingTier":  0,
                         "startingLevel":  15,
+                        "startingSpecial":  0,
+                        "startingElite":  -1,
                         "unitType":  1,
-                        "clientId":  -1
+                        "clientId":  -1,
+                        "unlockTierLevels":  [
+                                                 -1,
+                                                 -1,
+                                                 -1,
+                                                 -1,
+                                                 -1
+                                             ]
                     },
                     {
                         "name":  "Google2u.DBUpgradeSlotsRockyTurret",
@@ -452,6 +738,8 @@
                         "behaviourType":  "TurretRocketsBehaviour",
                         "upgradeType":  "UpgradeSlotsTurret",
                         "tutorialUnit":  false,
+                        "deploymentType":  0,
+                        "isSoldier":  false,
                         "unlockLevel":  0,
                         "canBuyLevelIndex":  0,
                         "warBucks":  0,
@@ -459,8 +747,17 @@
                         "deliverySeconds":  0,
                         "startingTier":  0,
                         "startingLevel":  0,
+                        "startingSpecial":  0,
+                        "startingElite":  -1,
                         "unitType":  1,
-                        "clientId":  -1
+                        "clientId":  -1,
+                        "unlockTierLevels":  [
+                                                 -1,
+                                                 -1,
+                                                 -1,
+                                                 -1,
+                                                 -1
+                                             ]
                     }
                 ],
     "unresolvedRows":  [
@@ -473,8 +770,17 @@
                                "deliverySeconds":  0,
                                "startingTier":  8,
                                "startingLevel":  125,
+                               "startingSpecial":  76,
+                               "startingElite":  82,
                                "unitType":  1,
-                               "clientId":  32
+                               "clientId":  32,
+                               "unlockTierLevels":  [
+                                                        0,
+                                                        0,
+                                                        0,
+                                                        34,
+                                                        41
+                                                    ]
                            },
                            {
                                "name":  "Google2u.DBUpgradeSlotsBreach",
@@ -485,8 +791,17 @@
                                "deliverySeconds":  0,
                                "startingTier":  8,
                                "startingLevel":  125,
+                               "startingSpecial":  76,
+                               "startingElite":  82,
                                "unitType":  2,
-                               "clientId":  35
+                               "clientId":  35,
+                               "unlockTierLevels":  [
+                                                        0,
+                                                        0,
+                                                        0,
+                                                        34,
+                                                        41
+                                                    ]
                            },
                            {
                                "name":  "Google2u.DBUpgradeSlotsBunker",
@@ -497,8 +812,17 @@
                                "deliverySeconds":  0,
                                "startingTier":  7,
                                "startingLevel":  100,
+                               "startingSpecial":  101,
+                               "startingElite":  112,
                                "unitType":  17,
-                               "clientId":  36
+                               "clientId":  36,
+                               "unlockTierLevels":  [
+                                                        0,
+                                                        0,
+                                                        0,
+                                                        0,
+                                                        0
+                                                    ]
                            },
                            {
                                "name":  "Google2u.DBUpgradeSlotsChemical",
@@ -509,8 +833,17 @@
                                "deliverySeconds":  0,
                                "startingTier":  5,
                                "startingLevel":  50,
+                               "startingSpecial":  151,
+                               "startingElite":  172,
                                "unitType":  8,
-                               "clientId":  29
+                               "clientId":  29,
+                               "unlockTierLevels":  [
+                                                        0,
+                                                        0,
+                                                        0,
+                                                        30,
+                                                        39
+                                                    ]
                            },
                            {
                                "name":  "Google2u.DBUpgradeSlotsCrossbowSniper",
@@ -521,8 +854,17 @@
                                "deliverySeconds":  0,
                                "startingTier":  2,
                                "startingLevel":  5,
+                               "startingSpecial":  196,
+                               "startingElite":  232,
                                "unitType":  4,
-                               "clientId":  30
+                               "clientId":  30,
+                               "unlockTierLevels":  [
+                                                        4,
+                                                        13,
+                                                        25,
+                                                        33,
+                                                        43
+                                                    ]
                            },
                            {
                                "name":  "Google2u.DBUpgradeSlotsExoMech",
@@ -533,8 +875,17 @@
                                "deliverySeconds":  0,
                                "startingTier":  7,
                                "startingLevel":  100,
+                               "startingSpecial":  101,
+                               "startingElite":  112,
                                "unitType":  18,
-                               "clientId":  24
+                               "clientId":  24,
+                               "unlockTierLevels":  [
+                                                        0,
+                                                        0,
+                                                        0,
+                                                        0,
+                                                        0
+                                                    ]
                            },
                            {
                                "name":  "Google2u.DBUpgradeSlotsExoPilot",
@@ -545,8 +896,17 @@
                                "deliverySeconds":  0,
                                "startingTier":  7,
                                "startingLevel":  100,
+                               "startingSpecial":  101,
+                               "startingElite":  112,
                                "unitType":  4,
-                               "clientId":  -1
+                               "clientId":  -1,
+                               "unlockTierLevels":  [
+                                                        0,
+                                                        0,
+                                                        0,
+                                                        0,
+                                                        0
+                                                    ]
                            },
                            {
                                "name":  "Google2u.DBUpgradeSlotsHavoc",
@@ -557,8 +917,17 @@
                                "deliverySeconds":  0,
                                "startingTier":  8,
                                "startingLevel":  125,
+                               "startingSpecial":  76,
+                               "startingElite":  82,
                                "unitType":  8,
-                               "clientId":  33
+                               "clientId":  33,
+                               "unlockTierLevels":  [
+                                                        0,
+                                                        0,
+                                                        0,
+                                                        34,
+                                                        41
+                                                    ]
                            },
                            {
                                "name":  "Google2u.DBUpgradeSlotsInstinct",
@@ -569,8 +938,17 @@
                                "deliverySeconds":  0,
                                "startingTier":  8,
                                "startingLevel":  125,
+                               "startingSpecial":  76,
+                               "startingElite":  82,
                                "unitType":  4,
-                               "clientId":  34
+                               "clientId":  34,
+                               "unlockTierLevels":  [
+                                                        0,
+                                                        0,
+                                                        0,
+                                                        34,
+                                                        41
+                                                    ]
                            },
                            {
                                "name":  "Google2u.DBUpgradeSlotsOrb",
@@ -581,8 +959,17 @@
                                "deliverySeconds":  0,
                                "startingTier":  0,
                                "startingLevel":  150,
+                               "startingSpecial":  0,
+                               "startingElite":  -1,
                                "unitType":  2,
-                               "clientId":  -1
+                               "clientId":  -1,
+                               "unlockTierLevels":  [
+                                                        -1,
+                                                        -1,
+                                                        -1,
+                                                        -1,
+                                                        -1
+                                                    ]
                            },
                            {
                                "name":  "Google2u.DBUpgradeSlotsOverseer",
@@ -593,8 +980,17 @@
                                "deliverySeconds":  0,
                                "startingTier":  9,
                                "startingLevel":  150,
+                               "startingSpecial":  51,
+                               "startingElite":  57,
                                "unitType":  2,
-                               "clientId":  39
+                               "clientId":  39,
+                               "unlockTierLevels":  [
+                                                        0,
+                                                        0,
+                                                        0,
+                                                        34,
+                                                        41
+                                                    ]
                            },
                            {
                                "name":  "Google2u.DBUpgradeSlotsRenegade",
@@ -605,8 +1001,17 @@
                                "deliverySeconds":  0,
                                "startingTier":  7,
                                "startingLevel":  100,
+                               "startingSpecial":  101,
+                               "startingElite":  112,
                                "unitType":  1,
-                               "clientId":  26
+                               "clientId":  26,
+                               "unlockTierLevels":  [
+                                                        0,
+                                                        0,
+                                                        0,
+                                                        0,
+                                                        0
+                                                    ]
                            },
                            {
                                "name":  "Google2u.DBUpgradeSlotsRiko",
@@ -617,8 +1022,17 @@
                                "deliverySeconds":  0,
                                "startingTier":  9,
                                "startingLevel":  150,
+                               "startingSpecial":  51,
+                               "startingElite":  57,
                                "unitType":  1,
-                               "clientId":  37
+                               "clientId":  37,
+                               "unlockTierLevels":  [
+                                                        0,
+                                                        0,
+                                                        0,
+                                                        0,
+                                                        0
+                                                    ]
                            },
                            {
                                "name":  "Google2u.DBUpgradeSlotsSilverstrike",
@@ -629,8 +1043,17 @@
                                "deliverySeconds":  0,
                                "startingTier":  7,
                                "startingLevel":  100,
+                               "startingSpecial":  101,
+                               "startingElite":  112,
                                "unitType":  8,
-                               "clientId":  27
+                               "clientId":  27,
+                               "unlockTierLevels":  [
+                                                        0,
+                                                        0,
+                                                        0,
+                                                        0,
+                                                        0
+                                                    ]
                            },
                            {
                                "name":  "Google2u.DBUpgradeSlotsSpecter",
@@ -641,8 +1064,17 @@
                                "deliverySeconds":  0,
                                "startingTier":  9,
                                "startingLevel":  150,
+                               "startingSpecial":  51,
+                               "startingElite":  57,
                                "unitType":  4,
-                               "clientId":  40
+                               "clientId":  40,
+                               "unlockTierLevels":  [
+                                                        0,
+                                                        0,
+                                                        0,
+                                                        0,
+                                                        0
+                                                    ]
                            },
                            {
                                "name":  "Google2u.DBUpgradeSlotsSpiderBot",
@@ -653,8 +1085,17 @@
                                "deliverySeconds":  0,
                                "startingTier":  5,
                                "startingLevel":  50,
+                               "startingSpecial":  151,
+                               "startingElite":  172,
                                "unitType":  18,
-                               "clientId":  31
+                               "clientId":  31,
+                               "unlockTierLevels":  [
+                                                        0,
+                                                        0,
+                                                        0,
+                                                        34,
+                                                        41
+                                                    ]
                            },
                            {
                                "name":  "Google2u.DBUpgradeSlotsSurge",
@@ -665,8 +1106,17 @@
                                "deliverySeconds":  0,
                                "startingTier":  9,
                                "startingLevel":  150,
+                               "startingSpecial":  51,
+                               "startingElite":  57,
                                "unitType":  8,
-                               "clientId":  38
+                               "clientId":  38,
+                               "unlockTierLevels":  [
+                                                        0,
+                                                        0,
+                                                        0,
+                                                        30,
+                                                        39
+                                                    ]
                            },
                            {
                                "name":  "Google2u.DBUpgradeSlotsVTOL",
@@ -677,8 +1127,17 @@
                                "deliverySeconds":  0,
                                "startingTier":  7,
                                "startingLevel":  100,
+                               "startingSpecial":  101,
+                               "startingElite":  112,
                                "unitType":  20,
-                               "clientId":  28
+                               "clientId":  28,
+                               "unlockTierLevels":  [
+                                                        0,
+                                                        0,
+                                                        0,
+                                                        0,
+                                                        0
+                                                    ]
                            }
                        ]
 }

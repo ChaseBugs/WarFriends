@@ -17,6 +17,9 @@ import {
   itemInventoryStateFor,
 } from "./itemInventoryService";
 
+/** IJEAJGCCHEF.CantEquipUnit, consumed by UpdateEquippedUnits rollback logic. */
+export const UNIT_CANT_EQUIP = 11406;
+
 /**
  * Authoritative unit purchase logic recovered from the 4.9.5 MainScene.
  *
@@ -49,6 +52,10 @@ export interface UnitDefinition {
   behaviourType: string;
   upgradeType: string;
   tutorialUnit: boolean;
+  /** LevelBehaviour.UnitType used by ActiveUnitsManager's four deployment categories. */
+  deploymentType: 0 | 1 | 2 | 3;
+  /** False for mechanical units, which share an additional three-unit global cap. */
+  isSoldier: boolean;
   /** Display level echoed in BuyUnit.UnlockLevel. */
   unlockLevel: number;
   /** Zero-based LevelManager.levelNumber gate used by UpgradeSlots.canBuy. */
@@ -60,8 +67,14 @@ export interface UnitDefinition {
   startingTier: number;
   /** Source-sheet display level retained for later upgrade/promotion recovery. */
   startingLevel: number;
+  /** Absolute source-table row at which the special-slot subtable begins. */
+  startingSpecial: number;
+  /** Absolute source-table row at which elite-part upgrades begin. */
+  startingElite: number;
   unitType: number;
   clientId: number;
+  /** Display-level requirements for promotions into tiers 2 through 6. */
+  unlockTierLevels: readonly number[];
 }
 
 interface GeneratedUnitArtifact {
@@ -69,6 +82,13 @@ interface GeneratedUnitArtifact {
 }
 
 const extractedRows = (generatedUnitCatalog as GeneratedUnitArtifact).catalog;
+const PLAYER_UNIT_CATALOG: Readonly<Record<string, UnitDefinition>> = Object.freeze(
+  Object.fromEntries(
+    extractedRows
+      .filter((row) => row.roster === "player")
+      .map((row) => [row.name, Object.freeze({ ...row })]),
+  ),
+);
 
 /**
  * Runtime purchase catalog. Filtering is deliberate security logic, not data cleanup: helper
@@ -94,6 +114,18 @@ export interface UnitPurchasePayload {
 
 export interface UnitActivatePayload {
   name: string;
+}
+
+export interface UnitEquipDetailPayload {
+  wasEquipped: boolean;
+  equipped: boolean;
+}
+
+export interface UnitEquipPayload {
+  /** Client display value. Shape-checked but not authoritative until power rows are recovered. */
+  armyPower: number;
+  /** Full set of units whose historical or current equip flag is true. */
+  equips: Readonly<Record<string, UnitEquipDetailPayload>>;
 }
 
 export interface UnitInventoryMutationResult {
@@ -155,6 +187,31 @@ export function parseUnitPurchaseData(value: string): UnitPurchasePayload {
 export function parseUnitActivateData(value: string): UnitActivatePayload {
   const data = parseObjectJson(value);
   return { name: unitName(data.LevelName) };
+}
+
+/** Decode ArmyScreen.SendEquippedUnits' exact action-1003 dictionary. */
+export function parseUnitEquipData(value: string): UnitEquipPayload {
+  const data = parseObjectJson(value);
+  const rawEquips = data.equips;
+  if (!isObject(rawEquips) || Object.keys(rawEquips).length > 24) {
+    throw new ApiError(UNIT_CANT_EQUIP, "Equipped-unit map is invalid.");
+  }
+  const equips: Record<string, UnitEquipDetailPayload> = {};
+  for (const [name, rawDetail] of Object.entries(rawEquips)) {
+    if (!isObject(rawDetail)) {
+      throw new ApiError(UNIT_CANT_EQUIP, "Equipped-unit detail is invalid.");
+    }
+    const wasEquipped = rawDetail.wasEquipped ?? false;
+    const equipped = rawDetail.equipped ?? false;
+    if (typeof wasEquipped !== "boolean" || typeof equipped !== "boolean") {
+      throw new ApiError(UNIT_CANT_EQUIP, "Equipped-unit flags must be booleans.");
+    }
+    equips[unitName(name)] = { wasEquipped, equipped };
+  }
+  return {
+    armyPower: integer(data.armyPower, "armyPower"),
+    equips,
+  };
 }
 
 function newlyOwnedUnit(definition: UnitDefinition): SavedArmyState {
@@ -262,13 +319,86 @@ export function activateUnitState(
   return { state, itemInventory, unit, definition };
 }
 
-function emptyUnit(): SavedArmyState {
+/**
+ * Persist the full active-unit snapshot sent after purchase or roster editing.
+ *
+ * ActiveUnitsManager allows at most two equipped units in each of the four
+ * LevelBehaviour.UnitType categories and at most three non-soldier (mechanical) units in
+ * total. `equips` omits rows whose two flags are both false, so the server first clears only
+ * the current `equipped` bit on every owned row while preserving `wasEquipped` as monotonic
+ * history, then applies and validates the supplied true rows.
+ *
+ * The tutorial Assaulter is a special source-backed exception. ArmyScreen deliberately skips
+ * BuyUnit/ActivateUnit for `isTutorialUnit`, leaving UpdateEquippedUnits as the first normal
+ * backend event capable of persisting it. Materializing that one exact recovered row here is
+ * safe and required for the post-tutorial roster to survive login; helpers and unresolved
+ * table rows remain rejected. Client armyPower is not stored because its per-upgrade formula
+ * has not yet been recovered and therefore cannot be independently verified by the server.
+ */
+export function updateEquippedUnitsState(
+  state: PlayerProgressionState,
+  payload: UnitEquipPayload,
+): { state: PlayerProgressionState; itemInventory: ItemInventoryState } {
+  if (payload.armyPower < 0) {
+    throw new ApiError(UNIT_CANT_EQUIP, "Army power must be non-negative.");
+  }
+  const itemInventory = itemInventoryStateFor(state);
+  const savedArmies = itemInventory.levelManagerData.savedArmies;
+
+  for (const unit of Object.values(savedArmies)) {
+    unit.equipped = false;
+  }
+
+  const categoryCounts = [0, 0, 0, 0];
+  let mechanicalCount = 0;
+  for (const [name, requested] of Object.entries(payload.equips)) {
+    const definition = PLAYER_UNIT_CATALOG[name];
+    if (!definition) {
+      throw new ApiError(UNIT_CANT_EQUIP, "Unit is not part of the player roster.");
+    }
+
+    let unit = savedArmies[name];
+    if (!unit?.bought && definition.tutorialUnit) {
+      // This is the only client-authoritative grant in the path and is constrained to the
+      // scene's single isTutorialUnit row. It cannot mint currency or another catalog item.
+      unit = newlyOwnedUnit(definition);
+      savedArmies[name] = unit;
+    }
+    if (!unit?.bought || unit.borrowed) {
+      throw new ApiError(UNIT_CANT_EQUIP, "Only owned, non-rental units can be equipped.");
+    }
+    if (requested.equipped && !(requested.wasEquipped || unit.wasEquipped)) {
+      throw new ApiError(UNIT_CANT_EQUIP, "An equipped unit must carry its wasEquipped history flag.");
+    }
+
+    unit.wasEquipped = unit.wasEquipped || requested.wasEquipped || requested.equipped;
+    unit.equipped = requested.equipped;
+    if (requested.equipped) {
+      categoryCounts[definition.deploymentType] += 1;
+      if (!definition.isSoldier) mechanicalCount += 1;
+    }
+  }
+
+  if (categoryCounts.some((count) => count > 2) || mechanicalCount > 3) {
+    throw new ApiError(UNIT_CANT_EQUIP, "Equipped units exceed recovered category or mechanical limits.");
+  }
+  const next: PlayerProgressionState = {
+    ...state,
+    revision: state.revision + 1,
+    itemInventory,
+  };
+  return { state: next, itemInventory };
+}
+
+function emptyUnit(definition?: UnitDefinition): SavedArmyState {
   return {
     bought: false,
     boughtIndex: 0,
     specialSlot: 0,
-    showed: false,
-    tier: 0,
+    // GetArmySlot initializes these two fields before the user buys anything. Returning the
+    // same defaults prevents rollback from changing the unit's displayed tier or seen state.
+    showed: definition?.canBuyLevelIndex === 0,
+    tier: definition?.startingTier ?? 0,
     borrowed: false,
     wasEquipped: false,
     equipped: false,
@@ -290,13 +420,28 @@ export function unitRecoveryFields(
 ): Record<string, unknown> {
   const itemInventory = itemInventoryStateFor(state);
   const name = requestedName || "";
-  const unit = itemInventory.levelManagerData.savedArmies[name] ?? emptyUnit();
+  const unit = itemInventory.levelManagerData.savedArmies[name] ?? emptyUnit(PLAYER_UNIT_CATALOG[name]);
   return {
     LevelName: name,
     Unit: JSON.stringify(unit),
     unitDelivery: JSON.stringify(itemInventory.levelManagerData.unitDelivery),
     Gold: state.gold,
     WarBucks: state.warBucks,
+  };
+}
+
+/** Exact UpdateEquippedUnits failure payload consumed by OGLEHLIPEFM. */
+export function equippedUnitsRecoveryFields(state: PlayerProgressionState): Record<string, unknown> {
+  const savedArmies = itemInventoryStateFor(state).levelManagerData.savedArmies;
+  return {
+    data: JSON.stringify(
+      Object.fromEntries(
+        Object.values(PLAYER_UNIT_CATALOG).map((definition) => [
+          definition.name,
+          JSON.stringify(savedArmies[definition.name] ?? emptyUnit(definition)),
+        ]),
+      ),
+    ),
   };
 }
 

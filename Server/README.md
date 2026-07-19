@@ -130,9 +130,15 @@ Working end-to-end (verified live):
   gates, display unlock checks, initial tier state, atomic wallet/ownership writes, Unity rollback
   fields, and `BufferId` replay protection. All supported rows have `DELIVERTIME=0`, so BuyUnit
   grants ownership and the stock client's immediate ActivateUnit is a validated idempotent
-  acknowledgement rather than a fabricated timer. The tutorial Assaulter, helper rows, unresolved
-  rows, discounts, upgrades, promotions, and equipped-army mutation remain fail-closed. Run
-  `npm run verify:unit-catalog` to compare the artifact with MainScene and recovered assemblies.
+  acknowledgement rather than a fabricated timer. `UpdateEquippedUnits` persists the tutorial
+  Assaulter's first backend-visible grant and the full owned roster while enforcing the recovered
+  two-per-category and three-mechanical-unit caps; invalid changes receive the exact 11406 rollback
+  dictionary. Helper rows, unresolved rows, discounts, upgrades, promotions, and unverified
+  army-power writes remain fail-closed. The same extractor now records 4,124 normal and 684
+  special per-level rows across all 24 player tables, including absolute source offsets, tier,
+  XOR-decoded WarBucks price, and delivery duration; this evidence is checked in but is not yet
+  exposed as a mutation. Run `npm run verify:unit-catalog` to compare both artifacts with
+  MainScene and the recovered assemblies.
 - **Daily rewards**: `CheckDailyReward` and `ClaimDailyReward` provide the recovered monthly
   `dailyRewardData` calendar contract, one UTC-day unlock, ordered atomic Gold grants, and
   replay-safe claim cursors. Reward amounts are conservative environment-tunable defaults
@@ -178,10 +184,10 @@ allowlist of analytics/impression actions is safely ignored.
 - **Squad extensions** — card pool and squad events/wars are not implemented. Chat unread
   state is persistent, but actual channel delivery still requires Photon Chat repointing or
   a compatible replacement transport.
-- **Item economy expansion** — recover unit normal/special upgrade, promotion, deployment,
-  equipped-category/cap, and army-power rules, then add decals, cards, packs, and VIP. Normal
-  purchase is authoritative for 23 non-tutorial roster units; the tutorial unit, three helper
-  rows, and 18 ArmyUpgrades rows without LevelManager objects remain closed. All 84 resolvable
+- **Item economy expansion** — recover unit normal/special upgrade, promotion, and army-power
+  rules, then add decals, cards, packs, and VIP. Normal purchase is authoritative for 23
+  non-tutorial roster units, and the tutorial unit is persisted through its first equip event;
+  three helper rows and 18 ArmyUpgrades rows without LevelManager objects remain closed. All 84 resolvable
   shop weapons support exact Gold or WarBucks purchase/equip plus server-owned upgrade
   delivery/activation; the nine null-reference Pulse Rifle rows, unknown items, and
   discount-bearing requests remain rejected instead of receiving guessed prices or unusable

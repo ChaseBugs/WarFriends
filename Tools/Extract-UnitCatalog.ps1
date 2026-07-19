@@ -1,6 +1,7 @@
 param(
     [string]$ScenePath,
     [string]$OutputPath,
+    [string]$UpgradeOutputPath,
     [switch]$Check
 )
 
@@ -13,6 +14,24 @@ if ([string]::IsNullOrWhiteSpace($ScenePath)) {
 }
 if ([string]::IsNullOrWhiteSpace($OutputPath)) {
     $OutputPath = Join-Path $repoRoot "Server\src\data\unitCatalog.generated.json"
+}
+if ([string]::IsNullOrWhiteSpace($UpgradeOutputPath)) {
+    $UpgradeOutputPath = Join-Path $repoRoot "Server\src\data\unitUpgradeCatalog.generated.json"
+}
+
+function Decode-ObscuredFloat([uint32]$Key, [string]$HiddenHex) {
+    if ($HiddenHex -notmatch '^[0-9a-fA-F]{8}$') {
+        throw "Invalid ObscuredFloat hidden value '$HiddenHex'."
+    }
+    # Unity serializes the encrypted four-byte union in memory order. Decode those bytes as
+    # little-endian before XORing with currentCryptoKey, matching the recovered Android build.
+    $encryptedBytes = [byte[]]::new(4)
+    for ($index = 0; $index -lt 4; $index++) {
+        $encryptedBytes[$index] = [Convert]::ToByte($HiddenHex.Substring($index * 2, 2), 16)
+    }
+    $encryptedBits = [BitConverter]::ToUInt32($encryptedBytes, 0)
+    $plainBits = $encryptedBits -bxor $Key
+    return [BitConverter]::ToSingle([BitConverter]::GetBytes($plainBits), 0)
 }
 
 function Resolve-RequiredFile([string]$Path, [string]$Description) {
@@ -120,6 +139,8 @@ try {
             TypeName = $typeName
             UpgradeSlotsId = [string]$Block.upgradeSlotsId
             TutorialUnit = [bool]$Block.tutorialUnit
+            DeploymentType = [int]$Block.deploymentType
+            IsSoldier = [bool]$Block.isSoldier
         }
         $componentsById[$component.Id] = $component
         if (-not $componentsByGameObject.ContainsKey($component.GameObject)) {
@@ -145,6 +166,8 @@ try {
                         guid = ""
                         upgradeSlotsId = ""
                         tutorialUnit = $false
+                        deploymentType = -1
+                        isSoldier = $true
                     }
                 }
                 else {
@@ -168,6 +191,12 @@ try {
             elseif ($line -match '^  isTutorialUnit: ([01])$') {
                 $block.tutorialUnit = $Matches[1] -eq "1"
             }
+            elseif ($line -match '^  unitType: (-?\d+)$') {
+                $block.deploymentType = [int]$Matches[1]
+            }
+            elseif ($line -match '^  isSoldier: ([01])$') {
+                $block.isSoldier = $Matches[1] -eq "1"
+            }
         }
         Save-MonoBehaviourBlock $block
     }
@@ -184,21 +213,26 @@ try {
             throw "Unit behaviour $BehaviourId has no resolvable UpgradeSlots component."
         }
         $upgrade = $componentsById[$behaviour.UpgradeSlotsId]
-        $googleTypes = @(
+        $googleComponents = @(
             $componentsByGameObject[$upgrade.GameObject] |
-                Where-Object { $_.TypeName -like 'Google2u.DBUpgradeSlots*' } |
-                Select-Object -ExpandProperty TypeName -Unique
+                Where-Object { $_.TypeName -like 'Google2u.DBUpgradeSlots*' }
         )
-        if ($googleTypes.Count -ne 1) {
-            throw "UpgradeSlots $($upgrade.Id) resolved $($googleTypes.Count) Google2u unit tables."
+        if ($googleComponents.Count -ne 1) {
+            throw "UpgradeSlots $($upgrade.Id) resolved $($googleComponents.Count) Google2u unit tables."
+        }
+        if ($behaviour.DeploymentType -lt 0 -or $behaviour.DeploymentType -gt 3) {
+            throw "Unit behaviour $BehaviourId has invalid deployment type $($behaviour.DeploymentType)."
         }
         return [pscustomobject]@{
-            Name = [string]$googleTypes[0]
+            Name = [string]$googleComponents[0].TypeName
+            GoogleComponentId = [string]$googleComponents[0].Id
             Index = $Index
             Additional = $Additional
             BehaviourType = [string]$behaviour.TypeName
             UpgradeType = [string]$upgrade.TypeName
             TutorialUnit = [bool]$upgrade.TutorialUnit
+            DeploymentType = [int]$behaviour.DeploymentType
+            IsSoldier = [bool]$behaviour.IsSoldier
         }
     }
 
@@ -215,7 +249,11 @@ try {
         if ($null -eq $Row) {
             return
         }
-        foreach ($field in @('unlockLevel', 'canBeBought', 'deliverySeconds', 'startingTier', 'startingLevel', 'unitType', 'clientId')) {
+        foreach ($field in @(
+            'unlockLevel', 'canBeBought', 'deliverySeconds', 'startingTier', 'startingLevel',
+            'startingSpecial', 'startingElite', 'unitType', 'clientId', 'unlockTier2',
+            'unlockTier3', 'unlockTier4', 'unlockTier5', 'unlockTier6'
+        )) {
             if ($null -eq $Row[$field]) {
                 throw "ArmyUpgrades row $($Row.name) is missing $field."
             }
@@ -251,8 +289,15 @@ try {
                     deliverySeconds = $null
                     startingTier = $null
                     startingLevel = $null
+                    startingSpecial = $null
+                    startingElite = $null
                     unitType = $null
                     clientId = $null
+                    unlockTier2 = $null
+                    unlockTier3 = $null
+                    unlockTier4 = $null
+                    unlockTier5 = $null
+                    unlockTier6 = $null
                 }
                 $moneyField = $null
                 continue
@@ -270,8 +315,15 @@ try {
             if ($line -match '^    DELIVERTIME: (-?\d+)$') { $row.deliverySeconds = [int]$Matches[1]; continue }
             if ($line -match '^    STARTINGTIER: (-?\d+)$') { $row.startingTier = [int]$Matches[1]; continue }
             if ($line -match '^    STARTINGLEVEL: (-?\d+)$') { $row.startingLevel = [int]$Matches[1]; continue }
+            if ($line -match '^    STARTINGSPECIAL: (-?\d+)$') { $row.startingSpecial = [int]$Matches[1]; continue }
+            if ($line -match '^    STARTINGELITE: (-?\d+)$') { $row.startingElite = [int]$Matches[1]; continue }
             if ($line -match '^    UNITTYPE: (-?\d+)$') { $row.unitType = [int]$Matches[1]; continue }
             if ($line -match '^    CLIENTID: (-?\d+)$') { $row.clientId = [int]$Matches[1]; continue }
+            if ($line -match '^    UNLOCKTIER2: (-?\d+)$') { $row.unlockTier2 = [int]$Matches[1]; continue }
+            if ($line -match '^    UNLOCKTIER3: (-?\d+)$') { $row.unlockTier3 = [int]$Matches[1]; continue }
+            if ($line -match '^    UNLOCKTIER4: (-?\d+)$') { $row.unlockTier4 = [int]$Matches[1]; continue }
+            if ($line -match '^    UNLOCKTIER5: (-?\d+)$') { $row.unlockTier5 = [int]$Matches[1]; continue }
+            if ($line -match '^    UNLOCKTIER6: (-?\d+)$') { $row.unlockTier6 = [int]$Matches[1]; continue }
             if ($line -eq '    PRICE:') { $moneyField = 'price'; continue }
             if ($line -eq '    PRICEGOLD:') { $moneyField = 'gold'; continue }
             if ($line -match '^      currentCryptoKey: (\d+)$') {
@@ -312,6 +364,8 @@ try {
             behaviourType = $reference.BehaviourType
             upgradeType = $reference.UpgradeType
             tutorialUnit = $reference.TutorialUnit
+            deploymentType = $reference.DeploymentType
+            isSoldier = $reference.IsSoldier
             unlockLevel = $source.unlockLevel
             canBuyLevelIndex = $source.canBeBought
             warBucks = $source.warBucks
@@ -319,8 +373,17 @@ try {
             deliverySeconds = $source.deliverySeconds
             startingTier = $source.startingTier
             startingLevel = $source.startingLevel
+            startingSpecial = $source.startingSpecial
+            startingElite = $source.startingElite
             unitType = $source.unitType
             clientId = $source.clientId
+            unlockTierLevels = @(
+                $source.unlockTier2,
+                $source.unlockTier3,
+                $source.unlockTier4,
+                $source.unlockTier5,
+                $source.unlockTier6
+            )
         })
     }
 
@@ -336,13 +399,164 @@ try {
                 deliverySeconds = $source.deliverySeconds
                 startingTier = $source.startingTier
                 startingLevel = $source.startingLevel
+                startingSpecial = $source.startingSpecial
+                startingElite = $source.startingElite
                 unitType = $source.unitType
                 clientId = $source.clientId
+                unlockTierLevels = @(
+                    $source.unlockTier2,
+                    $source.unlockTier3,
+                    $source.unlockTier4,
+                    $source.unlockTier5,
+                    $source.unlockTier6
+                )
             })
         }
     }
     if ($unresolved.Count -ne 18) {
         throw "Expected 18 unreferenced ArmyUpgrades rows, found $($unresolved.Count)."
+    }
+
+    # Each resolved Google2u component contains the per-level rows used by both UpgradeSlot
+    # cursors. TIER encodes the slot in its tens digit: 0x is the normal path and 1x is the
+    # special path. Preserve the absolute source index because STARTINGSPECIAL is an offset
+    # into RowsGeneric, while SavedArmySlots.specialSlot stores a relative cursor.
+    $upgradeComponentToName = @{}
+    $playerReferences = @($references | Where-Object { -not $_.Additional })
+    foreach ($reference in $playerReferences) {
+        $upgradeComponentToName[[string]$reference.GoogleComponentId] = [string]$reference.Name
+    }
+    $upgradeRowsByName = @{}
+    $activeUpgradeComponent = $null
+    $activeUpgradeRows = $null
+    $insideUpgradeRows = $false
+    $upgradeRow = $null
+    $upgradeSection = $null
+
+    function Save-UnitUpgradeRow($Row, $Rows) {
+        if ($null -eq $Row) { return }
+        if ($null -eq $Row.tier) {
+            throw "Unit upgrade component $activeUpgradeComponent has a row missing tier."
+        }
+        $tier = [int]$Row.tier
+        if ($tier -lt 0) { return }
+        foreach ($field in @('priceKey', 'priceHidden', 'priceGold', 'timeKey', 'timeHidden')) {
+            if ($null -eq $Row[$field]) {
+                throw "Unit upgrade component $activeUpgradeComponent has a row missing $field."
+            }
+        }
+        $slot = [Math]::Floor($tier / 10)
+        if ($slot -notin @(0, 1)) {
+            # Elite/card/arena rows use different state and currency contracts. They remain in
+            # the source table but cannot enter the normal/special RequestBuffer lifecycle.
+            return
+        }
+        if ([int]$Row.priceGold -ne 0) {
+            throw "Unexpected premium currency in unit upgrade row $($Row.index)."
+        }
+        $delivery = Decode-ObscuredFloat ([uint32]$Row.timeKey) ([string]$Row.timeHidden)
+        $roundedDelivery = [int][Math]::Round($delivery)
+        if ([Math]::Abs($delivery - $roundedDelivery) -gt 0.001 -or $roundedDelivery -lt 0) {
+            throw "Unit upgrade row $($Row.index) has invalid delivery time $delivery."
+        }
+        $Rows.Add([ordered]@{
+            sourceIndex = [int]$Row.index
+            tier = $tier % 10
+            slot = [int]$slot
+            warBucks = [int]([long]$Row.priceKey -bxor [long]$Row.priceHidden)
+            deliverySeconds = $roundedDelivery
+        })
+    }
+
+    function Finish-UnitUpgradeComponent {
+        if ($null -ne $script:activeUpgradeComponent) {
+            Save-UnitUpgradeRow $script:upgradeRow $script:activeUpgradeRows
+            $name = $script:upgradeComponentToName[[string]$script:activeUpgradeComponent]
+            $script:upgradeRowsByName[$name] = @($script:activeUpgradeRows)
+        }
+        $script:activeUpgradeComponent = $null
+        $script:activeUpgradeRows = $null
+        $script:insideUpgradeRows = $false
+        $script:upgradeRow = $null
+        $script:upgradeSection = $null
+    }
+
+    $reader = [IO.File]::OpenText($scene)
+    try {
+        while (($line = $reader.ReadLine()) -ne $null) {
+            if ($line -match '^--- !u![0-9]+ &(\d+)$') {
+                Finish-UnitUpgradeComponent
+                if ($upgradeComponentToName.ContainsKey($Matches[1])) {
+                    $activeUpgradeComponent = $Matches[1]
+                    $activeUpgradeRows = [Collections.Generic.List[object]]::new()
+                }
+                continue
+            }
+            if ($null -eq $activeUpgradeComponent) { continue }
+            if (-not $insideUpgradeRows) {
+                if ($line -eq '  Rows:') { $insideUpgradeRows = $true }
+                continue
+            }
+            if ($line -match '^  - TIER: (-?\d+)$') {
+                Save-UnitUpgradeRow $upgradeRow $activeUpgradeRows
+                $upgradeRow = [ordered]@{
+                    index = $activeUpgradeRows.Count
+                    tier = [int]$Matches[1]
+                    priceKey = $null
+                    priceHidden = $null
+                    priceGold = $null
+                    timeKey = $null
+                    timeHidden = $null
+                }
+                $upgradeSection = $null
+                continue
+            }
+            if ($null -eq $upgradeRow) { continue }
+            if ($line -match '^    TIER: (-?\d+)$') { $upgradeRow.tier = [int]$Matches[1]; continue }
+            if ($line -eq '    NEXTUPGRADEPRICE:') { $upgradeSection = 'price'; continue }
+            if ($line -match '^    NEXTUPGRADEPRICEGOLD: (-?\d+)$') {
+                $upgradeRow.priceGold = [int]$Matches[1]
+                $upgradeSection = $null
+                continue
+            }
+            if ($line -eq '    DELIVERYTIME:') { $upgradeSection = 'time'; continue }
+            if ($line -match '^    [A-Z][A-Z0-9_]*:') { $upgradeSection = $null; continue }
+            if ($line -match '^      currentCryptoKey: (\d+)$') {
+                if ($upgradeSection -eq 'price') { $upgradeRow.priceKey = [long]$Matches[1] }
+                elseif ($upgradeSection -eq 'time') { $upgradeRow.timeKey = [uint32]$Matches[1] }
+                continue
+            }
+            if ($line -match '^      hiddenValue: ([0-9a-fA-F]+)$') {
+                if ($upgradeSection -eq 'price') { $upgradeRow.priceHidden = [long]$Matches[1] }
+                elseif ($upgradeSection -eq 'time') { $upgradeRow.timeHidden = $Matches[1] }
+            }
+        }
+        Finish-UnitUpgradeComponent
+    }
+    finally {
+        $reader.Dispose()
+    }
+    if ($upgradeRowsByName.Count -ne $playerReferences.Count) {
+        throw "Expected $($playerReferences.Count) player unit upgrade tables, found $($upgradeRowsByName.Count)."
+    }
+
+    $upgradeCatalog = [Collections.Generic.List[object]]::new()
+    foreach ($reference in $playerReferences) {
+        $source = $armyRows[$reference.Name]
+        $rows = @($upgradeRowsByName[$reference.Name])
+        $normal = @($rows | Where-Object { $_.slot -eq 0 })
+        $special = @($rows | Where-Object { $_.slot -eq 1 })
+        if ($normal.Count -lt 2 -or $special.Count -lt 2) {
+            throw "$($reference.Name) has incomplete normal/special upgrade ranges."
+        }
+        if ($normal[0].sourceIndex -ne 0 -or $special[0].sourceIndex -ne $source.startingSpecial) {
+            throw "$($reference.Name) upgrade offsets disagree with ArmyUpgrades.STARTINGSPECIAL."
+        }
+        $upgradeCatalog.Add([ordered]@{
+            name = $reference.Name
+            normalLevels = $normal
+            specialLevels = $special
+        })
     }
 
     $artifact = [ordered]@{
@@ -352,13 +566,24 @@ try {
         catalog = $catalog
         unresolvedRows = $unresolved
     }
+    $upgradeArtifact = [ordered]@{
+        schemaVersion = 1
+        source = 'Client/ExportedProject/Assets/Scenes/MainScene.unity'
+        sourceSha256 = (Get-FileHash -LiteralPath $scene -Algorithm SHA256).Hash.ToLowerInvariant()
+        catalog = $upgradeCatalog
+    }
     $expectedText = ($artifact | ConvertTo-Json -Depth 8) + [Environment]::NewLine
+    $expectedUpgradeText = ($upgradeArtifact | ConvertTo-Json -Depth 10) + [Environment]::NewLine
     if ($Check) {
         $resolvedOutput = Resolve-RequiredFile $OutputPath "Generated unit catalog"
         if ([IO.File]::ReadAllText($resolvedOutput) -ne $expectedText) {
             throw "Generated unit catalog is stale. Run Tools\Extract-UnitCatalog.ps1."
         }
-        Write-Host "Unit catalog is current: 24 player rows, 3 additional rows, 18 unresolved rows."
+        $resolvedUpgradeOutput = Resolve-RequiredFile $UpgradeOutputPath "Generated unit upgrade catalog"
+        if ([IO.File]::ReadAllText($resolvedUpgradeOutput) -ne $expectedUpgradeText) {
+            throw "Generated unit upgrade catalog is stale. Run Tools\Extract-UnitCatalog.ps1."
+        }
+        Write-Host "Unit catalogs are current: 24 player rows, 3 helpers, 18 unresolved rows, and 24 upgrade tables."
     }
     else {
         $directory = Split-Path -Parent $OutputPath
@@ -366,7 +591,12 @@ try {
             [void](New-Item -ItemType Directory -Path $directory)
         }
         [IO.File]::WriteAllText($OutputPath, $expectedText, [Text.UTF8Encoding]::new($false))
-        Write-Host "Wrote $OutputPath with 24 player rows, 3 additional rows, and 18 unresolved rows."
+        $upgradeDirectory = Split-Path -Parent $UpgradeOutputPath
+        if (-not (Test-Path -LiteralPath $upgradeDirectory -PathType Container)) {
+            [void](New-Item -ItemType Directory -Path $upgradeDirectory)
+        }
+        [IO.File]::WriteAllText($UpgradeOutputPath, $expectedUpgradeText, [Text.UTF8Encoding]::new($false))
+        Write-Host "Wrote unit purchase and upgrade artifacts with 24 player upgrade tables."
     }
 }
 finally {
