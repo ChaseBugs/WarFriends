@@ -53,6 +53,21 @@ The most important restored objects are:
 Sending a normal JSON number or using the wrong nested type name can produce a syntactically valid
 response that the Unity client silently loads as zero or empty.
 
+### Configuration boot response
+
+`GetConfigurations` is the one recovered action that bypasses the normal JSON envelope. The stock
+parser reads semicolon-delimited segments in this exact order:
+
+```text
+success;<sheet configuration version>;{<sheet versions JSON>}
+```
+
+When no remote sheets are published, the server echoes the client's current version and returns an
+empty sheet-version object, preserving the APK's bundled Google2u data. The response must stop after
+the closing `}`. A trailing semicolon creates a fourth empty segment; the Client tries to deserialize
+that segment as a sheet object and may fail during boot. Semicolons are removed from the echoed
+version so client input cannot inject another wire segment.
+
 ## Persistence model
 
 MongoDB stores one player document per account. Frequently queried profile dimensions are copied

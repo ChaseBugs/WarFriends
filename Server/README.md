@@ -31,7 +31,8 @@ replicated/sharded managed deployment) and include `replicaSet` in `MONGO_URL`. 
 The client (`BeanstalkServerManager`) sends form fields to a URL ending in the numeric
 `DatabaseAction` and dashed client version. It repeats the action in `requestId`; authenticated
 requests use `PlayerId` and `Token`. Development tools may also send a JSON `DbAction`
-envelope. `GetConfigurations` returns the raw text format required by the recovered parser;
+envelope. `GetConfigurations` returns the exact three-segment raw text format required by the
+recovered parser and ends after its sheet-version JSON object without an empty trailing segment;
 other implemented actions return JSON. The replacement realtime layer connects to
 `ws://<host>/hub`.
 

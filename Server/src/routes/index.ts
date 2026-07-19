@@ -22,7 +22,10 @@ export function normalizeEnvelope(body: unknown, routeAction?: string): RequestE
 export function configurationResponse(fields: RequestEnvelope): string {
   const requested = fields.SheetConfiguraton ?? fields.SheetConfiguration ?? fields.SheetConfig ?? "0";
   const sheetConfiguration = String(requested).replaceAll(";", "").trim() || "0";
-  return `success;${sheetConfiguration};{};`;
+  // The recovered parser increments its segment counter for every semicolon. Segment three is the
+  // sheet-version JSON object; a trailing semicolon creates an empty fourth segment, which it then
+  // attempts to deserialize and index as a sheet object. End immediately after the JSON instead.
+  return `success;${sheetConfiguration};{}`;
 }
 
 async function handleEnvelope(req: Request, res: Response): Promise<void> {

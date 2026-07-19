@@ -126,8 +126,9 @@ test("request normalization accepts JSON envelopes and BestHTTP form fields", ()
 });
 
 test("configuration response matches the recovered raw client parser", () => {
-  assert.equal(configurationResponse({ DbAction: 157, SheetConfiguraton: "prod" }), "success;prod;{};");
-  assert.equal(configurationResponse({ DbAction: 157, SheetConfig: "bad;value" }), "success;badvalue;{};");
+  assert.equal(configurationResponse({ DbAction: 157, SheetConfiguraton: "prod" }), "success;prod;{}");
+  assert.equal(configurationResponse({ DbAction: 157, SheetConfig: "bad;value" }), "success;badvalue;{}");
+  assert.equal(configurationResponse({ DbAction: 157 }).split(";").length, 3);
 });
 
 test("account types map only to their matching external identity provider", () => {
