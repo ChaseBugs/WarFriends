@@ -2,6 +2,7 @@ import type { PlayerDocument, PlayerProgressionState } from "../db";
 import { config } from "../config";
 import { createInitialItemInventory } from "./itemInventoryService";
 import { createInitialVisualInventory } from "./visualInventoryService";
+import { createInitialCardInventory } from "./cardInventoryService";
 import { warArenaConfiguration, warArenaWireData } from "./warArenaContract";
 
 /** Unix seconds are used throughout the recovered Beanstalk protocol. */
@@ -39,6 +40,7 @@ export function createInitialProgression(
     vipStart: 0,
     itemInventory: createInitialItemInventory(),
     visualInventory: createInitialVisualInventory(),
+    cardInventory: createInitialCardInventory(),
     starterAssignments: {
       deadline: now + Math.max(0, Math.floor(config.starterAssignmentDurationSeconds)),
       assignments: {},
@@ -62,6 +64,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
       ...state,
       itemInventory: state.itemInventory ?? createInitialItemInventory(),
       visualInventory: state.visualInventory ?? createInitialVisualInventory(),
+      cardInventory: state.cardInventory ?? createInitialCardInventory(),
     };
   }
 
@@ -80,6 +83,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
     dogTagRefillSeconds: refillSeconds,
     itemInventory: state.itemInventory ?? createInitialItemInventory(),
     visualInventory: state.visualInventory ?? createInitialVisualInventory(),
+    cardInventory: state.cardInventory ?? createInitialCardInventory(),
   };
 }
 
@@ -212,6 +216,7 @@ export function buildPlayerData(player: PlayerDocument): PlayerDataMap {
   addSerializedObject(data, "InventoryData", state.itemInventory?.inventoryData ?? dto.inventoryData);
   addSerializedObject(data, "LevelManagerData", state.itemInventory?.levelManagerData ?? dto.levelManagerData);
   addSerializedObject(data, "DecalManagerData", state.visualInventory);
+  addSerializedObject(data, "CardManagerData", state.cardInventory);
   addSerializedObject(data, "StatisticsData", dto.statisticsData);
 
   if (state.assignments) {

@@ -10,12 +10,12 @@ import {
   type GameCatalogReleaseDocument,
 } from "../services/gameCatalogService";
 
-test("material database joins every recovered weapon and unit family", () => {
+test("material database joins every recovered gameplay inventory family", () => {
   const catalog = buildGameCatalog();
 
   assert.equal(catalog.clientVersion, GAME_CATALOG_CLIENT_VERSION);
   assert.match(catalog.catalogRevision, /^[0-9a-f]{64}$/);
-  assert.equal(catalog.entries.length, 354);
+  assert.equal(catalog.entries.length, 441);
   assert.deepEqual(catalog.counts, {
     weapons: 93,
     playableWeapons: 84,
@@ -28,6 +28,10 @@ test("material database joins every recovered weapon and unit family", () => {
     playableVisuals: 146,
     unresolvedVisuals: 1,
     shopVisuals: 84,
+    cards: 83,
+    playableCards: 58,
+    unresolvedCards: 25,
+    cardPacks: 4,
     units: 45,
     playableUnits: 24,
     helperUnits: 3,
@@ -70,6 +74,18 @@ test("material database joins every recovered weapon and unit family", () => {
   const unresolvedVisual = catalog.entries.find((entry) =>
     entry.kind === "visual" && entry.key === "HEAD_MASK_ROCKET");
   assert.equal(unresolvedVisual?.availability, "unresolved");
+
+  const ammoCrate = catalog.entries.find((entry) =>
+    entry.kind === "card" && entry.key === "AMMOCRATE");
+  assert.equal(ammoCrate?.availability, "playable");
+  assert.equal((ammoCrate?.data.definition as { rarity: number }).rarity, 1);
+  const unresolvedCard = catalog.entries.find((entry) =>
+    entry.kind === "card" && entry.key === "PLAYERINVIS");
+  assert.equal(unresolvedCard?.availability, "unresolved");
+  const goldCardPack = catalog.entries.find((entry) =>
+    entry.kind === "cardPack" && entry.key === "GOLD_CARDPACK");
+  assert.equal(goldCardPack?.availability, "playable");
+  assert.equal((goldCardPack?.data.definition as { priceGold: number }).priceGold, 69);
 
   const shotgunner = catalog.entries.find((entry) =>
     entry.kind === "unit" && entry.key === "Google2u.DBUpgradeSlotsShotgunner");
@@ -129,5 +145,5 @@ test("catalog sync writes all immutable entries before publishing the release po
   assert.deepEqual(calls, ["entries", "release"]);
   assert.equal(entryOperations, built.entries.length);
   assert.equal(publishedRelease?.catalogRevision, built.catalogRevision);
-  assert.equal(publishedRelease?.entryCount, 354);
+  assert.equal(publishedRelease?.entryCount, 441);
 });

@@ -23,6 +23,7 @@ The documentation distinguishes three states:
 9. [Versioned gameplay material database](09-gameplay-material-database.md)
 10. [Backend implementation roadmap](10-backend-roadmap.md)
 11. [Player visuals and decals](11-player-visuals-and-decals.md)
+12. [War Cards and card packs](12-war-cards-and-card-packs.md)
 
 ## Authoritative references
 

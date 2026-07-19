@@ -1,0 +1,588 @@
+{
+  "schemaVersion": 1,
+  "clientVersion": "4.9.5",
+  "source": "Client/ExportedProject/Assets/Scenes/MainScene.unity",
+  "sourceSha256": "eb33be9c3801b9e15cc1306e8a111f88ca80665bd403517a9e9645edf450ee41",
+  "unlockLevel": 6,
+  "rarityProbabilities": {
+    "lowLevel": 7,
+    "highLevel": 10,
+    "silverEarly": 0.20000000298023224,
+    "silver": 0.6000000238418579,
+    "goldEarly": 0.699999988079071,
+    "gold": 0.8999999761581421
+  },
+  "cards": [
+    {
+      "name": "AMMOCRATE",
+      "rarity": 1,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "BACKSTAB",
+      "rarity": 1,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "BULLETHARMLESS",
+      "rarity": 1,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "CRATEBLOCKER",
+      "rarity": 1,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "CRITICALS",
+      "rarity": 1,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "DESTROYSHIELD",
+      "rarity": 1,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "EMPTYMAG",
+      "rarity": 1,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "EXPLOSIVETIMING",
+      "rarity": 1,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "HEALINGSTORM",
+      "rarity": 1,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "HEALTHCRATE",
+      "rarity": 1,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "KEVLARCRATE",
+      "rarity": 1,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "MAXHEALTHINC",
+      "rarity": 1,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "MINE",
+      "rarity": 1,
+      "fromMission": 99,
+      "implemented": true
+    },
+    {
+      "name": "PARALYZE",
+      "rarity": 1,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "PLAGUE",
+      "rarity": 1,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "RANDOMKEVLAR",
+      "rarity": 1,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "SHIELDGENERATOR",
+      "rarity": 1,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "SHIELDSPAWNER",
+      "rarity": 1,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "SICKNESS",
+      "rarity": 1,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "SLOWDOWN",
+      "rarity": 1,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "SMALLMEDKIT",
+      "rarity": 1,
+      "fromMission": 10,
+      "implemented": true
+    },
+    {
+      "name": "STREAKBOOST",
+      "rarity": 1,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "SUPERSOLDIERS",
+      "rarity": 1,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "TRIGGERHAPPY",
+      "rarity": 1,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "TURRET",
+      "rarity": 1,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "TURRETCRATE",
+      "rarity": 1,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "VEHICLEHEALTH",
+      "rarity": 1,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "AMMOBOX",
+      "rarity": 2,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "AMMOTHIEF",
+      "rarity": 2,
+      "fromMission": 99,
+      "implemented": true
+    },
+    {
+      "name": "BOOBYTRAP",
+      "rarity": 2,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "DECOY",
+      "rarity": 2,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "ELECTRICTRAPS",
+      "rarity": 2,
+      "fromMission": 99,
+      "implemented": true
+    },
+    {
+      "name": "ELITEPARA",
+      "rarity": 2,
+      "fromMission": 99,
+      "implemented": true
+    },
+    {
+      "name": "EXPLOSIVEPISTOL",
+      "rarity": 2,
+      "fromMission": 99,
+      "implemented": true
+    },
+    {
+      "name": "FREEZE",
+      "rarity": 2,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "GREATGRENADIER",
+      "rarity": 2,
+      "fromMission": 99,
+      "implemented": true
+    },
+    {
+      "name": "HEADAHEAD",
+      "rarity": 2,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "HEAVYTURRET",
+      "rarity": 2,
+      "fromMission": 99,
+      "implemented": true
+    },
+    {
+      "name": "KEVLARUP",
+      "rarity": 2,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "MEATHEADS",
+      "rarity": 2,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "MEDKIT",
+      "rarity": 2,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "REFLECTION",
+      "rarity": 2,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "SABOTAGE",
+      "rarity": 2,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "SHIELDSHEALTH",
+      "rarity": 2,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "AIRSTRIKE",
+      "rarity": 3,
+      "fromMission": 99,
+      "implemented": true
+    },
+    {
+      "name": "APOCALYPSE",
+      "rarity": 3,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "BIGMEDKIT",
+      "rarity": 3,
+      "fromMission": 40,
+      "implemented": true
+    },
+    {
+      "name": "BIGROCKET",
+      "rarity": 3,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "CLUSTERGRENADE",
+      "rarity": 3,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "DISARMED",
+      "rarity": 3,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "ELITEMINIGUN",
+      "rarity": 3,
+      "fromMission": 99,
+      "implemented": true
+    },
+    {
+      "name": "ELITESNIPER",
+      "rarity": 3,
+      "fromMission": 99,
+      "implemented": true
+    },
+    {
+      "name": "ELITESWAT",
+      "rarity": 3,
+      "fromMission": 99,
+      "implemented": true
+    },
+    {
+      "name": "HEAVYDRONE",
+      "rarity": 3,
+      "fromMission": 99,
+      "implemented": true
+    },
+    {
+      "name": "IMMORTAL",
+      "rarity": 3,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "MINEENEMY",
+      "rarity": 3,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "ROCKETTURRET",
+      "rarity": 3,
+      "fromMission": 1,
+      "implemented": true
+    },
+    {
+      "name": "SLOWMOVE",
+      "rarity": 3,
+      "fromMission": 1,
+      "implemented": true
+    }
+  ],
+  "unresolvedRows": [
+    {
+      "name": "ARMYSPAWNFAST",
+      "rarity": -1,
+      "fromMission": -1,
+      "implemented": false,
+      "reason": "No matching serialized Card component in MainScene."
+    },
+    {
+      "name": "CANTDIENOW",
+      "rarity": -1,
+      "fromMission": -1,
+      "implemented": false,
+      "reason": "No matching serialized Card component in MainScene."
+    },
+    {
+      "name": "DEPLOYALL",
+      "rarity": -1,
+      "fromMission": -1,
+      "implemented": false,
+      "reason": "No matching serialized Card component in MainScene."
+    },
+    {
+      "name": "DESTRUCTIVESHOT",
+      "rarity": -1,
+      "fromMission": -1,
+      "implemented": false,
+      "reason": "No matching serialized Card component in MainScene."
+    },
+    {
+      "name": "ENGINEER",
+      "rarity": -1,
+      "fromMission": -1,
+      "implemented": false,
+      "reason": "No matching serialized Card component in MainScene."
+    },
+    {
+      "name": "GRENADETIMING",
+      "rarity": -1,
+      "fromMission": -1,
+      "implemented": false,
+      "reason": "No matching serialized Card component in MainScene."
+    },
+    {
+      "name": "HEALINGSALVE",
+      "rarity": -1,
+      "fromMission": -1,
+      "implemented": false,
+      "reason": "No matching serialized Card component in MainScene."
+    },
+    {
+      "name": "HEALTEAM",
+      "rarity": -1,
+      "fromMission": -1,
+      "implemented": false,
+      "reason": "No matching serialized Card component in MainScene."
+    },
+    {
+      "name": "HELIASSAULT",
+      "rarity": -1,
+      "fromMission": -1,
+      "implemented": false,
+      "reason": "No matching serialized Card component in MainScene."
+    },
+    {
+      "name": "INCREASERANKS",
+      "rarity": -1,
+      "fromMission": -1,
+      "implemented": false,
+      "reason": "No matching serialized Card component in MainScene."
+    },
+    {
+      "name": "MAXHEALTHINCSOL",
+      "rarity": -1,
+      "fromMission": -1,
+      "implemented": false,
+      "reason": "No matching serialized Card component in MainScene."
+    },
+    {
+      "name": "PLAYERINVIS",
+      "rarity": -1,
+      "fromMission": -1,
+      "implemented": false,
+      "reason": "No matching serialized Card component in MainScene."
+    },
+    {
+      "name": "SCORESTREAK",
+      "rarity": -1,
+      "fromMission": -1,
+      "implemented": false,
+      "reason": "No matching serialized Card component in MainScene."
+    },
+    {
+      "name": "SEEENEMY",
+      "rarity": -1,
+      "fromMission": -1,
+      "implemented": false,
+      "reason": "No matching serialized Card component in MainScene."
+    },
+    {
+      "name": "SHIELDINGSHOT",
+      "rarity": -1,
+      "fromMission": -1,
+      "implemented": false,
+      "reason": "No matching serialized Card component in MainScene."
+    },
+    {
+      "name": "SHRINK",
+      "rarity": -1,
+      "fromMission": -1,
+      "implemented": false,
+      "reason": "No matching serialized Card component in MainScene."
+    },
+    {
+      "name": "HEALTHYUNIT",
+      "rarity": 1,
+      "fromMission": 1,
+      "implemented": false,
+      "reason": "No matching serialized Card component in MainScene."
+    },
+    {
+      "name": "HELISTRIKE",
+      "rarity": 2,
+      "fromMission": 99,
+      "implemented": false,
+      "reason": "No matching serialized Card component in MainScene."
+    },
+    {
+      "name": "INVISIBILITY",
+      "rarity": 2,
+      "fromMission": 99,
+      "implemented": false,
+      "reason": "No matching serialized Card component in MainScene."
+    },
+    {
+      "name": "MIRRORMYSELF",
+      "rarity": 2,
+      "fromMission": 99,
+      "implemented": false,
+      "reason": "No matching serialized Card component in MainScene."
+    },
+    {
+      "name": "SHIELDRAFFLE",
+      "rarity": 2,
+      "fromMission": 1,
+      "implemented": false,
+      "reason": "No matching serialized Card component in MainScene."
+    },
+    {
+      "name": "CHEMICALUNIT",
+      "rarity": 3,
+      "fromMission": 99,
+      "implemented": false,
+      "reason": "No matching serialized Card component in MainScene."
+    },
+    {
+      "name": "ELITETANK",
+      "rarity": 3,
+      "fromMission": 99,
+      "implemented": false,
+      "reason": "No matching serialized Card component in MainScene."
+    },
+    {
+      "name": "MADGANG",
+      "rarity": 3,
+      "fromMission": 99,
+      "implemented": false,
+      "reason": "No matching serialized Card component in MainScene."
+    },
+    {
+      "name": "TOPBUILDERS",
+      "rarity": 3,
+      "fromMission": 99,
+      "implemented": false,
+      "reason": "No matching serialized Card component in MainScene."
+    }
+  ],
+  "packs": [
+    {
+      "name": "BRONZE_CARDPACK",
+      "priceGold": 19,
+      "priceWarBucks": 0,
+      "enumValue": 1,
+      "cardCount": 10,
+      "fixedRarity": 1,
+      "fixedRarityCount": 7,
+      "guaranteedRarity": 1,
+      "maxRarity": 2
+    },
+    {
+      "name": "SILVER_CARDPACK",
+      "priceGold": 39,
+      "priceWarBucks": 0,
+      "enumValue": 2,
+      "cardCount": 10,
+      "fixedRarity": 2,
+      "fixedRarityCount": 6,
+      "guaranteedRarity": 2,
+      "maxRarity": 3
+    },
+    {
+      "name": "GOLD_CARDPACK",
+      "priceGold": 69,
+      "priceWarBucks": 0,
+      "enumValue": 3,
+      "cardCount": 10,
+      "fixedRarity": 3,
+      "fixedRarityCount": 5,
+      "guaranteedRarity": 2,
+      "maxRarity": 3
+    },
+    {
+      "name": "THREE_CARDS",
+      "priceGold": 0,
+      "priceWarBucks": 1200,
+      "enumValue": 6,
+      "cardCount": 3,
+      "fixedRarity": 0,
+      "fixedRarityCount": 0,
+      "guaranteedRarity": 1,
+      "maxRarity": 3
+    }
+  ]
+}

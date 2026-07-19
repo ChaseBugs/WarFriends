@@ -14,7 +14,7 @@ Each entry is keyed by:
 
 - `clientVersion`;
 - deterministic `catalogRevision`;
-- `kind` (`weapon`, `unit`, `rank`, `weaponFeature`, or `visual`);
+- `kind` (`weapon`, `unit`, `rank`, `weaponFeature`, `visual`, `card`, or `cardPack`);
 - Google2u `key`.
 
 An entry also stores availability, source path/SHA-256/schema version, an entry content hash, and a
@@ -27,6 +27,9 @@ and exact `ARMYPOWER` value. Weapon-feature reference documents preserve nine DP
 each of 11 categories without making the incomplete black-market acquisition path playable.
 Visual documents join the Google2u price/effect row to a serialized asset in one of four player
 customization categories; the one sheet row without an asset remains explicitly unresolved.
+Card documents join each definition row to its serialized playable component, while card-pack
+documents preserve source currency prices, card counts, fixed-rarity slots, and remaining rarity
+ranges.
 
 ### `gameCatalogReleases`
 
@@ -51,6 +54,10 @@ the same revision and upserts the same keys, making startup synchronization idem
 - 4,124 normal, 684 special, and 216 Elite unit rows;
 - 146 playable visual rows across four categories and 1 unresolved visual row;
 - 84 of the playable visual rows use the normal shop acquisition source.
+- 58 playable War Card rows and 25 unresolved definition rows;
+- 4 source-priced card-pack rows.
+
+The current release contains 441 queryable documents in total.
 
 Unresolved/helper entries are retained as evidence with non-playable availability. Database
 presence alone must never authorize their purchase.
@@ -69,8 +76,8 @@ and entry count.
 
 ## Extension rules
 
-Future extractors should follow the same model for cards, packs, mission tables,
-achievements, Arena loot, and archived live-ops sheets:
+Future extractors should follow the same model for mission tables, achievements, Arena loot, and
+archived live-ops sheets:
 
 1. record client version and exact source hash;
 2. preserve unresolved rows with an explicit reason;
@@ -81,6 +88,7 @@ achievements, Arena loot, and archived live-ops sheets:
 ## Key implementation files
 
 - `Server/src/services/gameCatalogService.ts`
+- `Server/scripts/Extract-CardCatalog.mjs`
 - `Server/src/scripts/syncGameCatalog.ts`
 - `Server/src/db.ts`
 - `Server/src/tests/gameCatalog.test.ts`

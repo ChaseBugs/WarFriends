@@ -100,6 +100,14 @@ export interface PlayerProgressionState {
    */
   visualInventory?: VisualInventoryState;
   /**
+   * Authoritative normal War Card counts and squad-card timing fields.
+   *
+   * The public shape is CardManager.CardManagerData. Pack purchases update this object in
+   * the same optimistic-concurrency transaction as Gold/WarBucks so a replay cannot grant
+   * the client-selected pack contents twice.
+   */
+  cardInventory?: CardInventoryState;
+  /**
    * Persistent War Arena run state consumed by WarArena.WarArenaData.
    *
    * The recovered client keeps this object in PlayerData and receives the same public shape
@@ -236,6 +244,35 @@ export interface VisualInventoryState {
   visuals: Record<string, SavedVisualState>;
   slots: Record<string, SavedVisualSlotState>;
   previousHeadDecal: string;
+}
+
+/** CardManager.CardData from the recovered client. */
+export interface SavedCardState {
+  amount: number;
+}
+
+/**
+ * CardManager.BuddyCardData. Buddy cards are not granted by normal card packs, but the exact
+ * fields are retained so squad deposit/withdraw implementation can share this state later.
+ */
+export interface SavedBuddyCardState {
+  amount: number;
+  buddyName: string;
+  equippedVisuals: Record<string, SavedVisualSlotState>;
+  unityType: number;
+  primaryWeapon: number;
+  secondaryWeapon: number;
+  armypower: number;
+  level: number;
+}
+
+/** CardManager.CardManagerData; property names intentionally match Newtonsoft JSON. */
+export interface CardInventoryState {
+  cardData: Record<string, SavedCardState>;
+  buddyCardData: Record<string, SavedBuddyCardState>;
+  nextWithdraw: number;
+  nextBuddyDeposit: number;
+  extraSlot: boolean;
 }
 
 export interface AssignmentRecordState {

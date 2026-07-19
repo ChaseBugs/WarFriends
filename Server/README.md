@@ -98,12 +98,13 @@ Working end-to-end (verified live):
   `PayOneDogTag`, and gold-validated `RefillDogtags` using the recovered 900-second/5-tag
   balancing and refill-price formula.
 - **Versioned client-data material database**: MongoDB collections `gameCatalogEntries` and
-  `gameCatalogReleases` persist the recovered 4.9.5 weapon, soldier/unit, rank, power, and player
-  visual data as 354 queryable records. Every playable weapon record joins its shop row to the full
+  `gameCatalogReleases` persist the recovered 4.9.5 weapon, soldier/unit, rank, power, player
+  visual, War Card, and card-pack data as 441 queryable records. Every playable weapon record joins its shop row to the full
   upgrade table; every playable unit joins roster/deployment/purchase data to normal, special, and
   elite level rows; every visual joins its price/effect row to a serialized client asset. Nine
   unresolved Pulse Rifles, three helper units, 18 unresolved unit rows, and the assetless
-  `HEAD_MASK_ROCKET` visual are retained with explicit non-playable states instead of being
+  `HEAD_MASK_ROCKET` visual and 25 card definitions without serialized Card components are
+  retained with explicit non-playable states instead of being
   discarded or silently enabled. Per-entry SHA-256 hashes and a deterministic release hash make
   balancing changes auditable. Startup idempotently writes all immutable revision entries before switching the
   current 4.9.5 release pointer, so readers cannot observe a partial synchronization. Run
@@ -126,6 +127,15 @@ Working end-to-end (verified live):
   atomic. Event/Arena/loyalty/assignment/value-pack grants, parts, rentals, and unsupported
   discounts remain fail-closed. Run `npm run verify:visual-catalog` to compare the artifact with
   MainScene.
+- **War Card inventory and card packs**: exact `CardManagerData` is persisted and returned at boot.
+  `scripts/Extract-CardCatalog.mjs` reproduces 58 playable cards, 25 unresolved definitions, and
+  four source-priced packs from MainScene. Buffered `BuyCardPack` validates unlock level, pack,
+  count, playable IDs, fixed and ranged rarity slots, discount, timing, and funds; then atomically
+  debits Gold/WarBucks and increments card amounts with `BufferId` replay protection and exact
+  rollback fields. The stock client selects card identities before sending and cannot consume
+  replacement IDs on success, so identities inside the verified rarity envelope remain
+  client-selected until a nonce or client adapter is added. Run `npm run verify:card-catalog` to
+  verify the generated artifact.
 - **Weapon inventory foundation**: private and public player snapshots now serialize the
   exact recovered `InventoryData.slots` and `LevelManagerData.savedWeapons` structures with
   the 4.9.5 starter loadout. Stock buffered `BuyWeapon`/`EquipWeapon` supports all 84
@@ -228,8 +238,9 @@ allowlist of analytics/impression actions is safely ignored.
 - **Squad extensions** — card pool and squad events/wars are not implemented. Chat unread
   state is persistent, but actual channel delivery still requires Photon Chat repointing or
   a compatible replacement transport.
-- **Item economy expansion** — unit Elite upgrades, normal shop visuals, and complete normal-
-  loadout ArmyPower are now source-authoritative. Add cards, packs, black-market features, rentals,
+- **Item economy expansion** — unit Elite upgrades, normal shop visuals, normal card-pack
+  purchase, and complete normal-loadout ArmyPower are implemented. Add authoritative card reward
+  and consumption events, squad card crafting, black-market features, rentals,
   VIP purchasing, and non-shop visual reward delivery. Normal unit purchase is authoritative for 23
   non-tutorial roster units, and the tutorial unit is persisted through its first equip event;
   three helper rows and 18 ArmyUpgrades rows without LevelManager objects remain closed. All 84 resolvable

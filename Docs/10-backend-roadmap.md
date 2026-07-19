@@ -17,10 +17,14 @@ remaining work by gameplay dependency rather than duplicating every `DatabaseAct
 ### Complete remaining inventory families
 
 - non-shop visual rewards, parts, offers, and rentals;
-- war cards, card packs, crafting, and squad card pool;
+- card reward/consumption events, crafting, and the squad card pool;
 - lootboxes and Arena crowns;
 - offers, rentals, VIP, and subscriptions;
 - platform-verified real-money purchase receipts and refunds.
+
+Normal Gold/WarBucks card-pack purchase and `CardManagerData` persistence are implemented. The
+stock protocol still lets the client select identities inside a server-validated rarity envelope;
+see [War Cards and card packs](12-war-cards-and-card-packs.md) for the compatibility boundary.
 
 ## Progression and live operations
 

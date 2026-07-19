@@ -5,11 +5,12 @@ import generatedUnitCatalog from "../data/unitCatalog.generated.json";
 import generatedUnitUpgradeCatalog from "../data/unitUpgradeCatalog.generated.json";
 import generatedWeaponCatalog from "../data/weaponCatalog.generated.json";
 import generatedVisualCatalog from "../data/visualCatalog.generated.json";
+import generatedCardCatalog from "../data/cardCatalog.generated.json";
 import { WEAPON_UPGRADE_CATALOG } from "../data/weaponUpgradeCatalog.generated";
 
 export const GAME_CATALOG_CLIENT_VERSION = "4.9.5";
 
-export type GameCatalogKind = "weapon" | "unit" | "rank" | "weaponFeature" | "visual";
+export type GameCatalogKind = "weapon" | "unit" | "rank" | "weaponFeature" | "visual" | "card" | "cardPack";
 export type GameCatalogAvailability = "playable" | "helper" | "reference" | "unresolved";
 
 export interface GameCatalogEntryDocument {
@@ -40,6 +41,10 @@ export interface GameCatalogCounts {
   playableVisuals: number;
   unresolvedVisuals: number;
   shopVisuals: number;
+  cards: number;
+  playableCards: number;
+  unresolvedCards: number;
+  cardPacks: number;
   units: number;
   playableUnits: number;
   helperUnits: number;
@@ -115,11 +120,24 @@ interface VisualCatalogArtifact extends CatalogArtifact<Record<string, unknown>>
   unresolvedRows: Array<Record<string, unknown>>;
 }
 
+interface CardCatalogArtifact {
+  schemaVersion: number;
+  clientVersion: string;
+  source: string;
+  sourceSha256: string;
+  unlockLevel: number;
+  rarityProbabilities: Record<string, number>;
+  cards: Array<Record<string, unknown>>;
+  unresolvedRows: Array<Record<string, unknown>>;
+  packs: Array<Record<string, unknown>>;
+}
+
 const weapons = generatedWeaponCatalog as unknown as WeaponArtifact;
 const units = generatedUnitCatalog as unknown as UnitArtifact;
 const unitUpgrades = generatedUnitUpgradeCatalog as unknown as UnitUpgradeArtifact;
 const armyPower = generatedArmyPowerCatalog as unknown as ArmyPowerArtifact;
 const visuals = generatedVisualCatalog as unknown as VisualCatalogArtifact;
+const cards = generatedCardCatalog as unknown as CardCatalogArtifact;
 
 /**
  * JSON.stringify preserves insertion order, which is not a safe canonical form for hashes.
@@ -149,7 +167,7 @@ function requiredName(row: Record<string, unknown>, family: string): string {
   return row.name;
 }
 
-function sourceFor(artifact: CatalogArtifact<unknown>): Pick<GameCatalogEntryDocument,
+function sourceFor(artifact: Pick<CatalogArtifact<unknown>, "schemaVersion" | "source" | "sourceSha256">): Pick<GameCatalogEntryDocument,
   "source" | "sourceSha256" | "sourceSchemaVersion"> {
   return {
     source: artifact.source,
@@ -297,6 +315,35 @@ export function buildGameCatalog(): BuiltGameCatalog {
     });
   }
 
+  const cardSource = sourceFor(cards);
+  for (const definition of cards.cards) {
+    rawEntries.push({
+      kind: "card",
+      key: requiredName(definition, "Card"),
+      availability: definition.implemented === true ? "playable" : "reference",
+      ...cardSource,
+      data: { definition, unlockLevel: cards.unlockLevel },
+    });
+  }
+  for (const definition of cards.unresolvedRows) {
+    rawEntries.push({
+      kind: "card",
+      key: requiredName(definition, "Unresolved card"),
+      availability: "unresolved",
+      ...cardSource,
+      data: { definition },
+    });
+  }
+  for (const definition of cards.packs) {
+    rawEntries.push({
+      kind: "cardPack",
+      key: requiredName(definition, "Card pack"),
+      availability: "playable",
+      ...cardSource,
+      data: { definition, rarityProbabilities: cards.rarityProbabilities },
+    });
+  }
+
   rawEntries.sort((left, right) =>
     left.kind.localeCompare(right.kind) || left.key.localeCompare(right.key));
   const duplicateKeys = rawEntries.filter((entry, index) =>
@@ -342,6 +389,10 @@ export function buildGameCatalog(): BuiltGameCatalog {
     playableVisuals: visuals.visuals.length,
     unresolvedVisuals: visuals.unresolvedRows.length,
     shopVisuals: visuals.visuals.filter((row) => row.purchasable === "shop").length,
+    cards: cards.cards.length + cards.unresolvedRows.length,
+    playableCards: cards.cards.filter((row) => row.implemented === true).length,
+    unresolvedCards: cards.unresolvedRows.length,
+    cardPacks: cards.packs.length,
     units: playableUnits.length + helperUnits.length + unresolvedUnits.length,
     playableUnits: playableUnits.length,
     helperUnits: helperUnits.length,
@@ -358,6 +409,7 @@ export function buildGameCatalog(): BuiltGameCatalog {
     { path: unitUpgrades.source, sha256: unitUpgrades.sourceSha256, schemaVersion: unitUpgrades.schemaVersion },
     { path: armyPower.source, sha256: armyPower.sourceSha256, schemaVersion: armyPower.schemaVersion },
     { path: visuals.source, sha256: visuals.sourceSha256, schemaVersion: visuals.schemaVersion },
+    { path: cards.source, sha256: cards.sourceSha256, schemaVersion: cards.schemaVersion },
   ]) sourceMap.set(`${source.path}:${source.schemaVersion}`, source);
 
   return {

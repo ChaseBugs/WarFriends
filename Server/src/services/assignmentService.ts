@@ -64,6 +64,12 @@ import {
   visualRecoveryFields,
   VISUAL_CATALOG,
 } from "./visualInventoryService";
+import {
+  cardPackRecoveryFields,
+  parseCardPackPurchaseData,
+  purchaseCardPackState,
+  requestedCardPackName,
+} from "./cardInventoryService";
 
 /**
  * Daily assignments and the recovered RequestBuffer transaction boundary.
@@ -718,6 +724,37 @@ export function processAssignmentBufferState(
           // this complete snapshot and both wallet balances to roll them back on failure.
           ...visualRecoveryFields(working),
           DecalId: requestedVisualName(request.data),
+        });
+      }
+      continue;
+    }
+
+    if (request.action === DbAction.BuyCardPack) {
+      try {
+        // CardManager has already added the locally rolled cards before transport. Rebuild
+        // pack price/count/rarity rules from MainScene and add only source-valid card IDs;
+        // the request never supplies an authoritative price.
+        const result = purchaseCardPackState(
+          working,
+          playerLevel,
+          parseCardPackPurchaseData(request.data),
+        );
+        working = result.state;
+        responses.push({
+          ActionId: request.action,
+          Result: SUCCESS,
+          CardPack: result.pack.name,
+          Cards: result.cards,
+        });
+      } catch (error) {
+        const code = error instanceof ApiError ? error.code : ApiErrorCode.InternalServerError;
+        responses.push({
+          ActionId: request.action,
+          Result: code,
+          // Codes 100/112/13601 make the stock parser replace its optimistic local card
+          // counts and both wallet balances with this last committed server snapshot.
+          ...cardPackRecoveryFields(working),
+          CardPack: requestedCardPackName(request.data),
         });
       }
       continue;

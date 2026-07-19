@@ -83,12 +83,17 @@ Player customization purchases and equipment use the same atomic buffer boundary
 catalog, ownership, expiry, VIP, slot, and rollback rules are documented in
 [Player visuals and decals](11-player-visuals-and-decals.md).
 
+Card-pack purchases also use this boundary. Their exact `CardManagerData` state, extracted pack
+prices and rarity rules, replay behavior, and stock-client random-selection limitation are
+documented in [War Cards and card packs](12-war-cards-and-card-packs.md).
+
 ## Key implementation files
 
 - `Server/src/services/economyService.ts`
 - `Server/src/services/itemInventoryService.ts`
 - `Server/src/services/unitInventoryService.ts`
 - `Server/src/services/visualInventoryService.ts`
+- `Server/src/services/cardInventoryService.ts`
 - `Server/src/services/assignmentService.ts` (buffer dispatcher)
 - `Tools/Extract-WeaponCatalog.ps1`
 - `Server/scripts/Extract-WeaponUpgradeCatalog.ps1`
