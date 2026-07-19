@@ -83,7 +83,7 @@ import {
 } from "../services/assignmentService";
 import { assignmentHandlers } from "../handlers/assignments";
 import { pvpGameReward, pvpLevelFields, winnerFromEndReason } from "../services/matchService";
-import { buildDatabaseSquad } from "../services/squadWireService";
+import { buildDatabaseSquad, buildSquadWarsDivision } from "../services/squadWireService";
 import { buildPlayerLeaderboardItem } from "../services/leaderboardService";
 import { playerCredentialMatches } from "../services/authService";
 
@@ -428,6 +428,22 @@ test("squad snapshots use the recovered AANECPGDMGM field contract", () => {
   assert.equal(wire.Size, 1);
   assert.equal(wire.SkillRequirement, 25);
   assert.equal(wire.name, undefined);
+});
+
+test("Squad Wars division uses the CLBPOGIEGAN cache and item fields", () => {
+  const alpha = newSquad("Alpha", "alpha-leader");
+  alpha.squadPoints = 100;
+  const bravo = newSquad("Bravo", "bravo-leader");
+  bravo.squadPoints = 80;
+  const wire = buildSquadWarsDivision("4-gold", "reconstructed-4-gold", [alpha, bravo]);
+  const items = wire.Items as Record<string, unknown>[];
+
+  assert.equal(wire.LeagueId, "4-gold");
+  assert.equal(wire.SquadWarsId, "reconstructed-4-gold");
+  assert.equal(items[0]?.Id, "Alpha");
+  assert.equal(items[0]?.RoundId, "4-gold");
+  assert.equal(items[0]?.Position, 1);
+  assert.equal(items[1]?.Position, 2);
 });
 
 test("experience leaderboard items use the FHIPGDADNFG field contract", () => {

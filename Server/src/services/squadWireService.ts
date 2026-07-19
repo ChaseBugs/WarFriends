@@ -36,3 +36,26 @@ export function buildDatabaseSquad(squad: SquadDTO): Record<string, unknown> {
     SquadWarWins: 0,
   };
 }
+
+/**
+ * Build action 124's exact division payload for CLBPOGIEGAN/AANECPGDMGM.
+ *
+ * The recovered client caches the array under the top-level LeagueId, then reads RoundId and
+ * Position from every item. Override those fields at the wire boundary instead of mutating a
+ * squad's persistent league metadata merely because a round leaderboard was viewed.
+ */
+export function buildSquadWarsDivision(
+  roundId: string,
+  squadWarsId: string,
+  squads: readonly SquadDTO[],
+): Record<string, unknown> {
+  return {
+    LeagueId: roundId,
+    SquadWarsId: squadWarsId,
+    Items: squads.map((squad, index) => ({
+      ...buildDatabaseSquad(squad),
+      RoundId: roundId,
+      Position: index + 1,
+    })),
+  };
+}

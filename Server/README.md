@@ -84,6 +84,10 @@ Working end-to-end (verified live):
   notification in the membership transaction. The operational integrity audit reports duplicate
   rosters, broken founders/leaders, and missing accounts; repair mode changes only unambiguous
   player mirrors and safely returns orphaned normal card deposits.
+- **Squad Wars reads**: `GetSquadWarsDivision` validates its round identifier and returns the
+  recovered `LeagueId`/`SquadWarsId`/`Items` contract with ranked `RoundId`/`Position` squad rows.
+  The identifier is explicitly marked reconstructed until the retired season scheduler and
+  reward tables are recovered or replaced by configured server data.
 - **PvP (WebSocket `/hub`)**: identify → `FindMatch` (matchmaking pairs by army-power within
   a widening league window) → `MatchFound` → `JoinMatch` → `MatchStart` → in-match
   `MatchEvent` relay to the opponent → `MatchResult`. Room joins/events are restricted to

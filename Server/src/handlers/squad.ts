@@ -21,7 +21,7 @@ import {
 } from "../services/squadService";
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import { authed, type HandlerEntry } from "./types";
-import { buildDatabaseSquad } from "../services/squadWireService";
+import { buildDatabaseSquad, buildSquadWarsDivision } from "../services/squadWireService";
 import { buildDatabasePlayer, progressionForPlayer } from "../services/playerStateService";
 import { findById } from "../services/playerService";
 import { informSquadLeaderAboutEvent, saveSquadChatCursor } from "../services/squadSocialService";
@@ -45,6 +45,14 @@ function targetId(req: Record<string, unknown>): string {
     req.Id ??
     req.id;
   return typeof id === "string" ? id : "";
+}
+
+function squadWarsRoundId(req: Record<string, unknown>): string {
+  const value = typeof req.RoundId === "string" ? req.RoundId.trim() : "";
+  if (!value || value.length > 128 || !/^[\p{L}\p{N}_.:-]+$/u.test(value)) {
+    throw new ApiError(ApiErrorCode.UnknownAction, "RoundId is invalid.");
+  }
+  return value;
 }
 
 function integer(value: unknown, fallback = 0): number {
@@ -284,6 +292,18 @@ export const squadHandlers: Record<number, HandlerEntry> = {
   [DbAction.GetSquadsByExperience]: authed(async () =>
     ok(DbAction.GetSquadsByExperience, { Items: (await listByExperience()).map(buildDatabaseSquad) }),
   ),
+
+  [DbAction.GetSquadWarsDivision]: authed(async ({ req }) => {
+    const round = squadWarsRoundId(req);
+    const division = await listByExperience(50);
+    // The archived production season ID is absent from the recovered APK. Use a stable,
+    // explicitly reconstruction-owned ID until persisted season scheduling is implemented.
+    return ok(DbAction.GetSquadWarsDivision, buildSquadWarsDivision(
+      round,
+      `reconstructed-${round}`,
+      division,
+    ));
+  }),
 
   [DbAction.FindSuggestedSquads]: authed(async () =>
     ok(DbAction.FindSuggestedSquads, { Items: (await listByExperience(20)).map(buildDatabaseSquad) }),

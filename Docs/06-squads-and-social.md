@@ -76,6 +76,16 @@ so a concurrent gameplay mutation becomes a reported conflict instead of being o
 Ambiguous roster/founder/leader problems remain manual by design; the tool never guesses which
 squad or manager should own a player.
 
+## Squad Wars division reads
+
+`GetSquadWarsDivision` (action 124) now returns the exact top-level `LeagueId`, `SquadWarsId`, and
+`Items` array consumed by `CLBPOGIEGAN`. Each item uses the normal `AANECPGDMGM` squad contract and
+adds its one-based `Position` plus the requested `RoundId`. Results are ordered from the
+MongoDB-authoritative squad leaderboard. Because the archived production season scheduler is not
+present in either recovered APK, `SquadWarsId` is deliberately prefixed `reconstructed-`; it must
+not be mistaken for recovered live-ops data. Joining seasons, contributions, and reward claims
+remain separate state-changing work.
+
 ## Squad creation economy
 
 Squad creation is a paid, server-authoritative operation. The recovered
