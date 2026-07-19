@@ -140,6 +140,13 @@ test("player data uses the recovered DynamoDB attribute wire format", () => {
   assert.deepEqual(data.DogTagSeconds, { N: "4500" });
   assert.deepEqual(data.DogTagMax, { N: "4500" });
   assert.equal(JSON.parse((data.Settings as { S: string }).S).maintenance, true);
+  const inventory = JSON.parse((data.InventoryData as { S: string }).S);
+  const levelManager = JSON.parse((data.LevelManagerData as { S: string }).S);
+  assert.deepEqual(inventory.slots["0"], {
+    name: "Google2u.AssaultRifle_AK47",
+    weaponIndex: 1,
+  });
+  assert.equal(levelManager.savedWeapons["Google2u.AssaultRifle_AK47"].bought, true);
   const starter = JSON.parse((data.StarterAssignmentsData as { S: string }).S);
   assert.equal(starter.deadline, 1_700_604_800);
   assert.deepEqual(starter.assignments, {});
