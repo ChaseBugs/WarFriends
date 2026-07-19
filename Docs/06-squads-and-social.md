@@ -35,6 +35,11 @@ The backend stores recipient-owned normal messages and challenges. Reads are bou
 soft visibility change, and expiring messages enforce logical expiry even before MongoDB's TTL
 monitor deletes the row. Sender rate limits and idempotency keys reduce replay and spam.
 
+War Card contribution reminders are also implemented as recovered `DepositWarcards` inbox
+messages. The backend validates both players against the same server-owned squad roster, rejects
+self-notification, emits the five-field sender snapshot consumed by the original UI, and limits
+each actor/target pair to one persistent reminder per UTC day.
+
 Challenge acceptance validates the recipient and message state, but the live challenge-to-match
 handoff is still incomplete.
 
@@ -47,20 +52,28 @@ seen timestamp. The backend currently stores that timestamp monotonically and re
 Actual chat delivery still requires Photon Chat repointing or a compatible replacement transport,
 plus moderation, retention, and push-notification fan-out.
 
+## Card-pool integration
+
+Normal-card deposits, cross-player withdrawals, timed crafting, claims, and member contribution
+reminders are implemented. Cross-player withdrawal uses a MongoDB transaction so donor pool,
+recipient inventory/cooldown, and donor reputation commit together. Existing Buddy snapshots can
+be withdrawn, but creating a new authoritative Buddy deposit remains closed because its randomized
+unit, weapon, visual, level, and Army Power inputs have not all been recovered.
+
 ## Missing squad systems
 
-- card pool deposit/withdraw/craft/claim;
-- member reminders to deposit;
 - squad events, divisions, milestones, and wars;
 - atomic multi-document transactions for every membership mutation;
 - chat delivery and moderation.
 
-These actions remain rejected rather than mutating guessed card or event state.
+Unrecovered actions remain rejected rather than mutating guessed card or event state.
 
 ## Key implementation files
 
 - `Server/src/services/squadService.ts`
 - `Server/src/services/squadWireService.ts`
 - `Server/src/services/squadSocialService.ts`
+- `Server/src/services/squadCardPoolService.ts`
+- `Server/src/handlers/cards.ts`
 - `Server/src/handlers/squad.ts`
 - `Server/src/services/socialService.ts`

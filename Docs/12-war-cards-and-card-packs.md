@@ -134,6 +134,15 @@ latest donor pool and recipient `CardManagerData` when another member already to
 Existing valid Buddy deposits can be withdrawn, preserve their full loadout snapshot, and respect
 the recovered maximum of ten owned Buddy cards.
 
+`NotifyPlayerToDeposit` (action 178) sends a persistent card-pool reminder to another current
+squad member. The request contains only `SquadMemberId`; the server derives the squad from the
+authenticated actor and verifies that actor and target are distinct members of the same
+authoritative roster. It then writes the recovered `DepositWarcards` message type 28 with the
+exact compact sender snapshot parsed by `BOAFLMMKCGB`: `PlayerName`, `Level`, `SquadId`,
+`SquadRank`, and `AdminPlayerId`. One actor-to-target reminder per UTC day is persisted through a
+unique idempotency key, so HTTP retries return the first message and modified clients cannot spam
+the same member. This is an inbox message; device push fan-out remains a separate operations task.
+
 ## Compatibility and trust boundary
 
 The unmodified client chooses card identities locally and adds them to its local inventory before
@@ -158,8 +167,7 @@ The following systems are still fail-closed or incomplete:
 
 - consuming War Cards during an authoritative PvP battle;
 - granting cards or card packs from missions, Arena, assignments, offers, and achievements;
-- authoritative Buddy snapshot generation/deposit, its 480-minute timer, and deposit-request
-  notifications;
+- authoritative Buddy snapshot generation/deposit and its 480-minute timer;
 - purchase/entitlement logic for the battle-card `extraSlot` flag;
 - subscription-backed instant `CraftAndClaimCard`;
 - server-owned offer/subscription discounts;
@@ -171,6 +179,7 @@ The following systems are still fail-closed or incomplete:
 - `Server/src/data/cardCatalog.generated.json`
 - `Server/src/services/cardInventoryService.ts`
 - `Server/src/services/squadCardPoolService.ts`
+- `Server/src/services/squadSocialService.ts`
 - `Server/src/services/assignmentService.ts`
 - `Server/src/handlers/cards.ts`
 - `Server/src/services/playerStateService.ts`

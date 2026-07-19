@@ -33,8 +33,12 @@ export interface MessageDoc {
   fromPlayerId: string;
   fromName: string;
   body: string;
-  /** Recovered inbox enum: Challenge(0), InformSquadLeaderAboutEvent(21), InGameMessage(27). */
-  messageType: 0 | 21 | 27;
+  /**
+   * Recovered inbox enum values currently emitted by this backend:
+   * Challenge(0), InformSquadLeaderAboutEvent(21), InGameMessage(27), and
+   * DepositWarcards(28).
+   */
+  messageType: 0 | 21 | 27 | 28;
   payload: Record<string, string | number>;
   otherPlayerJson: string;
   read: boolean;
@@ -225,7 +229,11 @@ type DynamoValue = { S: string } | { N: string } | { BOOL: boolean };
 export function toClientMessage(doc: MessageDoc): Record<string, DynamoValue> {
   const wire: Record<string, DynamoValue> = {
     MessageId: { S: doc.messageId },
-    PlayerId: { S: doc.fromPlayerId },
+    // HHFHFANGCEJ's local-message constructor assigns currentPlayer.id here, proving that
+    // PlayerId is the inbox owner/recipient. Sender identity has message-specific fields such as
+    // OpponentId, AdminPlayerId, or OtherPlayer. Emitting fromPlayerId caused read/ignore requests
+    // from an unmodified client to carry the wrong DynamoDB partition owner.
+    PlayerId: { S: doc.toPlayerId },
     MessageType: { N: String(doc.messageType) },
   };
   if (doc.read) wire.WasShown = { BOOL: true };
@@ -237,6 +245,16 @@ export function toClientMessage(doc: MessageDoc): Record<string, DynamoValue> {
       // Challenge parser expects GameType/Region as N and optional NumberOfMission as S.
       wire[key] = key === "GameType" || key === "Region" ? { N: String(value) } : { S: String(value) };
     }
+  } else if (doc.messageType === 28) {
+    // BOAFLMMKCGB does not parse the generic Title/Text fields. It constructs a lightweight
+    // DatabasePlayer directly from these five DynamoDB attributes and uses that player in the
+    // card-pool reminder row. Keep this adapter explicit so a harmless-looking refactor to the
+    // generic message shape cannot silently produce an empty sender name or a broken profile.
+    wire.PlayerName = { S: String(doc.payload.PlayerName ?? doc.fromName) };
+    wire.Level = { N: String(doc.payload.Level ?? 0) };
+    wire.SquadId = { S: String(doc.payload.SquadId ?? "") };
+    wire.SquadRank = { N: String(doc.payload.SquadRank ?? 0) };
+    wire.AdminPlayerId = { S: String(doc.payload.AdminPlayerId ?? doc.fromPlayerId) };
   } else {
     wire.Title = { S: doc.fromName };
     wire.Text = { S: doc.body };

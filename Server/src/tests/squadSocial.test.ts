@@ -9,6 +9,7 @@ import { processAssignmentBufferState } from "../services/assignmentService";
 import { createInitialProgression, buildPlayerData } from "../services/playerStateService";
 import {
   advanceSquadChatCursorState,
+  buildDepositWarcardsMessage,
   buildSquadEventMessage,
 } from "../services/squadSocialService";
 import { toClientMessage } from "../services/socialService";
@@ -83,5 +84,63 @@ test("squad event notification uses the message type and numeric suffix parsed b
 
   assert.match(message.messageId, new RegExp(`-${NOW}$`));
   assert.deepEqual(wire.MessageType, { N: "21" });
-  assert.deepEqual(wire.PlayerId, { S: actor.id });
+  assert.deepEqual(wire.PlayerId, { S: "leader-1" });
+});
+
+test("War Card deposit reminder emits the exact BOAFLMMKCGB player snapshot", () => {
+  const actor = playerDocument("member-1");
+  actor.player.level = 17;
+  const squad = {
+    ...newSquad("Test Squad", "leader-1"),
+    members: [
+      {
+        playerId: actor.id,
+        name: actor.player.accountName,
+        rank: 1,
+        squadPoints: 10,
+        joinedAt: NOW,
+        lastSeenChatTimestamp: 0,
+      },
+      {
+        playerId: "member-2",
+        name: "Player-member-2",
+        rank: 0,
+        squadPoints: 0,
+        joinedAt: NOW,
+        lastSeenChatTimestamp: 0,
+      },
+    ],
+    createdAt: new Date(NOW * 1_000),
+    updatedAt: new Date(NOW * 1_000),
+  } as SquadDocument;
+
+  const message = buildDepositWarcardsMessage(actor, "member-2", squad, new Date(NOW * 1_000));
+  const wire = toClientMessage(message);
+
+  assert.equal(message.toPlayerId, "member-2");
+  assert.equal(message.messageId, `DepositWarcards-${actor.player.accountName}-${NOW}`);
+  assert.deepEqual(wire, {
+    MessageId: { S: message.messageId },
+    PlayerId: { S: "member-2" },
+    MessageType: { N: "28" },
+    PlayerName: { S: actor.player.accountName },
+    Level: { N: "17" },
+    SquadId: { S: "Test Squad" },
+    SquadRank: { N: "1" },
+    AdminPlayerId: { S: actor.id },
+  });
+});
+
+test("War Card deposit reminder refuses to build for an actor outside the roster", () => {
+  const actor = playerDocument("outsider");
+  const squad = {
+    ...newSquad("Test Squad", "leader-1"),
+    createdAt: new Date(NOW * 1_000),
+    updatedAt: new Date(NOW * 1_000),
+  } as SquadDocument;
+
+  assert.throws(
+    () => buildDepositWarcardsMessage(actor, "member-2", squad, new Date(NOW * 1_000)),
+    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.NotSquadMember,
+  );
 });

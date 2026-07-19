@@ -152,6 +152,8 @@ Working end-to-end (verified live):
   the donor 5/15/45 rarity reputation, and starts the exact 240-minute recipient cooldown. Existing
   Buddy deposits transfer with their full loadout and a ten-card cap; new Buddy generation/deposit
   remains rejected until its randomized unit/weapon snapshot can be derived authoritatively.
+  `NotifyPlayerToDeposit` validates both players against the same roster and persists the exact
+  type-28 sender snapshot with one actor/target reminder per UTC day.
 - **Weapon inventory foundation**: private and public player snapshots now serialize the
   exact recovered `InventoryData.slots` and `LevelManagerData.savedWeapons` structures with
   the 4.9.5 starter loadout. Stock buffered `BuyWeapon`/`EquipWeapon` supports all 84
@@ -252,7 +254,8 @@ allowlist of analytics/impression actions is safely ignored.
 ### Next
 
 - **Squad extensions** — normal-card pool deposits/withdrawals are implemented. Authoritative
-  Buddy generation/deposit, card-pool request notifications, and squad events/wars remain. Chat
+  Buddy generation/deposit and squad events/wars remain. Type-28 card-pool request notifications
+  validate same-roster membership and use daily actor/target idempotency. Chat
   unread state is persistent, but actual channel delivery still requires Photon Chat repointing
   or a compatible replacement transport.
 - **Item economy expansion** — unit Elite upgrades, normal shop visuals, normal card-pack

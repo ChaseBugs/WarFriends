@@ -6,6 +6,7 @@ import { getByName } from "./squadService";
 import type { MessageDoc } from "./socialService";
 
 const SQUAD_EVENT_MESSAGE_TYPE = 21;
+const DEPOSIT_WARCARDS_MESSAGE_TYPE = 28;
 const MAX_CURSOR_CLOCK_SKEW_SECONDS = 300;
 
 export interface SquadChatCursorMutation {
@@ -115,5 +116,115 @@ export async function informSquadLeaderAboutEvent(
   }
   const existing = await messages().findOne({ idempotencyKey });
   if (!existing) throw new ApiError(ApiErrorCode.InternalServerError, "Squad event notification was not persisted.");
+  return existing as unknown as MessageDoc;
+}
+
+/**
+ * Build the exact DepositWarcards inbox item consumed by BOAFLMMKCGB in client 1.6.0.
+ *
+ * Unlike a normal text message, this notification contains a compact DatabasePlayer snapshot.
+ * The recovered constructor reads PlayerName, Level, SquadId, SquadRank, and AdminPlayerId, while
+ * HHFHFANGCEJ reads the common MessageId, PlayerId, and MessageType attributes. The squad member
+ * rank is taken from the authoritative roster rather than the player's denormalized mirror.
+ */
+export function buildDepositWarcardsMessage(
+  actor: PlayerDocument,
+  targetPlayerId: string,
+  squad: SquadDocument,
+  createdAt: Date,
+): MessageDoc {
+  const actorMember = squad.members.find((member) => member.playerId === actor.id);
+  if (!actorMember) {
+    throw new ApiError(ApiErrorCode.NotSquadMember, "Player is not a member of this squad.");
+  }
+
+  const unixTimestamp = Math.floor(createdAt.getTime() / 1_000);
+  return {
+    // The stock local constructor uses DepositWarcards-{player name}-{timestamp}. Retaining the
+    // same prefix makes diagnostics familiar, and the numeric suffix is required by the base
+    // message parser for chronological presentation.
+    messageId: `DepositWarcards-${actor.player.accountName}-${unixTimestamp}`,
+    toPlayerId: targetPlayerId,
+    fromPlayerId: actor.id,
+    fromName: actor.player.accountName,
+    body: "Please deposit War Cards into the squad card pool.",
+    messageType: DEPOSIT_WARCARDS_MESSAGE_TYPE,
+    payload: {
+      PlayerName: actor.player.accountName,
+      Level: actor.player.level,
+      SquadId: squad.name,
+      SquadRank: actorMember.rank,
+      AdminPlayerId: actor.id,
+    },
+    otherPlayerJson: "",
+    read: false,
+    ignored: false,
+    accepted: false,
+    createdAt,
+  };
+}
+
+/**
+ * Ask one current squad member to contribute War Cards to the shared pool.
+ *
+ * Action 178 contains only SquadMemberId, so all authority is reconstructed from server state:
+ * the authenticated actor selects their current squad, both players must exist in that squad's
+ * roster, and self-notification is rejected. The target never comes from a client-supplied squad
+ * name. Since the old protocol has no operation ID, a deterministic actor/target/day key turns
+ * retries into the original success and also prevents reminder spam from repeated or modified
+ * client requests. A unique sparse MongoDB index makes this rule safe across server processes.
+ */
+export async function notifySquadMemberToDeposit(
+  actorId: string,
+  requestedTargetId: string,
+): Promise<MessageDoc> {
+  const targetId = requestedTargetId.trim();
+  if (!targetId) throw new ApiError(ApiErrorCode.PlayerNotFound, "Squad member not found.");
+  if (targetId === actorId) {
+    throw new ApiError(ApiErrorCode.UnknownAction, "A player cannot notify themselves.");
+  }
+
+  const actor = await findById(actorId);
+  if (!actor) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
+  if (!actor.player.squadName) {
+    throw new ApiError(ApiErrorCode.NotSquadMember, "Player is not a member of a squad.");
+  }
+
+  const squad = await getByName(actor.player.squadName);
+  if (!squad) throw new ApiError(ApiErrorCode.SquadNotFound, "Squad not found.");
+  if (!squad.members.some((member) => member.playerId === actorId)) {
+    throw new ApiError(ApiErrorCode.NotSquadMember, "Player is not a member of this squad.");
+  }
+  if (!squad.members.some((member) => member.playerId === targetId)) {
+    throw new ApiError(ApiErrorCode.NotSquadMember, "Target player is not a member of this squad.");
+  }
+
+  // Confirm that the roster entry still points to a real account. The squad roster remains the
+  // membership source of truth, but persisting a message for a deleted account would create an
+  // inbox row that can never be consumed.
+  const target = await findById(targetId);
+  if (!target) throw new ApiError(ApiErrorCode.PlayerNotFound, "Squad member not found.");
+
+  const now = new Date();
+  const dayKey = now.toISOString().slice(0, 10);
+  const idempotencyKey = `deposit-warcards:${squad.name}:${actorId}:${targetId}:${dayKey}`;
+  const message = buildDepositWarcardsMessage(actor, targetId, squad, now);
+  try {
+    const result = await messages().findOneAndUpdate(
+      { idempotencyKey },
+      { $setOnInsert: { ...message, idempotencyKey } },
+      { upsert: true, returnDocument: "after" },
+    );
+    if (result) return result as unknown as MessageDoc;
+  } catch (error) {
+    // A concurrent first request can lose the unique-index race. Treat that duplicate-key as a
+    // successful retry and return the winner, while preserving every unrelated database error.
+    if ((error as { code?: number }).code !== 11000) throw error;
+  }
+
+  const existing = await messages().findOne({ idempotencyKey });
+  if (!existing) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "War Card reminder was not persisted.");
+  }
   return existing as unknown as MessageDoc;
 }

@@ -16,6 +16,7 @@ import { depositSquadCards, withdrawSquadCard } from "../services/squadCardPoolS
 import { findById } from "../services/playerService";
 import { progressionForPlayer } from "../services/playerStateService";
 import { mutateProgression } from "../services/progressionMutationService";
+import { notifySquadMemberToDeposit } from "../services/squadSocialService";
 import { authed, type HandlerEntry } from "./types";
 
 /**
@@ -81,6 +82,17 @@ async function cardPoolFailure(
 }
 
 export const cardHandlers: Record<number, HandlerEntry> = {
+  [DbAction.NotifyPlayerToDeposit]: authed(async ({ player, req }) => {
+    // OCDBJPIKJAK sends exactly SquadMemberId. Do not accept generic target aliases here: keeping
+    // this boundary narrow prevents another action's fields from accidentally redirecting an
+    // inbox notification after a malformed or replayed request.
+    const targetId = typeof req.SquadMemberId === "string" ? req.SquadMemberId : "";
+    const message = await notifySquadMemberToDeposit(player!.id, targetId);
+    // The stock success handler only logs completion. MessageId is included for repaired clients,
+    // operations diagnostics, and deterministic retry verification.
+    return ok(DbAction.NotifyPlayerToDeposit, { MessageId: message.messageId });
+  }),
+
   [DbAction.DepositCards]: authed(async ({ player, req }) => {
     try {
       const result = await depositSquadCards(player!.id, req.AddedCards, req.RemovedCards);

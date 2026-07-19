@@ -473,6 +473,7 @@ test("challenge inbox adapter emits the DynamoDB attribute wrappers parsed by Un
   const wire = toClientMessage(message);
   assert.deepEqual(wire.MessageType, { N: "0" });
   assert.deepEqual(wire.MessageId, { S: message.messageId });
+  assert.deepEqual(wire.PlayerId, { S: "target" });
   assert.deepEqual(wire.MapName, { S: "map_1" });
   assert.deepEqual(wire.GameType, { N: "2" });
   assert.deepEqual(wire.OtherPlayer, { S: message.otherPlayerJson });
