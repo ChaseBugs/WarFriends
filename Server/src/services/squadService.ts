@@ -11,6 +11,7 @@ import { SquadRank } from "../constants";
 import { newSquad, type SquadDTO, type SquadMemberDTO } from "../dtos";
 import { findById, updatePlayerFields } from "./playerService";
 import { progressionForPlayer } from "./playerStateService";
+import { reclaimDepositedCardsForDepartureState } from "./squadCardPoolService";
 import logger from "../utils/logger";
 
 /**
@@ -426,27 +427,152 @@ export async function invitePlayer(actorId: string, targetId: string, name: stri
   return squad;
 }
 
-export async function leaveSquad(playerId: string, name: string): Promise<void> {
-  const squad = await getByName(name);
-  if (!squad) {
-    await updatePlayerFields(playerId, { squadName: "", squadRank: SquadRank.None });
-    return;
+export interface SquadLeavePlan {
+  squad: SquadDTO | null;
+  squadWrite: "none" | "update" | "delete";
+  playerMirrorChanged: boolean;
+  departed: boolean;
+}
+
+function consistentPlayerSquadName(player: PlayerDocument): string {
+  const names = [...new Set([player.squadName, player.player.squadName].filter((value) => Boolean(value)))];
+  if (names.length > 1) {
+    throw new ApiError(ApiErrorCode.NotSquadMember, "Player squad mirrors conflict and require repair.");
   }
-  if (!squad.members.some((candidate) => candidate.playerId === playerId)) {
-    throw new ApiError(ApiErrorCode.NotSquadMember, "Player is not a squad member.");
+  return names[0] ?? "";
+}
+
+/** Calculate a replay-safe leave transition without mutating the supplied snapshots. */
+export function planSquadLeave(
+  squad: SquadDTO | null,
+  player: PlayerDocument,
+  requestedName: string,
+): SquadLeavePlan {
+  const mirrorName = consistentPlayerSquadName(player);
+  const name = cleanName(requestedName) || mirrorName;
+  if (mirrorName && name !== mirrorName) {
+    // The old implementation cleared the real mirror when a modified client supplied any
+    // nonexistent SquadId. Binding the request to current server state closes that corruption.
+    throw new ApiError(ApiErrorCode.NotSquadMember, "Leave request does not match the player's squad.");
   }
-  // A multi-member squad must always retain exactly one leader/founder. Requiring an explicit
-  // transfer avoids silently promoting a member with surprising authority.
-  if (squad.founderId === playerId && squad.members.length > 1) {
+  if (squad && squad.name !== name) {
+    throw new ApiError(ApiErrorCode.SquadNotFound, "Leave request resolved to a different squad.");
+  }
+
+  const rosterMember = squad?.members.find((candidate) => candidate.playerId === player.id);
+  if (rosterMember && squad?.founderId === player.id && squad.members.length > 1) {
+    // A multi-member squad must always retain exactly one leader/founder. The explicit transfer
+    // action updates both leaders together and is required before the founder may leave.
     throw new ApiError(ApiErrorCode.InsufficientRank, "Transfer squad leadership before leaving.");
   }
-  if (squad.members.length === 1) await squads().deleteOne({ name: squad.name });
-  else {
-    squad.members = squad.members.filter((candidate) => candidate.playerId !== playerId);
-    await persist(squad);
+
+  const playerMirrorChanged = Boolean(
+    player.squadName
+    || player.player.squadName
+    || player.player.squadRank !== SquadRank.None,
+  );
+  if (!squad || !rosterMember) {
+    // A retry after a committed leave is a success. If an older two-write implementation left
+    // only the player mirror behind, clearing it repairs that safe direction of partial state.
+    return {
+      squad,
+      squadWrite: "none",
+      playerMirrorChanged,
+      departed: playerMirrorChanged,
+    };
   }
-  await updatePlayerFields(playerId, { squadName: "", squadRank: SquadRank.None });
-  logger.squad.event("Player left squad", { name: squad.name, playerId });
+
+  if (squad.members.length === 1) {
+    return { squad, squadWrite: "delete", playerMirrorChanged, departed: true };
+  }
+  return {
+    squad: {
+      ...squad,
+      members: squad.members.filter((candidate) => candidate.playerId !== player.id),
+    },
+    squadWrite: "update",
+    playerMirrorChanged,
+    departed: true,
+  };
+}
+
+export interface LeaveSquadResult {
+  returnedCardIds: string[];
+}
+
+/** Atomically remove membership, clear mirrors/deposits, and reclaim normal deposited cards. */
+export async function leaveSquad(playerId: string, requestedName: string): Promise<LeaveSquadResult> {
+  const result = await withMongoTransaction(async (session) => {
+    const player = await players().findOne({ id: playerId }, { session });
+    if (!player) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
+    const mirrorName = consistentPlayerSquadName(player);
+    const name = cleanName(requestedName) || mirrorName;
+    const squad = name ? await squads().findOne({ name }, { session }) : null;
+    const plan = planSquadLeave(squad, player, name);
+    const now = new Date();
+
+    if (plan.squadWrite === "delete" && squad) {
+      const deleted = await squads().deleteOne(
+        { name: squad.name, updatedAt: squad.updatedAt },
+        { session },
+      );
+      if (deleted.deletedCount !== 1) {
+        throw new ApiError(ApiErrorCode.InternalServerError, "Squad departure changed concurrently.");
+      }
+    } else if (plan.squadWrite === "update" && squad && plan.squad) {
+      const updated = await squads().updateOne(
+        { name: squad.name, updatedAt: squad.updatedAt },
+        { $set: { members: plan.squad.members, updatedAt: now } },
+        { session },
+      );
+      if (updated.modifiedCount !== 1) {
+        throw new ApiError(ApiErrorCode.InternalServerError, "Squad departure changed concurrently.");
+      }
+    }
+
+    const depositedCards = player.player.depositedCardsDic ?? {};
+    const reclaim = reclaimDepositedCardsForDepartureState(
+      progressionForPlayer(player),
+      depositedCards,
+    );
+    const progressionChanged = reclaim.state !== player.progression
+      && reclaim.returnedCardIds.length > 0;
+    const shouldUpdatePlayer =
+      plan.playerMirrorChanged
+      || Object.keys(depositedCards).length > 0
+      || progressionChanged;
+    if (shouldUpdatePlayer) {
+      const { dogTags: _legacyDogTags, ...canonicalState } = reclaim.state;
+      const updated = await players().updateOne(
+        {
+          id: player.id,
+          squadName: player.squadName,
+          "player.squadName": player.player.squadName,
+          "player.squadRank": player.player.squadRank,
+          ...(progressionChanged ? progressionRevisionFilter(player) : {}),
+        },
+        {
+          $set: {
+            ...(progressionChanged ? { progression: canonicalState } : {}),
+            squadName: "",
+            "player.squadName": "",
+            "player.squadRank": SquadRank.None,
+            "player.depositedCardsDic": {},
+            updatedAt: now,
+          },
+        },
+        { session },
+      );
+      if (updated.modifiedCount !== 1) {
+        throw new ApiError(ApiErrorCode.InternalServerError, "Player departure state changed concurrently.");
+      }
+    }
+
+    return { returnedCardIds: reclaim.returnedCardIds, departed: plan.departed, name };
+  });
+
+  if (result.departed) logger.squad.event("Player left squad", { name: result.name, playerId });
+  return { returnedCardIds: result.returnedCardIds };
 }
 
 export async function promoteMember(actorId: string, targetId: string, name: string): Promise<SquadDTO> {

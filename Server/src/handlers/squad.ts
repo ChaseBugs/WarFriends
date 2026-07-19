@@ -162,8 +162,14 @@ export const squadHandlers: Record<number, HandlerEntry> = {
   }),
 
   [DbAction.LeaveSquad]: authed(async ({ player, req }) => {
-    await leaveSquad(player!.id, squadName(req) || player!.player.squadName);
-    return ok(DbAction.LeaveSquad);
+    const result = await leaveSquad(player!.id, squadName(req) || player!.player.squadName);
+    return ok(DbAction.LeaveSquad, {
+      // GCGBPMPECDO expects a JSON list and calls CardManager.AddCard once per ID, so amounts
+      // are intentionally represented by repeated IDs rather than a dictionary.
+      ...(result.returnedCardIds.length > 0
+        ? { DepositedCards: JSON.stringify(result.returnedCardIds) }
+        : {}),
+    });
   }),
 
   [DbAction.PromotePlayer]: authed(async ({ player, req }) => {

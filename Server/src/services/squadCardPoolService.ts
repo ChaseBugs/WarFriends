@@ -75,6 +75,12 @@ export interface WithdrawCardMutationResult {
   buddy: boolean;
 }
 
+export interface DepartingCardReclaimResult {
+  state: PlayerProgressionState;
+  cardInventory: CardInventoryState;
+  returnedCardIds: string[];
+}
+
 export interface DepositCardResult extends DepositCardMutationResult {
   player: PlayerDocument;
 }
@@ -400,6 +406,41 @@ export function applyDepositCardChangesState(
     cardInventory,
   };
   return { state: next, cardInventory, depositedCards };
+}
+
+/**
+ * Return every normal card still deposited by a player who is leaving their squad.
+ *
+ * OGLEHLIPEFM's LeaveSquad callback reads `DepositedCards` as a JSON list of card IDs and
+ * calls CardManager.AddCard once per entry. Normal amounts are therefore expanded into repeated
+ * IDs. Buddy pool entries are temporary loadout projections rather than owned normal cards;
+ * AddCard cannot resolve their dynamic IDs, so they are deliberately cleared without creating
+ * a permanent Buddy copy. The caller clears `player.depositedCardsDic` in the same transaction.
+ */
+export function reclaimDepositedCardsForDepartureState(
+  state: PlayerProgressionState,
+  depositedCards: Record<string, string>,
+): DepartingCardReclaimResult {
+  const cardInventory = cardInventoryStateFor(state);
+  const returnedCardIds: string[] = [];
+  for (const [id, serialized] of Object.entries(depositedCards ?? {})) {
+    const entry = decodePoolEntry(id, serialized, "DepositedCards");
+    if (entry.kind === "buddy") continue;
+    const owned = cardInventory.cardData[id]?.amount ?? 0;
+    if (!Number.isSafeInteger(owned) || owned < 0 || owned > MAX_CARD_AMOUNT - entry.amount) {
+      throw new ApiError(CARD_NOT_FOUND, `Owned card ${id} amount is invalid during squad departure.`);
+    }
+    cardInventory.cardData[id] = { amount: owned + entry.amount };
+    for (let index = 0; index < entry.amount; index += 1) returnedCardIds.push(id);
+  }
+
+  return {
+    state: returnedCardIds.length > 0
+      ? { ...state, revision: state.revision + 1, cardInventory }
+      : state,
+    cardInventory,
+    returnedCardIds,
+  };
 }
 
 function normalReputation(cardId: string): number {

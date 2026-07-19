@@ -4,7 +4,9 @@ import { ApiErrorCode } from "../apiErrors";
 import { AccountType, SquadRank } from "../constants";
 import type { PlayerDocument } from "../db";
 import { newPlayer, newSquad, type SquadDTO } from "../dtos";
-import { planSquadJoin } from "../services/squadService";
+import { createInitialProgression } from "../services/playerStateService";
+import { reclaimDepositedCardsForDepartureState } from "../services/squadCardPoolService";
+import { planSquadJoin, planSquadLeave } from "../services/squadService";
 
 const NOW = Date.UTC(2026, 6, 20, 12, 0, 0);
 
@@ -133,4 +135,91 @@ test("admission never overwrites either mirror of membership in another squad", 
     () => planSquadJoin(squadDocument(), rootConflict),
     (error: unknown) => (error as { code?: number }).code === ApiErrorCode.NotSquadMember,
   );
+});
+
+test("member departure removes one roster entry without mutating its input snapshot", () => {
+  const squad = squadDocument();
+  squad.members.push({
+    playerId: "member",
+    name: "Player-member",
+    rank: SquadRank.Member,
+    squadPoints: 0,
+    joinedAt: NOW,
+    lastSeenChatTimestamp: 0,
+  });
+  const player = playerDocument("member", squad.name, SquadRank.Member);
+  const plan = planSquadLeave(squad, player, squad.name);
+
+  assert.equal(plan.squadWrite, "update");
+  assert.equal(plan.departed, true);
+  assert.deepEqual(plan.squad?.members.map((member) => member.playerId), ["leader"]);
+  assert.equal(squad.members.length, 2);
+  assert.equal(player.player.squadName, squad.name);
+});
+
+test("last member deletes the squad while a multi-member founder must transfer leadership", () => {
+  const single = squadDocument();
+  const leader = playerDocument("leader", single.name, SquadRank.Leader);
+  assert.equal(planSquadLeave(single, leader, "").squadWrite, "delete");
+
+  const multi = squadDocument();
+  multi.members.push({
+    playerId: "member",
+    name: "Player-member",
+    rank: SquadRank.Member,
+    squadPoints: 0,
+    joinedAt: NOW,
+    lastSeenChatTimestamp: 0,
+  });
+  assert.throws(
+    () => planSquadLeave(multi, leader, multi.name),
+    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.InsufficientRank,
+  );
+});
+
+test("leave replay repairs stale mirrors but cannot clear membership in another squad", () => {
+  const stale = playerDocument("member", "Deleted Squad", SquadRank.Member);
+  const repair = planSquadLeave(null, stale, "Deleted Squad");
+  assert.equal(repair.squadWrite, "none");
+  assert.equal(repair.playerMirrorChanged, true);
+  assert.equal(repair.departed, true);
+
+  const clean = playerDocument("member");
+  assert.equal(planSquadLeave(null, clean, "Deleted Squad").departed, false);
+  assert.throws(
+    () => planSquadLeave(null, stale, "Forged Squad"),
+    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.NotSquadMember,
+  );
+});
+
+test("departure returns deposited normal-card amounts as repeated stock response IDs", () => {
+  const initial = createInitialProgression(Math.floor(NOW / 1_000));
+  initial.cardInventory!.cardData.AMMOCRATE = { amount: 1 };
+  const result = reclaimDepositedCardsForDepartureState(initial, {
+    AMMOCRATE: JSON.stringify({ amount: 2 }),
+  });
+
+  assert.deepEqual(result.returnedCardIds, ["AMMOCRATE", "AMMOCRATE"]);
+  assert.equal(result.cardInventory.cardData.AMMOCRATE?.amount, 3);
+  assert.equal(result.state.revision, initial.revision + 1);
+  assert.equal(initial.cardInventory!.cardData.AMMOCRATE?.amount, 1);
+});
+
+test("departure clears a temporary Buddy projection without granting its dynamic ID", () => {
+  const initial = createInitialProgression(Math.floor(NOW / 1_000));
+  const result = reclaimDepositedCardsForDepartureState(initial, {
+    "member-1784558400": JSON.stringify({
+      amount: 1,
+      buddyName: "Player-member",
+      equippedVisuals: {},
+      unityType: 0,
+      primaryWeapon: 0,
+      secondaryWeapon: -1,
+      armypower: 0,
+      level: 0,
+    }),
+  });
+
+  assert.deepEqual(result.returnedCardIds, []);
+  assert.equal(result.state, initial);
 });

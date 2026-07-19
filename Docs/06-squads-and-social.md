@@ -31,6 +31,14 @@ commits the roster, consumes pending admission records, and updates the player's
 together. A replay cannot duplicate the roster, and an older roster-only partial state is repaired
 without changing an existing member's rank.
 
+LeaveSquad is also transactional and replay-safe. It binds the request to the player's current
+server-owned squad, preventing a forged or stale squad name from clearing unrelated membership.
+The same commit removes the roster entry (or deletes a last-member squad), clears both player
+mirrors and deposited-card state, and returns all deposited normal War Cards to the authoritative
+inventory. A founder of a multi-member squad must still transfer leadership first. Repeating a
+completed leave is harmless, while a legacy player-only mirror is repaired when its squad no
+longer exists.
+
 ## Squad creation economy
 
 Squad creation is a paid, server-authoritative operation. The recovered
@@ -94,8 +102,8 @@ client protocol task.
 ## Missing squad systems
 
 - squad events, divisions, milestones, and wars;
-- atomic multi-document transactions for leave, rank, kick, and leadership mutations (creation
-  and all successful admission paths are already transactional);
+- atomic multi-document transactions for rank, kick, and leadership mutations (creation,
+  admission, and leave are already transactional);
 - chat delivery and moderation.
 
 Unrecovered actions remain rejected rather than mutating guessed card or event state.

@@ -141,6 +141,14 @@ latest donor pool and recipient `CardManagerData` when another member already to
 Existing valid Buddy deposits can be withdrawn, preserve their full loadout snapshot, and respect
 the recovered maximum of ten owned Buddy cards.
 
+Leaving a squad atomically returns the departing player's remaining normal deposits to
+`CardManagerData` and clears `depositedCardsDic` together with membership. The action 49 response
+expands stored amounts into the exact `DepositedCards` JSON list of repeated card IDs consumed by
+the stock callback. A deposited Buddy is a temporary dynamic loadout projection, not normal-card
+ownership; its dynamic ID is cleared rather than passed to `CardManager.AddCard`, which can resolve
+only catalog card IDs. This prevents deposits from leaking into a later squad or becoming
+inaccessible after departure.
+
 `NotifyPlayerToDeposit` (action 178) sends a persistent card-pool reminder to another current
 squad member. The request contains only `SquadMemberId`; the server derives the squad from the
 authenticated actor and verifies that actor and target are distinct members of the same
