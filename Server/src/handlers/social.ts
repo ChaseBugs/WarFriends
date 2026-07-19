@@ -11,6 +11,7 @@ import {
   sendMessage,
   toClientMessage,
 } from "../services/socialService";
+import { getFriendsInfo } from "../services/friendService";
 import { authed, type HandlerEntry } from "./types";
 
 // Player discovery and inbox handlers. Hit-list mutations remain rejected because their
@@ -30,8 +31,8 @@ export const socialHandlers: Record<number, HandlerEntry> = {
 
   [DbAction.GetAllPlayers]: authed(async () => ok(DbAction.GetAllPlayers, { Items: await listPlayers() })),
 
-  // No friend graph yet — return an empty set rather than failing.
-  [DbAction.GetFriendsInfo]: authed(() => ok(DbAction.GetFriendsInfo, { facebookFriends: [] })),
+  [DbAction.GetFriendsInfo]: authed(async ({ player, req }) =>
+    ok(DbAction.GetFriendsInfo, await getFriendsInfo(player!, req))),
 
   [DbAction.MessageSent]: authed(async ({ player, req }) => {
     const challengedPlayerId = str(req.ChallengedPlayerId);

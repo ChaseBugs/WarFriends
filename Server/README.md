@@ -105,7 +105,8 @@ Working end-to-end (verified live):
   `GetPlayerLeaguesDivision` (league + 1-based global rank), squad board via
   `GetSquadsByExperience` / `LeagueLeaderboardShown`. MongoDB-authoritative (indexed on
   `experience`), Redis sorted-set cache warmed opportunistically.
-- **Social / messaging**: `SearchPlayers` (name prefix), `GetAllPlayers`, challenge and normal
+- **Social / messaging**: `SearchPlayers` (name prefix), `GetAllPlayers`, exact Facebook-friend and
+  authoritative squad-mate resolution through `GetFriendsInfo`, challenge and normal
   `MessageSent`, `GetAllMessages`, `ReadMessage`, `IgnoreMessage`, and `AcceptChallenge`
   (recipient-owned persistent inbox). Challenges expire logically and through MongoDB TTL;
   identical retries are deduplicated and player-generated traffic has a rolling sender limit.

@@ -96,6 +96,7 @@ import {
   loginRateLimitPolicy,
 } from "../services/authRateLimitService";
 import { containsProhibitedLanguage, moderationForms } from "../services/textModerationService";
+import { buildFriendsInfoWire, requestedFacebookFriendIds } from "../services/friendService";
 
 test("wire enums match the recovered 1.6.0 client", () => {
   assert.equal(AccountType.Guest, 0);
@@ -536,6 +537,31 @@ test("durable login throttling hides identity keys and enforces a real cooldown"
   assert.equal(policy.maxAttempts >= 2, true);
   assert.equal(policy.windowMilliseconds >= 60_000, true);
   assert.equal(policy.lockoutMilliseconds >= 60_000, true);
+});
+
+test("GetFriendsInfo preserves signed Int64 hashes and exact recovered result groups", () => {
+  const ids = requestedFacebookFriendIds({
+    DbAction: DbAction.GetFriendsInfo,
+    Count: "6",
+    Friend0: "9223372036854775807",
+    Friend1: "-9223372036854775808",
+    Friend2: "9223372036854775807",
+    Friend3: "-1",
+    Friend4: "not-a-number",
+    Friend5: " 42 ",
+  });
+  assert.deepEqual(ids, ["9223372036854775807", "-9223372036854775808", "42"]);
+
+  const friend = contractPlayer();
+  friend.id = "facebook-friend";
+  friend.player.id = friend.id;
+  const mate = contractPlayer();
+  mate.id = "squad-mate";
+  mate.player.id = mate.id;
+  const result = buildFriendsInfoWire([friend, friend], [friend, mate, mate]);
+  assert.deepEqual(result.Friends.map((item) => (item.Id as { S: string }).S), ["facebook-friend"]);
+  assert.deepEqual(result.SquadMates.map((item) => (item.Id as { S: string }).S), ["squad-mate"]);
+  assert.equal((result as unknown as Record<string, unknown>).facebookFriends, undefined);
 });
 
 test("player settings parser accepts only the recovered boolean preference contract", () => {

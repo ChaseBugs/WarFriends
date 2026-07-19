@@ -119,6 +119,18 @@ indexes support leaderboard reads. Redis may cache ranking data, but MongoDB rem
 
 ## Messages and challenges
 
+`GetFriendsInfo` now follows the stock 1.6.0 contract rather than returning an unrelated empty
+`facebookFriends` field. The client sends `Count` plus dynamic `Friend0..N` values containing its
+signed 64-bit Facebook ID hashes. The backend keeps those hashes as decimal strings to avoid
+JavaScript precision loss, resolves linked players in request order, and returns them under the
+exact `Friends` array consumed by `OGLEHLIPEFM.OCCMLAHEDBG`.
+
+The same response returns `SquadMates`, ordered by the authoritative roster. Its client-supplied
+`SquadId` is never trusted: the authenticated player's current mirror and actual roster membership
+select the squad. The caller is excluded, and a Facebook friend who is also a squad mate appears
+only in `Friends`, because the recovered parser concatenates both arrays without deduplicating.
+Both groups use the central DynamoDB-style `DatabasePlayer` adapter.
+
 The backend stores recipient-owned normal messages and challenges. Reads are bounded, ignore is a
 soft visibility change, and expiring messages enforce logical expiry even before MongoDB's TTL
 monitor deletes the row. Sender rate limits and idempotency keys reduce replay and spam.
@@ -170,3 +182,4 @@ Unrecovered actions remain rejected rather than mutating guessed card or event s
 - `Server/src/handlers/cards.ts`
 - `Server/src/handlers/squad.ts`
 - `Server/src/services/socialService.ts`
+- `Server/src/services/friendService.ts`
