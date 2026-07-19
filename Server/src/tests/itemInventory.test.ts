@@ -1,25 +1,41 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import generatedWeaponCatalog from "../data/weaponCatalog.generated.json";
 import { DbAction } from "../dbActions";
 import { processAssignmentBufferState } from "../services/assignmentService";
 import {
+  activateWeaponUpgradeState,
   createInitialItemInventory,
   equipWeaponState,
+  instantWeaponUpgradeState,
+  ITEM_ALREADY_UPGRADING,
+  ITEM_NEGATIVE_PRICE_FROM_CLIENT,
+  ITEM_NO_DISCOUNT_FOUND,
   ITEM_NOT_ENOUGH_GOLD,
   ITEM_NOT_ENOUGH_LEVEL,
+  ITEM_NOT_ENOUGH_WARBUCKS,
   ITEM_PRICE_MISMATCH,
+  ITEM_TOO_SOON_TO_ACTIVATE,
+  ITEM_WRONG_INDEX_TO_ACTIVATE,
   ITEM_WEAPON_NOT_BOUGHT,
+  parseWeaponUpgradeActivateData,
+  parseWeaponUpgradeInstantData,
+  parseWeaponUpgradePurchaseData,
   parseWeaponEquipData,
   parseWeaponPurchaseData,
   purchaseWeaponState,
   serializeInventoryData,
   serializeLevelManagerData,
+  startWeaponUpgradeState,
   WEAPON_CATALOG,
+  weaponUpgradeInstantPrice,
 } from "../services/itemInventoryService";
+import { WEAPON_UPGRADE_CATALOG } from "../data/weaponUpgradeCatalog.generated";
 import { createInitialProgression } from "../services/playerStateService";
 
 const NOW = Date.UTC(2026, 6, 19, 12, 0, 0) / 1_000;
 const FAMAS = "Google2u.AssaultRifle_Famas";
+const AK47 = "Google2u.AssaultRifle_AK47";
 
 function purchaseData(overrides: Record<string, unknown> = {}): string {
   return JSON.stringify({
@@ -41,6 +57,40 @@ function equipData(overrides: Record<string, unknown> = {}): string {
     SlotIndex: 0,
     ArmyPower: 123,
     SpecialFeature: 0,
+    ...overrides,
+  });
+}
+
+function upgradePurchaseData(overrides: Record<string, unknown> = {}): string {
+  return JSON.stringify({
+    LevelName: AK47,
+    BoughtIndex: 0,
+    StartTime: NOW,
+    discount: 0,
+    DeliveryTime: 60,
+    deliveryReduce: 0,
+    ...overrides,
+  });
+}
+
+function upgradeActivateData(overrides: Record<string, unknown> = {}): string {
+  return JSON.stringify({
+    LevelName: AK47,
+    BoughtIndex: 0,
+    ArmyPower: 100,
+    ...overrides,
+  });
+}
+
+function upgradeInstantData(expectedPrice: number, overrides: Record<string, unknown> = {}): string {
+  return JSON.stringify({
+    LevelName: AK47,
+    BoughtIndex: 0,
+    ExpectedPrice: expectedPrice,
+    ArmyPower: 100,
+    GoldCoefficient: 0.6325,
+    GoldExpCoefficient: -0.175,
+    discount: 0,
     ...overrides,
   });
 }
@@ -114,6 +164,273 @@ test("weapon catalog contains every shop row with a resolvable LevelManager entr
   // Keeping them absent proves the server will fail closed instead of granting unusable items.
   assert.equal(WEAPON_CATALOG["Google2u.PulseRifle_Grade1"], undefined);
   assert.equal(WEAPON_CATALOG["Google2u.PulseRifle_PR9"], undefined);
+});
+
+test("weapon upgrade catalog covers all enabled weapons with recovered variable-length stages", () => {
+  assert.equal(Object.keys(WEAPON_UPGRADE_CATALOG).length, 84);
+  assert.deepEqual(Object.keys(WEAPON_UPGRADE_CATALOG).sort(), Object.keys(WEAPON_CATALOG).sort());
+  assert.equal(
+    Object.values(WEAPON_UPGRADE_CATALOG).reduce((total, stages) => total + stages.length, 0),
+    5_781,
+  );
+  assert.deepEqual(WEAPON_UPGRADE_CATALOG[AK47]?.[0], [500, 60]);
+  assert.deepEqual(WEAPON_UPGRADE_CATALOG[FAMAS]?.[0], [10_900, 60]);
+  assert.equal(WEAPON_UPGRADE_CATALOG[AK47]?.length, 24);
+  assert.equal(WEAPON_UPGRADE_CATALOG[FAMAS]?.length, 54);
+});
+
+test("weapon upgrade purchase debits WarBucks and activation waits for server delivery", () => {
+  const initial = { ...createInitialProgression(NOW), warBucks: 2_000 };
+  const started = startWeaponUpgradeState(
+    initial,
+    NOW,
+    parseWeaponUpgradePurchaseData(upgradePurchaseData()),
+  );
+
+  assert.equal(started.state.warBucks, 1_500);
+  assert.equal(started.weapon.boughtIndex, 0);
+  assert.equal(started.deliveryTime, 60);
+  assert.deepEqual(started.itemInventory.levelManagerData.weaponDelivery, {
+    activationNeeded: true,
+    boughtIndex: 0,
+    end: NOW + 60,
+    itemId: AK47,
+    slotId: 0,
+    start: NOW,
+  });
+
+  assert.throws(
+    () => activateWeaponUpgradeState(
+      started.state,
+      NOW + 59,
+      parseWeaponUpgradeActivateData(upgradeActivateData()),
+    ),
+    (error: unknown) => (error as { code?: number }).code === ITEM_TOO_SOON_TO_ACTIVATE,
+  );
+
+  const activated = activateWeaponUpgradeState(
+    started.state,
+    NOW + 60,
+    parseWeaponUpgradeActivateData(upgradeActivateData()),
+  );
+  assert.equal(activated.weapon.boughtIndex, 1);
+  assert.deepEqual(activated.itemInventory.levelManagerData.weaponDelivery, {
+    activationNeeded: false,
+    boughtIndex: 0,
+    end: 0,
+    itemId: "",
+    slotId: 0,
+    start: 0,
+  });
+});
+
+test("weapon upgrade rejects stale indexes and a second shared delivery", () => {
+  const initial = { ...createInitialProgression(NOW), warBucks: 2_000 };
+  assert.throws(
+    () => startWeaponUpgradeState(
+      initial,
+      NOW,
+      parseWeaponUpgradePurchaseData(upgradePurchaseData({ DeliveryTime: 59 })),
+    ),
+    (error: unknown) => (error as { code?: number }).code === ITEM_PRICE_MISMATCH,
+  );
+  assert.throws(
+    () => startWeaponUpgradeState(
+      initial,
+      NOW,
+      parseWeaponUpgradePurchaseData(upgradePurchaseData({ discount: 1 })),
+    ),
+    (error: unknown) => (error as { code?: number }).code === ITEM_NO_DISCOUNT_FOUND,
+  );
+  assert.throws(
+    () => startWeaponUpgradeState(
+      { ...initial, warBucks: 499 },
+      NOW,
+      parseWeaponUpgradePurchaseData(upgradePurchaseData()),
+    ),
+    (error: unknown) => (error as { code?: number }).code === ITEM_NOT_ENOUGH_WARBUCKS,
+  );
+  assert.throws(
+    () => startWeaponUpgradeState(
+      initial,
+      NOW,
+      parseWeaponUpgradePurchaseData(upgradePurchaseData({ BoughtIndex: 1 })),
+    ),
+    (error: unknown) => (error as { code?: number }).code === ITEM_WRONG_INDEX_TO_ACTIVATE,
+  );
+
+  const started = startWeaponUpgradeState(
+    initial,
+    NOW,
+    parseWeaponUpgradePurchaseData(upgradePurchaseData()),
+  );
+  assert.throws(
+    () => startWeaponUpgradeState(
+      started.state,
+      NOW + 1,
+      parseWeaponUpgradePurchaseData(upgradePurchaseData()),
+    ),
+    (error: unknown) => (error as { code?: number }).code === ITEM_ALREADY_UPGRADING,
+  );
+});
+
+test("instant weapon upgrade derives Gold from remaining server time", () => {
+  // This long-duration boundary distinguishes the stock client's float32 calculation from
+  // a superficially similar JavaScript-double implementation (761 versus 760 Gold).
+  assert.equal(weaponUpgradeInstantPrice(324_478), 761);
+  const initial = { ...createInitialProgression(NOW), warBucks: 500, gold: 10 };
+  const started = startWeaponUpgradeState(
+    initial,
+    NOW,
+    parseWeaponUpgradePurchaseData(upgradePurchaseData()),
+  );
+  const price = weaponUpgradeInstantPrice(30);
+  assert.equal(price, 1);
+
+  assert.throws(
+    () => instantWeaponUpgradeState(
+      started.state,
+      NOW + 30,
+      parseWeaponUpgradeInstantData(upgradeInstantData(price + 1)),
+    ),
+    (error: unknown) => (error as { code?: number }).code === ITEM_PRICE_MISMATCH,
+  );
+
+  const finished = instantWeaponUpgradeState(
+    started.state,
+    NOW + 30,
+    parseWeaponUpgradeInstantData(upgradeInstantData(price)),
+  );
+  assert.equal(finished.state.gold, 9);
+  assert.equal(finished.goldSpent, 1);
+  assert.equal(finished.weapon.boughtIndex, 1);
+  assert.equal(finished.itemInventory.levelManagerData.weaponDelivery.activationNeeded, false);
+});
+
+test("queued instant upgrade accepts an earlier receipt-backed price without undercharging", () => {
+  const initial = { ...createInitialProgression(NOW), warBucks: 1_060, gold: 10 };
+  const firstStarted = startWeaponUpgradeState(
+    initial,
+    NOW,
+    parseWeaponUpgradePurchaseData(upgradePurchaseData()),
+  );
+  const firstActivated = activateWeaponUpgradeState(
+    firstStarted.state,
+    NOW + 60,
+    parseWeaponUpgradeActivateData(upgradeActivateData()),
+  );
+  const secondStarted = startWeaponUpgradeState(
+    firstActivated.state,
+    NOW + 60,
+    parseWeaponUpgradePurchaseData(upgradePurchaseData({
+      BoughtIndex: 1,
+      StartTime: NOW + 60,
+      DeliveryTime: 180,
+    })),
+  );
+
+  // The client can calculate the full-duration price and then sit in RequestBuffer while
+  // server time advances. Charging the exact sent amount preserves the optimistic wallet;
+  // the receipt-derived lower bound still prevents a modified client from underpaying.
+  const priceAtClientQueue = weaponUpgradeInstantPrice(180);
+  const priceAtServerReceipt = weaponUpgradeInstantPrice(60);
+  assert.equal(priceAtClientQueue, 2);
+  assert.equal(priceAtServerReceipt, 1);
+  const finished = instantWeaponUpgradeState(
+    secondStarted.state,
+    NOW + 180,
+    parseWeaponUpgradeInstantData(upgradeInstantData(priceAtClientQueue, { BoughtIndex: 1 })),
+  );
+  assert.equal(finished.goldSpent, 2);
+  assert.equal(finished.state.gold, 8);
+  assert.equal(finished.weapon.boughtIndex, 2);
+});
+
+test("failed instant upgrade returns code 7002 and the authoritative rollback receipt", () => {
+  const initial = { ...createInitialProgression(NOW), warBucks: 500, gold: 10 };
+  const purchase = processAssignmentBufferState(
+    initial,
+    NOW,
+    "weapon-upgrade-negative-start",
+    [{ action: DbAction.BuyWeaponUpgrade, data: upgradePurchaseData() }],
+  );
+  const failed = processAssignmentBufferState(
+    purchase.state,
+    NOW + 30,
+    "weapon-upgrade-negative-finish",
+    [{ action: DbAction.InstantWeaponUpgrade, data: upgradeInstantData(-1) }],
+  );
+  const [response] = JSON.parse(failed.requestsResults) as Array<Record<string, unknown>>;
+
+  assert.equal(response.Result, ITEM_NEGATIVE_PRICE_FROM_CLIENT);
+  assert.equal(response.Result, 7_002);
+  assert.equal(response.Gold, 10);
+  assert.equal(response.WarBucks, 0);
+  assert.equal(JSON.parse(String(response.Weapon)).boughtIndex, 0);
+  assert.equal(JSON.parse(String(response.weaponDelivery)).itemId, AK47);
+  assert.equal(failed.state.gold, 10);
+  assert.equal(failed.state.itemInventory?.levelManagerData.savedWeapons[AK47]?.boughtIndex, 0);
+});
+
+test("buffered weapon upgrade returns duration and instant completion is replay-safe", () => {
+  const initial = { ...createInitialProgression(NOW), warBucks: 500, gold: 10 };
+  const purchase = processAssignmentBufferState(
+    initial,
+    NOW,
+    "weapon-upgrade-start",
+    [{ action: DbAction.BuyWeaponUpgrade, data: upgradePurchaseData() }],
+  );
+  assert.deepEqual(JSON.parse(purchase.requestsResults), [{
+    ActionId: DbAction.BuyWeaponUpgrade,
+    Result: 1,
+    DeliveryTime: 60,
+  }]);
+  assert.equal(purchase.state.warBucks, 0);
+
+  const price = weaponUpgradeInstantPrice(30);
+  const request = [{ action: DbAction.InstantWeaponUpgrade, data: upgradeInstantData(price) }];
+  const first = processAssignmentBufferState(
+    purchase.state,
+    NOW + 30,
+    "weapon-upgrade-finish",
+    request,
+  );
+  assert.equal(first.state.gold, 9);
+  assert.equal(first.state.itemInventory?.levelManagerData.savedWeapons[AK47]?.boughtIndex, 1);
+
+  const replay = processAssignmentBufferState(
+    first.state,
+    NOW + 40,
+    "weapon-upgrade-finish",
+    request,
+  );
+  assert.equal(replay.replayed, true);
+  assert.equal(replay.state.gold, 9);
+  assert.equal(replay.state.itemInventory?.levelManagerData.savedWeapons[AK47]?.boughtIndex, 1);
+  assert.equal(replay.requestsResults, first.requestsResults);
+});
+
+test("runtime weapon catalog exactly matches the reproducible 4.9.5 extraction artifact", () => {
+  const runtimeRows = Object.values(WEAPON_CATALOG).sort((left, right) => left.index - right.index);
+
+  assert.equal(generatedWeaponCatalog.schemaVersion, 1);
+  assert.equal(generatedWeaponCatalog.source, "Client/ExportedProject/Assets/Scenes/MainScene.unity");
+  assert.match(generatedWeaponCatalog.sourceSha256, /^[0-9a-f]{64}$/);
+  assert.deepEqual(runtimeRows, generatedWeaponCatalog.catalog);
+  assert.deepEqual(
+    generatedWeaponCatalog.unresolvedShopRows.map((row) => row.name).sort(),
+    [
+      "Google2u.PulseRifle_Grade1",
+      "Google2u.PulseRifle_Grade2",
+      "Google2u.PulseRifle_Grade3",
+      "Google2u.PulseRifle_Grade4",
+      "Google2u.PulseRifle_Grade5",
+      "Google2u.PulseRifle_Grade6",
+      "Google2u.PulseRifle_Grade7",
+      "Google2u.PulseRifle_Grade8",
+      "Google2u.PulseRifle_PR9",
+    ],
+  );
 });
 
 test("Gold and WarBucks catalog rows use their recovered indexes and compatible slots", () => {

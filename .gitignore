@@ -109,6 +109,7 @@ InitTestScene*.unity*
 **/[Ll]ibrary/
 **/[Tt]emp/
 **/[Oo]bj/
+**/[Bb]in/
 **/[Bb]uild/
 **/[Bb]uilds/
 **/[Ll]ogs/

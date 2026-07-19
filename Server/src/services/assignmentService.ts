@@ -20,11 +20,17 @@ import {
   serializeStarterAssignmentsData,
 } from "./starterAssignmentService";
 import {
+  activateWeaponUpgradeState,
   equipWeaponState,
+  instantWeaponUpgradeState,
+  parseWeaponUpgradeActivateData,
+  parseWeaponUpgradeInstantData,
+  parseWeaponUpgradePurchaseData,
   parseWeaponEquipData,
   parseWeaponPurchaseData,
   purchaseWeaponState,
   requestedWeaponName,
+  startWeaponUpgradeState,
   weaponRecoveryFields,
 } from "./itemInventoryService";
 
@@ -369,7 +375,7 @@ function boundedReplayCache(
  * after a lost response return the original result without crediting Gold again.
  *
  * SaveLastSeenSquadChatTimeStamp, ClaimStarterAssignment, achievement actions 218-220, and
- * the recovered BuyWeapon/EquipWeapon subset are also supported because their managers
+ * the recovered weapon purchase/equip/upgrade actions are also supported because their managers
  * append them to this same transport. Client progress, price, reward, ownership, and army-
  * power fields are validation assertions, not authority. Other buffered economy actions
  * remain explicit per-item failures until their resource rows and inventory lifecycles are
@@ -404,8 +410,15 @@ export function processAssignmentBufferState(
     // error result but does not abort the remaining batch, matching the stock parser's
     // one-result-per-action contract. The outer optimistic transaction commits the final
     // working snapshot and the replay record together.
-    if (request.action === DbAction.BuyWeapon || request.action === DbAction.EquipWeapon) {
+    if (
+      request.action === DbAction.BuyWeapon
+      || request.action === DbAction.EquipWeapon
+      || request.action === DbAction.BuyWeaponUpgrade
+      || request.action === DbAction.InstantWeaponUpgrade
+      || request.action === DbAction.ActivateWeaponUpgrade
+    ) {
       try {
+        let successResponse: Record<string, unknown> = { ActionId: request.action, Result: SUCCESS };
         if (request.action === DbAction.BuyWeapon) {
           // WeaponScreen has already applied Buy() locally before this buffer reaches the
           // server. The transition independently validates the 4.9.5 catalog row, level,
@@ -415,13 +428,47 @@ export function processAssignmentBufferState(
             playerLevel,
             parseWeaponPurchaseData(request.data),
           ).state;
-        } else {
+        } else if (request.action === DbAction.EquipWeapon) {
           // EquipWeapon is also optimistic on the client. Only the stored ownership record
           // and recovered slot-category mask are authoritative here; client ArmyPower is
           // checked for shape but never written to the leaderboard/profile fields.
           working = equipWeaponState(working, parseWeaponEquipData(request.data)).state;
+        } else if (request.action === DbAction.BuyWeaponUpgrade) {
+          // Buying an upgrade creates a shared LevelManager.weaponDelivery receipt but does
+          // not increment boughtIndex. The response duration is important: on the last item
+          // in a RequestBuffer, JIMIKHFDEFC calls SetWeaponDeliveryTime so client clock drift
+          // is corrected to the exact server-authoritative MainScene duration.
+          const upgraded = startWeaponUpgradeState(
+            working,
+            now,
+            parseWeaponUpgradePurchaseData(request.data),
+          );
+          working = upgraded.state;
+          successResponse = {
+            ActionId: request.action,
+            Result: SUCCESS,
+            DeliveryTime: upgraded.deliveryTime,
+          };
+        } else if (request.action === DbAction.InstantWeaponUpgrade) {
+          // WeaponScreen has already incremented its local boughtIndex. The server verifies
+          // the old index and pending receipt, recalculates Gold from remaining server time,
+          // then commits the increment and clears delivery in one progression transition.
+          working = instantWeaponUpgradeState(
+            working,
+            now,
+            parseWeaponUpgradeInstantData(request.data),
+          ).state;
+        } else {
+          // Normal activation is free, but only after the persisted delivery end timestamp.
+          // Consuming the receipt and incrementing the level together prevents duplicate
+          // activation when the client retries a lost RequestBuffer response.
+          working = activateWeaponUpgradeState(
+            working,
+            now,
+            parseWeaponUpgradeActivateData(request.data),
+          ).state;
         }
-        responses.push({ ActionId: request.action, Result: SUCCESS });
+        responses.push(successResponse);
       } catch (error) {
         const code = error instanceof ApiError ? error.code : ApiErrorCode.InternalServerError;
         responses.push({

@@ -103,8 +103,24 @@ Working end-to-end (verified live):
   MainScene; purchases grant immediate ownership because every enabled row has
   `DELIVERTIME=0`. Mutations include server price/discount validation, atomic debits,
   category-safe equipment, Unity rollback fields, and `BufferId` replay protection. Nine
-  shop-priced Pulse Rifle rows with null LevelManager entries, unknown catalog rows, offers,
-  and weapon upgrade actions still fail closed.
+  shop-priced Pulse Rifle rows with null LevelManager entries, unknown catalog rows, and
+  offer-discounted purchases still fail closed.
+  `../Tools/Extract-WeaponCatalog.ps1` reproduces the catalog by joining the serialized
+  LevelManager setup array to the Google2u component on each weapon GameObject, resolving
+  Unity DLL script IDs through the recovered assemblies, and XOR-decoding both currency
+  fields. Run `npm run verify:weapon-catalog` to prove that the checked-in extraction artifact
+  and the runtime catalog still match the recovered 4.9.5 scene exactly.
+- **Weapon upgrade lifecycle**: buffered actions `73`-`75` use all 84 recovered per-level
+  Google2u tables (5,781 normal-level transitions). BuyWeaponUpgrade validates the old index
+  and source duration, debits the server-owned WarBucks price, and creates the single shared
+  `weaponDelivery` receipt used by
+  LevelManager. Normal activation enforces its server end time; instant activation derives
+  Gold from the recovered float32 `0.6325`/`-0.175` formula and the persisted delivery receipt.
+  A delayed buffer may pay its earlier valid price but can never pay below the receipt-time
+  server price. Both completion
+  paths increment `boughtIndex` once, clear delivery atomically, return Unity rollback fields
+  on failure, and inherit `BufferId` replay protection. Run `npm run verify:weapon-upgrades`
+  to compare the generated price/time catalog with MainScene.
 - **Daily rewards**: `CheckDailyReward` and `ClaimDailyReward` provide the recovered monthly
   `dailyRewardData` calendar contract, one UTC-day unlock, ordered atomic Gold grants, and
   replay-safe claim cursors. Reward amounts are conservative environment-tunable defaults
@@ -122,9 +138,10 @@ Working end-to-end (verified live):
 - **Starter assignments (authoritative subset)**: actions `185`/`186` restore the exact
   `StarterAssignmentsData` object and the MainScene-defined thresholds, order, Gold, and
   WarBucks rewards. Ranked wins, medal balance, level, lifetime squad points, and the first
-  replay-safe mission completion are checked against server state; buffered claims are
-  ordered, atomic, reward-validated, and replay safe. Unit/card/weapon completions remain
-  disabled until those event sources exist.
+  replay-safe mission completion, and the exact equipped secondary-weapon level required by
+  ID_7 are checked against server state; buffered claims are ordered, atomic,
+  reward-validated, and replay safe. Unit deployment, war-card, and card-crafting completions
+  remain disabled until those event sources exist.
 - **Achievements (authoritative subset)**: actions `218`-`220` use the recovered
   `AchievementsData`/RequestBuffer contract. Solo missions, ranked wins, assignment
   completion, squad points, and daily-reward claims advance only from accepted server
@@ -149,11 +166,11 @@ allowlist of analytics/impression actions is safely ignored.
 - **Squad extensions** — card pool and squad events/wars are not implemented. Chat unread
   state is persistent, but actual channel delivery still requires Photon Chat repointing or
   a compatible replacement transport.
-- **Item economy expansion** — recover the 4.9.5 weapon-upgrade and unit rows, implement
-  upgrade delivery/activation, then add decals, cards, packs, and VIP. All 84 resolvable shop
-  weapons support exact Gold or WarBucks purchase/equip; the nine null-reference Pulse Rifle
-  rows, unknown items, and discount-bearing requests remain rejected instead of receiving
-  guessed prices or unusable inventory records.
+- **Item economy expansion** — recover the 4.9.5 unit rows and lifecycle, then add decals,
+  cards, packs, and VIP. All 84 resolvable shop weapons support exact Gold or WarBucks
+  purchase/equip plus server-owned upgrade delivery/activation; the nine null-reference Pulse
+  Rifle rows, unknown items, and discount-bearing requests remain rejected instead of
+  receiving guessed prices or unusable inventory records.
 - **Arena fidelity / leagues** — recover production arena prices, rules, opponent weighting,
   lootbox/crown inventory payloads, and authoritative combat evidence; implement league
   promotion/relegation on `FinishPlayerLeague`. Arena debug mutations remain rejected.

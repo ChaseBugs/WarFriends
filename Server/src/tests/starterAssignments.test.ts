@@ -63,6 +63,23 @@ test("starter completion accepts server-owned facts and rejects unrecovered clie
   );
 });
 
+test("weapon-upgrade starter assignment uses the equipped secondary weapon level", () => {
+  const initial = createInitialProgression(NOW);
+  const sniper = initial.itemInventory!.levelManagerData.savedWeapons["Google2u.SniperRifle_M24"]!;
+
+  // StarterAssignmentUpgradeWeapon reads weaponLevel, which is boughtIndex + 1. An index of
+  // one is therefore level two and must not satisfy the recovered target of three.
+  sniper.boughtIndex = 1;
+  assert.throws(
+    () => completeStarterAssignmentsState(initial, NOW + 10, NOW, FACTS, ["ID_7"]),
+    (error: unknown) => (error as { code?: number }).code === 18501,
+  );
+
+  sniper.boughtIndex = 2;
+  const completed = completeStarterAssignmentsState(initial, NOW + 20, NOW, FACTS, ["ID_7"]);
+  assert.equal(completed.starterAssignments.assignments.ID_7.completed, true);
+});
+
 test("starter claims enforce order and server balancing before crediting currency", () => {
   const initial = createInitialProgression(NOW);
   initial.achievements = {

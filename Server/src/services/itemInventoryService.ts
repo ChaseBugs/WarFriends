@@ -7,6 +7,7 @@ import type {
   PlayerProgressionState,
   SavedWeaponState,
 } from "../db";
+import { WEAPON_UPGRADE_CATALOG } from "../data/weaponUpgradeCatalog.generated";
 
 /**
  * Recovered weapon ownership and loadout logic.
@@ -20,17 +21,30 @@ import type {
  * State helpers clone every nested inventory object before mutation. A rejected request can
  * then safely build recovery fields from the last successful state in the same RequestBuffer,
  * while the outer progression transaction commits wallet and inventory changes atomically.
- * Delivery-bearing and discounted purchase paths remain closed until their full activation
- * and offer-entitlement lifecycles are implemented.
+ * Weapon upgrade delivery is also server-owned: the persisted receipt is created, finished,
+ * and consumed only by the recovered three-action lifecycle. Offer-backed discounts remain
+ * closed until the backend can prove the corresponding entitlement.
  */
 
 // Exact IJEAJGCCHEF values handled by the stock RequestBuffer result parser.
 export const ITEM_NOT_ENOUGH_WARBUCKS = 100;
 export const ITEM_NOT_ENOUGH_LEVEL = 101;
+export const ITEM_ALREADY_MAXIMUM_UPGRADE = 102;
 export const ITEM_NOT_ENOUGH_GOLD = 103;
+export const ITEM_WRONG_INDEX_TO_ACTIVATE = 104;
+export const ITEM_ALREADY_UPGRADING = 105;
+export const ITEM_TOO_SOON_TO_ACTIVATE = 106;
 export const ITEM_WEAPON_NOT_BOUGHT = 110;
 export const ITEM_PRICE_NOT_FOUND = 113;
 export const ITEM_PRICE_MISMATCH = 114;
+export const ITEM_NEGATIVE_PRICE_FROM_CLIENT = 7002;
+export const ITEM_NO_DISCOUNT_FOUND = 13601;
+
+// Exact 4.9.5 Constants rows consumed by MEJMLNDFDBP.BCEGIAODLCL. The client
+// echoes both values in InstantWeaponUpgrade, but the server always calculates
+// premium cost from these recovered constants and its own delivery receipt.
+export const WEAPON_GOLD_COEFFICIENT = 0.6325;
+export const WEAPON_GOLD_EXP_COEFFICIENT = -0.175;
 
 interface WeaponDefinition {
   /** GetType().ToString() value written by WeaponLevelsSetup.DHHKOKKDDDO. */
@@ -215,11 +229,49 @@ export interface WeaponEquipPayload {
   specialFeature: number;
 }
 
+export interface WeaponUpgradePurchasePayload {
+  /** Google2u component type returned by WeaponLevelsSetup.DHHKOKKDDDO. */
+  name: string;
+  /** Current saved upgrade index before the requested transition starts. */
+  boughtIndex: number;
+  /** Client server-clock snapshot; retained as a protocol assertion only. */
+  startTime: number;
+  /** Upgrade-price offer discount. Unsupported discounts fail closed. */
+  discount: number;
+  /** Client-reduced duration, checked against the recovered source row. */
+  deliveryTime: number;
+  /** Offer-derived number of seconds removed from the source duration. */
+  deliveryReduce: number;
+}
+
+export interface WeaponUpgradeInstantPayload {
+  name: string;
+  boughtIndex: number;
+  expectedPrice: number;
+  armyPower: number;
+  goldCoefficient: number;
+  goldExpCoefficient: number;
+  discount: number;
+}
+
+export interface WeaponUpgradeActivatePayload {
+  name: string;
+  boughtIndex: number;
+  armyPower: number;
+}
+
 export interface ItemInventoryMutationResult {
   state: PlayerProgressionState;
   itemInventory: ItemInventoryState;
   weapon: SavedWeaponState;
   definition: WeaponDefinition;
+}
+
+export interface WeaponUpgradeMutationResult extends ItemInventoryMutationResult {
+  /** Present only when BuyWeaponUpgrade creates a new server delivery receipt. */
+  deliveryTime?: number;
+  /** Present only when InstantWeaponUpgrade debits the remaining delivery cost. */
+  goldSpent?: number;
 }
 
 function emptyDelivery(): ItemDeliveryState {
@@ -258,6 +310,12 @@ function isObject(value: unknown): value is Record<string, unknown> {
 function integer(value: unknown, field: string): number {
   const parsed = Number(value);
   if (!Number.isInteger(parsed)) throw new ApiError(ITEM_PRICE_MISMATCH, `${field} must be an integer.`);
+  return parsed;
+}
+
+function finiteNumber(value: unknown, field: string): number {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) throw new ApiError(ITEM_PRICE_MISMATCH, `${field} must be finite.`);
   return parsed;
 }
 
@@ -305,6 +363,43 @@ export function parseWeaponEquipData(value: string): WeaponEquipPayload {
     slotIndex: integer(data.SlotIndex, "SlotIndex"),
     armyPower: integer(data.ArmyPower, "ArmyPower"),
     specialFeature: integer(data.SpecialFeature, "SpecialFeature"),
+  };
+}
+
+/** Decode the exact dictionary queued by WeaponScreen.IEFLIEHLBNA. */
+export function parseWeaponUpgradePurchaseData(value: string): WeaponUpgradePurchasePayload {
+  const data = parseObjectJson(value);
+  return {
+    name: boundedName(data.LevelName),
+    boughtIndex: integer(data.BoughtIndex, "BoughtIndex"),
+    startTime: integer(data.StartTime, "StartTime"),
+    discount: integer(data.discount ?? 0, "discount"),
+    deliveryTime: integer(data.DeliveryTime, "DeliveryTime"),
+    deliveryReduce: integer(data.deliveryReduce ?? 0, "deliveryReduce"),
+  };
+}
+
+/** Decode the exact dictionary queued after WeaponScreen optimistically fast-activates. */
+export function parseWeaponUpgradeInstantData(value: string): WeaponUpgradeInstantPayload {
+  const data = parseObjectJson(value);
+  return {
+    name: boundedName(data.LevelName),
+    boughtIndex: integer(data.BoughtIndex, "BoughtIndex"),
+    expectedPrice: integer(data.ExpectedPrice, "ExpectedPrice"),
+    armyPower: integer(data.ArmyPower, "ArmyPower"),
+    goldCoefficient: finiteNumber(data.GoldCoefficient, "GoldCoefficient"),
+    goldExpCoefficient: finiteNumber(data.GoldExpCoefficient, "GoldExpCoefficient"),
+    discount: integer(data.discount ?? 0, "discount"),
+  };
+}
+
+/** Decode the exact dictionary queued after WeaponScreen optimistically activates delivery. */
+export function parseWeaponUpgradeActivateData(value: string): WeaponUpgradeActivatePayload {
+  const data = parseObjectJson(value);
+  return {
+    name: boundedName(data.LevelName),
+    boughtIndex: integer(data.BoughtIndex, "BoughtIndex"),
+    armyPower: integer(data.ArmyPower, "ArmyPower"),
   };
 }
 
@@ -442,6 +537,226 @@ export function equipWeaponState(
   return { state: next, itemInventory, weapon, definition };
 }
 
+function upgradeContext(
+  state: PlayerProgressionState,
+  name: string,
+): {
+  definition: WeaponDefinition;
+  itemInventory: ItemInventoryState;
+  weapon: SavedWeaponState;
+  stages: NonNullable<(typeof WEAPON_UPGRADE_CATALOG)[string]>;
+} {
+  const definition = WEAPON_CATALOG[name];
+  const stages = WEAPON_UPGRADE_CATALOG[name];
+  const itemInventory = itemInventoryStateFor(state);
+  const weapon = definition ? itemInventory.levelManagerData.savedWeapons[name] : undefined;
+  if (!definition || !stages) {
+    throw new ApiError(ITEM_PRICE_NOT_FOUND, "Weapon upgrade balancing was not found.");
+  }
+  if (!weapon?.bought) {
+    throw new ApiError(ITEM_WEAPON_NOT_BOUGHT, "Weapon must be owned before it can be upgraded.");
+  }
+  return { definition, itemInventory, weapon, stages };
+}
+
+function assertTransitionExists(stages: readonly (readonly [number, number])[], boughtIndex: number): void {
+  if (!Number.isInteger(boughtIndex) || boughtIndex < 0 || stages[boughtIndex] === undefined) {
+    throw new ApiError(ITEM_ALREADY_MAXIMUM_UPGRADE, "Weapon is already at its maximum normal level.");
+  }
+}
+
+function assertUpgradeIndex(weapon: SavedWeaponState, requestedIndex: number): void {
+  if (requestedIndex !== weapon.boughtIndex) {
+    throw new ApiError(ITEM_WRONG_INDEX_TO_ACTIVATE, "Weapon upgrade index does not match stored state.");
+  }
+}
+
+function activeWeaponDelivery(delivery: ItemDeliveryState): boolean {
+  // The receipt remains active after its timer reaches zero until ActivateWeaponUpgrade
+  // consumes it. This mirrors the client's `activationNeeded` state and prevents a second
+  // purchase from overwriting an expired-but-unclaimed upgrade.
+  return delivery.activationNeeded || delivery.itemId.length > 0;
+}
+
+/**
+ * Start one server-owned weapon upgrade and debit its recovered WarBucks cost.
+ *
+ * WeaponScreen only sends price through RequestBuffer's analytics arguments, which are not
+ * part of Request.data. Consequently the server must select both price and duration from the
+ * generated MainScene catalog. Client StartTime, DeliveryTime, discount, and deliveryReduce
+ * are assertions; none can alter the authoritative receipt. The recovered LevelManager has
+ * one shared weaponDelivery object, so a player may have only one pending weapon transition.
+ */
+export function startWeaponUpgradeState(
+  state: PlayerProgressionState,
+  now: number,
+  payload: WeaponUpgradePurchasePayload,
+): WeaponUpgradeMutationResult {
+  const { definition, itemInventory, weapon, stages } = upgradeContext(state, payload.name);
+  assertUpgradeIndex(weapon, payload.boughtIndex);
+  assertTransitionExists(stages, weapon.boughtIndex);
+  const [warBucks, deliverySeconds] = stages[weapon.boughtIndex]!;
+
+  if (payload.discount !== 0 || payload.deliveryReduce !== 0) {
+    throw new ApiError(ITEM_NO_DISCOUNT_FOUND, "Weapon upgrade offer is not backed by the server.");
+  }
+  if (warBucks < 0 || deliverySeconds < 0) {
+    throw new ApiError(ITEM_PRICE_NOT_FOUND, "Recovered weapon upgrade balancing is invalid.");
+  }
+  if (payload.deliveryTime !== deliverySeconds || payload.startTime < 0) {
+    throw new ApiError(ITEM_PRICE_MISMATCH, "Weapon upgrade duration or start time does not match server balancing.");
+  }
+  if (activeWeaponDelivery(itemInventory.levelManagerData.weaponDelivery)) {
+    throw new ApiError(ITEM_ALREADY_UPGRADING, "Another weapon upgrade is awaiting delivery or activation.");
+  }
+  if (state.warBucks < warBucks) {
+    throw new ApiError(ITEM_NOT_ENOUGH_WARBUCKS, "Not enough WarBucks for this weapon upgrade.");
+  }
+
+  const start = Math.max(0, Math.floor(now));
+  itemInventory.levelManagerData.weaponDelivery = {
+    activationNeeded: true,
+    boughtIndex: weapon.boughtIndex,
+    end: start + deliverySeconds,
+    itemId: definition.name,
+    // WeaponLevelsSetup uses one upgrade lane. slotId is retained for exact ItemDelivery
+    // serialization even though the recovered weapon code does not read it.
+    slotId: 0,
+    start,
+  };
+  const next: PlayerProgressionState = {
+    ...state,
+    revision: state.revision + 1,
+    warBucks: state.warBucks - warBucks,
+    itemInventory,
+  };
+  return { state: next, itemInventory, weapon, definition, deliveryTime: deliverySeconds };
+}
+
+/**
+ * Calculate the exact premium price used by MEJMLNDFDBP.BCEGIAODLCL.
+ *
+ * Remaining seconds are converted to minutes and evaluated as
+ * ceil(GoldCoefficient * minutes^GoldExpCoefficient * minutes). The recovered client first
+ * rounds its remaining double to Int32; server receipts and `now` are integral seconds, so
+ * the same expression is deterministic here without trusting client clock state.
+ */
+export function weaponUpgradeInstantPrice(remainingSeconds: number): number {
+  const seconds = Math.max(0, Math.round(remainingSeconds));
+  if (seconds <= 0) return 0;
+  // C# evaluates `seconds / 60f`, both obscured constants, and the values passed to
+  // Math.Pow as System.Single before widening the final multiplication to double. Math.fround
+  // reproduces those binary32 conversions; plain JavaScript doubles are one Gold lower at a
+  // small set of long-duration boundaries present in the recovered tables.
+  const minutes = Math.fround(Math.fround(seconds) / Math.fround(60));
+  return Math.ceil(
+    Math.fround(WEAPON_GOLD_COEFFICIENT)
+      * Math.pow(minutes, Math.fround(WEAPON_GOLD_EXP_COEFFICIENT))
+      * minutes,
+  );
+}
+
+function matchingDelivery(
+  itemInventory: ItemInventoryState,
+  weapon: SavedWeaponState,
+  name: string,
+  requestedIndex: number,
+): ItemDeliveryState {
+  assertUpgradeIndex(weapon, requestedIndex);
+  const delivery = itemInventory.levelManagerData.weaponDelivery;
+  if (
+    !delivery.activationNeeded
+    || delivery.itemId !== name
+    || delivery.boughtIndex !== weapon.boughtIndex
+  ) {
+    throw new ApiError(ITEM_WRONG_INDEX_TO_ACTIVATE, "No matching weapon upgrade delivery exists.");
+  }
+  return delivery;
+}
+
+function finishWeaponUpgrade(
+  state: PlayerProgressionState,
+  itemInventory: ItemInventoryState,
+  weapon: SavedWeaponState,
+  definition: WeaponDefinition,
+  goldSpent = 0,
+): WeaponUpgradeMutationResult {
+  weapon.boughtIndex += 1;
+  itemInventory.levelManagerData.weaponDelivery = emptyDelivery();
+  const next: PlayerProgressionState = {
+    ...state,
+    revision: state.revision + 1,
+    gold: state.gold - goldSpent,
+    itemInventory,
+  };
+  return { state: next, itemInventory, weapon, definition, goldSpent };
+}
+
+/** Activate a completed receipt exactly once after the server-owned end timestamp. */
+export function activateWeaponUpgradeState(
+  state: PlayerProgressionState,
+  now: number,
+  payload: WeaponUpgradeActivatePayload,
+): WeaponUpgradeMutationResult {
+  const { definition, itemInventory, weapon, stages } = upgradeContext(state, payload.name);
+  assertTransitionExists(stages, weapon.boughtIndex);
+  const delivery = matchingDelivery(itemInventory, weapon, definition.name, payload.boughtIndex);
+  if (payload.armyPower < 0) {
+    throw new ApiError(ITEM_PRICE_MISMATCH, "ArmyPower must be non-negative.");
+  }
+  if (Math.floor(now) < delivery.end) {
+    throw new ApiError(ITEM_TOO_SOON_TO_ACTIVATE, "Weapon upgrade delivery is not finished.");
+  }
+  return finishWeaponUpgrade(state, itemInventory, weapon, definition);
+}
+
+/**
+ * Pay Gold for the remaining delivery duration and activate the upgrade atomically.
+ *
+ * The client has already incremented boughtIndex locally before this request is sent, so all
+ * validation must use the old index included in the payload and the persisted receipt. Both
+ * echoed constants and ExpectedPrice are checked to detect stale configuration or tampering.
+ * A queued RequestBuffer can reach the server after the client calculated ExpectedPrice, so
+ * one exact receipt-time value would reject legitimate requests. The accepted interval runs
+ * from the price at server receipt up to the price at delivery start; both bounds are derived
+ * from the same persisted receipt, and the exact client amount is debited to keep its already
+ * optimistic wallet mutation synchronized with server state.
+ */
+export function instantWeaponUpgradeState(
+  state: PlayerProgressionState,
+  now: number,
+  payload: WeaponUpgradeInstantPayload,
+): WeaponUpgradeMutationResult {
+  const { definition, itemInventory, weapon, stages } = upgradeContext(state, payload.name);
+  assertTransitionExists(stages, weapon.boughtIndex);
+  const delivery = matchingDelivery(itemInventory, weapon, definition.name, payload.boughtIndex);
+  if (payload.discount !== 0) {
+    throw new ApiError(ITEM_NO_DISCOUNT_FOUND, "Weapon delivery discount is not backed by the server.");
+  }
+  if (payload.expectedPrice < 0) {
+    throw new ApiError(ITEM_NEGATIVE_PRICE_FROM_CLIENT, "ExpectedPrice cannot be negative.");
+  }
+  if (
+    payload.armyPower < 0
+    || Math.abs(payload.goldCoefficient - WEAPON_GOLD_COEFFICIENT) > 0.000_001
+    || Math.abs(payload.goldExpCoefficient - WEAPON_GOLD_EXP_COEFFICIENT) > 0.000_001
+  ) {
+    throw new ApiError(ITEM_PRICE_MISMATCH, "Weapon instant-upgrade constants do not match server balancing.");
+  }
+
+  const remainingAtReceipt = Math.max(0, delivery.end - Math.floor(now));
+  const fullDeliveryDuration = Math.max(0, delivery.end - delivery.start);
+  const minimumPrice = weaponUpgradeInstantPrice(remainingAtReceipt);
+  const maximumPrice = weaponUpgradeInstantPrice(fullDeliveryDuration);
+  if (payload.expectedPrice < minimumPrice || payload.expectedPrice > maximumPrice) {
+    throw new ApiError(ITEM_PRICE_MISMATCH, "Weapon instant-upgrade price is outside the server receipt range.");
+  }
+  if (state.gold < payload.expectedPrice) {
+    throw new ApiError(ITEM_NOT_ENOUGH_GOLD, "Not enough Gold to finish the weapon upgrade.");
+  }
+  return finishWeaponUpgrade(state, itemInventory, weapon, definition, payload.expectedPrice);
+}
+
 export function serializeInventoryData(value: ItemInventoryState): string {
   return JSON.stringify(value.inventoryData);
 }
@@ -478,7 +793,8 @@ export function weaponRecoveryFields(
 export function requestedWeaponName(value: string): string {
   try {
     const parsed = JSON.parse(value) as Record<string, unknown>;
-    return typeof parsed?.Name === "string" ? parsed.Name : "";
+    if (typeof parsed?.Name === "string") return parsed.Name;
+    return typeof parsed?.LevelName === "string" ? parsed.LevelName : "";
   } catch {
     return "";
   }

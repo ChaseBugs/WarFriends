@@ -7,6 +7,7 @@ import type {
 } from "../db";
 import { findById } from "./playerService";
 import { mutateProgression } from "./progressionMutationService";
+import { createInitialItemInventory } from "./itemInventoryService";
 
 /** Exact IJEAJGCCHEF values handled by the recovered RequestBuffer response parser. */
 export const STARTER_ASSIGNMENTS_INCORRECT = 18501;
@@ -18,7 +19,7 @@ export interface StarterAssignmentDefinition {
   gold: number;
   warBucks: number;
   order: number;
-  authority: "rankedWins" | "medals" | "level" | "squadPoints" | "heroicPoints" | "unrecovered";
+  authority: "rankedWins" | "medals" | "level" | "squadPoints" | "heroicPoints" | "weaponLevel" | "unrecovered";
 }
 
 /**
@@ -28,8 +29,8 @@ export interface StarterAssignmentDefinition {
  * Keeping even currently unsupported rows in this table matters: the server can validate a
  * claim against the real reward and order without ever accepting the Gold/WarBucks values
  * sent by the client. `authority` explicitly records whether this backend can prove the
- * completion fact. Unit deployment, war-card play, weapon upgrades, and card crafting remain
- * rejected until their authoritative inventory/gameplay paths are rebuilt. ID_6 is proven
+ * completion fact. Unit deployment, war-card play, and card crafting remain rejected until
+ * their authoritative inventory/gameplay paths are rebuilt. ID_6 is proven
  * by the first replay-safe daily/co-op mission settlement, matching
  * StarterAssignmentWinMissionFirst's `heroicPoints > 0` check.
  */
@@ -40,7 +41,7 @@ export const STARTER_ASSIGNMENT_DEFINITIONS: readonly StarterAssignmentDefinitio
   { id: "ID_4", target: 35, gold: 0, warBucks: 2_000, order: 2, authority: "medals" },
   { id: "ID_5", target: 5, gold: 4, warBucks: 0, order: 5, authority: "level" },
   { id: "ID_6", target: 1, gold: 0, warBucks: 4_000, order: 6, authority: "heroicPoints" },
-  { id: "ID_7", target: 3, gold: 0, warBucks: 3_000, order: 4, authority: "unrecovered" },
+  { id: "ID_7", target: 3, gold: 0, warBucks: 3_000, order: 4, authority: "weaponLevel" },
   { id: "ID_8", target: -1, gold: 0, warBucks: 5_000, order: 9, authority: "unrecovered" },
   { id: "ID_9", target: 6, gold: 5, warBucks: 0, order: 8, authority: "level" },
   { id: "ID_10", target: 3, gold: 0, warBucks: 6_000, order: 7, authority: "squadPoints" },
@@ -105,6 +106,24 @@ function rankedWins(state: PlayerProgressionState): number {
   return state.achievements?.data.find((group) => group.id === 2)?.value ?? 0;
 }
 
+/**
+ * Reproduce StarterAssignmentUpgradeWeapon's exact completion source.
+ *
+ * The client does not count total upgrades across the account. It reads inventorySlots[1],
+ * resolves that slot's currently equipped weapon, and compares `weaponLevel` (boughtIndex +
+ * 1) with the assignment target. Using the same equipped-slot fact avoids incorrectly
+ * completing ID_7 when another weapon was upgraded or when the sniper slot was changed to a
+ * lower-level compatible weapon. Legacy players without persisted itemInventory receive the
+ * recovered starter loadout before this calculation.
+ */
+function equippedSecondaryWeaponLevel(state: PlayerProgressionState): number {
+  const inventory = state.itemInventory ?? createInitialItemInventory();
+  const equipped = inventory.inventoryData.slots["1"];
+  if (!equipped) return 0;
+  const weapon = inventory.levelManagerData.savedWeapons[equipped.name];
+  return weapon?.bought ? Math.max(0, weapon.boughtIndex) + 1 : 0;
+}
+
 function isServerConfirmed(
   definition: StarterAssignmentDefinition,
   state: PlayerProgressionState,
@@ -116,6 +135,7 @@ function isServerConfirmed(
     case "level": return facts.level >= definition.target;
     case "squadPoints": return facts.squadPointsTotal >= definition.target;
     case "heroicPoints": return (state.dailyMissions?.heroicPoints ?? 0) >= definition.target;
+    case "weaponLevel": return equippedSecondaryWeaponLevel(state) >= definition.target;
     case "unrecovered": return false;
   }
 }
