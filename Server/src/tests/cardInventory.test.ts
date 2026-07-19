@@ -11,14 +11,23 @@ import {
   CARD_PACK_NOT_ENOUGH_FUNDS,
   CARD_PACK_NOT_FOUND,
   ALREADY_CRAFTING,
+  BUDDY_CARD_NOT_READY,
+  CARD_ALREADY_WITHDRAWN,
   CARD_NOT_FOUND,
   CRAFTED_CARD_NOT_READY,
+  WITHDRAW_NOT_YET_AVAILABLE,
   claimCraftedCardState,
   createInitialCardCrafting,
   createInitialCardInventory,
   purchaseCardPackState,
   startCardCraftingState,
 } from "../services/cardInventoryService";
+import {
+  applyDepositCardChangesState,
+  parseDepositCardChanges,
+  squadCardPoolCapacity,
+  withdrawSquadCardState,
+} from "../services/squadCardPoolService";
 import { buildPlayerData, createInitialProgression } from "../services/playerStateService";
 
 const NOW = 1_700_000_000;
@@ -52,7 +61,7 @@ const GOLD_PACK_CARDS = [
 ];
 
 test("card extraction joins serialized components, definitions, pack prices, and rarity rules", () => {
-  assert.equal(generatedCardCatalog.schemaVersion, 2);
+  assert.equal(generatedCardCatalog.schemaVersion, 3);
   assert.equal(generatedCardCatalog.clientVersion, "4.9.5");
   assert.match(generatedCardCatalog.sourceSha256, /^[0-9a-f]{64}$/);
   assert.equal(generatedCardCatalog.unlockLevel, 6);
@@ -67,7 +76,16 @@ test("card extraction joins serialized components, definitions, pack prices, and
   });
   assert.deepEqual(generatedCardCatalog.cardPoolRules, {
     withdrawCooldownMinutes: 240,
+    buddyDepositCooldownMinutes: 480,
     maximumBuddyCards: 10,
+    reputationPoints: { bronze: 5, silver: 15, gold: 45, buddy: 30 },
+    capacityBySquadLevel: [
+      3, 4, 5, 5, 6, 6, 6, 6, 7, 7,
+      7, 7, 7, 7, 7, 7, 8, 8, 8, 8,
+      8, 8, 8, 8, 8, 8, 8, 8, 9, 9,
+      9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
+      9, 9, 9, 9, 9, 9, 9, 9, 10, 10,
+    ],
   });
   assert.deepEqual(
     generatedCardCatalog.packs.map((pack) => [
@@ -186,6 +204,193 @@ test("crafting rejects invalid recipes, insufficient ownership, concurrent recei
     (error: unknown) => (error as { code?: number }).code === CRAFTED_CARD_NOT_READY,
   );
   assert.equal(claimed.cardInventory.cardData[claimed.cardId!]?.amount, beforeClaim + 1);
+});
+
+test("normal squad-card deposits atomically exchange inventory and enforce source capacity", () => {
+  const initial = createInitialProgression(NOW);
+  initial.cardInventory = {
+    ...createInitialCardInventory(),
+    cardData: { AMMOCRATE: { amount: 5 }, FREEZE: { amount: 1 } },
+  };
+  const deposit = applyDepositCardChangesState(
+    initial,
+    {},
+    parseDepositCardChanges(
+      JSON.stringify({ AMMOCRATE: JSON.stringify({ amount: 2 }) }),
+      JSON.stringify({}),
+    ),
+    squadCardPoolCapacity(1),
+  );
+  assert.equal(deposit.cardInventory.cardData.AMMOCRATE?.amount, 3);
+  assert.deepEqual(JSON.parse(deposit.depositedCards.AMMOCRATE), { amount: 2 });
+  assert.equal(deposit.state.revision, initial.revision + 1);
+
+  const edited = applyDepositCardChangesState(
+    deposit.state,
+    deposit.depositedCards,
+    parseDepositCardChanges(
+      JSON.stringify({ FREEZE: JSON.stringify({ amount: 1 }) }),
+      JSON.stringify({ AMMOCRATE: JSON.stringify({ amount: 1 }) }),
+    ),
+    squadCardPoolCapacity(1),
+  );
+  assert.equal(edited.cardInventory.cardData.AMMOCRATE?.amount, 4);
+  assert.equal(edited.cardInventory.cardData.FREEZE, undefined);
+  assert.deepEqual(JSON.parse(edited.depositedCards.AMMOCRATE), { amount: 1 });
+  assert.deepEqual(JSON.parse(edited.depositedCards.FREEZE), { amount: 1 });
+
+  assert.throws(
+    () => applyDepositCardChangesState(
+      initial,
+      {},
+      parseDepositCardChanges(
+        JSON.stringify({ AMMOCRATE: JSON.stringify({ amount: 4 }) }),
+        JSON.stringify({}),
+      ),
+      squadCardPoolCapacity(1),
+    ),
+    (error: unknown) => (error as { code?: number }).code === CARD_NOT_FOUND,
+  );
+  assert.equal(squadCardPoolCapacity(0), 3);
+  assert.equal(squadCardPoolCapacity(500), 10);
+});
+
+test("squad-card deposits reject forged ownership, contradictory deltas, and new Buddy payloads", () => {
+  const initial = createInitialProgression(NOW);
+  initial.cardInventory = {
+    ...createInitialCardInventory(),
+    cardData: { AMMOCRATE: { amount: 1 } },
+  };
+  assert.throws(
+    () => applyDepositCardChangesState(
+      initial,
+      {},
+      parseDepositCardChanges(
+        JSON.stringify({ AMMOCRATE: JSON.stringify({ amount: 2 }) }),
+        JSON.stringify({}),
+      ),
+      3,
+    ),
+    (error: unknown) => (error as { code?: number }).code === CARD_NOT_FOUND,
+  );
+  assert.throws(
+    () => parseDepositCardChanges(
+      JSON.stringify({ AMMOCRATE: JSON.stringify({ amount: 1 }) }),
+      JSON.stringify({ AMMOCRATE: JSON.stringify({ amount: 1 }) }),
+    ),
+    (error: unknown) => (error as { code?: number }).code === CARD_NOT_FOUND,
+  );
+  const buddy = JSON.stringify({
+    amount: 1,
+    buddyName: "Donor",
+    equippedVisuals: {},
+    unityType: 0,
+    primaryWeapon: 0,
+    secondaryWeapon: -1,
+    armypower: 100,
+    level: 5,
+  });
+  assert.throws(
+    () => applyDepositCardChangesState(
+      initial,
+      {},
+      parseDepositCardChanges(JSON.stringify({ "donor-1": buddy }), JSON.stringify({})),
+      3,
+    ),
+    (error: unknown) => (error as { code?: number }).code === BUDDY_CARD_NOT_READY,
+  );
+});
+
+test("squad-card withdrawal grants once, rewards the donor, and starts the exact cooldown", () => {
+  const recipient = createInitialProgression(NOW);
+  const first = withdrawSquadCardState(
+    recipient,
+    { AMMOCRATE: JSON.stringify({ amount: 2 }) },
+    7,
+    "AMMOCRATE",
+    NOW,
+  );
+  assert.equal(first.recipientInventory.cardData.AMMOCRATE?.amount, 1);
+  assert.deepEqual(JSON.parse(first.donorDepositedCards.AMMOCRATE), { amount: 1 });
+  assert.equal(first.donorReputation, 12);
+  assert.equal(first.nextWithdraw, NOW + 240 * 60);
+  assert.equal(first.recipientInventory.nextWithdraw, first.nextWithdraw);
+
+  assert.throws(
+    () => withdrawSquadCardState(
+      first.recipientState,
+      first.donorDepositedCards,
+      first.donorReputation,
+      "AMMOCRATE",
+      NOW + 1,
+    ),
+    (error: unknown) => (error as { code?: number }).code === WITHDRAW_NOT_YET_AVAILABLE,
+  );
+  const readyAgain = {
+    ...first.recipientState,
+    cardInventory: { ...first.recipientInventory, nextWithdraw: NOW },
+  };
+  const last = withdrawSquadCardState(
+    readyAgain,
+    first.donorDepositedCards,
+    first.donorReputation,
+    "AMMOCRATE",
+    NOW + 1,
+  );
+  assert.equal(last.recipientInventory.cardData.AMMOCRATE?.amount, 2);
+  assert.equal(last.donorDepositedCards.AMMOCRATE, undefined);
+  assert.throws(
+    () => withdrawSquadCardState(
+      { ...last.recipientState, cardInventory: { ...last.recipientInventory, nextWithdraw: NOW } },
+      last.donorDepositedCards,
+      last.donorReputation,
+      "AMMOCRATE",
+      NOW + 2,
+    ),
+    (error: unknown) => (error as { code?: number }).code === CARD_ALREADY_WITHDRAWN,
+  );
+});
+
+test("legacy Buddy cards transfer exact loadout data and enforce the ten-card ownership cap", () => {
+  const buddy = {
+    amount: 1,
+    buddyName: "Donor",
+    equippedVisuals: { "0": { equippedID: "HEAD_DEFAULT" } },
+    unityType: 2,
+    primaryWeapon: 3,
+    secondaryWeapon: -1,
+    armypower: 900,
+    level: 12,
+  };
+  const initial = createInitialProgression(NOW);
+  const result = withdrawSquadCardState(
+    initial,
+    { "donor-buddy": JSON.stringify(buddy) },
+    10,
+    "donor-buddy",
+    NOW,
+  );
+  assert.deepEqual(result.recipientInventory.buddyCardData["donor-buddy"], buddy);
+  assert.equal(result.donorReputation, 40);
+  assert.equal(result.donorDepositedCards["donor-buddy"], undefined);
+
+  const capped = createInitialProgression(NOW);
+  capped.cardInventory = {
+    ...createInitialCardInventory(),
+    buddyCardData: Object.fromEntries(
+      Array.from({ length: 10 }, (_, index) => [`buddy-${index}`, { ...buddy, buddyName: `Buddy ${index}` }]),
+    ),
+  };
+  assert.throws(
+    () => withdrawSquadCardState(
+      capped,
+      { "donor-buddy": JSON.stringify(buddy) },
+      10,
+      "donor-buddy",
+      NOW,
+    ),
+    (error: unknown) => (error as { code?: number }).code === BUDDY_CARD_NOT_READY,
+  );
 });
 
 test("Gold and WarBucks card packs debit source prices and add validated card counts", () => {

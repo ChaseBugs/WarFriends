@@ -128,7 +128,13 @@ interface CardCatalogArtifact {
   unlockLevel: number;
   rarityProbabilities: Record<string, number>;
   craftingRules: Record<string, number>;
-  cardPoolRules: Record<string, number>;
+  cardPoolRules: {
+    withdrawCooldownMinutes: number;
+    buddyDepositCooldownMinutes: number;
+    maximumBuddyCards: number;
+    reputationPoints: Record<string, number>;
+    capacityBySquadLevel: number[];
+  };
   cards: Array<Record<string, unknown>>;
   unresolvedRows: Array<Record<string, unknown>>;
   packs: Array<Record<string, unknown>>;

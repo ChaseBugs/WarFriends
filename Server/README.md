@@ -19,7 +19,9 @@ npm run dev               # ts-node-dev, watch mode
 ```
 
 Requires MongoDB (`:27017`) and, optionally, Redis (`:6379`). Set `REDIS_ENABLED=false` to
-run Mongo-only. Health check: `GET /health`.
+run Mongo-only. Cross-player squad-card withdrawal uses a multi-document transaction, so enable a
+single-node replica set for local development (or use a replicated/sharded managed deployment)
+and include `replicaSet` in `MONGO_URL`. Health check: `GET /health`.
 
 ## How the client talks to it
 
@@ -143,6 +145,13 @@ Working end-to-end (verified live):
   17401/17601/17701 recovery bodies restore client state, and a claimed Gold craft proves starter
   assignment ID_8. Subscription-only `CraftAndClaimCard` remains rejected until platform
   subscriptions are authoritative.
+- **Squad War Card pool (authoritative normal-card path)**: `DepositCards` validates the nested
+  `AddedCards`/`RemovedCards` dictionaries, ownership, and the recovered 3-10 slot squad-level
+  capacity before atomically exchanging inventory and `depositedCardsDic`. `WithdrawCard` verifies
+  both players against the same squad roster, transfers one card in a MongoDB transaction, awards
+  the donor 5/15/45 rarity reputation, and starts the exact 240-minute recipient cooldown. Existing
+  Buddy deposits transfer with their full loadout and a ten-card cap; new Buddy generation/deposit
+  remains rejected until its randomized unit/weapon snapshot can be derived authoritatively.
 - **Weapon inventory foundation**: private and public player snapshots now serialize the
   exact recovered `InventoryData.slots` and `LevelManagerData.savedWeapons` structures with
   the 4.9.5 starter loadout. Stock buffered `BuyWeapon`/`EquipWeapon` supports all 84
@@ -242,12 +251,13 @@ allowlist of analytics/impression actions is safely ignored.
 
 ### Next
 
-- **Squad extensions** — card pool and squad events/wars are not implemented. Chat unread
-  state is persistent, but actual channel delivery still requires Photon Chat repointing or
-  a compatible replacement transport.
+- **Squad extensions** — normal-card pool deposits/withdrawals are implemented. Authoritative
+  Buddy generation/deposit, card-pool request notifications, and squad events/wars remain. Chat
+  unread state is persistent, but actual channel delivery still requires Photon Chat repointing
+  or a compatible replacement transport.
 - **Item economy expansion** — unit Elite upgrades, normal shop visuals, normal card-pack
   purchase, and complete normal-loadout ArmyPower are implemented. Add authoritative card reward
-  and consumption events, squad card deposits/withdrawals, black-market features, rentals,
+  and consumption events, Buddy deposits, black-market features, rentals,
   VIP purchasing, and non-shop visual reward delivery. Normal unit purchase is authoritative for 23
   non-tutorial roster units, and the tutorial unit is persisted through its first equip event;
   three helper rows and 18 ArmyUpgrades rows without LevelManager objects remain closed. All 84 resolvable

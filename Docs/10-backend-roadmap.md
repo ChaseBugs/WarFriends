@@ -17,7 +17,8 @@ remaining work by gameplay dependency rather than duplicating every `DatabaseAct
 ### Complete remaining inventory families
 
 - non-shop visual rewards, parts, offers, and rentals;
-- card reward/consumption events and the squad card pool;
+- card reward/consumption events, authoritative Buddy deposit generation, and card-pool
+  notifications;
 - lootboxes and Arena crowns;
 - offers, rentals, VIP, and subscriptions;
 - platform-verified real-money purchase receipts and refunds.
@@ -26,7 +27,9 @@ Normal Gold/WarBucks card-pack purchase and `CardManagerData` persistence are im
 stock protocol still lets the client select identities inside a server-validated rarity envelope;
 see [War Cards and card packs](12-war-cards-and-card-packs.md) for the compatibility boundary.
 Timed three-for-one crafting and server-selected claim results are implemented; subscription-only
-instant crafting remains closed until subscriptions are authoritative.
+instant crafting remains closed until subscriptions are authoritative. Normal squad-card deposits
+and cross-player withdrawals are implemented with source capacity/reputation/cooldown rules and a
+two-player MongoDB transaction; new Buddy snapshot creation remains closed.
 
 ## Progression and live operations
 

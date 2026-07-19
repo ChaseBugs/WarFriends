@@ -50,7 +50,7 @@ function rowNames(block, tableName) {
   return [...match[1].matchAll(/^  - ([^\r\n]+)$/gm)].map((item) => item[1]);
 }
 
-function flatRows(block, fields, tableName) {
+function flatRows(block, fields, tableName, validateNames = true) {
   const start = block.text.search(/^  Rows:$/m);
   if (start < 0) throw new Error(`${tableName}.Rows was not found.`);
   const rows = block.text
@@ -74,7 +74,7 @@ function flatRows(block, fields, tableName) {
     throw new Error(`${tableName} has ${names.length} names but ${rows.length} rows.`);
   }
   for (let index = 0; index < names.length; index++) {
-    if (names[index] !== rows[index].NAME) {
+    if (validateNames && names[index] !== rows[index].NAME) {
       throw new Error(`${tableName} row order differs at index ${index}.`);
     }
   }
@@ -188,6 +188,19 @@ const cardConstantsBlock = blocks.find(({ text }) =>
 if (!cardConstantsBlock) throw new Error("CardConstants sheet was not found in MainScene.");
 const cardConstants = keyedFloatRows(cardConstantsBlock, "CardConstants");
 
+const squadsBlock = blocks.find(({ text }) =>
+  /^    CARDPOOLSIZE: /m.test(text)
+  && /^  - LEVEL: 1$/m.test(text)
+  && /^  - LEVEL: 50$/m.test(text));
+if (!squadsBlock) throw new Error("Squads card-pool rows were not found in MainScene.");
+const squadRows = flatRows(squadsBlock, ["LEVEL", "CARDPOOLSIZE"], "Squads", false)
+  .sort((left, right) => left.LEVEL - right.LEVEL);
+for (let index = 0; index < squadRows.length; index++) {
+  if (squadRows[index].LEVEL !== index + 1 || !Number.isInteger(squadRows[index].CARDPOOLSIZE)) {
+    throw new Error(`Squads card-pool row ${index} is invalid or non-contiguous.`);
+  }
+}
+
 function integerConstant(source, key) {
   const value = source.get(key);
   if (!Number.isInteger(value) || value < 0) throw new Error(`${key} is not a non-negative integer.`);
@@ -282,10 +295,18 @@ const craftingRules = {
 };
 const cardPoolRules = {
   withdrawCooldownMinutes: integerConstant(constants, "CardWithdrawTimer"),
+  buddyDepositCooldownMinutes: integerConstant(cardConstants, "BuddyDepositTimer"),
   maximumBuddyCards: integerConstant(constants, "MaximumNumberOfBuddyCards"),
+  reputationPoints: {
+    bronze: integerConstant(cardConstants, "RepPointsBronzeCard"),
+    silver: integerConstant(cardConstants, "RepPointsSilverCard"),
+    gold: integerConstant(cardConstants, "RepPointsGoldCard"),
+    buddy: integerConstant(cardConstants, "RepPointsBuddyCard"),
+  },
+  capacityBySquadLevel: squadRows.map((row) => row.CARDPOOLSIZE),
 };
 const artifact = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   clientVersion: "4.9.5",
   source: "Client/ExportedProject/Assets/Scenes/MainScene.unity",
   sourceSha256: createHash("sha256").update(sceneBuffer).digest("hex"),

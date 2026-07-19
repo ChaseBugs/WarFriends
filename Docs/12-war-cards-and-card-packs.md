@@ -18,8 +18,9 @@ the same object and returns it in the typed `PlayerData.CardManagerData` boot fi
 `cardData` maps a card ID to its owned `amount`. `buddyCardData` is the squad-buddy snapshot used
 by the deposit/withdraw flow and preserves amount, buddy identity, equipped visuals, unit type,
 weapons, Army Power, and level. The timer fields and extra-slot flag are preserved even though the
-squad card pool is not implemented yet. New accounts begin with the exact empty shape; old player
-documents are materialized safely when first loaded.
+extra-slot flag belongs to battle-card selection rather than squad-pool capacity. Normal squad-card
+deposit and cross-player withdrawal now use this authoritative inventory. New accounts begin with
+the exact empty shape; old player documents are materialized safely when first loaded.
 
 ## Authoritative 4.9.5 catalog
 
@@ -34,7 +35,10 @@ SHA-256 hash. The generated catalog contains:
 - display level 6 as the War Card unlock level;
 - the recovered level thresholds and rarity probabilities used by the client;
 - the 30-minute Bronze-to-Silver recipe, 60-minute Silver-to-Gold recipe, 240-minute squad
-  withdrawal cooldown, and ten-buddy-card limit.
+  withdrawal cooldown, 480-minute Buddy re-deposit timer, and ten-buddy-card limit;
+- all 50 squad-level card-pool capacities, ranging from three normal cards at level 1 to ten at
+  levels 49-50;
+- donor reputation rewards of 5/15/45 for Bronze/Silver/Gold cards and 30 for a Buddy card.
 
 Unresolved rows remain queryable evidence in the material database but can never be purchased or
 granted. Run `npm run verify:card-catalog` in `Server` to prove that the checked-in artifact still
@@ -101,6 +105,35 @@ assignment `ID_8`.
 but the reconstructed backend does not yet own a platform-verified subscription entitlement;
 accepting it would let a modified APK bypass both the timer and subscription purchase.
 
+## Squad card pool
+
+`DepositCards` (action 174) receives `AddedCards` and `RemovedCards` as JSON dictionaries whose
+values are serialized `CardData` or `BuddyCardData`. The server parses both JSON layers, rejects
+unknown IDs, malformed amounts, contradictory changes, and unowned cards, then exchanges normal
+cards between `CardManagerData.cardData` and the player's `depositedCardsDic` in one
+revision-guarded player-document write. It also derives the allowed normal-card count from the
+authoritative squad level instead of accepting a capacity from the request. Removing the owner's
+existing Buddy deposit is supported, but creating a new Buddy deposit remains fail-closed until
+the backend can reproduce `CardBuddy.CreateDataForCurrentPlayer` from authoritative random unit
+type, compatible equipped weapons, visuals, Army Power, and level.
+
+`WithdrawCard` (action 175) accepts only a donor player ID and card ID. The server verifies that
+the recipient and donor are distinct current members of the same authoritative squad roster,
+checks `nextWithdraw`, reloads the donor's current pool, and ignores the client's optimistic local
+grant. One MongoDB transaction then performs all ownership effects together:
+
+1. decrement or remove the donor's selected pool entry;
+2. add one normal card or the exact existing Buddy snapshot to the recipient inventory;
+3. add the recovered rarity-based reputation reward to the donor;
+4. set the recipient's next withdrawal to server time plus 240 minutes;
+5. commit both player documents, or abort both when any validation/write fails.
+
+This transaction requires a replica-set or sharded MongoDB deployment. Error 17501 restores the
+latest donor pool and recipient `CardManagerData` when another member already took the card;
+17502 returns the authoritative `NextWithdraw`; 17402 protects unsupported/maximum Buddy state.
+Existing valid Buddy deposits can be withdrawn, preserve their full loadout snapshot, and respect
+the recovered maximum of ten owned Buddy cards.
+
 ## Compatibility and trust boundary
 
 The unmodified client chooses card identities locally and adds them to its local inventory before
@@ -125,7 +158,9 @@ The following systems are still fail-closed or incomplete:
 
 - consuming War Cards during an authoritative PvP battle;
 - granting cards or card packs from missions, Arena, assignments, offers, and achievements;
-- squad deposits, withdrawals, buddy-card timers, extra slots, and notifications;
+- authoritative Buddy snapshot generation/deposit, its 480-minute timer, and deposit-request
+  notifications;
+- purchase/entitlement logic for the battle-card `extraSlot` flag;
 - subscription-backed instant `CraftAndClaimCard`;
 - server-owned offer/subscription discounts;
 - a server-selected card-pack RNG protocol compatible with a modified client.
@@ -135,6 +170,7 @@ The following systems are still fail-closed or incomplete:
 - `Server/scripts/Extract-CardCatalog.mjs`
 - `Server/src/data/cardCatalog.generated.json`
 - `Server/src/services/cardInventoryService.ts`
+- `Server/src/services/squadCardPoolService.ts`
 - `Server/src/services/assignmentService.ts`
 - `Server/src/handlers/cards.ts`
 - `Server/src/services/playerStateService.ts`

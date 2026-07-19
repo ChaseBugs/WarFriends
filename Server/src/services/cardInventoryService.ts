@@ -7,6 +7,9 @@ export const CARD_PACK_NOT_FOUND = 112;
 export const CARD_PACK_NOT_ENOUGH_FUNDS = 100;
 export const CARD_PACK_NO_DISCOUNT = 13601;
 export const CARD_NOT_FOUND = 17401;
+export const BUDDY_CARD_NOT_READY = 17402;
+export const CARD_ALREADY_WITHDRAWN = 17501;
+export const WITHDRAW_NOT_YET_AVAILABLE = 17502;
 export const ALREADY_CRAFTING = 17601;
 export const CRAFTED_CARD_NOT_READY = 17701;
 
@@ -42,7 +45,15 @@ interface CardCatalogArtifact {
   };
   cardPoolRules: {
     withdrawCooldownMinutes: number;
+    buddyDepositCooldownMinutes: number;
     maximumBuddyCards: number;
+    reputationPoints: {
+      bronze: number;
+      silver: number;
+      gold: number;
+      buddy: number;
+    };
+    capacityBySquadLevel: number[];
   };
   cards: CardDefinition[];
   unresolvedRows: CardDefinition[];

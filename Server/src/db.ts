@@ -1,4 +1,4 @@
-import { MongoClient, type Collection, type Db, type Document } from "mongodb";
+import { MongoClient, type ClientSession, type Collection, type Db, type Document } from "mongodb";
 import { config } from "./config";
 import type { DatabasePlayerDTO, SquadDTO } from "./dtos";
 import {
@@ -584,6 +584,31 @@ export async function disconnectMongo(): Promise<void> {
   reportsCollection = null;
   gameCatalogEntriesCollection = null;
   gameCatalogReleasesCollection = null;
+}
+
+/**
+ * Execute a multi-document gameplay mutation in one MongoDB transaction.
+ *
+ * Squad-card withdrawal moves ownership between two player documents. A pair of unrelated
+ * updateOne calls would have an unavoidable crash window in which the card is either lost or
+ * duplicated. The driver's withTransaction helper retries transient transaction conflicts and
+ * commits the donor-pool decrement together with the recipient-inventory grant.
+ *
+ * Production and local deployments that enable cross-player economy actions must therefore use
+ * a replica set or sharded MongoDB deployment; standalone MongoDB does not support transactions.
+ */
+export async function withMongoTransaction<T>(work: (session: ClientSession) => Promise<T>): Promise<T> {
+  return client.withSession(async (session) => {
+    let result: T | undefined;
+    await session.withTransaction(async () => {
+      result = await work(session);
+    }, {
+      readConcern: { level: "snapshot" },
+      writeConcern: { w: "majority" },
+    });
+    if (result === undefined) throw new Error("MongoDB transaction completed without a result.");
+    return result;
+  });
 }
 
 function requireCollection<T extends Document>(name: string, value: Collection<T> | null): Collection<T> {
