@@ -280,10 +280,12 @@ export function buildPlayerData(player: PlayerDocument): PlayerDataMap {
   // PlayerAnalytics derives from DatabaseSerializedObjectGeneric<PlayerAnalyticsData>, so
   // this exact nested type name is the boot lookup key. The real chat channel is Photon
   // Chat, but its cross-device unread cursor is persisted by Beanstalk action 193. Sending
-  // only the recovered server-owned field is equivalent to the client's current LoadEmpty
-  // behavior for the remaining analytics fields while restoring the cursor correctly.
+  // only recovered server-owned fields is equivalent to the client's current LoadEmpty
+  // behavior for the remaining analytics fields. The creation counter must also cross this
+  // boot boundary: PlayerAnalytics derives the next squad price from it after every restart.
   addSerializedObject(data, "PlayerAnalyticsData", {
     lastSeenSquadChatTimeStampDB: state.lastSeenSquadChatTimestamp ?? 0,
+    squadCreationsCount: state.squadCreationsCount ?? 0,
   });
 
   if (dto.facebookId !== -1) data.FacebookName = { S: dto.accountName };

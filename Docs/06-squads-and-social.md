@@ -24,6 +24,28 @@ Implemented flows include:
 Every mutation verifies actor membership, actor authority, target membership, capacity, and join
 policy. A leader cannot accidentally leave a squad without a valid succession path.
 
+## Squad creation economy
+
+Squad creation is a paid, server-authoritative operation. The recovered
+`PlayerAnalytics.createSquadWarBucksPrice` formula is `(squadCreationsCount + 1) * 25`, so a
+player's first creation costs 25 WarBucks, the second costs 50, and the third costs 75. The base
+value is not an estimate: the 4.9.5 MainScene stores `WarBucksCreateSquadPrice` as obscured bytes
+`e785cb41` with key `230887`, which decodes to the float value 25.
+
+The original UI subtracts that price optimistically before action 37 reaches the backend. The
+server never trusts the local subtraction. It reloads the founder's authoritative progression,
+calculates the price from the persisted creation count, and commits four related changes in one
+MongoDB transaction: the unique squad document, founder roster entry, player squad mirror, and
+WarBucks/count progression update. A name-index conflict or concurrent founder-state change
+aborts all four changes, preventing a paid but missing squad or a free squad with no wallet debit.
+
+On success, the response includes exact key `squadCreationsCnt`; the stock callback copies it
+back into PlayerAnalytics. If funds are insufficient, exact source error `11403` includes both
+`squadCreationsCnt` and `PlayerWB`, which the generic error parser uses to undo the optimistic UI
+debit. A unique-name race uses exact source error `3701`. `GetPlayerData` also restores
+`squadCreationsCount` inside `PlayerAnalyticsData`, so restarting or changing devices cannot reset
+the next creation price.
+
 ## Discovery and leaderboards
 
 Squads can be searched and listed using recovered response shapes. Experience and squad-points
@@ -65,7 +87,8 @@ client protocol task.
 ## Missing squad systems
 
 - squad events, divisions, milestones, and wars;
-- atomic multi-document transactions for every membership mutation;
+- atomic multi-document transactions for join, leave, invite acceptance, rank, and leadership
+  mutations (creation is already transactional);
 - chat delivery and moderation.
 
 Unrecovered actions remain rejected rather than mutating guessed card or event state.

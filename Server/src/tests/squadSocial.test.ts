@@ -63,13 +63,15 @@ test("stock RequestBuffer persists and idempotently replays squad chat cursor ac
   assert.equal(replay.requestsResults, first.requestsResults);
 });
 
-test("GetPlayerData restores the cursor through the recovered PlayerAnalyticsData key", () => {
+test("GetPlayerData restores squad analytics through the recovered PlayerAnalyticsData key", () => {
   const player = playerDocument("cursor-player");
   player.progression!.lastSeenSquadChatTimestamp = NOW - 5;
+  player.progression!.squadCreationsCount = 3;
   const wire = buildPlayerData(player);
   const analytics = JSON.parse((wire.PlayerAnalyticsData as { S: string }).S) as Record<string, number>;
 
   assert.equal(analytics.lastSeenSquadChatTimeStampDB, NOW - 5);
+  assert.equal(analytics.squadCreationsCount, 3);
 });
 
 test("squad event notification uses the message type and numeric suffix parsed by Unity", () => {

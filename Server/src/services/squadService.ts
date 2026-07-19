@@ -1,8 +1,16 @@
-import { players, squads, type SquadDocument } from "../db";
+import {
+  players,
+  squads,
+  withMongoTransaction,
+  type PlayerDocument,
+  type PlayerProgressionState,
+  type SquadDocument,
+} from "../db";
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import { SquadRank } from "../constants";
 import { newSquad, type SquadDTO, type SquadMemberDTO } from "../dtos";
 import { findById, updatePlayerFields } from "./playerService";
+import { progressionForPlayer } from "./playerStateService";
 import logger from "../utils/logger";
 
 /**
@@ -10,10 +18,10 @@ import logger from "../utils/logger";
  *
  * `squads.members` is the membership source of truth. Squad name and rank are also copied to
  * each player document because the recovered client expects to render them from a standalone
- * DatabasePlayer response. Every mutation therefore changes the squad document first and the
- * player mirror second. Those writes are intentionally visible here: a multi-instance
- * production deployment should wrap them in a MongoDB transaction or add an idempotent repair
- * worker before treating the mirror as strongly consistent.
+ * DatabasePlayer response. Creation commits both documents and its WarBucks debit in one
+ * transaction. The remaining membership mutations still change the squad first and player
+ * mirror second; they must be migrated to the same transaction boundary before that mirror is
+ * strongly consistent in a multi-instance production deployment.
  *
  * Admission capabilities are created only inside this service. A public join request cannot
  * set `allowPrivate`; only an already-authorized manager acceptance can pass it to `joinSquad`.
@@ -82,36 +90,139 @@ export interface CreateSquadOptions {
   requiredMedals?: number;
 }
 
-export async function createSquad(founderId: string, requestedName: string, options: CreateSquadOptions = {}): Promise<SquadDTO> {
+/** IJEAJGCCHEF.NotEnoughWarBucksForCreateSquad; its parser restores count and wallet. */
+export const SQUAD_CREATE_NOT_ENOUGH_WARBUCKS = 11403;
+
+/**
+ * Exact 4.9.5 `WarBucksCreateSquadPrice` Constants value.
+ *
+ * MainScene stores the CodeStage ObscuredFloat as hidden bytes `e785cb41` with key 230887.
+ * Reading the bytes as little-endian and XORing the key yields IEEE-754 value 25.
+ */
+export const SQUAD_CREATE_BASE_WARBUCKS_COST = 25;
+
+export interface SquadCreationEconomyResult {
+  state: PlayerProgressionState;
+  squadCreationsCount: number;
+  warBucksSpent: number;
+}
+
+export interface CreateSquadResult extends SquadCreationEconomyResult {
+  squad: SquadDTO;
+}
+
+/** Reproduce PlayerAnalytics.createSquadWarBucksPrice from server-owned creation history. */
+export function squadCreationWarBucksPrice(squadCreationsCount: number): number {
+  if (!Number.isSafeInteger(squadCreationsCount) || squadCreationsCount < 0) {
+    throw new ApiError(ApiErrorCode.UnknownAction, "Squad creation count is invalid.");
+  }
+  const price = (squadCreationsCount + 1) * SQUAD_CREATE_BASE_WARBUCKS_COST;
+  if (!Number.isSafeInteger(price) || price <= 0) {
+    throw new ApiError(ApiErrorCode.UnknownAction, "Squad creation price is outside the safe range.");
+  }
+  return price;
+}
+
+/** Apply only the authoritative currency/count portion so it can be tested without MongoDB. */
+export function applySquadCreationEconomyState(state: PlayerProgressionState): SquadCreationEconomyResult {
+  const previousCount = state.squadCreationsCount ?? 0;
+  const warBucksSpent = squadCreationWarBucksPrice(previousCount);
+  if (state.warBucks < warBucksSpent) {
+    throw new ApiError(SQUAD_CREATE_NOT_ENOUGH_WARBUCKS, "Not enough WarBucks to create a squad.");
+  }
+  return {
+    state: {
+      ...state,
+      revision: state.revision + 1,
+      warBucks: state.warBucks - warBucksSpent,
+      squadCreationsCount: previousCount + 1,
+    },
+    squadCreationsCount: previousCount + 1,
+    warBucksSpent,
+  };
+}
+
+function progressionRevisionFilter(player: PlayerDocument): Record<string, unknown> {
+  if (!player.progression) return { progression: { $exists: false } };
+  return player.progression.revision === undefined
+    ? { "progression.revision": { $exists: false } }
+    : { "progression.revision": player.progression.revision };
+}
+
+export async function createSquad(
+  founderId: string,
+  requestedName: string,
+  options: CreateSquadOptions = {},
+): Promise<CreateSquadResult> {
   const name = cleanName(requestedName);
   if (name.length < 3 || name.length > 24) {
     throw new ApiError(ApiErrorCode.SquadNotFound, "Squad name must be between 3 and 24 characters.");
   }
-  const founder = await findById(founderId);
-  if (!founder) throw new ApiError(ApiErrorCode.PlayerNotFound, "Founder not found.");
-  if (founder.player.squadName) throw new ApiError(ApiErrorCode.NotSquadMember, "Player already belongs to a squad.");
-
-  // All initial values are derived or bounded on the server. In particular, the request
-  // cannot choose its founder, inject members, or create an out-of-range join policy.
-  const squad = newSquad(name, founderId);
-  squad.description = options.description?.trim().slice(0, 250) ?? "";
-  squad.emblem = options.emblem ?? {};
-  squad.joinPolicy = options.joinPolicy === 1 || options.joinPolicy === 2 ? options.joinPolicy : 0;
-  squad.requiredMedals = Math.max(0, Math.floor(options.requiredMedals ?? 0));
-  squad.members.push({
-    playerId: founderId,
-    name: founder.player.accountName,
-    rank: SquadRank.Leader,
-    squadPoints: founder.player.squadPoints,
-    joinedAt: Date.now(),
-    lastSeenChatTimestamp: 0,
-  });
-
-  const now = new Date();
   try {
-    // The unique database index is the final arbiter for simultaneous create requests. The
-    // separate availability action is only UI feedback and must never be trusted as a lock.
-    await squads().insertOne({ ...squad, createdAt: now, updatedAt: now } as SquadDocument);
+    const result = await withMongoTransaction(async (session) => {
+      const founder = await players().findOne({ id: founderId }, { session });
+      if (!founder) throw new ApiError(ApiErrorCode.PlayerNotFound, "Founder not found.");
+      if (founder.player.squadName) {
+        throw new ApiError(ApiErrorCode.NotSquadMember, "Player already belongs to a squad.");
+      }
+
+      const economy = applySquadCreationEconomyState(progressionForPlayer(founder));
+      const { dogTags: _legacyDogTags, ...canonicalState } = economy.state;
+
+      // All initial values are derived or bounded on the server. In particular, the request
+      // cannot choose its founder, inject members, or create an out-of-range join policy.
+      const squad = newSquad(name, founderId);
+      squad.description = options.description?.trim().slice(0, 250) ?? "";
+      squad.emblem = options.emblem ?? {};
+      squad.joinPolicy = options.joinPolicy === 1 || options.joinPolicy === 2 ? options.joinPolicy : 0;
+      squad.requiredMedals = Math.max(0, Math.floor(options.requiredMedals ?? 0));
+      squad.members.push({
+        playerId: founderId,
+        name: founder.player.accountName,
+        rank: SquadRank.Leader,
+        squadPoints: founder.player.squadPoints,
+        joinedAt: Date.now(),
+        lastSeenChatTimestamp: 0,
+      });
+
+      const now = new Date();
+      // The unique index is the final arbiter for simultaneous create requests. The separate
+      // availability action is UI feedback only and is never trusted as a reservation.
+      await squads().insertOne({ ...squad, createdAt: now, updatedAt: now } as SquadDocument, { session });
+
+      const update = await players().updateOne(
+        {
+          id: founderId,
+          squadName: founder.squadName,
+          "player.squadName": founder.player.squadName,
+          ...progressionRevisionFilter(founder),
+        },
+        {
+          $set: {
+            progression: canonicalState,
+            squadName: name,
+            "player.squadName": name,
+            "player.squadRank": SquadRank.Leader,
+            updatedAt: now,
+          },
+        },
+        { session },
+      );
+      if (update.modifiedCount !== 1) {
+        // Throwing aborts the squad insert too. A caller may safely retry after reloading;
+        // no name, membership, creation count, or WarBucks debit has partially committed.
+        throw new ApiError(ApiErrorCode.InternalServerError, "Squad founder state changed concurrently.");
+      }
+
+      return { ...economy, state: canonicalState, squad };
+    });
+    logger.squad.event("Squad created", {
+      name,
+      founderId,
+      warBucksSpent: result.warBucksSpent,
+      squadCreationsCount: result.squadCreationsCount,
+    });
+    return result;
   } catch (error) {
     if ((error as { code?: number }).code === 11000) {
       throw new ApiError(ApiErrorCode.SquadNameTaken, "Squad name already taken.");
@@ -119,9 +230,6 @@ export async function createSquad(founderId: string, requestedName: string, opti
     throw error;
   }
 
-  await updatePlayerFields(founderId, { squadName: name, squadRank: SquadRank.Leader });
-  logger.squad.event("Squad created", { name, founderId });
-  return squad;
 }
 
 export async function joinSquad(playerId: string, name: string, allowPrivate = false): Promise<SquadDTO> {

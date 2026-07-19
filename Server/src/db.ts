@@ -153,6 +153,8 @@ export interface PlayerProgressionState {
    * state and so reconnects/devices restore one monotonic value.
    */
   lastSeenSquadChatTimestamp?: number;
+  /** Number of successful squad creations; the stock client derives the next WarBucks price from it. */
+  squadCreationsCount?: number;
   /** Bounded replay cache for the stock client's batched RequestBuffer transport. */
   processedRequestBuffers?: ProcessedRequestBuffer[];
 }

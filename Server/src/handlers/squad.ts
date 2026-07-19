@@ -15,12 +15,14 @@ import {
   listByExperience,
   promoteMember,
   requestToJoin,
+  SQUAD_CREATE_NOT_ENOUGH_WARBUCKS,
   transferLeadership,
   updateSquad,
 } from "../services/squadService";
+import { ApiError } from "../apiErrors";
 import { authed, type HandlerEntry } from "./types";
 import { buildDatabaseSquad } from "../services/squadWireService";
-import { buildDatabasePlayer } from "../services/playerStateService";
+import { buildDatabasePlayer, progressionForPlayer } from "../services/playerStateService";
 import { findById } from "../services/playerService";
 import { informSquadLeaderAboutEvent, saveSquadChatCursor } from "../services/squadSocialService";
 
@@ -99,13 +101,34 @@ export const squadHandlers: Record<number, HandlerEntry> = {
   }),
 
   [DbAction.CreateSquad]: authed(async ({ player, req }) => {
-    const squad = await createSquad(player!.id, squadName(req), {
-      description: typeof req.Message === "string" ? req.Message : undefined,
-      emblem: emblem(req),
-      joinPolicy: joinPolicy(req),
-      requiredMedals: integer(req.RequiredMedals ?? req.SkillRequirement),
-    });
-    return ok(DbAction.CreateSquad, { Squad: buildDatabaseSquad(squad), SquadId: squad.name, PlayerRank: 2 });
+    try {
+      const result = await createSquad(player!.id, squadName(req), {
+        description: typeof req.Message === "string" ? req.Message : undefined,
+        emblem: emblem(req),
+        joinPolicy: joinPolicy(req),
+        requiredMedals: integer(req.RequiredMedals ?? req.SkillRequirement),
+      });
+      return ok(DbAction.CreateSquad, {
+        Squad: buildDatabaseSquad(result.squad),
+        SquadId: result.squad.name,
+        PlayerRank: 2,
+        // OGLEHLIPEFM persists this exact lower-case-leading key into PlayerAnalytics.
+        squadCreationsCnt: result.squadCreationsCount,
+      });
+    } catch (error) {
+      if (!(error instanceof ApiError) || error.code !== SQUAD_CREATE_NOT_ENOUGH_WARBUCKS) throw error;
+      const latest = await findById(player!.id) ?? player!;
+      const progression = progressionForPlayer(latest);
+      return {
+        DbAction: DbAction.CreateSquad,
+        Code: error.code,
+        Message: error.message,
+        // LEDNENKKDJM's 11403 branch uses both values to reverse the client's optimistic
+        // WarBucks debit and restore the authoritative next-price counter.
+        squadCreationsCnt: progression.squadCreationsCount ?? 0,
+        PlayerWB: progression.warBucks,
+      };
+    }
   }),
 
   [DbAction.JoinSquad]: authed(async ({ player, req }) => {

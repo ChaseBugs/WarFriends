@@ -10,7 +10,8 @@ export const ApiErrorCode = {
   PlayerNotFound: 50,
   OpponentNotFound: 51,
   SquadNotFound: 60,
-  SquadNameTaken: 61,
+  /** IJEAJGCCHEF.SquadnameTaken; the stock create dialog handles this exact code. */
+  SquadNameTaken: 3701,
   SquadFull: 62,
   NotSquadMember: 63,
   InsufficientRank: 64,
