@@ -24,6 +24,7 @@ The documentation distinguishes three states:
 10. [Backend implementation roadmap](10-backend-roadmap.md)
 11. [Player visuals and decals](11-player-visuals-and-decals.md)
 12. [War Cards and card packs](12-war-cards-and-card-packs.md)
+13. [Operations and security](13-operations-and-security.md)
 
 ## Authoritative references
 

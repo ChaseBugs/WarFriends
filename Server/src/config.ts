@@ -20,6 +20,14 @@ export const config = {
   authLoginLockoutSeconds: Number(process.env.AUTH_LOGIN_LOCKOUT_SECONDS ?? 900),
   minClientVersion: Number(process.env.MIN_CLIENT_VERSION ?? 0),
 
+  // Process-local HTTP abuse boundary. TRUST_PROXY_HOPS remains zero unless the deployment has
+  // exactly that many trusted reverse proxies; accepting arbitrary forwarded addresses would let
+  // callers evade per-IP buckets by spoofing X-Forwarded-For.
+  trustProxyHops: Number(process.env.TRUST_PROXY_HOPS ?? 0),
+  httpRateLimitMaxRequests: Number(process.env.HTTP_RATE_LIMIT_MAX_REQUESTS ?? 120),
+  httpRateLimitWindowSeconds: Number(process.env.HTTP_RATE_LIMIT_WINDOW_SECONDS ?? 60),
+  httpRateLimitMaxEntries: Number(process.env.HTTP_RATE_LIMIT_MAX_ENTRIES ?? 10_000),
+
   // Recovered from MainScene's Constants rows. Requests repeat these values for compatibility,
   // but economy logic always uses the server copy so a modified client cannot accelerate energy.
   dogTagRefillSeconds: Number(process.env.DOG_TAG_REFILL_SECONDS ?? 900),

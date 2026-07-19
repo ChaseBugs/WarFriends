@@ -59,7 +59,8 @@ and persists per-player match receipts for exact finished-request replay.
 - add squad events and wars;
 - add friend graph, pagination, and push delivery;
 - add moderation review, sanctions, and appeals;
-- add rate limiting, metrics, tracing, backups, migrations, and admin authentication;
+- extend the process-local HTTP token bucket to shared HTTP/WebSocket enforcement, then add
+  metrics, tracing, backups, migrations, and admin authentication;
 - coordinate WebSocket rooms across multiple server instances.
 
 ## Implementation rules

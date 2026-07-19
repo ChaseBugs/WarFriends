@@ -9,10 +9,18 @@ import { connectRedis, disconnectRedis, isRedisAvailable, isRedisEnabled } from 
 import { createGameHub } from "./gameHub";
 import logger from "./utils/logger";
 import { recoverInterruptedMatches } from "./services/matchService";
+import { createHttpRateLimitMiddleware } from "./services/httpRateLimitService";
 
 const app = express();
 
+// Express trusts no forwarded client address by default. Enable only an explicit, bounded proxy
+// hop count so a public caller cannot choose its own rate-limit identity with X-Forwarded-For.
+if (Number.isInteger(config.trustProxyHops) && config.trustProxyHops > 0) {
+  app.set("trust proxy", config.trustProxyHops);
+}
+
 app.use(cors());
+app.use(createHttpRateLimitMiddleware());
 app.use(compression({ threshold: 1024 }));
 // strict:false so the client's non-object JSON bodies (if any) still parse.
 app.use(express.json({ strict: false, limit: "2mb" }));

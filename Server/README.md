@@ -82,6 +82,10 @@ Working end-to-end (verified live):
   unlink behavior. First-time `CreateGcAccount` commits the player and identity in one transaction,
   returns separate platform/session credentials, and supplies the recovered `15400` existing-account
   profile contract. Remaining response-contract work is tracked in `BACKEND_FEATURES.md`.
+- **HTTP abuse boundary**: every non-health API request passes through a continuously refilled,
+  memory-bounded token bucket keyed by an HMAC-hidden client address. Reverse-proxy addresses are
+  trusted only when `TRUST_PROXY_HOPS` is explicitly configured; rejected bursts receive HTTP 429
+  and `Retry-After` without reaching request parsing or game handlers.
 - **Squads (core membership)**: create / unique-name check / public or requested join /
   invite / accept / decline / promote / demote / kick / leadership transfer / guarded
   leave, plus details and full member snapshots. Client ranks exactly mirror
