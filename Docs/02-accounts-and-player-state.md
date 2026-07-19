@@ -38,6 +38,13 @@ duplicate response.
 The distinction between a durable login credential and a short-lived gameplay session prevents a
 stale password field from bypassing token rotation.
 
+Session rotation uses a compare-and-set against the token snapshot that was authenticated. If two
+writes race from that same snapshot, only one candidate token is persisted and the losing writer
+reloads that winner instead of returning an unpersisted candidate. A later login that already sees
+the winner may rotate again; this is the intentional single-session policy, so the last completed
+login owns the current gameplay credential. The prior token stops authorizing gameplay when its
+replacement is persisted.
+
 `LoginToCustomAccount` also reserves an attempt in the persistent `authRateLimits` collection
 before checking a durable custom or platform credential. One atomic counter is shared by every
 server process for the HMAC-derived key of the presented identity; the raw player/provider ID is

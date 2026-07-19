@@ -1,6 +1,7 @@
 import type { ClientSession } from "mongodb";
 import { players, type PlayerDocument } from "../db";
 import type { DatabasePlayerDTO } from "../dtos";
+import { ApiError, ApiErrorCode } from "../apiErrors";
 
 // Data-access for the player document. The full client-facing snapshot lives in
 // document.player (DatabasePlayerDTO); a few dimensions are denormalized to the top level
@@ -40,6 +41,39 @@ export async function updateAuthCredentials(id: string, authTokenHash: string, a
 /** Persist a rotated session token without changing the account's login password digest. */
 export async function updateSessionToken(id: string, authToken: string): Promise<void> {
   await players().updateOne({ id }, { $set: { authToken, updatedAt: new Date() } });
+}
+
+/**
+ * Rotate a session only if the caller still owns the token snapshot it authenticated.
+ *
+ * Two simultaneous durable logins may both validate against the same token snapshot before either
+ * writes its new gameplay token. An unconditional pair of updates would return one candidate that
+ * was never the final stored value. Compare-and-set makes one candidate win; a writer that loses
+ * that exact snapshot race reloads and returns the winning token instead.
+ */
+export async function compareAndRotateSessionToken(
+  id: string,
+  expectedToken: string | undefined,
+  candidateToken: string,
+): Promise<string> {
+  const currentTokenFilter = expectedToken === undefined
+    ? { authToken: { $exists: false } }
+    : { authToken: expectedToken };
+  const updated = await players().findOneAndUpdate(
+    { id, ...currentTokenFilter },
+    { $set: { authToken: candidateToken, updatedAt: new Date() } },
+    { returnDocument: "after", projection: { authToken: 1 } },
+  );
+  if (updated?.authToken) return updated.authToken;
+
+  // A failed compare normally means another successful login rotated first. Return its token
+  // instead of overwriting it. A missing player or token indicates an external destructive write
+  // and must fail closed rather than returning the unpersisted candidate.
+  const current = await players().findOne({ id }, { projection: { authToken: 1 } });
+  if (!current?.authToken) {
+    throw new ApiError(ApiErrorCode.RequestNotAuthorized, "Authenticated session could not be rotated.");
+  }
+  return current.authToken;
 }
 
 /** Persist a mutated player snapshot, re-syncing the denormalized top-level fields. */

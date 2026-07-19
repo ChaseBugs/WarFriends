@@ -15,7 +15,7 @@ export interface PlayerDocument {
   accountName: string;
   /** Lower-cased name used only for case-insensitive uniqueness checks. */
   normalizedAccountName?: string;
-  /** Legacy/server-issued opaque token. Removed after a human password replaces it. */
+  /** Rotatable opaque gameplay token; kept separate from any durable password digest. */
   authToken?: string;
   /** Keyed digest used for human-entered custom-account passwords. */
   authTokenHash?: string;

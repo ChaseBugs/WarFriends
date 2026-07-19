@@ -4,7 +4,13 @@ import { config } from "../config";
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import { AccountType } from "../constants";
 import { newPlayer, type DatabasePlayerDTO } from "../dtos";
-import { findById, insertPlayer, updateAuthCredentials, updateSessionToken } from "./playerService";
+import {
+  compareAndRotateSessionToken,
+  findById,
+  insertPlayer,
+  updateAuthCredentials,
+  updateSessionToken,
+} from "./playerService";
 import { withMongoTransaction, type PlayerDocument } from "../db";
 import logger from "../utils/logger";
 import {
@@ -40,6 +46,12 @@ function tokensMatch(a: string, b: string): boolean {
   const ba = Buffer.from(a);
   const bb = Buffer.from(b);
   return ba.length === bb.length && timingSafeEqual(ba, bb);
+}
+
+/** Mint and persist the gameplay credential returned by a successful explicit login. */
+async function rotateAuthenticatedSession(player: PlayerDocument): Promise<void> {
+  const candidate = issueToken(player.id, randomBytes(16).toString("hex"));
+  player.authToken = await compareAndRotateSessionToken(player.id, player.authToken, candidate);
 }
 
 /**
@@ -209,6 +221,7 @@ export async function authenticate(
   const sessionCredentialMatches = doc ? playerCredentialMatches(doc, token, false) : false;
   if (doc && sessionCredentialMatches) {
     if (allowCustomPassword) await clearLoginAttemptsForSession(id);
+    if (allowCustomPassword) await rotateAuthenticatedSession(doc);
     logger.auth.login(id, true, { playerId: id });
     return doc;
   }
@@ -230,6 +243,7 @@ export async function authenticate(
     : false;
   if (doc && customPasswordMatches) {
     if (loginReservation) await clearLoginAttempt(loginReservation);
+    await rotateAuthenticatedSession(doc);
     logger.auth.login(id, true, { playerId: id });
     return doc;
   }
@@ -238,6 +252,7 @@ export async function authenticate(
   const identityPlayer = provider ? await authenticateIdentity(provider, id, token) : null;
   if (identityPlayer) {
     if (loginReservation) await clearLoginAttempt(loginReservation);
+    await rotateAuthenticatedSession(identityPlayer);
     logger.auth.login(id, true, { playerId: identityPlayer.id, provider });
     return identityPlayer;
   }
