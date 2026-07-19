@@ -3,7 +3,7 @@ import { PlayerStatus } from "../constants";
 import { ok } from "../dtos";
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import { findById, updatePlayerFields } from "../services/playerService";
-import { replaceCustomCredential } from "../services/authService";
+import { replaceCustomProfileCredential } from "../services/authService";
 import { buildDatabasePlayer, buildPlayerStateResponse, progressionForPlayer } from "../services/playerStateService";
 import { recomputePlayerArmyPower } from "../services/armyPowerService";
 import {
@@ -134,17 +134,18 @@ export const playerHandlers: Record<number, HandlerEntry> = {
   [DbAction.ChangeNameAndPassword]: authed(async ({ player, req }) => {
     const name = normalizePlayerName(req.Name);
     const password = typeof req.Password === "string" ? req.Password : "";
-    if (password.length < 6 || password.length > 128) {
-      throw new ApiError(ApiErrorCode.UnknownAction, "Password must contain 6 to 128 characters.");
-    }
     await ensurePlayerNameAvailable(player!.id, name);
 
-    // Update the public name first and the credential second. The request was authenticated
-    // with the old token, while the response returns the replacement so the client can store
-    // it before its next login. Never write the password into the client-facing Player DTO.
+    // The recovered Client sends Name and Password together for action 121, so publish them
+    // with the rotated gameplay token in one compare-and-set write. Mutate the request snapshot
+    // only after MongoDB commits; an error must leave both durable and in-memory state unchanged.
+    const sessionToken = await replaceCustomProfileCredential(
+      player!.id,
+      player!.authToken!,
+      name,
+      password,
+    );
     player!.player.accountName = name;
-    await updatePlayerFields(player!.id, { accountName: name });
-    const sessionToken = await replaceCustomCredential(player!.id, password);
     player!.authToken = sessionToken;
     return ok(DbAction.ChangeNameAndPassword, { Name: name, Password: password, Token: sessionToken });
   }),

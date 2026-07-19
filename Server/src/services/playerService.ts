@@ -30,12 +30,35 @@ export async function insertPlayer(
   return full;
 }
 
-/** Persist the new password digest and its independently rotated gameplay session token. */
-export async function updateAuthCredentials(id: string, authTokenHash: string, authToken: string): Promise<void> {
-  await players().updateOne(
-    { id },
-    { $set: { authTokenHash, authToken, updatedAt: new Date() } },
+/**
+ * Publish an account name, password digest, and replacement gameplay session as one write.
+ *
+ * ChangeNameAndPassword is one logical Client action. Persisting the public name before deriving
+ * or saving the password allowed a KDF/database failure to leave the request half-applied. The
+ * expected-token filter also makes concurrent submissions deterministic: only the request that
+ * still owns the authenticated session may commit, and its write revokes that session at once.
+ */
+export async function updateProfileAndAuthCredentials(
+  id: string,
+  expectedAuthToken: string,
+  accountName: string,
+  authTokenHash: string,
+  authToken: string,
+): Promise<boolean> {
+  const result = await players().updateOne(
+    { id, authToken: expectedAuthToken },
+    {
+      $set: {
+        accountName,
+        normalizedAccountName: accountName.toLocaleLowerCase("en-US"),
+        "player.accountName": accountName,
+        authTokenHash,
+        authToken,
+        updatedAt: new Date(),
+      },
+    },
   );
+  return result.modifiedCount === 1;
 }
 
 /** Upgrade a verified legacy password digest without overwriting a concurrent password change. */

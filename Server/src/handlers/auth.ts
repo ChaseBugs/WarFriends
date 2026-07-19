@@ -2,7 +2,7 @@ import { AccountType } from "../constants";
 import type { PlayerDocument } from "../db";
 import { DbAction } from "../dbActions";
 import { ok, type RequestEnvelope } from "../dtos";
-import { createCustomAccount, ensureSessionToken, replaceCustomCredential } from "../services/authService";
+import { createCustomAccount, createFullCustomAccount, ensureSessionToken } from "../services/authService";
 import { buildDatabasePlayer, buildPlayerStateResponse } from "../services/playerStateService";
 import { authed, open, type HandlerEntry } from "./types";
 
@@ -63,15 +63,9 @@ export const authHandlers: Record<number, HandlerEntry> = {
   // for gameplay requests. This preserves the two values saved by GameLoginManager.
   [DbAction.CreateFullAccount]: open(async ({ req }) => {
     const accountName = typeof req.AccountName === "string" ? req.AccountName : "";
-    const created = await createCustomAccount(accountName, AccountType.Guest, req.DeviceToken);
     const requestedPassword = requestCredential(req);
-    const password = requestedPassword.length >= 6 && requestedPassword.length <= 128
-      ? requestedPassword
-      : created.authToken;
-    if (password !== created.authToken) {
-      created.doc.authToken = await replaceCustomCredential(created.doc.id, password);
-    }
-    return ok(DbAction.CreateFullAccount, accountPayload(created.doc, password, AccountType.Guest));
+    const created = await createFullCustomAccount(accountName, requestedPassword, req.DeviceToken);
+    return ok(DbAction.CreateFullAccount, accountPayload(created.doc, requestedPassword, AccountType.Guest));
   }),
 
   [DbAction.LoginToCustomAccount]: authed(async ({ player, req }) => {

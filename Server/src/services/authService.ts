@@ -9,7 +9,7 @@ import {
   compareAndUpgradeCredentialHash,
   findById,
   insertPlayer,
-  updateAuthCredentials,
+  updateProfileAndAuthCredentials,
   updateSessionToken,
 } from "./playerService";
 import { withMongoTransaction, type PlayerDocument } from "../db";
@@ -177,6 +177,8 @@ interface CreateAccountOptions {
   gameCenterId?: string;
   /** Transactional callers log only after the complete identity/account commit succeeds. */
   deferLogging?: boolean;
+  /** Optional human password hashed before the new player document becomes visible. */
+  customCredential?: string;
 }
 
 function logCreatedAccount(created: CreatedAccount, deviceToken?: string): void {
@@ -213,6 +215,9 @@ export async function createCustomAccount(
   const id = randomUUID();
   const salt = randomBytes(16).toString("hex");
   const authToken = issueToken(id, salt);
+  const authTokenHash = options.customCredential === undefined
+    ? undefined
+    : await hashCustomCredential(id, options.customCredential);
 
   // User-supplied names use the same validation path as later renames. Empty names are
   // intentionally replaced with a collision-resistant guest label for first-time boot.
@@ -228,6 +233,7 @@ export async function createCustomAccount(
       accountName: player.accountName,
       normalizedAccountName: player.accountName.toLocaleLowerCase("en-US"),
       authToken,
+      ...(authTokenHash ? { authTokenHash } : {}),
       accountType,
       ...(options.gameCenterId ? { gameCenterId: options.gameCenterId } : {}),
       deviceToken,
@@ -249,6 +255,28 @@ export async function createCustomAccount(
   const created = { doc, player, authToken };
   if (!options.deferLogging) logCreatedAccount(created, deviceToken);
   return created;
+}
+
+/** Enforce one custom-password contract for account creation and later replacement. */
+export function validateCustomCredential(value: unknown): string {
+  if (typeof value !== "string" || value.length < 6 || value.length > 128) {
+    throw new ApiError(ApiErrorCode.UnknownAction, "Password must contain 6 to 128 characters.");
+  }
+  return value;
+}
+
+/**
+ * Create a durable custom account without exposing a guest-only intermediate document.
+ * Password hashing completes before insertPlayer runs, so KDF failure cannot orphan an account
+ * whose successful response was never returned to the Client.
+ */
+export async function createFullCustomAccount(
+  accountName: string,
+  credentialValue: unknown,
+  deviceToken?: string,
+): Promise<CreatedAccount> {
+  const credential = validateCustomCredential(credentialValue);
+  return createCustomAccount(accountName, AccountType.Guest, deviceToken, { customCredential: credential });
 }
 
 /**
@@ -378,9 +406,36 @@ export async function authenticate(
  * revokes the old guest/session token without forcing provider logins to reuse a Facebook,
  * Google Play, or Game Center credential as an internal WarFriends session secret.
  */
-export async function replaceCustomCredential(playerId: string, credential: string): Promise<string> {
+/**
+ * Atomically apply the exact Name + Password payload sent by ChangeNameAndPassword (action 121).
+ * The unique normalized-name index remains the final race-safe authority for name ownership.
+ */
+export async function replaceCustomProfileCredential(
+  playerId: string,
+  expectedAuthToken: string,
+  accountName: string,
+  credentialValue: unknown,
+): Promise<string> {
+  const credential = validateCustomCredential(credentialValue);
+  const authTokenHash = await hashCustomCredential(playerId, credential);
   const sessionToken = issueToken(playerId, randomBytes(16).toString("hex"));
-  await updateAuthCredentials(playerId, await hashCustomCredential(playerId, credential), sessionToken);
+  try {
+    const updated = await updateProfileAndAuthCredentials(
+      playerId,
+      expectedAuthToken,
+      accountName,
+      authTokenHash,
+      sessionToken,
+    );
+    if (!updated) {
+      throw new ApiError(ApiErrorCode.RequestNotAuthorized, "The authenticated session changed before update.");
+    }
+  } catch (error) {
+    if (isDuplicateAccountName(error)) {
+      throw new ApiError(ApiErrorCode.UnknownAction, "Player name is already in use.");
+    }
+    throw error;
+  }
   return sessionToken;
 }
 

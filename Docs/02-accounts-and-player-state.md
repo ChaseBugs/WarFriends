@@ -38,6 +38,20 @@ duplicate response.
 The distinction between a durable login credential and a short-lived gameplay session prevents a
 stale password field from bypassing token rotation.
 
+`CreateFullAccount` accepts only an explicit 6-to-128-character password. It never silently turns
+the newly issued gameplay token into a password when the field is missing or invalid. The server
+derives the password digest before inserting the player document and then publishes the account,
+digest, and independent session token in one insert, so a hashing failure cannot leave a guest-only
+orphan behind.
+
+The recovered action 121 request sends `Name` and `Password` together. The backend likewise stores
+the public name mirror, normalized uniqueness key, password digest, and rotated gameplay token in
+one MongoDB compare-and-set update guarded by the session that authenticated the request. A KDF,
+unique-name, database, or stale-session failure therefore commits none of those fields. Two
+concurrent submissions using the same old session cannot both win. Action 122 exists in the 1.6.0
+enum and response listeners, but no authoritative outbound call was recovered; its strict handler
+is retained for compatibility without inventing additional request fields.
+
 Human-entered custom passwords use scrypt v1 with `N=16384`, `r=8`, `p=1`, a random 128-bit salt,
 and a 256-bit output. Before scrypt, an HMAC with `AUTH_SECRET` binds the password to the player ID
 and supplies a server-side pepper. This makes a stolen player database insufficient for independent
