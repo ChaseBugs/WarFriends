@@ -4,6 +4,7 @@ import type { DailyMissionMode } from "../db";
 import { ok } from "../dtos";
 import {
   getMatch,
+  pvpGameReward,
   reportMatchResult,
   winnerFromEndReason,
 } from "../services/matchService";
@@ -126,10 +127,16 @@ export const matchHandlers: Record<number, HandlerEntry> = {
     // LevelExperience is read without a ContainsKey guard by DMGJCGJDDID. Return it on every
     // outcome, including pending/conflicting reports, so a safe rejection cannot crash the
     // client's end-screen parser.
+    const responseWinner = report.settlement?.winnerId ?? winnerId;
+    const resultAvailable = report.status === "confirmed" || report.status === "finished";
     return ok(DbAction.GameEnded, {
       Settled: report.settlement?.rewarded ?? false,
       ResultStatus: report.status,
-      WinnerId: report.settlement?.winnerId ?? winnerId,
+      WinnerId: responseWinner,
+      // DMGJCGJDDID constructs IIGFODGJBFA from GameReward before it handles Skill.
+      // Always return a valid object, including a zero-XP pending/conflict result, to avoid
+      // dereferencing a null ServerResultsCache.lastGameReward on the stock end screen.
+      GameReward: pvpGameReward(player!.id, responseWinner, resultAvailable),
       LevelExperience: progression?.levelExperience ?? 0,
       Level: updated?.player.level ?? player!.player.level,
       Skill: updated?.player.skill ?? player!.player.skill,

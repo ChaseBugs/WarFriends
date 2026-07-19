@@ -78,7 +78,7 @@ import {
   skipAssignmentState,
 } from "../services/assignmentService";
 import { assignmentHandlers } from "../handlers/assignments";
-import { winnerFromEndReason } from "../services/matchService";
+import { pvpGameReward, winnerFromEndReason } from "../services/matchService";
 import { buildDatabaseSquad } from "../services/squadWireService";
 import { buildPlayerLeaderboardItem } from "../services/leaderboardService";
 import { playerCredentialMatches } from "../services/authService";
@@ -337,6 +337,21 @@ test("PvP EndReason inference agrees from winner and loser perspectives", () => 
   assert.equal(winnerFromEndReason(participants, "master", 5), "client");
   assert.equal(winnerFromEndReason(participants, "outsider", 2), null);
   assert.equal(winnerFromEndReason(participants, "master", 10), null);
+});
+
+test("PvP GameReward keeps the stock result parser non-null and exposes only settled XP", () => {
+  assert.deepEqual(pvpGameReward("winner", "winner", true), {
+    Xp: { BattleRewards: 30, ExtraRewards: 0, Winstreak: 0, Time: 0, offerMult: 1 },
+    IsVip: false,
+  });
+  assert.deepEqual(pvpGameReward("loser", "winner", true), {
+    Xp: { BattleRewards: 10, ExtraRewards: 0, Winstreak: 0, Time: 0, offerMult: 1 },
+    IsVip: false,
+  });
+  assert.deepEqual(pvpGameReward("winner", "winner", false), {
+    Xp: { BattleRewards: 0, ExtraRewards: 0, Winstreak: 0, Time: 0, offerMult: 1 },
+    IsVip: false,
+  });
 });
 
 test("database player snapshots use the field names and wrappers parsed by Unity", () => {

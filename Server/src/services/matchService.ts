@@ -96,6 +96,33 @@ const REWARDS = {
   winSquadPoints: 10,
 } as const;
 
+/**
+ * Build the minimum exact object consumed by IIGFODGJBFA before the GameEnded parser reads
+ * Skill and medal fields. The parser dereferences ServerResultsCache.lastGameReward whenever
+ * Skill exists, so omitting this object causes a null reference even when every balance was
+ * settled correctly. Pending/conflicting reports receive a real zero-valued object; confirmed
+ * results and finished retries receive the deterministic server XP for that participant.
+ */
+export function pvpGameReward(
+  playerId: string,
+  winnerId: string,
+  resultAvailable: boolean,
+): Record<string, unknown> {
+  const experience = resultAvailable
+    ? (playerId === winnerId ? REWARDS.winExperience : REWARDS.loseExperience)
+    : 0;
+  return {
+    Xp: {
+      BattleRewards: experience,
+      ExtraRewards: 0,
+      Winstreak: 0,
+      Time: 0,
+      offerMult: 1,
+    },
+    IsVip: false,
+  };
+}
+
 export async function createMatch(a: MatchPlayer, b: MatchPlayer): Promise<string> {
   const matchId = randomUUID();
   const doc: MatchDoc = { matchId, players: [a, b], state: "active", createdAt: new Date() };

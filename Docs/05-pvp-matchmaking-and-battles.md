@@ -59,6 +59,31 @@ therefore cannot be partially persisted across a process failure. Assignment, ac
 squad aggregate projections run after the core transaction and cannot cause duplicate core
 rewards.
 
+## Stock end-screen reward contract
+
+The recovered `DMGJCGJDDID` response parser constructs `IIGFODGJBFA` from `GameReward` before it
+processes `Skill`, medals, and placement fields. If `Skill` is present without `GameReward`, the
+parser dereferences a null `ServerResultsCache.lastGameReward` object. Every normal PvP response
+therefore includes the minimum exact object:
+
+```json
+{
+  "Xp": {
+    "BattleRewards": 30,
+    "ExtraRewards": 0,
+    "Winstreak": 0,
+    "Time": 0,
+    "offerMult": 1
+  },
+  "IsVip": false
+}
+```
+
+Confirmed winners receive 30 battle XP and confirmed losers receive 10, matching the atomic
+settlement constants. A finished retry returns the same deterministic display amount. Pending,
+conflicting, or invalid reports still receive a structurally valid object with zero battle XP, so
+the stock end screen remains safe without displaying an uncommitted reward.
+
 ## Current limitations
 
 The WebSocket layer is a controlled relay, not an authoritative combat simulation. It does not

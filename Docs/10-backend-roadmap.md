@@ -37,6 +37,8 @@ Confirmed PvP settlement now validates and atomically consumes each reporter's n
 Cards together with both players' core rewards and the terminal match row. This also proves starter
 assignment `ID_2`; detecting card plays omitted by a modified stock APK still requires live Photon
 or replacement-relay event validation.
+Normal PvP responses now also include the recovered `IIGFODGJBFA` `GameReward` shape, preventing
+the stock result parser from dereferencing a null reward object when `Skill` is returned.
 
 ## Progression and live operations
 
