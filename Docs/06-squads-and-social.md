@@ -56,9 +56,11 @@ plus moderation, retention, and push-notification fan-out.
 
 Normal-card deposits, cross-player withdrawals, timed crafting, claims, and member contribution
 reminders are implemented. Cross-player withdrawal uses a MongoDB transaction so donor pool,
-recipient inventory/cooldown, and donor reputation commit together. Existing Buddy snapshots can
-be withdrawn, but creating a new authoritative Buddy deposit remains closed because its randomized
-unit, weapon, visual, level, and Army Power inputs have not all been recovered.
+recipient inventory/cooldown, and donor reputation commit together. Buddy deposits validate the
+client-selected unit type against a server-derived weapon pair, owned loadout, visuals, Army Power,
+name, level, timestamped identity, single-pool limit, and 480-minute cooldown. Buddy withdrawals
+preserve that exact snapshot. Only server selection of the Buddy unit-type roll remains a modified-
+client protocol task.
 
 ## Missing squad systems
 

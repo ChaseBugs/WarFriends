@@ -98,6 +98,9 @@ export const cardHandlers: Record<number, HandlerEntry> = {
       const result = await depositSquadCards(player!.id, req.AddedCards, req.RemovedCards);
       return ok(DbAction.DepositCards, {
         DepositedCards: JSON.stringify(result.depositedCards),
+        // HNKAMNMHPKC applies this value when present; without it the unmodified client would let
+        // the same generated Buddy be deposited again immediately despite server persistence.
+        NextBuddyDeposit: result.cardInventory.nextBuddyDeposit,
       });
     } catch (error) {
       return cardPoolFailure(DbAction.DepositCards, player!, error);

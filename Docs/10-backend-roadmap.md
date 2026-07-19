@@ -17,7 +17,7 @@ remaining work by gameplay dependency rather than duplicating every `DatabaseAct
 ### Complete remaining inventory families
 
 - non-shop visual rewards, parts, offers, and rentals;
-- card reward/consumption events and authoritative Buddy deposit generation;
+- card reward/consumption events and server-selected card/Buddy RNG protocols;
 - lootboxes and Arena crowns;
 - offers, rentals, VIP, and subscriptions;
 - platform-verified real-money purchase receipts and refunds.
@@ -28,7 +28,9 @@ see [War Cards and card packs](12-war-cards-and-card-packs.md) for the compatibi
 Timed three-for-one crafting and server-selected claim results are implemented; subscription-only
 instant crafting remains closed until subscriptions are authoritative. Normal squad-card deposits
 and cross-player withdrawals are implemented with source capacity/reputation/cooldown rules and a
-two-player MongoDB transaction; new Buddy snapshot creation remains closed.
+two-player MongoDB transaction. Buddy deposits now reproduce the recovered current-player snapshot
+from server-owned weapon, visual, Army Power, name, and level state and enforce the exact cooldown;
+the stock client still selects its random unit type locally.
 Card-pool contribution reminders use the exact recovered type-28 inbox message, same-roster
 authorization, and persistent daily actor/target idempotency.
 

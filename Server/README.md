@@ -145,13 +145,15 @@ Working end-to-end (verified live):
   17401/17601/17701 recovery bodies restore client state, and a claimed Gold craft proves starter
   assignment ID_8. Subscription-only `CraftAndClaimCard` remains rejected until platform
   subscriptions are authoritative.
-- **Squad War Card pool (authoritative normal-card path)**: `DepositCards` validates the nested
+- **Squad War Card pool**: `DepositCards` validates the nested
   `AddedCards`/`RemovedCards` dictionaries, ownership, and the recovered 3-10 slot squad-level
   capacity before atomically exchanging inventory and `depositedCardsDic`. `WithdrawCard` verifies
   both players against the same squad roster, transfers one card in a MongoDB transaction, awards
   the donor 5/15/45 rarity reputation, and starts the exact 240-minute recipient cooldown. Existing
-  Buddy deposits transfer with their full loadout and a ten-card cap; new Buddy generation/deposit
-  remains rejected until its randomized unit/weapon snapshot can be derived authoritatively.
+  New Buddy deposits reproduce `CreateDataForCurrentPlayer`: owner/timestamp identity, account
+  name, zero-based level, Army Power, four visual slots, four owned weapon slots, unit-type-specific
+  primary/secondary pair, one-pool limit, and the exact 480-minute cooldown are server-validated.
+  Existing Buddy deposits transfer with their full loadout and a ten-card cap.
   `NotifyPlayerToDeposit` validates both players against the same roster and persists the exact
   type-28 sender snapshot with one actor/target reminder per UTC day.
 - **Weapon inventory foundation**: private and public player snapshots now serialize the
@@ -253,14 +255,14 @@ allowlist of analytics/impression actions is safely ignored.
 
 ### Next
 
-- **Squad extensions** — normal-card pool deposits/withdrawals are implemented. Authoritative
-  Buddy generation/deposit and squad events/wars remain. Type-28 card-pool request notifications
-  validate same-roster membership and use daily actor/target idempotency. Chat
-  unread state is persistent, but actual channel delivery still requires Photon Chat repointing
-  or a compatible replacement transport.
+- **Squad extensions** — normal/Buddy pool deposits and withdrawals are implemented.
+  Server-selected Buddy unit-type RNG and squad events/wars remain. Type-28 card-pool request
+  notifications validate same-roster membership and use daily actor/target idempotency. Chat unread
+  state is persistent, but actual channel delivery still requires Photon Chat repointing or a
+  compatible replacement transport.
 - **Item economy expansion** — unit Elite upgrades, normal shop visuals, normal card-pack
   purchase, and complete normal-loadout ArmyPower are implemented. Add authoritative card reward
-  and consumption events, Buddy deposits, black-market features, rentals,
+  and consumption events, server-selected card/Buddy RNG, black-market features, rentals,
   VIP purchasing, and non-shop visual reward delivery. Normal unit purchase is authoritative for 23
   non-tutorial roster units, and the tutorial unit is persisted through its first equip event;
   three helper rows and 18 ArmyUpgrades rows without LevelManager objects remain closed. All 84 resolvable

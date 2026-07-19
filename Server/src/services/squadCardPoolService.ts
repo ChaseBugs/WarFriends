@@ -19,6 +19,8 @@ import {
 } from "./cardInventoryService";
 import { findById } from "./playerService";
 import { progressionForPlayer, unixNow } from "./playerStateService";
+import { itemInventoryStateFor, WEAPON_CATALOG } from "./itemInventoryService";
+import { visualInventoryStateFor } from "./visualInventoryService";
 
 const MAX_CONCURRENCY_RETRIES = 4;
 const MAX_CHANGE_ENTRIES = 128;
@@ -46,6 +48,22 @@ export interface DepositCardMutationResult {
   state: PlayerProgressionState;
   cardInventory: CardInventoryState;
   depositedCards: Record<string, string>;
+}
+
+interface BuddyWeaponAuthority {
+  index: number;
+  category: number;
+}
+
+/** Server-owned inputs used to reproduce CardBuddy.CreateDataForCurrentPlayer. */
+export interface BuddyDepositAuthority {
+  playerId: string;
+  accountName: string;
+  levelIndex: number;
+  armyPower: number;
+  equippedVisuals: SavedBuddyCardState["equippedVisuals"];
+  weapons: [BuddyWeaponAuthority, BuddyWeaponAuthority, BuddyWeaponAuthority, BuddyWeaponAuthority];
+  now: number;
 }
 
 export interface WithdrawCardMutationResult {
@@ -185,6 +203,101 @@ function encodeNormal(amount: number): string {
   return JSON.stringify({ amount });
 }
 
+function encodeBuddy(data: SavedBuddyCardState): string {
+  return JSON.stringify(data);
+}
+
+function sameVisualSlots(
+  actual: SavedBuddyCardState["equippedVisuals"],
+  expected: SavedBuddyCardState["equippedVisuals"],
+): boolean {
+  const actualKeys = Object.keys(actual).sort();
+  const expectedKeys = Object.keys(expected).sort();
+  return actualKeys.length === expectedKeys.length
+    && actualKeys.every((key, index) =>
+      key === expectedKeys[index] && actual[key]?.equippedID === expected[key]?.equippedID);
+}
+
+/**
+ * Derive the four weapon rows and visual slots read by CardBuddy.CreateDataForCurrentPlayer.
+ *
+ * PlayerInventory slots are accepted only when their name, LevelManager index, and ownership all
+ * agree with the recovered 4.9.5 catalog. This prevents a forged legacy inventory blob from being
+ * converted into a Buddy whose weapon index points at an unrelated or assetless prefab.
+ */
+export function buddyDepositAuthorityFor(
+  player: PlayerDocument,
+  state: PlayerProgressionState,
+  now: number,
+): BuddyDepositAuthority {
+  const itemInventory = itemInventoryStateFor(state);
+  const weapons = ["0", "1", "2", "3"].map((slotId) => {
+    const slot = itemInventory.inventoryData.slots[slotId];
+    const definition = slot ? WEAPON_CATALOG[slot.name] : undefined;
+    const saved = slot ? itemInventory.levelManagerData.savedWeapons[slot.name] : undefined;
+    if (!slot || !definition || definition.index !== slot.weaponIndex || !saved?.bought) {
+      throw new ApiError(BUDDY_CARD_NOT_READY, `Buddy source weapon slot ${slotId} is invalid.`);
+    }
+    return { index: definition.index, category: definition.category };
+  }) as BuddyDepositAuthority["weapons"];
+
+  return {
+    playerId: player.id,
+    accountName: player.player.accountName,
+    // DatabasePlayer.level is GameLevel.displayNumber; BuddyCardData.level stores GameLevel.index.
+    levelIndex: Math.max(0, player.player.level - 1),
+    armyPower: player.player.armyPower,
+    equippedVisuals: visualInventoryStateFor(state).slots,
+    weapons,
+    now,
+  };
+}
+
+function expectedBuddyWeapons(
+  unityType: number,
+  weapons: BuddyDepositAuthority["weapons"],
+): { primaryWeapon: number; secondaryWeapon: number } {
+  const [assault, alternate, explosive, sidearm] = weapons;
+  switch (unityType) {
+    case 0: // Defender always uses inventory slot 0.
+      return { primaryWeapon: assault.index, secondaryWeapon: -1 };
+    case 1: // Explosive uses a launcher directly, or slot 3 plus the slot-2 throwable.
+      return explosive.category === 16 || explosive.category === 512
+        ? { primaryWeapon: explosive.index, secondaryWeapon: -1 }
+        : { primaryWeapon: sidearm.index, secondaryWeapon: explosive.index };
+    case 2: // Shooter uses a sniper from slot 1 when one is equipped.
+      return { primaryWeapon: alternate.category === 8 ? alternate.index : assault.index, secondaryWeapon: -1 };
+    case 3: // Rusher uses a shotgun from slot 1 when one is equipped.
+      return { primaryWeapon: alternate.category === 32 ? alternate.index : assault.index, secondaryWeapon: -1 };
+    default:
+      throw new ApiError(BUDDY_CARD_NOT_READY, "Buddy unit type is invalid.");
+  }
+}
+
+function validateNewBuddy(
+  id: string,
+  data: SavedBuddyCardState,
+  authority: BuddyDepositAuthority,
+): void {
+  const timestampText = id.startsWith(authority.playerId) ? id.slice(authority.playerId.length) : "";
+  const timestamp = Number(timestampText);
+  if (!/^\d{9,11}$/.test(timestampText) || Math.abs(timestamp - authority.now) > 600) {
+    throw new ApiError(BUDDY_CARD_NOT_READY, "Buddy card ID is not derived from the current player timestamp.");
+  }
+  const expectedWeapons = expectedBuddyWeapons(data.unityType, authority.weapons);
+  if (
+    data.amount !== 1
+    || data.buddyName !== authority.accountName
+    || data.primaryWeapon !== expectedWeapons.primaryWeapon
+    || data.secondaryWeapon !== expectedWeapons.secondaryWeapon
+    || data.armypower !== authority.armyPower
+    || data.level !== authority.levelIndex
+    || !sameVisualSlots(data.equippedVisuals, authority.equippedVisuals)
+  ) {
+    throw new ApiError(BUDDY_CARD_NOT_READY, "Buddy card does not match the authoritative player loadout.");
+  }
+}
+
 function normalPoolCount(value: Record<string, string>): number {
   let total = 0;
   for (const [id, serialized] of Object.entries(value)) {
@@ -205,15 +318,16 @@ export function squadCardPoolCapacity(squadLevel: number): number {
 /**
  * Apply one player's card-pool edit without trusting Unity's optimistic inventory changes.
  *
- * Removed normal cards return to the owner's collection; added normal cards leave it. A Buddy
- * already in the pool may be removed, but Buddy creation remains fail-closed until the server
- * can reproduce CardBuddy.CreateDataForCurrentPlayer from authoritative loadout state.
+ * Removed normal cards return to the owner's collection; added normal cards leave it. A new Buddy
+ * is accepted only when every CreateDataForCurrentPlayer field matches server-owned loadout state
+ * and the recovered 480-minute deposit cooldown has elapsed.
  */
 export function applyDepositCardChangesState(
   state: PlayerProgressionState,
   currentDepositedCards: Record<string, string>,
   changes: DepositCardChanges,
   capacity: number,
+  buddyAuthority?: BuddyDepositAuthority,
 ): DepositCardMutationResult {
   const cardInventory = cardInventoryStateFor(state);
   const depositedCards = cloneDepositedCards(currentDepositedCards);
@@ -242,7 +356,24 @@ export function applyDepositCardChangesState(
 
   for (const [id, requested] of Object.entries(changes.added)) {
     if (requested.kind === "buddy") {
-      throw new ApiError(BUDDY_CARD_NOT_READY, "Authoritative Buddy card generation is not available yet.");
+      if (!buddyAuthority) {
+        throw new ApiError(BUDDY_CARD_NOT_READY, "Authoritative Buddy card inputs are unavailable.");
+      }
+      if (cardInventory.nextBuddyDeposit > buddyAuthority.now) {
+        throw new ApiError(BUDDY_CARD_NOT_READY, "Buddy card deposit is still on cooldown.");
+      }
+      if (Object.entries(depositedCards).some(([cardId, serialized]) =>
+        cardId !== id && decodePoolEntry(cardId, serialized, "DepositedCards").kind === "buddy")) {
+        throw new ApiError(BUDDY_CARD_NOT_READY, "A Buddy card is already deposited.");
+      }
+      if (depositedCards[id]) {
+        throw new ApiError(BUDDY_CARD_NOT_READY, "Buddy card ID is already deposited.");
+      }
+      validateNewBuddy(id, requested.data, buddyAuthority);
+      depositedCards[id] = encodeBuddy(requested.data);
+      cardInventory.nextBuddyDeposit = buddyAuthority.now
+        + CARD_POOL_RULES.buddyDepositCooldownMinutes * 60;
+      continue;
     }
     const owned = cardInventory.cardData[id]?.amount ?? 0;
     if (!Number.isSafeInteger(owned) || owned < requested.amount) {
@@ -365,7 +496,7 @@ function requireSquadMembership(player: PlayerDocument, squad: { name: string; m
   }
 }
 
-/** Persist an owner's normal-card deposit edit in one revision-guarded player-document write. */
+/** Persist an owner's validated normal/Buddy pool edit in one revision-guarded document write. */
 export async function depositSquadCards(
   playerId: string,
   added: unknown,
@@ -385,6 +516,7 @@ export async function depositSquadCards(
       player.player.depositedCardsDic ?? {},
       changes,
       squadCardPoolCapacity(squad.level),
+      buddyDepositAuthorityFor(player, progressionForPlayer(player), unixNow()),
     );
     const canonical = canonicalProgression(result.state);
     const update = await players().updateOne(

@@ -24,6 +24,7 @@ import {
 } from "../services/cardInventoryService";
 import {
   applyDepositCardChangesState,
+  buddyDepositAuthorityFor,
   parseDepositCardChanges,
   squadCardPoolCapacity,
   withdrawSquadCardState,
@@ -255,7 +256,7 @@ test("normal squad-card deposits atomically exchange inventory and enforce sourc
   assert.equal(squadCardPoolCapacity(500), 10);
 });
 
-test("squad-card deposits reject forged ownership, contradictory deltas, and new Buddy payloads", () => {
+test("squad-card deposits reject forged ownership and contradictory deltas", () => {
   const initial = createInitialProgression(NOW);
   initial.cardInventory = {
     ...createInitialCardInventory(),
@@ -280,22 +281,61 @@ test("squad-card deposits reject forged ownership, contradictory deltas, and new
     ),
     (error: unknown) => (error as { code?: number }).code === CARD_NOT_FOUND,
   );
+});
+
+test("Buddy deposit reproduces the current loadout and starts the exact cooldown", () => {
+  const document = playerDocument();
+  document.player.armyPower = 1_234;
+  document.player.level = 9;
+  const initial = document.progression!;
+  const authority = buddyDepositAuthorityFor(document, initial, NOW);
+  const id = `${document.id}${NOW}`;
   const buddy = JSON.stringify({
     amount: 1,
-    buddyName: "Donor",
-    equippedVisuals: {},
-    unityType: 0,
-    primaryWeapon: 0,
-    secondaryWeapon: -1,
-    armypower: 100,
-    level: 5,
+    buddyName: document.player.accountName,
+    equippedVisuals: authority.equippedVisuals,
+    unityType: 1,
+    // Starter slot 2 is a grenade rather than a launcher, so the recovered explosive branch
+    // uses the slot-3 pistol as primary and the grenade as secondary.
+    primaryWeapon: 13,
+    secondaryWeapon: 6,
+    armypower: 1_234,
+    level: 8,
   });
+  const result = applyDepositCardChangesState(
+    initial,
+    {},
+    parseDepositCardChanges(JSON.stringify({ [id]: buddy }), JSON.stringify({})),
+    3,
+    authority,
+  );
+
+  assert.deepEqual(JSON.parse(result.depositedCards[id]!), JSON.parse(buddy));
+  assert.equal(result.cardInventory.nextBuddyDeposit, NOW + 480 * 60);
+  assert.deepEqual(result.cardInventory.buddyCardData, {});
+
+  const forged = JSON.stringify({ ...JSON.parse(buddy), armypower: 9_999 });
   assert.throws(
     () => applyDepositCardChangesState(
       initial,
       {},
-      parseDepositCardChanges(JSON.stringify({ "donor-1": buddy }), JSON.stringify({})),
+      parseDepositCardChanges(JSON.stringify({ [id]: forged }), JSON.stringify({})),
       3,
+      authority,
+    ),
+    (error: unknown) => (error as { code?: number }).code === BUDDY_CARD_NOT_READY,
+  );
+
+  const withoutExistingBuddy = { ...result.depositedCards };
+  delete withoutExistingBuddy[id];
+  const nextId = `${document.id}${NOW + 1}`;
+  assert.throws(
+    () => applyDepositCardChangesState(
+      result.state,
+      withoutExistingBuddy,
+      parseDepositCardChanges(JSON.stringify({ [nextId]: buddy }), JSON.stringify({})),
+      3,
+      { ...authority, now: NOW + 1 },
     ),
     (error: unknown) => (error as { code?: number }).code === BUDDY_CARD_NOT_READY,
   );

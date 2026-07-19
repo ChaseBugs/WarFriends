@@ -112,10 +112,17 @@ values are serialized `CardData` or `BuddyCardData`. The server parses both JSON
 unknown IDs, malformed amounts, contradictory changes, and unowned cards, then exchanges normal
 cards between `CardManagerData.cardData` and the player's `depositedCardsDic` in one
 revision-guarded player-document write. It also derives the allowed normal-card count from the
-authoritative squad level instead of accepting a capacity from the request. Removing the owner's
-existing Buddy deposit is supported, but creating a new Buddy deposit remains fail-closed until
-the backend can reproduce `CardBuddy.CreateDataForCurrentPlayer` from authoritative random unit
-type, compatible equipped weapons, visuals, Army Power, and level.
+authoritative squad level instead of accepting a capacity from the request.
+
+For a Buddy deposit, the server reproduces `CardBuddy.CreateDataForCurrentPlayer` from the owner's
+four current weapon slots and exact catalog indexes/categories, owned weapon records, four equipped
+visual slots, current Army Power, account name, and zero-based level index. The submitted unit type
+must be 0-3, and the server derives the only valid primary/secondary weapon pair for that type.
+The card ID must contain the authenticated owner ID plus a recent server timestamp, only one Buddy
+may be in the owner's pool, and a successful deposit sets and returns the recovered 480-minute
+`NextBuddyDeposit` cooldown. Removing an existing Buddy deposit is also supported. The stock
+protocol still chooses the random unit type locally; a server-selected type would require a nonce
+or client adapter so the unmodified client's optimistic snapshot remains synchronized.
 
 `WithdrawCard` (action 175) accepts only a donor player ID and card ID. The server verifies that
 the recipient and donor are distinct current members of the same authoritative squad roster,
@@ -167,7 +174,7 @@ The following systems are still fail-closed or incomplete:
 
 - consuming War Cards during an authoritative PvP battle;
 - granting cards or card packs from missions, Arena, assignments, offers, and achievements;
-- authoritative Buddy snapshot generation/deposit and its 480-minute timer;
+- a server-selected Buddy unit-type RNG protocol compatible with a modified client;
 - purchase/entitlement logic for the battle-card `extraSlot` flag;
 - subscription-backed instant `CraftAndClaimCard`;
 - server-owned offer/subscription discounts;
