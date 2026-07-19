@@ -87,9 +87,30 @@ This protects operations such as:
 ## Profile changes
 
 Names are normalized and checked case-insensitively. Countries, locales, notification settings,
-presence, and device tokens are bounded and validated before persistence. The reconstructed server
-supports the first free rename; paid rename charging remains disabled until that full pricing
-contract is recovered.
+presence, and device tokens are bounded and validated before persistence.
+
+### Player rename economy
+
+`ChangePlayerName` sends `Name` and `PayForRename`. The first rename is free because the stored
+`RenameCount` is zero. Later prices reproduce `PlayerAnalytics.renameGoldPrice`: four Gold for
+count one, then doubling for every completed rename. The base value is recovered from the 4.9.5
+`SecondRenameGoldCost` MainScene row. Its CodeStage `ObscuredFloat` bytes `e7858340`, decrypted
+with key 230887, resolve to 4.
+
+The profile name, normalized unique key, incremented `RenameCount`, and Gold balance commit in one
+revision-guarded MongoDB update. A concurrent economy mutation forces the rename to reload and
+recalculate its price. The database unique index decides simultaneous case-insensitive name races,
+so two players cannot reserve the same spelling by passing a preflight check together.
+
+The Rename dialog changes its local wallet only after success. The response echoes `PayForRename`
+and returns the new `RenameCount`, allowing the client to deduct the exact price it displayed. On
+insufficient Gold, source error `11402` returns the authoritative `RenameCount` and `PlayerGold`
+fields consumed by the stock rollback dialog. Extreme counts that trigger the original client's
+signed 32-bit price overflow are rejected instead of becoming free.
+
+The recovered client performs a local bad-word check before sending a manual rename. A production
+server-side profanity policy still needs an authoritative multilingual rule set; it must not infer
+one from corrupted decompiler strings.
 
 ## Migration behavior
 
@@ -102,6 +123,7 @@ were persisted. The next authoritative mutation writes the canonical schema.
 - `Server/src/services/authService.ts`
 - `Server/src/services/identityService.ts`
 - `Server/src/services/playerService.ts`
+- `Server/src/services/playerRenameService.ts`
 - `Server/src/services/playerStateService.ts`
 - `Server/src/services/progressionMutationService.ts`
 - `Server/src/handlers/auth.ts`, `Server/src/handlers/identity.ts`, and `Server/src/handlers/player.ts`

@@ -2,9 +2,9 @@ import { DbAction } from "../dbActions";
 import { PlayerStatus } from "../constants";
 import { ok } from "../dtos";
 import { ApiError, ApiErrorCode } from "../apiErrors";
-import { updatePlayerFields } from "../services/playerService";
+import { findById, updatePlayerFields } from "../services/playerService";
 import { replaceCustomCredential } from "../services/authService";
-import { buildDatabasePlayer, buildPlayerStateResponse } from "../services/playerStateService";
+import { buildDatabasePlayer, buildPlayerStateResponse, progressionForPlayer } from "../services/playerStateService";
 import { recomputePlayerArmyPower } from "../services/armyPowerService";
 import {
   ensurePlayerNameAvailable,
@@ -15,6 +15,10 @@ import {
   settingsForPlayer,
 } from "../services/playerSettingsService";
 import { authed, type HandlerEntry } from "./types";
+import {
+  PLAYER_RENAME_NOT_ENOUGH_GOLD,
+  renamePlayer,
+} from "../services/playerRenameService";
 
 // Player profile and settings handlers. GetPlayerData is the client's primary state fetch
 // after login. Mutations validate and persist only their own fields, which prevents a stale
@@ -60,26 +64,33 @@ export const playerHandlers: Record<number, HandlerEntry> = {
 
   [DbAction.ChangePlayerName]: authed(async ({ player, req }) => {
     const name = normalizePlayerName(req.Name);
-    await ensurePlayerNameAvailable(player!.id, name);
-
-    const renameCount = player!.player.renameCount ?? 0;
-    const requestedPaidRename = Number(req.PayForRename) === 1;
-    if (renameCount > 0 && requestedPaidRename) {
-      // The recovered request asks the backend to charge renameGoldPrice, but the currency
-      // schema is not yet authoritative. Rejecting preserves balances instead of granting a
-      // paid mutation for free or trusting a client-supplied price.
-      throw new ApiError(ApiErrorCode.UnknownAction, "Paid rename is unavailable until economy validation is enabled.");
+    const payForRenameValue = Number(req.PayForRename);
+    if (payForRenameValue !== 0 && payForRenameValue !== 1) {
+      throw new ApiError(ApiErrorCode.UnknownAction, "PayForRename must be 0 or 1.");
     }
-    if (renameCount > 0) {
-      throw new ApiError(ApiErrorCode.UnknownAction, "This account has already used its free rename.");
+    try {
+      const result = await renamePlayer(player!.id, name, payForRenameValue === 1);
+      // HIKDINCJEPB deducts its locally displayed price only when this flag is one, then sets
+      // RenameCount. Echoing the request supports both the free platform-name sync (zero) and
+      // RenameDialog, whose first confirmed rename sends one even though its current price is 0.
+      return ok(DbAction.ChangePlayerName, {
+        Name: result.name,
+        PayForRename: payForRenameValue,
+        RenameCount: result.renameCount,
+      });
+    } catch (error) {
+      if (!(error instanceof ApiError) || error.code !== PLAYER_RENAME_NOT_ENOUGH_GOLD) throw error;
+      const latest = await findById(player!.id) ?? player!;
+      return {
+        DbAction: DbAction.ChangePlayerName,
+        Code: error.code,
+        Message: error.message,
+        // LEDNENKKDJM's 11402 branch uses both fields to restore the optimistic wallet and
+        // keep PlayerAnalytics.renameGoldPrice aligned with the server's next attempt.
+        RenameCount: latest.player.renameCount ?? 0,
+        PlayerGold: progressionForPlayer(latest).gold,
+      };
     }
-
-    player!.player.accountName = name;
-    player!.player.renameCount = renameCount + 1;
-    await updatePlayerFields(player!.id, { accountName: name, renameCount: player!.player.renameCount });
-    // The client deducts currency only when PayForRename is 1. Since this path is the free
-    // rename, return 0 explicitly and provide the count consumed by PlayerAnalytics.
-    return ok(DbAction.ChangePlayerName, { Name: name, PayForRename: 0, RenameCount: player!.player.renameCount });
   }),
 
   [DbAction.ChangePlayerCountry]: authed(async ({ player, req }) => {
