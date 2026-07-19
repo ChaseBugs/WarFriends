@@ -1,4 +1,4 @@
-import { createHmac, randomBytes, randomUUID, timingSafeEqual } from "crypto";
+import { createHmac, randomBytes, randomUUID, scrypt, timingSafeEqual } from "crypto";
 import type { ClientSession } from "mongodb";
 import { config } from "../config";
 import { ApiError, ApiErrorCode } from "../apiErrors";
@@ -6,6 +6,7 @@ import { AccountType } from "../constants";
 import { newPlayer, type DatabasePlayerDTO } from "../dtos";
 import {
   compareAndRotateSessionToken,
+  compareAndUpgradeCredentialHash,
   findById,
   insertPlayer,
   updateAuthCredentials,
@@ -35,11 +36,94 @@ function issueToken(playerId: string, salt: string): string {
   return createHmac("sha256", config.authSecret).update(`${playerId}:${salt}`).digest("hex");
 }
 
-function credentialHash(playerId: string, credential: string): string {
+function legacyCredentialHash(playerId: string, credential: string): string {
   // Bind the digest to the account ID so identical passwords on two accounts never produce
   // the same stored value. AUTH_SECRET acts as a server-side pepper and must be rotated using
   // a migration strategy in production.
   return createHmac("sha256", config.authSecret).update(`custom:${playerId}:${credential}`).digest("hex");
+}
+
+const SCRYPT_VERSION = "v1";
+const SCRYPT_COST = 16_384;
+const SCRYPT_BLOCK_SIZE = 8;
+const SCRYPT_PARALLELIZATION = 1;
+const SCRYPT_KEY_LENGTH = 32;
+const SCRYPT_MAX_MEMORY = 64 * 1024 * 1024;
+
+interface ParsedScryptHash {
+  salt: Buffer;
+  digest: Buffer;
+}
+
+function passwordMaterial(playerId: string, credential: string): Buffer {
+  // The HMAC is a server-side pepper applied before the deliberately expensive KDF. A database
+  // leak alone is therefore insufficient for offline guesses, while random per-password salt
+  // still prevents equal passwords from sharing a stored digest.
+  return createHmac("sha256", config.authSecret)
+    .update("custom-password\0")
+    .update(playerId)
+    .update("\0")
+    .update(credential)
+    .digest();
+}
+
+function deriveScryptKey(material: Buffer, salt: Buffer): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    scrypt(
+      material,
+      salt,
+      SCRYPT_KEY_LENGTH,
+      {
+        N: SCRYPT_COST,
+        r: SCRYPT_BLOCK_SIZE,
+        p: SCRYPT_PARALLELIZATION,
+        maxmem: SCRYPT_MAX_MEMORY,
+      },
+      (error, derivedKey) => error ? reject(error) : resolve(derivedKey),
+    );
+  });
+}
+
+function parseScryptHash(value: string): ParsedScryptHash | null {
+  const parts = value.split("$");
+  if (
+    parts.length !== 7
+    || parts[0] !== "scrypt"
+    || parts[1] !== SCRYPT_VERSION
+    || Number(parts[2]) !== SCRYPT_COST
+    || Number(parts[3]) !== SCRYPT_BLOCK_SIZE
+    || Number(parts[4]) !== SCRYPT_PARALLELIZATION
+    || !/^[0-9a-f]{32}$/u.test(parts[5] ?? "")
+    || !/^[0-9a-f]{64}$/u.test(parts[6] ?? "")
+  ) return null;
+  return { salt: Buffer.from(parts[5]!, "hex"), digest: Buffer.from(parts[6]!, "hex") };
+}
+
+/** Produce a versioned, salted, memory-hard digest for a human-entered custom password. */
+export async function hashCustomCredential(playerId: string, credential: string): Promise<string> {
+  const salt = randomBytes(16);
+  const digest = await deriveScryptKey(passwordMaterial(playerId, credential), salt);
+  return [
+    "scrypt",
+    SCRYPT_VERSION,
+    SCRYPT_COST,
+    SCRYPT_BLOCK_SIZE,
+    SCRYPT_PARALLELIZATION,
+    salt.toString("hex"),
+    digest.toString("hex"),
+  ].join("$");
+}
+
+/** Legacy rows contain one unversioned 64-hex HMAC and are upgraded after a valid login. */
+export function customCredentialHashNeedsUpgrade(value: string | undefined): boolean {
+  return Boolean(value && !parseScryptHash(value));
+}
+
+async function customCredentialMatches(playerId: string, storedHash: string, credential: string): Promise<boolean> {
+  const parsed = parseScryptHash(storedHash);
+  if (!parsed) return tokensMatch(storedHash, legacyCredentialHash(playerId, credential));
+  const candidate = await deriveScryptKey(passwordMaterial(playerId, credential), parsed.salt);
+  return candidate.length === parsed.digest.length && timingSafeEqual(candidate, parsed.digest);
 }
 
 function tokensMatch(a: string, b: string): boolean {
@@ -49,9 +133,12 @@ function tokensMatch(a: string, b: string): boolean {
 }
 
 /** Mint and persist the gameplay credential returned by a successful explicit login. */
-async function rotateAuthenticatedSession(player: PlayerDocument): Promise<void> {
+async function rotateAuthenticatedSession(
+  player: PlayerDocument,
+  options: { allowConcurrentWinner: boolean; expectedCredentialHash?: string },
+): Promise<void> {
   const candidate = issueToken(player.id, randomBytes(16).toString("hex"));
-  player.authToken = await compareAndRotateSessionToken(player.id, player.authToken, candidate);
+  player.authToken = await compareAndRotateSessionToken(player.id, player.authToken, candidate, options);
 }
 
 /**
@@ -64,14 +151,15 @@ async function rotateAuthenticatedSession(player: PlayerDocument): Promise<void>
  * gameplay actions must present the rotatable session token; otherwise knowledge of a
  * long-lived password would bypass session revocation on every API route.
  */
-export function playerCredentialMatches(
+export async function playerCredentialMatches(
   doc: PlayerDocument,
   credential: string,
   allowCustomPassword: boolean,
-): boolean {
+): Promise<boolean> {
   const sessionMatches = typeof doc.authToken === "string" && tokensMatch(doc.authToken, credential);
+  if (sessionMatches) return true;
   const passwordMatches = allowCustomPassword && typeof doc.authTokenHash === "string"
-    ? tokensMatch(doc.authTokenHash, credentialHash(doc.id, credential))
+    ? await customCredentialMatches(doc.id, doc.authTokenHash, credential)
     : false;
   return sessionMatches || passwordMatches;
 }
@@ -214,14 +302,20 @@ export async function authenticate(
   if (!id || !token) {
     throw new ApiError(ApiErrorCode.RequestNotAuthorized, "Missing credentials.");
   }
+  // Match the provider-link input bounds before any MongoDB lookup or memory-hard password work.
+  // This prevents a modified client from turning the 2 MB HTTP body allowance into oversized
+  // index keys or repeated multi-megabyte HMAC inputs.
+  if (id.length > 256 || token.length > 4096) {
+    throw new ApiError(ApiErrorCode.RequestNotAuthorized, "Invalid credentials.");
+  }
   const doc = await findById(id);
   // A rotatable gameplay token is both cheap to verify and proof that the caller already owns
   // a live session. Let it bypass/clear durable-login failures so an attacker cannot lock an
   // active player out of ordinary play by guessing that player's public ID.
-  const sessionCredentialMatches = doc ? playerCredentialMatches(doc, token, false) : false;
+  const sessionCredentialMatches = doc ? await playerCredentialMatches(doc, token, false) : false;
   if (doc && sessionCredentialMatches) {
     if (allowCustomPassword) await clearLoginAttemptsForSession(id);
-    if (allowCustomPassword) await rotateAuthenticatedSession(doc);
+    if (allowCustomPassword) await rotateAuthenticatedSession(doc, { allowConcurrentWinner: false });
     logger.auth.login(id, true, { playerId: id });
     return doc;
   }
@@ -239,11 +333,26 @@ export async function authenticate(
   }
 
   const customPasswordMatches = doc
-    ? playerCredentialMatches(doc, token, allowCustomPassword)
+    ? await playerCredentialMatches(doc, token, allowCustomPassword)
     : false;
   if (doc && customPasswordMatches) {
     if (loginReservation) await clearLoginAttempt(loginReservation);
-    await rotateAuthenticatedSession(doc);
+    if (customCredentialHashNeedsUpgrade(doc.authTokenHash)) {
+      const legacyHash = doc.authTokenHash!;
+      const upgradedHash = await hashCustomCredential(doc.id, token);
+      if (await compareAndUpgradeCredentialHash(doc.id, legacyHash, upgradedHash)) {
+        doc.authTokenHash = upgradedHash;
+      } else {
+        // A simultaneous password change or legacy migration won the compare. Reject this
+        // snapshot instead of returning a session token that the verified legacy hash no longer
+        // authorizes. A retry will verify against the new versioned digest.
+        throw new ApiError(ApiErrorCode.RequestNotAuthorized, "Credentials changed during login.");
+      }
+    }
+    await rotateAuthenticatedSession(doc, {
+      allowConcurrentWinner: true,
+      expectedCredentialHash: doc.authTokenHash,
+    });
     logger.auth.login(id, true, { playerId: id });
     return doc;
   }
@@ -252,7 +361,7 @@ export async function authenticate(
   const identityPlayer = provider ? await authenticateIdentity(provider, id, token) : null;
   if (identityPlayer) {
     if (loginReservation) await clearLoginAttempt(loginReservation);
-    await rotateAuthenticatedSession(identityPlayer);
+    await rotateAuthenticatedSession(identityPlayer, { allowConcurrentWinner: true });
     logger.auth.login(id, true, { playerId: identityPlayer.id, provider });
     return identityPlayer;
   }
@@ -271,7 +380,7 @@ export async function authenticate(
  */
 export async function replaceCustomCredential(playerId: string, credential: string): Promise<string> {
   const sessionToken = issueToken(playerId, randomBytes(16).toString("hex"));
-  await updateAuthCredentials(playerId, credentialHash(playerId, credential), sessionToken);
+  await updateAuthCredentials(playerId, await hashCustomCredential(playerId, credential), sessionToken);
   return sessionToken;
 }
 

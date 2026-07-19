@@ -85,7 +85,11 @@ import { assignmentHandlers } from "../handlers/assignments";
 import { pvpGameReward, pvpLevelFields, winnerFromEndReason } from "../services/matchService";
 import { buildDatabaseSquad, buildSquadWarsDivision } from "../services/squadWireService";
 import { buildPlayerLeaderboardItem } from "../services/leaderboardService";
-import { playerCredentialMatches } from "../services/authService";
+import {
+  customCredentialHashNeedsUpgrade,
+  hashCustomCredential,
+  playerCredentialMatches,
+} from "../services/authService";
 import {
   loginRateLimitBlocked,
   loginRateLimitKey,
@@ -486,7 +490,7 @@ test("custom login returns distinct session and provider credentials", async () 
   assert.deepEqual((response.Player as Record<string, unknown>).Id, { S: "player-contract" });
 });
 
-test("custom password login works while gameplay routes still require the session token", () => {
+test("custom password login works while gameplay routes still require the session token", async () => {
   const player = contractPlayer();
   const password = "correct-horse-battery-staple";
   player.authToken = "rotated-session-token";
@@ -494,10 +498,25 @@ test("custom password login works while gameplay routes still require the sessio
     .update(`custom:${player.id}:${password}`)
     .digest("hex");
 
-  assert.equal(playerCredentialMatches(player, player.authToken, false), true);
-  assert.equal(playerCredentialMatches(player, password, false), false);
-  assert.equal(playerCredentialMatches(player, password, true), true);
-  assert.equal(playerCredentialMatches(player, "wrong-password", true), false);
+  assert.equal(await playerCredentialMatches(player, player.authToken, false), true);
+  assert.equal(await playerCredentialMatches(player, password, false), false);
+  assert.equal(await playerCredentialMatches(player, password, true), true);
+  assert.equal(await playerCredentialMatches(player, "wrong-password", true), false);
+  assert.equal(customCredentialHashNeedsUpgrade(player.authTokenHash), true);
+});
+
+test("new custom passwords use salted memory-hard hashes", async () => {
+  const player = contractPlayer();
+  const password = "correct-horse-battery-staple";
+  const first = await hashCustomCredential(player.id, password);
+  const second = await hashCustomCredential(player.id, password);
+  assert.match(first, /^scrypt\$v1\$16384\$8\$1\$[0-9a-f]{32}\$[0-9a-f]{64}$/u);
+  assert.notEqual(first, second);
+  player.authTokenHash = first;
+  assert.equal(customCredentialHashNeedsUpgrade(first), false);
+  assert.equal(await playerCredentialMatches(player, password, true), true);
+  assert.equal(await playerCredentialMatches(player, "wrong-password", true), false);
+  assert.equal(await playerCredentialMatches(player, password, false), false);
 });
 
 test("durable login throttling hides identity keys and enforces a real cooldown", () => {

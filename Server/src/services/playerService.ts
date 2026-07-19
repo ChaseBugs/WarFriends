@@ -38,6 +38,19 @@ export async function updateAuthCredentials(id: string, authTokenHash: string, a
   );
 }
 
+/** Upgrade a verified legacy password digest without overwriting a concurrent password change. */
+export async function compareAndUpgradeCredentialHash(
+  id: string,
+  expectedHash: string,
+  upgradedHash: string,
+): Promise<boolean> {
+  const result = await players().updateOne(
+    { id, authTokenHash: expectedHash },
+    { $set: { authTokenHash: upgradedHash, updatedAt: new Date() } },
+  );
+  return result.modifiedCount === 1;
+}
+
 /** Persist a rotated session token without changing the account's login password digest. */
 export async function updateSessionToken(id: string, authToken: string): Promise<void> {
   await players().updateOne({ id }, { $set: { authToken, updatedAt: new Date() } });
@@ -55,22 +68,31 @@ export async function compareAndRotateSessionToken(
   id: string,
   expectedToken: string | undefined,
   candidateToken: string,
+  options: { allowConcurrentWinner: boolean; expectedCredentialHash?: string },
 ): Promise<string> {
   const currentTokenFilter = expectedToken === undefined
     ? { authToken: { $exists: false } }
     : { authToken: expectedToken };
+  const credentialFilter = options.expectedCredentialHash === undefined
+    ? {}
+    : { authTokenHash: options.expectedCredentialHash };
   const updated = await players().findOneAndUpdate(
-    { id, ...currentTokenFilter },
+    { id, ...currentTokenFilter, ...credentialFilter },
     { $set: { authToken: candidateToken, updatedAt: new Date() } },
     { returnDocument: "after", projection: { authToken: 1 } },
   );
   if (updated?.authToken) return updated.authToken;
 
   // A failed compare normally means another successful login rotated first. Return its token
-  // instead of overwriting it. A missing player or token indicates an external destructive write
-  // and must fail closed rather than returning the unpersisted candidate.
-  const current = await players().findOne({ id }, { projection: { authToken: 1 } });
-  if (!current?.authToken) {
+  // only when the caller's durable credential still proves account ownership. A session-only
+  // login must not inherit a token created by a concurrent password change, and a password login
+  // must not inherit one after its verified hash was replaced.
+  const current = await players().findOne({ id }, { projection: { authToken: 1, authTokenHash: 1 } });
+  if (
+    !current?.authToken
+    || !options.allowConcurrentWinner
+    || (options.expectedCredentialHash !== undefined && current.authTokenHash !== options.expectedCredentialHash)
+  ) {
     throw new ApiError(ApiErrorCode.RequestNotAuthorized, "Authenticated session could not be rotated.");
   }
   return current.authToken;

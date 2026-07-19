@@ -29,7 +29,7 @@ duplicate response.
 ## Authentication lifecycle
 
 1. Account creation produces a player ID and an opaque session credential.
-2. Custom password creation stores a keyed digest, never the clear-text password.
+2. Custom password creation stores a versioned, salted scrypt digest, never the clear-text password.
 3. Login verifies the durable password/provider credential and rotates the gameplay session token.
 4. Normal gameplay requests authenticate with `PlayerId` and the current session token.
 5. Linking and unlinking providers validates ownership before changing the identity mirror on the
@@ -37,6 +37,15 @@ duplicate response.
 
 The distinction between a durable login credential and a short-lived gameplay session prevents a
 stale password field from bypassing token rotation.
+
+Human-entered custom passwords use scrypt v1 with `N=16384`, `r=8`, `p=1`, a random 128-bit salt,
+and a 256-bit output. Before scrypt, an HMAC with `AUTH_SECRET` binds the password to the player ID
+and supplies a server-side pepper. This makes a stolen player database insufficient for independent
+offline guessing and gives every guess a memory-hard cost. Historical development rows containing
+the old unversioned HMAC remain readable only on `LoginToCustomAccount`; after one valid password
+login, a compare-and-set migration replaces that exact legacy digest without overwriting a
+concurrent password change. Platform credentials remain separate because production must validate
+those with their provider rather than treat an OAuth token as a human password.
 
 Session rotation uses a compare-and-set against the token snapshot that was authenticated. If two
 writes race from that same snapshot, only one candidate token is persisted and the losing writer
