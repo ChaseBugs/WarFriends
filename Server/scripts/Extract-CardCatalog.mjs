@@ -275,13 +275,24 @@ if (
 }
 
 const unlockLevel = integerConstant(cardConstants, "WarcardsUnlockLevel");
+const craftingRules = {
+  inputCount: 3,
+  bronzeToSilverMinutes: integerConstant(constants, "CardCraftTimeSilver"),
+  silverToGoldMinutes: integerConstant(constants, "CardCraftTimeGold"),
+};
+const cardPoolRules = {
+  withdrawCooldownMinutes: integerConstant(constants, "CardWithdrawTimer"),
+  maximumBuddyCards: integerConstant(constants, "MaximumNumberOfBuddyCards"),
+};
 const artifact = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   clientVersion: "4.9.5",
   source: "Client/ExportedProject/Assets/Scenes/MainScene.unity",
   sourceSha256: createHash("sha256").update(sceneBuffer).digest("hex"),
   unlockLevel,
   rarityProbabilities,
+  craftingRules,
+  cardPoolRules,
   cards,
   unresolvedRows,
   packs,

@@ -32,7 +32,9 @@ SHA-256 hash. The generated catalog contains:
 - 25 definition rows without a serialized playable `Card` component, retained as unresolved;
 - four source-priced card packs;
 - display level 6 as the War Card unlock level;
-- the recovered level thresholds and rarity probabilities used by the client.
+- the recovered level thresholds and rarity probabilities used by the client;
+- the 30-minute Bronze-to-Silver recipe, 60-minute Silver-to-Gold recipe, 240-minute squad
+  withdrawal cooldown, and ten-buddy-card limit.
 
 Unresolved rows remain queryable evidence in the material database but can never be purchased or
 granted. Run `npm run verify:card-catalog` in `Server` to prove that the checked-in artifact still
@@ -69,6 +71,36 @@ fields consumed by the old client: `Gold`, `WarBucks`, `CardManagerData`, and `S
 Recovered result codes are 100 for insufficient currency, 112 for an invalid/unavailable pack or
 roll, and 13601 for a discount without a server-owned entitlement.
 
+## Timed card crafting
+
+The backend also persists the exact `CardCraftingManager.CraftData` login and recovery object:
+
+```json
+{
+  "cards": [],
+  "start": 0,
+  "end": 0
+}
+```
+
+`CraftCard` (action 176) accepts exactly three owned playable cards of one rarity. Three Bronze
+cards are removed atomically and create a 30-minute receipt for one Silver result; three Silver
+cards create a 60-minute receipt for one Gold result. Gold, unresolved, mixed-rarity, missing, and
+duplicate-over-owned inputs are rejected. A second start while a receipt exists returns recovered
+code 17601 and the current `CraftData` instead of consuming more cards.
+
+`ClaimCraftedCard` (action 177) validates server time, chooses one playable next-rarity card with a
+cryptographic random selector, grants it, and clears the receipt in the same progression revision.
+Early or duplicate claims return code 17701 and cannot grant twice. Invalid card ownership uses
+code 17401 with authoritative `CardManagerData`, `CraftData`, and deposited-card recovery fields.
+The returned `CardId` is authoritative because the stock claim parser explicitly adds the ID from
+the server response. A claimed Gold craft also records the server fact used to validate starter
+assignment `ID_8`.
+
+`CraftAndClaimCard` (action 2000) remains rejected. The stock client exposes it to subscribers,
+but the reconstructed backend does not yet own a platform-verified subscription entitlement;
+accepting it would let a modified APK bypass both the timer and subscription purchase.
+
 ## Compatibility and trust boundary
 
 The unmodified client chooses card identities locally and adds them to its local inventory before
@@ -93,7 +125,8 @@ The following systems are still fail-closed or incomplete:
 
 - consuming War Cards during an authoritative PvP battle;
 - granting cards or card packs from missions, Arena, assignments, offers, and achievements;
-- squad deposits, withdrawals, buddy-card timers, extra slots, crafting, and claims;
+- squad deposits, withdrawals, buddy-card timers, extra slots, and notifications;
+- subscription-backed instant `CraftAndClaimCard`;
 - server-owned offer/subscription discounts;
 - a server-selected card-pack RNG protocol compatible with a modified client.
 
@@ -103,5 +136,6 @@ The following systems are still fail-closed or incomplete:
 - `Server/src/data/cardCatalog.generated.json`
 - `Server/src/services/cardInventoryService.ts`
 - `Server/src/services/assignmentService.ts`
+- `Server/src/handlers/cards.ts`
 - `Server/src/services/playerStateService.ts`
 - `Server/src/tests/cardInventory.test.ts`

@@ -38,8 +38,9 @@ The limited onboarding chain uses recovered MainScene thresholds, order, and cur
 Supported completion facts include ranked wins, medal balance, level, lifetime squad points, first
 mission completion, and the equipped secondary-weapon level.
 
-Unit deployment, war-card play, and card crafting remain disabled until those event sources are
-server authoritative.
+Unit deployment and war-card play remain disabled until those event sources are server
+authoritative. Gold-card crafting now completes starter assignment `ID_8` only from an accepted
+server-owned craft claim.
 
 ## Daily, co-op, and heroic missions
 

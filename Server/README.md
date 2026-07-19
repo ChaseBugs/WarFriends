@@ -136,6 +136,13 @@ Working end-to-end (verified live):
   replacement IDs on success, so identities inside the verified rarity envelope remain
   client-selected until a nonce or client adapter is added. Run `npm run verify:card-catalog` to
   verify the generated artifact.
+- **Timed War Card crafting**: exact `CraftData` is returned at boot. Direct `CraftCard` atomically
+  consumes three same-rarity owned cards and creates the extracted 30-minute Bronze-to-Silver or
+  60-minute Silver-to-Gold receipt. `ClaimCraftedCard` enforces server time, selects one playable
+  next-rarity result with cryptographic randomness, grants once, and clears the receipt. Recovered
+  17401/17601/17701 recovery bodies restore client state, and a claimed Gold craft proves starter
+  assignment ID_8. Subscription-only `CraftAndClaimCard` remains rejected until platform
+  subscriptions are authoritative.
 - **Weapon inventory foundation**: private and public player snapshots now serialize the
   exact recovered `InventoryData.slots` and `LevelManagerData.savedWeapons` structures with
   the 4.9.5 starter loadout. Stock buffered `BuyWeapon`/`EquipWeapon` supports all 84
@@ -211,8 +218,8 @@ Working end-to-end (verified live):
   `StarterAssignmentsData` object and the MainScene-defined thresholds, order, Gold, and
   WarBucks rewards. Ranked wins, medal balance, level, lifetime squad points, and the first
   replay-safe mission completion, and the exact equipped secondary-weapon level required by
-  ID_7 are checked against server state; buffered claims are ordered, atomic,
-  reward-validated, and replay safe. Unit deployment, war-card, and card-crafting completions
+  ID_7 and a server-granted Gold craft for ID_8 are checked against server state; buffered claims
+  are ordered, atomic, reward-validated, and replay safe. Unit deployment and war-card completions
   remain disabled until those event sources exist.
 - **Achievements (authoritative subset)**: actions `218`-`220` use the recovered
   `AchievementsData`/RequestBuffer contract. Solo missions, ranked wins, assignment
@@ -240,7 +247,7 @@ allowlist of analytics/impression actions is safely ignored.
   a compatible replacement transport.
 - **Item economy expansion** — unit Elite upgrades, normal shop visuals, normal card-pack
   purchase, and complete normal-loadout ArmyPower are implemented. Add authoritative card reward
-  and consumption events, squad card crafting, black-market features, rentals,
+  and consumption events, squad card deposits/withdrawals, black-market features, rentals,
   VIP purchasing, and non-shop visual reward delivery. Normal unit purchase is authoritative for 23
   non-tutorial roster units, and the tutorial unit is persisted through its first equip event;
   three helper rows and 18 ArmyUpgrades rows without LevelManager objects remain closed. All 84 resolvable

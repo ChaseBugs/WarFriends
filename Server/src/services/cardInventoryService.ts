@@ -1,10 +1,14 @@
+import { randomInt } from "node:crypto";
 import generatedCardCatalog from "../data/cardCatalog.generated.json";
 import { ApiError, ApiErrorCode } from "../apiErrors";
-import type { CardInventoryState, PlayerProgressionState } from "../db";
+import type { CardCraftingState, CardInventoryState, PlayerProgressionState } from "../db";
 
 export const CARD_PACK_NOT_FOUND = 112;
 export const CARD_PACK_NOT_ENOUGH_FUNDS = 100;
 export const CARD_PACK_NO_DISCOUNT = 13601;
+export const CARD_NOT_FOUND = 17401;
+export const ALREADY_CRAFTING = 17601;
+export const CRAFTED_CARD_NOT_READY = 17701;
 
 export interface CardDefinition {
   name: string;
@@ -31,6 +35,15 @@ interface CardCatalogArtifact {
   source: string;
   sourceSha256: string;
   unlockLevel: number;
+  craftingRules: {
+    inputCount: number;
+    bronzeToSilverMinutes: number;
+    silverToGoldMinutes: number;
+  };
+  cardPoolRules: {
+    withdrawCooldownMinutes: number;
+    maximumBuddyCards: number;
+  };
   cards: CardDefinition[];
   unresolvedRows: CardDefinition[];
   packs: CardPackDefinition[];
@@ -50,6 +63,13 @@ export interface CardInventoryMutationResult {
   cards: string[];
 }
 
+export interface CardCraftingMutationResult {
+  state: PlayerProgressionState;
+  cardInventory: CardInventoryState;
+  cardCrafting: CardCraftingState;
+  cardId?: string;
+}
+
 const artifact = generatedCardCatalog as CardCatalogArtifact;
 export const CARD_UNLOCK_LEVEL = artifact.unlockLevel;
 export const CARD_CATALOG: Readonly<Record<string, Readonly<CardDefinition>>> = Object.freeze(
@@ -58,6 +78,8 @@ export const CARD_CATALOG: Readonly<Record<string, Readonly<CardDefinition>>> = 
 export const CARD_PACK_CATALOG: Readonly<Record<string, Readonly<CardPackDefinition>>> = Object.freeze(
   Object.fromEntries(artifact.packs.map((pack) => [pack.name, Object.freeze({ ...pack })])),
 );
+export const CARD_CRAFTING_RULES = Object.freeze({ ...artifact.craftingRules });
+export const CARD_POOL_RULES = Object.freeze({ ...artifact.cardPoolRules });
 
 /** New accounts begin with the exact empty CardManagerData wire shape. */
 export function createInitialCardInventory(): CardInventoryState {
@@ -70,6 +92,11 @@ export function createInitialCardInventory(): CardInventoryState {
     nextBuddyDeposit: 0,
     extraSlot: false,
   };
+}
+
+/** Empty state required by CardCraftingManager.LoadData during login and failure recovery. */
+export function createInitialCardCrafting(): CardCraftingState {
+  return { cards: [], start: 0, end: 0 };
 }
 
 function cloneCardInventory(value: CardInventoryState): CardInventoryState {
@@ -89,6 +116,153 @@ function cloneCardInventory(value: CardInventoryState): CardInventoryState {
 
 export function cardInventoryStateFor(state: PlayerProgressionState): CardInventoryState {
   return cloneCardInventory(state.cardInventory ?? createInitialCardInventory());
+}
+
+export function cardCraftingStateFor(state: PlayerProgressionState): CardCraftingState {
+  const value = state.cardCrafting ?? createInitialCardCrafting();
+  return { cards: [...value.cards], start: value.start, end: value.end };
+}
+
+/** Decode the `Cards` JSON form field used by CraftCard and CraftAndClaimCard. */
+export function parseCraftingCards(value: unknown): string[] {
+  if (typeof value !== "string" || value.length < 2 || value.length > 16_384) {
+    throw new ApiError(CARD_NOT_FOUND, "Crafting cards are missing.");
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(value);
+  } catch {
+    throw new ApiError(CARD_NOT_FOUND, "Crafting cards are invalid JSON.");
+  }
+  if (
+    !Array.isArray(parsed)
+    || parsed.length !== CARD_CRAFTING_RULES.inputCount
+    || parsed.some((card) => typeof card !== "string" || card.length < 1 || card.length > 128)
+  ) {
+    throw new ApiError(CARD_NOT_FOUND, "Crafting requires exactly three valid card IDs.");
+  }
+  return parsed as string[];
+}
+
+function recipeRarity(cards: readonly string[]): 1 | 2 {
+  if (cards.length !== CARD_CRAFTING_RULES.inputCount) {
+    throw new ApiError(CARD_NOT_FOUND, "Crafting requires exactly three cards.");
+  }
+  const definitions = cards.map((cardId) => CARD_CATALOG[cardId]);
+  if (definitions.some((definition) => !definition?.implemented)) {
+    throw new ApiError(CARD_NOT_FOUND, "Crafting contains an unknown or disabled card.");
+  }
+  const rarity = definitions[0].rarity;
+  // The recovered UI accepts only three cards of one rarity and disables Gold/Buddy cards.
+  // Enforce the rule again on the backend because a modified APK can bypass the UI filters.
+  if ((rarity !== 1 && rarity !== 2) || definitions.some((definition) => definition.rarity !== rarity)) {
+    throw new ApiError(CARD_NOT_FOUND, "Crafting requires three Bronze cards or three Silver cards.");
+  }
+  return rarity;
+}
+
+function ensureOwnedRecipe(inventory: CardInventoryState, cards: readonly string[]): void {
+  const required = new Map<string, number>();
+  for (const cardId of cards) required.set(cardId, (required.get(cardId) ?? 0) + 1);
+  for (const [cardId, count] of required) {
+    const owned = inventory.cardData[cardId]?.amount ?? 0;
+    if (!Number.isSafeInteger(owned) || owned < count) {
+      throw new ApiError(CARD_NOT_FOUND, `Card ${cardId} is not available for crafting.`);
+    }
+  }
+}
+
+function consumeRecipe(inventory: CardInventoryState, cards: readonly string[]): void {
+  for (const cardId of cards) {
+    const next = (inventory.cardData[cardId]?.amount ?? 0) - 1;
+    if (next > 0) inventory.cardData[cardId] = { amount: next };
+    else delete inventory.cardData[cardId];
+  }
+}
+
+/**
+ * Begin the exact client-side three-for-one timed recipe.
+ *
+ * Bronze inputs produce a random Silver card after 30 source minutes; Silver inputs produce
+ * a random Gold card after 60 source minutes. Input removal and receipt creation share one
+ * progression revision, so a retry can only observe `AlreadyCrafting` and cannot consume twice.
+ */
+export function startCardCraftingState(
+  state: PlayerProgressionState,
+  now: number,
+  cards: readonly string[],
+): CardCraftingMutationResult {
+  const existing = cardCraftingStateFor(state);
+  if (existing.cards.length > 0 && existing.start < existing.end) {
+    throw new ApiError(ALREADY_CRAFTING, "Player is already crafting a card.");
+  }
+  const rarity = recipeRarity(cards);
+  const inventory = cardInventoryStateFor(state);
+  ensureOwnedRecipe(inventory, cards);
+  consumeRecipe(inventory, cards);
+  const minutes = rarity === 1
+    ? CARD_CRAFTING_RULES.bronzeToSilverMinutes
+    : CARD_CRAFTING_RULES.silverToGoldMinutes;
+  const cardCrafting: CardCraftingState = {
+    cards: [...cards],
+    start: now,
+    end: now + minutes * 60,
+  };
+  const next: PlayerProgressionState = {
+    ...state,
+    revision: state.revision + 1,
+    cardInventory: inventory,
+    cardCrafting,
+  };
+  return { state: next, cardInventory: inventory, cardCrafting };
+}
+
+/** Pick one playable card from the next rarity using Node's unbiased cryptographic RNG. */
+function craftedResultCard(inputRarity: 1 | 2, choose: (upperBound: number) => number): string {
+  const outputRarity = inputRarity + 1;
+  const pool = Object.values(CARD_CATALOG)
+    .filter((definition) => definition.implemented && definition.rarity === outputRarity)
+    .map((definition) => definition.name)
+    .sort();
+  if (pool.length === 0) throw new ApiError(ApiErrorCode.InternalServerError, "Craft result pool is empty.");
+  const index = choose(pool.length);
+  if (!Number.isInteger(index) || index < 0 || index >= pool.length) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Craft result selector is invalid.");
+  }
+  return pool[index];
+}
+
+/** Grant a finished server-selected result and clear the receipt atomically. */
+export function claimCraftedCardState(
+  state: PlayerProgressionState,
+  now: number,
+  choose: (upperBound: number) => number = (upperBound) => randomInt(upperBound),
+): CardCraftingMutationResult {
+  const crafting = cardCraftingStateFor(state);
+  if (crafting.cards.length !== CARD_CRAFTING_RULES.inputCount || crafting.start >= crafting.end || now < crafting.end) {
+    throw new ApiError(CRAFTED_CARD_NOT_READY, "Crafted card is not ready.");
+  }
+  const inputRarity = recipeRarity(crafting.cards);
+  const cardId = craftedResultCard(inputRarity, choose);
+  const inventory = cardInventoryStateFor(state);
+  const current = inventory.cardData[cardId]?.amount ?? 0;
+  if (!Number.isSafeInteger(current) || current < 0 || current === Number.MAX_SAFE_INTEGER) {
+    throw new ApiError(ApiErrorCode.InternalServerError, `Card count for ${cardId} is invalid.`);
+  }
+  inventory.cardData[cardId] = { amount: current + 1 };
+  const cardCrafting = createInitialCardCrafting();
+  const next: PlayerProgressionState = {
+    ...state,
+    revision: state.revision + 1,
+    cardInventory: inventory,
+    cardCrafting,
+    goldCardsCrafted: (state.goldCardsCrafted ?? 0) + (inputRarity === 2 ? 1 : 0),
+  };
+  return { state: next, cardInventory: inventory, cardCrafting, cardId };
+}
+
+export function serializeCardCrafting(value: CardCraftingState): string {
+  return JSON.stringify(value);
 }
 
 function objectJson(value: string): Record<string, unknown> {

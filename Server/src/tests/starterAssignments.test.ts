@@ -57,6 +57,16 @@ test("starter completion accepts server-owned facts and rejects unrecovered clie
   assert.equal(completed.starterAssignments.assignments.ID_10.completed, true);
   assert.equal(completed.starterAssignments.assignments.ID_6.completed, true);
 
+  const crafted = { ...completed.state, goldCardsCrafted: 1 };
+  const craftedCompleted = completeStarterAssignmentsState(
+    crafted,
+    NOW + 15,
+    NOW,
+    FACTS,
+    ["ID_8"],
+  );
+  assert.equal(craftedCompleted.starterAssignments.assignments.ID_8.completed, true);
+
   assert.throws(
     () => completeStarterAssignmentsState(completed.state, NOW + 20, NOW, FACTS, ["ID_3"]),
     (error: unknown) => (error as { code?: number }).code === 18501,

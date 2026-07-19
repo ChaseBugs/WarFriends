@@ -127,6 +127,8 @@ interface CardCatalogArtifact {
   sourceSha256: string;
   unlockLevel: number;
   rarityProbabilities: Record<string, number>;
+  craftingRules: Record<string, number>;
+  cardPoolRules: Record<string, number>;
   cards: Array<Record<string, unknown>>;
   unresolvedRows: Array<Record<string, unknown>>;
   packs: Array<Record<string, unknown>>;
@@ -322,7 +324,12 @@ export function buildGameCatalog(): BuiltGameCatalog {
       key: requiredName(definition, "Card"),
       availability: definition.implemented === true ? "playable" : "reference",
       ...cardSource,
-      data: { definition, unlockLevel: cards.unlockLevel },
+      data: {
+        definition,
+        unlockLevel: cards.unlockLevel,
+        craftingRules: cards.craftingRules,
+        cardPoolRules: cards.cardPoolRules,
+      },
     });
   }
   for (const definition of cards.unresolvedRows) {

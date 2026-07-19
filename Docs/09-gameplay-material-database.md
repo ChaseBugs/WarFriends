@@ -29,7 +29,8 @@ Visual documents join the Google2u price/effect row to a serialized asset in one
 customization categories; the one sheet row without an asset remains explicitly unresolved.
 Card documents join each definition row to its serialized playable component, while card-pack
 documents preserve source currency prices, card counts, fixed-rarity slots, and remaining rarity
-ranges.
+ranges. The same extraction records card-crafting durations and squad-pool limits so runtime
+services do not rely on duplicated constants.
 
 ### `gameCatalogReleases`
 

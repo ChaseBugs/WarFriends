@@ -10,8 +10,14 @@ import {
   CARD_PACK_NO_DISCOUNT,
   CARD_PACK_NOT_ENOUGH_FUNDS,
   CARD_PACK_NOT_FOUND,
+  ALREADY_CRAFTING,
+  CARD_NOT_FOUND,
+  CRAFTED_CARD_NOT_READY,
+  claimCraftedCardState,
+  createInitialCardCrafting,
   createInitialCardInventory,
   purchaseCardPackState,
+  startCardCraftingState,
 } from "../services/cardInventoryService";
 import { buildPlayerData, createInitialProgression } from "../services/playerStateService";
 
@@ -46,7 +52,7 @@ const GOLD_PACK_CARDS = [
 ];
 
 test("card extraction joins serialized components, definitions, pack prices, and rarity rules", () => {
-  assert.equal(generatedCardCatalog.schemaVersion, 1);
+  assert.equal(generatedCardCatalog.schemaVersion, 2);
   assert.equal(generatedCardCatalog.clientVersion, "4.9.5");
   assert.match(generatedCardCatalog.sourceSha256, /^[0-9a-f]{64}$/);
   assert.equal(generatedCardCatalog.unlockLevel, 6);
@@ -54,6 +60,15 @@ test("card extraction joins serialized components, definitions, pack prices, and
   assert.equal(generatedCardCatalog.cards.every((card) => card.implemented), true);
   assert.equal(generatedCardCatalog.unresolvedRows.length, 25);
   assert.equal(generatedCardCatalog.packs.length, 4);
+  assert.deepEqual(generatedCardCatalog.craftingRules, {
+    inputCount: 3,
+    bronzeToSilverMinutes: 30,
+    silverToGoldMinutes: 60,
+  });
+  assert.deepEqual(generatedCardCatalog.cardPoolRules, {
+    withdrawCooldownMinutes: 240,
+    maximumBuddyCards: 10,
+  });
   assert.deepEqual(
     generatedCardCatalog.packs.map((pack) => [
       pack.name,
@@ -84,6 +99,93 @@ test("new accounts serialize the exact empty CardManagerData contract", () => {
   });
   const wire = buildPlayerData(playerDocument());
   assert.deepEqual(JSON.parse((wire.CardManagerData as { S: string }).S), initial);
+  assert.deepEqual(
+    JSON.parse((wire.CraftData as { S: string }).S),
+    createInitialCardCrafting(),
+  );
+});
+
+test("timed Bronze and Silver recipes consume three cards and grant one server-selected next-rarity card", () => {
+  const initial = createInitialProgression(NOW);
+  initial.cardInventory = {
+    ...createInitialCardInventory(),
+    cardData: { AMMOCRATE: { amount: 3 }, AMMOBOX: { amount: 3 } },
+  };
+
+  const bronze = startCardCraftingState(initial, NOW, ["AMMOCRATE", "AMMOCRATE", "AMMOCRATE"]);
+  assert.equal(bronze.cardInventory.cardData.AMMOCRATE, undefined);
+  assert.deepEqual(bronze.cardCrafting, {
+    cards: ["AMMOCRATE", "AMMOCRATE", "AMMOCRATE"],
+    start: NOW,
+    end: NOW + 30 * 60,
+  });
+  assert.throws(
+    () => claimCraftedCardState(bronze.state, bronze.cardCrafting.end - 1, () => 0),
+    (error: unknown) => (error as { code?: number }).code === CRAFTED_CARD_NOT_READY,
+  );
+  const expectedSilverId = generatedCardCatalog.cards
+    .filter((card) => card.implemented && card.rarity === 2)
+    .map((card) => card.name)
+    .sort()[0];
+  const silverBefore = bronze.cardInventory.cardData[expectedSilverId]?.amount ?? 0;
+  const silverResult = claimCraftedCardState(bronze.state, bronze.cardCrafting.end, () => 0);
+  const silverDefinition = generatedCardCatalog.cards.find((card) => card.name === silverResult.cardId);
+  assert.equal(silverDefinition?.rarity, 2);
+  assert.equal(silverResult.cardInventory.cardData[silverResult.cardId!]?.amount, silverBefore + 1);
+  assert.deepEqual(silverResult.cardCrafting, createInitialCardCrafting());
+  assert.equal(silverResult.state.goldCardsCrafted, 0);
+
+  const silver = startCardCraftingState(
+    silverResult.state,
+    NOW + 4_000,
+    ["AMMOBOX", "AMMOBOX", "AMMOBOX"],
+  );
+  assert.equal(silver.cardCrafting.end, NOW + 4_000 + 60 * 60);
+  const goldResult = claimCraftedCardState(silver.state, silver.cardCrafting.end, () => 0);
+  const goldDefinition = generatedCardCatalog.cards.find((card) => card.name === goldResult.cardId);
+  assert.equal(goldDefinition?.rarity, 3);
+  assert.equal(goldResult.state.goldCardsCrafted, 1);
+});
+
+test("crafting rejects invalid recipes, insufficient ownership, concurrent receipts, and duplicate claims", () => {
+  const initial = createInitialProgression(NOW);
+  initial.cardInventory = {
+    ...createInitialCardInventory(),
+    cardData: {
+      AMMOCRATE: { amount: 3 },
+      AMMOBOX: { amount: 3 },
+      AIRSTRIKE: { amount: 3 },
+    },
+  };
+  assert.throws(
+    () => startCardCraftingState(initial, NOW, ["AMMOCRATE", "AMMOBOX", "AMMOCRATE"]),
+    (error: unknown) => (error as { code?: number }).code === CARD_NOT_FOUND,
+  );
+  assert.throws(
+    () => startCardCraftingState(initial, NOW, ["AIRSTRIKE", "AIRSTRIKE", "AIRSTRIKE"]),
+    (error: unknown) => (error as { code?: number }).code === CARD_NOT_FOUND,
+  );
+  assert.throws(
+    () => startCardCraftingState(initial, NOW, ["AMMOCRATE", "AMMOCRATE", "PLAGUE"]),
+    (error: unknown) => (error as { code?: number }).code === CARD_NOT_FOUND,
+  );
+
+  const active = startCardCraftingState(initial, NOW, ["AMMOCRATE", "AMMOCRATE", "AMMOCRATE"]);
+  assert.throws(
+    () => startCardCraftingState(active.state, NOW + 1, ["AMMOBOX", "AMMOBOX", "AMMOBOX"]),
+    (error: unknown) => (error as { code?: number }).code === ALREADY_CRAFTING,
+  );
+  const expectedCardId = generatedCardCatalog.cards
+    .filter((card) => card.implemented && card.rarity === 2)
+    .map((card) => card.name)
+    .sort()[0];
+  const beforeClaim = active.cardInventory.cardData[expectedCardId]?.amount ?? 0;
+  const claimed = claimCraftedCardState(active.state, active.cardCrafting.end, () => 0);
+  assert.throws(
+    () => claimCraftedCardState(claimed.state, active.cardCrafting.end + 1, () => 0),
+    (error: unknown) => (error as { code?: number }).code === CRAFTED_CARD_NOT_READY,
+  );
+  assert.equal(claimed.cardInventory.cardData[claimed.cardId!]?.amount, beforeClaim + 1);
 });
 
 test("Gold and WarBucks card packs debit source prices and add validated card counts", () => {

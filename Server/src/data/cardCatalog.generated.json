@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "clientVersion": "4.9.5",
   "source": "Client/ExportedProject/Assets/Scenes/MainScene.unity",
   "sourceSha256": "eb33be9c3801b9e15cc1306e8a111f88ca80665bd403517a9e9645edf450ee41",
@@ -11,6 +11,15 @@
     "silver": 0.6000000238418579,
     "goldEarly": 0.699999988079071,
     "gold": 0.8999999761581421
+  },
+  "craftingRules": {
+    "inputCount": 3,
+    "bronzeToSilverMinutes": 30,
+    "silverToGoldMinutes": 60
+  },
+  "cardPoolRules": {
+    "withdrawCooldownMinutes": 240,
+    "maximumBuddyCards": 10
   },
   "cards": [
     {

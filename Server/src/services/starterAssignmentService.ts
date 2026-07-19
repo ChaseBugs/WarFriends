@@ -19,7 +19,7 @@ export interface StarterAssignmentDefinition {
   gold: number;
   warBucks: number;
   order: number;
-  authority: "rankedWins" | "medals" | "level" | "squadPoints" | "heroicPoints" | "weaponLevel" | "unrecovered";
+  authority: "rankedWins" | "medals" | "level" | "squadPoints" | "heroicPoints" | "weaponLevel" | "craftedGold" | "unrecovered";
 }
 
 /**
@@ -29,8 +29,9 @@ export interface StarterAssignmentDefinition {
  * Keeping even currently unsupported rows in this table matters: the server can validate a
  * claim against the real reward and order without ever accepting the Gold/WarBucks values
  * sent by the client. `authority` explicitly records whether this backend can prove the
- * completion fact. Unit deployment, war-card play, and card crafting remain rejected until
- * their authoritative inventory/gameplay paths are rebuilt. ID_6 is proven
+ * completion fact. Unit deployment and war-card play remain rejected until their
+ * authoritative gameplay paths are rebuilt. ID_8 is proven only when ClaimCraftedCard
+ * atomically grants a Gold result. ID_6 is proven
  * by the first replay-safe daily/co-op mission settlement, matching
  * StarterAssignmentWinMissionFirst's `heroicPoints > 0` check.
  */
@@ -42,7 +43,7 @@ export const STARTER_ASSIGNMENT_DEFINITIONS: readonly StarterAssignmentDefinitio
   { id: "ID_5", target: 5, gold: 4, warBucks: 0, order: 5, authority: "level" },
   { id: "ID_6", target: 1, gold: 0, warBucks: 4_000, order: 6, authority: "heroicPoints" },
   { id: "ID_7", target: 3, gold: 0, warBucks: 3_000, order: 4, authority: "weaponLevel" },
-  { id: "ID_8", target: -1, gold: 0, warBucks: 5_000, order: 9, authority: "unrecovered" },
+  { id: "ID_8", target: -1, gold: 0, warBucks: 5_000, order: 9, authority: "craftedGold" },
   { id: "ID_9", target: 6, gold: 5, warBucks: 0, order: 8, authority: "level" },
   { id: "ID_10", target: 3, gold: 0, warBucks: 6_000, order: 7, authority: "squadPoints" },
 ];
@@ -136,6 +137,7 @@ function isServerConfirmed(
     case "squadPoints": return facts.squadPointsTotal >= definition.target;
     case "heroicPoints": return (state.dailyMissions?.heroicPoints ?? 0) >= definition.target;
     case "weaponLevel": return equippedSecondaryWeaponLevel(state) >= definition.target;
+    case "craftedGold": return (state.goldCardsCrafted ?? 0) > 0;
     case "unrecovered": return false;
   }
 }

@@ -2,7 +2,7 @@ import type { PlayerDocument, PlayerProgressionState } from "../db";
 import { config } from "../config";
 import { createInitialItemInventory } from "./itemInventoryService";
 import { createInitialVisualInventory } from "./visualInventoryService";
-import { createInitialCardInventory } from "./cardInventoryService";
+import { createInitialCardCrafting, createInitialCardInventory } from "./cardInventoryService";
 import { warArenaConfiguration, warArenaWireData } from "./warArenaContract";
 
 /** Unix seconds are used throughout the recovered Beanstalk protocol. */
@@ -41,6 +41,7 @@ export function createInitialProgression(
     itemInventory: createInitialItemInventory(),
     visualInventory: createInitialVisualInventory(),
     cardInventory: createInitialCardInventory(),
+    cardCrafting: createInitialCardCrafting(),
     starterAssignments: {
       deadline: now + Math.max(0, Math.floor(config.starterAssignmentDurationSeconds)),
       assignments: {},
@@ -65,6 +66,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
       itemInventory: state.itemInventory ?? createInitialItemInventory(),
       visualInventory: state.visualInventory ?? createInitialVisualInventory(),
       cardInventory: state.cardInventory ?? createInitialCardInventory(),
+      cardCrafting: state.cardCrafting ?? createInitialCardCrafting(),
     };
   }
 
@@ -84,6 +86,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
     itemInventory: state.itemInventory ?? createInitialItemInventory(),
     visualInventory: state.visualInventory ?? createInitialVisualInventory(),
     cardInventory: state.cardInventory ?? createInitialCardInventory(),
+    cardCrafting: state.cardCrafting ?? createInitialCardCrafting(),
   };
 }
 
@@ -217,6 +220,7 @@ export function buildPlayerData(player: PlayerDocument): PlayerDataMap {
   addSerializedObject(data, "LevelManagerData", state.itemInventory?.levelManagerData ?? dto.levelManagerData);
   addSerializedObject(data, "DecalManagerData", state.visualInventory);
   addSerializedObject(data, "CardManagerData", state.cardInventory);
+  addSerializedObject(data, "CraftData", state.cardCrafting);
   addSerializedObject(data, "StatisticsData", dto.statisticsData);
 
   if (state.assignments) {

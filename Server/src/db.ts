@@ -107,6 +107,10 @@ export interface PlayerProgressionState {
    * the client-selected pack contents twice.
    */
   cardInventory?: CardInventoryState;
+  /** Timed three-for-one recipe consumed by CardCraftingManager.CraftData. */
+  cardCrafting?: CardCraftingState;
+  /** Private proof used by StarterAssignmentCraftCard; never serialized inside CraftData. */
+  goldCardsCrafted?: number;
   /**
    * Persistent War Arena run state consumed by WarArena.WarArenaData.
    *
@@ -273,6 +277,13 @@ export interface CardInventoryState {
   nextWithdraw: number;
   nextBuddyDeposit: number;
   extraSlot: boolean;
+}
+
+/** CardCraftingManager.CraftData; only these three fields are serialized to Unity. */
+export interface CardCraftingState {
+  cards: string[];
+  start: number;
+  end: number;
 }
 
 export interface AssignmentRecordState {
