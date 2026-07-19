@@ -12,7 +12,7 @@ import {
   buildDepositWarcardsMessage,
   buildSquadEventMessage,
 } from "../services/squadSocialService";
-import { toClientMessage } from "../services/socialService";
+import { buildSquadKickMessage, toClientMessage } from "../services/socialService";
 
 const NOW = Date.UTC(2026, 6, 19, 12, 0, 0) / 1_000;
 
@@ -145,4 +145,37 @@ test("War Card deposit reminder refuses to build for an actor outside the roster
     () => buildDepositWarcardsMessage(actor, "member-2", squad, new Date(NOW * 1_000)),
     (error: unknown) => (error as { code?: number }).code === ApiErrorCode.NotSquadMember,
   );
+});
+
+test("offline squad kick message emits the exact MBACFNICJPL recovery contract", () => {
+  const actor = playerDocument("leader-1");
+  actor.player.accountName = "Squad Leader";
+  actor.player.level = 28;
+  const target = playerDocument("member-1");
+  target.player.accountName = "Removed Member";
+  target.player.level = 14;
+  const message = buildSquadKickMessage(
+    actor,
+    target,
+    "Test Squad",
+    ["AMMOCRATE", "AMMOCRATE", "TROOP_HEAL"],
+    new Date(NOW * 1_000),
+  );
+
+  assert.equal(message.messageId, `SquadDemotion-${target.id}-${NOW}`);
+  assert.deepEqual(toClientMessage(message), {
+    MessageId: { S: message.messageId },
+    PlayerId: { S: target.id },
+    MessageType: { N: "3" },
+    PlayerName: { S: "Removed Member" },
+    Level: { N: "14" },
+    SquadId: { S: "Test Squad" },
+    KickedPlayerId: { S: target.id },
+    SquadKickedFrom: { S: "Test Squad" },
+    AdminName: { S: "Squad Leader" },
+    AdminId: { S: actor.id },
+    AdminLevel: { N: "28" },
+    KickedPlayerDepositedCards: { S: '["AMMOCRATE","AMMOCRATE","TROOP_HEAL"]' },
+  });
+  assert.equal("SquadRank" in toClientMessage(message), false);
 });

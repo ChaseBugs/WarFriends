@@ -1,4 +1,5 @@
 import {
+  messages,
   players,
   squads,
   withMongoTransaction,
@@ -12,6 +13,7 @@ import { newSquad, type SquadDTO, type SquadMemberDTO } from "../dtos";
 import { findById, updatePlayerFields } from "./playerService";
 import { progressionForPlayer } from "./playerStateService";
 import { reclaimDepositedCardsForDepartureState } from "./squadCardPoolService";
+import { buildSquadKickMessage } from "./socialService";
 import logger from "../utils/logger";
 
 /**
@@ -876,11 +878,13 @@ export function planSquadKick(squad: SquadDTO, actorId: string, targetId: string
 export async function kickMember(actorId: string, targetId: string, requestedName: string): Promise<SquadDTO> {
   const name = cleanName(requestedName);
   return withMongoTransaction(async (session) => {
-    const [squad, targetPlayer] = await Promise.all([
+    const [squad, actorPlayer, targetPlayer] = await Promise.all([
       squads().findOne({ name }, { session }),
+      players().findOne({ id: actorId }, { session }),
       players().findOne({ id: targetId }, { session }),
     ]);
     if (!squad) throw new ApiError(ApiErrorCode.KickPlayerError, "Squad not found.");
+    if (!actorPlayer) throw new ApiError(ApiErrorCode.KickPlayerError, "Squad manager not found.");
     if (!targetPlayer) throw new ApiError(ApiErrorCode.KickPlayerError, "Squad member not found.");
     const plan = planSquadKick(squad, actorId, targetId);
     try {
@@ -928,6 +932,13 @@ export async function kickMember(actorId: string, targetId: string, requestedNam
     if (playerUpdate.modifiedCount !== 1) {
       throw new ApiError(ApiErrorCode.InternalServerError, "Removed player state changed concurrently.");
     }
+    // Persist the recovered MessageType=3 payload in the same transaction as membership and
+    // inventory. This is delivery for both connected and offline targets, not merely an audit
+    // row: GetAllMessages converts it to the DynamoDB fields parsed by MBACFNICJPL.
+    await messages().insertOne(
+      buildSquadKickMessage(actorPlayer, targetPlayer, squad.name, reclaim.returnedCardIds, now),
+      { session },
+    );
     return plan.squad;
   });
 }

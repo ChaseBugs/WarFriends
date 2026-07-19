@@ -35,10 +35,10 @@ export interface MessageDoc {
   body: string;
   /**
    * Recovered inbox enum values currently emitted by this backend:
-   * Challenge(0), InformSquadLeaderAboutEvent(21), InGameMessage(27), and
-   * DepositWarcards(28).
+   * Challenge(0), SquadDemotion/kick(3), InformSquadLeaderAboutEvent(21),
+   * InGameMessage(27), and DepositWarcards(28).
    */
-  messageType: 0 | 21 | 27 | 28;
+  messageType: 0 | 3 | 21 | 27 | 28;
   payload: Record<string, string | number>;
   otherPlayerJson: string;
   read: boolean;
@@ -50,6 +50,49 @@ export interface MessageDoc {
 }
 
 const CHALLENGE_RETRY_WINDOW_MS = 10_000;
+
+/**
+ * Build the exact persisted message consumed by MBACFNICJPL after a squad kick.
+ *
+ * The absence of SquadRank is intentional: the recovered constructor converts that absence
+ * to rank -1, which is how it distinguishes a kick from an ordinary demotion. A connected
+ * client uses KickedPlayerDepositedCards to update its already-loaded inventory immediately;
+ * a client that logs in later has already loaded the same authoritative inventory revision
+ * and suppresses that replay by comparing the message and player-data timestamps.
+ */
+export function buildSquadKickMessage(
+  actor: PlayerDocument,
+  target: PlayerDocument,
+  squadName: string,
+  returnedCardIds: string[],
+  createdAt: Date,
+): MessageDoc {
+  const unixTimestamp = Math.floor(createdAt.getTime() / 1_000);
+  return {
+    messageId: `SquadDemotion-${target.id}-${unixTimestamp}`,
+    toPlayerId: target.id,
+    fromPlayerId: actor.id,
+    fromName: actor.player.accountName,
+    body: "You were removed from your squad.",
+    messageType: 3,
+    payload: {
+      PlayerName: target.player.accountName,
+      Level: target.player.level,
+      SquadId: squadName,
+      KickedPlayerId: target.id,
+      SquadKickedFrom: squadName,
+      AdminName: actor.player.accountName,
+      AdminId: actor.id,
+      AdminLevel: actor.player.level,
+      KickedPlayerDepositedCards: JSON.stringify(returnedCardIds),
+    },
+    otherPlayerJson: "",
+    read: false,
+    ignored: false,
+    accepted: false,
+    createdAt,
+  };
+}
 
 function challengeTtlMilliseconds(): number {
   return Math.max(60, Math.floor(config.challengeTtlSeconds)) * 1_000;
@@ -245,6 +288,20 @@ export function toClientMessage(doc: MessageDoc): Record<string, DynamoValue> {
       // Challenge parser expects GameType/Region as N and optional NumberOfMission as S.
       wire[key] = key === "GameType" || key === "Region" ? { N: String(value) } : { S: String(value) };
     }
+  } else if (doc.messageType === 3) {
+    // MBACFNICJPL treats a missing SquadRank as -1 (kick) and parses the returned-card list
+    // from a JSON string. Numeric player levels remain DynamoDB N attributes.
+    wire.PlayerName = { S: String(doc.payload.PlayerName ?? "") };
+    wire.Level = { N: String(doc.payload.Level ?? 0) };
+    wire.SquadId = { S: String(doc.payload.SquadId ?? "") };
+    wire.KickedPlayerId = { S: String(doc.payload.KickedPlayerId ?? doc.toPlayerId) };
+    wire.SquadKickedFrom = { S: String(doc.payload.SquadKickedFrom ?? "") };
+    wire.AdminName = { S: String(doc.payload.AdminName ?? doc.fromName) };
+    wire.AdminId = { S: String(doc.payload.AdminId ?? doc.fromPlayerId) };
+    wire.AdminLevel = { N: String(doc.payload.AdminLevel ?? 0) };
+    wire.KickedPlayerDepositedCards = {
+      S: String(doc.payload.KickedPlayerDepositedCards ?? "[]"),
+    };
   } else if (doc.messageType === 28) {
     // BOAFLMMKCGB does not parse the generic Title/Text fields. It constructs a lightweight
     // DatabasePlayer directly from these five DynamoDB attributes and uses that player in the

@@ -45,7 +45,12 @@ player mirror together with the roster. Leadership transfer updates both player 
 exactly one founder. The recovered `PromotePlayerToFounder` callback immediately changes the old
 leader to `Veteran`, so the backend uses that exact result; the earlier reconstruction's
 `Coleader` result was incorrect. Kick clears the target's membership/deposits and returns their
-normal deposited cards to authoritative inventory in the same commit.
+normal deposited cards to authoritative inventory in the same commit. It also persists the
+target's `MessageType=3` kick notification in that transaction. The notification contains the
+exact `KickedPlayerId`, `SquadKickedFrom`, administrator snapshot, and JSON
+`KickedPlayerDepositedCards` fields parsed by `MBACFNICJPL`. A connected client can therefore
+repair its already-loaded squad/card state immediately, while an offline client receives the
+message after login without risking loss between the membership commit and inbox delivery.
 
 ## Client error contracts
 
