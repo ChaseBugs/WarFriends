@@ -108,6 +108,10 @@ Working end-to-end (verified live):
   identical retries are deduplicated and player-generated traffic has a rolling sender limit.
 - **Moderation reports**: authenticated player/cheater reports are validated, rate-limited,
   deduplicated for safe retries, and stored with review status and evidence metadata.
+- **Public-text moderation**: account/rename names, Squad names/descriptions, and direct messages
+  share Unicode-normalized multilingual matching with punctuation/leetspeak resistance. Add
+  deployment-specific comma-separated terms with `PROFANITY_EXTRA_TERMS`; report evidence is
+  intentionally preserved verbatim for review.
 - **Energy economy**: server-owned dog-tag seconds, passive regeneration, atomic
   `PayOneDogTag`, and gold-validated `RefillDogtags` using the recovered 900-second/5-tag
   balancing and refill-price formula.

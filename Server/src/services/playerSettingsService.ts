@@ -1,6 +1,7 @@
 import { players, type PlayerDocument } from "../db";
 import type { NotificationSettingsDTO } from "../dtos";
 import { ApiError, ApiErrorCode } from "../apiErrors";
+import { requireModeratedText } from "./textModerationService";
 
 const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettingsDTO = {
   challenge: true,
@@ -22,7 +23,7 @@ export function normalizePlayerName(value: unknown): string {
   if (name.length < 3 || name.length > 15 || /[\u0000-\u001f\u007f]/u.test(name)) {
     throw new ApiError(ApiErrorCode.UnknownAction, "Player name must contain 3 to 15 visible characters.");
   }
-  return name;
+  return requireModeratedText(name, "Player name");
 }
 
 /** Reject a case-insensitive collision before updating the public account name. */

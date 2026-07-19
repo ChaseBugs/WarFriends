@@ -108,9 +108,14 @@ insufficient Gold, source error `11402` returns the authoritative `RenameCount` 
 fields consumed by the stock rollback dialog. Extreme counts that trigger the original client's
 signed 32-bit price overflow are rejected instead of becoming free.
 
-The recovered client performs a local bad-word check before sending a manual rename. A production
-server-side profanity policy still needs an authoritative multilingual rule set; it must not infer
-one from corrupted decompiler strings.
+The recovered client performs a local bad-word check before sending a manual rename, but that UI
+check is not authority. The backend applies one Unicode-normalized multilingual policy to account
+creation and every rename. It recognizes punctuation-separated and common leetspeak evasions,
+uses whole-token rules for ambiguous short terms to reduce false positives, and supports
+deployment-specific comma-separated additions through `PROFANITY_EXTRA_TERMS`. The same policy
+also protects Squad names/descriptions and normal inbox text, so a modified APK cannot bypass it
+by entering public text through another action. Reports remain unfiltered so moderators retain
+the submitted evidence.
 
 ## Migration behavior
 

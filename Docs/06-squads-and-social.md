@@ -24,6 +24,10 @@ Implemented flows include:
 Every mutation verifies actor membership, actor authority, target membership, capacity, and join
 policy. A leader cannot accidentally leave a squad without a valid succession path.
 
+Squad names and descriptions pass through the same Unicode-aware multilingual moderation policy
+as account names and direct messages. Validation occurs before uniqueness or persistence, so
+punctuation/leetspeak variants cannot enter roster, discovery, leaderboard, or inbox snapshots.
+
 Public joins, invitation joins, and manager-approved join requests use one admission transaction.
 The transaction reads the squad and target player from one snapshot, rechecks capacity, medal
 requirements, privacy, invitation/request state, and the approving manager's current rank, then

@@ -86,6 +86,7 @@ import { pvpGameReward, pvpLevelFields, winnerFromEndReason } from "../services/
 import { buildDatabaseSquad, buildSquadWarsDivision } from "../services/squadWireService";
 import { buildPlayerLeaderboardItem } from "../services/leaderboardService";
 import { playerCredentialMatches } from "../services/authService";
+import { containsProhibitedLanguage, moderationForms } from "../services/textModerationService";
 
 test("wire enums match the recovered 1.6.0 client", () => {
   assert.equal(AccountType.Guest, 0);
@@ -510,6 +511,17 @@ test("profile normalization preserves localized names and validates locale/count
   assert.throws(() => normalizePlayerName("  "));
   assert.throws(() => normalizeLocale("../../etc"));
   assert.throws(() => normalizeCountry("USA"));
+});
+
+test("multilingual moderation rejects punctuation, leetspeak, and localized evasions", () => {
+  assert.equal(moderationForms("F.u.u.u.c.k").compact, "fuck");
+  assert.equal(containsProhibitedLanguage("F.u.u.u.c.k"), true);
+  assert.equal(containsProhibitedLanguage("sh1t-player"), true);
+  assert.equal(containsProhibitedLanguage("씨 발"), true);
+  assert.equal(containsProhibitedLanguage("х.у.й"), true);
+  assert.equal(containsProhibitedLanguage("AssaultTeam"), false);
+  assert.equal(containsProhibitedLanguage("ClassicRecruit"), false);
+  assert.throws(() => normalizePlayerName("f.u.c.k"));
 });
 
 test("moderation report contract preserves recovered fields and requires authentication", () => {

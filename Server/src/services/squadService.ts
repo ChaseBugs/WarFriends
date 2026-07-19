@@ -15,6 +15,7 @@ import { progressionForPlayer } from "./playerStateService";
 import { reclaimDepositedCardsForDepartureState } from "./squadCardPoolService";
 import { buildSquadKickMessage } from "./socialService";
 import logger from "../utils/logger";
+import { requireModeratedText } from "./textModerationService";
 
 /**
  * Squad membership, admission, rank authority, and denormalized player mirrors.
@@ -33,6 +34,10 @@ import logger from "../utils/logger";
  */
 
 function cleanName(name: string): string {
+  // This helper is also used to resolve existing squads during join, leave, rank, and kick
+  // operations. Do not apply current publication policy here: a legacy squad whose name is no
+  // longer acceptable must remain addressable so its members can leave and managers can repair
+  // it. Moderation belongs only on creation/preflight entry points below.
   return name.trim().replace(/\s+/g, " ");
 }
 
@@ -71,6 +76,7 @@ function requireManager(squad: SquadDTO, actorId: string): SquadMemberDTO {
 export async function isNameAvailable(name: string): Promise<boolean> {
   const normalized = cleanName(name);
   if (!normalized) return false;
+  requireModeratedText(normalized, "Squad name");
   return (await squads().findOne({ name: normalized })) === null;
 }
 
@@ -163,6 +169,7 @@ export async function createSquad(
   if (name.length < 3 || name.length > 24) {
     throw new ApiError(ApiErrorCode.SquadNotFound, "Squad name must be between 3 and 24 characters.");
   }
+  requireModeratedText(name, "Squad name");
   try {
     const result = await withMongoTransaction(async (session) => {
       const founder = await players().findOne({ id: founderId }, { session });
@@ -177,7 +184,8 @@ export async function createSquad(
       // All initial values are derived or bounded on the server. In particular, the request
       // cannot choose its founder, inject members, or create an out-of-range join policy.
       const squad = newSquad(name, founderId);
-      squad.description = options.description?.trim().slice(0, 250) ?? "";
+      const description = options.description?.trim().slice(0, 250) ?? "";
+      squad.description = description ? requireModeratedText(description, "Squad description") : "";
       squad.emblem = options.emblem ?? {};
       squad.joinPolicy = options.joinPolicy === 1 || options.joinPolicy === 2 ? options.joinPolicy : 0;
       squad.requiredMedals = Math.max(0, Math.floor(options.requiredMedals ?? 0));
@@ -963,7 +971,10 @@ export async function updateSquad(actorId: string, name: string, values: UpdateS
   }
   // Apply only fields explicitly present in the request. This patch behavior prevents an
   // emblem-only update from resetting the description, join policy, or medal requirement.
-  if (values.description !== undefined) squad.description = values.description.trim().slice(0, 250);
+  if (values.description !== undefined) {
+    const description = values.description.trim().slice(0, 250);
+    squad.description = description ? requireModeratedText(description, "Squad description") : "";
+  }
   if (values.joinPolicy === 0 || values.joinPolicy === 1 || values.joinPolicy === 2) squad.joinPolicy = values.joinPolicy;
   if (values.requiredMedals !== undefined) squad.requiredMedals = Math.max(0, Math.floor(values.requiredMedals));
   if (values.emblem !== undefined) squad.emblem = values.emblem;

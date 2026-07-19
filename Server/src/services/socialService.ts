@@ -3,6 +3,7 @@ import { messages, players, type PlayerDocument } from "../db";
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import { buildDatabasePlayer } from "./playerStateService";
 import { config } from "../config";
+import { requireModeratedText } from "./textModerationService";
 
 // Player discovery + messaging (BACKEND.md §2.3 "Social / messaging / hit list"). Search
 // and directory reads project players to the client's summary shape; messages are stored
@@ -129,12 +130,14 @@ export async function sendMessage(fromPlayerId: string, fromName: string, toPlay
   if (!recipient) throw new ApiError(ApiErrorCode.PlayerNotFound, "Recipient not found.");
   const createdAt = new Date();
   await enforceOutgoingMessageLimit(fromPlayerId, createdAt);
+  const normalizedBody = body.trim().slice(0, 500);
+  requireModeratedText(normalizedBody, "Message");
   const doc: MessageDoc = {
     messageId: randomUUID(),
     toPlayerId,
     fromPlayerId,
     fromName,
-    body: body.trim().slice(0, 500),
+    body: normalizedBody,
     messageType: 27,
     payload: {},
     otherPlayerJson: "",
