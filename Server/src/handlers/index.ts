@@ -100,7 +100,7 @@ export async function dispatch(req: RequestEnvelope): Promise<ResponseEnvelope> 
       ? await authenticate(
         id,
         token,
-        Number.isInteger(accountType) ? accountType : undefined,
+        action === DbAction.LoginToCustomAccount && Number.isInteger(accountType) ? accountType : undefined,
         action === DbAction.LoginToCustomAccount,
       )
       : id && token

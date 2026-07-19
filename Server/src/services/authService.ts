@@ -14,6 +14,12 @@ import {
 } from "./identityService";
 import { normalizePlayerName } from "./playerSettingsService";
 import { createInitialProgression } from "./playerStateService";
+import {
+  clearLoginAttempt,
+  clearLoginAttemptsForSession,
+  reserveLoginAttempt,
+  type LoginAttemptReservation,
+} from "./authRateLimitService";
 
 // Auth model (BACKEND.md §2.2): id + token credential. On CreateAccount the server mints a
 // player id and an HMAC auth token derived from a server-side salt; the client stores both
@@ -197,10 +203,33 @@ export async function authenticate(
     throw new ApiError(ApiErrorCode.RequestNotAuthorized, "Missing credentials.");
   }
   const doc = await findById(id);
-  const directCredentialMatches = doc
+  // A rotatable gameplay token is both cheap to verify and proof that the caller already owns
+  // a live session. Let it bypass/clear durable-login failures so an attacker cannot lock an
+  // active player out of ordinary play by guessing that player's public ID.
+  const sessionCredentialMatches = doc ? playerCredentialMatches(doc, token, false) : false;
+  if (doc && sessionCredentialMatches) {
+    if (allowCustomPassword) await clearLoginAttemptsForSession(id);
+    logger.auth.login(id, true, { playerId: id });
+    return doc;
+  }
+
+  // Only LoginToCustomAccount passes allowCustomPassword. Reserve before checking a human or
+  // provider credential so every server node shares one persistent brute-force boundary.
+  let loginReservation: LoginAttemptReservation | null = null;
+  if (allowCustomPassword) {
+    try {
+      loginReservation = await reserveLoginAttempt(id);
+    } catch (error) {
+      logger.auth.login(id, false, { throttled: true });
+      throw error;
+    }
+  }
+
+  const customPasswordMatches = doc
     ? playerCredentialMatches(doc, token, allowCustomPassword)
     : false;
-  if (doc && directCredentialMatches) {
+  if (doc && customPasswordMatches) {
+    if (loginReservation) await clearLoginAttempt(loginReservation);
     logger.auth.login(id, true, { playerId: id });
     return doc;
   }
@@ -208,6 +237,7 @@ export async function authenticate(
   const provider = providerForAccountType(accountType ?? AccountType.Guest);
   const identityPlayer = provider ? await authenticateIdentity(provider, id, token) : null;
   if (identityPlayer) {
+    if (loginReservation) await clearLoginAttempt(loginReservation);
     logger.auth.login(id, true, { playerId: identityPlayer.id, provider });
     return identityPlayer;
   }

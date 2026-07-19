@@ -500,6 +500,18 @@ export interface IdentityDocument {
   updatedAt: Date;
 }
 
+/** Persistent LoginToCustomAccount throttle keyed by a non-reversible HMAC of the presented ID. */
+export interface AuthRateLimitDocument {
+  key: string;
+  attemptCount: number;
+  revision: number;
+  windowStartedAt: Date;
+  lockedUntil: Date | null;
+  updatedAt: Date;
+  /** TTL cleanup is storage hygiene only; application checks enforce lock expiry immediately. */
+  expiresAt: Date;
+}
+
 const client = new MongoClient(config.mongoUrl, { maxPoolSize: config.mongoPoolSize });
 
 let db: Db | null = null;
@@ -509,6 +521,7 @@ let matchesCollection: Collection<Document> | null = null;
 let messagesCollection: Collection<Document> | null = null;
 let identitiesCollection: Collection<IdentityDocument> | null = null;
 let reportsCollection: Collection<Document> | null = null;
+let authRateLimitsCollection: Collection<AuthRateLimitDocument> | null = null;
 let gameCatalogEntriesCollection: Collection<GameCatalogEntryDocument> | null = null;
 let gameCatalogReleasesCollection: Collection<GameCatalogReleaseDocument> | null = null;
 
@@ -522,6 +535,7 @@ export async function connectMongo(): Promise<void> {
   messagesCollection = db.collection("messages");
   identitiesCollection = db.collection<IdentityDocument>("identities");
   reportsCollection = db.collection("playerReports");
+  authRateLimitsCollection = db.collection<AuthRateLimitDocument>("authRateLimits");
   gameCatalogEntriesCollection = db.collection<GameCatalogEntryDocument>("gameCatalogEntries");
   gameCatalogReleasesCollection = db.collection<GameCatalogReleaseDocument>("gameCatalogReleases");
 
@@ -565,6 +579,12 @@ export async function connectMongo(): Promise<void> {
   await reportsCollection.createIndex({ reportedPlayerId: 1, status: 1, createdAt: -1 });
   await reportsCollection.createIndex({ reporterPlayerId: 1, createdAt: -1 });
 
+  // One atomic counter covers every process for a presented login identity. The key is an
+  // HMAC rather than a raw player/provider identifier so expired throttle rows do not become
+  // a second account directory. MongoDB removes inactive windows after their safety margin.
+  await authRateLimitsCollection.createIndex({ key: 1 }, { unique: true });
+  await authRateLimitsCollection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+
   // Catalog entries are immutable per content revision. The four-part unique key makes a
   // repeated startup idempotent while still retaining prior recovered releases for audit and
   // rollback. Gameplay reads first resolve gameCatalogReleases, then query this exact index.
@@ -592,6 +612,7 @@ export async function disconnectMongo(): Promise<void> {
   messagesCollection = null;
   identitiesCollection = null;
   reportsCollection = null;
+  authRateLimitsCollection = null;
   gameCatalogEntriesCollection = null;
   gameCatalogReleasesCollection = null;
 }
@@ -648,6 +669,10 @@ export function identities(): Collection<IdentityDocument> {
 
 export function reports(): Collection<Document> {
   return requireCollection("playerReports", reportsCollection);
+}
+
+export function authRateLimits(): Collection<AuthRateLimitDocument> {
+  return requireCollection("authRateLimits", authRateLimitsCollection);
 }
 
 export function gameCatalogEntries(): Collection<GameCatalogEntryDocument> {

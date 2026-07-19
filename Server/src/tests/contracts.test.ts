@@ -86,6 +86,11 @@ import { pvpGameReward, pvpLevelFields, winnerFromEndReason } from "../services/
 import { buildDatabaseSquad, buildSquadWarsDivision } from "../services/squadWireService";
 import { buildPlayerLeaderboardItem } from "../services/leaderboardService";
 import { playerCredentialMatches } from "../services/authService";
+import {
+  loginRateLimitBlocked,
+  loginRateLimitKey,
+  loginRateLimitPolicy,
+} from "../services/authRateLimitService";
 import { containsProhibitedLanguage, moderationForms } from "../services/textModerationService";
 
 test("wire enums match the recovered 1.6.0 client", () => {
@@ -493,6 +498,25 @@ test("custom password login works while gameplay routes still require the sessio
   assert.equal(playerCredentialMatches(player, password, false), false);
   assert.equal(playerCredentialMatches(player, password, true), true);
   assert.equal(playerCredentialMatches(player, "wrong-password", true), false);
+});
+
+test("durable login throttling hides identity keys and enforces a real cooldown", () => {
+  const publicId = "public-player-or-provider-id";
+  const key = loginRateLimitKey(publicId);
+  assert.equal(key.length, 64);
+  assert.equal(key.includes(publicId), false);
+  assert.equal(loginRateLimitKey(publicId), key);
+  assert.notEqual(loginRateLimitKey(`${publicId}-other`), key);
+
+  const now = new Date("2026-07-20T00:00:00.000Z");
+  assert.equal(loginRateLimitBlocked(null, now), false);
+  assert.equal(loginRateLimitBlocked({ lockedUntil: new Date(now.getTime() - 1) }, now), false);
+  assert.equal(loginRateLimitBlocked({ lockedUntil: new Date(now.getTime() + 1) }, now), true);
+
+  const policy = loginRateLimitPolicy();
+  assert.equal(policy.maxAttempts >= 2, true);
+  assert.equal(policy.windowMilliseconds >= 60_000, true);
+  assert.equal(policy.lockoutMilliseconds >= 60_000, true);
 });
 
 test("player settings parser accepts only the recovered boolean preference contract", () => {

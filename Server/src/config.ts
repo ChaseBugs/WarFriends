@@ -12,6 +12,12 @@ export const config = {
   redisLeaderboardTtl: Number(process.env.REDIS_LEADERBOARD_TTL ?? 15),
 
   authSecret: process.env.AUTH_SECRET ?? "change-me-in-production",
+  // LoginToCustomAccount is the only route allowed to verify a durable password/provider
+  // credential. These values bound repeated guesses for the same presented identity while
+  // leaving normal session-token gameplay requests unaffected.
+  authLoginMaxAttempts: Number(process.env.AUTH_LOGIN_MAX_ATTEMPTS ?? 5),
+  authLoginWindowSeconds: Number(process.env.AUTH_LOGIN_WINDOW_SECONDS ?? 900),
+  authLoginLockoutSeconds: Number(process.env.AUTH_LOGIN_LOCKOUT_SECONDS ?? 900),
   minClientVersion: Number(process.env.MIN_CLIENT_VERSION ?? 0),
 
   // Recovered from MainScene's Constants rows. Requests repeat these values for compatibility,

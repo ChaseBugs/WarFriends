@@ -38,6 +38,20 @@ duplicate response.
 The distinction between a durable login credential and a short-lived gameplay session prevents a
 stale password field from bypassing token rotation.
 
+`LoginToCustomAccount` also reserves an attempt in the persistent `authRateLimits` collection
+before checking a durable custom or platform credential. One atomic counter is shared by every
+server process for the HMAC-derived key of the presented identity; the raw player/provider ID is
+not stored in the throttle collection. The default policy allows five attempts in fifteen minutes
+and then holds the identifier for fifteen minutes. `AUTH_LOGIN_MAX_ATTEMPTS`,
+`AUTH_LOGIN_WINDOW_SECONDS`, and `AUTH_LOGIN_LOCKOUT_SECONDS` may tune that deployment policy, but
+code clamps all windows to a safe non-zero minimum.
+
+A correct durable login deletes only its own reservation revision, preserving any later concurrent
+failure. A valid current gameplay session bypasses the password throttle and clears older failures,
+so an attacker who knows a public player ID cannot lock an already authenticated player out of
+normal gameplay. Missing accounts, bad credentials, and active cooldowns all return the same code
+10 response. Ordinary actions never accept a provider password and never consume login attempts.
+
 ### Facebook account selection
 
 `DatabaseAction.SwitchToFacebook` exists in the recovered enum, and several UI components listen
@@ -126,6 +140,7 @@ were persisted. The next authoritative mutation writes the canonical schema.
 ## Key implementation files
 
 - `Server/src/services/authService.ts`
+- `Server/src/services/authRateLimitService.ts`
 - `Server/src/services/identityService.ts`
 - `Server/src/services/playerService.ts`
 - `Server/src/services/playerRenameService.ts`

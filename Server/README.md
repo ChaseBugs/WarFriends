@@ -71,7 +71,9 @@ Working end-to-end (verified live):
   `GetPlayerData`/`GetPlayerInfo`, and player settings (name/country/status/device token).
   Login/profile snapshots and private progression use the exact DynamoDB-style attribute
   wrappers parsed by the recovered 1.6.0 client. Passwords/provider credentials remain
-  separate from the rotated internal gameplay session token.
+  separate from the rotated internal gameplay session token. Durable login guesses use an
+  atomic MongoDB throttle keyed by an HMAC of the presented identity; active gameplay sessions
+  remain usable and provider credentials are never accepted by ordinary gameplay actions.
 - **Platform identities**: Facebook, Google Play, and Game Center identities have unique
   ownership, HMAC-protected credentials, provider login, collision-safe link/update, and
   unlink behavior. First-time `CreateGcAccount` commits the player and identity in one transaction,
