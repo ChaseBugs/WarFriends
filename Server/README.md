@@ -97,10 +97,14 @@ Working end-to-end (verified live):
   balancing and refill-price formula.
 - **Weapon inventory foundation**: private and public player snapshots now serialize the
   exact recovered `InventoryData.slots` and `LevelManagerData.savedWeapons` structures with
-  the 4.9.5 starter loadout. Stock buffered `BuyWeapon`/`EquipWeapon` supports the recovered
-  FAMAS Gold transaction end-to-end: server price/level/discount validation, atomic ownership
-  grant, category-safe equipment, Unity rollback fields, and `BufferId` replay protection.
-  Unknown catalog rows and delivery/upgrade actions still fail closed.
+  the 4.9.5 starter loadout. Stock buffered `BuyWeapon`/`EquipWeapon` supports all 84
+  `PURCHASABLE: shop` rows that also have real LevelManager entries. Their obscured Gold and
+  WarBucks prices, level gates, category masks, and non-sequential indexes are recovered from
+  MainScene; purchases grant immediate ownership because every enabled row has
+  `DELIVERTIME=0`. Mutations include server price/discount validation, atomic debits,
+  category-safe equipment, Unity rollback fields, and `BufferId` replay protection. Nine
+  shop-priced Pulse Rifle rows with null LevelManager entries, unknown catalog rows, offers,
+  and weapon upgrade actions still fail closed.
 - **Daily rewards**: `CheckDailyReward` and `ClaimDailyReward` provide the recovered monthly
   `dailyRewardData` calendar contract, one UTC-day unlock, ordered atomic Gold grants, and
   replay-safe claim cursors. Reward amounts are conservative environment-tunable defaults
@@ -145,10 +149,11 @@ allowlist of analytics/impression actions is safely ignored.
 - **Squad extensions** — card pool and squad events/wars are not implemented. Chat unread
   state is persistent, but actual channel delivery still requires Photon Chat repointing or
   a compatible replacement transport.
-- **Item economy expansion** — extract the remaining 4.9.5 weapon/unit rows, implement
-  WarBucks delivery/activation and upgrades, then add decals, cards, packs, and VIP. Only the
-  verified FAMAS Gold purchase/equip path is currently enabled; unknown or discount-bearing
-  purchase requests remain rejected instead of receiving guessed prices.
+- **Item economy expansion** — recover the 4.9.5 weapon-upgrade and unit rows, implement
+  upgrade delivery/activation, then add decals, cards, packs, and VIP. All 84 resolvable shop
+  weapons support exact Gold or WarBucks purchase/equip; the nine null-reference Pulse Rifle
+  rows, unknown items, and discount-bearing requests remain rejected instead of receiving
+  guessed prices or unusable inventory records.
 - **Arena fidelity / leagues** — recover production arena prices, rules, opponent weighting,
   lootbox/crown inventory payloads, and authoritative combat evidence; implement league
   promotion/relegation on `FinishPlayerLeague`. Arena debug mutations remain rejected.

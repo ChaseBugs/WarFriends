@@ -50,38 +50,138 @@ interface WeaponDefinition {
 }
 
 /**
- * Authoritative weapon rows currently recovered end-to-end from the 4.9.5 MainScene.
- *
- * Four entries are the initial PlayerInventory.Init choices for the serialized slot masks
- * 263, 1064, 592, and 128. FAMAS is the first non-starter transaction implemented here:
- * MainScene stores its obscured PRICEGOLD as 445353 XOR 444444 = 949, CANBEBOUGHT=14,
- * UNLOCKLEVEL=17, category=1, and LevelManager index=2. Limiting the catalog to verified
- * rows makes unknown weapons fail closed instead of assigning guessed prices or indexes.
+ * Construct one row without repeating values that are identical across the recovered shop.
+ * Every enabled 4.9.5 `PURCHASABLE: shop` row has `DELIVERTIME=0`, so a successful purchase
+ * grants ownership immediately. This is important for WarBucks rows too: inventing a delivery
+ * timer would disagree with the client sheet even though older code still contains delivery UI.
  */
-export const WEAPON_CATALOG: Readonly<Record<string, WeaponDefinition>> = Object.freeze({
-  "Google2u.AssaultRifle_AK47": {
-    name: "Google2u.AssaultRifle_AK47", index: 1, category: 1,
-    canBuyLevelIndex: 0, unlockLevel: 1, warBucks: 0, gold: 0, deliverySeconds: 0, starterOwned: true,
-  },
-  "Google2u.SniperRifle_M24": {
-    name: "Google2u.SniperRifle_M24", index: 3, category: 8,
-    canBuyLevelIndex: 0, unlockLevel: 1, warBucks: 0, gold: 0, deliverySeconds: 0, starterOwned: true,
-  },
-  "Google2u.Grenade_FRAG": {
-    name: "Google2u.Grenade_FRAG", index: 6, category: 64,
-    canBuyLevelIndex: 0, unlockLevel: 2, warBucks: 0, gold: 0, deliverySeconds: 0, starterOwned: true,
-  },
-  "Google2u.Pistol_Remmington51": {
-    name: "Google2u.Pistol_Remmington51", index: 13, category: 128,
-    canBuyLevelIndex: 0, unlockLevel: 1, warBucks: 0, gold: 0, deliverySeconds: 0, starterOwned: true,
-  },
-  "Google2u.AssaultRifle_Famas": {
-    name: "Google2u.AssaultRifle_Famas", index: 2, category: 1,
-    // HCICPDLJNCK.CANBEBOUGHT is 14, and WeaponLevelsSetup.canBeBought compares the
-    // zero-based currentLevel.index against CANBEBOUGHT - 1.
-    canBuyLevelIndex: 13, unlockLevel: 17, warBucks: 0, gold: 949, deliverySeconds: 0, starterOwned: false,
-  },
-});
+function weapon(
+  name: string,
+  index: number,
+  category: number,
+  canBuyLevelIndex: number,
+  unlockLevel: number,
+  warBucks: number,
+  gold: number,
+  starterOwned = false,
+): WeaponDefinition {
+  return {
+    name,
+    index,
+    category,
+    canBuyLevelIndex,
+    unlockLevel,
+    warBucks,
+    gold,
+    deliverySeconds: 0,
+    starterOwned,
+  };
+}
+
+/**
+ * Authoritative weapon rows recovered end-to-end from the 4.9.5 MainScene.
+ *
+ * Prices come from the Google2u `WeaponUpgrades.Rows` component by XOR-decoding each
+ * ObscuredInt's `currentCryptoKey` and `hiddenValue`. Indexes do not follow that sheet's row
+ * order: they come from the separate `LevelManager.weaponLevelsSetups` reference array. The
+ * four `starterOwned` rows are the choices created by `PlayerInventory.Init`; their sheet price
+ * remains documented here but is never charged because the purchase path rejects starter rows.
+ *
+ * The scene contains nine additional shop-priced Pulse Rifle rows whose corresponding
+ * LevelManager entries are null (Grade1-8 at indexes 176-191 and PR9 at 194). They are excluded
+ * deliberately: accepting their price would create an owned item that the recovered client
+ * cannot resolve or equip. Unknown and unresolved rows therefore continue to fail closed.
+ */
+const RECOVERED_WEAPON_ROWS: readonly WeaponDefinition[] = [
+  weapon("Google2u.AssaultRifle_AK47", 1, 1, 0, 1, 0, 100, true),
+  weapon("Google2u.AssaultRifle_Famas", 2, 1, 13, 17, 0, 949),
+  weapon("Google2u.AssaultRifle_G36", 29, 1, 28, 32, 0, 4_199),
+  weapon("Google2u.AssaultRifle_M16", 0, 1, 5, 9, 0, 269),
+  weapon("Google2u.AssaultRifle_QBZ95", 26, 1, 9, 13, 0, 799),
+  weapon("Google2u.AssaultRifle_SteyrAUG", 32, 1, 19, 23, 0, 1_499),
+  weapon("Google2u.Bazooka_FGM", 35, 16, 24, 28, 0, 2_479),
+  weapon("Google2u.Bazooka_HMV", 36, 16, 11, 15, 179_999, 0),
+  weapon("Google2u.Bazooka_RPG7", 4, 16, 0, 4, 0, 89),
+  weapon("Google2u.Grenade_FLASH", 8, 64, 7, 11, 0, 199),
+  weapon("Google2u.Grenade_FRAG", 6, 64, 0, 2, 999, 0, true),
+  weapon("Google2u.Grenade_POISON", 9, 64, 14, 18, 239_999, 0),
+  weapon("Google2u.Grenade_SMOKE", 7, 64, 20, 24, 0, 2_499),
+  weapon("Google2u.GrenadeLauncher_M320", 25, 512, 3, 7, 0, 139),
+  weapon("Google2u.LMG_M249", 18, 4, 7, 11, 199_999, 0),
+  weapon("Google2u.LMG_M60", 34, 4, 31, 35, 0, 4_499),
+  weapon("Google2u.LMG_MG4", 19, 4, 23, 27, 0, 2_499),
+  weapon("Google2u.LMG_Minigun", 21, 256, 1, 5, 0, 199),
+  weapon("Google2u.LMG_PKMachinegun", 17, 4, 1, 5, 14_999, 0),
+  weapon("Google2u.LMG_SA80", 20, 4, 15, 19, 1_599_999, 0),
+  weapon("Google2u.Pistol_Berreta", 14, 128, 9, 13, 0, 119),
+  weapon("Google2u.Pistol_DesertEagle", 12, 128, 29, 33, 6_349_999, 0),
+  weapon("Google2u.Pistol_M1911", 15, 128, 16, 20, 203_799, 0),
+  weapon("Google2u.Pistol_Magnum357", 37, 128, 21, 25, 0, 699),
+  weapon("Google2u.Pistol_Remmington51", 13, 128, 0, 1, 0, 0, true),
+  weapon("Google2u.Shotgun_Benelli", 27, 32, 2, 6, 8_999, 0),
+  weapon("Google2u.Shotgun_Saiga", 5, 32, 18, 22, 0, 1_599),
+  weapon("Google2u.Shotgun_SPAS", 38, 32, 10, 14, 0, 429),
+  weapon("Google2u.Shotgun_Striker", 31, 32, 26, 30, 0, 2_589),
+  weapon("Google2u.SMG_CPW", 24, 2, 11, 15, 619_999, 0),
+  weapon("Google2u.SMG_MP5", 22, 2, 3, 7, 59_999, 0),
+  weapon("Google2u.SMG_MP7", 23, 2, 21, 25, 0, 1_999),
+  weapon("Google2u.SMG_P90", 33, 2, 25, 29, 0, 3_999),
+  weapon("Google2u.SMG_UMP45", 10, 2, 17, 21, 0, 1_129),
+  weapon("Google2u.SniperRifle_AWMF", 28, 8, 14, 18, 489_999, 0),
+  weapon("Google2u.SniperRifle_Dragunov", 16, 8, 6, 10, 59_999, 0),
+  weapon("Google2u.SniperRifle_M110", 11, 8, 22, 26, 0, 1_999),
+  weapon("Google2u.SniperRifle_M24", 3, 8, 0, 1, 0, 100, true),
+  weapon("Google2u.SniperRifle_M90", 30, 8, 29, 33, 0, 3_139),
+  weapon("Google2u.Grenade_Molotov", 39, 64, 27, 31, 0, 2_999),
+  weapon("Google2u.Bazooka_Panzerfaust", 40, 16, 17, 21, 0, 619),
+  weapon("Google2u.Bazooka_M202", 41, 16, 31, 35, 0, 3_099),
+  weapon("Google2u.AssaultRifle_AKS47U", 43, 1, 35, 39, 0, 5_299),
+  weapon("Google2u.LMG_M249Elite", 47, 4, 37, 41, 0, 5_499),
+  weapon("Google2u.Shotgun_Blackhand", 49, 32, 39, 43, 0, 3_999),
+  weapon("Google2u.Shotgun_SawnOff", 50, 32, 21, 25, 0, 1_799),
+  weapon("Google2u.Pistol_Jester", 51, 128, 38, 42, 0, 3_499),
+  weapon("Google2u.Grenade_M84", 52, 64, 34, 38, 0, 3_499),
+  weapon("Google2u.Shotgun_AA12", 54, 32, 32, 36, 0, 3_399),
+  weapon("Google2u.SMG_Vector", 55, 2, 33, 37, 0, 4_999),
+  weapon("Google2u.Bazooka_Hater", 57, 16, 36, 40, 0, 3_499),
+  weapon("Google2u.SniperRifle_MSR", 58, 8, 35, 39, 0, 3_699),
+  weapon("Google2u.AssaultRifle_AK47Elite", 64, 1, 3, 7, 0, 139),
+  weapon("Google2u.LMG_PKMachinegunElite", 65, 4, 1, 5, 0, 99),
+  weapon("Google2u.GrenadeLauncher_DP64", 124, 512, 15, 19, 0, 499),
+  weapon("Google2u.GrenadeLauncher_M79", 125, 512, 8, 12, 0, 249),
+  weapon("Google2u.GrenadeLauncher_MGL", 126, 512, 23, 27, 0, 2_469),
+  weapon("Google2u.GrenadeLauncher_QLB06", 127, 512, 37, 41, 0, 3_599),
+  weapon("Google2u.GrenadeLauncher_QLZ87", 128, 512, 30, 34, 0, 3_049),
+  weapon("Google2u.AssaultRifle_XM8", 142, 1, 3, 44, 0, 5_899),
+  weapon("Google2u.SMG_Apollo", 135, 2, 45, 49, 0, 6_699),
+  weapon("Google2u.LMG_StarHammer", 136, 4, 43, 47, 0, 6_299),
+  weapon("Google2u.SniperRifle_3Eyes", 137, 8, 42, 46, 0, 5_499),
+  weapon("Google2u.Shotgun_DP12", 138, 32, 46, 50, 0, 4_699),
+  weapon("Google2u.Grenade_Doombringer", 139, 64, 41, 45, 0, 3_999),
+  weapon("Google2u.GrenadeLauncher_XM25", 140, 512, 44, 48, 0, 4_599),
+  weapon("Google2u.Bazooka_Juggernaut", 141, 16, 43, 47, 0, 4_399),
+  weapon("Google2u.Pistol_P320", 134, 128, 45, 49, 18_999_999, 0),
+  weapon("Google2u.LMG_T8", 159, 4, 50, 54, 0, 9_499),
+  weapon("Google2u.SniperRifle_SRT8", 160, 8, 53, 57, 0, 7_199),
+  weapon("Google2u.AssaultRifle_ART8", 161, 1, 47, 51, 0, 8_999),
+  weapon("Google2u.SMG_ST8", 162, 2, 52, 56, 0, 9_999),
+  weapon("Google2u.Grenade_GT8", 163, 64, 47, 51, 0, 4_999),
+  weapon("Google2u.GrenadeLauncher_GLT8", 164, 512, 48, 52, 0, 5_199),
+  weapon("Google2u.Bazooka_RLT8", 165, 16, 51, 55, 0, 5_499),
+  weapon("Google2u.Shotgun_SGT8", 166, 32, 49, 53, 0, 5_999),
+  weapon("Google2u.AssaultRifle_ART9", 192, 1, 55, 59, 0, 10_499),
+  weapon("Google2u.GrenadeLauncher_GLT9", 193, 512, 56, 60, 0, 5_999),
+  weapon("Google2u.SMG_ST9", 198, 2, 57, 61, 0, 10_999),
+  weapon("Google2u.Grenade_GT9", 199, 64, 58, 62, 0, 5_999),
+  weapon("Google2u.Shotgun_SGT9", 200, 32, 61, 65, 0, 7_499),
+  weapon("Google2u.LMG_T9", 201, 4, 60, 64, 0, 11_499),
+  weapon("Google2u.Bazooka_RLT9", 202, 16, 60, 64, 0, 6_999),
+  weapon("Google2u.SniperRifle_SRT9", 203, 8, 62, 66, 0, 7_999),
+];
+
+export const WEAPON_CATALOG: Readonly<Record<string, WeaponDefinition>> = Object.freeze(
+  Object.fromEntries(RECOVERED_WEAPON_ROWS.map((definition) => [definition.name, definition])),
+);
 
 // These are the four category masks serialized on PlayerInventory.inventorySlots in the
 // 4.9.5 MainScene. A weapon category must be wholly contained in its destination mask.
@@ -290,8 +390,8 @@ export function purchaseWeaponState(
 
   const weapon = ownedWeapon();
   itemInventory.levelManagerData.savedWeapons[definition.name] = weapon;
-  // FAMAS is a premium/Gold row with DELIVERTIME=0. Delivery-bearing WarBucks rows remain
-  // disabled until activation/instant-finish actions are implemented as one lifecycle.
+  // Every enabled 4.9.5 shop row has DELIVERTIME=0, including WarBucks-priced weapons.
+  // Ownership therefore becomes active immediately and no pending delivery may be fabricated.
   itemInventory.levelManagerData.weaponDelivery = emptyDelivery();
   const next: PlayerProgressionState = {
     ...state,

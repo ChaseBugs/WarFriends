@@ -14,6 +14,7 @@ import {
   purchaseWeaponState,
   serializeInventoryData,
   serializeLevelManagerData,
+  WEAPON_CATALOG,
 } from "../services/itemInventoryService";
 import { createInitialProgression } from "../services/playerStateService";
 
@@ -93,6 +94,82 @@ test("FAMAS purchase enforces recovered level and price before debiting Gold", (
   assert.equal(bought.state.itemInventory?.levelManagerData.savedWeapons[FAMAS]?.bought, true);
   // Buying does not silently equip the weapon; EquipWeapon owns that separate mutation.
   assert.equal(bought.state.itemInventory?.inventoryData.slots["0"]?.weaponIndex, 1);
+});
+
+test("weapon catalog contains every shop row with a resolvable LevelManager entry", () => {
+  const definitions = Object.values(WEAPON_CATALOG);
+
+  assert.equal(definitions.length, 84);
+  assert.equal(new Set(definitions.map((definition) => definition.index)).size, definitions.length);
+  assert.deepEqual(
+    {
+      m16: WEAPON_CATALOG["Google2u.AssaultRifle_M16"]?.index,
+      dp64: WEAPON_CATALOG["Google2u.GrenadeLauncher_DP64"]?.index,
+      p320: WEAPON_CATALOG["Google2u.Pistol_P320"]?.index,
+      art9: WEAPON_CATALOG["Google2u.AssaultRifle_ART9"]?.index,
+    },
+    { m16: 0, dp64: 124, p320: 134, art9: 192 },
+  );
+  // These rows have prices in WeaponUpgrades but null LevelManager references in MainScene.
+  // Keeping them absent proves the server will fail closed instead of granting unusable items.
+  assert.equal(WEAPON_CATALOG["Google2u.PulseRifle_Grade1"], undefined);
+  assert.equal(WEAPON_CATALOG["Google2u.PulseRifle_PR9"], undefined);
+});
+
+test("Gold and WarBucks catalog rows use their recovered indexes and compatible slots", () => {
+  const m16 = parseWeaponPurchaseData(purchaseData({
+    Name: "Google2u.AssaultRifle_M16",
+    Gold: 269,
+    UnlockLevel: 9,
+  }));
+  const m16Bought = purchaseWeaponState({ ...createInitialProgression(NOW), gold: 269 }, 5, m16);
+  const m16Equipped = equipWeaponState(m16Bought.state, parseWeaponEquipData(equipData({
+    Name: "Google2u.AssaultRifle_M16",
+    Index: "0",
+  })));
+  assert.equal(m16Equipped.state.gold, 0);
+  assert.deepEqual(m16Equipped.state.itemInventory?.inventoryData.slots["0"], {
+    name: "Google2u.AssaultRifle_M16",
+    weaponIndex: 0,
+  });
+
+  const benelli = parseWeaponPurchaseData(purchaseData({
+    Name: "Google2u.Shotgun_Benelli",
+    Warbucks: 8_999,
+    Gold: 0,
+    UnlockLevel: 6,
+  }));
+  const benelliBought = purchaseWeaponState(
+    { ...createInitialProgression(NOW), warBucks: 9_000 },
+    2,
+    benelli,
+  );
+  const benelliEquipped = equipWeaponState(benelliBought.state, parseWeaponEquipData(equipData({
+    Name: "Google2u.Shotgun_Benelli",
+    Index: "27",
+    SlotIndex: 1,
+  })));
+  assert.equal(benelliEquipped.state.warBucks, 1);
+  assert.deepEqual(benelliEquipped.state.itemInventory?.inventoryData.slots["1"], {
+    name: "Google2u.Shotgun_Benelli",
+    weaponIndex: 27,
+  });
+
+  const dp64 = parseWeaponPurchaseData(purchaseData({
+    Name: "Google2u.GrenadeLauncher_DP64",
+    Gold: 499,
+    UnlockLevel: 19,
+  }));
+  const dp64Bought = purchaseWeaponState({ ...createInitialProgression(NOW), gold: 499 }, 15, dp64);
+  const dp64Equipped = equipWeaponState(dp64Bought.state, parseWeaponEquipData(equipData({
+    Name: "Google2u.GrenadeLauncher_DP64",
+    Index: "124",
+    SlotIndex: 2,
+  })));
+  assert.deepEqual(dp64Equipped.state.itemInventory?.inventoryData.slots["2"], {
+    name: "Google2u.GrenadeLauncher_DP64",
+    weaponIndex: 124,
+  });
 });
 
 test("EquipWeapon requires ownership, exact catalog index, and a compatible slot", () => {
