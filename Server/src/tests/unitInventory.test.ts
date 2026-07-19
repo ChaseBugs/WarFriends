@@ -6,19 +6,30 @@ import { DbAction } from "../dbActions";
 import { processAssignmentBufferState } from "../services/assignmentService";
 import {
   ITEM_ALREADY_MAXIMUM_UPGRADE,
+  ITEM_ALREADY_UPGRADING,
+  ITEM_NEGATIVE_PRICE_FROM_CLIENT,
+  ITEM_NO_DISCOUNT_FOUND,
   ITEM_NOT_ENOUGH_GOLD,
   ITEM_NOT_ENOUGH_LEVEL,
   ITEM_NOT_ENOUGH_WARBUCKS,
   ITEM_PRICE_MISMATCH,
   ITEM_PRICE_NOT_FOUND,
+  ITEM_TOO_SOON_TO_ACTIVATE,
+  weaponUpgradeInstantPrice,
 } from "../services/itemInventoryService";
 import { createInitialProgression } from "../services/playerStateService";
 import {
   activateUnitState,
+  activateUnitUpgradeState,
+  instantUnitUpgradeState,
   parseUnitActivateData,
   parseUnitEquipData,
   parseUnitPurchaseData,
+  parseUnitUpgradeActivateData,
+  parseUnitUpgradeInstantData,
+  parseUnitUpgradePurchaseData,
   purchaseUnitState,
+  startUnitUpgradeState,
   UNIT_CANT_EQUIP,
   UNIT_CATALOG,
   updateEquippedUnitsState,
@@ -51,6 +62,49 @@ function buyData(
 
 function activateData(name = SHOTGUNNER): string {
   return JSON.stringify({ LevelName: name });
+}
+
+function upgradePurchaseData(
+  name = SHOTGUNNER,
+  isSpecial = false,
+  overrides: Record<string, unknown> = {},
+): string {
+  const table = generatedUnitUpgradeCatalog.catalog.find((row) => row.name === name);
+  const level = (isSpecial ? table?.specialLevels : table?.normalLevels)?.[0];
+  return JSON.stringify({
+    LevelName: name,
+    BoughtIndex: 0,
+    StartTime: NOW,
+    IsSpecial: isSpecial ? "1" : "0",
+    discount: 0,
+    DeliveryTime: level?.deliverySeconds ?? 0,
+    deliveryReduce: 0,
+    ...overrides,
+  });
+}
+
+function upgradeActivateData(
+  name = SHOTGUNNER,
+  overrides: Record<string, unknown> = {},
+): string {
+  return JSON.stringify({ LevelName: name, BoughtIndex: 0, ArmyPower: 100, ...overrides });
+}
+
+function upgradeInstantData(
+  expectedPrice: number,
+  name = SHOTGUNNER,
+  overrides: Record<string, unknown> = {},
+): string {
+  return JSON.stringify({
+    LevelName: name,
+    BoughtIndex: 0,
+    ExpectedPrice: expectedPrice,
+    ArmyPower: 100,
+    GoldCoefficient: 0.6325,
+    GoldExpCoefficient: -0.175,
+    discount: 0,
+    ...overrides,
+  });
 }
 
 function equippedData(
@@ -189,6 +243,205 @@ test("normal purchase fails closed for tutorial, helper, and unresolved unit row
       (error: unknown) => (error as { code?: number }).code === ITEM_PRICE_NOT_FOUND,
     );
   }
+});
+
+test("normal unit upgrade debits extracted price and waits for server delivery", () => {
+  const owned = purchaseUnitState(createInitialProgression(NOW), 0, parseUnitPurchaseData(buyData()));
+  const started = startUnitUpgradeState(
+    { ...owned.state, warBucks: 375 },
+    NOW,
+    parseUnitUpgradePurchaseData(upgradePurchaseData()),
+  );
+
+  assert.equal(started.state.warBucks, 0);
+  assert.equal(started.unit.boughtIndex, 0);
+  assert.equal(started.deliveryTime, 60);
+  assert.deepEqual(started.itemInventory.levelManagerData.unitDelivery, {
+    activationNeeded: true,
+    boughtIndex: 0,
+    end: NOW + 60,
+    itemId: SHOTGUNNER,
+    slotId: 0,
+    start: NOW,
+  });
+  assert.throws(
+    () => activateUnitUpgradeState(
+      started.state,
+      NOW + 59,
+      parseUnitUpgradeActivateData(upgradeActivateData()),
+    ),
+    (error: unknown) => (error as { code?: number }).code === ITEM_TOO_SOON_TO_ACTIVATE,
+  );
+
+  const activated = activateUnitUpgradeState(
+    started.state,
+    NOW + 60,
+    parseUnitUpgradeActivateData(upgradeActivateData()),
+  );
+  assert.equal(activated.unit.boughtIndex, 1);
+  assert.equal(activated.unit.specialSlot, 0);
+  assert.equal(activated.itemInventory.levelManagerData.unitDelivery.activationNeeded, false);
+});
+
+test("unit upgrade rejects an unowned roster row with a client-handled rollback code", () => {
+  assert.throws(
+    () => startUnitUpgradeState(
+      { ...createInitialProgression(NOW), warBucks: 10_000 },
+      NOW,
+      parseUnitUpgradePurchaseData(upgradePurchaseData()),
+    ),
+    (error: unknown) => (error as { code?: number }).code === ITEM_PRICE_NOT_FOUND,
+  );
+});
+
+test("unit upgrade enforces shared receipt, discounts, and current-tier boundary", () => {
+  const owned = purchaseUnitState(createInitialProgression(NOW), 0, parseUnitPurchaseData(buyData()));
+  const funded = { ...owned.state, warBucks: 20_000 };
+  assert.throws(
+    () => startUnitUpgradeState(
+      funded,
+      NOW,
+      parseUnitUpgradePurchaseData(upgradePurchaseData(SHOTGUNNER, false, { discount: 1 })),
+    ),
+    (error: unknown) => (error as { code?: number }).code === ITEM_NO_DISCOUNT_FOUND,
+  );
+
+  const started = startUnitUpgradeState(
+    funded,
+    NOW,
+    parseUnitUpgradePurchaseData(upgradePurchaseData()),
+  );
+  assert.throws(
+    () => startUnitUpgradeState(
+      started.state,
+      NOW + 1,
+      parseUnitUpgradePurchaseData(upgradePurchaseData()),
+    ),
+    (error: unknown) => (error as { code?: number }).code === ITEM_ALREADY_UPGRADING,
+  );
+
+  const tierComplete = purchaseUnitState(
+    createInitialProgression(NOW),
+    0,
+    parseUnitPurchaseData(buyData()),
+  );
+  tierComplete.unit.boughtIndex = 5;
+  assert.throws(
+    () => startUnitUpgradeState(
+      { ...tierComplete.state, warBucks: 100_000 },
+      NOW,
+      parseUnitUpgradePurchaseData(upgradePurchaseData(SHOTGUNNER, false, {
+        BoughtIndex: 5,
+        DeliveryTime: 1_200,
+      })),
+    ),
+    (error: unknown) => (error as { code?: number }).code === ITEM_ALREADY_MAXIMUM_UPGRADE,
+  );
+});
+
+test("special upgrade is promotion-gated and advances only specialSlot", () => {
+  const owned = purchaseUnitState(createInitialProgression(NOW), 0, parseUnitPurchaseData(buyData()));
+  assert.throws(
+    () => startUnitUpgradeState(
+      { ...owned.state, warBucks: 10_000 },
+      NOW,
+      parseUnitUpgradePurchaseData(upgradePurchaseData(SHOTGUNNER, true)),
+    ),
+    (error: unknown) => (error as { code?: number }).code === ITEM_NOT_ENOUGH_LEVEL,
+  );
+
+  // Promotion itself is a separate unrecovered action. Setting the exact post-promotion tier
+  // here isolates the special-lane lifecycle without pretending that promotion is implemented.
+  owned.unit.tier = 2;
+  const started = startUnitUpgradeState(
+    { ...owned.state, warBucks: 10_000 },
+    NOW,
+    parseUnitUpgradePurchaseData(upgradePurchaseData(SHOTGUNNER, true)),
+  );
+  assert.equal(started.itemInventory.levelManagerData.unitDelivery.slotId, 1);
+  assert.equal(started.state.warBucks, 0);
+  const activated = activateUnitUpgradeState(
+    started.state,
+    NOW + 3_600,
+    parseUnitUpgradeActivateData(upgradeActivateData()),
+  );
+  assert.equal(activated.unit.boughtIndex, 0);
+  assert.equal(activated.unit.specialSlot, 1);
+});
+
+test("instant unit upgrade uses receipt-backed Gold price and returns rollback on failure", () => {
+  const owned = purchaseUnitState(createInitialProgression(NOW), 0, parseUnitPurchaseData(buyData()));
+  const started = startUnitUpgradeState(
+    { ...owned.state, warBucks: 375, gold: 10 },
+    NOW,
+    parseUnitUpgradePurchaseData(upgradePurchaseData()),
+  );
+  const price = weaponUpgradeInstantPrice(30);
+  assert.equal(price, 1);
+  const finished = instantUnitUpgradeState(
+    started.state,
+    NOW + 30,
+    parseUnitUpgradeInstantData(upgradeInstantData(price)),
+  );
+  assert.equal(finished.state.gold, 9);
+  assert.equal(finished.unit.boughtIndex, 1);
+
+  const failed = processAssignmentBufferState(
+    started.state,
+    NOW + 30,
+    "unit-upgrade-negative-price",
+    [{ action: DbAction.InstantUnitUpgrade, data: upgradeInstantData(-1) }],
+    0,
+  );
+  const [response] = JSON.parse(failed.requestsResults) as Array<Record<string, unknown>>;
+  assert.equal(response.Result, ITEM_NEGATIVE_PRICE_FROM_CLIENT);
+  assert.equal(response.LevelName, SHOTGUNNER);
+  assert.equal(response.Gold, 10);
+  assert.equal(response.WarBucks, 0);
+  assert.deepEqual(JSON.parse(String(response.Unit)), started.unit);
+  assert.deepEqual(
+    JSON.parse(String(response.unitDelivery)),
+    started.itemInventory.levelManagerData.unitDelivery,
+  );
+});
+
+test("buffered unit upgrade returns duration and instant completion is replay-safe", () => {
+  const owned = purchaseUnitState(createInitialProgression(NOW), 0, parseUnitPurchaseData(buyData()));
+  const start = processAssignmentBufferState(
+    { ...owned.state, warBucks: 375, gold: 10 },
+    NOW,
+    "unit-upgrade-start",
+    [{ action: DbAction.BuyUnitUpgrade, data: upgradePurchaseData() }],
+    0,
+  );
+  assert.deepEqual(JSON.parse(start.requestsResults), [{
+    ActionId: DbAction.BuyUnitUpgrade,
+    Result: 1,
+    DeliveryTime: 60,
+  }]);
+
+  const request = [{
+    action: DbAction.InstantUnitUpgrade,
+    data: upgradeInstantData(weaponUpgradeInstantPrice(30)),
+  }];
+  const first = processAssignmentBufferState(
+    start.state,
+    NOW + 30,
+    "unit-upgrade-finish",
+    request,
+    0,
+  );
+  const replay = processAssignmentBufferState(
+    first.state,
+    NOW + 40,
+    "unit-upgrade-finish",
+    request,
+    0,
+  );
+  assert.equal(first.state.itemInventory?.levelManagerData.savedArmies[SHOTGUNNER]?.boughtIndex, 1);
+  assert.equal(replay.replayed, true);
+  assert.equal(replay.requestsResults, first.requestsResults);
+  assert.equal(replay.state.itemInventory?.levelManagerData.savedArmies[SHOTGUNNER]?.boughtIndex, 1);
 });
 
 test("BuyUnit, ActivateUnit, and auto-equip are atomic and replay-safe in RequestBuffer", () => {

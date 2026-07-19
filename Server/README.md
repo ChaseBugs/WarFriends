@@ -121,7 +121,7 @@ Working end-to-end (verified live):
   paths increment `boughtIndex` once, clear delivery atomically, return Unity rollback fields
   on failure, and inherit `BufferId` replay protection. Run `npm run verify:weapon-upgrades`
   to compare the generated price/time catalog with MainScene.
-- **Unit purchase foundation**: `../Tools/Extract-UnitCatalog.ps1` joins the recovered
+- **Unit purchase, loadout, and upgrade lifecycle**: `../Tools/Extract-UnitCatalog.ps1` joins the recovered
   `LevelManager.behaviours` and `additionalBehaviours` arrays through each behaviour's
   `UpgradeSlots` GameObject to the `Google2u.ArmyUpgrades` master row. The checked-in artifact
   records 24 player-roster units, three non-purchasable turret helpers, and 18 newer table rows
@@ -133,12 +133,15 @@ Working end-to-end (verified live):
   acknowledgement rather than a fabricated timer. `UpdateEquippedUnits` persists the tutorial
   Assaulter's first backend-visible grant and the full owned roster while enforcing the recovered
   two-per-category and three-mechanical-unit caps; invalid changes receive the exact 11406 rollback
-  dictionary. Helper rows, unresolved rows, discounts, upgrades, promotions, and unverified
-  army-power writes remain fail-closed. The same extractor now records 4,124 normal and 684
-  special per-level rows across all 24 player tables, including absolute source offsets, tier,
-  XOR-decoded WarBucks price, and delivery duration; this evidence is checked in but is not yet
-  exposed as a mutation. Run `npm run verify:unit-catalog` to compare both artifacts with
-  MainScene and the recovered assemblies.
+  dictionary. The same extractor records 4,124 normal and 684 special per-level rows across all
+  24 player tables, including absolute source offsets, tier, XOR-decoded WarBucks price, and
+  delivery duration. Buffered actions `77`-`79` use those rows to enforce separate normal and
+  special cursors, promotion-gated special access, current-tier maximums, one shared unit-delivery
+  receipt, server time, exact WarBucks debit, receipt-backed instant Gold cost, atomic completion,
+  Unity rollback, and replay safety. Helper/unresolved rows, offer/subscription discounts,
+  promotions, elite upgrades, and unverified army-power writes remain fail-closed. Run
+  `npm run verify:unit-catalog` to compare both artifacts with MainScene and the recovered
+  assemblies.
 - **Daily rewards**: `CheckDailyReward` and `ClaimDailyReward` provide the recovered monthly
   `dailyRewardData` calendar contract, one UTC-day unlock, ordered atomic Gold grants, and
   replay-safe claim cursors. Reward amounts are conservative environment-tunable defaults
@@ -184,8 +187,8 @@ allowlist of analytics/impression actions is safely ignored.
 - **Squad extensions** — card pool and squad events/wars are not implemented. Chat unread
   state is persistent, but actual channel delivery still requires Photon Chat repointing or
   a compatible replacement transport.
-- **Item economy expansion** — recover unit normal/special upgrade, promotion, and army-power
-  rules, then add decals, cards, packs, and VIP. Normal purchase is authoritative for 23
+- **Item economy expansion** — recover unit promotion, elite-upgrade, and army-power rules,
+  then add decals, cards, packs, and VIP. Normal purchase is authoritative for 23
   non-tutorial roster units, and the tutorial unit is persisted through its first equip event;
   three helper rows and 18 ArmyUpgrades rows without LevelManager objects remain closed. All 84 resolvable
   shop weapons support exact Gold or WarBucks purchase/equip plus server-owned upgrade

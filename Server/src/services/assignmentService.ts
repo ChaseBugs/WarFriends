@@ -35,12 +35,18 @@ import {
 } from "./itemInventoryService";
 import {
   activateUnitState,
+  activateUnitUpgradeState,
   equippedUnitsRecoveryFields,
+  instantUnitUpgradeState,
   parseUnitActivateData,
   parseUnitEquipData,
   parseUnitPurchaseData,
+  parseUnitUpgradeActivateData,
+  parseUnitUpgradeInstantData,
+  parseUnitUpgradePurchaseData,
   purchaseUnitState,
   requestedUnitName,
+  startUnitUpgradeState,
   unitRecoveryFields,
   updateEquippedUnitsState,
 } from "./unitInventoryService";
@@ -518,6 +524,61 @@ export function processAssignmentBufferState(
           Result: code,
           // The client already changed UpgradeSlots locally; these exact fields restore the
           // last committed state while allowing later subrequests in the batch to continue.
+          ...unitRecoveryFields(working, requestedUnitName(request.data)),
+        });
+      }
+      continue;
+    }
+
+    if (
+      request.action === DbAction.BuyUnitUpgrade
+      || request.action === DbAction.InstantUnitUpgrade
+      || request.action === DbAction.ActivateUnitUpgrade
+    ) {
+      try {
+        let successResponse: Record<string, unknown> = { ActionId: request.action, Result: SUCCESS };
+        if (request.action === DbAction.BuyUnitUpgrade) {
+          // UpgradeSlot.KDIHEKPKCJJ has already created the optimistic local unitDelivery.
+          // The server independently validates the selected lane, current cursor, tier
+          // boundary, recovered price/time row, wallet, and shared-receipt availability.
+          const upgraded = startUnitUpgradeState(
+            working,
+            now,
+            parseUnitUpgradePurchaseData(request.data),
+          );
+          working = upgraded.state;
+          successResponse = {
+            ActionId: request.action,
+            Result: SUCCESS,
+            // OGLEHLIPEFM forwards this value to SetUnitDeliveryTime for clock correction
+            // when this result is the last entry in the stock RequestBuffer response.
+            DeliveryTime: upgraded.deliveryTime,
+          };
+        } else if (request.action === DbAction.InstantUnitUpgrade) {
+          // The request omits IsSpecial. matchingUnitDelivery uses the persisted slotId so a
+          // modified client cannot finish the cheaper lane while advancing the other cursor.
+          working = instantUnitUpgradeState(
+            working,
+            now,
+            parseUnitUpgradeInstantData(request.data),
+          ).state;
+        } else {
+          // Normal activation is free only after the server receipt expires. Receipt removal
+          // and cursor advancement happen in one immutable progression transition.
+          working = activateUnitUpgradeState(
+            working,
+            now,
+            parseUnitUpgradeActivateData(request.data),
+          ).state;
+        }
+        responses.push(successResponse);
+      } catch (error) {
+        const code = error instanceof ApiError ? error.code : ApiErrorCode.InternalServerError;
+        responses.push({
+          ActionId: request.action,
+          Result: code,
+          // ArmyScreen has already changed its wallet, cursor, and receipt. These are the
+          // exact fields consumed by OGLEHLIPEFM to restore the last committed server state.
           ...unitRecoveryFields(working, requestedUnitName(request.data)),
         });
       }

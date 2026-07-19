@@ -5,16 +5,23 @@ import type {
   SavedArmyState,
 } from "../db";
 import generatedUnitCatalog from "../data/unitCatalog.generated.json";
+import generatedUnitUpgradeCatalog from "../data/unitUpgradeCatalog.generated.json";
 import {
   ITEM_ALREADY_MAXIMUM_UPGRADE,
+  ITEM_ALREADY_UPGRADING,
+  ITEM_NEGATIVE_PRICE_FROM_CLIENT,
   ITEM_NO_DISCOUNT_FOUND,
   ITEM_NOT_ENOUGH_GOLD,
   ITEM_NOT_ENOUGH_LEVEL,
   ITEM_NOT_ENOUGH_WARBUCKS,
   ITEM_PRICE_MISMATCH,
   ITEM_PRICE_NOT_FOUND,
+  ITEM_TOO_SOON_TO_ACTIVATE,
   ITEM_WRONG_INDEX_TO_ACTIVATE,
+  WEAPON_GOLD_COEFFICIENT,
+  WEAPON_GOLD_EXP_COEFFICIENT,
   itemInventoryStateFor,
+  weaponUpgradeInstantPrice,
 } from "./itemInventoryService";
 
 /** IJEAJGCCHEF.CantEquipUnit, consumed by UpdateEquippedUnits rollback logic. */
@@ -81,7 +88,41 @@ interface GeneratedUnitArtifact {
   catalog: UnitDefinition[];
 }
 
+interface UnitUpgradeLevel {
+  /** Absolute row in the recovered Google2u table, retained for extraction audits. */
+  sourceIndex: number;
+  /** Tier digit after removing the slot prefix from the table's encoded Tier field. */
+  tier: number;
+  /** UpgradeSlot.id: zero for normal power and one for the special ability. */
+  slot: 0 | 1;
+  warBucks: number;
+  deliverySeconds: number;
+}
+
+interface UnitUpgradeDefinition {
+  name: string;
+  normalLevels: readonly UnitUpgradeLevel[];
+  specialLevels: readonly UnitUpgradeLevel[];
+}
+
+interface GeneratedUnitUpgradeArtifact {
+  catalog: UnitUpgradeDefinition[];
+}
+
 const extractedRows = (generatedUnitCatalog as GeneratedUnitArtifact).catalog;
+const extractedUpgradeRows = (generatedUnitUpgradeCatalog as GeneratedUnitUpgradeArtifact).catalog;
+const UNIT_UPGRADE_CATALOG: Readonly<Record<string, UnitUpgradeDefinition>> = Object.freeze(
+  Object.fromEntries(
+    extractedUpgradeRows.map((row) => [
+      row.name,
+      Object.freeze({
+        ...row,
+        normalLevels: Object.freeze(row.normalLevels.map((level) => Object.freeze({ ...level }))),
+        specialLevels: Object.freeze(row.specialLevels.map((level) => Object.freeze({ ...level }))),
+      }),
+    ]),
+  ),
+);
 const PLAYER_UNIT_CATALOG: Readonly<Record<string, UnitDefinition>> = Object.freeze(
   Object.fromEntries(
     extractedRows
@@ -116,6 +157,32 @@ export interface UnitActivatePayload {
   name: string;
 }
 
+export interface UnitUpgradePurchasePayload {
+  name: string;
+  boughtIndex: number;
+  startTime: number;
+  isSpecial: boolean;
+  discount: number;
+  deliveryTime: number;
+  deliveryReduce: number;
+}
+
+export interface UnitUpgradeInstantPayload {
+  name: string;
+  boughtIndex: number;
+  expectedPrice: number;
+  armyPower: number;
+  goldCoefficient: number;
+  goldExpCoefficient: number;
+  discount: number;
+}
+
+export interface UnitUpgradeActivatePayload {
+  name: string;
+  boughtIndex: number;
+  armyPower: number;
+}
+
 export interface UnitEquipDetailPayload {
   wasEquipped: boolean;
   equipped: boolean;
@@ -135,6 +202,13 @@ export interface UnitInventoryMutationResult {
   definition: UnitDefinition;
 }
 
+export interface UnitUpgradeMutationResult extends UnitInventoryMutationResult {
+  /** Present when BuyUnitUpgrade creates the shared server-owned unit receipt. */
+  deliveryTime?: number;
+  /** Present when InstantUnitUpgrade spends Gold to consume that receipt. */
+  goldSpent?: number;
+}
+
 function isObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
@@ -143,6 +217,14 @@ function integer(value: unknown, field: string): number {
   const parsed = Number(value);
   if (!Number.isInteger(parsed)) {
     throw new ApiError(ITEM_PRICE_MISMATCH, `${field} must be an integer.`);
+  }
+  return parsed;
+}
+
+function finiteNumber(value: unknown, field: string): number {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    throw new ApiError(ITEM_PRICE_MISMATCH, `${field} must be finite.`);
   }
   return parsed;
 }
@@ -187,6 +269,49 @@ export function parseUnitPurchaseData(value: string): UnitPurchasePayload {
 export function parseUnitActivateData(value: string): UnitActivatePayload {
   const data = parseObjectJson(value);
   return { name: unitName(data.LevelName) };
+}
+
+/** Decode ArmyScreen.EFGAIHKNKGG's action-77 normal/special upgrade request. */
+export function parseUnitUpgradePurchaseData(value: string): UnitUpgradePurchasePayload {
+  const data = parseObjectJson(value);
+  if (data.IsSpecial !== "0" && data.IsSpecial !== "1") {
+    // The stock client deliberately serializes this flag as a string. Accepting arbitrary
+    // truthy JSON values would let a modified client select a different upgrade lane.
+    throw new ApiError(ITEM_PRICE_MISMATCH, "IsSpecial must be the string 0 or 1.");
+  }
+  return {
+    name: unitName(data.LevelName),
+    boughtIndex: integer(data.BoughtIndex, "BoughtIndex"),
+    startTime: integer(data.StartTime, "StartTime"),
+    isSpecial: data.IsSpecial === "1",
+    discount: integer(data.discount ?? 0, "discount"),
+    deliveryTime: integer(data.DeliveryTime, "DeliveryTime"),
+    deliveryReduce: integer(data.deliveryReduce ?? 0, "deliveryReduce"),
+  };
+}
+
+/** Decode ArmyScreen.ANLLAOJLPGN after Unity has fast-activated the pending slot locally. */
+export function parseUnitUpgradeInstantData(value: string): UnitUpgradeInstantPayload {
+  const data = parseObjectJson(value);
+  return {
+    name: unitName(data.LevelName),
+    boughtIndex: integer(data.BoughtIndex, "BoughtIndex"),
+    expectedPrice: integer(data.ExpectedPrice, "ExpectedPrice"),
+    armyPower: integer(data.ArmyPower, "ArmyPower"),
+    goldCoefficient: finiteNumber(data.GoldCoefficient, "GoldCoefficient"),
+    goldExpCoefficient: finiteNumber(data.GoldExpCoefficient, "GoldExpCoefficient"),
+    discount: integer(data.discount ?? 0, "discount"),
+  };
+}
+
+/** Decode ArmyScreen.JOFEFBHDFIN after normal timed delivery has been activated locally. */
+export function parseUnitUpgradeActivateData(value: string): UnitUpgradeActivatePayload {
+  const data = parseObjectJson(value);
+  return {
+    name: unitName(data.LevelName),
+    boughtIndex: integer(data.BoughtIndex, "BoughtIndex"),
+    armyPower: integer(data.ArmyPower, "ArmyPower"),
+  };
 }
 
 /** Decode ArmyScreen.SendEquippedUnits' exact action-1003 dictionary. */
@@ -317,6 +442,257 @@ export function activateUnitState(
     throw new ApiError(ITEM_WRONG_INDEX_TO_ACTIVATE, "Unit has no completed purchase to activate.");
   }
   return { state, itemInventory, unit, definition };
+}
+
+function emptyDelivery() {
+  return { activationNeeded: false, boughtIndex: 0, end: 0, itemId: "", slotId: 0, start: 0 };
+}
+
+function activeUnitDelivery(delivery: ItemInventoryState["levelManagerData"]["unitDelivery"]): boolean {
+  // An elapsed receipt stays occupied until ActivateUnitUpgrade consumes it. This is the
+  // server equivalent of UpgradeSlots.deliveryActivationNeeded and prevents a new purchase
+  // from overwriting an upgrade the client has not claimed yet.
+  return delivery.activationNeeded || delivery.itemId.length > 0;
+}
+
+function unitUpgradeContext(
+  state: PlayerProgressionState,
+  name: string,
+): {
+  definition: UnitDefinition;
+  upgrades: UnitUpgradeDefinition;
+  itemInventory: ItemInventoryState;
+  unit: SavedArmyState;
+} {
+  const definition = PLAYER_UNIT_CATALOG[name];
+  const upgrades = UNIT_UPGRADE_CATALOG[name];
+  const itemInventory = itemInventoryStateFor(state);
+  const unit = definition ? itemInventory.levelManagerData.savedArmies[name] : undefined;
+  if (!definition || !upgrades || definition.roster !== "player") {
+    throw new ApiError(ITEM_PRICE_NOT_FOUND, "Unit upgrade balancing was not found.");
+  }
+  if (!unit?.bought || unit.borrowed) {
+    // The unit branch in OGLEHLIPEFM does not handle WeaponNotBought (110); PriceNotFound
+    // (113) is the recovered failure that performs the unit/wallet/receipt rollback.
+    throw new ApiError(ITEM_PRICE_NOT_FOUND, "Unit must be permanently owned before it can be upgraded.");
+  }
+  return { definition, upgrades, itemInventory, unit };
+}
+
+function laneCursor(unit: SavedArmyState, slotId: 0 | 1): number {
+  return slotId === 0 ? unit.boughtIndex : unit.specialSlot;
+}
+
+function laneLevels(upgrades: UnitUpgradeDefinition, slotId: 0 | 1): readonly UnitUpgradeLevel[] {
+  return slotId === 0 ? upgrades.normalLevels : upgrades.specialLevels;
+}
+
+/**
+ * Return the last cursor available in the unit's current tier.
+ *
+ * UpgradeSlot.AFDBPKHKJHJ counts rows whose encoded tier digit is lower than actualTier and
+ * then subtracts one. The generated artifact already splits the slot prefix (0x normal,
+ * 1x special) from that digit, so the same rule is expressed directly here. A cursor equal
+ * to this boundary is fully upgraded for the tier and must wait for PromoteUnit; allowing it
+ * to purchase the next row would silently skip the promotion gate.
+ */
+function maximumCursorForTier(levels: readonly UnitUpgradeLevel[], actualTier: number): number {
+  return levels.filter((level) => level.tier < actualTier).length - 1;
+}
+
+function assertUnitUpgradeTransition(
+  definition: UnitDefinition,
+  unit: SavedArmyState,
+  upgrades: UnitUpgradeDefinition,
+  slotId: 0 | 1,
+  requestedIndex: number,
+): UnitUpgradeLevel {
+  const cursor = laneCursor(unit, slotId);
+  if (requestedIndex !== cursor) {
+    throw new ApiError(ITEM_WRONG_INDEX_TO_ACTIVATE, "Unit upgrade index does not match stored state.");
+  }
+  if (slotId === 1 && unit.tier <= definition.startingTier) {
+    // UpgradeSlotSpecial.isBought becomes true only after the first promotion. The source
+    // rows exist before then, but their presence is not permission to buy them.
+    throw new ApiError(ITEM_NOT_ENOUGH_LEVEL, "Special upgrade is locked until the unit is promoted.");
+  }
+
+  const levels = laneLevels(upgrades, slotId);
+  const maximumCursor = maximumCursorForTier(levels, unit.tier);
+  if (cursor < 0 || cursor >= maximumCursor || levels[cursor] === undefined) {
+    throw new ApiError(
+      ITEM_ALREADY_MAXIMUM_UPGRADE,
+      "Unit upgrade lane is complete for the current tier or globally complete.",
+    );
+  }
+  const level = levels[cursor]!;
+  if (level.slot !== slotId || level.warBucks < 0 || level.deliverySeconds < 0) {
+    throw new ApiError(ITEM_PRICE_NOT_FOUND, "Recovered unit upgrade balancing is invalid.");
+  }
+  return level;
+}
+
+/**
+ * Start one normal or special unit upgrade from exact recovered price/time data.
+ *
+ * ArmyScreen sends the lane and current cursor but keeps the optimistic WarBucks debit in
+ * RequestBuffer analytics arguments. Therefore the backend must select the cost itself. The
+ * one LevelManager.unitDelivery object is shared by every unit and both lanes, so only one
+ * receipt may be pending. Discounts, subscription time multipliers, and offer reductions are
+ * rejected until the corresponding server entitlements can be proven.
+ */
+export function startUnitUpgradeState(
+  state: PlayerProgressionState,
+  now: number,
+  payload: UnitUpgradePurchasePayload,
+): UnitUpgradeMutationResult {
+  const { definition, upgrades, itemInventory, unit } = unitUpgradeContext(state, payload.name);
+  const slotId: 0 | 1 = payload.isSpecial ? 1 : 0;
+  const level = assertUnitUpgradeTransition(
+    definition,
+    unit,
+    upgrades,
+    slotId,
+    payload.boughtIndex,
+  );
+  if (payload.discount !== 0 || payload.deliveryReduce !== 0) {
+    throw new ApiError(ITEM_NO_DISCOUNT_FOUND, "Unit upgrade offer is not backed by the server.");
+  }
+  if (payload.deliveryTime !== level.deliverySeconds || payload.startTime < 0) {
+    throw new ApiError(ITEM_PRICE_MISMATCH, "Unit upgrade duration or start time does not match balancing.");
+  }
+  if (activeUnitDelivery(itemInventory.levelManagerData.unitDelivery)) {
+    throw new ApiError(ITEM_ALREADY_UPGRADING, "Another unit upgrade is awaiting delivery or activation.");
+  }
+  if (state.warBucks < level.warBucks) {
+    throw new ApiError(ITEM_NOT_ENOUGH_WARBUCKS, "Not enough WarBucks for this unit upgrade.");
+  }
+
+  const start = Math.max(0, Math.floor(now));
+  itemInventory.levelManagerData.unitDelivery = {
+    activationNeeded: true,
+    boughtIndex: payload.boughtIndex,
+    end: start + level.deliverySeconds,
+    itemId: definition.name,
+    slotId,
+    start,
+  };
+  const next: PlayerProgressionState = {
+    ...state,
+    revision: state.revision + 1,
+    warBucks: state.warBucks - level.warBucks,
+    itemInventory,
+  };
+  return { state: next, itemInventory, unit, definition, deliveryTime: level.deliverySeconds };
+}
+
+function matchingUnitDelivery(
+  itemInventory: ItemInventoryState,
+  unit: SavedArmyState,
+  name: string,
+  requestedIndex: number,
+) {
+  const delivery = itemInventory.levelManagerData.unitDelivery;
+  if (
+    !delivery.activationNeeded
+    || delivery.itemId !== name
+    || (delivery.slotId !== 0 && delivery.slotId !== 1)
+    || delivery.boughtIndex !== requestedIndex
+    || laneCursor(unit, delivery.slotId) !== requestedIndex
+  ) {
+    throw new ApiError(ITEM_WRONG_INDEX_TO_ACTIVATE, "No matching unit upgrade delivery exists.");
+  }
+  return delivery as typeof delivery & { slotId: 0 | 1 };
+}
+
+function finishUnitUpgrade(
+  state: PlayerProgressionState,
+  itemInventory: ItemInventoryState,
+  unit: SavedArmyState,
+  definition: UnitDefinition,
+  slotId: 0 | 1,
+  goldSpent = 0,
+): UnitUpgradeMutationResult {
+  if (slotId === 0) unit.boughtIndex += 1;
+  else unit.specialSlot += 1;
+  itemInventory.levelManagerData.unitDelivery = emptyDelivery();
+  const next: PlayerProgressionState = {
+    ...state,
+    revision: state.revision + 1,
+    gold: state.gold - goldSpent,
+    itemInventory,
+  };
+  return { state: next, itemInventory, unit, definition, goldSpent };
+}
+
+/** Consume a completed unit receipt only after the server-owned end timestamp. */
+export function activateUnitUpgradeState(
+  state: PlayerProgressionState,
+  now: number,
+  payload: UnitUpgradeActivatePayload,
+): UnitUpgradeMutationResult {
+  const { definition, upgrades, itemInventory, unit } = unitUpgradeContext(state, payload.name);
+  const delivery = matchingUnitDelivery(itemInventory, unit, definition.name, payload.boughtIndex);
+  assertUnitUpgradeTransition(definition, unit, upgrades, delivery.slotId, payload.boughtIndex);
+  if (payload.armyPower < 0) {
+    throw new ApiError(ITEM_PRICE_MISMATCH, "ArmyPower must be non-negative.");
+  }
+  if (Math.floor(now) < delivery.end) {
+    throw new ApiError(ITEM_TOO_SOON_TO_ACTIVATE, "Unit upgrade delivery is not finished.");
+  }
+  return finishUnitUpgrade(state, itemInventory, unit, definition, delivery.slotId);
+}
+
+/**
+ * Spend Gold to finish the remaining unit delivery and advance the recorded lane atomically.
+ *
+ * UpgradeSlot.JCDBPPBDHBC has already incremented the local cursor before action 78 is sent.
+ * The payload carries the old cursor, while slot identity must come from the server receipt
+ * because InstantUnitUpgrade does not include IsSpecial. As with weapons, the accepted price
+ * range covers RequestBuffer queue delay but both bounds derive solely from persisted time.
+ */
+export function instantUnitUpgradeState(
+  state: PlayerProgressionState,
+  now: number,
+  payload: UnitUpgradeInstantPayload,
+): UnitUpgradeMutationResult {
+  const { definition, upgrades, itemInventory, unit } = unitUpgradeContext(state, payload.name);
+  const delivery = matchingUnitDelivery(itemInventory, unit, definition.name, payload.boughtIndex);
+  assertUnitUpgradeTransition(definition, unit, upgrades, delivery.slotId, payload.boughtIndex);
+  if (payload.discount !== 0) {
+    throw new ApiError(ITEM_NO_DISCOUNT_FOUND, "Unit delivery discount is not backed by the server.");
+  }
+  if (payload.expectedPrice < 0) {
+    throw new ApiError(ITEM_NEGATIVE_PRICE_FROM_CLIENT, "ExpectedPrice cannot be negative.");
+  }
+  if (
+    payload.armyPower < 0
+    || Math.abs(payload.goldCoefficient - WEAPON_GOLD_COEFFICIENT) > 0.000_001
+    || Math.abs(payload.goldExpCoefficient - WEAPON_GOLD_EXP_COEFFICIENT) > 0.000_001
+  ) {
+    // Both weapon and unit screens call the same client helper and constants rows. Keeping a
+    // single formula prevents the two delivery endpoints from drifting at float32 boundaries.
+    throw new ApiError(ITEM_PRICE_MISMATCH, "Unit instant-upgrade constants do not match balancing.");
+  }
+
+  const remainingAtReceipt = Math.max(0, delivery.end - Math.floor(now));
+  const fullDeliveryDuration = Math.max(0, delivery.end - delivery.start);
+  const minimumPrice = weaponUpgradeInstantPrice(remainingAtReceipt);
+  const maximumPrice = weaponUpgradeInstantPrice(fullDeliveryDuration);
+  if (payload.expectedPrice < minimumPrice || payload.expectedPrice > maximumPrice) {
+    throw new ApiError(ITEM_PRICE_MISMATCH, "Unit instant-upgrade price is outside the receipt range.");
+  }
+  if (state.gold < payload.expectedPrice) {
+    throw new ApiError(ITEM_NOT_ENOUGH_GOLD, "Not enough Gold to finish the unit upgrade.");
+  }
+  return finishUnitUpgrade(
+    state,
+    itemInventory,
+    unit,
+    definition,
+    delivery.slotId,
+    payload.expectedPrice,
+  );
 }
 
 /**
