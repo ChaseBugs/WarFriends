@@ -1,6 +1,11 @@
 import { MongoClient, type Collection, type Db, type Document } from "mongodb";
 import { config } from "./config";
 import type { DatabasePlayerDTO, SquadDTO } from "./dtos";
+import {
+  syncGameCatalog,
+  type GameCatalogEntryDocument,
+  type GameCatalogReleaseDocument,
+} from "./services/gameCatalogService";
 
 // One document per account. Top-level fields are indexed for lookup/matchmaking; the full
 // client-facing snapshot lives in `player` (DatabasePlayerDTO), mirroring the reference
@@ -416,6 +421,8 @@ let matchesCollection: Collection<Document> | null = null;
 let messagesCollection: Collection<Document> | null = null;
 let identitiesCollection: Collection<IdentityDocument> | null = null;
 let reportsCollection: Collection<Document> | null = null;
+let gameCatalogEntriesCollection: Collection<GameCatalogEntryDocument> | null = null;
+let gameCatalogReleasesCollection: Collection<GameCatalogReleaseDocument> | null = null;
 
 export async function connectMongo(): Promise<void> {
   await client.connect();
@@ -427,6 +434,8 @@ export async function connectMongo(): Promise<void> {
   messagesCollection = db.collection("messages");
   identitiesCollection = db.collection<IdentityDocument>("identities");
   reportsCollection = db.collection("playerReports");
+  gameCatalogEntriesCollection = db.collection<GameCatalogEntryDocument>("gameCatalogEntries");
+  gameCatalogReleasesCollection = db.collection<GameCatalogReleaseDocument>("gameCatalogReleases");
 
   await playersCollection.createIndex({ id: 1 }, { unique: true });
   await playersCollection.createIndex({ authToken: 1 });
@@ -467,6 +476,23 @@ export async function connectMongo(): Promise<void> {
   // supports the rolling abuse-rate limit without scanning the complete collection.
   await reportsCollection.createIndex({ reportedPlayerId: 1, status: 1, createdAt: -1 });
   await reportsCollection.createIndex({ reporterPlayerId: 1, createdAt: -1 });
+
+  // Catalog entries are immutable per content revision. The four-part unique key makes a
+  // repeated startup idempotent while still retaining prior recovered releases for audit and
+  // rollback. Gameplay reads first resolve gameCatalogReleases, then query this exact index.
+  await gameCatalogEntriesCollection.createIndex(
+    { clientVersion: 1, catalogRevision: 1, kind: 1, key: 1 },
+    { unique: true },
+  );
+  await gameCatalogEntriesCollection.createIndex(
+    { clientVersion: 1, catalogRevision: 1, availability: 1, kind: 1 },
+  );
+  // One pointer per client version identifies the only complete revision visible to readers.
+  await gameCatalogReleasesCollection.createIndex({ clientVersion: 1 }, { unique: true });
+
+  // Publish checked-in client data during boot. syncGameCatalog writes every immutable entry
+  // before moving the release pointer, so a process failure cannot expose half a catalog.
+  await syncGameCatalog(gameCatalogEntriesCollection, gameCatalogReleasesCollection);
 }
 
 export async function disconnectMongo(): Promise<void> {
@@ -478,6 +504,8 @@ export async function disconnectMongo(): Promise<void> {
   messagesCollection = null;
   identitiesCollection = null;
   reportsCollection = null;
+  gameCatalogEntriesCollection = null;
+  gameCatalogReleasesCollection = null;
 }
 
 function requireCollection<T extends Document>(name: string, value: Collection<T> | null): Collection<T> {
@@ -507,4 +535,12 @@ export function identities(): Collection<IdentityDocument> {
 
 export function reports(): Collection<Document> {
   return requireCollection("playerReports", reportsCollection);
+}
+
+export function gameCatalogEntries(): Collection<GameCatalogEntryDocument> {
+  return requireCollection("gameCatalogEntries", gameCatalogEntriesCollection);
+}
+
+export function gameCatalogReleases(): Collection<GameCatalogReleaseDocument> {
+  return requireCollection("gameCatalogReleases", gameCatalogReleasesCollection);
 }

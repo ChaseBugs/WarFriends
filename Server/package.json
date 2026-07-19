@@ -13,6 +13,7 @@
     "verify:weapon-catalog": "powershell -NoProfile -ExecutionPolicy Bypass -File ../Tools/Extract-WeaponCatalog.ps1 -Check",
     "verify:weapon-upgrades": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/Extract-WeaponUpgradeCatalog.ps1 -Check",
     "verify:unit-catalog": "powershell -NoProfile -ExecutionPolicy Bypass -File ../Tools/Extract-UnitCatalog.ps1 -Check",
+    "sync:catalog": "npm run build && node --env-file=.env dist/scripts/syncGameCatalog.js",
     "test": "npm run build && node --test \"dist/tests/*.test.js\""
   },
   "dependencies": {

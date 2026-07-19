@@ -40,6 +40,7 @@ import {
   instantUnitUpgradeState,
   parseUnitActivateData,
   parseUnitEquipData,
+  parseUnitEliteUpgradeData,
   parseUnitPromoteData,
   parseUnitPurchaseData,
   parseUnitUpgradeActivateData,
@@ -51,6 +52,7 @@ import {
   startUnitUpgradeState,
   unitRecoveryFields,
   unitPromotionErrorFields,
+  upgradeUnitEliteState,
   updateEquippedUnitsState,
 } from "./unitInventoryService";
 
@@ -610,6 +612,30 @@ export function processAssignmentBufferState(
           // Preserve the authoritative unit snapshot for compatible clients and diagnostics;
           // the stock 1.6.0 promotion success path needs no response body beyond Result.
           ...unitRecoveryFields(working, name),
+        });
+      }
+      continue;
+    }
+
+    if (request.action === DbAction.UpgradeEliteSlot) {
+      try {
+        // ArmyScreen has already removed unit-specific parts, removed WarBucks, and advanced
+        // eliteSlot locally. The server selects the old relative cursor's STARTINGELITE row,
+        // validates both echoed costs, and commits all three fields without a delivery timer.
+        working = upgradeUnitEliteState(
+          working,
+          parseUnitEliteUpgradeData(request.data),
+        ).state;
+        responses.push({ ActionId: request.action, Result: SUCCESS });
+      } catch (error) {
+        const code = error instanceof ApiError ? error.code : ApiErrorCode.InternalServerError;
+        responses.push({
+          ActionId: request.action,
+          Result: code,
+          // The stock error branch relogs for every recoverable elite failure. Returning the
+          // authoritative snapshot also supports compatible clients and makes the batch result
+          // self-contained while BufferId replay protection preserves exactly-once spending.
+          ...unitRecoveryFields(working, requestedUnitName(request.data)),
         });
       }
       continue;

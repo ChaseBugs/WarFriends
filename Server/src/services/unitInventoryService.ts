@@ -28,6 +28,10 @@ import {
 export const UNIT_CANT_EQUIP = 11406;
 /** IJEAJGCCHEF.NotEnoughLevelForPromote, handled by the client's global warning parser. */
 export const UNIT_NOT_ENOUGH_LEVEL_FOR_PROMOTE = 11405;
+/** IJEAJGCCHEF.NotEnoughParts, handled only by the UpgradeEliteSlot response branch. */
+export const UNIT_ELITE_NOT_ENOUGH_PARTS = 20902;
+/** IJEAJGCCHEF.IncorrectValuesOnClient, which forces a relog after an elite mismatch. */
+export const UNIT_ELITE_INCORRECT_VALUES = 20903;
 
 /**
  * Authoritative unit purchase logic recovered from the 4.9.5 MainScene.
@@ -99,12 +103,26 @@ interface UnitUpgradeLevel {
   slot: 0 | 1;
   warBucks: number;
   deliverySeconds: number;
+  /** Float value read by UpgradeSlot/UpgradeSlotSpecial.GetArmyPower. */
+  armyPower: number;
+}
+
+interface UnitEliteUpgradeLevel {
+  /** Absolute STARTINGELITE-based row retained for source audits. */
+  sourceIndex: number;
+  /** Exact unit-specific elite parts consumed by UpgradeEliteSlot. */
+  parts: number;
+  /** WarBucks cost; the first elite purchase is zero in the recovered tables. */
+  warBucks: number;
+  /** Float value included only after SavedArmySlots.eliteSlot becomes positive. */
+  armyPower: number;
 }
 
 interface UnitUpgradeDefinition {
   name: string;
   normalLevels: readonly UnitUpgradeLevel[];
   specialLevels: readonly UnitUpgradeLevel[];
+  eliteLevels: readonly UnitEliteUpgradeLevel[];
 }
 
 interface GeneratedUnitUpgradeArtifact {
@@ -121,6 +139,7 @@ const UNIT_UPGRADE_CATALOG: Readonly<Record<string, UnitUpgradeDefinition>> = Ob
         ...row,
         normalLevels: Object.freeze(row.normalLevels.map((level) => Object.freeze({ ...level }))),
         specialLevels: Object.freeze(row.specialLevels.map((level) => Object.freeze({ ...level }))),
+        eliteLevels: Object.freeze(row.eliteLevels.map((level) => Object.freeze({ ...level }))),
       }),
     ]),
   ),
@@ -187,6 +206,14 @@ export interface UnitUpgradeActivatePayload {
 
 export interface UnitPromotePayload {
   name: string;
+}
+
+export interface UnitEliteUpgradePayload {
+  name: string;
+  /** Relative SavedArmySlots.eliteSlot cursor, not the absolute Google2u row. */
+  boughtIndex: number;
+  spentWarBucks: number;
+  spentParts: number;
 }
 
 export interface UnitEquipDetailPayload {
@@ -324,6 +351,27 @@ export function parseUnitUpgradeActivateData(value: string): UnitUpgradeActivate
 export function parseUnitPromoteData(value: string): UnitPromotePayload {
   const data = parseObjectJson(value);
   return { name: unitName(data.LevelName) };
+}
+
+/** Decode the exact action-209 dictionary shared by first elite purchase and later upgrades. */
+export function parseUnitEliteUpgradeData(value: string): UnitEliteUpgradePayload {
+  try {
+    const data = parseObjectJson(value);
+    return {
+      name: unitName(data.LevelName),
+      boughtIndex: integer(data.BoughtIndex, "BoughtIndex"),
+      spentWarBucks: integer(data.SpentWarbucks, "SpentWarbucks"),
+      spentParts: integer(data.SpentParts, "SpentParts"),
+    };
+  } catch (error) {
+    if (error instanceof ApiError) {
+      // OGLEHLIPEFM's UpgradeEliteSlot branch does not handle the generic unit price codes.
+      // IncorrectValuesOnClient is its source-defined malformed/stale-payload result and
+      // deliberately forces a full relog so Unity discards every optimistic elite mutation.
+      throw new ApiError(UNIT_ELITE_INCORRECT_VALUES, error.message);
+    }
+    throw error;
+  }
 }
 
 /** Decode ArmyScreen.SendEquippedUnits' exact action-1003 dictionary. */
@@ -781,6 +829,133 @@ export function promoteUnitState(
 }
 
 /**
+ * Consume parts and WarBucks for one immediate elite-slot transition.
+ *
+ * ArmyScreen uses UpgradeEliteSlot for both the first elite purchase and every later elite
+ * level. It optimistically subtracts `upgradePriceParts` and increments eliteSlot before the
+ * RequestBuffer is sent. Unlike normal/special upgrades, elite has no delivery receipt: the
+ * old relative cursor selects the STARTINGELITE row, and the entire transition commits in one
+ * request. `NextUpgradePriceGold` is a misleading historical column name; UpgradeSlotElite
+ * reads it as a unit-specific parts requirement, while `NextUpgradePrice` remains WarBucks.
+ */
+export function upgradeUnitEliteState(
+  state: PlayerProgressionState,
+  payload: UnitEliteUpgradePayload,
+): UnitInventoryMutationResult {
+  let context: ReturnType<typeof unitUpgradeContext>;
+  try {
+    context = unitUpgradeContext(state, payload.name);
+  } catch (error) {
+    if (error instanceof ApiError) {
+      // The action-209 parser has no PriceNotFound/WeaponNotBought case. Mapping ownership and
+      // catalog failures to its dedicated IncorrectValuesOnClient result preserves the stock
+      // client's relog/rollback behavior instead of returning a code it silently ignores.
+      throw new ApiError(UNIT_ELITE_INCORRECT_VALUES, error.message);
+    }
+    throw error;
+  }
+  const { definition, upgrades, itemInventory, unit } = context;
+  const levels = upgrades.eliteLevels;
+  if (definition.startingElite <= 0 || levels.length < 2) {
+    throw new ApiError(UNIT_ELITE_INCORRECT_VALUES, "Elite balancing is not available for this unit.");
+  }
+  if (payload.boughtIndex !== unit.eliteSlot) {
+    throw new ApiError(ITEM_WRONG_INDEX_TO_ACTIVATE, "Elite cursor does not match stored state.");
+  }
+
+  // UpgradeSlot.isMaxUpgraded is `boughtIndex + 1 >= maxPower`. The row at the current cursor
+  // prices the transition into cursor + 1, so the final row is a terminal display/stat row and
+  // cannot itself be purchased.
+  const level = levels[unit.eliteSlot];
+  if (!level || unit.eliteSlot < 0 || unit.eliteSlot >= levels.length - 1) {
+    throw new ApiError(ITEM_WRONG_INDEX_TO_ACTIVATE, "Elite slot is already fully upgraded.");
+  }
+  if (level.sourceIndex !== definition.startingElite + unit.eliteSlot) {
+    throw new ApiError(UNIT_ELITE_INCORRECT_VALUES, "Elite source row is not contiguous.");
+  }
+  if (level.warBucks < 0 || level.parts < 0 || level.armyPower < 0) {
+    throw new ApiError(UNIT_ELITE_INCORRECT_VALUES, "Recovered elite balancing is invalid.");
+  }
+  if (payload.spentWarBucks !== level.warBucks || payload.spentParts !== level.parts) {
+    // Offer/discount entitlement has not been recovered. Accepting a smaller client echo here
+    // would let a modified APK choose its own price, so only the exact source row is valid.
+    throw new ApiError(UNIT_ELITE_INCORRECT_VALUES, "Elite price does not match server balancing.");
+  }
+  if (unit.parts < level.parts) {
+    throw new ApiError(UNIT_ELITE_NOT_ENOUGH_PARTS, "Not enough unit-specific elite parts.");
+  }
+  if (state.warBucks < level.warBucks) {
+    throw new ApiError(ITEM_NOT_ENOUGH_WARBUCKS, "Not enough WarBucks for the elite upgrade.");
+  }
+
+  unit.parts -= level.parts;
+  unit.eliteSlot += 1;
+  const next: PlayerProgressionState = {
+    ...state,
+    revision: state.revision + 1,
+    warBucks: state.warBucks - level.warBucks,
+    itemInventory,
+  };
+  return { state: next, itemInventory, unit, definition };
+}
+
+function clampCursor(cursor: number, length: number): number {
+  return Math.max(0, Math.min(Math.trunc(cursor), length - 1));
+}
+
+/** Reproduce UpgradeSlots.GetArmyPower's float32 addition for one persisted unit. */
+function unitArmyPowerValue(
+  definition: UnitDefinition,
+  upgrades: UnitUpgradeDefinition,
+  unit: SavedArmyState,
+): number {
+  if (upgrades.normalLevels.length < 1 || upgrades.specialLevels.length < 1 || upgrades.eliteLevels.length < 1) {
+    throw new ApiError(ITEM_PRICE_NOT_FOUND, "Unit ArmyPower rows are incomplete.");
+  }
+  const normal = Math.fround(upgrades.normalLevels[clampCursor(unit.boughtIndex, upgrades.normalLevels.length)]!.armyPower);
+  const actualTier = unit.tier === 0 ? definition.startingTier : unit.tier;
+  const special = actualTier <= definition.startingTier
+    ? 0
+    : Math.fround(upgrades.specialLevels[clampCursor(unit.specialSlot, upgrades.specialLevels.length)]!.armyPower);
+  const elite = unit.eliteSlot <= 0
+    ? 0
+    : Math.fround(upgrades.eliteLevels[clampCursor(unit.eliteSlot, upgrades.eliteLevels.length)]!.armyPower);
+
+  // C# evaluates float additions after every operator. Math.fround at both boundaries avoids
+  // JavaScript's double precision changing a half-step before Unity's FloorToInt(value + .5f).
+  return Math.fround(Math.fround(normal + special) + elite);
+}
+
+/** Source-authoritative floating ArmyPower for one owned unit, excluding weapon/rank power. */
+export function unitArmyPower(state: PlayerProgressionState, name: string): number {
+  const definition = PLAYER_UNIT_CATALOG[name];
+  const upgrades = UNIT_UPGRADE_CATALOG[name];
+  const unit = itemInventoryStateFor(state).levelManagerData.savedArmies[name];
+  if (!definition || !upgrades || !unit?.bought) return 0;
+  return unitArmyPowerValue(definition, upgrades, unit);
+}
+
+/**
+ * Reproduce LevelManager.unitPower for the equipped, permanently owned unit roster.
+ *
+ * LevelManager sums UpgradeSlots.armyPower as float32 in behaviour order and rounds once with
+ * FloorToInt(total + 0.5f). Weapon and rank power are intentionally outside this helper; those
+ * independent source tables must be recovered before UpdateArmyPower can replace the current
+ * fail-closed client-echo boundary with a complete server-owned total.
+ */
+export function equippedUnitPower(state: PlayerProgressionState): number {
+  const saved = itemInventoryStateFor(state).levelManagerData.savedArmies;
+  let total = Math.fround(0);
+  for (const definition of Object.values(PLAYER_UNIT_CATALOG).sort((a, b) => a.index - b.index)) {
+    const unit = saved[definition.name];
+    const upgrades = UNIT_UPGRADE_CATALOG[definition.name];
+    if (!unit?.bought || !unit.equipped || unit.borrowed || !upgrades) continue;
+    total = Math.fround(total + unitArmyPowerValue(definition, upgrades, unit));
+  }
+  return Math.floor(Math.fround(total + Math.fround(0.5)));
+}
+
+/**
  * Persist the full active-unit snapshot sent after purchase or roster editing.
  *
  * ActiveUnitsManager allows at most two equipped units in each of the four
@@ -793,8 +968,9 @@ export function promoteUnitState(
  * BuyUnit/ActivateUnit for `isTutorialUnit`, leaving UpdateEquippedUnits as the first normal
  * backend event capable of persisting it. Materializing that one exact recovered row here is
  * safe and required for the post-tutorial roster to survive login; helpers and unresolved
- * table rows remain rejected. Client armyPower is not stored because its per-upgrade formula
- * has not yet been recovered and therefore cannot be independently verified by the server.
+ * table rows remain rejected. Unit ArmyPower is now source-authoritative, but the request's
+ * total also contains equipped-weapon and rank rows. The client echo is therefore not stored
+ * until those remaining two components can be independently reproduced by the server.
  */
 export function updateEquippedUnitsState(
   state: PlayerProgressionState,

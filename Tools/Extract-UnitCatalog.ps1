@@ -417,10 +417,10 @@ try {
         throw "Expected 18 unreferenced ArmyUpgrades rows, found $($unresolved.Count)."
     }
 
-    # Each resolved Google2u component contains the per-level rows used by both UpgradeSlot
-    # cursors. TIER encodes the slot in its tens digit: 0x is the normal path and 1x is the
-    # special path. Preserve the absolute source index because STARTINGSPECIAL is an offset
-    # into RowsGeneric, while SavedArmySlots.specialSlot stores a relative cursor.
+    # Each resolved Google2u component contains all three per-level cursors used by UpgradeSlots.
+    # TIER encodes the slot in its tens digit: 0x is normal, 1x is special, and 2x is elite.
+    # Preserve the absolute source index because STARTINGSPECIAL/STARTINGELITE are offsets into
+    # RowsGeneric, while SavedArmySlots stores relative normal, special, and elite cursors.
     $upgradeComponentToName = @{}
     $playerReferences = @($references | Where-Object { -not $_.Additional })
     foreach ($reference in $playerReferences) {
@@ -440,18 +440,18 @@ try {
         }
         $tier = [int]$Row.tier
         if ($tier -lt 0) { return }
-        foreach ($field in @('priceKey', 'priceHidden', 'priceGold', 'timeKey', 'timeHidden')) {
-            if ($null -eq $Row[$field]) {
-                throw "Unit upgrade component $activeUpgradeComponent has a row missing $field."
-            }
-        }
         $slot = [Math]::Floor($tier / 10)
-        if ($slot -notin @(0, 1)) {
-            # Elite/card/arena rows use different state and currency contracts. They remain in
-            # the source table but cannot enter the normal/special RequestBuffer lifecycle.
+        if ($slot -notin @(0, 1, 2)) {
+            # Later card/arena rows use unrelated state and currency contracts. They remain in
+            # the source table but cannot enter any recovered unit-upgrade lifecycle.
             return
         }
-        if ([int]$Row.priceGold -ne 0) {
+        foreach ($field in @('priceKey', 'priceHidden', 'priceGold', 'timeKey', 'timeHidden', 'armyPower')) {
+            if ($null -eq $Row[$field]) {
+                throw "Unit upgrade component $activeUpgradeComponent row $($Row.index) (tier $tier, slot $slot) is missing $field."
+            }
+        }
+        if ($slot -ne 2 -and [int]$Row.priceGold -ne 0) {
             throw "Unexpected premium currency in unit upgrade row $($Row.index)."
         }
         $delivery = Decode-ObscuredFloat ([uint32]$Row.timeKey) ([string]$Row.timeHidden)
@@ -459,13 +459,23 @@ try {
         if ([Math]::Abs($delivery - $roundedDelivery) -gt 0.001 -or $roundedDelivery -lt 0) {
             throw "Unit upgrade row $($Row.index) has invalid delivery time $delivery."
         }
-        $Rows.Add([ordered]@{
+        $extractedRow = [ordered]@{
             sourceIndex = [int]$Row.index
             tier = $tier % 10
             slot = [int]$slot
             warBucks = [int]([long]$Row.priceKey -bxor [long]$Row.priceHidden)
             deliverySeconds = $roundedDelivery
-        })
+            # ARMYPOWER is serialized as a plain number in the recovered Google2u row. Keeping
+            # it on every lane lets the backend reproduce UpgradeSlots.GetArmyPower without
+            # accepting the ArmyPower echo sent by a modified client.
+            armyPower = [double]$Row.armyPower
+        }
+        if ($slot -eq 2) {
+            # Elite uses the historical NextUpgradePriceGold column as a parts requirement.
+            # It is not premium currency and is therefore retained under its actual meaning.
+            $extractedRow.parts = [int]$Row.priceGold
+        }
+        $Rows.Add($extractedRow)
     }
 
     function Finish-UnitUpgradeComponent {
@@ -507,6 +517,7 @@ try {
                     priceGold = $null
                     timeKey = $null
                     timeHidden = $null
+                    armyPower = $null
                 }
                 $upgradeSection = $null
                 continue
@@ -516,6 +527,11 @@ try {
             if ($line -eq '    NEXTUPGRADEPRICE:') { $upgradeSection = 'price'; continue }
             if ($line -match '^    NEXTUPGRADEPRICEGOLD: (-?\d+)$') {
                 $upgradeRow.priceGold = [int]$Matches[1]
+                $upgradeSection = $null
+                continue
+            }
+            if ($line -match '^    ARMYPOWER: (-?\d+(?:\.\d+)?)$') {
+                $upgradeRow.armyPower = [double]::Parse($Matches[1], [Globalization.CultureInfo]::InvariantCulture)
                 $upgradeSection = $null
                 continue
             }
@@ -546,16 +562,27 @@ try {
         $rows = @($upgradeRowsByName[$reference.Name])
         $normal = @($rows | Where-Object { $_.slot -eq 0 })
         $special = @($rows | Where-Object { $_.slot -eq 1 })
-        if ($normal.Count -lt 2 -or $special.Count -lt 2) {
-            throw "$($reference.Name) has incomplete normal/special upgrade ranges."
+        $elite = @($rows | Where-Object { $_.slot -eq 2 })
+        if ($normal.Count -lt 2 -or $special.Count -lt 2 -or $elite.Count -lt 2) {
+            throw "$($reference.Name) has incomplete normal/special/elite upgrade ranges."
         }
-        if ($normal[0].sourceIndex -ne 0 -or $special[0].sourceIndex -ne $source.startingSpecial) {
-            throw "$($reference.Name) upgrade offsets disagree with ArmyUpgrades.STARTINGSPECIAL."
+        if ($normal[0].sourceIndex -ne 0 -or $special[0].sourceIndex -ne $source.startingSpecial -or $elite[0].sourceIndex -ne $source.startingElite) {
+            throw "$($reference.Name) upgrade offsets disagree with ArmyUpgrades slot offsets."
         }
         $upgradeCatalog.Add([ordered]@{
             name = $reference.Name
             normalLevels = $normal
             specialLevels = $special
+            eliteLevels = @($elite | ForEach-Object {
+                [ordered]@{
+                    sourceIndex = $_.sourceIndex
+                    # UpgradeSlotElite reads the parts requirement from NextUpgradePriceGold;
+                    # despite the historical column name, this is not premium Gold currency.
+                    parts = $_.parts
+                    warBucks = $_.warBucks
+                    armyPower = $_.armyPower
+                }
+            })
         })
     }
 
@@ -567,7 +594,7 @@ try {
         unresolvedRows = $unresolved
     }
     $upgradeArtifact = [ordered]@{
-        schemaVersion = 1
+        schemaVersion = 2
         source = 'Client/ExportedProject/Assets/Scenes/MainScene.unity'
         sourceSha256 = (Get-FileHash -LiteralPath $scene -Algorithm SHA256).Hash.ToLowerInvariant()
         catalog = $upgradeCatalog
@@ -583,7 +610,7 @@ try {
         if ([IO.File]::ReadAllText($resolvedUpgradeOutput) -ne $expectedUpgradeText) {
             throw "Generated unit upgrade catalog is stale. Run Tools\Extract-UnitCatalog.ps1."
         }
-        Write-Host "Unit catalogs are current: 24 player rows, 3 helpers, 18 unresolved rows, and 24 upgrade tables."
+        Write-Host "Unit catalogs are current: 24 player rows, 3 helpers, 18 unresolved rows, and 24 three-lane upgrade tables."
     }
     else {
         $directory = Split-Path -Parent $OutputPath
@@ -596,7 +623,7 @@ try {
             [void](New-Item -ItemType Directory -Path $upgradeDirectory)
         }
         [IO.File]::WriteAllText($UpgradeOutputPath, $expectedUpgradeText, [Text.UTF8Encoding]::new($false))
-        Write-Host "Wrote unit purchase and upgrade artifacts with 24 player upgrade tables."
+        Write-Host "Wrote unit purchase and upgrade artifacts with 24 three-lane player tables."
     }
 }
 finally {

@@ -14,6 +14,7 @@ cp .env.example .env      # adjust MONGO_URL / REDIS_URL if needed
 npm install
 npm run dev               # ts-node-dev, watch mode
 # or: npm run build && npm start
+# optional explicit catalog publication: npm run sync:catalog
 ```
 
 Requires MongoDB (`:27017`) and, optionally, Redis (`:6379`). Set `REDIS_ENABLED=false` to
@@ -95,6 +96,16 @@ Working end-to-end (verified live):
 - **Energy economy**: server-owned dog-tag seconds, passive regeneration, atomic
   `PayOneDogTag`, and gold-validated `RefillDogtags` using the recovered 900-second/5-tag
   balancing and refill-price formula.
+- **Versioned client-data material database**: MongoDB collections `gameCatalogEntries` and
+  `gameCatalogReleases` persist the recovered 4.9.5 weapon, soldier/unit, and upgrade data as
+  138 queryable records. Every playable weapon record joins its shop row to the full upgrade
+  table; every playable unit joins roster/deployment/purchase data to normal, special, and
+  elite level rows. Nine unresolved Pulse Rifles, three helper units, and 18 unresolved unit
+  rows are retained with explicit non-playable states instead of being discarded or silently
+  enabled. Per-entry SHA-256 hashes and a deterministic release hash make balancing changes
+  auditable. Startup idempotently writes all immutable revision entries before switching the
+  current 4.9.5 release pointer, so readers cannot observe a partial synchronization. Run
+  `npm run sync:catalog` to publish explicitly; normal server startup performs the same sync.
 - **Weapon inventory foundation**: private and public player snapshots now serialize the
   exact recovered `InventoryData.slots` and `LevelManagerData.savedWeapons` structures with
   the 4.9.5 starter loadout. Stock buffered `BuyWeapon`/`EquipWeapon` supports all 84
@@ -133,16 +144,21 @@ Working end-to-end (verified live):
   acknowledgement rather than a fabricated timer. `UpdateEquippedUnits` persists the tutorial
   Assaulter's first backend-visible grant and the full owned roster while enforcing the recovered
   two-per-category and three-mechanical-unit caps; invalid changes receive the exact 11406 rollback
-  dictionary. The same extractor records 4,124 normal and 684 special per-level rows across all
-  24 player tables, including absolute source offsets, tier, XOR-decoded WarBucks price, and
-  delivery duration. Buffered actions `77`-`79` use those rows to enforce separate normal and
+  dictionary. The same extractor records 4,124 normal, 684 special, and 216 elite per-level rows
+  across all 24 player tables, including absolute source offsets, tier, float ArmyPower,
+  XOR-decoded WarBucks price, delivery duration, and Elite parts price. Buffered actions `77`-`79`
+  use those rows to enforce separate normal and
   special cursors, promotion-gated special access, current-tier maximums, one shared unit-delivery
   receipt, server time, exact WarBucks debit, receipt-backed instant Gold cost, atomic completion,
   Unity rollback, and replay safety. `PromoteUnit` then validates normal-tier completion, the
   recovered one-based `UNLOCKTIER2`-`UNLOCKTIER6` level gates, maximum tier 6, ownership, and an
   empty delivery receipt before advancing only `tier`; the exact 11405 level error includes the
-  diagnostics consumed by the client warning handler. Helper/unresolved rows, offer/subscription
-  discounts, elite upgrades, and unverified army-power writes remain fail-closed. Run
+  diagnostics consumed by the client warning handler. `UpgradeEliteSlot` action `209` now validates
+  the relative Elite cursor and exact source parts/WarBucks cost, performs the immediate atomic
+  debit/increment, returns the recovered `104`/`20902`/`20903` failures, and is replay-safe. Unit
+  ArmyPower reproduces Unity float32 addition for normal, promoted-special, and bought-Elite rows
+  and sums only equipped permanent units. Helper/unresolved rows, offer/subscription discounts,
+  and full ArmyPower writes remain fail-closed until weapon and rank power are also recovered. Run
   `npm run verify:unit-catalog` to compare both artifacts with MainScene and the recovered
   assemblies.
 - **Daily rewards**: `CheckDailyReward` and `ClaimDailyReward` provide the recovered monthly
@@ -190,8 +206,9 @@ allowlist of analytics/impression actions is safely ignored.
 - **Squad extensions** — card pool and squad events/wars are not implemented. Chat unread
   state is persistent, but actual channel delivery still requires Photon Chat repointing or
   a compatible replacement transport.
-- **Item economy expansion** — recover unit elite-upgrade and army-power rules, then add
-  decals, cards, packs, and VIP. Normal purchase is authoritative for 23
+- **Item economy expansion** — unit Elite upgrades and the unit component of ArmyPower are now
+  source-authoritative. Recover equipped-weapon and rank power to close the full ArmyPower write,
+  then add decals, cards, packs, and VIP. Normal purchase is authoritative for 23
   non-tutorial roster units, and the tutorial unit is persisted through its first equip event;
   three helper rows and 18 ArmyUpgrades rows without LevelManager objects remain closed. All 84 resolvable
   shop weapons support exact Gold or WarBucks purchase/equip plus server-owned upgrade

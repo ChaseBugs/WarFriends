@@ -21,9 +21,11 @@ import { createInitialProgression } from "../services/playerStateService";
 import {
   activateUnitState,
   activateUnitUpgradeState,
+  equippedUnitPower,
   instantUnitUpgradeState,
   parseUnitActivateData,
   parseUnitEquipData,
+  parseUnitEliteUpgradeData,
   parseUnitPromoteData,
   parseUnitPurchaseData,
   parseUnitUpgradeActivateData,
@@ -34,7 +36,11 @@ import {
   startUnitUpgradeState,
   UNIT_CANT_EQUIP,
   UNIT_CATALOG,
+  UNIT_ELITE_INCORRECT_VALUES,
+  UNIT_ELITE_NOT_ENOUGH_PARTS,
   UNIT_NOT_ENOUGH_LEVEL_FOR_PROMOTE,
+  unitArmyPower,
+  upgradeUnitEliteState,
   updateEquippedUnitsState,
 } from "../services/unitInventoryService";
 
@@ -114,6 +120,22 @@ function promoteData(name = SHOTGUNNER): string {
   return JSON.stringify({ LevelName: name });
 }
 
+function eliteUpgradeData(
+  name = SHOTGUNNER,
+  boughtIndex = 0,
+  overrides: Record<string, unknown> = {},
+): string {
+  const table = generatedUnitUpgradeCatalog.catalog.find((row) => row.name === name);
+  const level = table?.eliteLevels[boughtIndex];
+  return JSON.stringify({
+    LevelName: name,
+    BoughtIndex: boughtIndex,
+    SpentWarbucks: level?.warBucks ?? 0,
+    SpentParts: level?.parts ?? 0,
+    ...overrides,
+  });
+}
+
 function equippedData(
   equips: Record<string, { wasEquipped?: boolean; equipped?: boolean }>,
   armyPower = 100,
@@ -147,8 +169,8 @@ test("unit extraction preserves player, helper, and unresolved boundaries", () =
   );
 });
 
-test("unit upgrade extraction preserves normal/special offsets and all player tables", () => {
-  assert.equal(generatedUnitUpgradeCatalog.schemaVersion, 1);
+test("unit upgrade extraction preserves all three slot offsets, power, and player tables", () => {
+  assert.equal(generatedUnitUpgradeCatalog.schemaVersion, 2);
   assert.equal(generatedUnitUpgradeCatalog.catalog.length, 24);
   assert.equal(
     generatedUnitUpgradeCatalog.catalog.reduce((sum, row) => sum + row.normalLevels.length, 0),
@@ -158,14 +180,20 @@ test("unit upgrade extraction preserves normal/special offsets and all player ta
     generatedUnitUpgradeCatalog.catalog.reduce((sum, row) => sum + row.specialLevels.length, 0),
     684,
   );
+  assert.equal(
+    generatedUnitUpgradeCatalog.catalog.reduce((sum, row) => sum + row.eliteLevels.length, 0),
+    216,
+  );
 
   for (const upgrades of generatedUnitUpgradeCatalog.catalog) {
     const definition = generatedUnitCatalog.catalog.find((row) => row.name === upgrades.name);
     assert.ok(definition);
     assert.equal(upgrades.normalLevels[0]?.sourceIndex, 0);
     assert.equal(upgrades.specialLevels[0]?.sourceIndex, definition.startingSpecial);
+    assert.equal(upgrades.eliteLevels[0]?.sourceIndex, definition.startingElite);
     assert.equal(upgrades.normalLevels.every((row) => row.slot === 0), true);
     assert.equal(upgrades.specialLevels.every((row) => row.slot === 1), true);
+    assert.equal(upgrades.eliteLevels.length, 9);
   }
 
   // Sniper begins at tier 2, so its first normal row is tier 1 balancing but its saved tier
@@ -177,8 +205,15 @@ test("unit upgrade extraction preserves normal/special offsets and all player ta
     slot: 0,
     warBucks: 1_800,
     deliverySeconds: 240,
+    armyPower: 71.97,
   });
   assert.equal(sniper?.specialLevels[0]?.sourceIndex, 196);
+  assert.deepEqual(sniper?.eliteLevels[0], {
+    sourceIndex: 232,
+    parts: 50,
+    warBucks: 0,
+    armyPower: 5,
+  });
 });
 
 test("free unit purchase creates the exact SavedArmySlots shape", () => {
@@ -511,6 +546,108 @@ test("buffered promotion returns exact level diagnostics and is replay-safe", ()
   assert.equal(replay.replayed, true);
   assert.equal(replay.requestsResults, first.requestsResults);
   assert.equal(replay.state.itemInventory?.levelManagerData.savedArmies[SHOTGUNNER]?.tier, 2);
+});
+
+test("elite purchase consumes exact parts and later levels consume recovered WarBucks", () => {
+  const owned = purchaseUnitState(createInitialProgression(NOW), 0, parseUnitPurchaseData(buyData()));
+  owned.unit.parts = 50;
+  const first = upgradeUnitEliteState(owned.state, parseUnitEliteUpgradeData(eliteUpgradeData()));
+  assert.equal(first.unit.eliteSlot, 1);
+  assert.equal(first.unit.parts, 0);
+  assert.equal(first.state.warBucks, 0);
+
+  first.unit.parts = 100;
+  assert.throws(
+    () => upgradeUnitEliteState(first.state, parseUnitEliteUpgradeData(eliteUpgradeData(SHOTGUNNER, 1))),
+    (error: unknown) => (error as { code?: number }).code === ITEM_NOT_ENOUGH_WARBUCKS,
+  );
+  const funded = { ...first.state, warBucks: 50_000 };
+  const second = upgradeUnitEliteState(
+    funded,
+    parseUnitEliteUpgradeData(eliteUpgradeData(SHOTGUNNER, 1)),
+  );
+  assert.equal(second.unit.eliteSlot, 2);
+  assert.equal(second.unit.parts, 0);
+  assert.equal(second.state.warBucks, 0);
+});
+
+test("elite transition rejects stale cursors, insufficient parts, and client-selected prices", () => {
+  assert.throws(
+    () => upgradeUnitEliteState(
+      createInitialProgression(NOW),
+      parseUnitEliteUpgradeData(eliteUpgradeData()),
+    ),
+    (error: unknown) => (error as { code?: number }).code === UNIT_ELITE_INCORRECT_VALUES,
+  );
+  const owned = purchaseUnitState(createInitialProgression(NOW), 0, parseUnitPurchaseData(buyData()));
+  owned.unit.parts = 49;
+  assert.throws(
+    () => upgradeUnitEliteState(owned.state, parseUnitEliteUpgradeData(eliteUpgradeData())),
+    (error: unknown) => (error as { code?: number }).code === UNIT_ELITE_NOT_ENOUGH_PARTS,
+  );
+  owned.unit.parts = 50;
+  assert.throws(
+    () => upgradeUnitEliteState(
+      owned.state,
+      parseUnitEliteUpgradeData(eliteUpgradeData(SHOTGUNNER, 0, { SpentParts: 1 })),
+    ),
+    (error: unknown) => (error as { code?: number }).code === UNIT_ELITE_INCORRECT_VALUES,
+  );
+  assert.throws(
+    () => upgradeUnitEliteState(
+      owned.state,
+      parseUnitEliteUpgradeData(eliteUpgradeData(SHOTGUNNER, 0, { BoughtIndex: 1 })),
+    ),
+    (error: unknown) => (error as { code?: number }).code === 104,
+  );
+});
+
+test("buffered elite upgrade is exactly-once and malformed payloads use the client elite error", () => {
+  const owned = purchaseUnitState(createInitialProgression(NOW), 0, parseUnitPurchaseData(buyData()));
+  owned.unit.parts = 50;
+  const request = [{ action: DbAction.UpgradeEliteSlot, data: eliteUpgradeData() }];
+  const first = processAssignmentBufferState(owned.state, NOW, "unit-elite-1", request, 0);
+  assert.deepEqual(JSON.parse(first.requestsResults), [{ ActionId: DbAction.UpgradeEliteSlot, Result: 1 }]);
+  assert.equal(first.state.itemInventory?.levelManagerData.savedArmies[SHOTGUNNER]?.eliteSlot, 1);
+  assert.equal(first.state.itemInventory?.levelManagerData.savedArmies[SHOTGUNNER]?.parts, 0);
+
+  const replay = processAssignmentBufferState(first.state, NOW + 5, "unit-elite-1", request, 0);
+  assert.equal(replay.replayed, true);
+  assert.equal(replay.requestsResults, first.requestsResults);
+  assert.equal(replay.state.itemInventory?.levelManagerData.savedArmies[SHOTGUNNER]?.eliteSlot, 1);
+
+  const malformed = processAssignmentBufferState(
+    owned.state,
+    NOW,
+    "unit-elite-malformed",
+    [{ action: DbAction.UpgradeEliteSlot, data: JSON.stringify({ LevelName: SHOTGUNNER }) }],
+    0,
+  );
+  const [failure] = JSON.parse(malformed.requestsResults) as Array<Record<string, unknown>>;
+  assert.equal(failure.Result, UNIT_ELITE_INCORRECT_VALUES);
+  assert.equal(JSON.parse(String(failure.Unit)).eliteSlot, 0);
+  assert.equal(JSON.parse(String(failure.Unit)).parts, 50);
+});
+
+test("unit ArmyPower follows normal, promoted special, and bought elite rows", () => {
+  const owned = purchaseUnitState(createInitialProgression(NOW), 0, parseUnitPurchaseData(buyData()));
+  assert.equal(unitArmyPower(owned.state, SHOTGUNNER), 60);
+  assert.equal(equippedUnitPower(owned.state), 0);
+
+  owned.unit.equipped = true;
+  assert.equal(equippedUnitPower(owned.state), 60);
+  owned.unit.parts = 50;
+  const elite = upgradeUnitEliteState(owned.state, parseUnitEliteUpgradeData(eliteUpgradeData()));
+  // The cursor advances to elite row one; row zero priced that transition but was hidden while
+  // isBought was false, so the newly bought elite contribution is row one's value of 10.
+  assert.equal(unitArmyPower(elite.state, SHOTGUNNER), 70);
+  assert.equal(equippedUnitPower(elite.state), 70);
+
+  // At tier 2, special cursor zero contributes 5 and normal cursor five contributes 68.47.
+  elite.unit.boughtIndex = 5;
+  elite.unit.tier = 2;
+  assert.ok(Math.abs(unitArmyPower(elite.state, SHOTGUNNER) - 83.47) < 0.000_01);
+  assert.equal(equippedUnitPower(elite.state), 83);
 });
 
 test("BuyUnit, ActivateUnit, and auto-equip are atomic and replay-safe in RequestBuffer", () => {
