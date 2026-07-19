@@ -40,14 +40,17 @@ import {
   instantUnitUpgradeState,
   parseUnitActivateData,
   parseUnitEquipData,
+  parseUnitPromoteData,
   parseUnitPurchaseData,
   parseUnitUpgradeActivateData,
   parseUnitUpgradeInstantData,
   parseUnitUpgradePurchaseData,
   purchaseUnitState,
+  promoteUnitState,
   requestedUnitName,
   startUnitUpgradeState,
   unitRecoveryFields,
+  unitPromotionErrorFields,
   updateEquippedUnitsState,
 } from "./unitInventoryService";
 
@@ -580,6 +583,33 @@ export function processAssignmentBufferState(
           // ArmyScreen has already changed its wallet, cursor, and receipt. These are the
           // exact fields consumed by OGLEHLIPEFM to restore the last committed server state.
           ...unitRecoveryFields(working, requestedUnitName(request.data)),
+        });
+      }
+      continue;
+    }
+
+    if (request.action === DbAction.PromoteUnit) {
+      try {
+        // ArmyScreen has already incremented actualTier locally. The server reconstructs the
+        // gate from its saved normal cursor, zero-based player level, recovered UNLOCKTIERn
+        // values, maximum tier, and the globally shared unit-delivery receipt.
+        working = promoteUnitState(
+          working,
+          playerLevel,
+          parseUnitPromoteData(request.data),
+        ).state;
+        responses.push({ ActionId: request.action, Result: SUCCESS });
+      } catch (error) {
+        const code = error instanceof ApiError ? error.code : ApiErrorCode.InternalServerError;
+        const name = requestedUnitName(request.data);
+        responses.push({
+          ActionId: request.action,
+          Result: code,
+          // NotEnoughLevelForPromote's global handler reads these two strings for diagnostics.
+          ...unitPromotionErrorFields(working, playerLevel, name),
+          // Preserve the authoritative unit snapshot for compatible clients and diagnostics;
+          // the stock 1.6.0 promotion success path needs no response body beyond Result.
+          ...unitRecoveryFields(working, name),
         });
       }
       continue;

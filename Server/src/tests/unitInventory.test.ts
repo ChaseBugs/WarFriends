@@ -24,14 +24,17 @@ import {
   instantUnitUpgradeState,
   parseUnitActivateData,
   parseUnitEquipData,
+  parseUnitPromoteData,
   parseUnitPurchaseData,
   parseUnitUpgradeActivateData,
   parseUnitUpgradeInstantData,
   parseUnitUpgradePurchaseData,
   purchaseUnitState,
+  promoteUnitState,
   startUnitUpgradeState,
   UNIT_CANT_EQUIP,
   UNIT_CATALOG,
+  UNIT_NOT_ENOUGH_LEVEL_FOR_PROMOTE,
   updateEquippedUnitsState,
 } from "../services/unitInventoryService";
 
@@ -105,6 +108,10 @@ function upgradeInstantData(
     discount: 0,
     ...overrides,
   });
+}
+
+function promoteData(name = SHOTGUNNER): string {
+  return JSON.stringify({ LevelName: name });
 }
 
 function equippedData(
@@ -442,6 +449,68 @@ test("buffered unit upgrade returns duration and instant completion is replay-sa
   assert.equal(replay.replayed, true);
   assert.equal(replay.requestsResults, first.requestsResults);
   assert.equal(replay.state.itemInventory?.levelManagerData.savedArmies[SHOTGUNNER]?.boughtIndex, 1);
+});
+
+test("unit promotion requires tier completion and the recovered display-level gate", () => {
+  const owned = purchaseUnitState(createInitialProgression(NOW), 0, parseUnitPurchaseData(buyData()));
+  assert.throws(
+    () => promoteUnitState(owned.state, 100, parseUnitPromoteData(promoteData())),
+    (error: unknown) => (error as { code?: number }).code === ITEM_ALREADY_MAXIMUM_UPGRADE,
+  );
+
+  // Shotgunner tier 1 ends at normal cursor 5 and UNLOCKTIER2 is display level 11.
+  owned.unit.boughtIndex = 5;
+  assert.throws(
+    () => promoteUnitState(owned.state, 9, parseUnitPromoteData(promoteData())),
+    (error: unknown) => (
+      (error as { code?: number }).code === UNIT_NOT_ENOUGH_LEVEL_FOR_PROMOTE
+    ),
+  );
+  const promoted = promoteUnitState(owned.state, 10, parseUnitPromoteData(promoteData()));
+  assert.equal(promoted.unit.tier, 2);
+  assert.equal(promoted.unit.boughtIndex, 5);
+  assert.equal(promoted.unit.specialSlot, 0);
+});
+
+test("buffered promotion returns exact level diagnostics and is replay-safe", () => {
+  const owned = purchaseUnitState(createInitialProgression(NOW), 0, parseUnitPurchaseData(buyData()));
+  owned.unit.boughtIndex = 5;
+  const request = [{ action: DbAction.PromoteUnit, data: promoteData() }];
+  const blocked = processAssignmentBufferState(
+    owned.state,
+    NOW,
+    "unit-promote-blocked",
+    request,
+    9,
+  );
+  const [failure] = JSON.parse(blocked.requestsResults) as Array<Record<string, unknown>>;
+  assert.equal(failure.Result, UNIT_NOT_ENOUGH_LEVEL_FOR_PROMOTE);
+  assert.equal(failure.playerLevel, "10");
+  assert.equal(failure.requiredLevel, "11");
+  assert.equal(JSON.parse(String(failure.Unit)).tier, 1);
+
+  const first = processAssignmentBufferState(
+    owned.state,
+    NOW,
+    "unit-promote-success",
+    request,
+    10,
+  );
+  assert.deepEqual(JSON.parse(first.requestsResults), [{
+    ActionId: DbAction.PromoteUnit,
+    Result: 1,
+  }]);
+  assert.equal(first.state.itemInventory?.levelManagerData.savedArmies[SHOTGUNNER]?.tier, 2);
+  const replay = processAssignmentBufferState(
+    first.state,
+    NOW + 5,
+    "unit-promote-success",
+    request,
+    10,
+  );
+  assert.equal(replay.replayed, true);
+  assert.equal(replay.requestsResults, first.requestsResults);
+  assert.equal(replay.state.itemInventory?.levelManagerData.savedArmies[SHOTGUNNER]?.tier, 2);
 });
 
 test("BuyUnit, ActivateUnit, and auto-equip are atomic and replay-safe in RequestBuffer", () => {

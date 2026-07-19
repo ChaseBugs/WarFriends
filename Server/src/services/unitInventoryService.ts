@@ -26,6 +26,8 @@ import {
 
 /** IJEAJGCCHEF.CantEquipUnit, consumed by UpdateEquippedUnits rollback logic. */
 export const UNIT_CANT_EQUIP = 11406;
+/** IJEAJGCCHEF.NotEnoughLevelForPromote, handled by the client's global warning parser. */
+export const UNIT_NOT_ENOUGH_LEVEL_FOR_PROMOTE = 11405;
 
 /**
  * Authoritative unit purchase logic recovered from the 4.9.5 MainScene.
@@ -183,6 +185,10 @@ export interface UnitUpgradeActivatePayload {
   armyPower: number;
 }
 
+export interface UnitPromotePayload {
+  name: string;
+}
+
 export interface UnitEquipDetailPayload {
   wasEquipped: boolean;
   equipped: boolean;
@@ -312,6 +318,12 @@ export function parseUnitUpgradeActivateData(value: string): UnitUpgradeActivate
     boughtIndex: integer(data.BoughtIndex, "BoughtIndex"),
     armyPower: integer(data.ArmyPower, "ArmyPower"),
   };
+}
+
+/** Decode the one-field dictionary queued by ArmyScreen.JNPHAIPOOBB for action 158. */
+export function parseUnitPromoteData(value: string): UnitPromotePayload {
+  const data = parseObjectJson(value);
+  return { name: unitName(data.LevelName) };
 }
 
 /** Decode ArmyScreen.SendEquippedUnits' exact action-1003 dictionary. */
@@ -693,6 +705,79 @@ export function instantUnitUpgradeState(
     delivery.slotId,
     payload.expectedPrice,
   );
+}
+
+/** Return the recovered display-level gate for the unit's next promotion. */
+export function unitPromotionRequiredLevel(
+  definition: UnitDefinition,
+  actualTier: number,
+): number {
+  // unlockTierLevels stores UNLOCKTIER2 through UNLOCKTIER6. Promoting from tier N to N+1
+  // therefore selects N-1. Zeroes before a high-tier unit's starting tier are source data,
+  // not missing values, and are never reached by a normally purchased unit.
+  return definition.unlockTierLevels[actualTier - 1] ?? 999;
+}
+
+/** Fields read by the global NotEnoughLevelForPromote warning handler. */
+export function unitPromotionErrorFields(
+  state: PlayerProgressionState,
+  playerLevel: number,
+  requestedName: string,
+): Record<string, unknown> {
+  const definition = PLAYER_UNIT_CATALOG[requestedName];
+  const unit = itemInventoryStateFor(state).levelManagerData.savedArmies[requestedName];
+  const actualTier = unit?.tier || definition?.startingTier || 0;
+  return {
+    playerLevel: String(Math.max(0, Math.floor(playerLevel)) + 1),
+    requiredLevel: String(definition ? unitPromotionRequiredLevel(definition, actualTier) : 999),
+  };
+}
+
+/**
+ * Promote a fully upgraded unit to the next source-defined tier.
+ *
+ * ArmyScreen queues only LevelName and calls UpgradeSlots.PromoteUnit immediately, so all
+ * preconditions must be reconstructed from persisted state. The normal cursor (not the
+ * special cursor) owns the promotion gate in ArmyLeftPowerDialog. The client compares its
+ * one-based GameLevel.displayNumber to UNLOCKTIERn; DatabasePlayer.Level is zero-based, hence
+ * the explicit +1 below. Promotion has no currency cost and does not reset either cursor.
+ */
+export function promoteUnitState(
+  state: PlayerProgressionState,
+  playerLevel: number,
+  payload: UnitPromotePayload,
+): UnitInventoryMutationResult {
+  const { definition, upgrades, itemInventory, unit } = unitUpgradeContext(state, payload.name);
+  if (activeUnitDelivery(itemInventory.levelManagerData.unitDelivery)) {
+    throw new ApiError(ITEM_ALREADY_UPGRADING, "A unit delivery must be completed before promotion.");
+  }
+
+  // UpgradeSlots.actualTier treats stored zero as STARTINGTIER for legacy/default records.
+  const actualTier = unit.tier === 0 ? definition.startingTier : unit.tier;
+  if (actualTier < definition.startingTier || actualTier >= 6) {
+    throw new ApiError(ITEM_ALREADY_MAXIMUM_UPGRADE, "Unit is already at its maximum tier.");
+  }
+  const normalTierMaximum = maximumCursorForTier(upgrades.normalLevels, actualTier);
+  if (unit.boughtIndex !== normalTierMaximum) {
+    throw new ApiError(ITEM_ALREADY_MAXIMUM_UPGRADE, "Normal upgrades are not complete for this tier.");
+  }
+
+  const requiredLevel = unitPromotionRequiredLevel(definition, actualTier);
+  const displayLevel = Math.max(0, Math.floor(playerLevel)) + 1;
+  if (!Number.isInteger(playerLevel) || displayLevel < requiredLevel) {
+    throw new ApiError(
+      UNIT_NOT_ENOUGH_LEVEL_FOR_PROMOTE,
+      `Player display level ${displayLevel} is below promotion requirement ${requiredLevel}.`,
+    );
+  }
+
+  unit.tier = actualTier + 1;
+  const next: PlayerProgressionState = {
+    ...state,
+    revision: state.revision + 1,
+    itemInventory,
+  };
+  return { state: next, itemInventory, unit, definition };
 }
 
 /**

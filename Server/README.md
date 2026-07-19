@@ -138,8 +138,11 @@ Working end-to-end (verified live):
   delivery duration. Buffered actions `77`-`79` use those rows to enforce separate normal and
   special cursors, promotion-gated special access, current-tier maximums, one shared unit-delivery
   receipt, server time, exact WarBucks debit, receipt-backed instant Gold cost, atomic completion,
-  Unity rollback, and replay safety. Helper/unresolved rows, offer/subscription discounts,
-  promotions, elite upgrades, and unverified army-power writes remain fail-closed. Run
+  Unity rollback, and replay safety. `PromoteUnit` then validates normal-tier completion, the
+  recovered one-based `UNLOCKTIER2`-`UNLOCKTIER6` level gates, maximum tier 6, ownership, and an
+  empty delivery receipt before advancing only `tier`; the exact 11405 level error includes the
+  diagnostics consumed by the client warning handler. Helper/unresolved rows, offer/subscription
+  discounts, elite upgrades, and unverified army-power writes remain fail-closed. Run
   `npm run verify:unit-catalog` to compare both artifacts with MainScene and the recovered
   assemblies.
 - **Daily rewards**: `CheckDailyReward` and `ClaimDailyReward` provide the recovered monthly
@@ -187,8 +190,8 @@ allowlist of analytics/impression actions is safely ignored.
 - **Squad extensions** — card pool and squad events/wars are not implemented. Chat unread
   state is persistent, but actual channel delivery still requires Photon Chat repointing or
   a compatible replacement transport.
-- **Item economy expansion** — recover unit promotion, elite-upgrade, and army-power rules,
-  then add decals, cards, packs, and VIP. Normal purchase is authoritative for 23
+- **Item economy expansion** — recover unit elite-upgrade and army-power rules, then add
+  decals, cards, packs, and VIP. Normal purchase is authoritative for 23
   non-tutorial roster units, and the tutorial unit is persisted through its first equip event;
   three helper rows and 18 ArmyUpgrades rows without LevelManager objects remain closed. All 84 resolvable
   shop weapons support exact Gold or WarBucks purchase/equip plus server-owned upgrade
