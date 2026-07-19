@@ -1,7 +1,7 @@
 import { DbAction } from "../dbActions";
 import { PlayerStatus } from "../constants";
 import { ok } from "../dtos";
-import { savePlayer } from "../services/playerService";
+import { updatePlayerFields } from "../services/playerService";
 import { authed, type HandlerEntry } from "./types";
 
 // Player data + lightweight settings. GetPlayerData is the client's primary state fetch
@@ -22,16 +22,17 @@ export const playerHandlers: Record<number, HandlerEntry> = {
   ),
 
   [DbAction.SetPlayerStatus]: authed(async ({ player, req }) => {
-    const status = Number(req.Status ?? PlayerStatus.Online);
+    const status = Number(req.PlayerStatus ?? req.Status ?? PlayerStatus.Online);
+    if (!Object.values(PlayerStatus).includes(status)) return ok(DbAction.SetPlayerStatus, { Status: player!.player.status });
     player!.player.status = status;
-    await savePlayer(player!.id, player!.player);
+    await updatePlayerFields(player!.id, { status });
     return ok(DbAction.SetPlayerStatus, { Status: status });
   }),
 
   [DbAction.UpdateDeviceToken]: authed(async ({ player, req }) => {
     if (typeof req.DeviceToken === "string") {
       player!.player.deviceToken = req.DeviceToken;
-      await savePlayer(player!.id, player!.player);
+      await updatePlayerFields(player!.id, { deviceToken: req.DeviceToken });
     }
     return ok(DbAction.UpdateDeviceToken);
   }),
@@ -39,7 +40,7 @@ export const playerHandlers: Record<number, HandlerEntry> = {
   [DbAction.ChangePlayerName]: authed(async ({ player, req }) => {
     if (typeof req.Name === "string" && req.Name.trim()) {
       player!.player.accountName = req.Name.trim().slice(0, 15);
-      await savePlayer(player!.id, player!.player);
+      await updatePlayerFields(player!.id, { accountName: player!.player.accountName });
     }
     return ok(DbAction.ChangePlayerName, { Name: player!.player.accountName });
   }),
@@ -47,8 +48,17 @@ export const playerHandlers: Record<number, HandlerEntry> = {
   [DbAction.ChangePlayerCountry]: authed(async ({ player, req }) => {
     if (typeof req.Country === "string") {
       player!.player.country = req.Country;
-      await savePlayer(player!.id, player!.player);
+      await updatePlayerFields(player!.id, { country: req.Country });
     }
     return ok(DbAction.ChangePlayerCountry, { Country: player!.player.country });
+  }),
+
+  [DbAction.UpdateArmyPower]: authed(async ({ player, req }) => {
+    const armyPower = Math.max(0, Math.floor(Number(req.ArmyPower)));
+    if (Number.isFinite(armyPower)) {
+      player!.player.armyPower = armyPower;
+      await updatePlayerFields(player!.id, { armyPower });
+    }
+    return ok(DbAction.UpdateArmyPower, { ArmyPower: player!.player.armyPower });
   }),
 };

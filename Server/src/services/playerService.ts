@@ -43,3 +43,19 @@ export async function savePlayer(id: string, player: DatabasePlayerDTO): Promise
     },
   );
 }
+
+/** Update only the supplied player fields so concurrent match/squad writes are not lost. */
+export async function updatePlayerFields(id: string, fields: Partial<DatabasePlayerDTO>): Promise<void> {
+  const set: Record<string, unknown> = { updatedAt: new Date() };
+  for (const [key, value] of Object.entries(fields)) set[`player.${key}`] = value;
+
+  if (fields.accountName !== undefined) set.accountName = fields.accountName;
+  if (fields.leagueTier !== undefined) set.leagueTier = fields.leagueTier;
+  if (fields.armyPower !== undefined) set.armyPower = fields.armyPower;
+  if (fields.experience !== undefined) set.experience = fields.experience;
+  if (fields.squadPoints !== undefined) set.squadPoints = fields.squadPoints;
+  if (fields.squadName !== undefined) set.squadName = fields.squadName;
+  if (fields.deviceToken !== undefined) set.deviceToken = fields.deviceToken;
+
+  await players().updateOne({ id }, { $set: set });
+}

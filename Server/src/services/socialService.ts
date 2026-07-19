@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 import { messages, players, type PlayerDocument } from "../db";
+import { ApiError, ApiErrorCode } from "../apiErrors";
 
 // Player discovery + messaging (BACKEND.md §2.3 "Social / messaging / hit list"). Search
 // and directory reads project players to the client's summary shape; messages are stored
@@ -53,12 +54,14 @@ export interface MessageDoc {
 }
 
 export async function sendMessage(fromPlayerId: string, fromName: string, toPlayerId: string, body: string): Promise<MessageDoc> {
+  const recipient = await players().findOne({ id: toPlayerId }, { projection: { id: 1 } });
+  if (!recipient) throw new ApiError(ApiErrorCode.PlayerNotFound, "Recipient not found.");
   const doc: MessageDoc = {
     messageId: randomUUID(),
     toPlayerId,
     fromPlayerId,
     fromName,
-    body: body.slice(0, 500),
+    body: body.trim().slice(0, 500),
     read: false,
     createdAt: new Date(),
   };

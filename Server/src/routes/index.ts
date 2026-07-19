@@ -1,16 +1,38 @@
 import { Router, type Request, type Response } from "express";
 import { dispatch } from "../handlers";
+import { DbAction } from "../dbActions";
 import type { RequestEnvelope } from "../dtos";
 
-// The recovered client (BeanstalkServerManager) talks to a single service that carries the
-// operation in a `DbAction` field. Exact base path is ⚠ RE-NEEDED (BACKEND.md §5) — the
-// client assembles a URL containing "/PC/". We accept the envelope on a few candidate
-// paths so the client can be pointed here without yet knowing the precise route.
+// The recovered 1.6.0 client posts form fields to
+// <base>/<DatabaseAction>/<short-version> and repeats the action as `requestId`.
+// JSON/envelope routes remain available for diagnostics and newer adapters.
 export const apiRouter = Router();
 
+export function normalizeEnvelope(body: unknown, routeAction?: string): RequestEnvelope {
+  const fields = body && typeof body === "object" && !Array.isArray(body) ? (body as RequestEnvelope) : ({} as RequestEnvelope);
+  const bodyAction = fields.DbAction ?? fields.requestId;
+  if (routeAction !== undefined && bodyAction !== undefined && Number(routeAction) !== Number(bodyAction)) {
+    return { ...fields, DbAction: Number.NaN };
+  }
+  const requestAction = routeAction ?? bodyAction;
+  return { ...fields, DbAction: Number(requestAction) };
+}
+
+/** Build the special non-JSON response parsed by GameConfigurationManager. */
+export function configurationResponse(fields: RequestEnvelope): string {
+  const requested = fields.SheetConfiguraton ?? fields.SheetConfiguration ?? fields.SheetConfig ?? "0";
+  const sheetConfiguration = String(requested).replaceAll(";", "").trim() || "0";
+  return `success;${sheetConfiguration};{};`;
+}
+
 async function handleEnvelope(req: Request, res: Response): Promise<void> {
-  const body = (req.body ?? {}) as RequestEnvelope;
-  const response = await dispatch(body);
+  const envelope = normalizeEnvelope(req.body, req.params.action);
+  if (envelope.DbAction === DbAction.GetConfigurations) {
+    res.type("text/plain").send(configurationResponse(envelope));
+    return;
+  }
+
+  const response = await dispatch(envelope);
   res.json(response);
 }
 
@@ -18,3 +40,12 @@ apiRouter.post("/pc", handleEnvelope);
 apiRouter.post("/PC", handleEnvelope);
 apiRouter.post("/warfriends", handleEnvelope);
 apiRouter.post("/", handleEnvelope);
+
+// The 1.6.0 client posts to <base>/<DatabaseAction>/<short-version> and includes the
+// numeric action again as the `requestId` form field. Accept the known /PC variants plus
+// a direct action route so a recovered base URL can point at this server unchanged.
+apiRouter.post("/PC/:appId/:action(\\d+)/:version?", handleEnvelope);
+apiRouter.post("/pc/:appId/:action(\\d+)/:version?", handleEnvelope);
+apiRouter.post("/PC/:action(\\d+)/:version?", handleEnvelope);
+apiRouter.post("/pc/:action(\\d+)/:version?", handleEnvelope);
+apiRouter.post("/:action(\\d+)/:version?", handleEnvelope);

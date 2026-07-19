@@ -4,7 +4,7 @@ import { WebSocket, WebSocketServer } from "ws";
 import { authenticate } from "./services/authService";
 import { findById } from "./services/playerService";
 import { enqueue, remove as leaveQueue } from "./services/matchmakingService";
-import { createMatch, settleResult, type MatchPlayer } from "./services/matchService";
+import { createMatch, getMatch, settleResult, type MatchPlayer } from "./services/matchService";
 import { roomManager } from "./gameRooms/roomManager";
 import type {
   ClientEnvelope,
@@ -14,6 +14,7 @@ import type {
   MatchResultPayload,
 } from "./gameRooms/types";
 import logger from "./utils/logger";
+import { PlayerStatus } from "./constants";
 
 // WebSocket hub — the live PvP relay that stands in for Photon (BACKEND.md §3). A client
 // connects to /hub, Identifies with its id+token, joins a match room by MatchId, then
@@ -69,7 +70,11 @@ export function createGameHub(httpServer: HttpServer): WebSocketServer {
         return;
       }
       logger.websocket.message(client.id, envelope.Type);
-      void handleMessage(client, envelope);
+      void handleMessage(client, envelope).catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : String(error);
+        logger.websocket.error("Message handler failed", { clientId: client.id, type: envelope.Type, error: message });
+        send(client, { Type: "ServerError", Payload: { Message: "Unable to process message." } });
+      });
     });
 
     socket.on("close", () => {
@@ -96,6 +101,9 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
       const p = envelope.Payload as IdentifyPayload | undefined;
       try {
         const doc = await authenticate(p?.PlayerId, p?.Token);
+        const previousClientId = onlinePlayers.get(doc.id);
+        const previousClient = previousClientId ? clients.get(previousClientId) : undefined;
+        if (previousClient && previousClient.id !== client.id) previousClient.socket.close(4001, "Signed in elsewhere");
         client.playerId = doc.id;
         onlinePlayers.set(doc.id, client.id);
         send(client, { Type: "Identified", Payload: { PlayerId: doc.id } });
@@ -114,6 +122,9 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
       if (!client.playerId) return send(client, { Type: "AuthError", Payload: { Message: "Identify first." } });
       const doc = await findById(client.playerId);
       if (!doc) return;
+      if (doc.player.status === PlayerStatus.InGame) {
+        return send(client, { Type: "MatchError", Payload: { Reason: "AlreadyInBattle" } });
+      }
       const opponentId = enqueue({
         playerId: doc.id,
         armyPower: doc.player.armyPower,
@@ -124,7 +135,9 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
         return;
       }
       const opponent = await findById(opponentId);
-      if (!opponent) {
+      const opponentClientId = onlinePlayers.get(opponentId);
+      const opponentClient = opponentClientId ? clients.get(opponentClientId) : undefined;
+      if (!opponent || !opponentClient || opponentClient.socket.readyState !== WebSocket.OPEN) {
         // Opponent vanished between queueing and pairing; requeue this player.
         enqueue({ playerId: doc.id, armyPower: doc.player.armyPower, leagueTier: doc.player.leagueTier });
         send(client, { Type: "Searching", Payload: {} });
@@ -148,8 +161,12 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
     case "JoinMatch": {
       if (!client.playerId) return send(client, { Type: "AuthError", Payload: { Message: "Identify first." } });
       const p = envelope.Payload as JoinMatchPayload;
-      const room = roomManager.join(p.MatchId, client.playerId, client.id);
-      if (!room) return send(client, { Type: "MatchError", Payload: { MatchId: p.MatchId, Reason: "Full" } });
+      const match = await getMatch(p?.MatchId);
+      const allowedPlayerIds = match?.state === "active" ? match.players.map((participant) => participant.playerId) : [];
+      const room = roomManager.join(p?.MatchId, client.playerId, client.id, allowedPlayerIds);
+      if (!room) {
+        return send(client, { Type: "MatchError", Payload: { MatchId: p?.MatchId, Reason: "NotParticipantOrFull" } });
+      }
       send(client, {
         Type: "MatchJoined",
         Payload: { MatchId: p.MatchId, State: room.state, Participants: room.participants.size },
@@ -160,15 +177,29 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
     case "MatchEvent": {
       if (!client.playerId) return;
       const p = envelope.Payload as MatchEventPayload;
-      roomManager.relay(p.MatchId, client.playerId, envelope);
+      if (!roomManager.relay(p?.MatchId, client.playerId, envelope)) {
+        send(client, { Type: "MatchError", Payload: { MatchId: p?.MatchId, Reason: "NotInActiveMatch" } });
+      }
       return;
     }
 
     case "MatchResult": {
       if (!client.playerId) return;
       const p = envelope.Payload as MatchResultPayload;
-      // Settle authoritatively (idempotent — the loser's client may also report the result).
-      const settlement = await settleResult(p.MatchId, p.WinnerId);
+      // Settle only after both participants report the same winner.
+      const report = roomManager.recordResult(p?.MatchId, client.playerId, p?.WinnerId);
+      if (report === "invalid") {
+        return send(client, { Type: "MatchError", Payload: { MatchId: p?.MatchId, Reason: "InvalidResult" } });
+      }
+      if (report === "conflict") {
+        roomManager.broadcast(p.MatchId, { Type: "MatchError", Payload: { MatchId: p.MatchId, Reason: "ResultConflict" } });
+        return;
+      }
+      if (report === "pending") {
+        return send(client, { Type: "ResultPending", Payload: { MatchId: p.MatchId } });
+      }
+
+      const settlement = await settleResult(p.MatchId, p.WinnerId, client.playerId);
       roomManager.broadcast(p.MatchId, { Type: "MatchEnded", Payload: { MatchId: p.MatchId, WinnerId: settlement.winnerId } });
       roomManager.finish(p.MatchId);
       logger.match.event("Match result received", { matchId: p.MatchId, winnerId: p.WinnerId, rewarded: settlement.rewarded });

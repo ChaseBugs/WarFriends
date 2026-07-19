@@ -5,8 +5,7 @@
 
 /** AccountType — how a player authenticates. Mirrors AccountType.cs. */
 export enum AccountType {
-  None = 0,
-  Custom = 1,
+  Guest = 0,
   Facebook = 2,
   GameCenter = 3,
   GooglePlay = 4,
@@ -14,31 +13,39 @@ export enum AccountType {
 
 /** League tiers. Mirrors League.cs ordering (Bronze3 is the starting tier). */
 export enum League {
-  Bronze3 = 0,
-  Bronze2 = 1,
-  Bronze1 = 2,
-  Silver3 = 3,
-  Silver2 = 4,
-  Silver1 = 5,
-  Gold3 = 6,
-  Gold2 = 7,
-  Gold1 = 8,
-  Diamond = 9,
+  NoLeague = 0,
+  Bronze3 = 1,
+  Bronze2 = 2,
+  Bronze1 = 3,
+  Silver3 = 4,
+  Silver2 = 5,
+  Silver1 = 6,
+  Gold3 = 7,
+  Gold2 = 8,
+  Gold1 = 9,
+  Elite3 = 10,
+  Elite2 = 11,
+  Elite1 = 12,
+  Master3 = 13,
+  Master2 = 14,
+  Master1 = 15,
+  Champion = 16,
 }
 
 /** Rank of a member within a squad. Mirrors SquadRank.cs. */
 export enum SquadRank {
+  None = -1,
   Member = 0,
-  Officer = 1,
+  Veteran = 1,
   Leader = 2,
-  Founder = 3,
+  Coleader = 3,
 }
 
 /** Player online/presence status. Mirrors PlayerStatus.cs. */
 export enum PlayerStatus {
   Offline = 0,
   Online = 1,
-  InBattle = 2,
+  InGame = 2,
 }
 
 /** Collection names used by ServerResultsCache reads (see BACKEND.md §2.4). */

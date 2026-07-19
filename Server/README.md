@@ -21,14 +21,17 @@ run Mongo-only. Health check: `GET /health`.
 
 ## How the client talks to it
 
-The client (`BeanstalkServerManager`) sends every operation to one endpoint as a JSON
-envelope carrying a `DbAction` integer (the `DatabaseAction` enum). The realtime match layer
-connects to `ws://<host>/hub`.
+The client (`BeanstalkServerManager`) sends form fields to a URL ending in the numeric
+`DatabaseAction` and dashed client version. It repeats the action in `requestId`; authenticated
+requests use `PlayerId` and `Token`. Development tools may also send a JSON `DbAction`
+envelope. `GetConfigurations` returns the raw text format required by the recovered parser;
+other implemented actions return JSON. The replacement realtime layer connects to
+`ws://<host>/hub`.
 
 ```bash
-# Create a custom account (DbAction 118)
-curl -X POST localhost:8080/pc -H 'Content-Type: application/json' \
-  -d '{"DbAction":118,"AccountName":"Maverick","DeviceToken":"dev-A"}'
+# Create a guest account (DatabaseAction 118) using the recovered BestHTTP shape
+curl -X POST localhost:8080/PC/8b004c04-6921-4613-9815-e63b42db4a7c/118/1-6-0 \
+  -d 'requestId=118&Version=1.6.0&Os=android&DeviceToken=dev-A'
 # → { id, token, Player }  — replay id+token on every authed action
 ```
 
@@ -44,7 +47,7 @@ src/
   redis.ts           optional Redis (matchmaking queue, leaderboards, pub/sub)
   dtos/              wire types: envelope (base), DatabasePlayer, Squad
   services/          data/business logic: auth, player, squad
-  handlers/          DbAction → handler dispatch (auth, player, squad) + fallback ack
+  handlers/          DbAction → handler dispatch (auth, player, squad)
   routes/            Express router: the Beanstalk POST endpoint
   gameRooms/         match room registry + relay types
   gameHub.ts         WebSocket hub: identify → join match → relay events → result
@@ -58,13 +61,16 @@ Working end-to-end (verified live):
 
 - **Accounts / player**: `CreateAccount`, `CreateFullAccount`, `LoginToCustomAccount`,
   `GetPlayerData`/`GetPlayerInfo`, and player settings (name/country/status/device token).
-- **Squads**: full lifecycle — create / unique-name check / join / promote / demote / kick /
-  leave, with server-side rank guards.
+- **Squads (core membership)**: create / unique-name check / public or requested join /
+  invite / accept / decline / promote / demote / kick / leadership transfer / guarded
+  leave, plus details and full member snapshots. Client ranks exactly mirror
+  `Member`, `Veteran`, `Leader`, and `Coleader`.
 - **PvP (WebSocket `/hub`)**: identify → `FindMatch` (matchmaking pairs by army-power within
   a widening league window) → `MatchFound` → `JoinMatch` → `MatchStart` → in-match
-  `MatchEvent` relay to the opponent → `MatchResult`. Results settle **authoritatively and
-  idempotently** (winner/loser xp + medals + squad points; players flipped to InBattle then
-  back to Online). `GameEnded` (REST) settles the same way.
+  `MatchEvent` relay to the opponent → `MatchResult`. Room joins/events are restricted to
+  recorded match participants, WebSocket settlement requires matching reports from both
+  participants, and the database settlement claim is idempotent. Players move from
+  `InGame` back to `Online`. `GameEnded` (REST) only accepts a match participant's report.
 
 - **Leaderboards / leagues**: `GetPlayersByExperience` (global player board),
   `GetPlayerLeaguesDivision` (league + 1-based global rank), squad board via
@@ -73,18 +79,19 @@ Working end-to-end (verified live):
 - **Social / messaging**: `SearchPlayers` (name prefix), `GetAllPlayers`, `MessageSent` /
   `GetAllMessages` / `ReadMessage` (per-recipient inbox).
 
-Every other `DbAction` returns a benign ack so the client does not hard-fail.
+Unimplemented state-changing `DbAction` values return error code `90`; only an explicit
+allowlist of analytics/impression actions is safely ignored.
 
 ### Next
 
+- **Squad extensions** — card pool, squad events/wars, and squad chat are not implemented.
 - **Economy** — `Buy*`/`Activate*`/`Equip*`, packs, VIP. **Blocked**: these mutate the
   client-serialized `inventoryData` / `levelManagerData` blobs, whose schema is still
-  `⚠ RE-NEEDED`; currently acked. Currency-only ops (medals) can land sooner.
+  `⚠ RE-NEEDED`; currently rejected as unimplemented. Currency-only ops can land sooner.
 - **Arena** — `EnterArena` / lives / `GetArenaLeaderboards`; league promotion/relegation on
-  `FinishPlayerLeague` (currently acked).
+  `FinishPlayerLeague`. Mutating actions without a real implementation are rejected.
 - **Assignments / daily / achievements**, **hit list**.
 - **Reward tuning** — `matchService.REWARDS` is placeholder; wire to the client's
   MatchMakingConstants / reward config once extracted.
-- **Client transport** — the envelope shape and Photon→ws repoint are still `⚠ RE-NEEDED`
-  (BACKEND.md §5); `dtos/base.ts` and `routes/index.ts` are the single seams to update once
-  the real wire format is confirmed from the client.
+- **Client integration** — form request routing is implemented, but exact response keys for
+  every action and the Photon→WebSocket client repoint remain `⚠ RE-NEEDED`.

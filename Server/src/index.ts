@@ -5,7 +5,7 @@ import { createServer } from "http";
 import { apiRouter } from "./routes";
 import { config } from "./config";
 import { connectMongo, disconnectMongo } from "./db";
-import { connectRedis, disconnectRedis, isRedisEnabled } from "./redis";
+import { connectRedis, disconnectRedis, isRedisAvailable, isRedisEnabled } from "./redis";
 import { createGameHub } from "./gameHub";
 import logger from "./utils/logger";
 
@@ -15,6 +15,8 @@ app.use(cors());
 app.use(compression({ threshold: 1024 }));
 // strict:false so the client's non-object JSON bodies (if any) still parse.
 app.use(express.json({ strict: false, limit: "2mb" }));
+// BestHTTP's AddField API posts the recovered client's requests as form fields.
+app.use(express.urlencoded({ extended: false, limit: "2mb" }));
 
 app.use((req: Request, res: Response, next: NextFunction) => {
   const startedAt = Date.now();
@@ -31,7 +33,7 @@ app.get("/health", (_req, res) => {
     status: "ok",
     pid: process.pid,
     uptime: Math.floor(process.uptime()),
-    redis: isRedisEnabled() ? "enabled" : "disabled",
+    redis: !isRedisEnabled() ? "disabled" : isRedisAvailable() ? "available" : "unavailable",
     memory: process.memoryUsage().rss,
   });
 });
@@ -58,6 +60,9 @@ httpServer.keepAliveTimeout = 65_000;
 httpServer.headersTimeout = 66_000;
 
 async function start(): Promise<void> {
+  if (process.env.NODE_ENV === "production" && config.authSecret === "change-me-in-production") {
+    throw new Error("AUTH_SECRET must be changed before starting in production.");
+  }
   await connectMongo();
   logger.db.connect("MongoDB connected", { provider: "mongodb", database: config.mongoDbName });
 

@@ -42,19 +42,21 @@ server pairs two players and hands them a room; Photon relays the in-match traff
 
 ### 2.1 Transport envelope (confirmed from `BeanstalkServerManager`)
 
-- Single HTTPS service. Client builds a request path containing `/PC/` and an app
-  identifier GUID `8b004c04-6921-4613-9815-e63b42db4a7c`. **⚠ RE-NEEDED**: confirm the
-  exact base URL + route by dumping the string builder in `BeanstalkServerManager` (the URL
-  is assembled from config, likely `GetConfigurations` / a region host table).
-- Every request carries the operation id in field **`DbAction`** (integer = `DatabaseAction`
-  enum value, see §2.3) plus a payload of action-specific fields.
-- Common request fields seen in the client: `id`, `password`/`token`, `AccountType`,
-  `ClientVersion`/`clientVersion`, `DeviceToken`, `AndroidID`, `AndroidAdvertisingID`,
+- Single HTTPS service. `BeanstalkServerManager.EIDPAHNCFPD` constructs
+  `<base URL>/<DatabaseAction integer>/<short-version-dashed>`. Recovered configuration
+  also references `/PC/` and app id `8b004c04-6921-4613-9815-e63b42db4a7c`; the rebuilt
+  router accepts direct and `/PC/` variants.
+- Requests are **form encoded**, not JSON. BestHTTP `AddField` sends `requestId` (the
+  operation integer), `Version`, `Os`, `SheetConfig`, and action-specific fields. JSON with
+  `DbAction` remains supported by the rebuilt server for development tooling.
+- Authenticated requests carry `PlayerId` and `Token`. Other fields include `AccountType`,
+  `DeviceToken`, `AndroidID`, `AndroidAdvertisingID`,
   `BundleId`, `FacebookId`/`FacebookPassword`, `GooglePlayId`/`GooglePlayPassword`,
   `GameCenterId`/`GameCenterPassword`. HTTP header `App-Version` is set.
-- Response is **JSON** (parsed with `Newtonsoft.Json`). Empty response is treated as an
-  error (`"Beanstalk: Error - empty response from server"`). The server returns a
-  `DbAction` echo + result payload; the client routes it back through `ServerResultsCache`.
+- Responses are normally **JSON** (parsed with `Newtonsoft.Json`). Empty response is treated
+  as an error (`"Beanstalk: Error - empty response from server"`). `GetConfigurations` is
+  the exception: its parser requires raw `success;<sheet configuration>;{};` text when no
+  sheet updates are being sent.
 - **⚠ RE-NEEDED**: exact response envelope keys and whether the body is signed/encrypted.
   Extract by logging one real request or reading the response-parse switch in
   `BeanstalkServerManager`.
@@ -67,7 +69,8 @@ Account types (`AccountType` enum) and the login actions from the enum:
   `LoginToCustomAccount` (30), `CreateGcAccount` (146), `ChangeNameAndPassword` (121).
 - Social linking: `AddFacebook`/`SwitchToFacebook`/`RemoveFacebook`,
   `AddGooglePlay`/`RemoveGooglePlay`, `AddGameCenter`, `ExistFBAccount`, `ExistGCAccount`.
-- Auth is **id + password/token** based (fields `id`, `password`, `token`). Reimplement as:
+- Auth is **id + password/token** based. Normal authenticated calls use `PlayerId` +
+  `Token`; login calls include `Id` + `Password`. Reimplement as:
   device-generated credential on first `CreateAccount`, returned id/token reused on
   subsequent `LoginToCustomAccount`. Social ids map onto the same player row.
 
@@ -131,8 +134,9 @@ value is one operation the server must handle. Grouped by subsystem:
 `UpdateAnalytics 179`, `SendCrashReport 141`, `SendLog 166`, `Test 167`,
 and the `Debug*` values (94, 134, 147, 159, 162, 204, 205, 210, 1010–1015).
 
-> The full numeric list is in `Client-Decompiled-Mono-1.6.0/.../DatabaseAction.cs`. Server
-> switches on `DbAction`; unknown/debug actions should return a benign error.
+> The full numeric list is in `Client-Decompiled-Mono-1.6.0/.../DatabaseAction.cs`. The
+> numeric action is carried in the URL and repeated as the `requestId` form field;
+> unknown state-changing actions must return an explicit error.
 
 ### 2.4 Core persisted model — `DatabasePlayer`
 
@@ -176,14 +180,15 @@ Data model needed (a `Squad` table + `SquadMember` join):
 Squad:   id/name (unique — CheckUniqueSquadName), emblem, description,
          experience, squadPoints, leagueId/division, createdBy(founderId),
          settings (open/invite-only, min level), eventState
-Member:  playerId, squadId, rank (SquadRank: Member/Officer/Leader/Founder),
+Member:  playerId, squadId, rank (SquadRank: None=-1, Member=0, Veteran=1,
+         Leader=2, Coleader=3),
          joinedAt, contribution/points, lastSeenChatTimestamp
 JoinRequest: playerId, squadId, status(pending/accepted/declined), createdAt
 ```
 
 Operations to implement (map 1:1 to §2.3 Squad actions):
 
-1. **Create** — `CheckUniqueSquadName 41` → `CreateSquad 37`. Founder becomes rank Founder.
+1. **Create** — `CheckUniqueSquadName 41` → `CreateSquad 37`. Founder becomes rank Leader.
 2. **Discovery** — `GetSquads 56`, `GetSquadsByExperience 101`, `FindSuggestedSquads 81`,
    `GetSquadDetails 45`, `GetFullSquadInfo 151`, `GetAllSquadMembers 44`.
 3. **Join** — open: `JoinSquad 38`; gated: `JoinSquadRequest 132` →
@@ -225,8 +230,9 @@ live turn/action traffic.
 3. In-match sync runs over Photon (`GameControllerPVP`, `PhotonLevelView`,
    `PhotonCachedRPC`) via RPCs / `RaiseEvent`. If a room is full/unavailable the client
    sends `PhotonIsFull 143`.
-4. On completion the client sends `GameEnded 62` to the Meta server, which validates the
-   result and grants rewards / league + squad points (server-authoritative).
+4. On completion the client sends `GameEnded 62` to the Meta server. This reconstruction
+   validates match participation and settles once; the WebSocket path also requires both
+   participants to report the same winner. A fully server-simulated result is future work.
 5. `UpdateRegionPings 140` reports per-region latency so matchmaking can pick a Photon region.
 
 ### 3.2 What you must provide for Photon
@@ -249,8 +255,9 @@ live turn/action traffic.
 
 ### 4.1 Stack
 
-- **Meta server**: any HTTP framework (Node/TypeScript, ASP.NET, or Go). One `POST` route
-  that switches on `DbAction`. Return the client's expected JSON envelope.
+- **Meta server**: any HTTP framework (Node/TypeScript, ASP.NET, or Go). Accept form `POST`
+  requests at `<base>/<DatabaseAction>/<short-version>`, using the repeated `requestId` as
+  a consistency check. Most responses are JSON; `GetConfigurations` is raw text.
 - **DB**: Postgres (relational: players, squads, members, join_requests, messages,
   leaderboards, matches) — the original used a document store (Beanstalk + likely DynamoDB),
   but relational is fine and simpler for squads/leaderboards.
@@ -283,9 +290,9 @@ live turn/action traffic.
 
 All are extractable from the decompiled client — do not guess:
 
-1. **Exact REST base URL + route + response envelope** (`BeanstalkServerManager` URL builder
-   and response-parse switch).
-2. **Request/response JSON schema per `DbAction`** — capture from the parse code or a live
+1. **Deploy-time REST base host and exact response envelope keys** for each action. The
+   recovered request route and common form fields are now implemented.
+2. **Response schema per `DbAction`** — capture from the parse code or a live
    trace of the original (if any endpoint still answers).
 3. **Whether payloads are signed/encrypted/obfuscated** and any anti-cheat token.
 4. **Matchmaking action + room handoff** — how client gets its opponent and Photon room.

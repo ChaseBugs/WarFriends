@@ -1,19 +1,25 @@
-// The Beanstalk request/response envelope.
-//
-// ⚠ RE-NEEDED (BACKEND.md §5): the exact field names and whether the body is
-// signed/encrypted are not yet confirmed. The names below are derived from string
-// literals in BeanstalkServerManager (`DbAction`, `id`, `password`/`token`,
-// `ClientVersion`, device ids). This file is the SINGLE seam for the wire format — when
-// the real envelope is confirmed, change it here only.
+// Normalized Beanstalk request/response envelope. The recovered client sends URL-encoded
+// form fields with `requestId`, `PlayerId`, and `Token`; JSON aliases are retained for
+// diagnostics and adapters. GetConfigurations is the one confirmed raw-text response.
 
 export interface RequestEnvelope {
-  /** DbAction integer selecting the operation. */
+  /** Normalized action integer (from route, requestId, or DbAction). */
   DbAction: number;
   /** Player id (absent for CreateAccount / first login). */
   id?: string;
+  Id?: string;
+  PlayerId?: string;
   /** Credential the client stores after account creation and replays on login. */
   password?: string;
   token?: string;
+  Token?: string;
+  Password?: string;
+  requestId?: number | string;
+  Version?: number | string;
+  Os?: string;
+  SheetConfig?: string;
+  SheetConfiguraton?: string;
+  SheetConfiguration?: string;
   /** Client build version, gated against config.minClientVersion. */
   ClientVersion?: number;
   clientVersion?: number;

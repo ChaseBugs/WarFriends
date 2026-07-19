@@ -24,15 +24,12 @@ export const matchHandlers: Record<number, HandlerEntry> = {
     if (!winnerId && req.Won === true) winnerId = player!.id;
 
     if (id && winnerId) {
-      const settlement = await settleResult(id, winnerId);
+      const settlement = await settleResult(id, winnerId, player!.id);
       const updated = await findById(player!.id);
       return ok(DbAction.GameEnded, { Settled: settlement.rewarded, WinnerId: settlement.winnerId, Player: updated?.player });
     }
     return ok(DbAction.GameEnded, { Settled: false });
   }),
-
-  // Quick battle vs a bot loadout — acknowledged; reward simulation is a follow-up.
-  [DbAction.InstantBattle]: authed(() => ok(DbAction.InstantBattle)),
 
   // Region latency report — used to bias matchmaking; store is a follow-up, ack for now.
   [DbAction.UpdateRegionPings]: authed(() => ok(DbAction.UpdateRegionPings)),

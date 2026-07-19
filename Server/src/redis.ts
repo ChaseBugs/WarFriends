@@ -1,4 +1,4 @@
-import Redis from "ioredis";
+import Redis, { type RedisOptions } from "ioredis";
 import { config } from "./config";
 import logger from "./utils/logger";
 
@@ -9,15 +9,28 @@ import logger from "./utils/logger";
 let publisher: Redis | null = null;
 let subscriber: Redis | null = null;
 let dataClient: Redis | null = null;
+let redisAvailable = false;
+
+const redisOptions: RedisOptions = {
+  lazyConnect: true,
+  enableOfflineQueue: false,
+  maxRetriesPerRequest: 1,
+  connectTimeout: 3000,
+  retryStrategy: (attempt) => (attempt <= 3 ? attempt * 200 : null),
+};
 
 export function isRedisEnabled(): boolean {
   return config.redisEnabled;
 }
 
+export function isRedisAvailable(): boolean {
+  return config.redisEnabled && redisAvailable;
+}
+
 export function getRedisPublisher(): Redis | null {
   if (!config.redisEnabled) return null;
   if (!publisher) {
-    publisher = new Redis(config.redisUrl, { lazyConnect: true });
+    publisher = new Redis(config.redisUrl, redisOptions);
     publisher.on("error", (err) => logger.redis.error("Publisher connection error", { error: err.message }));
   }
   return publisher;
@@ -26,7 +39,7 @@ export function getRedisPublisher(): Redis | null {
 export function getRedisSubscriber(): Redis | null {
   if (!config.redisEnabled) return null;
   if (!subscriber) {
-    subscriber = new Redis(config.redisUrl, { lazyConnect: true });
+    subscriber = new Redis(config.redisUrl, redisOptions);
     subscriber.on("error", (err) => logger.redis.error("Subscriber connection error", { error: err.message }));
   }
   return subscriber;
@@ -38,12 +51,7 @@ export function getRedisDataClient(): Redis | null {
     // Disable offline queueing and cap retries so a missing Redis surfaces immediately and
     // the Mongo fallback actually kicks in, instead of commands hanging on a reconnect that
     // may never happen.
-    dataClient = new Redis(config.redisUrl, {
-      lazyConnect: true,
-      enableOfflineQueue: false,
-      maxRetriesPerRequest: 1,
-      connectTimeout: 3000,
-    });
+    dataClient = new Redis(config.redisUrl, redisOptions);
     dataClient.on("error", (err) => logger.redis.error("Data client connection error", { error: err.message }));
   }
   return dataClient;
@@ -53,11 +61,19 @@ export async function connectRedis(): Promise<void> {
   if (!config.redisEnabled) return;
   try {
     await Promise.all([getRedisPublisher()?.connect(), getRedisSubscriber()?.connect(), getRedisDataClient()?.connect()]);
+    redisAvailable = true;
     logger.redis.connected({ url: config.redisUrl });
   } catch (err) {
     logger.redis.error("Failed to connect — continuing without Redis (MongoDB-only fallback)", {
       error: (err as Error).message,
     });
+    publisher?.disconnect();
+    subscriber?.disconnect();
+    dataClient?.disconnect();
+    publisher = null;
+    subscriber = null;
+    dataClient = null;
+    redisAvailable = false;
   }
 }
 
@@ -66,6 +82,7 @@ export async function disconnectRedis(): Promise<void> {
   publisher = null;
   subscriber = null;
   dataClient = null;
+  redisAvailable = false;
 }
 
 export async function redisGet(key: string): Promise<string | null> {

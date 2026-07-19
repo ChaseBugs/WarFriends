@@ -14,6 +14,16 @@ import { socialHandlers } from "./social";
 import type { HandlerEntry } from "./types";
 import logger from "../utils/logger";
 
+const benignNoOpActions = new Set<number>([
+  67, 68, 69, // campaign/co-op start telemetry
+  92, // client error report
+  104, 105, 108, // content impression telemetry
+  119, 120, // tutorial start/end telemetry
+  141, 163, 166, 168, 169, // crash/log/UI telemetry
+  179, 180, 183, 191, 194, // analytics and UI impression telemetry
+  212, 213, 1007, // feature/offer impression telemetry
+]);
+
 // The dispatch table: DbAction code → handler. Grouped registries are merged here; later
 // spreads would override earlier ones, so keep action codes unique across groups.
 const registry: Record<number, HandlerEntry> = {
@@ -35,6 +45,9 @@ function clientVersion(req: RequestEnvelope): number {
  */
 export async function dispatch(req: RequestEnvelope): Promise<ResponseEnvelope> {
   const action = Number(req.DbAction);
+  if (!Number.isInteger(action)) {
+    return { DbAction: -1, ...apiError(90, "Missing or invalid request action.") };
+  }
   logger.api.action(dbActionName(action), action);
 
   if (config.minClientVersion > 0 && clientVersion(req) < config.minClientVersion) {
@@ -45,15 +58,16 @@ export async function dispatch(req: RequestEnvelope): Promise<ResponseEnvelope> 
 
   try {
     if (!entry) {
-      // Not implemented yet — acknowledge so the client doesn't treat it as a hard failure.
-      // Many DbActions are telemetry/analytics no-ops; the rest are tracked in BACKEND.md.
-      logger.warnWithEmoji("⚠️", `Unhandled DbAction ${dbActionName(action)} (${action}) — acking`, "DISPATCH");
-      return ok(action, { Unhandled: true });
+      logger.warnWithEmoji("⚠️", `Unhandled DbAction ${dbActionName(action)} (${action})`, "DISPATCH");
+      if (benignNoOpActions.has(action)) return ok(action, { Ignored: true });
+      return { DbAction: action, ...apiError(90, `Action ${dbActionName(action)} is not implemented.`) };
     }
 
     // Attach the player: required handlers authenticate strictly; others attach best-effort.
-    const id = typeof req.id === "string" ? req.id : undefined;
-    const token = (typeof req.token === "string" ? req.token : undefined) ?? (typeof req.password === "string" ? req.password : undefined);
+    const id = [req.PlayerId, req.id, req.Id].find((value): value is string => typeof value === "string" && value !== "null");
+    const token = [req.Token, req.token, req.Password, req.password].find(
+      (value): value is string => typeof value === "string" && value !== "null",
+    );
 
     const player = entry.requiresAuth
       ? await authenticate(id, token)

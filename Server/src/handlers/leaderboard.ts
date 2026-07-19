@@ -24,9 +24,6 @@ export const leaderboardHandlers: Record<number, HandlerEntry> = {
 
   [DbAction.GetArenaLeaderboards]: authed(() => ok(DbAction.GetArenaLeaderboards, { arenaLeaderboard: [] })),
 
-  // League settlement (promotion/relegation) is a follow-up; acknowledge for now.
-  [DbAction.FinishPlayerLeague]: authed(() => ok(DbAction.FinishPlayerLeague)),
-
   // Squad leaderboard read (also served by squad handlers' GetSquadsByExperience).
   [DbAction.LeagueLeaderboardShown]: authed(async () =>
     ok(DbAction.LeagueLeaderboardShown, { globalSquadLeaderboard: await topSquads() }),

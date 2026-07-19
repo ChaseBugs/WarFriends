@@ -32,8 +32,11 @@ export interface SquadDTO {
   /** 0 = open join, 1 = request required, 2 = invite only. */
   joinPolicy: number;
   minLevel: number;
+  requiredMedals: number;
+  maxMembers: number;
   members: SquadMemberDTO[];
   joinRequests: SquadJoinRequestDTO[];
+  invitedPlayerIds: string[];
 }
 
 export function newSquad(name: string, founderId: string): SquadDTO {
@@ -49,7 +52,10 @@ export function newSquad(name: string, founderId: string): SquadDTO {
     founderId,
     joinPolicy: 0,
     minLevel: 0,
+    requiredMedals: 0,
+    maxMembers: 15,
     members: [],
     joinRequests: [],
+    invitedPlayerIds: [],
   };
 }

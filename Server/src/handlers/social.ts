@@ -3,8 +3,8 @@ import { ok } from "../dtos";
 import { inbox, listPlayers, markRead, searchPlayers, sendMessage } from "../services/socialService";
 import { authed, type HandlerEntry } from "./types";
 
-// Player discovery + messaging (BACKEND.md §2.3). Hit-list actions are acked until a
-// hit-list store exists.
+// Player discovery + messaging. Unimplemented hit-list mutations are rejected so callers
+// never receive a false success.
 
 function str(v: unknown): string {
   return typeof v === "string" ? v : "";
@@ -12,7 +12,7 @@ function str(v: unknown): string {
 
 export const socialHandlers: Record<number, HandlerEntry> = {
   [DbAction.SearchPlayers]: authed(async ({ req }) => {
-    const query = str(req.Query) || str(req.Name) || str(req.SearchTerm);
+    const query = str(req.Query) || str(req.PlayerName) || str(req.Name) || str(req.SearchTerm);
     return ok(DbAction.SearchPlayers, { players: await searchPlayers(query) });
   }),
 
@@ -24,8 +24,9 @@ export const socialHandlers: Record<number, HandlerEntry> = {
   [DbAction.MessageSent]: authed(async ({ player, req }) => {
     const to = str(req.ToPlayerId) || str(req.ChallengedPlayerId) || str(req.PlayerId);
     const body = str(req.Message) || str(req.Body) || str(req.Text);
-    if (to && body) await sendMessage(player!.id, player!.player.accountName, to, body);
-    return ok(DbAction.MessageSent, { Delivered: Boolean(to && body) });
+    const delivered = Boolean(to && body.trim());
+    if (delivered) await sendMessage(player!.id, player!.player.accountName, to, body);
+    return ok(DbAction.MessageSent, { Delivered: delivered });
   }),
 
   [DbAction.GetAllMessages]: authed(async ({ player }) =>

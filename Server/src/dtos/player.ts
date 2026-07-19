@@ -9,6 +9,9 @@ export interface DatabasePlayerDTO {
   id: string;
   accountName: string;
   accountType: AccountType;
+  facebookId: number;
+  googlePlayId: string;
+  gameCenterId: string;
 
   experience: number;
   level: number;
@@ -33,6 +36,13 @@ export interface DatabasePlayerDTO {
   country: string;
   status: PlayerStatus;
   lastAction: number;
+  awaitingSquadMember: boolean;
+
+  visualType: string;
+  visualTimestamp: number;
+  influencerLink: string;
+  influencerAlias: string;
+  connectionType: number;
 
   deviceToken: string;
   sendLogsValue: number;
@@ -50,6 +60,9 @@ export function newPlayer(id: string, accountName: string, accountType: AccountT
     id,
     accountName,
     accountType,
+    facebookId: -1,
+    googlePlayId: "",
+    gameCenterId: "",
     experience: 0,
     level: 1,
     skill: 0,
@@ -63,11 +76,17 @@ export function newPlayer(id: string, accountName: string, accountType: AccountT
     beginnersLeague: 1,
     squadName: "",
     squadPoints: 0,
-    squadRank: SquadRank.Member,
+    squadRank: SquadRank.None,
     vipExpiration: 0,
     country: "",
     status: PlayerStatus.Online,
     lastAction: 0,
+    awaitingSquadMember: false,
+    visualType: "",
+    visualTimestamp: 0,
+    influencerLink: "",
+    influencerAlias: "",
+    connectionType: 0,
     deviceToken: "",
     sendLogsValue: 0,
     inventoryData: null,

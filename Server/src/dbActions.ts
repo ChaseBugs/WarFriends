@@ -4,9 +4,9 @@
  * Source of truth: the recovered client enum
  *   Client-Decompiled-Mono-1.6.0/.../DatabaseAction.cs
  *
- * Every request the client sends to the meta server carries one of these integers in the
- * `DbAction` field. The dispatcher (src/handlers/index.ts) switches on it. Keep the numeric
- * values EXACTLY in sync with the client — they are the wire contract.
+ * BestHTTP puts the integer in the request URL and the `requestId` form field. The rebuilt
+ * server also accepts `DbAction` in JSON for tooling. Keep the numeric values EXACTLY in
+ * sync with the client — they are the wire contract.
  */
 export enum DbAction {
   MessageSent = 2,

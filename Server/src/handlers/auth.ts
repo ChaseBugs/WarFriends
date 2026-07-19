@@ -10,11 +10,15 @@ import { authed, open, type HandlerEntry } from "./types";
 export const authHandlers: Record<number, HandlerEntry> = {
   [DbAction.CreateAccount]: open(async ({ req }) => {
     const accountName = typeof req.AccountName === "string" ? req.AccountName : "";
-    const created = await createCustomAccount(accountName, AccountType.Custom, req.DeviceToken);
+    const created = await createCustomAccount(accountName, AccountType.Guest, req.DeviceToken);
     return ok(DbAction.CreateAccount, {
       id: created.doc.id,
+      Id: created.doc.id,
+      PlayerId: created.doc.id,
       token: created.authToken,
+      Token: created.authToken,
       password: created.authToken,
+      Password: created.authToken,
       Player: created.player,
     });
   }),
@@ -22,17 +26,21 @@ export const authHandlers: Record<number, HandlerEntry> = {
   // Full account = custom account with a chosen name/password. Same shape for now.
   [DbAction.CreateFullAccount]: open(async ({ req }) => {
     const accountName = typeof req.AccountName === "string" ? req.AccountName : "";
-    const created = await createCustomAccount(accountName, AccountType.Custom, req.DeviceToken);
+    const created = await createCustomAccount(accountName, AccountType.Guest, req.DeviceToken);
     return ok(DbAction.CreateFullAccount, {
       id: created.doc.id,
+      Id: created.doc.id,
+      PlayerId: created.doc.id,
       token: created.authToken,
+      Token: created.authToken,
       password: created.authToken,
+      Password: created.authToken,
       Player: created.player,
     });
   }),
 
   // Credentials are verified by the dispatcher (requiresAuth); just return the snapshot.
   [DbAction.LoginToCustomAccount]: authed(({ player }) =>
-    ok(DbAction.LoginToCustomAccount, { id: player!.id, Player: player!.player }),
+    ok(DbAction.LoginToCustomAccount, { id: player!.id, Id: player!.id, PlayerId: player!.id, Player: player!.player }),
   ),
 };
