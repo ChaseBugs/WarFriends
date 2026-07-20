@@ -3,6 +3,7 @@ import test from "node:test";
 import { League } from "../constants";
 import {
   advancePlayerLeaguePlacementAfterPvp,
+  BEGINNER_LEAGUE_REWARDS,
   managedPlayerLeagueId,
   parseManagedPlayerLeagueId,
   PLAYER_LEAGUE_MINIMUM_PLAYERS,
@@ -31,6 +32,16 @@ test("recovered player-league table preserves all 16 source tiers and constants"
     PLAYER_LEAGUE_RULES.map((row) => row.underfilledGold),
     [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 125, 150, 175, 200, 225, 250],
   );
+  assert.deepEqual(
+    PLAYER_LEAGUE_RULES.map((row) => row.rewardWarBucks),
+    [800, 900, 1000, 1250, 1500, 1750, 2000, 2250, 2500, 2750, 3000, 3250, 3500, 3750, 4000, 5000],
+  );
+  assert.deepEqual(PLAYER_LEAGUE_RULES.map((row) => row.rewardSquadPoints), [2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 7]);
+  assert.deepEqual([...BEGINNER_LEAGUE_REWARDS], [
+    { beginnersLeague: 1, rewardWarBucks: 200, rewardSquadPoints: 1 },
+    { beginnersLeague: 2, rewardWarBucks: 400, rewardSquadPoints: 1 },
+    { beginnersLeague: 3, rewardWarBucks: 600, rewardSquadPoints: 1 },
+  ]);
 });
 
 test("managed IDs preserve Unity's tier-first and division-last parsing contract", () => {

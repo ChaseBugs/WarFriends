@@ -11,6 +11,13 @@ import { League } from "../constants";
 export interface PlayerLeagueRule {
   tier: League;
   name: string;
+  /** `REWARDWARBUCKS`: the source league component granted for a confirmed ranked win. */
+  rewardWarBucks: number;
+  /** `REWARDSQUADPOINTS`: the source squad contribution granted for that same win. */
+  rewardSquadPoints: number;
+  /** Retained source factors for the still-unrecovered global/league medal formula. */
+  winFactor: number;
+  loseFactor: number;
   durationHours: number;
   promoteFraction: number;
   demoteFraction: number;
@@ -18,23 +25,30 @@ export interface PlayerLeagueRule {
 }
 
 export const PLAYER_LEAGUE_RULES: readonly PlayerLeagueRule[] = [
-  { tier: League.Bronze3, name: "Bronze3", durationHours: 24, promoteFraction: 0.5, demoteFraction: 0, underfilledGold: 10 },
-  { tier: League.Bronze2, name: "Bronze2", durationHours: 24, promoteFraction: 0.5, demoteFraction: 0.1, underfilledGold: 20 },
-  { tier: League.Bronze1, name: "Bronze1", durationHours: 24, promoteFraction: 0.5, demoteFraction: 0.1, underfilledGold: 30 },
-  { tier: League.Silver3, name: "Silver3", durationHours: 72, promoteFraction: 0.3, demoteFraction: 0, underfilledGold: 40 },
-  { tier: League.Silver2, name: "Silver2", durationHours: 72, promoteFraction: 0.3, demoteFraction: 0.1, underfilledGold: 50 },
-  { tier: League.Silver1, name: "Silver1", durationHours: 72, promoteFraction: 0.3, demoteFraction: 0.1, underfilledGold: 60 },
-  { tier: League.Gold3, name: "Gold3", durationHours: 168, promoteFraction: 0.1, demoteFraction: 0, underfilledGold: 70 },
-  { tier: League.Gold2, name: "Gold2", durationHours: 168, promoteFraction: 0.1, demoteFraction: 0.1, underfilledGold: 80 },
-  { tier: League.Gold1, name: "Gold1", durationHours: 168, promoteFraction: 0.1, demoteFraction: 0.1, underfilledGold: 90 },
-  { tier: League.Elite3, name: "Elite3", durationHours: 168, promoteFraction: 0.1, demoteFraction: 0.1, underfilledGold: 100 },
-  { tier: League.Elite2, name: "Elite2", durationHours: 168, promoteFraction: 0.1, demoteFraction: 0.1, underfilledGold: 125 },
-  { tier: League.Elite1, name: "Elite1", durationHours: 168, promoteFraction: 0.1, demoteFraction: 0.1, underfilledGold: 150 },
-  { tier: League.Master3, name: "Master3", durationHours: 168, promoteFraction: 0.1, demoteFraction: 0.1, underfilledGold: 175 },
-  { tier: League.Master2, name: "Master2", durationHours: 168, promoteFraction: 0.1, demoteFraction: 0.1, underfilledGold: 200 },
-  { tier: League.Master1, name: "Master1", durationHours: 168, promoteFraction: 0.1, demoteFraction: 0.1, underfilledGold: 225 },
-  { tier: League.Champion, name: "Champion", durationHours: 168, promoteFraction: 0, demoteFraction: 0.1, underfilledGold: 250 },
+  { tier: League.Bronze3, name: "Bronze3", rewardWarBucks: 800, rewardSquadPoints: 2, winFactor: 1, loseFactor: 0.2, durationHours: 24, promoteFraction: 0.5, demoteFraction: 0, underfilledGold: 10 },
+  { tier: League.Bronze2, name: "Bronze2", rewardWarBucks: 900, rewardSquadPoints: 2, winFactor: 1, loseFactor: 0.4, durationHours: 24, promoteFraction: 0.5, demoteFraction: 0.1, underfilledGold: 20 },
+  { tier: League.Bronze1, name: "Bronze1", rewardWarBucks: 1000, rewardSquadPoints: 2, winFactor: 1, loseFactor: 0.8, durationHours: 24, promoteFraction: 0.5, demoteFraction: 0.1, underfilledGold: 30 },
+  { tier: League.Silver3, name: "Silver3", rewardWarBucks: 1250, rewardSquadPoints: 3, winFactor: 1, loseFactor: 1, durationHours: 72, promoteFraction: 0.3, demoteFraction: 0, underfilledGold: 40 },
+  { tier: League.Silver2, name: "Silver2", rewardWarBucks: 1500, rewardSquadPoints: 3, winFactor: 1, loseFactor: 1, durationHours: 72, promoteFraction: 0.3, demoteFraction: 0.1, underfilledGold: 50 },
+  { tier: League.Silver1, name: "Silver1", rewardWarBucks: 1750, rewardSquadPoints: 3, winFactor: 1, loseFactor: 1, durationHours: 72, promoteFraction: 0.3, demoteFraction: 0.1, underfilledGold: 60 },
+  { tier: League.Gold3, name: "Gold3", rewardWarBucks: 2000, rewardSquadPoints: 4, winFactor: 1, loseFactor: 1, durationHours: 168, promoteFraction: 0.1, demoteFraction: 0, underfilledGold: 70 },
+  { tier: League.Gold2, name: "Gold2", rewardWarBucks: 2250, rewardSquadPoints: 4, winFactor: 1, loseFactor: 1, durationHours: 168, promoteFraction: 0.1, demoteFraction: 0.1, underfilledGold: 80 },
+  { tier: League.Gold1, name: "Gold1", rewardWarBucks: 2500, rewardSquadPoints: 4, winFactor: 1, loseFactor: 1, durationHours: 168, promoteFraction: 0.1, demoteFraction: 0.1, underfilledGold: 90 },
+  { tier: League.Elite3, name: "Elite3", rewardWarBucks: 2750, rewardSquadPoints: 5, winFactor: 1, loseFactor: 1, durationHours: 168, promoteFraction: 0.1, demoteFraction: 0.1, underfilledGold: 100 },
+  { tier: League.Elite2, name: "Elite2", rewardWarBucks: 3000, rewardSquadPoints: 5, winFactor: 1, loseFactor: 1, durationHours: 168, promoteFraction: 0.1, demoteFraction: 0.1, underfilledGold: 125 },
+  { tier: League.Elite1, name: "Elite1", rewardWarBucks: 3250, rewardSquadPoints: 5, winFactor: 1, loseFactor: 1, durationHours: 168, promoteFraction: 0.1, demoteFraction: 0.1, underfilledGold: 150 },
+  { tier: League.Master3, name: "Master3", rewardWarBucks: 3500, rewardSquadPoints: 6, winFactor: 1, loseFactor: 1, durationHours: 168, promoteFraction: 0.1, demoteFraction: 0.1, underfilledGold: 175 },
+  { tier: League.Master2, name: "Master2", rewardWarBucks: 3750, rewardSquadPoints: 6, winFactor: 1, loseFactor: 1, durationHours: 168, promoteFraction: 0.1, demoteFraction: 0.1, underfilledGold: 200 },
+  { tier: League.Master1, name: "Master1", rewardWarBucks: 4000, rewardSquadPoints: 6, winFactor: 1, loseFactor: 1, durationHours: 168, promoteFraction: 0.1, demoteFraction: 0.1, underfilledGold: 225 },
+  { tier: League.Champion, name: "Champion", rewardWarBucks: 5000, rewardSquadPoints: 7, winFactor: 1, loseFactor: 1, durationHours: 168, promoteFraction: 0, demoteFraction: 0.1, underfilledGold: 250 },
 ] as const;
+
+/** `StringConstants.BeginnersRewards`: three exact local beginner-league win rows. */
+export const BEGINNER_LEAGUE_REWARDS = Object.freeze([
+  { beginnersLeague: 1, rewardWarBucks: 200, rewardSquadPoints: 1 },
+  { beginnersLeague: 2, rewardWarBucks: 400, rewardSquadPoints: 1 },
+  { beginnersLeague: 3, rewardWarBucks: 600, rewardSquadPoints: 1 },
+] as const);
 
 /** MainScene Constants.NotEnoughPlayersForPlayerLeague (decoded ObscuredFloat). */
 export const PLAYER_LEAGUE_MINIMUM_PLAYERS = 30;

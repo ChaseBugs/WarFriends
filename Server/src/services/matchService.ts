@@ -17,7 +17,11 @@ import { consumePvpUsedCardsState } from "./cardInventoryService";
 import { progressionForPlayer } from "./playerStateService";
 import { applyLevelExperienceState } from "./levelProgressionService";
 import { calculateArmyPower } from "./armyPowerService";
-import { advancePlayerLeaguePlacementAfterPvp } from "./playerLeagueContract";
+import {
+  advancePlayerLeaguePlacementAfterPvp,
+  BEGINNER_LEAGUE_REWARDS,
+  playerLeagueRule,
+} from "./playerLeagueContract";
 import {
   getActiveConfiguredSquadEvent,
   recordConfirmedPvpSquadEventProgress,
@@ -121,7 +125,6 @@ const REWARDS = {
   loseExperience: 10,
   winMedals: 25,
   loseMedals: -12,
-  winSquadPoints: 10,
 } as const;
 
 /**
@@ -245,6 +248,45 @@ export function pvpWarBucksAmounts(won: boolean, isVip: boolean): {
   return { baseWarBucks, warBucks };
 }
 
+export interface PvpLeagueReward {
+  baseWarBucks: number;
+  warBucks: number;
+  squadPoints: number;
+}
+
+/**
+ * Resolve the source-owned ranked-win bonuses advertised by the active league.
+ *
+ * `PlayerLeaderboards.REWARDWARBUCKS/REWARDSQUADPOINTS` and
+ * `StringConstants.BeginnersRewards` are complete in MainScene. The recovered result parser
+ * has dedicated `Warbucks.League` and outer `squadPoints` fields for these values. A loss is
+ * intentionally zero: the scene does not prove that league bonuses were paid on defeats, so
+ * the offline backend follows the existing winner-only policy instead of creating currency.
+ * VIP multiplication is separate because IIGFODGJBFA truncates the League component on its
+ * own, independently from BattleRewards and Winstreak.
+ */
+export function pvpLeagueReward(
+  won: boolean,
+  isVip: boolean,
+  beginnersLeague: number,
+  leagueTier: number,
+): PvpLeagueReward {
+  if (!won) return { baseWarBucks: 0, warBucks: 0, squadPoints: 0 };
+  // Positive beginner IDs select only the recovered three-row table. Do not silently fall
+  // through to the much larger normal-league payout if persistent league state is corrupt.
+  const beginner = BEGINNER_LEAGUE_REWARDS.find((row) => row.beginnersLeague === beginnersLeague);
+  if (beginnersLeague > 0 && !beginner) {
+    throw new Error(`Unsupported beginner league ${beginnersLeague}.`);
+  }
+  const source = beginner ?? playerLeagueRule(leagueTier);
+  const baseWarBucks = source.rewardWarBucks;
+  const warBucks = isVip
+    ? Math.trunc(baseWarBucks * VIP_BATTLE_WARBUCKS_MULTIPLIER)
+    : baseWarBucks;
+  if (!Number.isSafeInteger(warBucks)) throw new Error("PvP VIP league WarBucks overflowed.");
+  return { baseWarBucks, warBucks, squadPoints: source.rewardSquadPoints };
+}
+
 /**
  * Derive the base client component and the authoritative amount for one PvP result.
  *
@@ -297,6 +339,7 @@ export function pvpGameReward(
   newVisuals?: string,
   battleWarBucks = 0,
   winStreakWarBucks = 0,
+  leagueWarBucks = 0,
 ): Record<string, unknown> {
   return {
     Warbucks: {
@@ -306,7 +349,7 @@ export function pvpGameReward(
       BattleRewards: resultAvailable ? battleWarBucks : 0,
       ExtraRewards: 0,
       Winstreak: resultAvailable ? winStreakWarBucks : 0,
-      League: 0,
+      League: resultAvailable ? leagueWarBucks : 0,
       offerMult: 1,
     },
     Xp: {
@@ -386,6 +429,12 @@ export interface MatchPlayerReward {
   /** Immutable outer GameEnded fields used to restore WinStreakManager on response/retry. */
   winCount: number;
   winStreakTimestamp: number;
+  /** Unmultiplied source tier value returned through Warbucks.League. */
+  baseLeagueWarBucks: number;
+  /** Durable league component after its independent settlement-time VIP multiplier. */
+  leagueWarBucks: number;
+  /** Exact source tier squad-point grant returned by the outer GameEnded field. */
+  squadPoints: number;
   /** Unmultiplied Xp.BattleRewards value consumed by the stock client reward parser. */
   baseExperience: number;
   /** Actual XP committed to the player after the settlement-time VIP multiplier. */
@@ -442,8 +491,16 @@ async function settlePlayerCore(
   const { baseExperience, experience } = pvpExperienceAmounts(won, isVip);
   const { baseWarBucks, warBucks } = pvpWarBucksAmounts(won, isVip);
   const winStreak = advancePvpWinStreak(initialState.pvpWinStreak, won, isVip, settlementUnix);
+  const leagueReward = pvpLeagueReward(
+    won,
+    isVip,
+    player.player.beginnersLeague,
+    player.player.leagueTier,
+  );
   const medalDelta = won ? REWARDS.winMedals : REWARDS.loseMedals;
-  const squadPoints = won && player.player.squadName ? REWARDS.winSquadPoints : 0;
+  // A player outside a squad still receives the personal reward receipt as zero. This keeps
+  // lifetime squad achievements and squad aggregates tied to real membership at settlement.
+  const squadPoints = player.player.squadName ? leagueReward.squadPoints : 0;
   const consumed = consumePvpUsedCardsState(initialState, usedCards);
   const leveled = applyLevelExperienceState(consumed.state, player.player.level, experience);
   // Advance the periodic paid-VIP benefit before constructing the canonical progression.
@@ -456,7 +513,7 @@ async function settlePlayerCore(
   if (vipLootboxes.state.gold > Number.MAX_SAFE_INTEGER - vipLevelGoldBonus) {
     throw new Error("PvP VIP level Gold balance overflowed.");
   }
-  const totalPvpWarBucks = warBucks + winStreak.warBucks;
+  const totalPvpWarBucks = warBucks + winStreak.warBucks + leagueReward.warBucks;
   if (!Number.isSafeInteger(totalPvpWarBucks)
     || vipLootboxes.state.warBucks > Number.MAX_SAFE_INTEGER - totalPvpWarBucks) {
     throw new Error("PvP WarBucks balance overflowed.");
@@ -532,6 +589,9 @@ async function settlePlayerCore(
       winStreakWarBucks: winStreak.warBucks,
       winCount: winStreak.state.winCount,
       winStreakTimestamp: winStreak.state.timestamp,
+      baseLeagueWarBucks: leagueReward.baseWarBucks,
+      leagueWarBucks: leagueReward.warBucks,
+      squadPoints,
       baseExperience,
       experience,
       baseGold,

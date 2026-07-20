@@ -526,8 +526,8 @@ test("PvP VIP receipts expose base XP and WarBucks while settlement persists exa
   assert.deepEqual(pvpWarBucksAmounts(false, false), { baseWarBucks: 400, warBucks: 400 });
   assert.deepEqual(pvpWarBucksAmounts(true, true), { baseWarBucks: 800, warBucks: 1200 });
   assert.deepEqual(pvpWarBucksAmounts(false, true), { baseWarBucks: 400, warBucks: 600 });
-  assert.deepEqual(pvpGameReward(true, 30, 7, true, undefined, 800, 700), {
-    Warbucks: { BattleRewards: 800, ExtraRewards: 0, Winstreak: 700, League: 0, offerMult: 1 },
+  assert.deepEqual(pvpGameReward(true, 30, 7, true, undefined, 800, 700, 1250), {
+    Warbucks: { BattleRewards: 800, ExtraRewards: 0, Winstreak: 700, League: 1250, offerMult: 1 },
     Xp: { BattleRewards: 30, ExtraRewards: 0, Winstreak: 0, Time: 0, offerMult: 1 },
     GameGold: { BattleRewards: 7, League: 0, offerMult: 1 },
     IsVip: true,

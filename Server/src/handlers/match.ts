@@ -225,6 +225,7 @@ export const matchHandlers: Record<number, HandlerEntry> = {
         rewardReceipt?.newVisuals,
         rewardReceipt?.baseWarBucks ?? rewardReceipt?.warBucks ?? 0,
         rewardReceipt?.baseWinStreakWarBucks ?? rewardReceipt?.winStreakWarBucks ?? 0,
+        rewardReceipt?.baseLeagueWarBucks ?? rewardReceipt?.leagueWarBucks ?? 0,
       ),
       // DMGJCGJDDID restores WinStreakManager only when WinCount is present. Return the
       // immutable pair for both wins and losses (zero clears a lost streak); never emit it
@@ -252,6 +253,10 @@ export const matchHandlers: Record<number, HandlerEntry> = {
       ),
       Skill: updated?.player.skill ?? player!.player.skill,
       MedalsBalance: updated?.player.medalsBalance ?? player!.player.medalsBalance,
+      // OGLEHLIPEFM copies this lower-case outer field into IIGFODGJBFA and immediately
+      // advances the local lifetime squad-points statistic. Use the immutable receipt so a
+      // retry shows the original delta and a pending/conflicting report never invents one.
+      ...(resultAvailable && rewardReceipt ? { squadPoints: rewardReceipt.squadPoints ?? 0 } : {}),
       PlacementMatchesRequired: updated?.player.remainingMatches ?? player!.player.remainingMatches,
       BeginnersLeague: updated?.player.beginnersLeague ?? player!.player.beginnersLeague,
       // DMGJCGJDDID treats EnteredLeague as the signal to replace the local placement ID.

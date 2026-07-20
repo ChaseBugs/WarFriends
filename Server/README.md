@@ -374,5 +374,8 @@ allowlist of analytics/impression actions is safely ignored.
 - **Win-streak fidelity** — the 200-second interval and nine valid WarBucks tiers are decoded from
   MainScene and persisted authoritatively. The corrupted/unusable tenth value is capped at tier nine
   until archived live balancing is available.
+- **League win rewards** — the three beginner and 16 normal MainScene WarBucks/squad-point rows
+  now settle from authenticated player state, use the exact lower-case `squadPoints` response key,
+  and apply VIP independently without trusting client reward echoes.
 - **Client integration** — form request routing is implemented, but exact response keys for
   every action and the Photon→WebSocket client repoint remain `⚠ RE-NEEDED`.

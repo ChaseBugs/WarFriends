@@ -80,7 +80,7 @@ therefore includes the minimum exact object:
     "BattleRewards": 800,
     "ExtraRewards": 0,
     "Winstreak": 400,
-    "League": 0,
+    "League": 200,
     "offerMult": 1
   },
   "Xp": {
@@ -115,6 +115,23 @@ mint arbitrary currency. Active VIP settlement persists 1.5 times the base using
 positive float-to-int truncation, while the response sends the base plus `IsVip=true` so the
 client applies that decoded multiplier exactly once.
 
+## League win rewards
+
+Confirmed ranked winners now receive the exact `REWARDWARBUCKS` and `REWARDSQUADPOINTS` values
+advertised by the recovered league UI. The three beginner rows grant 200/400/600 WarBucks and one
+squad point. The 16 normal tiers grant 800 through 5000 WarBucks and two through seven squad
+points. The WarBucks value is returned in `GameReward.Warbucks.League`; a current squad member's
+point delta is returned in the parser's lower-case outer `squadPoints` field and is also committed
+to the player, squad, achievement, and assignment projections.
+
+The source table does not establish a league payout on a defeat, so the offline backend uses the
+conservative winner-only rule and returns zero for both components after a loss. Active VIP applies
+the decoded 1.5x multiplier to `Warbucks.League` independently, matching the client's per-component
+truncation. The result request cannot choose the league, payout, or squad-point amount: all three
+come from the authenticated player's settlement-time server state. The table's `WINFACTOR` and
+`LOSEFACTOR` rows are retained for future medal-formula recovery but are not guessed into the
+current fixed global/league medal policy.
+
 ## Timed win-streak rewards
 
 Ranked wins now advance a private server-owned streak and return the recovered outer `WinCount`
@@ -145,8 +162,8 @@ then included in a full authoritative Army Power recomputation.
 
 Level progress, Gold, public level, Army Power, card consumption, periodic VIP visual parts,
 duplicate WarBucks, match rewards, and the terminal match state share the same MongoDB transaction.
-The match stores an immutable per-player receipt containing base/streak WarBucks, streak state,
-XP, Gold, old/new level, remaining
+The match stores an immutable per-player receipt containing base/streak/league WarBucks, streak
+state, the exact squad-point delta, XP, Gold, old/new level, remaining
 level XP, the post-match VIP lootbox countdown, and the exact optional `GameReward.NewVisuals`
 dictionary string. A finished `GameEnded` retry can therefore reproduce the original
 `GameReward.GameGold`, conditional `Level`, `MatchesToNextLootboxes`, and suitcase pair without
