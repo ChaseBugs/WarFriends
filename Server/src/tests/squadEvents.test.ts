@@ -176,6 +176,15 @@ test("confirmed PvP facts advance only recovered win and play assignment fractio
     () => applyConfirmedPvpSquadEventProgress(damaged, SEASON, true, now),
     /does not match its immutable season definition/,
   );
+  assert.throws(
+    () => applyConfirmedPvpSquadEventProgress(
+      { ...initial, configHash: "retired-live-definition" },
+      SEASON,
+      true,
+      now,
+    ),
+    /definition changed after progress was created/,
+  );
 });
 
 test("completing a tier advances ActiveTier and creates the exact claimable type-11 Gold message", () => {

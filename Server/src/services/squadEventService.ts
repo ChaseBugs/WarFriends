@@ -414,8 +414,16 @@ export type SquadEventProjectionStatus =
   | "not_member"
   | "unchanged"
   | "updated"
+  // These two values remain in the persisted receipt type because older Server builds could
+  // commit them. New settlements never return them: definition drift or damaged progress now
+  // aborts the enclosing match transaction so the event contribution remains retryable.
   | "config_mismatch"
   | "invalid_progress";
+
+type CurrentSquadEventProjectionStatus = Exclude<
+  SquadEventProjectionStatus,
+  "config_mismatch" | "invalid_progress"
+>;
 
 /**
  * Project one confirmed participant result inside the match settlement transaction.
@@ -431,7 +439,7 @@ export async function recordConfirmedPvpSquadEventProgress(
   squadId: string,
   won: boolean,
   now = new Date(),
-): Promise<SquadEventProjectionStatus> {
+): Promise<CurrentSquadEventProjectionStatus> {
   const squad = squadId
     ? await squads().findOne({ name: squadId, "members.playerId": playerId }, { session })
     : null;
@@ -440,16 +448,12 @@ export async function recordConfirmedPvpSquadEventProgress(
   }
   const current = await squadEventProgress().findOne({ squadId, eventId: season.id }, { session });
   if (!current) return "not_joined";
-  if (current.configHash !== squadEventConfigHash(season)) return "config_mismatch";
-  let next: SquadEventPvpProgressResult;
-  try {
-    next = applyConfirmedPvpSquadEventProgress(current, season, won, now);
-  } catch (error) {
-    // A damaged projection is isolated from core match settlement. Its audit status remains on
-    // the terminal match so operators can repair it without granting the same PvP rewards twice.
-    if (error instanceof ApiError) return "invalid_progress";
-    throw error;
-  }
+  // `applyConfirmedPvpSquadEventProgress` verifies both the immutable configuration hash and the
+  // complete stored progress shape. Do not translate either invariant failure into a successful
+  // terminal receipt: once the match is finished, its confirmed win/play contribution cannot be
+  // applied again. Let the error abort core rewards as well, then retry after the operator restores
+  // the live definition or repairs the damaged projection.
+  const next = applyConfirmedPvpSquadEventProgress(current, season, won, now);
   if (!next.changed) return "unchanged";
   const update = await squadEventProgress().updateOne(
     { _id: current._id, revision: current.revision, configHash: current.configHash },
