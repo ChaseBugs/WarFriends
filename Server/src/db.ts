@@ -970,6 +970,18 @@ export async function connectMongo(): Promise<void> {
   await syncGameCatalog(gameCatalogEntriesCollection, gameCatalogReleasesCollection);
 }
 
+/**
+ * Return the connected database for deployment-level work such as versioned migrations.
+ *
+ * Gameplay services should continue to use the typed collection accessors below. Exposing the
+ * database narrowly here prevents migration code from constructing a second MongoClient (and a
+ * second connection pool) while still failing fast if startup order is changed accidentally.
+ */
+export function mongoDatabase(): Db {
+  if (!db) throw new Error("MongoDB is not connected.");
+  return db;
+}
+
 export async function disconnectMongo(): Promise<void> {
   await client.close();
   db = null;

@@ -10,6 +10,7 @@ import { createGameHub } from "./gameHub";
 import logger from "./utils/logger";
 import { recoverInterruptedMatches } from "./services/matchService";
 import { createHttpRateLimitMiddleware } from "./services/httpRateLimitService";
+import { runDatabaseMigrations } from "./services/databaseMigrationService";
 
 const app = express();
 
@@ -74,6 +75,10 @@ async function start(): Promise<void> {
   }
   await connectMongo();
   logger.db.connect("MongoDB connected", { provider: "mongodb", database: config.mongoDbName });
+  // Migrations run before any repair or listener opens. A node with unknown/drifted history stays
+  // out of service, and the database lease prevents two rolling-deployment nodes changing schema
+  // concurrently.
+  await runDatabaseMigrations();
   await recoverInterruptedMatches();
 
   await connectRedis();

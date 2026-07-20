@@ -64,6 +64,7 @@ src/
   apiErrors.ts       numeric error codes + ApiError
   db.ts              MongoDB connection + typed collection accessors
   redis.ts           optional Redis (matchmaking queue, leaderboards, pub/sub)
+  services/databaseMigrationService.ts  ordered, leased MongoDB schema migrations
   dtos/              wire types: envelope (base), DatabasePlayer, Squad
   services/          data/business logic: auth, player, squad
   handlers/          DbAction → handler dispatch (auth, player, squad)
