@@ -159,6 +159,9 @@ Working end-to-end (verified live):
   Match rows record their coordinator node, whose renewable Redis heartbeat separates crashed-room
   orphans from live peer-owned matches. Startup and periodic recovery cancel confirmed orphans and
   repair only unprotected `InGame` profiles; an unknown Redis observation is conservatively retried.
+  Distributed `JoinMatch` writes authenticated participant membership idempotently to MongoDB. The
+  request that atomically completes the assigned pair writes `roomStartedAt` once and fans a
+  MongoDB-validated `MatchStart` to both nodes; late join-timeout callbacks cannot cancel it.
   Cancellation likewise commits the terminal match and both presence releases together. On a
   single-node restart, active/settling matches are cancelled and all residual `InGame` profiles
   are repaired in the same transaction, including legacy partial cancellations.

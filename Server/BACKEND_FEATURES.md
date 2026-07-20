@@ -57,8 +57,10 @@ same two accounts. Redis-disabled or unavailable deployments retain the tested i
 
 `MatchFound` can cross backend nodes through a size/type-bounded pub/sub instruction. The receiving
 node never trusts that instruction as match authority: it reloads MongoDB and proves that the local
-target belongs to the named active match before delivering to the socket. Durable cross-node
-join/start/event/result/disconnect room coordination remains the next horizontal PvP layer.
+target belongs to the named active match before delivering to the socket. Authenticated `JoinMatch`
+is also durable and retry-safe: each assigned player is added once, the complete pair atomically
+claims one `roomStartedAt` transition, and only that compare-and-set winner fans `MatchStart` to
+both nodes. Cross-node event/result/disconnect coordination remains the next horizontal PvP layer.
 
 Each new match also stores its backend coordinator UUID. Redis carries a renewable crash-expiring
 heartbeat for that UUID, and startup plus periodic orphan recovery cancels only matches whose owner

@@ -99,6 +99,10 @@ export interface MatchDoc {
   matchId: string;
   /** Backend node that owns transient timers/room state; liveness is advertised through Redis. */
   coordinatorId?: string;
+  /** Authenticated participants that completed JoinMatch; used for cross-node room admission. */
+  joinedPlayerIds?: string[];
+  /** Written once when every assigned participant has joined the distributed room. */
+  roomStartedAt?: Date;
   players: MatchPlayer[];
   state: "active" | "settling" | "finished" | "cancelled";
   /** Written only by the atomic settlement claim and preserved for idempotent retries. */
@@ -141,11 +145,19 @@ export function normalizeMatchCancelReason(reason: string): string {
  */
 export async function cancelMatch(matchId: string, reason: string): Promise<boolean> {
   const cancelReason = normalizeMatchCancelReason(reason);
+  // A late join-timeout callback must never cancel a distributed room whose second participant
+  // already committed the start transition on another node.
+  const cancellationGuard = cancelReason === "join_timeout"
+    ? { roomStartedAt: { $exists: false } }
+    : {};
   const cancelled = await withMongoTransaction(async (session) => {
-    const match = await matches().findOne({ matchId, state: "active" }, { session }) as unknown as MatchDoc | null;
+    const match = await matches().findOne(
+      { matchId, state: "active", ...cancellationGuard },
+      { session },
+    ) as unknown as MatchDoc | null;
     if (!match) return false;
     const claim = await matches().updateOne(
-      { matchId, state: "active" },
+      { matchId, state: "active", ...cancellationGuard },
       { $set: { state: "cancelled", cancelReason, endedAt: new Date() } },
       { session },
     );
@@ -925,6 +937,70 @@ async function grantSecondaryProgress(grant: CoreGrant): Promise<void> {
 
 export async function getMatch(matchId: string): Promise<MatchDoc | null> {
   return (await matches().findOne({ matchId })) as unknown as MatchDoc | null;
+}
+
+export interface JoinActiveMatchResult {
+  match: MatchDoc;
+  joinedCount: number;
+  started: boolean;
+  /** True only for the request that won the waiting-to-start compare-and-set. */
+  activatedByCaller: boolean;
+}
+
+export function distributedRoomJoinState(match: MatchDoc): {
+  allowedPlayerIds: string[];
+  joinedPlayerIds: string[];
+  ready: boolean;
+} {
+  const allowedPlayerIds = [...new Set(match.players.map((player) => player.playerId))];
+  const joinedPlayerIds = [...new Set(match.joinedPlayerIds ?? [])]
+    .filter((id) => allowedPlayerIds.includes(id));
+  return {
+    allowedPlayerIds,
+    joinedPlayerIds,
+    ready: allowedPlayerIds.length > 0 && allowedPlayerIds.every((id) => joinedPlayerIds.includes(id)),
+  };
+}
+
+/**
+ * Durably admit one authenticated assigned participant to a distributed PvP room.
+ *
+ * `$addToSet` makes reconnect/retry joins idempotent. Once all immutable participants are present,
+ * a second compare-and-set writes roomStartedAt exactly once. Concurrent joins may both observe the
+ * active room, but only one publishes the initial MatchStart fan-out.
+ */
+export async function joinActiveMatch(matchId: string, playerId: string): Promise<JoinActiveMatchResult | null> {
+  if (!matchId || !playerId || matchId.length > 128 || playerId.length > 128) return null;
+  const admitted = await matches().updateOne(
+    { matchId, state: "active", "players.playerId": playerId },
+    { $addToSet: { joinedPlayerIds: playerId } },
+  );
+  if (admitted.matchedCount !== 1) return null;
+
+  let match = await getMatch(matchId);
+  if (!match || match.state !== "active" || !match.players.some((player) => player.playerId === playerId)) return null;
+  const { allowedPlayerIds, joinedPlayerIds, ready } = distributedRoomJoinState(match);
+  let activatedByCaller = false;
+  if (ready) {
+    const activation = await matches().updateOne(
+      {
+        matchId,
+        state: "active",
+        roomStartedAt: { $exists: false },
+        joinedPlayerIds: { $all: allowedPlayerIds },
+      },
+      { $set: { roomStartedAt: new Date() } },
+    );
+    activatedByCaller = activation.modifiedCount === 1;
+    match = await getMatch(matchId);
+    if (!match || match.state !== "active") return null;
+  }
+  return {
+    match,
+    joinedCount: joinedPlayerIds.length,
+    started: match.roomStartedAt instanceof Date,
+    activatedByCaller,
+  };
 }
 
 export async function isMatchParticipant(matchId: string, playerId: string): Promise<boolean> {

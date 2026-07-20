@@ -29,14 +29,16 @@ export function parsePvpFanoutNotice(raw: string): PvpFanoutNotice | null {
   try {
     const value = JSON.parse(raw) as Partial<PvpFanoutNotice>;
     const payload = value.envelope?.Payload as { MatchId?: unknown; Opponent?: unknown } | undefined;
+    const envelopeType = value.envelope?.Type;
     if (value.version !== 1
       || typeof value.originId !== "string" || value.originId.length === 0 || value.originId.length > 128
       || typeof value.targetPlayerId !== "string" || value.targetPlayerId.length === 0 || value.targetPlayerId.length > 128
       || typeof value.matchId !== "string" || value.matchId.length === 0 || value.matchId.length > 128
       || !value.envelope || typeof value.envelope !== "object"
-      || typeof value.envelope.Type !== "string" || value.envelope.Type !== "MatchFound"
+      || (envelopeType !== "MatchFound" && envelopeType !== "MatchStart")
       || !payload || payload.MatchId !== value.matchId
-      || typeof payload.Opponent !== "string" || payload.Opponent.length === 0 || payload.Opponent.length > 64) return null;
+      || (envelopeType === "MatchFound"
+        && (typeof payload.Opponent !== "string" || payload.Opponent.length === 0 || payload.Opponent.length > 64))) return null;
     return value as PvpFanoutNotice;
   } catch {
     return null;

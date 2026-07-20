@@ -8,6 +8,7 @@ import {
   cancelMatch,
   createMatch,
   getMatch,
+  joinActiveMatch,
   recordRelayedCardPlay,
   reportMatchResult,
   settleResult,
@@ -311,11 +312,12 @@ async function receiveRemotePvpFanout(raw: string): Promise<void> {
   const match = await getMatch(notice.matchId);
   if (!match
     || match.state !== "active"
-    || !match.players.some((participant) => participant.playerId === notice.targetPlayerId)) return;
+    || !match.players.some((participant) => participant.playerId === notice.targetPlayerId)
+    || (notice.envelope.Type === "MatchStart" && !(match.roomStartedAt instanceof Date))) return;
   sendToPlayer(notice.targetPlayerId, notice.envelope);
 }
 
-async function deliverMatchFound(
+async function deliverPvpEnvelope(
   playerId: string,
   matchId: string,
   envelope: ClientEnvelope,
@@ -619,8 +621,8 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
       }
       scheduleMatchJoinTimeout(matchId, [self.playerId, other.playerId]);
       const found = (opponentName: string) => ({ Type: "MatchFound", Payload: { MatchId: matchId, Opponent: opponentName } });
-      const selfDelivered = await deliverMatchFound(self.playerId, matchId, found(other.name));
-      const opponentDelivered = await deliverMatchFound(opponent.id, matchId, found(self.name));
+      const selfDelivered = await deliverPvpEnvelope(self.playerId, matchId, found(other.name));
+      const opponentDelivered = await deliverPvpEnvelope(opponent.id, matchId, found(self.name));
       if (!selfDelivered || !opponentDelivered) {
         await cancelMatch(matchId, "match_found_delivery_failed");
         clearMatchJoinTimer(matchId);
@@ -646,6 +648,34 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
     case "JoinMatch": {
       if (!client.playerId) return send(client, { Type: "AuthError", Payload: { Message: "Identify first." } });
       const p = envelope.Payload as JoinMatchPayload;
+      if (isRedisAvailable()) {
+        const joined = await joinActiveMatch(p?.MatchId, client.playerId);
+        if (!joined) {
+          return send(client, {
+            Type: "MatchError",
+            Payload: { MatchId: p?.MatchId, Reason: "NotParticipantOrFull" },
+          });
+        }
+        send(client, {
+          Type: "MatchJoined",
+          Payload: {
+            MatchId: p.MatchId,
+            State: joined.started ? "active" : "waiting",
+            Participants: joined.joinedCount,
+          },
+        });
+        if (joined.activatedByCaller) {
+          const started: ClientEnvelope = { Type: "MatchStart", Payload: { MatchId: p.MatchId } };
+          // The compare-and-set winner emits exactly one start instruction per assigned player.
+          // Same-node sockets receive it directly; remote nodes revalidate roomStartedAt from
+          // MongoDB before delivering the Redis instruction.
+          await Promise.all(joined.match.players.map((participant) =>
+            deliverPvpEnvelope(participant.playerId, p.MatchId, started)
+          ));
+          clearMatchJoinTimer(p.MatchId);
+        }
+        return;
+      }
       const match = await getMatch(p?.MatchId);
       const allowedPlayerIds = match?.state === "active" ? match.players.map((participant) => participant.playerId) : [];
       const room = roomManager.join(p?.MatchId, client.playerId, client.id, allowedPlayerIds);

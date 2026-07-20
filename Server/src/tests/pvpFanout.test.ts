@@ -38,3 +38,11 @@ test("PvP fan-out rejects malformed identities and JSON", () => {
     envelope: { Type: "MatchFound" },
   })), null);
 });
+
+test("PvP fan-out accepts a start instruction bound to the same durable match", () => {
+  const encoded = buildPvpFanoutNotice("node-b", "player-a", "match-2", {
+    Type: "MatchStart",
+    Payload: { MatchId: "match-2" },
+  });
+  assert.equal(parsePvpFanoutNotice(encoded)?.envelope.Type, "MatchStart");
+});
