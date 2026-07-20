@@ -11,6 +11,7 @@ import {
   parseSquadEventConfig,
   selectActiveSquadEvent,
   squadEventConfigHash,
+  squadEventPlayerLevelProgress,
 } from "../services/squadEventService";
 
 const SEASON = {
@@ -94,7 +95,6 @@ test("SquadEventProgress uses exact DynamoDB S/N wrappers and zero-based tier ke
     eventId: SEASON.id,
     configHash: squadEventConfigHash(SEASON),
     activeTier: 0,
-    levelProgress: 0.25,
     tiers: [{
       reward: 100,
       assignments: [
@@ -106,7 +106,7 @@ test("SquadEventProgress uses exact DynamoDB S/N wrappers and zero-based tier ke
     joinedAt: now,
     updatedAt: now,
   };
-  assert.deepEqual(buildSquadEventProgress(progress), {
+  assert.deepEqual(buildSquadEventProgress(progress, 0.25), {
     SquadId: { S: "Alpha" },
     EventId: { S: SEASON.id },
     ActiveTier: { N: "0" },
@@ -118,6 +118,12 @@ test("SquadEventProgress uses exact DynamoDB S/N wrappers and zero-based tier ke
     T0A1Target: { N: "3" },
     T0A1Param: { N: "2.5" },
   });
+});
+
+test("LevelProgress reproduces the viewer-specific LevelManager float calculation", () => {
+  assert.equal(squadEventPlayerLevelProgress(0), Math.fround(1 / 58));
+  assert.equal(squadEventPlayerLevelProgress(57), 1);
+  assert.throws(() => squadEventPlayerLevelProgress(58), /level index 58 is invalid/);
 });
 
 test("JoinSquadEvent fails with the recovered no-active-event code before storage access", async () => {

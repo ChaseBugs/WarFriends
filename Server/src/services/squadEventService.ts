@@ -9,6 +9,7 @@ import {
   type PlayerDocument,
   type SquadEventProgressDocument,
 } from "../db";
+import { PLAYER_LEVELS, playerLevelDefinition } from "./levelProgressionService";
 
 const MAX_UNIX_SECONDS = 2_147_483_647;
 const MAX_SEASONS = 128;
@@ -172,6 +173,12 @@ function numberAttribute(value: number): { N: string } {
   return { N: String(value) };
 }
 
+/** Reproduce LevelManager.GetPlayerLevelProgress with the client's binary32 result. */
+export function squadEventPlayerLevelProgress(levelIndex: number): number {
+  playerLevelDefinition(levelIndex);
+  return Math.fround((levelIndex + 1) / PLAYER_LEVELS.length);
+}
+
 /** Exact plain-JSON contract consumed by PFPAMNODNPF.MAINIENLLIL. */
 export function buildSquadEventDefinition(season: SquadEventSeasonConfig): Record<string, unknown> {
   const result: Record<string, unknown> = {
@@ -190,12 +197,17 @@ export function buildSquadEventDefinition(season: SquadEventSeasonConfig): Recor
 }
 
 /** Exact DynamoDB-attribute contract consumed by JMHLHIIMNIG.MAINIENLLIL. */
-export function buildSquadEventProgress(progress: SquadEventProgressDocument): Record<string, unknown> {
+export function buildSquadEventProgress(
+  progress: SquadEventProgressDocument,
+  playerLevelProgress: number,
+): Record<string, unknown> {
   const result: Record<string, unknown> = {
     SquadId: { S: progress.squadId },
     EventId: { S: progress.eventId },
     ActiveTier: numberAttribute(progress.activeTier),
-    LevelProgress: numberAttribute(progress.levelProgress),
+    // This is viewer-specific reward scaling, not shared Squad Event completion. Persisting the
+    // first member's value would make every other member see rewards calculated for that level.
+    LevelProgress: numberAttribute(playerLevelProgress),
   };
   progress.tiers.forEach((tier, tierIndex) => {
     result[`T${tierIndex}Reward`] = numberAttribute(tier.reward);
@@ -217,7 +229,6 @@ function initialProgress(squadId: string, season: SquadEventSeasonConfig, now: D
     eventId: season.id,
     configHash: squadEventConfigHash(season),
     activeTier: 0,
-    levelProgress: 0,
     tiers: season.tiers.map((tier) => ({
       reward: tier.reward,
       assignments: tier.assignments.map((assignment) => ({ ...assignment, value: 0 })),
@@ -276,12 +287,21 @@ export async function joinSquadEvent(player: PlayerDocument, now = new Date()): 
 }
 
 /** Optional event fields appended to squad-detail responses for the currently active season. */
-export async function getSquadEventWireFields(squadId: string, now = new Date()): Promise<Record<string, unknown>> {
+export async function getSquadEventWireFields(
+  squadId: string,
+  playerLevel: number,
+  now = new Date(),
+): Promise<Record<string, unknown>> {
   const season = await activeSquadEvent(now);
   if (!season) return {};
   const progress = await squadEventProgress().findOne({ squadId, eventId: season.id });
   return {
     EventDefinition: buildSquadEventDefinition(season),
-    ...(progress ? { SquadEventProgress: buildSquadEventProgress(assertProgressMatchesSeason(progress, season)) } : {}),
+    ...(progress ? {
+      SquadEventProgress: buildSquadEventProgress(
+        assertProgressMatchesSeason(progress, season),
+        squadEventPlayerLevelProgress(playerLevel),
+      ),
+    } : {}),
   };
 }

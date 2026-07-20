@@ -495,7 +495,6 @@ export interface SquadEventProgressDocument {
   /** SHA-256 of the normalized immutable season definition used to create this row. */
   configHash: string;
   activeTier: number;
-  levelProgress: number;
   tiers: Array<{
     reward: number;
     assignments: Array<{

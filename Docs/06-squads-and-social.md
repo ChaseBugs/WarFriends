@@ -121,6 +121,11 @@ The wire response follows both recovered parsers exactly:
   numeric wrappers for `ActiveTier`, `LevelProgress`, `T{i}Reward`, `T{i}A{j}` current value,
   `T{i}A{j}Target`, and optional numeric `T{i}A{j}Param`.
 
+`LevelProgress` is not the squad's tier completion. `Assignment.CreateAssignment` uses it to
+interpolate the viewing player's assignment reward display. The backend reproduces
+`LevelManager.GetPlayerLevelProgress` as binary32 `(levelIndex + 1) / 58` for each authenticated
+viewer and does not persist one member's level ratio into shared squad progress.
+
 `GetSquadDetails` and `GetFullSquadInfo` expose the active definition and, after the squad joins,
 its progress. This is intentionally only the participation foundation. The old client sends
 `SquadEventUpdate` floats from `GameEnded`, but modified clients can forge them; the backend does

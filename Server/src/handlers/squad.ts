@@ -29,6 +29,7 @@ import {
   buildSquadEventProgress,
   getSquadEventWireFields,
   joinSquadEvent,
+  squadEventPlayerLevelProgress,
 } from "../services/squadEventService";
 
 // Squad system — BACKEND.md §2.5. Every handler is authenticated; rank checks live in the
@@ -84,7 +85,14 @@ function emblem(req: Record<string, unknown>): Record<string, unknown> | undefin
 export const squadHandlers: Record<number, HandlerEntry> = {
   [DbAction.JoinSquadEvent]: authed(async ({ player }) => {
     const progress = await joinSquadEvent(player!);
-    return ok(DbAction.JoinSquadEvent, { SquadEventProgress: buildSquadEventProgress(progress) });
+    return ok(DbAction.JoinSquadEvent, {
+      SquadEventProgress: buildSquadEventProgress(
+        progress,
+        // Level is the zero-based LevelManager index in the recovered DatabasePlayer contract.
+        // LevelProgress is viewer-specific reward scaling, not shared event completion.
+        squadEventPlayerLevelProgress(player!.player.level),
+      ),
+    });
   }),
 
   [DbAction.SaveLastSeenSquadChatTimeStamp]: authed(async ({ player, req }) => {
@@ -283,7 +291,7 @@ export const squadHandlers: Record<number, HandlerEntry> = {
     const squad = await getByName(squadName(req) || player!.player.squadName);
     return ok(DbAction.GetSquadDetails, {
       Squad: squad ? buildDatabaseSquad(squad) : null,
-      ...(squad ? await getSquadEventWireFields(squad.name) : {}),
+      ...(squad ? await getSquadEventWireFields(squad.name, player!.player.level) : {}),
     });
   }),
 
@@ -291,7 +299,7 @@ export const squadHandlers: Record<number, HandlerEntry> = {
     const squad = await getByName(squadName(req) || player!.player.squadName);
     return ok(DbAction.GetFullSquadInfo, {
       Squad: squad ? buildDatabaseSquad(squad) : null,
-      ...(squad ? await getSquadEventWireFields(squad.name) : {}),
+      ...(squad ? await getSquadEventWireFields(squad.name, player!.player.level) : {}),
     });
   }),
 
