@@ -17,7 +17,7 @@ import {
   grantCardPackRewardState,
   grantMissionCardsState,
 } from "./cardInventoryService";
-import { applyLevelExperienceState } from "./levelProgressionService";
+import { applyLevelExperienceState, playerLevelDefinition } from "./levelProgressionService";
 import {
   VIP_BATTLE_EXPERIENCE_MULTIPLIER,
   VIP_BATTLE_WARBUCKS_MULTIPLIER,
@@ -166,13 +166,13 @@ function unityModifierSum(values: readonly number[]): number {
 function unityMissionRewardAmount(
   base: number,
   root: number,
-  playerLevel: number,
+  displayLevel: number,
   modifiers: readonly number[],
   missionIndex: number,
   modeMultiplier: number,
 ): number {
   const modifierSum = unityModifierSum(modifiers);
-  const levelExponent = Math.fround(Math.max(1, Math.floor(playerLevel)) - 3);
+  const levelExponent = Math.fround(displayLevel - 3);
 
   // Match the left-to-right float operations in DailyMission.GenerateRewards. Mathf.Pow
   // returns a float, and EDEIDMHHCAO divides the final float by 50 before Math.Ceiling.
@@ -193,12 +193,16 @@ function unityMissionRewardAmount(
  * applies that entitlement to these base components and the server mirrors it at settlement.
  */
 export function missionBattleRewardFor(
-  playerLevel: number,
+  playerLevelIndex: number,
   missionType: DailyMissionMode,
   missionIndex: number,
 ): MissionBattleReward {
   if (missionType === "Coop") return { experience: 0, warBucks: 0 };
 
+  // DatabasePlayer.Level is LevelManager's zero-based index, while GenerateRewards reads
+  // currentLevel.displayNumber. Resolve the exact recovered row instead of assuming those two
+  // values are interchangeable; otherwise every payout is scaled one display rank too low.
+  const displayLevel = playerLevelDefinition(playerLevelIndex).displayLevel;
   const modifiers = missionType === "Heroic" ? HEROIC_REWARD_MODIFIERS : DAILY_REWARD_MODIFIERS;
   if (!Number.isInteger(missionIndex) || missionIndex < 0 || missionIndex >= modifiers.length) {
     throw new ApiError(ApiErrorCode.UnknownAction, "Mission reward index is invalid.");
@@ -208,7 +212,7 @@ export function missionBattleRewardFor(
     experience: unityMissionRewardAmount(
       MISSION_REWARD_XP_BASE,
       MISSION_REWARD_XP_ROOT,
-      playerLevel,
+      displayLevel,
       modifiers,
       missionIndex,
       modeMultiplier,
@@ -216,7 +220,7 @@ export function missionBattleRewardFor(
     warBucks: unityMissionRewardAmount(
       MISSION_REWARD_WARBUCKS_BASE,
       MISSION_REWARD_WARBUCKS_ROOT,
-      playerLevel,
+      displayLevel,
       modifiers,
       missionIndex,
       modeMultiplier,

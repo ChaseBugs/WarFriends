@@ -29,15 +29,16 @@ export const dailyRewardHandlers: Record<number, HandlerEntry> = {
 
   [DbAction.ClaimDailyReward]: authed(async ({ player, req }) => {
     const day = requestedRewardDay(req.claimRweard ?? req.claimReward);
-    const result = await claimDailyReward(player!.id, day);
+    const result = await claimDailyReward(player!.id, day, player!.player.level);
     return ok(DbAction.ClaimDailyReward, {
       dailyRewardData: {
         ...buildDailyRewardWireData(result.calendar, unixNow()),
         // IJEAJGCCHEF.Success is 1. DailyRewardDataLoaded calls ParseReward only on this value.
         ok: 1,
-        // ParseReward expects MDNLFMNBNEG.Gold (1) and reads the credited delta from `added`.
-        addedType: 1,
-        added: result.goldAdded,
+        // ParseReward switches on this exact MDNLFMNBNEG value. Currency rewards use an
+        // integer `added`; card rewards use `{ count, cards }` with semicolon-delimited IDs.
+        addedType: result.addedType,
+        added: result.added,
         ...(result.vipDailyCardReward ? {
           // DailyRewardManager.ParseReward receives this nested object, queues NGGINCOPKKJ,
           // and invokes AddCard for both IDs. Keeping the fields beside `added` matches that

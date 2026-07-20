@@ -25,6 +25,11 @@ recovered. Set `SQUAD_EVENT_CONFIG_PATH` only to an operator-reviewed file follo
 [`config/README.md`](config/README.md); an empty value makes action 113 return recovered error
 `11302` without creating progress or granting rewards.
 
+The separate limited-time Event Assignment calendar is also disabled by default. Set
+`EVENT_ASSIGNMENT_CONFIG_PATH` only to a reviewed file following [`config/README.md`](config/README.md).
+The backend then publishes its exact boot config/state and enables server-owned action 222/223
+claims. Destroyed-box progress remains disabled until the match relay can prove that combat fact.
+
 Requires MongoDB (`:27017`) and, optionally, Redis (`:6379`). Set `REDIS_ENABLED=false` to
 run Mongo-only. Cross-player squad-card withdrawal and confirmed PvP core settlement use
 multi-document transactions, so enable a single-node replica set for local development (or use a
@@ -134,6 +139,11 @@ Working end-to-end (verified live):
 - **Energy economy**: server-owned dog-tag seconds, passive regeneration, atomic
   `PayOneDogTag`, and gold-validated `RefillDogtags` using the recovered 900-second/5-tag
   balancing and refill-price formula.
+- **Gold-to-WarBucks exchange**: action `221` validates `WarbucksId` against the deployment-owned
+  MainScene A/B prefix, debits the exact 50/200/500/1000/3500/7000 Gold row, and multiplies the
+  exact row units by the authenticated player's source `CONVERTGOLDTOWARBUCKS` rank value. The
+  wallet and a narrow transport-replay receipt commit atomically. `WARBUCKS_GOLD_VARIANT` defaults
+  to the conservative standard curve because the retired remote experiment selector is absent.
 - **Instant Battle / Skirmish**: action `199` is server-authoritative from rank 9 onward. A
   new account starts with five ready battles; after a batch is consumed, one battle recharges
   every 48 minutes up to five. A free request consumes every currently ready battle. When none
@@ -306,9 +316,11 @@ Working end-to-end (verified live):
   `npm run verify:unit-catalog` to compare both artifacts with MainScene and the recovered
   assemblies.
 - **Daily rewards**: `CheckDailyReward` and `ClaimDailyReward` provide the recovered monthly
-  `dailyRewardData` calendar contract, one UTC-day unlock, ordered atomic Gold grants, and
-  replay-safe claim cursors. Reward amounts are conservative environment-tunable defaults
-  because the original remote live-ops reward sheet is not present in the recovered APK.
+  `dailyRewardData` calendar contract, one UTC-day unlock, ordered replay-safe claim cursors,
+  and exact parser payloads for Gold, WarBucks, Arena Tickets, loose Bronze/Silver/Gold cards,
+  and Bronze/Silver/Gold packs. Wallets, inventory, achievement progress, the optional VIP pair,
+  and the claim cursor commit atomically. The deterministic seven-position schedule and amounts
+  are an explicit conservative replacement because the original remote live-ops sheet is absent.
 - **One-time rewards**: action `161` accepts only the three source-backed Facebook Like, Twitter
   Follow, and notification-permission DBKEYs; the separate Facebook-login reward requires a
   successful authenticated provider link. The server credits their exact decoded Gold values once
@@ -322,11 +334,15 @@ Working end-to-end (verified live):
 - **Assignments**: `GetNewAssignments`, both skip actions, assignment/mega claims, and the
   stock `SendRequestBuffer` path use a persistent UTC cycle. Only objectives derived from
   confirmed PvP settlement advance; buffered claim retries are idempotent by `BufferId`.
-- **Limited-time Event Assignments (closed)**: client actions `222`/`223` belong to the separate
-  Christmas-style `EventAssignmentManager`, not the Squad Event system. Their requests contain
-  client-selected reward values and their known progress source is local destroyed-winter-box
-  telemetry. The backend intentionally rejects both until a reviewed `EventAssignmentConfig`,
-  server-observed progress, and server-owned day/milestone reward tables are available.
+- **Limited-time Event Assignments (authoritative claim foundation)**: client actions `222`/`223`
+  belong to the separate Christmas-style `EventAssignmentManager`, not Squad Events. A strict,
+  non-overlapping, disabled-by-default operator schedule publishes the exact outer
+  `EventAssignmentConfig`, UTC `Midnight`, and nested `EventAssignmentData` contracts. Daily and
+  ordered milestone claims derive their active index, target, points, currency/parts/visual reward,
+  and eligibility from immutable hashed server configuration; wallet/inventory/claim state commits
+  atomically and `BufferId` replay cannot grant twice. Client `RewardType`, `RewardValue`, and
+  `MilestoneId` are assertions only. The client-local destroyed-winter-box update is deliberately
+  ignored until authoritative battle telemetry can advance the provided trusted-progress transition.
 - **Daily/co-op/heroic missions**: actions `67`-`69`, `215`, `216`, and mission-flavoured
   `GameEnded` use the exact `DailyMissionsData`, `SavedMission`, and compact `MissionUnit`
   fields. UTC issuance, start receipts, consumed failure receipts, mode/index/order checks,

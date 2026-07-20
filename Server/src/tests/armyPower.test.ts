@@ -42,6 +42,7 @@ test("Army Power extraction covers rank rows and every normal weapon power row",
     experience: 50_000,
     rewardGold: 5,
     armyPower: 93,
+    convertGoldToWarBucks: 150,
   });
   assert.deepEqual(generatedArmyPowerCatalog.rankLevels.at(-1), {
     index: 57,
@@ -49,6 +50,7 @@ test("Army Power extraction covers rank rows and every normal weapon power row",
     experience: 845_433_656,
     rewardGold: 60,
     armyPower: 1_060,
+    convertGoldToWarBucks: 4_590,
   });
   assert.equal(generatedArmyPowerCatalog.weapons.length, 165);
   assert.equal(generatedArmyPowerCatalog.featureDpsCoefficients.length, 11);

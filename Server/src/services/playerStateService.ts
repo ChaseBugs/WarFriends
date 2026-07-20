@@ -12,6 +12,11 @@ export function unixNow(): number {
   return Math.floor(Date.now() / 1000);
 }
 
+function currentUtcMidnight(now: number): number {
+  const date = new Date(Math.floor(now) * 1_000);
+  return Math.floor(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()) / 1_000);
+}
+
 /**
  * Create the server-owned part of a new account.
  *
@@ -203,7 +208,7 @@ export function buildDatabasePlayer(document: PlayerDocument): Record<string, un
  * Translate the normalized MongoDB document into the exact attribute map consumed by
  * OGLEHLIPEFM.NCNNKGNJNOH in the recovered 1.6.0 client.
  */
-export function buildPlayerData(player: PlayerDocument): PlayerDataMap {
+export function buildPlayerData(player: PlayerDocument, now = unixNow()): PlayerDataMap {
   const state = progressionForPlayer(player);
   const dto = player.player;
   const data: PlayerDataMap = {
@@ -222,6 +227,9 @@ export function buildPlayerData(player: PlayerDocument): PlayerDataMap {
     VipStart: numberAttribute(state.vipStart),
     SendLogs: numberAttribute(dto.sendLogsValue),
     Settings: stringAttribute(dto.notificationSettings),
+    // EventAssignmentManager computes its zero-based calendar day from this server boundary.
+    // Send the current UTC midnight (not the next reset) so day zero begins at startTime.
+    Midnight: numberAttribute(currentUtcMidnight(now)),
   };
 
   // These names are the nested C# type names used as lookup keys by
@@ -285,6 +293,13 @@ export function buildPlayerData(player: PlayerDocument): PlayerDataMap {
       heroicMissionLevel: missions.heroicMissionLevel,
       heroicUnitReward: missions.heroicUnitReward,
     });
+  }
+
+  if (state.eventAssignment) {
+    // EventAssignmentManager derives from DatabaseSerializedObjectGeneric<EventAssignmentData>.
+    // configHash is server-only immutable-definition authority and must not enter the client JSON.
+    const { configHash: _serverConfigHash, ...eventAssignmentData } = state.eventAssignment;
+    addSerializedObject(data, "EventAssignmentData", eventAssignmentData);
   }
 
   if (state.warArena) {
@@ -352,7 +367,7 @@ export function buildPlayerStateResponse(player: PlayerDocument, now = unixNow()
     ...playerLeagueBootFields(player.player.leagueId, now),
     UtcOffset: 0,
     DeviceToken: player.player.deviceToken,
-    PlayerData: buildPlayerData(player),
+    PlayerData: buildPlayerData(player, now),
     // JLMICAJOHIK/EGPLNLMMADN both log an error and leave the Arena closed when this key is
     // absent. The value is the Dynamo-style document consumed by IKPLPPFFDNI, not a string.
     WarArenaConfig: warArenaConfiguration(now),

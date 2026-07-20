@@ -13,6 +13,8 @@ export interface PlayerLevelDefinition {
   rewardGold: number;
   /** Rank contribution to LevelManager.armyPower while this level is active. */
   armyPower: number;
+  /** WarBucks delivered per conversion unit by InAppDataManager.warbucksAmount. */
+  convertGoldToWarBucks: number;
 }
 
 interface LevelCatalogArtifact {

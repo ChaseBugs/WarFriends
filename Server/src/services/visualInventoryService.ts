@@ -63,6 +63,12 @@ export interface VisualMutationResult {
   expiresOn: number;
 }
 
+export interface VisualRewardResult {
+  state: PlayerProgressionState;
+  visualInventory: VisualInventoryState;
+  definition: VisualDefinition;
+}
+
 const artifact = generatedVisualCatalog as VisualCatalogArtifact;
 export const VISUAL_CATALOG: Readonly<Record<string, Readonly<VisualDefinition>>> = Object.freeze(
   Object.fromEntries(artifact.visuals.map((definition) => [definition.name, Object.freeze({ ...definition })])),
@@ -99,6 +105,38 @@ function cloneVisualInventory(value: VisualInventoryState): VisualInventoryState
 
 export function visualInventoryStateFor(state: PlayerProgressionState): VisualInventoryState {
   return cloneVisualInventory(state.visualInventory ?? createInitialVisualInventory());
+}
+
+/**
+ * Grant a permanent visual selected by a reviewed event definition.
+ *
+ * Shop rows still belong to BuyDecal, while hidden/Arena/VIP rows require their own recovered
+ * entitlement paths. Event Assignment configuration may reference only the two source catalog
+ * families that explicitly identify event/assignment rewards. This helper deliberately does
+ * not increment progression revision; the enclosing claim owns the atomic wallet/state write.
+ */
+export function grantEventAssignmentVisualState(
+  state: PlayerProgressionState,
+  name: string,
+): VisualRewardResult {
+  const definition = VISUAL_CATALOG[name];
+  if (!definition || (definition.purchasable !== "event" && definition.purchasable !== "assignment")) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Event Assignment visual is not reward-eligible.");
+  }
+  const visualInventory = visualInventoryStateFor(state);
+  const saved = visualInventory.visuals[name];
+  visualInventory.visuals[name] = {
+    ...(saved ?? emptySavedVisual()),
+    bought: true,
+    borrowed: false,
+    expiresOn: 0,
+    notificate: true,
+  };
+  return {
+    state: { ...state, visualInventory },
+    visualInventory,
+    definition,
+  };
 }
 
 function objectJson(value: string): Record<string, unknown> {

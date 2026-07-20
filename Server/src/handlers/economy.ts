@@ -1,6 +1,7 @@
 import { DbAction } from "../dbActions";
 import { ok } from "../dtos";
-import { refillDogTags, spendOneDogTag } from "../services/economyService";
+import { convertGoldToWarBucks, refillDogTags, spendOneDogTag } from "../services/economyService";
+import { ApiError, ApiErrorCode } from "../apiErrors";
 import { claimOneTimeReward, oneTimeRewardWire } from "../services/oneTimeRewardService";
 import { authed, type HandlerEntry } from "./types";
 
@@ -8,6 +9,20 @@ import { authed, type HandlerEntry } from "./types";
 // derives its cost from server configuration and commits through the progression revision,
 // rather than trusting client-supplied balances or serialized inventory blobs.
 export const economyHandlers: Record<number, HandlerEntry> = {
+  [DbAction.BuyWarbucksRequest]: authed(async ({ player, req }) => {
+    if (typeof req.WarbucksId !== "string" || !/^(?:b)?warbucks[1-6]$/.test(req.WarbucksId)) {
+      throw new ApiError(ApiErrorCode.UnknownAction, "WarbucksId is invalid.");
+    }
+    const result = await convertGoldToWarBucks(player!.id, player!.player.level, req.WarbucksId);
+    // MIFGKEHBPOK applies these as deltas to its already-loaded local wallet. Returning the
+    // source amounts, rather than balances, matches the recovered action-221 success parser.
+    return ok(DbAction.BuyWarbucksRequest, {
+      GoldDeducted: result.goldDeducted,
+      WarbucksAdded: result.warBucksAdded,
+      Replayed: result.replayed,
+    });
+  }),
+
   [DbAction.PayOneDogTag]: authed(async ({ player }) => {
     const result = await spendOneDogTag(player!.id);
     // ILMBENLPAJD reads LastUpdate and Seconds unconditionally, then rebuilds DogTagManager.

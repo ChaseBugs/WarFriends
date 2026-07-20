@@ -15,6 +15,11 @@ import { createGameCenterAccount, type CreatedAccount } from "../services/authSe
 import { buildPlayerLeaderboardItem } from "../services/leaderboardService";
 import { claimOneTimeReward, oneTimeRewardWire } from "../services/oneTimeRewardService";
 import { authed, open, type HandlerEntry } from "./types";
+import {
+  buildEventAssignmentClientConfig,
+  ensureActiveEventAssignment,
+  type EventAssignmentMutationResult,
+} from "../services/eventAssignmentService";
 
 // Platform-account actions recovered from BeanstalkServerManager. Identity records are
 // separate from player documents so uniqueness and credentials remain server-owned; the
@@ -45,7 +50,11 @@ function identityName(req: Record<string, unknown>): string {
 export function buildGameCenterAccountPayload(
   created: CreatedAccount,
   gameCenterCredential: string,
+  eventAssignment?: EventAssignmentMutationResult | null,
 ): Record<string, unknown> {
+  const projected = eventAssignment
+    ? { ...created.doc, progression: eventAssignment.state }
+    : created.doc;
   return {
     id: created.doc.id,
     Id: created.doc.id,
@@ -55,8 +64,11 @@ export function buildGameCenterAccountPayload(
     password: gameCenterCredential,
     Password: gameCenterCredential,
     AccountType: AccountType.GameCenter,
-    Player: buildDatabasePlayer(created.doc),
-    ...buildPlayerStateResponse(created.doc),
+    Player: buildDatabasePlayer(projected),
+    ...buildPlayerStateResponse(projected),
+    ...(eventAssignment ? {
+      EventAssignmentConfig: buildEventAssignmentClientConfig(eventAssignment.event),
+    } : {}),
   };
 }
 
@@ -173,9 +185,10 @@ export const identityHandlers: Record<number, HandlerEntry> = {
     const credential = identityCredential(req, "gameCenter");
     try {
       const created = await createGameCenterAccount(gameCenterId, credential, text(req.DeviceToken));
+      const eventAssignment = await ensureActiveEventAssignment(created.doc.id);
       return ok(
         DbAction.CreateGcAccount,
-        buildGameCenterAccountPayload(created, credential),
+        buildGameCenterAccountPayload(created, credential, eventAssignment),
       );
     } catch (error) {
       if (!(error instanceof ApiError) || error.code !== ApiErrorCode.GameCenterAlreadyCreated) {

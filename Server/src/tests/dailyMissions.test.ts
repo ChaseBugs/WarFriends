@@ -66,32 +66,33 @@ test("daily completion reward selection enables card variants only after War Car
 });
 
 test("mission battle rewards reproduce scene scaling, slot modifiers, and co-op shares", () => {
-  // Level 1 exercises the negative exponent used below the formula's level-3 anchor. The
+  // Database level index 1 is display level 2 and exercises the negative exponent below the
+  // formula's display-level-3 anchor. The
   // values are the recovered C# float calculation rounded upward to the next 50.
   assert.deepEqual(missionBattleRewardFor(1, "Daily", 0), {
-    experience: 7_150,
-    warBucks: 8_050,
+    experience: 7_850,
+    warBucks: 8_350,
   });
   assert.deepEqual(missionBattleRewardFor(1, "Daily", 2), {
-    experience: 9_450,
-    warBucks: 10_700,
+    experience: 10_400,
+    warBucks: 11_100,
   });
   assert.deepEqual(missionBattleRewardFor(1, "Heroic", 4), {
-    experience: 8_950,
-    warBucks: 10_150,
+    experience: 9_850,
+    warBucks: 10_450,
   });
   assert.deepEqual(missionBattleRewardFor(1, "Coop", 0), {
     experience: 0,
     warBucks: 0,
   });
   assert.deepEqual(missionBattleRewardFor(1, "CoopClient", 0), {
-    experience: 3_600,
-    warBucks: 4_050,
+    experience: 3_950,
+    warBucks: 4_200,
   });
-  // A high-level row guards the positive exponent and float32 operation order.
+  // Database index 43 is display level 44 and guards the positive exponent/float32 order.
   assert.deepEqual(missionBattleRewardFor(43, "Heroic", 4), {
-    experience: 476_750,
-    warBucks: 39_550,
+    experience: 524_100,
+    warBucks: 40_850,
   });
 });
 
@@ -105,11 +106,11 @@ test("default settlement pays the recovered mission formula instead of an offlin
     endReason: 10,
   });
 
-  assert.equal(result.experienceGained, 7_150);
-  assert.equal(result.state.warBucks, 8_050);
+  assert.equal(result.experienceGained, 7_850);
+  assert.equal(result.state.warBucks, 8_350);
   assert.deepEqual(result.response.GameReward, {
-    Warbucks: { BattleRewards: 8_050, ExtraRewards: 0, Winstreak: 0, League: 0, offerMult: 1 },
-    Xp: { BattleRewards: 7_150, ExtraRewards: 0, Winstreak: 0, Time: 0, offerMult: 1 },
+    Warbucks: { BattleRewards: 8_350, ExtraRewards: 0, Winstreak: 0, League: 0, offerMult: 1 },
+    Xp: { BattleRewards: 7_850, ExtraRewards: 0, Winstreak: 0, Time: 0, offerMult: 1 },
     GameGold: { BattleRewards: 0, League: 0, offerMult: 1 },
     IsVip: false,
   });

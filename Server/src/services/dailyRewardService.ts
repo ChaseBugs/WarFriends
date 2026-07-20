@@ -2,6 +2,10 @@ import { ApiError, ApiErrorCode } from "../apiErrors";
 import { config } from "../config";
 import type { DailyRewardState, PlayerProgressionState } from "../db";
 import { advanceAchievementState } from "./achievementService";
+import {
+  grantCardPackRewardState,
+  grantMissionCardsState,
+} from "./cardInventoryService";
 import { mutateProgression } from "./progressionMutationService";
 import {
   grantDailyVipCardsState,
@@ -9,9 +13,31 @@ import {
   type VipRandomIndex,
 } from "./vipService";
 
-// MDNLFMNBNEG.Gold and LGCDFAELDNL.None from the recovered 1.6.0 assemblies.
+// Exact MDNLFMNBNEG values read by DailyRewardManager.ParseReward in the 1.6.0 client.
+const WARBUCKS_REWARD_TYPE = 0;
 const GOLD_REWARD_TYPE = 1;
+const BRONZE_CARDS_REWARD_TYPE = 2;
+const SILVER_CARDS_REWARD_TYPE = 3;
+const GOLD_CARDS_REWARD_TYPE = 4;
+const BRONZE_PACK_REWARD_TYPE = 11;
+const SILVER_PACK_REWARD_TYPE = 12;
+const GOLD_PACK_REWARD_TYPE = 13;
+const ARENA_TICKETS_REWARD_TYPE = 15;
+// LGCDFAELDNL.None. VIP/Facebook doubling requires a separate server-owned entitlement and
+// therefore remains disabled for this offline calendar rather than trusting a client claim.
 const NO_DOUBLE_BONUS = 0;
+
+/*
+ * The response types and delivery shapes survived in the APK, but the production calendar was
+ * remote live-ops data. These conservative values are an explicit offline replacement. The
+ * seven-position cadence makes every implemented parser branch reachable without granting
+ * paid VIP, visuals, or Elite parts whose original schedule/selection rules are unavailable.
+ */
+const OFFLINE_DAILY_WARBUCKS = 1_000;
+const OFFLINE_DAILY_BRONZE_CARDS = 2;
+const OFFLINE_DAILY_SILVER_CARDS = 1;
+const OFFLINE_DAILY_GOLD_CARDS = 1;
+const OFFLINE_DAILY_TICKETS = 1;
 
 export interface DailyRewardDefinition {
   Type: number;
@@ -34,8 +60,19 @@ export interface DailyRewardMutationResult {
   calendar: DailyRewardState;
   rewardDay?: number;
   goldAdded?: number;
+  warBucksAdded?: number;
+  ticketsAdded?: number;
+  cardIds?: string[];
+  addedType?: number;
+  added?: number | DailyRewardCardsAdded;
   /** Optional paid-VIP pair carried inside the recovered dailyRewardData response object. */
   vipDailyCardReward?: VipDailyCardReward;
+}
+
+export interface DailyRewardCardsAdded {
+  /** ParseReward applies this amount once to every semicolon-separated card identity. */
+  count: number;
+  cards: string;
 }
 
 function utcDate(now: number): Date {
@@ -57,31 +94,87 @@ function secondsUntilNextUtcDay(date: Date): number {
   return Math.max(1, Math.floor((next - date.getTime()) / 1000));
 }
 
-/**
- * Return the reconstruction's configurable currency-only reward for a calendar position.
- * The APK preserves the response schema and reward-type enum but not the original remote
- * live-ops amounts. A larger every-seventh-login reward gives the calendar useful cadence
- * while avoiding inventory grants whose serialized schema has not yet been recovered.
- */
+/** Return the configurable Gold fallback retained for compatibility and operator tuning. */
 export function dailyRewardGoldForDay(day: number): number {
   const ordinary = Math.max(0, Math.floor(config.dailyRewardGold));
   const weekly = Math.max(ordinary, Math.floor(config.dailyRewardWeeklyGold));
   return day % 7 === 0 ? weekly : ordinary;
 }
 
+/**
+ * Build one deterministic offline replacement row using only fully implemented reward types.
+ *
+ * Days 1..6 of each seven-position block exercise Gold, WarBucks, loose Bronze cards, Arena
+ * Tickets, loose Silver cards, and one loose Gold card. The first seventh day retains the old
+ * weekly Gold fallback; later weekly milestones grant Bronze, Silver, then Gold packs. Months
+ * longer than 28 days restart the cadence for their final positions. Persisted claim order makes
+ * the schedule stable across reconnects and prevents selecting a more valuable future row.
+ */
+export function dailyRewardDefinitionForDay(day: number): DailyRewardDefinition {
+  if (!Number.isInteger(day) || day < 1 || day > 31) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Daily reward day is invalid.");
+  }
+  const slot = ((day - 1) % 7) + 1;
+  switch (slot) {
+    case 1:
+      return { Type: GOLD_REWARD_TYPE, Double: NO_DOUBLE_BONUS, Count: dailyRewardGoldForDay(day), Param: "" };
+    case 2:
+      return { Type: WARBUCKS_REWARD_TYPE, Double: NO_DOUBLE_BONUS, Count: OFFLINE_DAILY_WARBUCKS, Param: "" };
+    case 3:
+      return { Type: BRONZE_CARDS_REWARD_TYPE, Double: NO_DOUBLE_BONUS, Count: OFFLINE_DAILY_BRONZE_CARDS, Param: "" };
+    case 4:
+      return { Type: ARENA_TICKETS_REWARD_TYPE, Double: NO_DOUBLE_BONUS, Count: OFFLINE_DAILY_TICKETS, Param: "" };
+    case 5:
+      return { Type: SILVER_CARDS_REWARD_TYPE, Double: NO_DOUBLE_BONUS, Count: OFFLINE_DAILY_SILVER_CARDS, Param: "" };
+    case 6:
+      return { Type: GOLD_CARDS_REWARD_TYPE, Double: NO_DOUBLE_BONUS, Count: OFFLINE_DAILY_GOLD_CARDS, Param: "" };
+    default: {
+      const week = Math.ceil(day / 7);
+      if (week === 1) {
+        return { Type: GOLD_REWARD_TYPE, Double: NO_DOUBLE_BONUS, Count: dailyRewardGoldForDay(day), Param: "" };
+      }
+      const type = week === 2
+        ? BRONZE_PACK_REWARD_TYPE
+        : week === 3
+          ? SILVER_PACK_REWARD_TYPE
+          : GOLD_PACK_REWARD_TYPE;
+      return { Type: type, Double: NO_DOUBLE_BONUS, Count: 1, Param: "" };
+    }
+  }
+}
+
 /** Build the exact `config.DayN` objects read by DailyRewardManager.MCGFHPOPMHL. */
 export function buildDailyRewardConfig(year: number, month: number): Record<string, DailyRewardDefinition> {
   const result: Record<string, DailyRewardDefinition> = {};
   for (let day = 1; day <= daysInMonth(year, month); day += 1) {
-    result[`Day${day}`] = {
-      Type: GOLD_REWARD_TYPE,
-      Double: NO_DOUBLE_BONUS,
-      Count: dailyRewardGoldForDay(day),
-      // Param is read with JToken.ToString() even for currency rewards, so it must exist.
-      Param: "",
-    };
+    result[`Day${day}`] = dailyRewardDefinitionForDay(day);
   }
   return result;
+}
+
+function checkedAdd(left: number, right: number, name: string): number {
+  if (!Number.isSafeInteger(left) || left < 0 || !Number.isSafeInteger(right) || right < 0) {
+    throw new ApiError(ApiErrorCode.InternalServerError, `${name} is invalid.`);
+  }
+  const result = left + right;
+  if (!Number.isSafeInteger(result)) {
+    throw new ApiError(ApiErrorCode.InternalServerError, `${name} overflowed.`);
+  }
+  return result;
+}
+
+function packNameForReward(type: number): string | undefined {
+  if (type === BRONZE_PACK_REWARD_TYPE) return "BRONZE_CARDPACK";
+  if (type === SILVER_PACK_REWARD_TYPE) return "SILVER_CARDPACK";
+  if (type === GOLD_PACK_REWARD_TYPE) return "GOLD_CARDPACK";
+  return undefined;
+}
+
+function rarityForLooseReward(type: number): number | undefined {
+  if (type === BRONZE_CARDS_REWARD_TYPE) return 1;
+  if (type === SILVER_CARDS_REWARD_TYPE) return 2;
+  if (type === GOLD_CARDS_REWARD_TYPE) return 3;
+  return undefined;
 }
 
 function calendarFor(state: PlayerProgressionState, date: Date): DailyRewardState {
@@ -125,7 +218,8 @@ export function claimDailyRewardState(
   state: PlayerProgressionState,
   now: number,
   requestedDay: number,
-  chooseVipCard?: VipRandomIndex,
+  chooseRandom?: VipRandomIndex,
+  playerLevelIndex = 1,
 ): DailyRewardMutationResult {
   const calendar = calendarFor(state, utcDate(now));
   const expectedDay = calendar.claimReward + 1;
@@ -136,12 +230,60 @@ export function claimDailyRewardState(
     throw new ApiError(ApiErrorCode.DailyRewardWrongIndex, "Daily reward is not available yet.");
   }
 
-  const goldAdded = dailyRewardGoldForDay(requestedDay);
+  const definition = dailyRewardDefinitionForDay(requestedDay);
+  let rewardedState = state;
+  let goldAdded = 0;
+  let warBucksAdded = 0;
+  let ticketsAdded = 0;
+  let cardIds: string[] | undefined;
+  let added: number | DailyRewardCardsAdded;
+
+  if (definition.Type === GOLD_REWARD_TYPE) {
+    goldAdded = definition.Count;
+    rewardedState = { ...rewardedState, gold: checkedAdd(rewardedState.gold, goldAdded, "Daily reward Gold") };
+    added = goldAdded;
+  } else if (definition.Type === WARBUCKS_REWARD_TYPE) {
+    warBucksAdded = definition.Count;
+    rewardedState = {
+      ...rewardedState,
+      warBucks: checkedAdd(rewardedState.warBucks, warBucksAdded, "Daily reward WarBucks"),
+    };
+    added = warBucksAdded;
+  } else if (definition.Type === ARENA_TICKETS_REWARD_TYPE) {
+    ticketsAdded = definition.Count;
+    rewardedState = {
+      ...rewardedState,
+      tickets: checkedAdd(rewardedState.tickets, ticketsAdded, "Daily reward Tickets"),
+    };
+    added = ticketsAdded;
+  } else {
+    const rarity = rarityForLooseReward(definition.Type);
+    const packName = packNameForReward(definition.Type);
+    if (rarity !== undefined) {
+      const cards = grantMissionCardsState(
+        rewardedState,
+        rarity,
+        definition.Count,
+        playerLevelIndex,
+        chooseRandom,
+      );
+      rewardedState = cards.state;
+      cardIds = [...cards.cards];
+    } else if (packName) {
+      const cards = grantCardPackRewardState(rewardedState, packName, chooseRandom);
+      rewardedState = cards.state;
+      cardIds = [...cards.cards];
+    } else {
+      throw new ApiError(ApiErrorCode.InternalServerError, "Daily reward type is not implemented.");
+    }
+    // The parser applies `count` to each listed identity. Each selected array entry already
+    // represents one authoritative inventory increment, including valid duplicate identities.
+    added = { count: 1, cards: cardIds.join(";") };
+  }
+
   calendar.claimReward = requestedDay;
-  const rewardedState: PlayerProgressionState = {
-    ...state,
-    revision: state.revision + 1,
-    gold: state.gold + goldAdded,
+  rewardedState = {
+    ...rewardedState,
     dailyReward: calendar,
   };
 
@@ -152,14 +294,22 @@ export function claimDailyRewardState(
   // DailyRewardManager.ParseReward explicitly reads VipReward1/2 from this same response object
   // and adds both identities locally. Compose the independent paid-VIP benefit before MongoDB's
   // revision guard so Gold, achievement progress, cards, and both cursors commit or retry together.
-  const vipResult = chooseVipCard
-    ? grantDailyVipCardsState(achievementResult.state, now, chooseVipCard)
+  const vipResult = chooseRandom
+    ? grantDailyVipCardsState(achievementResult.state, now, chooseRandom)
     : grantDailyVipCardsState(achievementResult.state, now);
   return {
-    state: vipResult.state,
+    // Card, currency, achievement, optional VIP pair, and claim cursor are one logical write.
+    // Composition helpers may increment their local revision, so normalize the final document
+    // to exactly one monotonic step before mutateProgression performs its compare-and-swap.
+    state: { ...vipResult.state, revision: state.revision + 1 },
     calendar,
     rewardDay: requestedDay,
-    goldAdded,
+    ...(goldAdded ? { goldAdded } : {}),
+    ...(warBucksAdded ? { warBucksAdded } : {}),
+    ...(ticketsAdded ? { ticketsAdded } : {}),
+    ...(cardIds ? { cardIds } : {}),
+    addedType: definition.Type,
+    added,
     vipDailyCardReward: vipResult.reward,
   };
 }
@@ -179,6 +329,13 @@ export function checkDailyReward(playerId: string): Promise<DailyRewardMutationR
   return mutateProgression(playerId, checkDailyRewardState);
 }
 
-export function claimDailyReward(playerId: string, requestedDay: number): Promise<DailyRewardMutationResult> {
-  return mutateProgression(playerId, (state, now) => claimDailyRewardState(state, now, requestedDay));
+export function claimDailyReward(
+  playerId: string,
+  requestedDay: number,
+  playerLevelIndex: number,
+): Promise<DailyRewardMutationResult> {
+  return mutateProgression(
+    playerId,
+    (state, now) => claimDailyRewardState(state, now, requestedDay, undefined, playerLevelIndex),
+  );
 }

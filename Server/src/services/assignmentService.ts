@@ -75,6 +75,12 @@ import {
   purchaseCardPackState,
   requestedCardPackName,
 } from "./cardInventoryService";
+import {
+  claimEventAssignmentState,
+  claimEventMilestoneState,
+  getActiveConfiguredEventAssignment,
+  type EventAssignmentEventConfig,
+} from "./eventAssignmentService";
 
 /**
  * Daily assignments and the recovered RequestBuffer transaction boundary.
@@ -397,6 +403,26 @@ function parseStarterAssignmentClaimData(data: string): {
   return { assignmentId, gold, warBucks };
 }
 
+function parseEventClaimData(data: string): { rewardType: number; rewardValue: number } {
+  const record = parseAchievementData(data);
+  const rewardType = Number(record.RewardType);
+  const rewardValue = Number(record.RewardValue);
+  if (!Number.isInteger(rewardType) || !Number.isInteger(rewardValue)) {
+    throw new ApiError(ApiErrorCode.UnknownAction, "Buffered Event Assignment reward fields are invalid.");
+  }
+  return { rewardType, rewardValue };
+}
+
+function parseEventMilestoneData(data: string): { milestoneId: number; rewardValue: string } {
+  const record = parseAchievementData(data);
+  const milestoneId = Number(record.MilestoneId);
+  const rewardValue = record.RewardValue;
+  if (!Number.isInteger(milestoneId) || typeof rewardValue !== "string" || rewardValue.length > 128) {
+    throw new ApiError(ApiErrorCode.UnknownAction, "Buffered Event milestone fields are invalid.");
+  }
+  return { milestoneId, rewardValue };
+}
+
 function achievementInteger(record: Record<string, unknown>, field: string): number {
   const value = Number(record[field]);
   if (!Number.isInteger(value)) throw new ApiError(21801, `Achievement ${field} is invalid.`);
@@ -431,6 +457,7 @@ export function processAssignmentBufferState(
   playerLevel = 1,
   playerVipExpiration = 0,
   playerLeagueTier?: number,
+  eventAssignment?: EventAssignmentEventConfig | null,
 ): AssignmentBufferResult {
   // VIP is part of the same progression revision as buffered visual purchases. The optional
   // argument exists only for legacy documents whose entitlement still lives in the profile.
@@ -859,6 +886,26 @@ export function processAssignmentBufferState(
       continue;
     }
 
+    if (request.action === DbAction.ClaimEventAssignment || request.action === DbAction.ClaimEventMilestone) {
+      try {
+        if (!eventAssignment) throw new ApiError(ApiErrorCode.UnknownAction, "No Event Assignment is active.");
+        // Both requests are optimistic locally. The phone echoes what it displayed, but the
+        // immutable deployment config chooses the day, target, points, and reward actually
+        // committed. EventAssignmentUpdate is intentionally absent because its box count is
+        // client-controlled until the battle relay can prove individual destructions.
+        working = request.action === DbAction.ClaimEventAssignment
+          ? claimEventAssignmentState(working, eventAssignment, now, parseEventClaimData(request.data)).state
+          : claimEventMilestoneState(working, eventAssignment, now, parseEventMilestoneData(request.data)).state;
+        responses.push({ ActionId: request.action, Result: SUCCESS });
+      } catch (error) {
+        const code = error instanceof ApiError ? error.code : ApiErrorCode.InternalServerError;
+        // The recovered action-222/223 parser only checks Result and relogs on failure, so no
+        // guessed rollback fields are emitted. GetPlayerData then restores the durable state.
+        responses.push({ ActionId: request.action, Result: code });
+      }
+      continue;
+    }
+
     if (request.action === DbAction.ClaimStarterAssignment) {
       try {
         const claim = parseStarterAssignmentClaimData(request.data);
@@ -966,7 +1013,7 @@ export function claimAssignmentMegaReward(playerId: string): Promise<AssignmentM
   return mutateProgression(playerId, claimAssignmentMegaRewardState);
 }
 
-export function processAssignmentBuffer(
+export async function processAssignmentBuffer(
   playerId: string,
   bufferId: string,
   requests: readonly BufferedRequestInput[],
@@ -974,6 +1021,9 @@ export function processAssignmentBuffer(
   playerVipExpiration = 0,
   playerLeagueTier?: number,
 ): Promise<AssignmentBufferResult> {
+  // Load once before the optimistic transaction. The config is process-cached and immutable;
+  // each retry still receives a fresh `now` and revalidates the active half-open time window.
+  const eventAssignment = await getActiveConfiguredEventAssignment(Math.floor(Date.now() / 1_000));
   return mutateProgression(playerId, (state, now) =>
     processAssignmentBufferState(
       state,
@@ -983,5 +1033,6 @@ export function processAssignmentBuffer(
       playerLevel,
       playerVipExpiration,
       playerLeagueTier,
+      eventAssignment,
     ));
 }

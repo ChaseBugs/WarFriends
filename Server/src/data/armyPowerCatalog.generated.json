@@ -2,413 +2,471 @@
   "schemaVersion": 2,
   "clientVersion": "4.9.5",
   "source": "Client/ExportedProject/Assets/Scenes/MainScene.unity",
-  "sourceSha256": "eb33be9c3801b9e15cc1306e8a111f88ca80665bd403517a9e9645edf450ee41",
+  "sourceSha256": "cf9b1da395cfb392d5bf274d3717ca11eb8b8bfefc85a8c782a46bdb24a0f996",
   "rankLevels": [
     {
       "index": 0,
       "displayLevel": 1,
       "experience": 50000,
       "rewardGold": 5,
-      "armyPower": 93
+      "armyPower": 93,
+      "convertGoldToWarBucks": 150
     },
     {
       "index": 1,
       "displayLevel": 2,
       "experience": 50000,
       "rewardGold": 5,
-      "armyPower": 97
+      "armyPower": 97,
+      "convertGoldToWarBucks": 150
     },
     {
       "index": 2,
       "displayLevel": 3,
       "experience": 50000,
       "rewardGold": 5,
-      "armyPower": 104
+      "armyPower": 104,
+      "convertGoldToWarBucks": 150
     },
     {
       "index": 3,
       "displayLevel": 4,
       "experience": 65960,
       "rewardGold": 5,
-      "armyPower": 112
+      "armyPower": 112,
+      "convertGoldToWarBucks": 180
     },
     {
       "index": 4,
       "displayLevel": 5,
       "experience": 96684,
       "rewardGold": 5,
-      "armyPower": 120
+      "armyPower": 120,
+      "convertGoldToWarBucks": 200
     },
     {
       "index": 5,
       "displayLevel": 6,
       "experience": 146147,
       "rewardGold": 5,
-      "armyPower": 130
+      "armyPower": 130,
+      "convertGoldToWarBucks": 230
     },
     {
       "index": 6,
       "displayLevel": 7,
       "experience": 204483,
       "rewardGold": 5,
-      "armyPower": 140
+      "armyPower": 140,
+      "convertGoldToWarBucks": 260
     },
     {
       "index": 7,
       "displayLevel": 8,
       "experience": 289023,
       "rewardGold": 5,
-      "armyPower": 151
+      "armyPower": 151,
+      "convertGoldToWarBucks": 290
     },
     {
       "index": 8,
       "displayLevel": 9,
       "experience": 405994,
       "rewardGold": 5,
-      "armyPower": 163
+      "armyPower": 163,
+      "convertGoldToWarBucks": 320
     },
     {
       "index": 9,
       "displayLevel": 10,
       "experience": 485137,
       "rewardGold": 10,
-      "armyPower": 175
+      "armyPower": 175,
+      "convertGoldToWarBucks": 360
     },
     {
       "index": 10,
       "displayLevel": 11,
       "experience": 575997,
       "rewardGold": 10,
-      "armyPower": 188
+      "armyPower": 188,
+      "convertGoldToWarBucks": 390
     },
     {
       "index": 11,
       "displayLevel": 12,
       "experience": 680121,
       "rewardGold": 10,
-      "armyPower": 201
+      "armyPower": 201,
+      "convertGoldToWarBucks": 430
     },
     {
       "index": 12,
       "displayLevel": 13,
       "experience": 799249,
       "rewardGold": 10,
-      "armyPower": 214
+      "armyPower": 214,
+      "convertGoldToWarBucks": 470
     },
     {
       "index": 13,
       "displayLevel": 14,
       "experience": 935333,
       "rewardGold": 10,
-      "armyPower": 228
+      "armyPower": 228,
+      "convertGoldToWarBucks": 500
     },
     {
       "index": 14,
       "displayLevel": 15,
       "experience": 1090567,
       "rewardGold": 10,
-      "armyPower": 242
+      "armyPower": 242,
+      "convertGoldToWarBucks": 530
     },
     {
       "index": 15,
       "displayLevel": 16,
       "experience": 1370176,
       "rewardGold": 10,
-      "armyPower": 257
+      "armyPower": 257,
+      "convertGoldToWarBucks": 580
     },
     {
       "index": 16,
       "displayLevel": 17,
       "experience": 1694576,
       "rewardGold": 10,
-      "armyPower": 271
+      "armyPower": 271,
+      "convertGoldToWarBucks": 610
     },
     {
       "index": 17,
       "displayLevel": 18,
       "experience": 2069905,
       "rewardGold": 10,
-      "armyPower": 287
+      "armyPower": 287,
+      "convertGoldToWarBucks": 660
     },
     {
       "index": 18,
       "displayLevel": 19,
       "experience": 2503083,
       "rewardGold": 10,
-      "armyPower": 302
+      "armyPower": 302,
+      "convertGoldToWarBucks": 720
     },
     {
       "index": 19,
       "displayLevel": 20,
       "experience": 3001897,
       "rewardGold": 15,
-      "armyPower": 318
+      "armyPower": 318,
+      "convertGoldToWarBucks": 760
     },
     {
       "index": 20,
       "displayLevel": 21,
       "experience": 3575114,
       "rewardGold": 15,
-      "armyPower": 334
+      "armyPower": 334,
+      "convertGoldToWarBucks": 820
     },
     {
       "index": 21,
       "displayLevel": 22,
       "experience": 4232594,
       "rewardGold": 15,
-      "armyPower": 351
+      "armyPower": 351,
+      "convertGoldToWarBucks": 880
     },
     {
       "index": 22,
       "displayLevel": 23,
       "experience": 4985421,
       "rewardGold": 15,
-      "armyPower": 367
+      "armyPower": 367,
+      "convertGoldToWarBucks": 940
     },
     {
       "index": 23,
       "displayLevel": 24,
       "experience": 5846051,
       "rewardGold": 15,
-      "armyPower": 384
+      "armyPower": 384,
+      "convertGoldToWarBucks": 1010
     },
     {
       "index": 24,
       "displayLevel": 25,
       "experience": 7631823,
       "rewardGold": 15,
-      "armyPower": 401
+      "armyPower": 401,
+      "convertGoldToWarBucks": 1080
     },
     {
       "index": 25,
       "displayLevel": 26,
       "experience": 9714700,
       "rewardGold": 15,
-      "armyPower": 419
+      "armyPower": 419,
+      "convertGoldToWarBucks": 1150
     },
     {
       "index": 26,
       "displayLevel": 27,
       "experience": 12136089,
       "rewardGold": 15,
-      "armyPower": 437
+      "armyPower": 437,
+      "convertGoldToWarBucks": 1230
     },
     {
       "index": 27,
       "displayLevel": 28,
       "experience": 14942690,
       "rewardGold": 15,
-      "armyPower": 455
+      "armyPower": 455,
+      "convertGoldToWarBucks": 1320
     },
     {
       "index": 28,
       "displayLevel": 29,
       "experience": 18187143,
       "rewardGold": 15,
-      "armyPower": 473
+      "armyPower": 473,
+      "convertGoldToWarBucks": 1400
     },
     {
       "index": 29,
       "displayLevel": 30,
       "experience": 21283780,
       "rewardGold": 20,
-      "armyPower": 491
+      "armyPower": 491,
+      "convertGoldToWarBucks": 1490
     },
     {
       "index": 30,
       "displayLevel": 31,
       "experience": 24107144,
       "rewardGold": 20,
-      "armyPower": 510
+      "armyPower": 510,
+      "convertGoldToWarBucks": 1590
     },
     {
       "index": 31,
       "displayLevel": 32,
       "experience": 27281417,
       "rewardGold": 20,
-      "armyPower": 529
+      "armyPower": 529,
+      "convertGoldToWarBucks": 1690
     },
     {
       "index": 32,
       "displayLevel": 33,
       "experience": 30848455,
       "rewardGold": 20,
-      "armyPower": 548
+      "armyPower": 548,
+      "convertGoldToWarBucks": 1800
     },
     {
       "index": 33,
       "displayLevel": 34,
       "experience": 34854966,
       "rewardGold": 20,
-      "armyPower": 567
+      "armyPower": 567,
+      "convertGoldToWarBucks": 1900
     },
     {
       "index": 34,
       "displayLevel": 35,
       "experience": 39353066,
       "rewardGold": 20,
-      "armyPower": 587
+      "armyPower": 587,
+      "convertGoldToWarBucks": 2020
     },
     {
       "index": 35,
       "displayLevel": 36,
       "experience": 44400883,
       "rewardGold": 25,
-      "armyPower": 607
+      "armyPower": 607,
+      "convertGoldToWarBucks": 2140
     },
     {
       "index": 36,
       "displayLevel": 37,
       "experience": 50063248,
       "rewardGold": 25,
-      "armyPower": 627
+      "armyPower": 627,
+      "convertGoldToWarBucks": 2260
     },
     {
       "index": 37,
       "displayLevel": 38,
       "experience": 56412445,
       "rewardGold": 25,
-      "armyPower": 647
+      "armyPower": 647,
+      "convertGoldToWarBucks": 2380
     },
     {
       "index": 38,
       "displayLevel": 39,
       "experience": 63529053,
       "rewardGold": 25,
-      "armyPower": 667
+      "armyPower": 667,
+      "convertGoldToWarBucks": 2500
     },
     {
       "index": 39,
       "displayLevel": 40,
       "experience": 71502887,
       "rewardGold": 30,
-      "armyPower": 688
+      "armyPower": 688,
+      "convertGoldToWarBucks": 2630
     },
     {
       "index": 40,
       "displayLevel": 41,
       "experience": 82262077,
       "rewardGold": 30,
-      "armyPower": 708
+      "armyPower": 708,
+      "convertGoldToWarBucks": 2750
     },
     {
       "index": 41,
       "displayLevel": 42,
       "experience": 96462924,
       "rewardGold": 30,
-      "armyPower": 729
+      "armyPower": 729,
+      "convertGoldToWarBucks": 2880
     },
     {
       "index": 42,
       "displayLevel": 43,
       "experience": 117091962,
       "rewardGold": 30,
-      "armyPower": 750
+      "armyPower": 750,
+      "convertGoldToWarBucks": 3010
     },
     {
       "index": 43,
       "displayLevel": 44,
       "experience": 128723878,
       "rewardGold": 40,
-      "armyPower": 768
+      "armyPower": 768,
+      "convertGoldToWarBucks": 3130
     },
     {
       "index": 44,
       "displayLevel": 45,
       "experience": 141511308,
       "rewardGold": 40,
-      "armyPower": 790
+      "armyPower": 790,
+      "convertGoldToWarBucks": 3250
     },
     {
       "index": 45,
       "displayLevel": 46,
       "experience": 155569041,
       "rewardGold": 40,
-      "armyPower": 811
+      "armyPower": 811,
+      "convertGoldToWarBucks": 3370
     },
     {
       "index": 46,
       "displayLevel": 47,
       "experience": 171023270,
       "rewardGold": 40,
-      "armyPower": 833
+      "armyPower": 833,
+      "convertGoldToWarBucks": 3470
     },
     {
       "index": 47,
       "displayLevel": 48,
       "experience": 188012721,
       "rewardGold": 40,
-      "armyPower": 855
+      "armyPower": 855,
+      "convertGoldToWarBucks": 3580
     },
     {
       "index": 48,
       "displayLevel": 49,
       "experience": 206689905,
       "rewardGold": 40,
-      "armyPower": 876
+      "armyPower": 876,
+      "convertGoldToWarBucks": 3660
     },
     {
       "index": 49,
       "displayLevel": 50,
       "experience": 227222480,
       "rewardGold": 40,
-      "armyPower": 899
+      "armyPower": 899,
+      "convertGoldToWarBucks": 3730
     },
     {
       "index": 50,
       "displayLevel": 51,
       "experience": 237464618,
       "rewardGold": 50,
-      "armyPower": 919
+      "armyPower": 919,
+      "convertGoldToWarBucks": 3870
     },
     {
       "index": 51,
       "displayLevel": 52,
       "experience": 279120771,
       "rewardGold": 50,
-      "armyPower": 936
+      "armyPower": 936,
+      "convertGoldToWarBucks": 3990
     },
     {
       "index": 52,
       "displayLevel": 53,
       "experience": 483733014,
       "rewardGold": 50,
-      "armyPower": 957
+      "armyPower": 957,
+      "convertGoldToWarBucks": 4090
     },
     {
       "index": 53,
       "displayLevel": 54,
       "experience": 541195742,
       "rewardGold": 50,
-      "armyPower": 977
+      "armyPower": 977,
+      "convertGoldToWarBucks": 4190
     },
     {
       "index": 54,
       "displayLevel": 55,
       "experience": 605301477,
       "rewardGold": 50,
-      "armyPower": 998
+      "armyPower": 998,
+      "convertGoldToWarBucks": 4290
     },
     {
       "index": 55,
       "displayLevel": 56,
       "experience": 676802985,
       "rewardGold": 60,
-      "armyPower": 1018
+      "armyPower": 1018,
+      "convertGoldToWarBucks": 4390
     },
     {
       "index": 56,
       "displayLevel": 57,
       "experience": 756537033,
       "rewardGold": 60,
-      "armyPower": 1039
+      "armyPower": 1039,
+      "convertGoldToWarBucks": 4490
     },
     {
       "index": 57,
       "displayLevel": 58,
       "experience": 845433656,
       "rewardGold": 60,
-      "armyPower": 1060
+      "armyPower": 1060,
+      "convertGoldToWarBucks": 4590
     }
   ],
   "featureDpsCoefficients": [

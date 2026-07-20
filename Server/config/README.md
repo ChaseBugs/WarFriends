@@ -46,3 +46,31 @@ silently selecting or granting guessed content.
 Treat a season ID as immutable after the first squad joins. Each progress row stores a SHA-256 of
 its normalized definition, and reads fail closed if an operator reuses that ID with changed tiers,
 assignments, targets, or rewards. Publish corrections under a new season ID.
+
+# Limited-time Event Assignment configuration
+
+`EVENT_ASSIGNMENT_CONFIG_PATH` controls the separate `EventAssignmentManager` daily calendar used
+by actions 222/223. It is not a Squad Event. Empty means no config is sent at boot and both claims
+fail closed. Copy `event-assignments.example.json` to deployment-owned storage and replace every
+example value with reviewed live-ops data; the repository example demonstrates syntax only.
+
+Events use half-open UTC Unix windows. Both endpoints must be exact UTC-midnight boundaries, and
+`assignments` must contain exactly one entry for every day in the window because the recovered
+client chooses the row with `(Midnight - startTime) / 86400`. Events cannot overlap. The only
+recovered assignment implementation is `type: "xmas"` (destroy winter bonus boxes).
+
+Supported daily reward types match the recovered GameReward factory: `0` WarBucks, `1` Gold, `5`
+Scraps, `8` Player Visual, `15` Arena Tickets, and `17` unit Elite Parts. Visual rewards require
+`amount: 1` and a source-catalog `event`/`assignment` visual in `param`; Elite Parts require a
+source player-unit name. Milestones must be strictly increasing and must use visual type `8`,
+because the recovered milestone UI unconditionally casts each reward to `GameRewardPlayerVisual`.
+
+The client echoes reward fields during claims, but they never select what is granted. The server
+derives the current day, target, event points, reward, and next milestone from the configured event,
+then commits reward inventory and claim state together. Each player state stores a SHA-256 of the
+normalized event definition and fails closed if the same event ID changes after initialization.
+
+The claim foundation does not trust the stock `EventAssignmentUpdate` value: that number comes
+from the phone's local destroyed-box counter. A pure confirmed-progress transition exists for a
+future authoritative battle relay, but no current production request calls it. Therefore deploying
+a schedule makes claims correct but not naturally completable until trusted box telemetry is added.

@@ -32,9 +32,8 @@ export const config = {
   // but economy logic always uses the server copy so a modified client cannot accelerate energy.
   dogTagRefillSeconds: Number(process.env.DOG_TAG_REFILL_SECONDS ?? 900),
   dogTagCap: Number(process.env.DOG_TAG_CAP ?? 5),
-  // The response shape and Gold reward type are recovered exactly. The original live-ops
-  // amounts were remote data and are absent from the APK, so these conservative defaults
-  // remain environment-tunable until an archived production reward sheet is recovered.
+  // The full response/type contract is recovered, but the original live-ops calendar is absent.
+  // Gold positions remain environment-tunable inside the documented offline mixed calendar.
   dailyRewardGold: Number(process.env.DAILY_REWARD_GOLD ?? 5),
   dailyRewardWeeklyGold: Number(process.env.DAILY_REWARD_WEEKLY_GOLD ?? 10),
   // Task reward ranges and the 50-point threshold are present in MainScene. The mega prize
@@ -44,11 +43,18 @@ export const config = {
   // the APK's Google2u sheet. Keep that server-owned policy configurable; seven days is the
   // reconstruction default, while thresholds and rewards below come from MainScene itself.
   starterAssignmentDurationSeconds: Number(process.env.STARTER_ASSIGNMENT_DURATION_SECONDS ?? 604_800),
+  // Both MainScene A/B tables are source-exact, but the retired remote experiment chose which
+  // prefix the client displayed. Default to the conservative standard curve; never let the
+  // request choose the more generous variant.
+  warBucksGoldVariant: (process.env.WARBUCKS_GOLD_VARIANT ?? "standard").trim().toLowerCase(),
 
   // Squad events were scheduled by retired live-ops data that is not present in either
   // recovered APK. An empty path keeps action 113 deliberately disabled. Deployments may
   // opt in with a reviewed JSON file whose strict schema is documented in config/README.md.
   squadEventConfigPath: (process.env.SQUAD_EVENT_CONFIG_PATH ?? "").trim(),
+  // EventAssignmentManager is a different Christmas-style daily event system. Its archived
+  // schedule is also absent, so an empty path hides it and actions 222/223 fail closed.
+  eventAssignmentConfigPath: (process.env.EVENT_ASSIGNMENT_CONFIG_PATH ?? "").trim(),
 
   // War Arena's response contracts and twelve-battle ceiling are present in the recovered
   // client. Prices and guaranteed scraps came from the retired remote arena document and

@@ -171,6 +171,11 @@ const PLAYER_UNIT_CATALOG: Readonly<Record<string, UnitDefinition>> = Object.fre
   ),
 );
 
+/** Validate a server-configured Elite-parts reward without exposing helper-only unit rows. */
+export function isPlayerUnitName(value: string): boolean {
+  return PLAYER_UNIT_CATALOG[value] !== undefined;
+}
+
 /**
  * Runtime purchase catalog. Filtering is deliberate security logic, not data cleanup: helper
  * rows and tutorial-owned units exist in the artifact so extraction drift is testable, but

@@ -71,6 +71,7 @@ import {
   buildDailyRewardWireData,
   checkDailyRewardState,
   claimDailyRewardState,
+  dailyRewardDefinitionForDay,
   dailyRewardGoldForDay,
 } from "../services/dailyRewardService";
 import { dailyRewardHandlers } from "../handlers/dailyRewards";
@@ -362,6 +363,63 @@ test("daily reward claims reject replays and locked future indexes", () => {
   );
 });
 
+test("offline daily calendar exposes every implemented currency and card parser branch", () => {
+  assert.equal(dailyRewardDefinitionForDay(1).Type, 1);
+  assert.deepEqual(dailyRewardDefinitionForDay(2), { Type: 0, Double: 0, Count: 1_000, Param: "" });
+  assert.deepEqual(dailyRewardDefinitionForDay(3), { Type: 2, Double: 0, Count: 2, Param: "" });
+  assert.deepEqual(dailyRewardDefinitionForDay(4), { Type: 15, Double: 0, Count: 1, Param: "" });
+  assert.deepEqual(dailyRewardDefinitionForDay(5), { Type: 3, Double: 0, Count: 1, Param: "" });
+  assert.deepEqual(dailyRewardDefinitionForDay(6), { Type: 4, Double: 0, Count: 1, Param: "" });
+  assert.equal(dailyRewardDefinitionForDay(7).Type, 1);
+  assert.equal(dailyRewardDefinitionForDay(14).Type, 11);
+  assert.equal(dailyRewardDefinitionForDay(21).Type, 12);
+  assert.equal(dailyRewardDefinitionForDay(28).Type, 13);
+});
+
+test("daily claims atomically deliver WarBucks, Tickets, loose cards, and card packs", () => {
+  const now = Date.parse("2026-07-19T12:00:00Z") / 1000;
+  const calendar = (claimReward: number, canClaim: number) => ({
+    year: 2026,
+    month: 7,
+    canClaim,
+    claimReward,
+    lastCheckDay: "2026-07-19",
+  });
+
+  const warBucksState = { ...createInitialProgression(now), dailyReward: calendar(1, 2) };
+  const warBucks = claimDailyRewardState(warBucksState, now, 2);
+  assert.equal(warBucks.addedType, 0);
+  assert.equal(warBucks.added, 1_000);
+  assert.equal(warBucks.state.warBucks, 1_000);
+
+  const ticketsState = { ...createInitialProgression(now), dailyReward: calendar(3, 4) };
+  const tickets = claimDailyRewardState(ticketsState, now, 4);
+  assert.equal(tickets.addedType, 15);
+  assert.equal(tickets.state.tickets, 1);
+
+  const looseState = { ...createInitialProgression(now), dailyReward: calendar(2, 3) };
+  const loose = claimDailyRewardState(looseState, now, 3, () => 0, 5);
+  assert.equal(loose.addedType, 2);
+  assert.equal(loose.cardIds?.length, 2);
+  assert.equal((loose.added as { count: number }).count, 1);
+  assert.equal((loose.added as { cards: string }).cards.split(";").length, 2);
+  assert.equal(
+    Object.values(loose.state.cardInventory?.cardData ?? {}).reduce((sum, card) => sum + card.amount, 0),
+    2,
+  );
+
+  const packState = { ...createInitialProgression(now), dailyReward: calendar(13, 14) };
+  const pack = claimDailyRewardState(packState, now, 14, () => 0, 5);
+  assert.equal(pack.addedType, 11);
+  assert.equal(pack.cardIds?.length, 10);
+  assert.equal((pack.added as { cards: string }).cards.split(";").length, 10);
+  assert.equal(
+    Object.values(pack.state.cardInventory?.cardData ?? {}).reduce((sum, card) => sum + card.amount, 0),
+    10,
+  );
+  assert.equal(pack.state.revision, packState.revision + 1);
+});
+
 test("daily calendar claim composes the active VIP card pair into the same state transition", () => {
   const now = Date.parse("2026-07-19T12:00:00Z") / 1000;
   const active = {
@@ -403,6 +461,9 @@ test("daily reward wire data matches the recovered Unity calendar parser", () =>
     Count: dailyRewardGoldForDay(1),
     Param: "",
   });
+  assert.equal(monthConfig.Day14.Type, 11);
+  assert.equal(monthConfig.Day21.Type, 12);
+  assert.equal(monthConfig.Day28.Type, 13);
   assert.equal(dailyRewardHandlers[DbAction.CheckDailyReward]?.requiresAuth, true);
   assert.equal(dailyRewardHandlers[DbAction.ClaimDailyReward]?.requiresAuth, true);
 });

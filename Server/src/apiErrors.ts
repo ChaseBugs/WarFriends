@@ -37,6 +37,8 @@ export const ApiErrorCode = {
   NoSkirmishAvailable: 19901,
   /** IJEAJGCCHEF.NotEnoughGoldForSkirmish; its error parser also consumes wallet snapshots. */
   NotEnoughGoldForSkirmish: 19902,
+  /** IJEAJGCCHEF.NotEnoughGoldForWarbucks; action 221 has a dedicated stock warning. */
+  NotEnoughGoldForWarbucks: 22101,
   SquadFull: 62,
   NotSquadMember: 63,
   InsufficientRank: 64,

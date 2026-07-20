@@ -21,6 +21,10 @@ import {
 } from "../services/playerRenameService";
 import { ensureRentalOffer } from "../services/rentalService";
 import { ensureDailyVipCards } from "../services/vipService";
+import {
+  buildEventAssignmentClientConfig,
+  ensureActiveEventAssignment,
+} from "../services/eventAssignmentService";
 
 // Player profile and settings handlers. GetPlayerData is the client's primary state fetch
 // after login. Mutations validate and persist only their own fields, which prevents a stale
@@ -35,12 +39,19 @@ export const playerHandlers: Record<number, HandlerEntry> = {
     // Rental is an outer GetPlayerData field, not part of the Dynamo-style PlayerData map.
     // EGPLNLMMADN reads it directly and always opens this boot variant as a free trial.
     const vipCards = await ensureDailyVipCards(player!.id);
+    // This is the separate EventAssignmentManager calendar, not Squad Events. With no reviewed
+    // deployment schedule the service returns null and the feature remains completely hidden.
+    // When active, initialization is persisted before its config/state are exposed together.
+    const eventAssignment = await ensureActiveEventAssignment(player!.id);
     // ensureDailyVipCards reloads after the rental transition and returns the newest complete
     // progression snapshot. Building PlayerData from rental.state here would omit the newly
     // committed cards and make the popup disagree with CardManagerData after this response.
-    const projected = { ...player!, progression: vipCards.state };
+    const projected = { ...player!, progression: eventAssignment?.state ?? vipCards.state };
     return ok(DbAction.GetPlayerData, {
       ...buildPlayerStateResponse(projected),
+      ...(eventAssignment ? {
+        EventAssignmentConfig: buildEventAssignmentClientConfig(eventAssignment.event),
+      } : {}),
       ...(rental.bootOffer ? { Rental: rental.bootOffer } : {}),
       ...(vipCards.reward ? {
         // NCNNKGNJNOH has already loaded the authoritative CardManagerData from PlayerData by

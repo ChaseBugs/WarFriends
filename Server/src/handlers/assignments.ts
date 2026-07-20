@@ -16,6 +16,10 @@ import {
   serializeStarterAssignmentsData,
 } from "../services/starterAssignmentService";
 import { authed, type HandlerEntry } from "./types";
+import {
+  claimEventAssignment,
+  claimEventMilestone,
+} from "../services/eventAssignmentService";
 
 function integer(value: unknown, field: string): number {
   const parsed = Number(value);
@@ -165,6 +169,41 @@ export const assignmentHandlers: Record<number, HandlerEntry> = {
       Gold: result.goldAdded ?? 0,
       GoldBalance: result.state.gold,
       AssignmentData: serializeAssignmentData(result.assignments),
+    });
+  }),
+
+  // Current Unity normally queues these through RequestBuffer. Direct handlers preserve the
+  // same server-owned validation for diagnostic/older builds without trusting echoed rewards.
+  [DbAction.ClaimEventAssignment]: authed(async ({ player, req }) => {
+    const result = await claimEventAssignment(player!.id, {
+      rewardType: integer(req.RewardType, "RewardType"),
+      rewardValue: integer(req.RewardValue, "RewardValue"),
+    });
+    return ok(DbAction.ClaimEventAssignment, {
+      EventAssignmentData: JSON.stringify({
+        eventId: result.eventAssignment.eventId,
+        totalValue: result.eventAssignment.totalValue,
+        progress: result.eventAssignment.progress,
+        milestones: result.eventAssignment.milestones,
+      }),
+    });
+  }),
+
+  [DbAction.ClaimEventMilestone]: authed(async ({ player, req }) => {
+    if (typeof req.RewardValue !== "string" || req.RewardValue.length > 128) {
+      throw new ApiError(ApiErrorCode.UnknownAction, "RewardValue is invalid.");
+    }
+    const result = await claimEventMilestone(player!.id, {
+      milestoneId: integer(req.MilestoneId, "MilestoneId"),
+      rewardValue: req.RewardValue,
+    });
+    return ok(DbAction.ClaimEventMilestone, {
+      EventAssignmentData: JSON.stringify({
+        eventId: result.eventAssignment.eventId,
+        totalValue: result.eventAssignment.totalValue,
+        progress: result.eventAssignment.progress,
+        milestones: result.eventAssignment.milestones,
+      }),
     });
   }),
 

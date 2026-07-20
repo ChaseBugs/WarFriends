@@ -204,8 +204,11 @@ while ((levelMatch = levelPattern.exec(levelsSection)) !== null) {
   const experienceMatch = /^      EXPERIENCE: (\d+)$/m.exec(levelMatch[2]);
   const rewardGoldMatch = /^      REWARDGOLD: (\d+)$/m.exec(levelMatch[2]);
   const powerMatch = /^      ARMYPOWER: (-?\d+)$/m.exec(levelMatch[2]);
-  if (!displayLevelMatch || !experienceMatch || !rewardGoldMatch || !powerMatch) {
-    throw new Error(`Level row ${index} is missing LEVEL, EXPERIENCE, REWARDGOLD, or ARMYPOWER.`);
+  const convertGoldToWarBucksMatch = /^      CONVERTGOLDTOWARBUCKS: (\d+)$/m.exec(levelMatch[2]);
+  if (!displayLevelMatch || !experienceMatch || !rewardGoldMatch || !powerMatch || !convertGoldToWarBucksMatch) {
+    throw new Error(
+      `Level row ${index} is missing LEVEL, EXPERIENCE, REWARDGOLD, ARMYPOWER, or CONVERTGOLDTOWARBUCKS.`,
+    );
   }
   rankLevels.push({
     index,
@@ -213,6 +216,7 @@ while ((levelMatch = levelPattern.exec(levelsSection)) !== null) {
     experience: Number(experienceMatch[1]),
     rewardGold: Number(rewardGoldMatch[1]),
     armyPower: Number(powerMatch[1]),
+    convertGoldToWarBucks: Number(convertGoldToWarBucksMatch[1]),
   });
 }
 rankLevels.sort((left, right) => left.index - right.index);
@@ -226,6 +230,8 @@ for (let index = 0; index < rankLevels.length; index++) {
     || !Number.isSafeInteger(row.rewardGold)
     || row.rewardGold < 0
     || row.armyPower < 0
+    || !Number.isSafeInteger(row.convertGoldToWarBucks)
+    || row.convertGoldToWarBucks < 1
   ) {
     throw new Error(`Level row ${index} is not contiguous or contains invalid progression balancing.`);
   }

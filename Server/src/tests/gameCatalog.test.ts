@@ -65,6 +65,7 @@ test("material database joins every recovered gameplay inventory family", () => 
     experience: 50_000,
     rewardGold: 5,
     armyPower: 93,
+    convertGoldToWarBucks: 150,
   });
 
   const assaultFeatures = catalog.entries.find((entry) =>

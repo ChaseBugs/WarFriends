@@ -123,6 +123,15 @@ export interface PlayerProgressionState {
    */
   dailyMissions?: DailyMissionsState;
   /**
+   * Limited-time EventAssignmentManager state for the separately configured daily event.
+   *
+   * `progress` and `milestones` use stringified zero-based indexes because JSON object keys
+   * become strings in MongoDB and in the recovered Dictionary<int, ...> wire model. The
+   * configuration digest is private server authority: it prevents an operator from changing
+   * rewards or targets underneath an already-started event while retaining the same event ID.
+   */
+  eventAssignment?: EventAssignmentState;
+  /**
    * Authoritative weapon ownership and equipment state.
    *
    * `inventoryData` and `levelManagerData` deliberately preserve the exact nested field
@@ -213,6 +222,8 @@ export interface PlayerProgressionState {
    * collapse an immediate same-second transport replay without granting or charging twice.
    */
   instantBattle?: InstantBattleState;
+  /** Narrow replay receipt for action 221, whose stock request has no operation UUID. */
+  warBucksConversion?: WarBucksConversionReceiptState;
   /**
    * Server-issued Black Market weapon offers consumed by action 217 and buffered BuyWeapon.
    *
@@ -267,6 +278,14 @@ export interface InstantBattleState {
   lastReceipt?: InstantBattleReceiptState;
 }
 
+export interface WarBucksConversionReceiptState {
+  id: string;
+  goldDeducted: number;
+  warBucksAdded: number;
+  processedAt: number;
+  progressionRevision: number;
+}
+
 /** BlackMarketManager.OfferedWeapon from the recovered 1.6.0 client. */
 export interface BlackMarketOfferedWeaponState {
   level: number;
@@ -319,6 +338,15 @@ export interface DailyRewardState {
   claimReward: number;
   /** YYYY-MM-DD UTC date on which availability was last advanced. */
   lastCheckDay: string;
+}
+
+/** Exact public EventAssignmentManager.EventAssignmentData fields plus one private digest. */
+export interface EventAssignmentState {
+  eventId: string;
+  totalValue: number;
+  progress: Record<string, { v: number; c: boolean }>;
+  milestones: Record<string, boolean>;
+  configHash: string;
 }
 
 /** PlayerInventory.SerializedSlotDetail from the recovered 1.6.0 client. */

@@ -1,11 +1,115 @@
 import type { PlayerProgressionState } from "../db";
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import { mutateProgression } from "./progressionMutationService";
+import { config } from "../config";
+import { playerLevelDefinition } from "./levelProgressionService";
 
 export interface DogTagMutationResult {
   state: PlayerProgressionState;
   currentDogTags: number;
   goldSpent: number;
+}
+
+export interface WarBucksConversionResult {
+  state: PlayerProgressionState;
+  id: string;
+  goldDeducted: number;
+  warBucksAdded: number;
+  replayed: boolean;
+}
+
+interface WarBucksConversionDefinition {
+  standardId: string;
+  variantId: string;
+  goldPrice: number;
+  standardUnits: number;
+  variantUnits: number;
+}
+
+/** Exact MainScene Warbucks rows; units are multiplied by the current Levels conversion row. */
+const WARBUCKS_CONVERSIONS: readonly WarBucksConversionDefinition[] = [
+  { standardId: "warbucks1", variantId: "bwarbucks1", goldPrice: 50, standardUnits: 50, variantUnits: 100 },
+  { standardId: "warbucks2", variantId: "bwarbucks2", goldPrice: 200, standardUnits: 210, variantUnits: 400 },
+  { standardId: "warbucks3", variantId: "bwarbucks3", goldPrice: 500, standardUnits: 550, variantUnits: 1000 },
+  { standardId: "warbucks4", variantId: "bwarbucks4", goldPrice: 1000, standardUnits: 1150, variantUnits: 2000 },
+  { standardId: "warbucks5", variantId: "bwarbucks5", goldPrice: 3500, standardUnits: 4200, variantUnits: 7000 },
+  { standardId: "warbucks6", variantId: "bwarbucks6", goldPrice: 7000, standardUnits: 9800, variantUnits: 14000 },
+];
+
+const CONVERSION_REPLAY_SECONDS = 2;
+
+function configuredWarBucksVariant(): "standard" | "b" {
+  if (config.warBucksGoldVariant === "standard" || config.warBucksGoldVariant === "b") {
+    return config.warBucksGoldVariant;
+  }
+  throw new ApiError(ApiErrorCode.InternalServerError, "WARBUCKS_GOLD_VARIANT must be standard or b.");
+}
+
+/**
+ * Execute action 221 using only MainScene balancing and the authenticated player's level.
+ *
+ * `WarbucksId` selects a row only within the deployment-owned A/B prefix. The phone cannot
+ * choose Gold price, conversion units, level multiplier, or resulting wallet values. The stock
+ * request has no transaction ID, so an identical same-revision retry inside two seconds returns
+ * its receipt; a later intentional conversion or any intervening economy mutation proceeds.
+ */
+export function convertGoldToWarBucksState(
+  state: PlayerProgressionState,
+  now: number,
+  playerLevelIndex: number,
+  requestedId: string,
+  variant = configuredWarBucksVariant(),
+): WarBucksConversionResult {
+  const prior = state.warBucksConversion;
+  if (
+    prior?.id === requestedId
+    && prior.progressionRevision === state.revision
+    && Math.floor(now) >= prior.processedAt
+    && Math.floor(now) <= prior.processedAt + CONVERSION_REPLAY_SECONDS
+  ) {
+    return {
+      state,
+      id: prior.id,
+      goldDeducted: prior.goldDeducted,
+      warBucksAdded: prior.warBucksAdded,
+      replayed: true,
+    };
+  }
+  const definition = WARBUCKS_CONVERSIONS.find((row) =>
+    requestedId === (variant === "b" ? row.variantId : row.standardId));
+  if (!definition) throw new ApiError(ApiErrorCode.UnknownAction, "WarbucksId is not active in the server A/B variant.");
+  if (!Number.isSafeInteger(state.gold) || state.gold < definition.goldPrice) {
+    throw new ApiError(ApiErrorCode.NotEnoughGoldForWarbucks, "Not enough Gold for this WarBucks conversion.");
+  }
+  const level = playerLevelDefinition(playerLevelIndex);
+  const units = variant === "b" ? definition.variantUnits : definition.standardUnits;
+  const warBucksAdded = units * level.convertGoldToWarBucks;
+  if (!Number.isSafeInteger(warBucksAdded) || warBucksAdded <= 0
+    || !Number.isSafeInteger(state.warBucks) || state.warBucks < 0
+    || state.warBucks > Number.MAX_SAFE_INTEGER - warBucksAdded) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "WarBucks conversion overflowed.");
+  }
+  const revision = state.revision + 1;
+  const next: PlayerProgressionState = {
+    ...state,
+    revision,
+    gold: state.gold - definition.goldPrice,
+    warBucks: state.warBucks + warBucksAdded,
+    warBucksConversion: {
+      id: requestedId,
+      goldDeducted: definition.goldPrice,
+      warBucksAdded,
+      processedAt: Math.floor(now),
+      progressionRevision: revision,
+    },
+  };
+  return {
+    state: next,
+    id: requestedId,
+    goldDeducted: definition.goldPrice,
+    warBucksAdded,
+    replayed: false,
+  };
 }
 
 /** Exact 4.9.5 MainScene `VipDogtags` value and localized VIP benefit count. */
@@ -117,4 +221,13 @@ export function spendOneDogTag(playerId: string): Promise<DogTagMutationResult> 
 
 export function refillDogTags(playerId: string): Promise<DogTagMutationResult> {
   return mutateProgression(playerId, refillDogTagsState);
+}
+
+export function convertGoldToWarBucks(
+  playerId: string,
+  playerLevelIndex: number,
+  requestedId: string,
+): Promise<WarBucksConversionResult> {
+  return mutateProgression(playerId, (state, now) =>
+    convertGoldToWarBucksState(state, now, playerLevelIndex, requestedId));
 }

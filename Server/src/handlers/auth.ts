@@ -5,6 +5,10 @@ import { ok, type RequestEnvelope } from "../dtos";
 import { createCustomAccount, createFullCustomAccount, ensureSessionToken } from "../services/authService";
 import { buildDatabasePlayer, buildPlayerStateResponse } from "../services/playerStateService";
 import { authed, open, type HandlerEntry } from "./types";
+import {
+  buildEventAssignmentClientConfig,
+  ensureActiveEventAssignment,
+} from "../services/eventAssignmentService";
 
 // Account and session actions form the boot handshake the client must complete before it
 // reaches the menu. Response fields here follow OGLEHLIPEFM's recovered parsers exactly.
@@ -26,15 +30,17 @@ function requestedAccountType(req: RequestEnvelope, player: PlayerDocument): Acc
     : player.player.accountType;
 }
 
-function accountPayload(
+async function accountPayload(
   player: PlayerDocument,
   password: string,
   accountType: AccountType,
-): Record<string, unknown> {
+): Promise<Record<string, unknown>> {
   // Token is the internal session credential sent with every ordinary PlayerId request.
   // Password is retained separately because GameLoginManager stores it under the selected
   // provider and reuses it only on a later LoginToCustomAccount call.
   const sessionToken = player.authToken ?? password;
+  const eventAssignment = await ensureActiveEventAssignment(player.id);
+  const projected = eventAssignment ? { ...player, progression: eventAssignment.state } : player;
   return {
     id: player.id,
     Id: player.id,
@@ -44,8 +50,11 @@ function accountPayload(
     password,
     Password: password,
     AccountType: accountType,
-    Player: buildDatabasePlayer(player),
-    ...buildPlayerStateResponse(player),
+    Player: buildDatabasePlayer(projected),
+    ...buildPlayerStateResponse(projected),
+    ...(eventAssignment ? {
+      EventAssignmentConfig: buildEventAssignmentClientConfig(eventAssignment.event),
+    } : {}),
   };
 }
 
@@ -55,7 +64,7 @@ export const authHandlers: Record<number, HandlerEntry> = {
     const created = await createCustomAccount(accountName, AccountType.Guest, req.DeviceToken);
     return ok(
       DbAction.CreateAccount,
-      accountPayload(created.doc, created.authToken, AccountType.Guest),
+      await accountPayload(created.doc, created.authToken, AccountType.Guest),
     );
   }),
 
@@ -65,7 +74,7 @@ export const authHandlers: Record<number, HandlerEntry> = {
     const accountName = typeof req.AccountName === "string" ? req.AccountName : "";
     const requestedPassword = requestCredential(req);
     const created = await createFullCustomAccount(accountName, requestedPassword, req.DeviceToken);
-    return ok(DbAction.CreateFullAccount, accountPayload(created.doc, requestedPassword, AccountType.Guest));
+    return ok(DbAction.CreateFullAccount, await accountPayload(created.doc, requestedPassword, AccountType.Guest));
   }),
 
   [DbAction.LoginToCustomAccount]: authed(async ({ player, req }) => {
@@ -75,7 +84,7 @@ export const authHandlers: Record<number, HandlerEntry> = {
     await ensureSessionToken(player!);
     return ok(
       DbAction.LoginToCustomAccount,
-      accountPayload(player!, requestCredential(req), requestedAccountType(req, player!)),
+      await accountPayload(player!, requestCredential(req), requestedAccountType(req, player!)),
     );
   }),
 };

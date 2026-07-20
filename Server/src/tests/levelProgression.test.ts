@@ -15,6 +15,7 @@ test("player-level catalog preserves all recovered XP, Gold, and rank-power rows
     experience: 50_000,
     rewardGold: 5,
     armyPower: 93,
+    convertGoldToWarBucks: 150,
   });
   assert.deepEqual(playerLevelDefinition(57), {
     index: 57,
@@ -22,6 +23,7 @@ test("player-level catalog preserves all recovered XP, Gold, and rank-power rows
     experience: 845_433_656,
     rewardGold: 60,
     armyPower: 1_060,
+    convertGoldToWarBucks: 4_590,
   });
   assert.throws(() => playerLevelDefinition(-1));
   assert.throws(() => playerLevelDefinition(58));
