@@ -3,7 +3,7 @@ import type { Server as HttpServer } from "http";
 import { WebSocket, WebSocketServer } from "ws";
 import { authenticate } from "./services/authService";
 import { findById } from "./services/playerService";
-import { enqueue, remove as leaveQueue } from "./services/matchmakingService";
+import { enqueue, remove as leaveQueue, restoreWaiting } from "./services/matchmakingService";
 import {
   cancelMatch,
   createMatch,
@@ -504,7 +504,10 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
       const opponent = await findById(opponentId);
       const opponentClientId = onlinePlayers.get(opponentId);
       const opponentClient = opponentClientId ? clients.get(opponentClientId) : undefined;
-      if (!opponent || !opponentClient || opponentClient.socket.readyState !== WebSocket.OPEN) {
+      if (!opponent
+        || opponent.player.status === PlayerStatus.InGame
+        || !opponentClient
+        || opponentClient.socket.readyState !== WebSocket.OPEN) {
         // Opponent vanished between queueing and pairing; requeue this player.
         enqueue({ playerId: doc.id, armyPower: doc.player.armyPower, leagueTier: doc.player.leagueTier });
         scheduleMatchmakingTimeout(doc.id);
@@ -513,7 +516,47 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
       }
       const self: MatchPlayer = { playerId: doc.id, name: doc.player.accountName, armyPower: doc.player.armyPower, leagueTier: doc.player.leagueTier };
       const other: MatchPlayer = { playerId: opponent.id, name: opponent.player.accountName, armyPower: opponent.player.armyPower, leagueTier: opponent.player.leagueTier };
-      const matchId = await createMatch(self, other);
+      let matchId: string;
+      try {
+        matchId = await createMatch(self, other);
+      } catch (error: unknown) {
+        // Pairing removed both queue entries before durable admission. Re-read both profiles so
+        // a player claimed by a concurrent match is never reintroduced into the queue, then
+        // restore all still-connected candidates as one non-pairing batch.
+        const fresh = await Promise.all([findById(self.playerId), findById(other.playerId)]);
+        const candidates: MatchPlayer[] = [];
+        for (const [index, candidate] of [self, other].entries()) {
+          const current = fresh[index];
+          const currentClientId = onlinePlayers.get(candidate.playerId);
+          const currentClient = currentClientId ? clients.get(currentClientId) : undefined;
+          if (!current
+            || current.player.status === PlayerStatus.InGame
+            || currentClient?.socket.readyState !== WebSocket.OPEN) continue;
+          // A profile may have changed Army Power, league, or display name between queueing and
+          // admission. Restore its fresh server snapshot so the next pairing can pass the same
+          // transaction guard instead of looping on stale queue data.
+          candidates.push({
+            playerId: current.id,
+            name: current.player.accountName,
+            armyPower: current.player.armyPower,
+            leagueTier: current.player.leagueTier,
+          });
+        }
+        restoreWaiting(candidates);
+        for (const candidate of candidates) {
+          scheduleMatchmakingTimeout(candidate.playerId);
+          sendToPlayer(candidate.playerId, { Type: "Searching", Payload: { Restored: true } });
+        }
+        logger.match.error("Atomic match admission failed", {
+          players: [self.playerId, other.playerId],
+          restored: candidates.map((candidate) => candidate.playerId),
+          error: error instanceof Error ? error.message : String(error),
+        });
+        if (!candidates.some((candidate) => candidate.playerId === self.playerId)) {
+          send(client, { Type: "MatchError", Payload: { Reason: "AdmissionRejected" } });
+        }
+        return;
+      }
       scheduleMatchJoinTimeout(matchId, [self.playerId, other.playerId]);
       const found = (opponentName: string) => ({ Type: "MatchFound", Payload: { MatchId: matchId, Opponent: opponentName } });
       send(client, found(other.name));

@@ -9,7 +9,7 @@ import {
   type PvpWinStreakState,
 } from "../db";
 import { findById, updatePlayerFields } from "./playerService";
-import { PlayerStatus } from "../constants";
+import { League, PlayerStatus } from "../constants";
 import logger from "../utils/logger";
 import { recordPvpAssignmentProgress } from "./assignmentService";
 import {
@@ -46,9 +46,9 @@ import { config } from "../config";
  * Persistent PvP match lifecycle and reward settlement.
  *
  * `gameHub` and `RoomManager` own transient WebSocket connections; this service owns the
- * durable match row, player presence, result reports, terminal state, and rewards. A match is
- * created before either profile is marked InGame. Settlement atomically commits both player
- * rewards and the direct `active -> finished` match transition in one MongoDB transaction.
+ * durable match row, player presence, result reports, terminal state, and rewards. Match creation
+ * and both profile `InGame` reservations commit in one MongoDB transaction. Settlement atomically
+ * commits both player rewards and the direct `active -> finished` transition in another.
  * Competing reports or timeout handlers cannot commit the same match after that transition.
  *
  * Normal settlement requires both authenticated participants to report the same winner. This
@@ -66,6 +66,33 @@ export interface MatchPlayer {
   armyPower: number;
   /** League snapshot used by the queue's widening compatibility window. */
   leagueTier: number;
+}
+
+export class MatchAdmissionError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "MatchAdmissionError";
+  }
+}
+
+/** Validate the immutable pair before opening the MongoDB admission transaction. */
+export function validateMatchParticipants(a: MatchPlayer, b: MatchPlayer): void {
+  const valid = (participant: MatchPlayer): boolean => Boolean(
+    participant.playerId
+    && participant.playerId.length <= 128
+    && !/\p{Cc}/u.test(participant.playerId)
+    && participant.name
+    && participant.name.length <= 64
+    && !/\p{Cc}/u.test(participant.name)
+    && Number.isFinite(participant.armyPower)
+    && participant.armyPower >= 0
+    && Number.isInteger(participant.leagueTier)
+    && participant.leagueTier >= League.NoLeague
+    && participant.leagueTier <= League.Champion
+  );
+  if (!valid(a) || !valid(b) || a.playerId === b.playerId) {
+    throw new MatchAdmissionError("Match participants are invalid or not distinct.");
+  }
 }
 
 export interface MatchDoc {
@@ -441,17 +468,55 @@ export function pvpLevelFields(
 }
 
 export async function createMatch(a: MatchPlayer, b: MatchPlayer): Promise<string> {
+  validateMatchParticipants(a, b);
   const matchId = randomUUID();
   const doc: MatchDoc = { matchId, players: [a, b], state: "active", createdAt: new Date() };
-  await matches().insertOne(doc);
-  // Move both persistent player records to InGame only after the match row exists. If neither
-  // client joins, the hub's join deadline cancels this row and restores both statuses.
-  for (const p of [a, b]) {
-    const player = await findById(p.playerId);
-    if (player) {
-      await updatePlayerFields(p.playerId, { status: PlayerStatus.InGame });
+
+  await withMongoTransaction(async (session) => {
+    const playerIds = [a.playerId, b.playerId];
+    const participants = await players().find(
+      { id: { $in: playerIds } },
+      {
+        session,
+        projection: {
+          id: 1,
+          accountName: 1,
+          armyPower: 1,
+          leagueTier: 1,
+          "player.status": 1,
+        },
+      },
+    ).toArray();
+    if (participants.length !== 2
+      || participants.some((participant) => participant.player?.status === PlayerStatus.InGame)) {
+      throw new MatchAdmissionError("A match participant no longer exists or is already in battle.");
     }
-  }
+    const byId = new Map(participants.map((participant) => [String(participant.id), participant]));
+    if ([a, b].some((snapshot) => {
+      const current = byId.get(snapshot.playerId);
+      return !current
+        || current.accountName !== snapshot.name
+        || current.armyPower !== snapshot.armyPower
+        || current.leagueTier !== snapshot.leagueTier;
+    })) {
+      throw new MatchAdmissionError("A match participant snapshot changed during pairing.");
+    }
+
+    // Insert the durable room and reserve both profiles inside one snapshot transaction. A
+    // concurrent pairing touches the same player rows, so MongoDB aborts/retries one transaction;
+    // its retry then observes InGame and fails without leaving a second active match. A crash can
+    // no longer persist only the match row or only one player's status.
+    await matches().insertOne(doc, { session });
+    const reserved = await players().updateMany(
+      { id: { $in: playerIds }, "player.status": { $ne: PlayerStatus.InGame } },
+      { $set: { "player.status": PlayerStatus.InGame, updatedAt: new Date() } },
+      { session },
+    );
+    if (reserved.matchedCount !== 2) {
+      throw new MatchAdmissionError("Match participants changed during admission.");
+    }
+    return true;
+  });
   logger.match.event("Match created", { matchId, a: a.playerId, b: b.playerId });
   return matchId;
 }

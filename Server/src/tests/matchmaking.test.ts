@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { enqueue, queueSize, remove } from "../services/matchmakingService";
+import { enqueue, queueSize, remove, restoreWaiting } from "../services/matchmakingService";
 
 test("matchmaking deduplicates queue entries and removes both players when paired", () => {
   remove("queue-p1");
@@ -19,4 +19,21 @@ test("queue removal reports whether a pending search actually existed", () => {
   enqueue({ playerId: "queue-remove", armyPower: 1, leagueTier: 1 });
   assert.equal(remove("queue-remove"), true);
   assert.equal(remove("queue-remove"), false);
+});
+
+test("failed durable admission restores a deduplicated batch without immediately re-pairing it", () => {
+  for (const id of ["restore-a", "restore-b", "restore-c"]) remove(id);
+  const initialSize = queueSize();
+  const a = { playerId: "restore-a", armyPower: 100, leagueTier: 2 };
+  const b = { playerId: "restore-b", armyPower: 110, leagueTier: 2 };
+
+  assert.equal(restoreWaiting([a, b, a], 5_000), 2);
+  assert.equal(queueSize(), initialSize + 2, "restoration must not pair the restored entries together");
+  assert.ok(["restore-a", "restore-b"].includes(
+    enqueue({ playerId: "restore-c", armyPower: 105, leagueTier: 2 }) ?? "",
+  ));
+  assert.equal(queueSize(), initialSize + 1);
+
+  for (const id of ["restore-a", "restore-b", "restore-c"]) remove(id);
+  assert.equal(queueSize(), initialSize);
 });

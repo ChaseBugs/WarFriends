@@ -64,6 +64,27 @@ export function remove(playerId: string): boolean {
   return true;
 }
 
+/**
+ * Restore players removed by a pairing whose durable admission failed.
+ *
+ * This intentionally does not run opponent selection while inserting the batch. Calling
+ * `enqueue` twice would immediately pair the same two players again and discard its returned ID,
+ * losing both entries. Their next FindMatch request (or another player's request) performs the
+ * ordinary selection, while normal queue timers continue to bound the restored wait.
+ */
+export function restoreWaiting(entries: ReadonlyArray<Omit<QueueEntry, "enqueuedAt">>, now = Date.now()): number {
+  const unique = [...new Map(entries.map((entry) => [entry.playerId, entry])).values()];
+  for (const entry of unique) remove(entry.playerId);
+  for (const entry of unique) queue.push({ ...entry, enqueuedAt: now });
+  if (unique.length > 0) {
+    logger.match.event("Matchmaking entries restored after admission failure", {
+      playerIds: unique.map((entry) => entry.playerId),
+      size: queue.length,
+    });
+  }
+  return unique.length;
+}
+
 export function queueSize(): number {
   return queue.length;
 }

@@ -146,7 +146,11 @@ Working end-to-end (verified live):
   a widening league window) → `MatchFound` → `JoinMatch` → `MatchStart` → in-match
   `MatchEvent` relay to the opponent → `MatchResult`. Room joins/events are restricted to
   recorded match participants, WebSocket settlement requires matching reports from both
-  participants, and the database settlement claim is idempotent. Replacement clients send an
+  participants, and the database settlement claim is idempotent. Match creation inserts the
+  durable row and reserves both current profiles as `InGame` in one MongoDB transaction; duplicate
+  participants, corrupt snapshots, missing accounts, and concurrent active-match claims fail
+  without partial state, and still-eligible connected players are restored to the bounded queue.
+  Replacement clients send an
   inventory-consuming activation as `MatchEvent { Event: "CardPlayed", Data: { Sequence,
   CardId } }`: the server validates the authenticated owner's complete candidate list, durably
   appends contiguous evidence before relaying the effect, acknowledges exact retries without
