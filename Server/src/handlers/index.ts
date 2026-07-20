@@ -29,6 +29,7 @@ import { inventoryImpressionHandlers } from "./inventoryImpressions";
 import { tutorialHandlers } from "./tutorial";
 import { analyticsHandlers } from "./analytics";
 import { purchaseHandlers } from "./purchases";
+import { videoAdHandlers } from "./videoAds";
 import type { HandlerEntry } from "./types";
 import logger from "../utils/logger";
 
@@ -66,6 +67,7 @@ const registry: Record<number, HandlerEntry> = {
   ...tutorialHandlers,
   ...analyticsHandlers,
   ...purchaseHandlers,
+  ...videoAdHandlers,
 };
 
 function clientVersion(req: RequestEnvelope): number {

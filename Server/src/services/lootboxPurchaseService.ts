@@ -46,6 +46,21 @@ export interface LootboxPurchaseTransition {
   duplicateWarBucks: number;
 }
 
+/**
+ * Result of adding visual-part suitcases without charging the normal Gold shop price.
+ *
+ * Video ads, periodic VIP rewards, and other server-issued prizes need the same part and
+ * duplicate-conversion rules as BuyLootboxes, but they must not pretend to purchase one of the
+ * six shop products. Keeping this as a composable transition gives every caller one canonical
+ * implementation while allowing its enclosing reward receipt to own the single revision bump.
+ */
+export interface GrantedLootboxPartsTransition {
+  state: PlayerProgressionState;
+  rewards: PurchasedLootboxReward[];
+  newVisuals: string;
+  duplicateWarBucks: number;
+}
+
 type PickIndex = (exclusiveMaximum: number) => number;
 
 function emptySavedVisual(): SavedVisualState {
@@ -85,6 +100,71 @@ function selectVisualId(pickIndex: PickIndex): string {
     throw new Error("Purchasable lootbox selector returned an out-of-range index.");
   }
   return pool[index]!;
+}
+
+/**
+ * Grant a server-selected number of one-part visual suitcases.
+ *
+ * This helper deliberately preserves `revision`. A caller normally combines the visual parts,
+ * its eligibility cursor, and any other currency/card result in one optimistic transaction.
+ * Selecting inside that transaction is also important: if MongoDB's revision guard loses a
+ * race, the complete reward is recalculated and no uncommitted selection reaches the client.
+ */
+export function grantLootboxPartsState(
+  state: PlayerProgressionState,
+  count: number,
+  pickIndex: PickIndex = (exclusiveMaximum) => randomInt(exclusiveMaximum),
+): GrantedLootboxPartsTransition {
+  if (!Number.isSafeInteger(count) || count < 1 || count > 1_000) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Lootbox reward count is invalid.");
+  }
+
+  const selectedIds = Array.from({ length: count }, () => selectVisualId(pickIndex));
+  const visualInventory = visualInventoryStateFor(state);
+  let duplicateWarBucks = 0;
+
+  for (const visualId of selectedIds) {
+    const definition = VISUAL_CATALOG[visualId];
+    if (!definition || definition.parts <= 0) {
+      throw new Error(`Purchasable lootbox selected invalid visual ${visualId}.`);
+    }
+    const saved = visualInventory.visuals[visualId] ?? emptySavedVisual();
+    const storedParts = Number.isFinite(saved.parts)
+      ? Math.max(0, Math.min(definition.parts, Math.floor(saved.parts)))
+      : 0;
+    const ownedBeforeReward = saved.bought || storedParts >= definition.parts;
+
+    if (ownedBeforeReward) {
+      if (duplicateWarBucks > Number.MAX_SAFE_INTEGER - definition.duplicateWarBucks) {
+        throw new Error("Purchasable lootbox duplicate WarBucks overflowed.");
+      }
+      duplicateWarBucks += definition.duplicateWarBucks;
+      visualInventory.visuals[visualId] = { ...saved, parts: storedParts };
+      continue;
+    }
+
+    visualInventory.visuals[visualId] = {
+      ...saved,
+      parts: Math.min(definition.parts, storedParts + 1),
+      // JHDGAACJEGH marks unseen, unowned results for the customization notification badge.
+      notificate: true,
+    };
+  }
+
+  if (state.warBucks > Number.MAX_SAFE_INTEGER - duplicateWarBucks) {
+    throw new Error("Purchasable lootbox WarBucks balance overflowed.");
+  }
+  const rewards: PurchasedLootboxReward[] = selectedIds.map((visualId) => ({ visualId, parts: 1 }));
+  return {
+    state: {
+      ...state,
+      warBucks: state.warBucks + duplicateWarBucks,
+      visualInventory,
+    },
+    rewards,
+    newVisuals: serializePurchasedLootboxVisuals(rewards),
+    duplicateWarBucks,
+  };
 }
 
 /**
@@ -130,56 +210,19 @@ export function purchaseLootboxesState(
     );
   }
 
-  // Select every reward inside the pure transition. If optimistic concurrency loses its write,
-  // mutateProgression reruns the entire transition against the winner's current inventory and
-  // wallet; no abandoned selection has been exposed or partially granted.
-  const selectedIds = Array.from({ length: product.count }, () => selectVisualId(pickIndex));
-  const visualInventory = visualInventoryStateFor(state);
-  let duplicateWarBucks = 0;
-
-  for (const visualId of selectedIds) {
-    const definition = VISUAL_CATALOG[visualId];
-    if (!definition || definition.parts <= 0) {
-      throw new Error(`Purchasable lootbox selected invalid visual ${visualId}.`);
-    }
-    const saved = visualInventory.visuals[visualId] ?? emptySavedVisual();
-    const storedParts = Number.isFinite(saved.parts)
-      ? Math.max(0, Math.min(definition.parts, Math.floor(saved.parts)))
-      : 0;
-    const ownedBeforeReward = saved.bought || storedParts >= definition.parts;
-
-    if (ownedBeforeReward) {
-      if (duplicateWarBucks > Number.MAX_SAFE_INTEGER - definition.duplicateWarBucks) {
-        throw new Error("Purchasable lootbox duplicate WarBucks overflowed.");
-      }
-      duplicateWarBucks += definition.duplicateWarBucks;
-      visualInventory.visuals[visualId] = { ...saved, parts: storedParts };
-      continue;
-    }
-
-    visualInventory.visuals[visualId] = {
-      ...saved,
-      parts: Math.min(definition.parts, storedParts + 1),
-      // JHDGAACJEGH marks unseen, unowned results for the customization notification badge.
-      notificate: true,
-    };
-  }
-
-  if (state.warBucks > Number.MAX_SAFE_INTEGER - duplicateWarBucks) {
-    throw new Error("Purchasable lootbox WarBucks balance overflowed.");
-  }
-  const rewards: PurchasedLootboxReward[] = selectedIds.map((visualId) => ({ visualId, parts: 1 }));
+  // Select and apply every part inside the pure transition. If optimistic concurrency loses
+  // its write, mutateProgression reruns the whole transition against the winner's current
+  // inventory and wallet; no abandoned selection has been exposed or partially granted.
+  const granted = grantLootboxPartsState(state, product.count, pickIndex);
   return {
     state: {
-      ...state,
+      ...granted.state,
       revision: state.revision + 1,
       gold: state.gold - product.gold,
-      warBucks: state.warBucks + duplicateWarBucks,
-      visualInventory,
     },
     product,
-    rewards,
-    newVisuals: serializePurchasedLootboxVisuals(rewards),
-    duplicateWarBucks,
+    rewards: granted.rewards,
+    newVisuals: granted.newVisuals,
+    duplicateWarBucks: granted.duplicateWarBucks,
   };
 }

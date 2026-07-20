@@ -265,6 +265,16 @@ export interface PlayerProgressionState {
    * collapse an immediate same-second transport replay without granting or charging twice.
    */
   instantBattle?: InstantBattleState;
+  /**
+   * Server-owned action-156 rate-limit ledgers and narrow transport replay receipt.
+   *
+   * The recovered Fuse SDK callback proves completion only inside the client process; it does
+   * not send a provider-signed receipt to Beanstalk. These timestamps therefore cannot prove an
+   * advertisement impression, but they do enforce the exact source count/window policy on the
+   * only authority that can grant inventory. They are projected to Unity as
+   * `videoAdRewardTimes`, matching EventTrackingManager.KHHOMCIOKAO.MENAHKIIFOC.
+   */
+  videoAdRewards?: VideoAdRewardState;
   /** Narrow replay receipt for action 221, whose stock request has no operation UUID. */
   warBucksConversion?: WarBucksConversionReceiptState;
   /**
@@ -294,6 +304,27 @@ export interface PlayerSubscriptionState {
   expireTime: number;
   subscribeSince: number;
   dogTagTimerLock: number;
+}
+
+/** Exact JSON property names parsed by the recovered EventTrackingManager. */
+export interface VideoAdRewardTimesState {
+  warcards: number[];
+  dogtags: number[];
+  goldenSuitcase: number[];
+  lootboxes: number[];
+}
+
+export interface VideoAdRewardReceiptState {
+  reward: 1 | 2 | 3 | 4;
+  settledAt: number;
+  progressionRevision: number;
+  /** Immutable stock-client response payload returned by an immediate transport replay. */
+  response: Record<string, unknown>;
+}
+
+export interface VideoAdRewardState {
+  times: VideoAdRewardTimesState;
+  lastReceipt?: VideoAdRewardReceiptState;
 }
 
 export interface PvpWinStreakState {

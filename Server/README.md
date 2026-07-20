@@ -352,6 +352,20 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   part rows; event/Arena/loyalty/assignment/value-pack grants, visual rentals, and unsupported
   discounts remain fail-closed. Run `npm run verify:visual-catalog` to compare the artifact with
   MainScene.
+- **Rewarded-video prizes**: action `156` implements the recovered `RandomCard`, `Dogtag`,
+  `GoldenSuitcase`, and `LootBox` enum contract. The server ignores client-authored dog-tag timing
+  and cap values, atomically persists every card/energy/currency/visual-part grant, applies exact
+  duplicate-WarBucks conversion, returns the parser's `AddedCards`, `DogTagSeconds`,
+  `DogTagLastUpdate`, `Gold`, `WarBucks`, `NewVisuals`, and `videoAdRewardTimes` fields, and restores
+  all four ledgers at boot. XOR-decoded 4.9.5 limits are enforced server-side as 24 claims per
+  rolling 5/12/15/100-hour window, with the exact one-minute Golden Suitcase spacing. A narrow
+  same-revision five-second receipt prevents a lost HTTP response from granting twice. The
+  production Golden Suitcase weights/ranges were remote and the bundled rows are internally
+  invalid, so the documented offline table uniformly selects 1,000 WarBucks, 5 Gold, one visible
+  Bronze card, or one normal-shop visual part; VIP and power-band prizes remain disabled rather
+  than fabricated. The stock Fuse completion callback provides no provider-signed proof, so these
+  limits contain economy abuse but cannot attest a real impression; production ad monetization
+  requires a provider server-to-server callback/nonce before calling the grant transition.
 - **VIP purchase and expiry authority**: action `114` validates `VIP_1` through `VIP_4` against
   the 4.9.5 MainScene table (49 Gold/12 hours, 249/3 days, 499/7 days, and 1799/30 days), debits
   Gold and extends the Unix entitlement in one revision-safe transaction, emits the exact

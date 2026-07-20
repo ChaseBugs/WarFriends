@@ -252,6 +252,12 @@ export function buildPlayerData(player: PlayerDocument, now = unixNow()): Player
   // loader also reads dogTagTimerLock from the same JSON object even though the recovered
   // nested C# model does not declare it, so retain all four server-owned fields here.
   addSerializedObject(data, "Subscription", state.subscription);
+  if (state.videoAdRewards) {
+    // Unlike the manager-backed objects above, EventTrackingManager reads this exact lower-case
+    // PlayerData key and manually deserializes its Dynamo `S` value. Expose only the four public
+    // timestamp arrays; the same-revision replay receipt remains private backend authority.
+    data.videoAdRewardTimes = stringAttribute(state.videoAdRewards.times);
+  }
   addSerializedObject(data, "StatisticsData", dto.statisticsData);
   // WinStreakManager derives from DatabaseSerializedObjectGeneric<WinStreak>. Restore the
   // server-owned streak on every boot; otherwise LoadEmpty silently resets the lobby timer
