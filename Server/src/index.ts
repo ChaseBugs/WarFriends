@@ -2,6 +2,7 @@ import cors from "cors";
 import compression from "compression";
 import express, { type NextFunction, type Request, type Response } from "express";
 import { createServer } from "http";
+import { randomUUID } from "crypto";
 import { apiRouter } from "./routes";
 import { config } from "./config";
 import { connectMongo, disconnectMongo } from "./db";
@@ -16,6 +17,7 @@ import {
   startPvpCoordinatorHeartbeat,
   type PvpCoordinatorHeartbeat,
 } from "./services/pvpCoordinatorService";
+import { serverMetrics } from "./services/metricsService";
 
 const app = express();
 
@@ -25,6 +27,24 @@ if (Number.isInteger(config.trustProxyHops) && config.trustProxyHops > 0) {
   app.set("trust proxy", config.trustProxyHops);
 }
 
+// Correlation and metrics wrap every request, including rate-limit/404/error responses. Generated
+// IDs avoid reflecting attacker-controlled headers and never encode player/address information.
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const startedAt = Date.now();
+  const requestId = randomUUID();
+  const requestPath = req.path;
+  res.locals.requestId = requestId;
+  res.setHeader("X-Request-ID", requestId);
+  serverMetrics.beginHttp();
+  logger.api.request(req.method, requestPath, { requestId });
+  res.on("finish", () => {
+    const durationMs = Date.now() - startedAt;
+    serverMetrics.finishHttp(req.method, res.statusCode, durationMs);
+    logger.api.response(req.method, requestPath, res.statusCode, { requestId, duration: `${durationMs}ms` });
+  });
+  next();
+});
+
 app.use(cors());
 app.use(createHttpRateLimitMiddleware());
 app.use(compression({ threshold: 1024 }));
@@ -32,16 +52,6 @@ app.use(compression({ threshold: 1024 }));
 app.use(express.json({ strict: false, limit: "2mb" }));
 // BestHTTP's AddField API posts the recovered client's requests as form fields.
 app.use(express.urlencoded({ extended: false, limit: "2mb" }));
-
-app.use((req: Request, res: Response, next: NextFunction) => {
-  const startedAt = Date.now();
-  const requestPath = req.originalUrl;
-  logger.api.request(req.method, requestPath);
-  res.on("finish", () => {
-    logger.api.response(req.method, requestPath, res.statusCode, { duration: `${Date.now() - startedAt}ms` });
-  });
-  next();
-});
 
 app.get("/health", (_req, res) => {
   res.json({
@@ -51,6 +61,10 @@ app.get("/health", (_req, res) => {
     redis: !isRedisEnabled() ? "disabled" : isRedisAvailable() ? "available" : "unavailable",
     memory: process.memoryUsage().rss,
   });
+});
+
+app.get("/metrics", (_req, res) => {
+  res.type("text/plain; version=0.0.4; charset=utf-8").send(serverMetrics.render(isRedisAvailable()));
 });
 
 app.use(apiRouter);
@@ -64,6 +78,7 @@ app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {
   logger.errorWithEmoji("❌", "Unhandled request error", "API", {
     method: req.method,
     path: req.originalUrl,
+    requestId: res.locals.requestId,
     error: error.message,
   });
   res.status(500).json({ Code: 0, Message: "Internal server error." });

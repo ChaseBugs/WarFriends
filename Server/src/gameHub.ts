@@ -58,6 +58,7 @@ import {
   releasePvpSocket,
   socketPresenceHeartbeatMs,
 } from "./services/pvpSocketPresenceService";
+import { serverMetrics } from "./services/metricsService";
 import {
   WebSocketRateLimiter,
   consumeWebSocketRateLimit,
@@ -512,15 +513,18 @@ export async function createGameHub(httpServer: HttpServer): Promise<WebSocketSe
       rateLimitKey: webSocketRateLimitKey(request.socket.remoteAddress ?? "unknown"),
     };
     clients.set(client.id, client);
+    serverMetrics.websocketConnected();
     logger.websocket.connected(client.id, { totalClients: clients.size });
     send(client, { Type: "Welcome", Payload: { ClientId: client.id } });
 
     socket.on("message", (raw) => {
+      serverMetrics.websocketMessage();
       // Serialize rate consumption with message handling. Without this chain, a burst of async
       // Redis decisions could all observe/reorder around Identify or CardPlayed/MatchResult.
       client.processing = client.processing.then(async () => {
         const rate = await consumeWebSocketRateLimit(client.rateLimiter, client.rateLimitKey);
         if (!rate.allowed) {
+          serverMetrics.websocketRejectedByRateLimit();
           client.consecutiveRateLimitViolations += 1;
           logger.warnWithEmoji("RATE", "WebSocket message rate limit exceeded", "SECURITY", {
             clientId: client.id,
@@ -575,6 +579,7 @@ export async function createGameHub(httpServer: HttpServer): Promise<WebSocketSe
         if (onlinePlayers.get(client.playerId) === client.id) onlinePlayers.delete(client.playerId);
       }
       clients.delete(client.id);
+      serverMetrics.websocketDisconnected();
       logger.websocket.disconnected(client.id, { totalClients: clients.size });
     });
 

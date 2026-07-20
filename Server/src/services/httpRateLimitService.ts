@@ -110,7 +110,7 @@ export function createHttpRateLimitMiddleware(
   return (req: Request, res: Response, next: NextFunction): void => {
     // Monitoring must remain able to determine that the process is alive, and a browser's CORS
     // preflight does not execute game logic. Every actual API request still consumes one token.
-    if (req.method === "OPTIONS" || req.path === "/health") {
+    if (req.method === "OPTIONS" || req.path === "/health" || req.path === "/metrics") {
       next();
       return;
     }
