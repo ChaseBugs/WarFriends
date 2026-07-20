@@ -68,6 +68,14 @@ function checkedSum(left: number, right: number, name: string): number {
   return value;
 }
 
+function checkedBalanceSum(left: number, right: number, name: string): number {
+  const value = left + right;
+  if (!Number.isSafeInteger(left) || !Number.isSafeInteger(right) || right < 0 || !Number.isSafeInteger(value)) {
+    throw new ApiError(ApiErrorCode.InternalServerError, `${name} overflowed.`);
+  }
+  return value;
+}
+
 /** Clone and validate the private counters instead of mutating a MongoDB snapshot in place. */
 export function instantBattleStateFor(state: PlayerProgressionState): InstantBattleState {
   const current = state.instantBattle ?? {
@@ -268,7 +276,7 @@ export function playInstantBattleState(
     paidInstantBattles: nextPaidCount,
     lastReceipt: receipt,
   };
-  const rewardedWarBucks = checkedSum(leveled.state.warBucks, warBucks, "WarBucks balance");
+  const rewardedWarBucks = checkedBalanceSum(leveled.state.warBucks, warBucks, "WarBucks balance");
   return {
     state: {
       ...leveled.state,

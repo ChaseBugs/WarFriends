@@ -161,11 +161,13 @@ export function advanceBeginnerLeagueAfterPvp(
 export const PLAYER_LEAGUE_MINIMUM_PLAYERS = 30;
 /** MainScene Constants.LeaguePlacementMatches (decoded ObscuredFloat). */
 export const PLAYER_LEAGUE_PLACEMENT_MATCHES = 1;
+/** Stock PlayerLeague screen and recovered beginner simulation both operate on 100 rows. */
+export const PLAYER_LEAGUE_MAXIMUM_PLAYERS = 100;
 /** MainScene Constants.ChampionLeagueTopPlayersForReward (decoded ObscuredFloat). */
 export const CHAMPION_REWARD_FRACTION = 0.1;
 
 const CHAMPION_REWARDS = { first: 700, second: 350, remainingTop: 150 } as const;
-const MANAGED_DIVISION = "local";
+const LEGACY_MANAGED_DIVISION = "local";
 
 export interface ManagedLeagueId {
   tier: League;
@@ -208,20 +210,37 @@ export function playerLeagueRule(tier: number): PlayerLeagueRule {
  *
  * That parser splits LeagueId on '-' and treats the first segment as the numeric tier and
  * the final segment as the division label. The retired service's division allocator is not
- * present in either client archive, so this replacement deliberately uses one "local"
- * division per tier and a UTC-aligned recovered-duration window. The timestamp in the
- * middle makes old seasons immutable and lets every process derive the same end time.
+ * present in either client archive, so this replacement uses explicit `localN` buckets and a
+ * UTC-aligned recovered-duration window. The timestamp in the middle makes old seasons immutable
+ * and lets every process derive the same end time. The optional zero value retains `local` for
+ * pre-bounded-allocation rows already active during an upgrade.
  */
-export function managedPlayerLeagueId(tier: League, now: number): ManagedLeagueId & { leagueId: string } {
+export function managedPlayerLeagueId(
+  tier: League,
+  now: number,
+  divisionIndex = 0,
+): ManagedLeagueId & { leagueId: string } {
   const rule = playerLeagueRule(tier);
   const duration = rule.durationHours * 3_600;
   const endsAt = (Math.floor(Math.max(0, now) / duration) + 1) * duration;
-  return { tier, endsAt, division: MANAGED_DIVISION, leagueId: `${tier}-${endsAt}-${MANAGED_DIVISION}` };
+  if (!Number.isSafeInteger(divisionIndex) || divisionIndex < 0) {
+    throw new Error(`Invalid player league division index ${divisionIndex}.`);
+  }
+  const division = divisionIndex === 0 ? LEGACY_MANAGED_DIVISION : `local${divisionIndex}`;
+  return { tier, endsAt, division, leagueId: `${tier}-${endsAt}-${division}` };
+}
+
+/** Convert a one-based committed admission ordinal into a one-based bounded division index. */
+export function playerLeagueDivisionIndexForOrdinal(ordinal: number): number {
+  if (!Number.isSafeInteger(ordinal) || ordinal < 1) {
+    throw new Error(`Invalid player league admission ordinal ${ordinal}.`);
+  }
+  return Math.floor((ordinal - 1) / PLAYER_LEAGUE_MAXIMUM_PLAYERS) + 1;
 }
 
 /** Parse only IDs owned by this scheduler. Unknown production-era IDs fail closed. */
 export function parseManagedPlayerLeagueId(value: string): ManagedLeagueId | null {
-  const match = /^([1-9]|1[0-6])-(\d{9,11})-(local)$/.exec(value);
+  const match = /^([1-9]|1[0-6])-(\d{9,11})-(local(?:[1-9]\d*)?)$/.exec(value);
   if (!match) return null;
   const tier = Number(match[1]) as League;
   const endsAt = Number(match[2]);

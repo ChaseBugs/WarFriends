@@ -23,6 +23,8 @@ import { runWithRequestContext } from "./services/requestContextService";
 import { startPlayerLeagueSettlementScheduler } from "./services/playerLeagueSchedulerService";
 import { startGooglePlaySubscriptionRevalidationScheduler } from "./services/googlePlaySubscriptionRevalidationService";
 import { initializeRemoteConfiguration } from "./services/remoteConfigurationService";
+import { startGooglePlayVoidedPurchaseScheduler } from "./services/googlePlayVoidedPurchaseService";
+import { startSquadWarScheduler } from "./services/squadWarSchedulerService";
 
 const app = express();
 
@@ -96,6 +98,8 @@ let pvpCoordinatorHeartbeat: PvpCoordinatorHeartbeat | null = null;
 let pvpOrphanRecoveryTimer: NodeJS.Timeout | null = null;
 let playerLeagueSchedulerTimer: NodeJS.Timeout | null = null;
 let googlePlaySubscriptionSchedulerTimer: NodeJS.Timeout | null = null;
+let googlePlayVoidedPurchaseSchedulerTimer: NodeJS.Timeout | null = null;
+let squadWarSchedulerTimer: NodeJS.Timeout | null = null;
 // Let Unity's BestHTTP reuse keep-alive sockets; headersTimeout must exceed keepAliveTimeout.
 httpServer.keepAliveTimeout = 65_000;
 httpServer.headersTimeout = 66_000;
@@ -115,6 +119,9 @@ async function start(): Promise<void> {
   }
   if (config.googlePlaySubscriptionRevalidationEnabled && !config.googlePlayPurchasesEnabled) {
     throw new Error("Google Play subscription revalidation requires GOOGLE_PLAY_PURCHASES_ENABLED=true.");
+  }
+  if (config.googlePlayVoidedPurchaseReconciliationEnabled && !config.googlePlayPurchasesEnabled) {
+    throw new Error("Google Play voided purchase reconciliation requires GOOGLE_PLAY_PURCHASES_ENABLED=true.");
   }
   // Parse, schema-check, and authenticate the complete publication before opening MongoDB or a
   // listener. A malformed live-ops file therefore fails deployment instead of reaching clients.
@@ -142,7 +149,9 @@ async function start(): Promise<void> {
   }
   await createGameHub(httpServer);
   playerLeagueSchedulerTimer = startPlayerLeagueSettlementScheduler();
+  squadWarSchedulerTimer = startSquadWarScheduler();
   googlePlaySubscriptionSchedulerTimer = startGooglePlaySubscriptionRevalidationScheduler();
+  googlePlayVoidedPurchaseSchedulerTimer = startGooglePlayVoidedPurchaseScheduler();
 
   httpServer.listen(config.port, () => {
     logger.server.start(config.port, process.env.NODE_ENV ?? "development");
@@ -156,7 +165,9 @@ async function shutdown(signal: string): Promise<void> {
   httpServer.close();
   if (pvpOrphanRecoveryTimer) clearInterval(pvpOrphanRecoveryTimer);
   if (playerLeagueSchedulerTimer) clearInterval(playerLeagueSchedulerTimer);
+  if (squadWarSchedulerTimer) clearInterval(squadWarSchedulerTimer);
   if (googlePlaySubscriptionSchedulerTimer) clearInterval(googlePlaySubscriptionSchedulerTimer);
+  if (googlePlayVoidedPurchaseSchedulerTimer) clearInterval(googlePlayVoidedPurchaseSchedulerTimer);
   await pvpCoordinatorHeartbeat?.stop();
   await disconnectRedis();
   await disconnectMongo();

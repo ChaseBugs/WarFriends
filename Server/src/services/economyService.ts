@@ -85,7 +85,7 @@ export function convertGoldToWarBucksState(
   const units = variant === "b" ? definition.variantUnits : definition.standardUnits;
   const warBucksAdded = units * level.convertGoldToWarBucks;
   if (!Number.isSafeInteger(warBucksAdded) || warBucksAdded <= 0
-    || !Number.isSafeInteger(state.warBucks) || state.warBucks < 0
+    || !Number.isSafeInteger(state.warBucks)
     || state.warBucks > Number.MAX_SAFE_INTEGER - warBucksAdded) {
     throw new ApiError(ApiErrorCode.InternalServerError, "WarBucks conversion overflowed.");
   }

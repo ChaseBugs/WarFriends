@@ -67,6 +67,17 @@ test("tutorial completion grants only recovered starter constants and one placem
   assert.equal(replay.replayed, true);
 });
 
+test("tutorial starter grant pays chargeback debt instead of erasing it", () => {
+  const debt = {
+    ...createInitialProgression(NOW),
+    gold: -40,
+    warBucks: -2_000,
+  };
+  const finished = finishTutorialState(debt, "", 2, 0);
+  assert.equal(finished.state.gold, TUTORIAL_STARTING_GOLD - 40);
+  assert.equal(finished.state.warBucks, TUTORIAL_STARTING_WARBUCKS - 2_000);
+});
+
 test("tutorial completion rejects forged receipts and non-win results", () => {
   const started = startTutorialState(createInitialProgression(NOW), NOW, BATTLE_ID);
   assert.throws(() => finishTutorialState(started.state, "forged", 2, 0));

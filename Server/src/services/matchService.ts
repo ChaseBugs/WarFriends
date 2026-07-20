@@ -41,6 +41,12 @@ import {
 } from "./squadEventService";
 import { applyVipBattleLootboxState } from "./vipLootboxService";
 import { config } from "../config";
+import {
+  ensureActiveSquadWarSeason,
+  recordConfirmedSquadWarProgress,
+  type SquadWarProgressStatus,
+} from "./squadWarService";
+import { allocatePlayerLeagueDivision } from "./playerLeagueService";
 
 /**
  * Persistent PvP match lifecycle and reward settlement.
@@ -125,6 +131,12 @@ export interface MatchDoc {
     configHash: string;
     participants: Array<{ playerId: string; squadId: string; status: SquadEventProjectionStatus }>;
   };
+  /** Audit receipt for current-round Squad Wars score committed with this match. */
+  squadWarProjection?: Array<{
+    playerId: string;
+    squadId: string;
+    status: SquadWarProgressStatus;
+  }>;
   createdAt: Date;
   /** Terminal timestamp for both normal completion and cancellation. */
   endedAt?: Date;
@@ -798,23 +810,29 @@ async function settlePlayerCore(
     canonical,
     leagueAdvance?.leagueTier ?? player.player.leagueTier,
   ).state;
+  const enteredNormalLeague = beginnerAdvance?.enteredNormalLeague
+    ? beginnerAdvance
+    : normalLeagueAdvance?.enteredLeague
+      ? normalLeagueAdvance
+      : null;
+  // The pure recovered placement decision identifies the tier and season window. Actual
+  // membership is allocated here, inside the same transaction as rewards and the terminal match
+  // row, so concurrent placements cannot overfill one division or leave capacity without a player.
+  const allocatedLeague = enteredNormalLeague
+    ? await allocatePlayerLeagueDivision(session, enteredNormalLeague.leagueTier, settlementUnix)
+    : null;
   const leagueFields: Record<string, unknown> = leagueAdvance
     ? {
       leagueTier: leagueAdvance.leagueTier,
       "player.leagueTier": leagueAdvance.leagueTier,
-      "player.leagueId": leagueAdvance.leagueId,
-      "player.leagueDivision": leagueAdvance.leagueDivision,
+      "player.leagueId": allocatedLeague?.leagueId ?? leagueAdvance.leagueId,
+      "player.leagueDivision": allocatedLeague?.division ?? leagueAdvance.leagueDivision,
       "player.remainingMatches": leagueAdvance.remainingMatches,
     }
     : {};
   const placementMatchesRequired = leagueAdvance?.remainingMatches ?? player.player.remainingMatches;
   const beginnersLeague = beginnerAdvance?.beginnersLeague ?? player.player.beginnersLeague;
   const medalsBalance = beginnerAdvance?.medalsBalance ?? medals.medalsBalance;
-  const enteredNormalLeague = beginnerAdvance?.enteredNormalLeague
-    ? beginnerAdvance
-    : normalLeagueAdvance?.enteredLeague
-      ? normalLeagueAdvance
-      : null;
 
   const update = await players().updateOne(
     { id: playerId, ...progressionRevisionFilter(player) },
@@ -867,9 +885,9 @@ async function settlePlayerCore(
       beginnersLeague,
       ...(enteredNormalLeague
         ? {
-          enteredLeague: enteredNormalLeague.leagueId,
+          enteredLeague: allocatedLeague?.leagueId ?? enteredNormalLeague.leagueId,
           enteredNormalLeague: true,
-          leagueEvaluation: enteredNormalLeague.endsAt,
+          leagueEvaluation: allocatedLeague?.endsAt ?? enteredNormalLeague.endsAt,
         }
         : {}),
       baseExperience,
@@ -1321,6 +1339,16 @@ export async function settleResult(matchId: string, winnerId: string, reportedBy
     return null;
   });
   const settlementTime = new Date();
+  // Allocation must occur before the core transaction: creating a whole season can touch many
+  // squads and does not belong in a two-player settlement. Once materialized, the per-player
+  // score updates below share the terminal match transaction and are therefore exactly once.
+  const squadWarsAvailable = await ensureActiveSquadWarSeason(settlementTime).then(Boolean).catch((error: unknown) => {
+    logger.warnWithEmoji("âš ï¸", "Squad Wars could not be prepared for PvP settlement", "MATCH", {
+      matchId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return false;
+  });
   const transaction = await withMongoTransaction(async (session) => {
     const match = await matches().findOne({ matchId }, { session }) as unknown as MatchDoc | null;
     if (!match) return { result: { matchId, winnerId, rewarded: false }, grants: [] as CoreGrant[], unknown: true };
@@ -1380,6 +1408,24 @@ export async function settleResult(matchId: string, winnerId: string, reportedBy
         eventParticipants.push({ playerId: grant.playerId, squadId: grant.squadName, status });
       }
     }
+    const squadWarParticipants: Array<{
+      playerId: string;
+      squadId: string;
+      status: SquadWarProgressStatus;
+    }> = [];
+    if (squadWarsAvailable) {
+      for (const grant of grants) {
+        const status = await recordConfirmedSquadWarProgress(
+          session,
+          grant.playerId,
+          grant.squadName,
+          grant.won,
+          grant.squadPoints,
+          settlementTime,
+        );
+        squadWarParticipants.push({ playerId: grant.playerId, squadId: grant.squadName, status });
+      }
+    }
     const finish = await matches().updateOne(
       { matchId, state: "active" },
       {
@@ -1395,6 +1441,7 @@ export async function settleResult(matchId: string, winnerId: string, reportedBy
               participants: eventParticipants,
             },
           } : {}),
+          ...(squadWarsAvailable ? { squadWarProjection: squadWarParticipants } : {}),
         },
       },
       { session },

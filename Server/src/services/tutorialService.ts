@@ -99,12 +99,21 @@ export function finishTutorialState(
     throw new ApiError(ApiErrorCode.UnknownAction, "Tutorial battle has no matching start receipt.");
   }
   const { tutorialBattle: _battle, ...withoutBattle } = state;
+  // Normally bootcamp raises a new account to the fixed starting balances. A chargeback debt is
+  // different: using Math.max would erase it. In that case treat the same constants as the exact
+  // one-time tutorial grant, allowing them to pay the debt before exposing spendable currency.
+  const tutorialGold = state.gold < 0
+    ? state.gold + TUTORIAL_STARTING_GOLD
+    : Math.max(state.gold, TUTORIAL_STARTING_GOLD);
+  const tutorialWarBucks = state.warBucks < 0
+    ? state.warBucks + TUTORIAL_STARTING_WARBUCKS
+    : Math.max(state.warBucks, TUTORIAL_STARTING_WARBUCKS);
   return {
     state: {
       ...withoutBattle,
       revision: state.revision + 1,
-      gold: Math.max(state.gold, TUTORIAL_STARTING_GOLD),
-      warBucks: Math.max(state.warBucks, TUTORIAL_STARTING_WARBUCKS),
+      gold: tutorialGold,
+      warBucks: tutorialWarBucks,
       tutorialFinished: true,
     },
     battleId: receipt?.battleId ?? "",

@@ -149,6 +149,17 @@ function checkedSum(left: number, right: number, name: string): number {
   return value;
 }
 
+function checkedBalanceSum(left: number, right: number, name: string): number {
+  if (!Number.isSafeInteger(left) || !Number.isSafeInteger(right) || right < 0) {
+    throw new ApiError(ApiErrorCode.InternalServerError, `${name} is invalid.`);
+  }
+  const value = left + right;
+  if (!Number.isSafeInteger(value)) {
+    throw new ApiError(ApiErrorCode.InternalServerError, `${name} overflowed.`);
+  }
+  return value;
+}
+
 function checkedScaledInteger(value: number, multiplier: number, name: string): number {
   const scaled = Math.trunc(value * multiplier);
   if (!Number.isSafeInteger(scaled) || scaled < 0) {
@@ -819,9 +830,9 @@ export function settleDailyMissionState(
   // amount with the actual GameGold total, then add completion prizes, which the source parser
   // treats as separate top-level rewards and does not multiply for VIP.
   const goldWithoutBaseLevelReward = leveled.state.gold - leveled.goldGranted;
-  const goldWithGameReward = checkedSum(goldWithoutBaseLevelReward, actualGameGold, "Gold balance");
-  const nextGold = checkedSum(goldWithGameReward, completionGold, "Gold balance");
-  const nextWarBucks = checkedSum(leveled.state.warBucks, warBucksGained, "WarBucks balance");
+  const goldWithGameReward = checkedBalanceSum(goldWithoutBaseLevelReward, actualGameGold, "Gold balance");
+  const nextGold = checkedBalanceSum(goldWithGameReward, completionGold, "Gold balance");
+  const nextWarBucks = checkedBalanceSum(leveled.state.warBucks, warBucksGained, "WarBucks balance");
   const nextTickets = checkedSum(leveled.state.tickets, addedTickets, "Tickets balance");
   const nextScraps = checkedSum(leveled.state.scraps, addedScraps, "Scraps balance");
 

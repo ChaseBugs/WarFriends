@@ -47,6 +47,31 @@ Treat a season ID as immutable after the first squad joins. Each progress row st
 its normalized definition, and reads fail closed if an operator reuses that ID with changed tiers,
 assignments, targets, or rewards. Publish corrections under a new season ID.
 
+Confirmed PvP settlement advances only the current tier. When every assignment reaches one, the
+shared `ActiveTier` advances and the same transaction creates one type-11 reward message for every
+current squad member. `reward` is the exact Gold amount stored in that message; the stock client
+claims it later through action `91` using only `MessageId`. Leaving the squad after completion does
+not remove an already-earned message, while joining afterward does not retroactively receive one.
+The final terminal value is `ActiveTier == tiers.length`, matching the client's completed-event
+branch. A zero reward advances the tier without creating a misleading claimable message.
+
+# Squad Wars scheduling
+
+`SQUAD_WARS_ENABLED` controls the separate weekly Squad Wars competition consumed by action 124.
+When enabled, `SQUAD_WARS_SEASON_DURATION_SECONDS` defaults to seven days and windows are aligned
+from Monday 00:00 UTC. This calendar is reconstruction-owned policy: the 1.6.0 client proves the
+wire contract and the 4.9.5 MainScene proves division/reward balancing, but neither APK contains
+the retired production calendar. Change the duration only before a clean deployment; existing
+season IDs and settled rows are terminal and are never rewritten or reopened.
+
+`SQUAD_WARS_SCHEDULER_INTERVAL_SECONDS` controls the maintenance polling interval. One backend node
+holds a MongoDB lease while it settles expired divisions, creates deterministic type-9 result
+messages, closes ended seasons (including empty seasons), and allocates the current window. Match
+settlement itself adds points only for a confirmed ranked win, inside the terminal match
+transaction. Action 124 and Squad detail reads derive their round from authenticated membership;
+request fields cannot select another division or provide scores. During the short rollover window,
+`GetPlayerData` exposes the recovered presence-only `SquadWarsProcessing` flag.
+
 # Limited-time Event Assignment configuration
 
 `EVENT_ASSIGNMENT_CONFIG_PATH` controls the separate `EventAssignmentManager` daily calendar used

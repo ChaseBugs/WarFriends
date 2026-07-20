@@ -42,16 +42,17 @@ semicolon/DynamoDB-shaped wire supports sheet versions, row IDs, AB variant, lan
 range, and deterministic player rollout targeting. See `config/README.md`; unsigned or malformed
 publication data fails startup, while an empty path preserves the APK-bundled sheets.
 
-Google Play purchases are fail-closed by default. To enable verified Android currency and
-`subscription1` delivery, grant a service account Play Console purchase-read access, set
+Google Play purchases are fail-closed by default. To enable verified Android currency, reviewed
+pack, and `subscription1` delivery, grant a service account Play Console purchase-read access, set
 `GOOGLE_APPLICATION_CREDENTIALS` to its JSON file outside this repository, and set
 `GOOGLE_PLAY_PURCHASES_ENABLED=true`. `GOOGLE_PLAY_PACKAGE_NAME` must remain the exact deployed
 application ID. Set a separate random `PURCHASE_TOKEN_HASH_SECRET` of at least 32 characters and
 keep it stable across session-secret rotations; changing it requires a purchase-ledger migration.
 Set an independent `PURCHASE_TOKEN_ENCRYPTION_SECRET` of at least 32 characters and keep it stable:
 subscription tokens are AES-256-GCM encrypted with this key so the scheduler can query later Play
-state without storing replayable plaintext. Revalidation defaults to purchase enablement and polls
-due rows every five minutes; cadence and batch controls are documented in `.env.example`.
+state without storing replayable plaintext. Subscription revalidation and one-time Voided
+Purchases reconciliation default to purchase enablement and poll every five minutes; cadence,
+batch, and independent emergency-disable controls are documented in `.env.example`.
 The server never accepts `GoldBase`, `WarbucksBase`, a price, or an amount as purchase authority.
 
 Operational metrics are available at authenticated `GET /metrics` in Prometheus text format. Send
@@ -169,10 +170,18 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   notification in the membership transaction. The operational integrity audit reports duplicate
   rosters, broken founders/leaders, and missing accounts; repair mode changes only unambiguous
   player mirrors and safely returns orphaned normal card deposits.
-- **Squad Wars reads**: `GetSquadWarsDivision` validates its round identifier and returns the
-  recovered `LeagueId`/`SquadWarsId`/`Items` contract with ranked `RoundId`/`Position` squad rows.
-  The identifier is explicitly marked reconstructed until the retired season scheduler and
-  reward tables are recovered or replaced by configured server data.
+- **Squad Wars**: the backend creates deterministic weekly UTC seasons and persistent divisions
+  for all eight recovered levels, with at most 50 squads per division. `GetSquadWarsDivision`
+  derives the caller's division from authenticated membership, rejects stale or foreign round
+  IDs, and returns the exact recovered `LeagueId`/`SquadWarsId`/`Items` contract. Only a confirmed
+  ranked PvP win adds server-derived Squad Points, and that score commits in the same transaction
+  as the terminal match receipt. A leased scheduler settles expired divisions exactly once,
+  applies the source-exact 4.9.5 placement/reward/promotion rules, and sends each current member an
+  exact type-9 `SquadWarEnd` message whose Gold is claimed once through action `91`. Settlement
+  also completes the exact 4.9.5 group-19 first-Squad-War achievement for each eligible result
+  recipient in the same transaction. Its single 5,000-WarBucks tier is replay-idempotent. The
+  weekly Monday calendar is explicit reconstruction policy because neither recovered APK contains the
+  retired production schedule; no client-supplied score, placement, reward, or squad ID is trusted.
 - **PvP (WebSocket `/hub`)**: identify → `FindMatch` (matchmaking pairs by army-power within
   a widening league window) → `MatchFound` → `JoinMatch` → `MatchStart` → in-match
   `MatchEvent` relay to the opponent → `MatchResult`. Room joins/events are restricted to
@@ -366,6 +375,13 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   than fabricated. The stock Fuse completion callback provides no provider-signed proof, so these
   limits contain economy abuse but cannot attest a real impression; production ad monetization
   requires a provider server-to-server callback/nonce before calling the grant transition.
+- **Replay video publishing**: action `3000` restores the retired Everyplay submission callback.
+  It validates the authenticated player's bounded HTTP/HTTPS URL, rejects executable, local-file,
+  credential-bearing, malformed, and control-character input, and stores a deterministic
+  per-player publication. Unique URL identity makes concurrent/lost-response retries harmless,
+  while a 20-per-day cap and one-year TTL bound this write-only compatibility collection. The
+  response echoes the exact `URL` consumed by `MHEHGPLIFHF.LLCLNJKBGGM`. No feed-read database
+  action exists in 1.6.0, so the backend does not invent an unreachable mobile browsing API.
 - **VIP purchase and expiry authority**: action `114` validates `VIP_1` through `VIP_4` against
   the 4.9.5 MainScene table (49 Gold/12 hours, 249/3 days, 499/7 days, and 1799/30 days), debits
   Gold and extends the Unix entitlement in one revision-safe transaction, emits the exact
@@ -380,7 +396,8 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   parts, preserves duplicate `_#n-VIP` wire entries, and restores its countdown through
   `PlayerAnalyticsData`. Nonzero VIP discounts stay rejected until retired Fusebox offer
   definitions are recovered into a server allowlist.
-- **Verified Google Play currency and subscription delivery**: Android action `142` validates the
+- **Verified Google Play purchases, packs, restore, and revocation**: Android actions `142` and
+  `130` validate the
   recovered `ProductId`/`PurchaseToken`/`PackageName`/`OrderId` proof through Google Play Developer
   API `products.get` or `subscriptionsv2.get`. A global HMAC-keyed token ledger and the progression
   grant commit in one MongoDB transaction, so one store token cannot fund two accounts and a lost
@@ -394,8 +411,21 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   observed paused/on-hold states. Expired receipts become terminal. Transport, credential,
   malformed-response, and unknown-future-state failures use durable exponential retry and never
   shorten paid access. Receipt authority prevents an older token from revoking a newer replacement
-  subscription. The implementation is contract-tested; a live store verification requires
-  deployment credentials.
+  subscription. Seven packs whose serialized benefits are fully representable are enabled:
+  `afstarterpack`, `starterpackB`, `valuepackaf`, `valuepackafB`, `valuepackafc`, `moneypack1`, and
+  `moneypack1B`. Their wallet, VIP, weapon, timed/permanent visual, and extra-card-slot changes
+  commit atomically; action `189` verifies every restored token and returns complete `PlayerData`.
+  Unsupported special-weapon or incompletely serialized offer packs remain fail-closed.
+
+  A second Mongo-leased scheduler queries Google Play Voided Purchases for one-time products with
+  a durable successful-window cursor, ten-minute overlap, complete token pagination, and Google's
+  30-day first-run boundary. It matches the HMAC token plus exact order ID, reverses each receipt
+  once, records source/reason/time, preserves benefits backed by another active pack receipt, and
+  resets revoked equipped items to recovered defaults. Already-spent refunded currency becomes a
+  negative server balance so later earnings repay the chargeback before spending resumes. The
+  client-originated action `1013` is compatibility-only and cannot revoke anything. The
+  implementation is contract-tested; live verification and reconciliation require deployment
+  credentials.
 - **War Card inventory and card packs**: exact `CardManagerData` is persisted and returned at boot.
   `scripts/Extract-CardCatalog.mjs` reproduces 58 playable cards, 25 unresolved definitions, and
   four source-priced packs from MainScene. Buffered `BuyCardPack` validates unlock level, pack,
@@ -540,6 +570,14 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   confirmed PvP settlement advance. Same-day `GetNewAssignments` reads preserve progression
   identity while the UTC rollover persists once; buffered claim retries are idempotent by `BufferId`, return
   the cached response without a revision/write, and never roll an unrelated UTC cycle.
+- **Squad Events (reviewed seasons only)**: action `113` joins the authenticated current roster to
+  one immutable operator-configured season. Confirmed PvP wins/plays advance only recovered
+  assignment IDs `7` and `8` as Unity-compatible binary32 fractions. Completing every assignment
+  advances shared `ActiveTier` in the same match transaction and enqueues the recovered type-11
+  `Tier`/`SquadId`/`Reward` message for every current member. Action `91` then credits that
+  server-authored Gold exactly once and replays the original delta after a lost response. Final
+  completion uses `ActiveTier == tierCount`; client `SquadEventUpdate` and claimed active tier are
+  ignored. Empty or unreviewed schedules remain disabled.
 - **Limited-time Event Assignments (authoritative claim foundation)**: client actions `222`/`223`
   belong to the separate Christmas-style `EventAssignmentManager`, not Squad Events. A strict,
   non-overlapping, disabled-by-default operator schedule publishes the exact outer
@@ -585,8 +623,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   3 and 4 inside the Arena receipt transition, so retries cannot duplicate their Ticket/Scraps
   progress. Group 13 mirrors the authenticated profile's highest reached league tier and rejects a
   larger action-220 client value. Group 17 retains the largest validated, inventory-consuming PvP
-  card list and grants the exact one-time 50,000-WarBucks reward at five cards. Exact serialized
-  MainScene tier rewards are granted atomically and replay-safely.
+  card list and grants the exact one-time 50,000-WarBucks reward at five cards. Group 19 completes
+  only with an eligible type-9 Squad War settlement and exposes its exact one-time 5,000-WarBucks
+  reward. Exact serialized MainScene tier rewards are granted atomically and replay-safely.
 - **Squad social state**: action `193` persists the monotonic Photon Chat unread cursor through
   the stock request buffer and restores it as `PlayerAnalyticsData`; equal or stale cross-device
   cursor updates return the authoritative value without a false revision/write. Squad-event notices are
@@ -640,9 +679,11 @@ allowlist of analytics/impression actions is safely ignored.
   using the recovered 100-player rank curve, 50/100/150 maximums, 40/35/31 promotion positions,
   and Unity-compatible rounding; UI-only random rank jitter is never backend authority. The final
   stage atomically emits the stock normal-league handoff fields and enters the managed Bronze
-  division. The local UTC-aligned allocator intentionally uses one reconstructed division per tier
-  until the retired production 100-player allocator and background scheduler are recovered or
-  replaced; the final beginner weekly-medal reset remains explicit reconstruction policy.
+  division. The local UTC-aligned allocator uses a transactional tier/window counter to create
+  stable `localN` divisions of exactly 100 committed admissions; allocation shares the confirmed
+  PvP transaction, so an aborted settlement cannot consume capacity. Pre-upgrade `local` divisions
+  are never split mid-season and finish under their original immutable ID. The retired production
+  assignment policy and final beginner weekly-medal reset remain explicit reconstruction policy.
 - **Arena fidelity / league operations** — recover production arena prices, rules, opponent
   weighting, lootbox/crown inventory payloads, and authoritative combat evidence; add bounded
   league division documents and scheduled settlement; verify the final beginner weekly-medal reset
@@ -651,8 +692,8 @@ allowlist of analytics/impression actions is safely ignored.
   exact `FROMMISSION` card eligibility semantics, and production Heroic unit selection weighting
   to replace the documented uniform and bought-first cryptographic fallbacks; add combat-result
   validation.
-  Remaining deployment, stolen-crate, and first-Squad-War achievement groups stay unclaimable until
-  their gameplay events are authoritative. Group 17 uses accepted owned-card consumption but still
+  Remaining deployment and stolen-crate achievement groups stay unclaimable until their gameplay
+  events are authoritative. Group 17 uses accepted owned-card consumption but still
   shares the documented missing live card-event-validation boundary.
 - **PvP reward tuning** — XP/medal/squad values in `matchService.REWARDS` remain reconstruction
   policy. Normal WarBucks uses server-owned `PVP_WIN_WARBUCKS` / `PVP_LOSE_WARBUCKS` defaults

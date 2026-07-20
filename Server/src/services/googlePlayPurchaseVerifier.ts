@@ -13,7 +13,7 @@ export interface GooglePlayVerificationInput {
 }
 
 export interface VerifiedGooglePlayPurchase {
-  kind: "currency" | "subscription";
+  kind: "currency" | "pack" | "subscription";
   productId: string;
   storeProductId: string;
   orderId: string;
@@ -95,6 +95,9 @@ export function parseGoogleProductPurchase(
   response: GoogleProductPurchaseResponse,
   input: GooglePlayVerificationInput,
 ): VerifiedGooglePlayPurchase {
+  if (input.entitlement.kind === "subscription") {
+    throw new GooglePlayVerificationError("Subscription must use the subscriptions endpoint.");
+  }
   const storeProductId = googlePlayStoreProductId(input.packageName, input.productId);
   if (response.purchaseState !== 0) throw new GooglePlayVerificationError("Google Play purchase is not completed.");
   // Older product responses may omit productId; the endpoint path already binds token and SKU.
@@ -108,7 +111,9 @@ export function parseGoogleProductPurchase(
     throw new GooglePlayVerificationError("Google Play purchase time is invalid.");
   }
   return {
-    kind: "currency",
+    // products.get verifies both consumable currency and one-time packs. Their benefit kind is
+    // selected only from the server catalog; the Play payload cannot change this discriminator.
+    kind: input.entitlement.kind,
     productId: input.productId,
     storeProductId,
     orderId: verifiedOrderId(response.orderId, input.orderId),
@@ -213,9 +218,115 @@ export interface GooglePlaySubscriptionStatusVerifier {
   ): Promise<GooglePlaySubscriptionStatus>;
 }
 
+export interface GooglePlayVoidedPurchase {
+  purchaseToken: string;
+  orderId: string;
+  purchaseTimeMillis: number;
+  voidedTimeMillis: number;
+  voidedSource: number;
+  voidedReason: number;
+}
+
+export interface GooglePlayVoidedPurchasePage {
+  purchases: GooglePlayVoidedPurchase[];
+  nextPageToken?: string;
+}
+
+export interface GooglePlayVoidedPurchaseLister {
+  listVoidedProductPurchases(
+    packageName: string,
+    startTimeMillis: number,
+    endTimeMillis: number,
+    pageToken?: string,
+  ): Promise<GooglePlayVoidedPurchasePage>;
+}
+
+export interface GoogleVoidedPurchasesResponse {
+  tokenPagination?: { nextPageToken?: string };
+  voidedPurchases?: Array<{
+    purchaseToken?: string;
+    orderId?: string;
+    purchaseTimeMillis?: string;
+    voidedTimeMillis?: string;
+    voidedSource?: number;
+    voidedReason?: number;
+  }>;
+}
+
+function positiveMillis(value: string | undefined, field: string): number {
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed) || parsed <= 0) {
+    throw new GooglePlayVerificationError(`Google Play ${field} is invalid.`, true);
+  }
+  return parsed;
+}
+
+function boundedGoogleText(value: string | undefined, field: string, maximum: number): string {
+  if (!value || value.length > maximum || value.trim() !== value) {
+    throw new GooglePlayVerificationError(`Google Play ${field} is invalid.`, true);
+  }
+  return value;
+}
+
+/** Strictly decode one list page before any refund event is allowed to mutate progression. */
+export function parseGoogleVoidedPurchasesPage(
+  response: GoogleVoidedPurchasesResponse,
+): GooglePlayVoidedPurchasePage {
+  const purchases = (response.voidedPurchases ?? []).map((purchase) => ({
+    purchaseToken: boundedGoogleText(purchase.purchaseToken, "voided purchase token", 4_096),
+    orderId: boundedGoogleText(purchase.orderId, "voided order ID", 255),
+    purchaseTimeMillis: positiveMillis(purchase.purchaseTimeMillis, "voided purchase time"),
+    voidedTimeMillis: positiveMillis(purchase.voidedTimeMillis, "voided time"),
+    voidedSource: Number.isInteger(purchase.voidedSource) ? purchase.voidedSource! : -1,
+    voidedReason: Number.isInteger(purchase.voidedReason) ? purchase.voidedReason! : -1,
+  }));
+  if (purchases.some((purchase) => purchase.voidedSource < 0 || purchase.voidedReason < 0)) {
+    throw new GooglePlayVerificationError("Google Play voided purchase reason is invalid.", true);
+  }
+  const nextPageToken = response.tokenPagination?.nextPageToken;
+  if (nextPageToken !== undefined) boundedGoogleText(nextPageToken, "pagination token", 4_096);
+  return { purchases, ...(nextPageToken ? { nextPageToken } : {}) };
+}
+
 /** Production verifier backed by Google Application Default Credentials. */
-export class GooglePlayDeveloperApiVerifier implements GooglePlayPurchaseVerifier, GooglePlaySubscriptionStatusVerifier {
+export class GooglePlayDeveloperApiVerifier implements
+  GooglePlayPurchaseVerifier,
+  GooglePlaySubscriptionStatusVerifier,
+  GooglePlayVoidedPurchaseLister {
   private readonly auth = new GoogleAuth({ scopes: [androidPublisherScope] });
+
+  /**
+   * List only voided one-time products (`type=0`). Subscriptions already have their own status
+   * authority and renewal order semantics; mixing them into a token-keyed product reversal sweep
+   * could revoke the wrong renewal. The caller advances its durable window only after every
+   * returned pagination token has completed successfully.
+   */
+  async listVoidedProductPurchases(
+    packageNameValue: string,
+    startTimeMillis: number,
+    endTimeMillis: number,
+    pageToken?: string,
+  ): Promise<GooglePlayVoidedPurchasePage> {
+    const packageName = encodeURIComponent(packageNameValue);
+    const query = new URLSearchParams({
+      startTime: String(startTimeMillis),
+      endTime: String(endTimeMillis),
+      maxResults: "1000",
+      type: "0",
+    });
+    if (pageToken) query.set("token", pageToken);
+    try {
+      const client = await this.auth.getClient();
+      const response = await client.request<GoogleVoidedPurchasesResponse>({
+        method: "GET",
+        url: `${publisherRoot}/${packageName}/purchases/voidedpurchases?${query.toString()}`,
+      });
+      return parseGoogleVoidedPurchasesPage(response.data);
+    } catch (error) {
+      if (error instanceof GooglePlayVerificationError) throw error;
+      throw new GooglePlayVerificationError("Google Play voided purchases query failed.", true);
+    }
+  }
 
   async getSubscriptionStatus(
     input: GooglePlaySubscriptionStatusInput,

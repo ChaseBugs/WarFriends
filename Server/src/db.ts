@@ -775,6 +775,74 @@ export interface SquadDocument extends SquadDTO {
   updatedAt: Date;
 }
 
+/** One immutable scheduling window shared by every Squad Wars division. */
+export interface SquadWarSeasonDocument {
+  seasonId: string;
+  startsAt: Date;
+  endsAt: Date;
+  /** Active seasons accept confirmed PvP contributions; settled seasons never reopen. */
+  status: "active" | "settled";
+  createdAt: Date;
+  settledAt?: Date;
+}
+
+/**
+ * Transactional admission counter for one reconstructed player-league tier/window.
+ *
+ * The player rows remain the authoritative division roster. This small document exists only to
+ * allocate a monotonically increasing ordinal without a count-then-write race: every 100 committed
+ * ordinals map to one bounded division, while an aborted PvP settlement rolls its increment back.
+ */
+export interface PlayerLeagueAllocationDocument {
+  seasonKey: string;
+  tier: number;
+  endsAt: number;
+  nextMemberOrdinal: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface SquadWarMemberScore {
+  playerId: string;
+  name: string;
+  /** Points earned by this member from confirmed ranked PvP during this round only. */
+  score: number;
+}
+
+export interface SquadWarEntry {
+  squadId: string;
+  squadIcon: string;
+  /** Cumulative squad score when the round was allocated. */
+  baseScore: number;
+  /** Confirmed score earned after allocation. */
+  score: number;
+  /** Confirmed ranked wins during this round; exposed as SquadWarWins for diagnostics/UI. */
+  wins: number;
+  members: SquadWarMemberScore[];
+}
+
+/**
+ * Durable action-124 division and its exactly-once settlement state.
+ *
+ * A complete division is stored in one bounded document (at most 50 squads). That makes final
+ * ordering, promotion/demotion, and per-member inbox creation one MongoDB transaction instead
+ * of a partially visible series of leaderboard writes.
+ */
+export interface SquadWarRoundDocument {
+  roundId: string;
+  seasonId: string;
+  level: number;
+  division: number;
+  startsAt: Date;
+  endsAt: Date;
+  status: "active" | "settled";
+  entries: SquadWarEntry[];
+  revision: number;
+  createdAt: Date;
+  updatedAt: Date;
+  settledAt?: Date;
+}
+
 /**
  * Server-owned shared progress for one squad in one explicitly configured event.
  *
@@ -787,6 +855,7 @@ export interface SquadEventProgressDocument {
   eventId: string;
   /** SHA-256 of the normalized immutable season definition used to create this row. */
   configHash: string;
+  /** Zero-based active tier; equals tiers.length after the final tier is complete. */
   activeTier: number;
   tiers: Array<{
     reward: number;
@@ -818,6 +887,19 @@ export interface SquadChatMessageDocument {
   text: string;
   createdAt: Date;
   /** MongoDB TTL cleanup; reads also exclude expired rows immediately. */
+  expiresAt: Date;
+}
+
+/** Durable action-3000 record for a replay URL uploaded by an authenticated player. */
+export interface VideoFeedDocument {
+  videoId: string;
+  playerId: string;
+  /** SHA-256 identity used for per-player retry deduplication without indexing a long URL. */
+  urlHash: string;
+  url: string;
+  createdAt: Date;
+  updatedAt: Date;
+  /** Bounded retention for an integration whose retired feed reader is not in the stock client. */
   expiresAt: Date;
 }
 
@@ -895,8 +977,12 @@ const client = new MongoClient(config.mongoUrl, { maxPoolSize: config.mongoPoolS
 let db: Db | null = null;
 let playersCollection: Collection<PlayerDocument> | null = null;
 let squadsCollection: Collection<SquadDocument> | null = null;
+let playerLeagueAllocationsCollection: Collection<PlayerLeagueAllocationDocument> | null = null;
+let squadWarSeasonsCollection: Collection<SquadWarSeasonDocument> | null = null;
+let squadWarRoundsCollection: Collection<SquadWarRoundDocument> | null = null;
 let squadEventProgressCollection: Collection<SquadEventProgressDocument> | null = null;
 let squadChatMessagesCollection: Collection<SquadChatMessageDocument> | null = null;
+let videoFeedCollection: Collection<VideoFeedDocument> | null = null;
 let matchesCollection: Collection<Document> | null = null;
 let messagesCollection: Collection<Document> | null = null;
 let identitiesCollection: Collection<IdentityDocument> | null = null;
@@ -922,10 +1008,12 @@ export interface PurchaseReceiptDocument extends Document {
   productId: string;
   storeProductId: string;
   orderId: string;
-  kind: "currency" | "subscription";
+  kind: "currency" | "pack" | "subscription";
   purchasedAt: Date;
   verifiedAt: Date;
   response: Record<string, string | number | boolean>;
+  /** Exact reversible benefit snapshot captured before a one-time delivery commits. */
+  reversibleGrant?: PurchaseReversibleGrant;
   /** Authenticated ciphertext required only for later subscription status checks. */
   encryptedPurchaseToken?: {
     version: 1;
@@ -941,9 +1029,30 @@ export interface PurchaseReceiptDocument extends Document {
   lastRevalidatedAt?: Date;
   revalidationFailures?: number;
   revokedAt?: Date;
+  voidedSource?: number;
+  voidedReason?: number;
+  voidedOrderId?: string;
+}
+
+export interface PurchaseReversibleGrant {
+  gold: number;
+  warBucks: number;
+  vipSeconds: number;
+  weapons: Array<{ name: string; introduced: boolean }>;
+  visuals: Array<{ name: string; durationSeconds: number; introduced: boolean }>;
+  extraCardSlot: boolean;
+  introducedExtraCardSlot: boolean;
 }
 
 let purchaseReceiptsCollection: Collection<PurchaseReceiptDocument> | null = null;
+export interface PurchaseReconciliationCursorDocument extends Document {
+  _id: "google-play-voided-products";
+  /** End of the last fully paginated API window; partial/failed sweeps never advance it. */
+  lastSuccessfulEndTime: Date;
+  updatedAt: Date;
+}
+
+let purchaseReconciliationCursorsCollection: Collection<PurchaseReconciliationCursorDocument> | null = null;
 export interface ScheduledJobLeaseDocument extends Document {
   _id: string;
   ownerId: string;
@@ -959,8 +1068,12 @@ export async function connectMongo(): Promise<void> {
 
   playersCollection = db.collection<PlayerDocument>("players");
   squadsCollection = db.collection<SquadDocument>("squads");
+  playerLeagueAllocationsCollection = db.collection<PlayerLeagueAllocationDocument>("playerLeagueAllocations");
+  squadWarSeasonsCollection = db.collection<SquadWarSeasonDocument>("squadWarSeasons");
+  squadWarRoundsCollection = db.collection<SquadWarRoundDocument>("squadWarRounds");
   squadEventProgressCollection = db.collection<SquadEventProgressDocument>("squadEventProgress");
   squadChatMessagesCollection = db.collection<SquadChatMessageDocument>("squadChatMessages");
+  videoFeedCollection = db.collection<VideoFeedDocument>("videoFeed");
   matchesCollection = db.collection("matches");
   messagesCollection = db.collection("messages");
   identitiesCollection = db.collection<IdentityDocument>("identities");
@@ -972,6 +1085,9 @@ export async function connectMongo(): Promise<void> {
   gameCatalogEntriesCollection = db.collection<GameCatalogEntryDocument>("gameCatalogEntries");
   gameCatalogReleasesCollection = db.collection<GameCatalogReleaseDocument>("gameCatalogReleases");
   purchaseReceiptsCollection = db.collection<PurchaseReceiptDocument>("purchaseReceipts");
+  purchaseReconciliationCursorsCollection = db.collection<PurchaseReconciliationCursorDocument>(
+    "purchaseReconciliationCursors",
+  );
   scheduledJobLeasesCollection = db.collection<ScheduledJobLeaseDocument>("scheduledJobLeases");
 
   await playersCollection.createIndex({ id: 1 }, { unique: true });
@@ -996,6 +1112,16 @@ export async function connectMongo(): Promise<void> {
   await squadsCollection.createIndex({ experience: -1 });
   await squadsCollection.createIndex({ squadPoints: -1 });
 
+  await playerLeagueAllocationsCollection.createIndex({ seasonKey: 1 }, { unique: true });
+  await playerLeagueAllocationsCollection.createIndex({ endsAt: 1 });
+
+  await squadWarSeasonsCollection.createIndex({ seasonId: 1 }, { unique: true });
+  await squadWarSeasonsCollection.createIndex({ status: 1, endsAt: 1 });
+  await squadWarRoundsCollection.createIndex({ roundId: 1 }, { unique: true });
+  await squadWarRoundsCollection.createIndex({ seasonId: 1, level: 1, division: 1 }, { unique: true });
+  await squadWarRoundsCollection.createIndex({ status: 1, endsAt: 1 });
+  await squadWarRoundsCollection.createIndex({ "entries.squadId": 1, status: 1 });
+
   // A squad joins a season once. Concurrent JoinSquadEvent retries all resolve to this one
   // shared row rather than creating separate member-owned progress or duplicate rewards.
   await squadEventProgressCollection.createIndex({ squadId: 1, eventId: 1 }, { unique: true });
@@ -1008,6 +1134,11 @@ export async function connectMongo(): Promise<void> {
   await squadChatMessagesCollection.createIndex({ squadId: 1, createdAt: -1, messageId: -1 });
   await squadChatMessagesCollection.createIndex({ senderId: 1, createdAt: -1 });
   await squadChatMessagesCollection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+
+  await videoFeedCollection.createIndex({ videoId: 1 }, { unique: true });
+  await videoFeedCollection.createIndex({ playerId: 1, urlHash: 1 }, { unique: true });
+  await videoFeedCollection.createIndex({ playerId: 1, createdAt: -1 });
+  await videoFeedCollection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
   await matchesCollection.createIndex({ matchId: 1 }, { unique: true });
   await matchesCollection.createIndex({ "players.playerId": 1, createdAt: -1 });
@@ -1094,8 +1225,12 @@ export async function disconnectMongo(): Promise<void> {
   db = null;
   playersCollection = null;
   squadsCollection = null;
+  playerLeagueAllocationsCollection = null;
+  squadWarSeasonsCollection = null;
+  squadWarRoundsCollection = null;
   squadEventProgressCollection = null;
   squadChatMessagesCollection = null;
+  videoFeedCollection = null;
   matchesCollection = null;
   messagesCollection = null;
   identitiesCollection = null;
@@ -1107,6 +1242,7 @@ export async function disconnectMongo(): Promise<void> {
   gameCatalogEntriesCollection = null;
   gameCatalogReleasesCollection = null;
   purchaseReceiptsCollection = null;
+  purchaseReconciliationCursorsCollection = null;
   scheduledJobLeasesCollection = null;
 }
 
@@ -1148,6 +1284,18 @@ export function squads(): Collection<SquadDocument> {
   return requireCollection("squads", squadsCollection);
 }
 
+export function playerLeagueAllocations(): Collection<PlayerLeagueAllocationDocument> {
+  return requireCollection("playerLeagueAllocations", playerLeagueAllocationsCollection);
+}
+
+export function squadWarSeasons(): Collection<SquadWarSeasonDocument> {
+  return requireCollection("squadWarSeasons", squadWarSeasonsCollection);
+}
+
+export function squadWarRounds(): Collection<SquadWarRoundDocument> {
+  return requireCollection("squadWarRounds", squadWarRoundsCollection);
+}
+
 export function squadEventProgress(): Collection<SquadEventProgressDocument> {
   return requireCollection("squadEventProgress", squadEventProgressCollection);
 }
@@ -1156,12 +1304,20 @@ export function squadChatMessages(): Collection<SquadChatMessageDocument> {
   return requireCollection("squadChatMessages", squadChatMessagesCollection);
 }
 
+export function videoFeed(): Collection<VideoFeedDocument> {
+  return requireCollection("videoFeed", videoFeedCollection);
+}
+
 export function matches(): Collection<Document> {
   return requireCollection("matches", matchesCollection);
 }
 
 export function purchaseReceipts(): Collection<PurchaseReceiptDocument> {
   return requireCollection("purchaseReceipts", purchaseReceiptsCollection);
+}
+
+export function purchaseReconciliationCursors(): Collection<PurchaseReconciliationCursorDocument> {
+  return requireCollection("purchaseReconciliationCursors", purchaseReconciliationCursorsCollection);
 }
 
 export function scheduledJobLeases(): Collection<ScheduledJobLeaseDocument> {

@@ -153,7 +153,9 @@ export function buildDailyRewardConfig(year: number, month: number): Record<stri
 }
 
 function checkedAdd(left: number, right: number, name: string): number {
-  if (!Number.isSafeInteger(left) || left < 0 || !Number.isSafeInteger(right) || right < 0) {
+  // Gold/WarBucks can be negative chargeback debt. Reward amounts remain nonnegative and every
+  // addition stays integer-bounded, so ordinary rewards automatically repay that debt.
+  if (!Number.isSafeInteger(left) || !Number.isSafeInteger(right) || right < 0) {
     throw new ApiError(ApiErrorCode.InternalServerError, `${name} is invalid.`);
   }
   const result = left + right;

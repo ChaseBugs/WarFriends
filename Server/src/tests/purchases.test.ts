@@ -31,7 +31,7 @@ function verificationInput(productId: string): GooglePlayVerificationInput {
   };
 }
 
-test("paid catalog uses recovered 4.9.5 currency amounts and fails closed for packs", () => {
+test("paid catalog uses recovered 4.9.5 currency amounts and fails closed for unsupported products", () => {
   assert.deepEqual(inAppEntitlement("afgold1"), {
     kind: "currency", productId: "afgold1", gold: 100, warBucks: 0,
   });

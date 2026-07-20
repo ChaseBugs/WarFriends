@@ -47,10 +47,10 @@ export interface AchievementTierDefinition {
  * soldier/mechanical normal upgrades, 11 is weapon upgrades, and 15 is paid permanent visuals.
  * Group 2 is ranked PvP wins, 3/4 are accepted Arena wins/flawless runs, 5 is completed solo
  * missions, 12 is completed assignments, 13 is the highest server-owned player league reached,
- * 14 is lifetime squad points, 16 is claimed daily rewards, and 17 is the largest accepted
- * inventory-consuming War Card list in one settled PvP match. Combat-detail-only rows remain
- * intentionally disabled until their event facts are authoritative; a client-reported
- * achievement value is never enough to enable one.
+ * 14 is lifetime squad points, 16 is claimed daily rewards, 17 is the largest accepted
+ * inventory-consuming War Card list in one settled PvP match, and 19 is the first completed
+ * Squad War. Combat-detail-only rows remain intentionally disabled until their event facts are
+ * authoritative; a client-reported achievement value is never enough to enable one.
  */
 export const ACHIEVEMENT_DEFINITIONS: Readonly<Record<number, readonly AchievementTierDefinition[]>> = {
   0: [
@@ -130,6 +130,12 @@ export const ACHIEVEMENT_DEFINITIONS: Readonly<Record<number, readonly Achieveme
   ],
   17: [
     { target: 5, gold: 0, warBucks: 50_000, scraps: 0, tickets: 0 },
+  ],
+  // MainScene 4.9.5 adds this one-tier row after the old 1.6 achievement table. The backend can
+  // safely own it now because a player receives progress only while an expired Squad War round
+  // is being settled, in the same transaction that creates the player's type-9 result message.
+  19: [
+    { target: 1, gold: 0, warBucks: 5_000, scraps: 0, tickets: 0 },
   ],
 };
 
@@ -312,6 +318,23 @@ export function advanceAchievementState(
   const group = achievements.data.find((candidate) => candidate.id === groupId)!;
   const finalTarget = definitions[definitions.length - 1].target;
   group.value = Math.min(finalTarget, group.value + amount);
+  return applyAchievementState(state, achievements);
+}
+
+/**
+ * Complete the 4.9.5 `AchievementFirstSquadWar` row from an authoritative round result.
+ *
+ * This deliberately synchronizes to one instead of accepting an arbitrary client increment.
+ * The row has a single target and represents whether the account has ever finished a Squad War,
+ * not how many wars it has played. Replaying a settlement after the value is one therefore
+ * returns the exact input state and cannot create another claimable reward or revision.
+ */
+export function completeFirstSquadWarAchievementState(
+  state: PlayerProgressionState,
+): AchievementMutationResult {
+  const achievements = achievementStateFor(state);
+  const group = achievements.data.find((candidate) => candidate.id === 19)!;
+  group.value = 1;
   return applyAchievementState(state, achievements);
 }
 

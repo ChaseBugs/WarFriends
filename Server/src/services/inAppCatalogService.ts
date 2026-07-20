@@ -1,6 +1,27 @@
 export type InAppEntitlement =
   | { kind: "currency"; productId: string; gold: number; warBucks: number }
+  | PackEntitlement
   | { kind: "subscription"; productId: "subscription1" };
+
+export interface PackVisualEntitlement {
+  name: string;
+  /** Zero is permanent; positive values are seconds from verified delivery time. */
+  durationSeconds: number;
+}
+
+export interface PackEntitlement {
+  kind: "pack";
+  /** Exact InApps/Google Play product identity. */
+  productId: string;
+  /** Exact Packs sheet row used as grant authority; differs only for afstarterpack. */
+  sourcePackName: string;
+  gold: number;
+  warBucks: number;
+  vipSeconds: number;
+  weapons: readonly string[];
+  visuals: readonly PackVisualEntitlement[];
+  extraCardSlot: boolean;
+}
 
 /**
  * Paid currency rows serialized in the recovered 4.9.5 MainScene InApps table.
@@ -25,9 +46,103 @@ const currencyEntitlements = new Map<string, InAppEntitlement>([
   ]),
 ] as Array<[string, InAppEntitlement]>);
 
+function pack(
+  productId: string,
+  sourcePackName: string,
+  gold: number,
+  warBucks: number,
+  vipSeconds: number,
+  weapons: readonly string[] = [],
+  visuals: readonly PackVisualEntitlement[] = [],
+  extraCardSlot = false,
+): [string, PackEntitlement] {
+  return [productId, Object.freeze({
+    kind: "pack",
+    productId,
+    sourcePackName,
+    gold,
+    warBucks,
+    vipSeconds,
+    weapons: Object.freeze([...weapons]),
+    visuals: Object.freeze(visuals.map((visual) => Object.freeze({ ...visual }))),
+    extraCardSlot,
+  })];
+}
+
+/**
+ * Fully deliverable 4.9.5 pack rows joined to the InApps table.
+ *
+ * This is deliberately not every product whose name contains "pack". Elite/Veteran rows name
+ * special weapon types that are absent from the recovered LevelManager catalog, while special
+ * offer rows advertise LP/Scraps not present in their serialized grant columns. Enabling either
+ * family would accept real money for an incomplete benefit. These seven rows can be represented
+ * completely by the existing wallet, VIP, weapon, visual, and CardManagerData models.
+ */
+const packEntitlements = new Map<string, InAppEntitlement>([
+  pack(
+    "afstarterpack",
+    "starterpack",
+    150,
+    25_000,
+    259_200,
+    ["Google2u.LMG_Minigun"],
+    [{ name: "BANDS_DAMAGE_0", durationSeconds: 14_400 }],
+  ),
+  pack(
+    "starterpackB",
+    "starterpackB",
+    150,
+    25_000,
+    259_200,
+    ["Google2u.LMG_Minigun"],
+    [{ name: "BANDS_DAMAGE_0", durationSeconds: 14_400 }],
+  ),
+  pack(
+    "valuepackaf",
+    "valuepackaf",
+    200,
+    0,
+    1_209_600,
+    [],
+    [
+      { name: "CAMOS_ALIEN", durationSeconds: 0 },
+      { name: "HELMETS_SKULL", durationSeconds: 0 },
+    ],
+    true,
+  ),
+  pack(
+    "valuepackafB",
+    "valuepackafB",
+    200,
+    0,
+    1_209_600,
+    [],
+    [
+      { name: "CAMOS_ALIEN", durationSeconds: 0 },
+      { name: "HELMETS_SKULL", durationSeconds: 0 },
+    ],
+    true,
+  ),
+  pack(
+    "valuepackafc",
+    "valuepackafc",
+    200,
+    0,
+    1_209_600,
+    [],
+    [
+      { name: "CAMOS_ALIEN", durationSeconds: 0 },
+      { name: "HELMETS_SKULL", durationSeconds: 0 },
+    ],
+    true,
+  ),
+  pack("moneypack1", "moneypack1", 1_150, 350_000, 86_400),
+  pack("moneypack1B", "moneypack1B", 575, 180_000, 86_400),
+]);
+
 export function inAppEntitlement(productId: string): InAppEntitlement | null {
   if (productId === "subscription1") return { kind: "subscription", productId };
-  return currencyEntitlements.get(productId) ?? null;
+  return currencyEntitlements.get(productId) ?? packEntitlements.get(productId) ?? null;
 }
 
 /** Android PLIABAOLHBE.GCPPOCNJDNA constructs the Play SKU with this exact convention. */

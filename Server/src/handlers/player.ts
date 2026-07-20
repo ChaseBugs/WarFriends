@@ -27,6 +27,7 @@ import {
   buildEventAssignmentClientConfig,
   ensureActiveEventAssignment,
 } from "../services/eventAssignmentService";
+import { isSquadWarProcessing } from "../services/squadWarService";
 
 // Player profile and settings handlers. GetPlayerData is the client's primary state fetch
 // after login. Mutations validate and persist only their own fields, which prevents a stale
@@ -45,6 +46,7 @@ export const playerHandlers: Record<number, HandlerEntry> = {
     // deployment schedule the service returns null and the feature remains completely hidden.
     // When active, initialization is persisted before its config/state are exposed together.
     const eventAssignment = await ensureActiveEventAssignment(player!.id);
+    const squadWarsProcessing = await isSquadWarProcessing();
     // ensureDailyVipCards reloads after the rental transition and returns the newest complete
     // progression snapshot. Building PlayerData from rental.state here would omit the newly
     // committed cards and make the popup disagree with CardManagerData after this response.
@@ -55,6 +57,9 @@ export const playerHandlers: Record<number, HandlerEntry> = {
         EventAssignmentConfig: buildEventAssignmentClientConfig(eventAssignment.event),
       } : {}),
       ...(rental.bootOffer ? { Rental: rental.bootOffer } : {}),
+      // The recovered client checks key presence, not its value. Emit only while expired
+      // divisions are being finalized so roster-management buttons remain safely locked.
+      ...(squadWarsProcessing ? { SquadWarsProcessing: 1 } : {}),
       ...(vipCards.reward ? {
         // NCNNKGNJNOH has already loaded the authoritative CardManagerData from PlayerData by
         // the time it queues this dialog. Unlike BuyVip, this callback intentionally does not

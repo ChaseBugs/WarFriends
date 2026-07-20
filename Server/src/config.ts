@@ -58,6 +58,15 @@ export const config = {
     Number(process.env.GOOGLE_PLAY_SUBSCRIPTION_REVALIDATION_CADENCE_SECONDS ?? 21_600),
   googlePlaySubscriptionRevalidationBatchSize:
     Number(process.env.GOOGLE_PLAY_SUBSCRIPTION_REVALIDATION_BATCH_SIZE ?? 100),
+  // Voided Purchases is the delayed, authoritative backstop for refunded/charged-back one-time
+  // products. It defaults to purchase enablement and keeps its own scheduler switch for staged
+  // rollout or emergency suspension without disabling new purchase verification.
+  googlePlayVoidedPurchaseReconciliationEnabled:
+    (process.env.GOOGLE_PLAY_VOIDED_PURCHASE_RECONCILIATION_ENABLED
+      ?? process.env.GOOGLE_PLAY_PURCHASES_ENABLED
+      ?? "false").toLowerCase() === "true",
+  googlePlayVoidedPurchaseSchedulerIntervalSeconds:
+    Number(process.env.GOOGLE_PLAY_VOIDED_PURCHASE_SCHEDULER_INTERVAL_SECONDS ?? 300),
 
   // Optional signed publication manifest for the stock GetConfigurations raw-text protocol.
   // Empty keeps bundled APK sheets active. The signing key is backend-only and protects the
@@ -89,6 +98,13 @@ export const config = {
   // recovered APK. An empty path keeps action 113 deliberately disabled. Deployments may
   // opt in with a reviewed JSON file whose strict schema is documented in config/README.md.
   squadEventConfigPath: (process.env.SQUAD_EVENT_CONFIG_PATH ?? "").trim(),
+  // The retired Squad Wars calendar is also absent, but unlike content-driven Squad Events its
+  // complete ranking/reward tables are serialized in MainScene. The offline backend therefore
+  // runs an explicit reconstruction-owned weekly calendar by default; operators may disable it
+  // or change cadence without pretending the generated IDs are archived production seasons.
+  squadWarsEnabled: (process.env.SQUAD_WARS_ENABLED ?? "true").toLowerCase() === "true",
+  squadWarsSeasonDurationSeconds: Number(process.env.SQUAD_WARS_SEASON_DURATION_SECONDS ?? 604_800),
+  squadWarsSchedulerIntervalSeconds: Number(process.env.SQUAD_WARS_SCHEDULER_INTERVAL_SECONDS ?? 60),
   // EventAssignmentManager is a different Christmas-style daily event system. Its archived
   // schedule is also absent, so an empty path hides it and actions 222/223 fail closed.
   eventAssignmentConfigPath: (process.env.EVENT_ASSIGNMENT_CONFIG_PATH ?? "").trim(),

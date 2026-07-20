@@ -8,12 +8,14 @@ import {
   applyConfirmedPvpSquadEventProgress,
   buildSquadEventDefinition,
   buildSquadEventProgress,
+  buildSquadEventTierRewardMessage,
   joinSquadEvent,
   parseSquadEventConfig,
   selectActiveSquadEvent,
   squadEventConfigHash,
   squadEventPlayerLevelProgress,
 } from "../services/squadEventService";
+import { claimableMessageReward, toClientMessage } from "../services/socialService";
 
 const SEASON = {
   id: "season-2026-07",
@@ -174,6 +176,48 @@ test("confirmed PvP facts advance only recovered win and play assignment fractio
     () => applyConfirmedPvpSquadEventProgress(damaged, SEASON, true, now),
     /does not match its immutable season definition/,
   );
+});
+
+test("completing a tier advances ActiveTier and creates the exact claimable type-11 Gold message", () => {
+  const now = new Date("2026-07-20T02:00:00Z");
+  const season = {
+    id: "one-tier",
+    startTime: SEASON.startTime,
+    endTime: SEASON.endTime,
+    tiers: [{
+      reward: 125,
+      assignments: [{ id: 7, target: 1 }, { id: 8, target: 1 }],
+    }],
+  };
+  const initial: SquadEventProgressDocument = {
+    squadId: "Alpha",
+    eventId: season.id,
+    configHash: squadEventConfigHash(season),
+    activeTier: 0,
+    tiers: [{
+      reward: 125,
+      assignments: [{ id: 7, value: 0, target: 1 }, { id: 8, value: 0, target: 1 }],
+    }],
+    revision: 0,
+    joinedAt: now,
+    updatedAt: now,
+  };
+  const completed = applyConfirmedPvpSquadEventProgress(initial, season, true, now);
+  assert.equal(completed.progress.activeTier, 1);
+  assert.deepEqual(completed.completedTier, { tierIndex: 0, reward: 125 });
+  assert.equal(applyConfirmedPvpSquadEventProgress(completed.progress, season, true, now).changed, false);
+
+  const message = buildSquadEventTierRewardMessage("member-1", "Alpha", season.id, 0, 125, now);
+  assert.equal(message.messageType, 11);
+  assert.deepEqual(claimableMessageReward(message), { Gold: 125, Warbucks: 0 });
+  assert.deepEqual(toClientMessage(message), {
+    MessageId: { S: "squad-event-tier:one-tier:Alpha:0:member-1" },
+    PlayerId: { S: "member-1" },
+    MessageType: { N: "11" },
+    Tier: { N: "0" },
+    SquadId: { S: "Alpha" },
+    Reward: { N: "125" },
+  });
 });
 
 test("LevelProgress reproduces the viewer-specific LevelManager float calculation", () => {

@@ -43,10 +43,10 @@ export interface MessageDoc {
   body: string;
   /**
    * Recovered inbox enum values currently emitted by this backend:
-   * Challenge(0), SquadDemotion/kick(3), InformSquadLeaderAboutEvent(21),
+   * Challenge(0), SquadDemotion/kick(3), SquadWarEnd(9), SquadEventTierReward(11), InformSquadLeaderAboutEvent(21),
    * PlayerLeagueFinished(23), InGameMessage(27), and DepositWarcards(28).
    */
-  messageType: 0 | 3 | 21 | 23 | 27 | 28;
+  messageType: 0 | 3 | 9 | 11 | 21 | 23 | 27 | 28;
   payload: Record<string, string | number>;
   otherPlayerJson: string;
   read: boolean;
@@ -348,7 +348,11 @@ export interface ClaimedMessageReward {
 export function claimableMessageReward(
   message: Pick<MessageDoc, "messageType" | "payload">,
 ): { Gold: number; Warbucks: number } | null {
-  const rewardGold = message.messageType === 23 ? Number(message.payload.RewardGold ?? 0) : 0;
+  const rewardGold = message.messageType === 23 || message.messageType === 9
+    ? Number(message.payload.RewardGold ?? 0)
+    : message.messageType === 11
+      ? Number(message.payload.Reward ?? 0)
+      : 0;
   if (!Number.isSafeInteger(rewardGold) || rewardGold <= 0) return null;
   return { Gold: rewardGold, Warbucks: 0 };
 }
@@ -374,7 +378,7 @@ export async function claimMessageReward(playerId: string, messageId: string): P
 
     // Only recovered message types with an explicit server-authored reward are claimable.
     // Supporting arbitrary Title/Text messages here would turn the generic inbox into an
-    // economy endpoint. PlayerLeagueFinished currently carries Gold and never WarBucks.
+    // economy endpoint. SquadWarEnd, PlayerLeagueFinished, and SquadEventTierReward carry Gold only.
     const reward = claimableMessageReward(message);
     if (!reward) {
       throw new ApiError(ApiErrorCode.UnknownAction, "Message has no claimable reward.");
@@ -501,6 +505,23 @@ export function toClientMessage(doc: MessageDoc): Record<string, DynamoValue> {
     wire.SquadId = { S: String(doc.payload.SquadId ?? "") };
     wire.SquadRank = { N: String(doc.payload.SquadRank ?? 0) };
     wire.AdminPlayerId = { S: String(doc.payload.AdminPlayerId ?? doc.fromPlayerId) };
+  } else if (doc.messageType === 9) {
+    // LDDEMALIBBK requires these exact DynamoDB wrappers. SquadMembers is itself a JSON string
+    // containing DatabasePlayer DynamoDB objects; keeping it as S matches its constructor's
+    // JsonConvert.DeserializeObject<JArray> path. The claim request later sends only MessageId.
+    wire.Position = { N: String(doc.payload.Position ?? 0) };
+    wire.SquadId = { S: String(doc.payload.SquadId ?? "") };
+    wire.SquadIcon = { S: String(doc.payload.SquadIcon ?? "") };
+    wire.RewardGold = { N: String(doc.payload.RewardGold ?? 0) };
+    wire.PrevLevelId = { N: String(doc.payload.PrevLevelId ?? 1) };
+    wire.NewLevelId = { N: String(doc.payload.NewLevelId ?? 1) };
+    wire.SquadMembers = { S: String(doc.payload.SquadMembers ?? "[]") };
+  } else if (doc.messageType === 11) {
+    // OKLNJJBHAIH requires these exact wrappers, then sends only MessageId to action 91. The
+    // reward remains server-authored in this durable message and is never echoed by the claim.
+    wire.Tier = { N: String(doc.payload.Tier ?? 0) };
+    wire.SquadId = { S: String(doc.payload.SquadId ?? "") };
+    wire.Reward = { N: String(doc.payload.Reward ?? 0) };
   } else if (doc.messageType === 23) {
     // MMKFEEGDFKN parses this type-23 document before it performs any UI work. LeagueId is
     // mandatory and numeric; the remaining values are optional DynamoDB attributes. The

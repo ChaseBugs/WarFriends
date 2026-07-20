@@ -117,7 +117,7 @@ function selectedIndex(pick: PickIndex, upperBound: number, context: string): nu
 }
 
 function checkedCurrencyAdd(current: number, amount: number, currency: string): number {
-  if (!Number.isSafeInteger(current) || current < 0 || !Number.isSafeInteger(amount) || amount < 1) {
+  if (!Number.isSafeInteger(current) || !Number.isSafeInteger(amount) || amount < 1) {
     throw new ApiError(ApiErrorCode.InternalServerError, `${currency} ad reward is invalid.`);
   }
   const next = current + amount;

@@ -28,6 +28,18 @@ export interface SquadDTO {
   level: number;
   leagueId: string;
   leagueDivision: string;
+  /**
+   * Current reconstructed Squad Wars level (1..8).
+   *
+   * The recovered client derives the level from the numeric prefix of RoundId. Keeping the
+   * normalized value separately lets season settlement promote/demote a squad without parsing
+   * client-facing identifiers or trusting a RoundId later echoed by Unity.
+   */
+  squadWarLevel?: number;
+  /** Server-owned action-124 division identifier for the active reconstructed season. */
+  squadWarRoundId?: string;
+  /** Number of completed Squad Wars divisions won in first place. */
+  squadWarWins?: number;
   founderId: string;
   /** 0 = open join, 1 = request required, 2 = invite only. */
   joinPolicy: number;
@@ -49,6 +61,9 @@ export function newSquad(name: string, founderId: string): SquadDTO {
     level: 1,
     leagueId: "",
     leagueDivision: "",
+    squadWarLevel: 1,
+    squadWarRoundId: "",
+    squadWarWins: 0,
     founderId,
     joinPolicy: 0,
     minLevel: 0,

@@ -9,6 +9,8 @@ import {
   beginnerLeaguePosition,
   managedPlayerLeagueId,
   parseManagedPlayerLeagueId,
+  playerLeagueDivisionIndexForOrdinal,
+  PLAYER_LEAGUE_MAXIMUM_PLAYERS,
   PLAYER_LEAGUE_MINIMUM_PLAYERS,
   PLAYER_LEAGUE_PLACEMENT_MATCHES,
   PLAYER_LEAGUE_RULES,
@@ -27,6 +29,7 @@ test("recovered player-league table preserves all 16 source tiers and constants"
   assert.equal(PLAYER_LEAGUE_RULES.length, 16);
   assert.equal(PLAYER_LEAGUE_MINIMUM_PLAYERS, 30);
   assert.equal(PLAYER_LEAGUE_PLACEMENT_MATCHES, 1);
+  assert.equal(PLAYER_LEAGUE_MAXIMUM_PLAYERS, 100);
   assert.deepEqual(
     PLAYER_LEAGUE_RULES.map((row) => row.durationHours),
     [24, 24, 24, 72, 72, 72, 168, 168, 168, 168, 168, 168, 168, 168, 168, 168],
@@ -100,6 +103,24 @@ test("managed IDs preserve Unity's tier-first and division-last parsing contract
   });
   assert.equal(parseManagedPlayerLeagueId("5-placement"), null);
   assert.equal(parseManagedPlayerLeagueId("5-production-division"), null);
+});
+
+test("bounded reconstructed league IDs assign exactly 100 committed ordinals per division", () => {
+  assert.equal(playerLeagueDivisionIndexForOrdinal(1), 1);
+  assert.equal(playerLeagueDivisionIndexForOrdinal(100), 1);
+  assert.equal(playerLeagueDivisionIndexForOrdinal(101), 2);
+  assert.equal(playerLeagueDivisionIndexForOrdinal(200), 2);
+  assert.equal(playerLeagueDivisionIndexForOrdinal(201), 3);
+  assert.throws(() => playerLeagueDivisionIndexForOrdinal(0), /Invalid player league admission ordinal/);
+
+  const bounded = managedPlayerLeagueId(League.Gold2, 1_700_000_000, 37);
+  assert.match(bounded.leagueId, /^8-\d+-local37$/);
+  assert.deepEqual(parseManagedPlayerLeagueId(bounded.leagueId), {
+    tier: League.Gold2,
+    endsAt: bounded.endsAt,
+    division: "local37",
+  });
+  assert.equal(parseManagedPlayerLeagueId(`${League.Gold2}-${bounded.endsAt}-local0`), null);
 });
 
 test("league boot fields expose the timer and only mark an expired season processing", () => {

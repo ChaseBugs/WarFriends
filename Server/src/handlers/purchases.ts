@@ -1,8 +1,73 @@
 import { DbAction } from "../dbActions";
 import { ApiError, ApiErrorCode } from "../apiErrors";
+import { players } from "../db";
 import { ok } from "../dtos";
-import { deliverGooglePlayPurchase, parseGooglePlayPurchaseInput } from "../services/purchaseService";
+import { buildPlayerData, unixNow } from "../services/playerStateService";
+import {
+  deliverGooglePlayPackPurchase,
+  deliverGooglePlayPurchase,
+  parseGooglePlayPurchaseInput,
+  type GooglePlayPurchaseInput,
+} from "../services/purchaseService";
 import { authed, type HandlerEntry } from "./types";
+
+const MAX_RESTORE_PACKS = 50;
+
+function restoreEntry(value: unknown): GooglePlayPurchaseInput {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new ApiError(ApiErrorCode.InvalidInapp, "Restore pack entry is invalid.");
+  }
+  const entry = value as Record<string, unknown>;
+  // RestorePacks uses Value1..Value4 because the original C# path serializes Tuple-like
+  // dictionaries instead of the named BuyPack form. Normalize to the same strict proof parser
+  // so both endpoints have identical length, whitespace, and required-field validation.
+  return parseGooglePlayPurchaseInput({
+    ProductId: entry.Value1,
+    PurchaseToken: entry.Value2,
+    PackageName: entry.Value3,
+    OrderId: entry.Value4,
+  });
+}
+
+/** Decode the exact JSON list produced by the recovered Android RestorePacks action. */
+export function parseRestorePackInputs(value: unknown): GooglePlayPurchaseInput[] {
+  if (typeof value !== "string" || value.length < 2 || value.length > 256_000) {
+    throw new ApiError(ApiErrorCode.InvalidInapp, "Packs restore payload is invalid.");
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(value);
+  } catch {
+    throw new ApiError(ApiErrorCode.InvalidInapp, "Packs restore payload is invalid JSON.");
+  }
+  if (!Array.isArray(parsed) || parsed.length > MAX_RESTORE_PACKS) {
+    throw new ApiError(ApiErrorCode.InvalidInapp, "Packs restore payload has an invalid number of entries.");
+  }
+  return parsed.map(restoreEntry);
+}
+
+function validateRefundPackNotice(value: unknown): void {
+  if (typeof value !== "string" || value.length < 2 || value.length > 256_000) {
+    throw new ApiError(ApiErrorCode.InvalidInapp, "Refund pack payload is invalid.");
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(value);
+  } catch {
+    throw new ApiError(ApiErrorCode.InvalidInapp, "Refund pack payload is invalid JSON.");
+  }
+  if (!Array.isArray(parsed) || parsed.length > MAX_RESTORE_PACKS || parsed.some((item) => (
+    !item || typeof item !== "object" || Array.isArray(item)
+  ))) {
+    throw new ApiError(ApiErrorCode.InvalidInapp, "Refund pack payload has invalid entries.");
+  }
+}
+
+async function currentPlayerData(playerId: string, now: number): Promise<Record<string, unknown>> {
+  const current = await players().findOne({ id: playerId });
+  if (!current) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found after purchase delivery.");
+  return buildPlayerData(current, now);
+}
 
 export const purchaseHandlers: Record<number, HandlerEntry> = {
   [DbAction.BuyInApp]: authed(async ({ player, req }) => {
@@ -12,6 +77,44 @@ export const purchaseHandlers: Record<number, HandlerEntry> = {
     const input = parseGooglePlayPurchaseInput(req);
     const delivered = await deliverGooglePlayPurchase(player!.id, input);
     return ok(DbAction.BuyInApp, delivered.response);
+  }),
+
+  [DbAction.BuyPack]: authed(async ({ player, req }) => {
+    const now = unixNow();
+    const input = parseGooglePlayPurchaseInput(req);
+    await deliverGooglePlayPackPurchase(player!.id, input, undefined, now);
+    // BuyPack's recovered response replaces multiple client-side managers from PlayerData. A
+    // narrow delta would leave one of wallet, VIP, card slot, weapon, or visual state stale.
+    return ok(DbAction.BuyPack, {
+      PlayerData: await currentPlayerData(player!.id, now),
+      PackId: input.productId,
+    });
+  }),
+
+  [DbAction.RestorePacks]: authed(async ({ player, req }) => {
+    const now = unixNow();
+    const inputs = parseRestorePackInputs(req.Packs);
+    const restored: string[] = [];
+    for (const input of inputs) {
+      // Google verification is external, so a multi-token restore cannot share one database
+      // transaction. Each token is nevertheless atomic and globally idempotent; if a later
+      // token fails, the client can retry the full list without duplicating earlier benefits.
+      await deliverGooglePlayPackPurchase(player!.id, input, undefined, now);
+      if (!restored.includes(input.productId)) restored.push(input.productId);
+    }
+    return ok(DbAction.RestorePacks, {
+      PlayerData: await currentPlayerData(player!.id, now),
+      RestoredPacks: restored,
+    });
+  }),
+
+  [DbAction.RefundPack]: authed(async ({ req }) => {
+    validateRefundPackNotice(req.Packs);
+    // The stock client detects a locally missing Billing purchase and submits product/token/order
+    // dictionaries, but possession state on a modified or stale device is not refund authority.
+    // Keep the wire action successful while deliberately ignoring every claimed identity. The
+    // cluster-wide Voided Purchases sweep alone can subtract balances and revoke pack benefits.
+    return ok(DbAction.RefundPack);
   }),
 
   [DbAction.OnSubscriptionExpired]: authed(async () => {

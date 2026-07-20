@@ -31,6 +31,11 @@ import {
   joinSquadEvent,
   squadEventPlayerLevelProgress,
 } from "../services/squadEventService";
+import {
+  getSquadWarDetailFields,
+  getSquadWarDivision,
+} from "../services/squadWarService";
+import { rankSquadWarDivision } from "../services/squadWarContract";
 
 // Squad system — BACKEND.md §2.5. Every handler is authenticated; rank checks live in the
 // service layer.
@@ -292,18 +297,26 @@ export const squadHandlers: Record<number, HandlerEntry> = {
   }),
 
   [DbAction.GetSquadDetails]: authed(async ({ player, req }) => {
-    const squad = await getByName(squadName(req) || player!.player.squadName);
+    const name = squadName(req) || player!.player.squadName;
+    // Assignment may update RoundId. Resolve it before reading the squad snapshot so the object
+    // and its top-level SquadWarsId/position/evaluation metadata describe the same division.
+    const squadWarFields = name ? await getSquadWarDetailFields(name) : {};
+    const squad = await getByName(name);
     return ok(DbAction.GetSquadDetails, {
       Squad: squad ? buildDatabaseSquad(squad) : null,
       ...(squad ? await getSquadEventWireFields(squad.name, player!.player.level) : {}),
+      ...(squad ? squadWarFields : {}),
     });
   }),
 
   [DbAction.GetFullSquadInfo]: authed(async ({ player, req }) => {
-    const squad = await getByName(squadName(req) || player!.player.squadName);
+    const name = squadName(req) || player!.player.squadName;
+    const squadWarFields = name ? await getSquadWarDetailFields(name) : {};
+    const squad = await getByName(name);
     return ok(DbAction.GetFullSquadInfo, {
       Squad: squad ? buildDatabaseSquad(squad) : null,
       ...(squad ? await getSquadEventWireFields(squad.name, player!.player.level) : {}),
+      ...(squad ? squadWarFields : {}),
     });
   }),
 
@@ -321,15 +334,24 @@ export const squadHandlers: Record<number, HandlerEntry> = {
     ok(DbAction.GetSquadsByExperience, { Items: (await listByExperience()).map(buildDatabaseSquad) }),
   ),
 
-  [DbAction.GetSquadWarsDivision]: authed(async ({ req }) => {
-    const round = squadWarsRoundId(req);
-    const division = await listByExperience(50);
-    // The archived production season ID is absent from the recovered APK. Use a stable,
-    // explicitly reconstruction-owned ID until persisted season scheduling is implemented.
+  [DbAction.GetSquadWarsDivision]: authed(async ({ player, req }) => {
+    const requestedRound = squadWarsRoundId(req);
+    const model = await getSquadWarDivision(player!, requestedRound);
+    const ranked = rankSquadWarDivision(model.round.entries, model.round.level);
+    const squadByName = new Map(model.squads.map((squad) => [squad.name, squad]));
+    const orderedSquads = ranked
+      .map((entry) => squadByName.get(entry.squadId))
+      .filter((value): value is NonNullable<typeof value> => Boolean(value));
     return ok(DbAction.GetSquadWarsDivision, buildSquadWarsDivision(
-      round,
-      `reconstructed-${round}`,
-      division,
+      model.round.roundId,
+      model.season.seasonId,
+      orderedSquads,
+      ranked.map((entry) => ({
+        squadId: entry.squadId,
+        baseScore: entry.baseScore,
+        score: entry.score,
+        wins: model.round.entries.find((candidate) => candidate.squadId === entry.squadId)?.wins ?? 0,
+      })),
     ));
   }),
 

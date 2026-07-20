@@ -8,6 +8,7 @@ import {
   withMongoTransaction,
   type PlayerDocument,
   type PlayerProgressionState,
+  type PurchaseReversibleGrant,
   type PurchaseReceiptDocument,
 } from "../db";
 import { inAppEntitlement, type InAppEntitlement } from "./inAppCatalogService";
@@ -19,6 +20,7 @@ import {
 } from "./googlePlayPurchaseVerifier";
 import { progressionForPlayer, unixNow } from "./playerStateService";
 import { encryptPurchaseToken } from "./purchaseTokenCryptoService";
+import { applyPackEntitlementState } from "./packPurchaseService";
 
 const defaultVerifier = new GooglePlayDeveloperApiVerifier();
 
@@ -33,6 +35,7 @@ export interface PurchaseDeliveryTransition {
   state: PlayerProgressionState;
   response: Record<string, string | number | boolean>;
   changed: boolean;
+  reversibleGrant?: PurchaseReversibleGrant;
 }
 
 export interface PurchaseDeliveryResult {
@@ -59,7 +62,10 @@ export function parseGooglePlayPurchaseInput(values: Record<string, unknown>): G
 
 function checkedCurrency(current: number, amount: number, field: string): number {
   const next = current + amount;
-  if (!Number.isSafeInteger(next) || next < 0) {
+  // A chargeback can create a negative balance when the original currency was already spent.
+  // Later purchases and earned rewards pay that debt down naturally, so delivery must accept a
+  // still-negative result while retaining the integer-overflow boundary.
+  if (!Number.isSafeInteger(next)) {
     throw new ApiError(ApiErrorCode.InternalServerError, `${field} balance overflow.`);
   }
   return next;
@@ -97,6 +103,27 @@ export function applyPurchaseEntitlementState(
         ...(entitlement.gold > 0 ? { Gold: entitlement.gold } : {}),
         ...(entitlement.warBucks > 0 ? { Warbucks: entitlement.warBucks } : {}),
       },
+      reversibleGrant: {
+        gold: entitlement.gold,
+        warBucks: entitlement.warBucks,
+        vipSeconds: 0,
+        weapons: [],
+        visuals: [],
+        extraCardSlot: false,
+        introducedExtraCardSlot: false,
+      },
+    };
+  }
+
+  if (entitlement.kind === "pack") {
+    const applied = applyPackEntitlementState(state, entitlement, now);
+    return {
+      state: applied.state,
+      changed: true,
+      // The recovered BuyPack callback uses PackId for analytics/product lookup. Return the
+      // InApps identity, not sourcePackName (afstarterpack intentionally maps to starterpack).
+      response: { PackId: entitlement.productId },
+      reversibleGrant: applied.reversibleGrant,
     };
   }
 
@@ -194,6 +221,7 @@ export async function deliverGooglePlayPurchase(
   input: GooglePlayPurchaseInput,
   verifier: GooglePlayPurchaseVerifier = defaultVerifier,
   now = unixNow(),
+  allowedKinds: readonly InAppEntitlement["kind"][] = ["currency", "subscription"],
 ): Promise<PurchaseDeliveryResult> {
   if (!config.googlePlayPurchasesEnabled) {
     throw new ApiError(ApiErrorCode.InvalidInapp, "Google Play purchases are not configured.");
@@ -203,6 +231,12 @@ export async function deliverGooglePlayPurchase(
   }
   const entitlement = inAppEntitlement(input.productId);
   if (!entitlement) throw new ApiError(ApiErrorCode.InvalidInapp, "Paid product is not supported.");
+  // BuyInApp and BuyPack carry identical proof fields, but they have different response
+  // contracts. Bind each endpoint to its reviewed entitlement families so a caller cannot route
+  // a valid currency receipt through BuyPack (or a pack through BuyInApp) to confuse the client.
+  if (!allowedKinds.includes(entitlement.kind)) {
+    throw new ApiError(ApiErrorCode.InvalidInapp, "Paid product is not valid for this action.");
+  }
 
   let verified: VerifiedGooglePlayPurchase;
   try {
@@ -224,7 +258,7 @@ export async function deliverGooglePlayPurchase(
       if (existing && (existing.playerId !== playerId || existing.productId !== input.productId)) {
         throw new ApiError(ApiErrorCode.InvalidInapp, "Purchase token is already bound to another entitlement.");
       }
-      if (existing && entitlement.kind === "currency") {
+      if (existing && entitlement.kind !== "subscription") {
         return { response: existing.response, replayed: true };
       }
 
@@ -250,8 +284,9 @@ export async function deliverGooglePlayPurchase(
         purchasedAt: new Date(verified.purchasedAt * 1_000),
         verifiedAt: new Date(now * 1_000),
         response: transition.response,
+        ...(transition.reversibleGrant ? { reversibleGrant: transition.reversibleGrant } : {}),
         ...(entitlement.kind === "subscription" ? {
-          // Currency tokens are immutable after delivery and therefore need no reversible copy.
+          // One-time product tokens are immutable after delivery and need no reversible copy.
           // Subscription tokens are encrypted because Google expects the same bearer token for
           // renewal, hold, cancellation, and expiry checks throughout the entitlement lifecycle.
           encryptedPurchaseToken: encryptPurchaseToken(
@@ -284,4 +319,14 @@ export async function deliverGooglePlayPurchase(
     }
     throw error;
   }
+}
+
+/** BuyPack/RestorePacks adapter that cannot deliver currency or subscription products. */
+export function deliverGooglePlayPackPurchase(
+  playerId: string,
+  input: GooglePlayPurchaseInput,
+  verifier: GooglePlayPurchaseVerifier = defaultVerifier,
+  now = unixNow(),
+): Promise<PurchaseDeliveryResult> {
+  return deliverGooglePlayPurchase(playerId, input, verifier, now, ["pack"]);
 }

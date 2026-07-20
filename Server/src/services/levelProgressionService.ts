@@ -70,7 +70,9 @@ export function applyLevelExperienceState(
   if (!Number.isSafeInteger(state.levelExperience) || state.levelExperience < 0) {
     throw new ApiError(ApiErrorCode.InternalServerError, "Stored level experience is invalid.");
   }
-  if (!Number.isSafeInteger(state.gold) || state.gold < 0) {
+  // Refunded currency may leave a valid negative balance. Level-up Gold pays that debt down;
+  // only a non-integer value is corrupt state.
+  if (!Number.isSafeInteger(state.gold)) {
     throw new ApiError(ApiErrorCode.InternalServerError, "Stored Gold balance is invalid.");
   }
 

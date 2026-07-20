@@ -7,10 +7,12 @@ import { config } from "../config";
 import {
   squadEventProgress,
   squads,
+  messages,
   type PlayerDocument,
   type SquadEventProgressDocument,
 } from "../db";
 import { PLAYER_LEVELS, playerLevelDefinition } from "./levelProgressionService";
+import type { MessageDoc } from "./socialService";
 
 const MAX_UNIX_SECONDS = 2_147_483_647;
 const MAX_SEASONS = 128;
@@ -263,7 +265,9 @@ function assertProgressMatchesSeason(
   }
   const validShape = Number.isSafeInteger(progress.activeTier)
     && progress.activeTier >= 0
-    && progress.activeTier < season.tiers.length
+    // The recovered client explicitly treats ActiveTier == tier count as the completed terminal
+    // state: it shows all tier rows complete and stops producing SquadEventUpdate values.
+    && progress.activeTier <= season.tiers.length
     && Number.isSafeInteger(progress.revision)
     && progress.revision >= 0
     && progress.tiers.length === season.tiers.length
@@ -327,6 +331,7 @@ export async function joinSquadEvent(player: PlayerDocument, now = new Date()): 
 export interface SquadEventPvpProgressResult {
   progress: SquadEventProgressDocument;
   changed: boolean;
+  completedTier?: { tierIndex: number; reward: number };
 }
 
 /**
@@ -336,8 +341,9 @@ export interface SquadEventPvpProgressResult {
  * WinMultiplayerMatches (7) contributes `1 / target` only to the winner and
  * PlayMultiplayerMatches (8) contributes `1 / target` to either participant. Math.fround
  * reproduces the binary32 values that the original Unity client serialized in
- * `SquadEventUpdate`. No tier is advanced and no reward is granted here; those rules were
- * live-ops/backend-owned and have not been recovered.
+ * `SquadEventUpdate`. When every assignment reaches one, the recovered ActiveTier contract and
+ * type-11 inbox message prove that the backend advances exactly one tier and offers its configured
+ * Gold reward to each current member through action 91.
  */
 export function applyConfirmedPvpSquadEventProgress(
   current: SquadEventProgressDocument,
@@ -358,16 +364,48 @@ export function applyConfirmedPvpSquadEventProgress(
     return { ...assignment, value };
   });
   if (!changed) return { progress: current, changed: false };
+  const completed = assignments.every((assignment) => assignment.value >= 1);
   return {
     changed: true,
     progress: {
       ...current,
+      activeTier: completed ? current.activeTier + 1 : current.activeTier,
       tiers: current.tiers.map((entry, index) => (index === current.activeTier
         ? { ...entry, assignments }
         : entry)),
       revision: current.revision + 1,
       updatedAt: now,
     },
+    ...(completed ? {
+      completedTier: { tierIndex: current.activeTier, reward: tier.reward },
+    } : {}),
+  };
+}
+
+/** Build the exact type-11 reward document parsed by OKLNJJBHAIH. */
+export function buildSquadEventTierRewardMessage(
+  memberId: string,
+  squadId: string,
+  eventId: string,
+  tierIndex: number,
+  reward: number,
+  createdAt: Date,
+): MessageDoc {
+  const idempotencyKey = `squad-event-tier:${eventId}:${squadId}:${tierIndex}:${memberId}`;
+  return {
+    messageId: idempotencyKey,
+    idempotencyKey,
+    toPlayerId: memberId,
+    fromPlayerId: "system",
+    fromName: "Squad Event",
+    body: "",
+    messageType: 11,
+    payload: { Tier: tierIndex, SquadId: squadId, Reward: reward },
+    otherPlayerJson: "",
+    read: false,
+    ignored: false,
+    accepted: false,
+    createdAt,
   };
 }
 
@@ -394,7 +432,10 @@ export async function recordConfirmedPvpSquadEventProgress(
   won: boolean,
   now = new Date(),
 ): Promise<SquadEventProjectionStatus> {
-  if (!squadId || !(await squads().findOne({ name: squadId, "members.playerId": playerId }, { session }))) {
+  const squad = squadId
+    ? await squads().findOne({ name: squadId, "members.playerId": playerId }, { session })
+    : null;
+  if (!squad) {
     return "not_member";
   }
   const current = await squadEventProgress().findOne({ squadId, eventId: season.id }, { session });
@@ -413,13 +454,37 @@ export async function recordConfirmedPvpSquadEventProgress(
   const update = await squadEventProgress().updateOne(
     { _id: current._id, revision: current.revision, configHash: current.configHash },
     {
-      $set: { tiers: next.progress.tiers, updatedAt: now },
+      $set: {
+        activeTier: next.progress.activeTier,
+        tiers: next.progress.tiers,
+        updatedAt: now,
+      },
       $inc: { revision: 1 },
     },
     { session },
   );
   if (update.modifiedCount !== 1) {
     throw new ApiError(ApiErrorCode.InternalServerError, "Concurrent Squad Event progress update was rejected.");
+  }
+  if (next.completedTier && next.completedTier.reward > 0) {
+    // Tier progress is shared, but the reward is one claimable inbox row per current member.
+    // Insert every row in the same match transaction as ActiveTier, so a crash cannot advance
+    // the squad without its rewards or enqueue rewards for a tier that did not commit.
+    for (const member of squad.members) {
+      const message = buildSquadEventTierRewardMessage(
+        member.playerId,
+        squad.name,
+        season.id,
+        next.completedTier.tierIndex,
+        next.completedTier.reward,
+        now,
+      );
+      await messages().updateOne(
+        { idempotencyKey: message.idempotencyKey },
+        { $setOnInsert: message },
+        { upsert: true, session },
+      );
+    }
   }
   return "updated";
 }

@@ -14,7 +14,7 @@ export function buildDatabaseSquad(squad: SquadDTO): Record<string, unknown> {
     Id: squad.name,
     IsPublic: squad.joinPolicy === 0 ? 1 : 0,
     Message: squad.description,
-    RoundId: squad.leagueId || "0-placement",
+    RoundId: squad.squadWarRoundId || squad.leagueId || "0-placement",
     Size: squad.members.length,
     // In the recovered model Skill is the squad's current competitive score, while
     // SkillRequirement is the minimum player medal gate for joining.
@@ -33,7 +33,7 @@ export function buildDatabaseSquad(squad: SquadDTO): Record<string, unknown> {
     UnitsDeployed: 0,
     TiersCompleted: 0,
     SquadPointsBest: squad.squadPoints,
-    SquadWarWins: 0,
+    SquadWarWins: squad.squadWarWins ?? 0,
   };
 }
 
@@ -48,14 +48,34 @@ export function buildSquadWarsDivision(
   roundId: string,
   squadWarsId: string,
   squads: readonly SquadDTO[],
+  scoreEntries: readonly {
+    squadId: string;
+    baseScore: number;
+    score: number;
+    wins: number;
+  }[] = [],
 ): Record<string, unknown> {
+  const scoreBySquad = new Map(scoreEntries.map((entry) => [entry.squadId, entry]));
   return {
     LeagueId: roundId,
     SquadWarsId: squadWarsId,
-    Items: squads.map((squad, index) => ({
-      ...buildDatabaseSquad(squad),
-      RoundId: roundId,
-      Position: index + 1,
-    })),
+    Items: squads.map((squad, index) => {
+      const score = scoreBySquad.get(squad.name);
+      return {
+        ...buildDatabaseSquad(squad),
+        RoundId: roundId,
+        Position: index + 1,
+        ...(score
+          ? {
+            // AANECPGDMGM first reads SquadPoints, then adds the numeric field whose key is
+            // the top-level SquadWarsId. Splitting baseline and current-round gain reproduces
+            // that contract while their sum remains the authoritative leaderboard score.
+            SquadPoints: score.baseScore,
+            [squadWarsId]: score.score,
+            SquadWarWins: score.wins,
+          }
+          : {}),
+      };
+    }),
   };
 }

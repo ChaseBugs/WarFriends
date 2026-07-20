@@ -2,6 +2,7 @@ import type { ClientSession } from "mongodb";
 import { League } from "../constants";
 import {
   messages,
+  playerLeagueAllocations,
   players,
   withMongoTransaction,
   type PlayerDocument,
@@ -12,6 +13,7 @@ import type { MessageDoc } from "./socialService";
 import {
   managedPlayerLeagueId,
   parseManagedPlayerLeagueId,
+  playerLeagueDivisionIndexForOrdinal,
   PLAYER_LEAGUE_PLACEMENT_MATCHES,
   playerLeagueSettlementDecision,
 } from "./playerLeagueContract";
@@ -36,6 +38,46 @@ function isPlacementLeagueId(value: string): boolean {
 }
 
 /**
+ * Reserve one position in a bounded reconstructed division.
+ *
+ * This must be called inside the transaction that commits the player's league entry. MongoDB's
+ * pipeline upsert creates or increments one tier/window counter atomically; the returned ordinal
+ * maps to a stable 100-player bucket. If the surrounding match/player transaction aborts, this
+ * increment aborts as well, so a failed settlement cannot consume capacity or create a ghost
+ * member. Division zero (`local`) is intentionally left for legacy unbounded seasons and every
+ * new admission starts at `local1`.
+ */
+export async function allocatePlayerLeagueDivision(
+  session: ClientSession,
+  tier: League,
+  now: number,
+): Promise<ReturnType<typeof managedPlayerLeagueId>> {
+  const window = managedPlayerLeagueId(tier, now);
+  const seasonKey = `${tier}:${window.endsAt}`;
+  const updatedAt = new Date(now * 1_000);
+  const allocation = await playerLeagueAllocations().findOneAndUpdate(
+    { seasonKey },
+    [
+      {
+        $set: {
+          tier: { $ifNull: ["$tier", tier] },
+          endsAt: { $ifNull: ["$endsAt", window.endsAt] },
+          createdAt: { $ifNull: ["$createdAt", updatedAt] },
+          updatedAt,
+          nextMemberOrdinal: { $add: [{ $ifNull: ["$nextMemberOrdinal", 0] }, 1] },
+        },
+      },
+    ],
+    { session, upsert: true, returnDocument: "after" },
+  );
+  if (!allocation || allocation.tier !== tier || allocation.endsAt !== window.endsAt) {
+    throw new Error(`Player league allocation ${seasonKey} is inconsistent.`);
+  }
+  const divisionIndex = playerLeagueDivisionIndexForOrdinal(allocation.nextMemberOrdinal);
+  return managedPlayerLeagueId(tier, now, divisionIndex);
+}
+
+/**
  * Materialize an active division after the recovered one-match placement requirement.
  *
  * The player document is the membership lock: the conditional LeagueId filter means two
@@ -44,30 +86,40 @@ function isPlacementLeagueId(value: string): boolean {
  * can rank the complete old division before anyone enters the next season.
  */
 export async function ensureActivePlayerLeague(player: PlayerDocument, now: number): Promise<PlayerDocument> {
-  if (player.player.beginnersLeague > 0) return player;
+  return withMongoTransaction(async (session) => {
+    // Re-read under the transaction instead of trusting the handler snapshot. This makes a
+    // concurrent PvP placement win and leaderboard recovery converge on one membership write.
+    const current = await players().findOne({ id: player.id }, { session });
+    if (!current || current.player.beginnersLeague > 0) return current ?? player;
 
-  const currentId = player.player.leagueId;
-  const managed = parseManagedPlayerLeagueId(currentId);
-  if (managed) return player;
-  if (currentId && !isPlacementLeagueId(currentId)) return player;
-  if (player.player.remainingMatches > 0) return player;
+    const currentId = current.player.leagueId;
+    const managed = parseManagedPlayerLeagueId(currentId);
+    if (managed) return current;
+    if (currentId && !isPlacementLeagueId(currentId)) return current;
+    if (current.player.remainingMatches > 0) return current;
 
-  const tier = Math.min(League.Champion, Math.max(League.Bronze3, player.player.leagueTier)) as League;
-  const active = managedPlayerLeagueId(tier, now);
-  await players().updateOne(
-    { id: player.id, "player.leagueId": currentId, "player.remainingMatches": { $lte: 0 } },
-    {
-      $set: {
-        leagueTier: tier,
-        "player.leagueTier": tier,
-        "player.leagueId": active.leagueId,
-        "player.leagueDivision": active.division,
-        "player.remainingMatches": 0,
-        updatedAt: new Date(now * 1_000),
+    const tier = Math.min(League.Champion, Math.max(League.Bronze3, current.player.leagueTier)) as League;
+    const active = await allocatePlayerLeagueDivision(session, tier, now);
+    const update = await players().updateOne(
+      { id: current.id, "player.leagueId": currentId, "player.remainingMatches": { $lte: 0 } },
+      {
+        $set: {
+          leagueTier: tier,
+          "player.leagueTier": tier,
+          "player.leagueId": active.leagueId,
+          "player.leagueDivision": active.division,
+          "player.remainingMatches": 0,
+          updatedAt: new Date(now * 1_000),
+        },
       },
-    },
-  );
-  return (await players().findOne({ id: player.id })) ?? player;
+      { session },
+    );
+    if (update.modifiedCount !== 1) {
+      // Throwing aborts the capacity increment. The caller can retry and observe the winner.
+      throw new Error(`Concurrent player league allocation rejected ${current.id}.`);
+    }
+    return (await players().findOne({ id: current.id }, { session })) ?? current;
+  });
 }
 
 /** Return the exact stable division ordered by the weekly MedalsBalance competition. */

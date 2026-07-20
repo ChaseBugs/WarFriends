@@ -10,6 +10,7 @@ import {
   achievementStateFor,
   advanceAchievementState,
   claimAchievementState,
+  completeFirstSquadWarAchievementState,
   serializeAchievementsData,
   synchronizeCardsPlayedInMatchAchievementState,
   synchronizeLeagueAchievementState,
@@ -54,6 +55,22 @@ test("only confirmed events can advance supported achievement counters", () => {
 
   const offset = acknowledgeAchievementOffsetState(advanced.state, 2, -999);
   assert.equal(offset.achievements.data.find((group) => group.id === 2)?.offset, 0);
+});
+
+test("finishing a Squad War completes the exact one-time 4.9.5 achievement", () => {
+  assert.deepEqual(ACHIEVEMENT_DEFINITIONS[19], [
+    { target: 1, gold: 0, warBucks: 5_000, scraps: 0, tickets: 0 },
+  ]);
+
+  const initial = createInitialProgression(NOW);
+  const completed = completeFirstSquadWarAchievementState(initial);
+  assert.equal(completed.achievements.data.find((group) => group.id === 19)?.value, 1);
+  assert.equal(completed.state.revision, initial.revision + 1);
+
+  // A scheduler replay or a later finished war is a strict no-op. The one-tier achievement
+  // cannot manufacture another progression revision or a second claimable reward.
+  const replay = completeFirstSquadWarAchievementState(completed.state);
+  assert.equal(replay.state, completed.state);
 });
 
 test("achievement acknowledgements and satisfied projections preserve exact state identity", () => {
