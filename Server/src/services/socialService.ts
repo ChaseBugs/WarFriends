@@ -52,6 +52,8 @@ export interface MessageDoc {
   read: boolean;
   ignored: boolean;
   accepted: boolean;
+  /** Durable first-acceptance time; absent on rows created by older server builds. */
+  acceptedAt?: Date;
   createdAt: Date;
   /** Deterministic key for server-generated events which must survive request retries once. */
   idempotencyKey?: string;
@@ -405,8 +407,30 @@ export async function claimMessageReward(playerId: string, messageId: string): P
   });
 }
 
+export type ChallengeAcceptanceDecision = "accept" | "replay" | "invalid";
+
+/** Pure ownership/lifecycle decision shared by the database path and contract tests. */
+export function challengeAcceptanceDecision(
+  message: Pick<MessageDoc, "toPlayerId" | "messageType" | "ignored" | "accepted" | "expiresAt"> | null,
+  playerId: string,
+  now: Date,
+): ChallengeAcceptanceDecision {
+  if (!message
+    || message.toPlayerId !== playerId
+    || message.messageType !== 0
+    || message.ignored
+    || !message.expiresAt
+    || message.expiresAt.getTime() <= now.getTime()) return "invalid";
+  return message.accepted ? "replay" : "accept";
+}
+
 export async function acceptChallenge(playerId: string, messageId: string): Promise<boolean> {
   const now = new Date();
+  const message = await messages().findOne({ messageId, toPlayerId: playerId }) as unknown as MessageDoc | null;
+  const decision = challengeAcceptanceDecision(message, playerId, now);
+  if (decision === "invalid") return false;
+  if (decision === "replay") return true;
+
   const result = await messages().updateOne(
     {
       messageId,
@@ -416,9 +440,15 @@ export async function acceptChallenge(playerId: string, messageId: string): Prom
       accepted: { $ne: true },
       expiresAt: { $gt: now },
     },
-    { $set: { accepted: true, read: true } },
+    { $set: { accepted: true, acceptedAt: now, read: true } },
   );
-  return result.matchedCount === 1;
+  if (result.modifiedCount === 1) return true;
+
+  // A concurrent request may have committed between the read and compare-and-set update. Re-read
+  // the terminal state so both callers receive Accepted=true; never convert expiry/ignore races
+  // into a false replay success.
+  const winner = await messages().findOne({ messageId, toPlayerId: playerId }) as unknown as MessageDoc | null;
+  return challengeAcceptanceDecision(winner, playerId, new Date()) === "replay";
 }
 
 type DynamoValue = { S: string } | { N: string } | { BOOL: boolean };

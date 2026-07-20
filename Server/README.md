@@ -192,7 +192,9 @@ Working end-to-end (verified live):
   authoritative squad-mate resolution through `GetFriendsInfo`, challenge and normal
   `MessageSent`, `GetAllMessages`, `ReadMessage`, `IgnoreMessage`, and `AcceptChallenge`
   (recipient-owned persistent inbox). Challenges expire logically and through MongoDB TTL;
-  identical retries are deduplicated and player-generated traffic has a rolling sender limit.
+  identical send retries are deduplicated and player-generated traffic has a rolling sender limit.
+  Acceptance records its first durable timestamp and is idempotent after a lost response, while
+  wrong-recipient, ignored, expired, and non-challenge rows remain rejected.
   `GetAllMessages` keeps the stock `Items` array and adds an optional `NextCursor`; a replacement
   client sends it back as `BeforeCursor` to read older pages. The cursor combines exact
   milliseconds with the message ID, page size remains server-bounded, and every query retains the
