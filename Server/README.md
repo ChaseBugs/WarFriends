@@ -337,7 +337,10 @@ Working end-to-end (verified live):
   grants rank-up Gold, refills dog tags, and recomputes rank Army Power in the same guarded
   document write. Base `GameReward` components are cached with the receipt so retries cannot
   multiply or duplicate them. The archived server's random selection and original normal
-  battle reward table remain reconstruction gaps; card-pack/elite-part delivery stays disabled.
+  battle reward table remain reconstruction gaps. Completing the fifth Heroic mission now also
+  grants the exact level-row Bronze/Silver/Gold ten-card pack and one Elite part for the unit
+  target persisted in `DailyMissionsData`; identities, inventory, currencies, and receipt commit
+  together, with bought units preferred by the documented replacement selector.
 - **Starter assignments (authoritative subset)**: actions `185`/`186` restore the exact
   `StarterAssignmentsData` object and the MainScene-defined thresholds, order, Gold, and
   WarBucks rewards. Ranked wins, medal balance, level, lifetime squad points, and the first
@@ -407,7 +410,8 @@ allowlist of analytics/impression actions is safely ignored.
 - **Mission fidelity** — recover the original mission-selection weighting and normal battle
   reward table to replace the documented 30-XP/800-WarBucks/zero-ordinary-Gold
   fallback, add combat-result validation, restore the missing recovered-client
-  `MissionsSettings`/`UnitsInMissionsConfig` references, and deliver heroic inventory rewards.
+  `MissionsSettings`/`UnitsInMissionsConfig` references, and recover the production Heroic unit
+  selection weighting to replace the documented bought-first cryptographic fallback.
   Remaining deployment, stolen-crate, and first-Squad-War achievement groups stay unclaimable until
   their gameplay events are authoritative. Group 17 uses accepted owned-card consumption but still
   shares the documented missing live card-event-validation boundary.

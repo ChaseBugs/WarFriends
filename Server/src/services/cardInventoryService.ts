@@ -446,6 +446,71 @@ function validatePackContents(pack: CardPackDefinition, cards: readonly string[]
   }
 }
 
+/**
+ * Select and grant one server-owned card-pack reward without charging its shop price.
+ *
+ * Heroic missions return the selected IDs in `HeroicMissionsCompletionRewardCardPack`, so
+ * unlike BuyCardPack the backend can safely own identity selection without a request nonce or
+ * patched client. Fixed slots use the exact source rarity; every remaining slot is selected
+ * from the pack's recovered inclusive rarity interval. Duplicate IDs are valid because the
+ * stock CardManager increments amounts once for every array element.
+ *
+ * This composable helper deliberately preserves `revision`. The enclosing reward settlement
+ * combines cards with currencies, elite parts, achievements, and its receipt under one revision.
+ */
+export function grantCardPackRewardState(
+  state: PlayerProgressionState,
+  packName: string,
+  choose: (upperBound: number) => number = (upperBound) => randomInt(upperBound),
+): CardInventoryMutationResult {
+  const pack = CARD_PACK_CATALOG[packName];
+  if (!pack) throw new ApiError(ApiErrorCode.InternalServerError, `Reward card pack ${packName} is invalid.`);
+
+  const fixedPool = Object.values(CARD_CATALOG)
+    .filter((card) => card.implemented && card.rarity === pack.fixedRarity)
+    .map((card) => card.name)
+    .sort();
+  const rangedPool = Object.values(CARD_CATALOG)
+    .filter((card) => (
+      card.implemented
+      && card.rarity >= pack.guaranteedRarity
+      && card.rarity <= pack.maxRarity
+    ))
+    .map((card) => card.name)
+    .sort();
+  if (fixedPool.length === 0 || rangedPool.length === 0) {
+    throw new ApiError(ApiErrorCode.InternalServerError, `Reward card pack ${packName} has an empty pool.`);
+  }
+
+  const cards: string[] = [];
+  for (let index = 0; index < pack.cardCount; index += 1) {
+    const pool = index < pack.fixedRarityCount ? fixedPool : rangedPool;
+    const selected = choose(pool.length);
+    if (!Number.isInteger(selected) || selected < 0 || selected >= pool.length) {
+      throw new ApiError(ApiErrorCode.InternalServerError, "Reward card selector is invalid.");
+    }
+    cards.push(pool[selected]!);
+  }
+  // Keep this assertion beside selection so future catalog/rule changes cannot silently grant
+  // a pack shape that the already recovered purchase validator would reject.
+  validatePackContents(pack, cards);
+
+  const cardInventory = cardInventoryStateFor(state);
+  for (const id of cards) {
+    const current = cardInventory.cardData[id]?.amount ?? 0;
+    if (!Number.isSafeInteger(current) || current < 0 || current === Number.MAX_SAFE_INTEGER) {
+      throw new ApiError(ApiErrorCode.InternalServerError, `Card count for ${id} is invalid.`);
+    }
+    cardInventory.cardData[id] = { amount: current + 1 };
+  }
+  return {
+    state: { ...state, cardInventory },
+    cardInventory,
+    pack,
+    cards,
+  };
+}
+
 /** Debit one source-priced pack and atomically add its validated cards. */
 export function purchaseCardPackState(
   state: PlayerProgressionState,

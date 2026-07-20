@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { DbAction } from "../dbActions";
+import { CARD_CATALOG } from "../services/cardInventoryService";
 import {
   dailyMissionsStateFor,
   dailyMissionsWireData,
@@ -32,6 +33,7 @@ test("daily mission wire matches DailyMissionsData and rolls at UTC midnight", (
   ]);
   assert.equal(missions.dailyMissions.length, 3);
   assert.equal(missions.heroicMissions.length, 5);
+  assert.notEqual(missions.heroicUnitReward, "");
   assert.deepEqual(missions.dailyMissions.map((item) => item.type), [
     "DailyMissionKillUnits",
     "DailyMissionSurvive",
@@ -146,15 +148,18 @@ test("heroic chain is ordered and grants the recovered currency rewards once", (
     (error: unknown) => (error as { code?: number }).code === 90,
   );
 
+  let finalResponse: Record<string, unknown> = {};
   for (let index = 0; index < 5; index += 1) {
     const id = `player-1-heroic-${index}`;
     state = startDailyMissionState(state, NOW + index * 20, 1, id, DbAction.GameStartedCampaign).state;
-    state = settleDailyMissionState(state, NOW + index * 20 + 10, 1, {
+    const result = settleDailyMissionState(state, NOW + index * 20 + 10, 1, {
       battleId: id,
       missionIndex: index,
       missionType: "Heroic",
       endReason: 10,
-    }, POLICY).state;
+    }, POLICY);
+    state = result.state;
+    finalResponse = result.response;
   }
 
   // Five level-1 heroic missions grant 1 Gold each; completing all five adds 15 Gold,
@@ -167,6 +172,33 @@ test("heroic chain is ordered and grants the recovered currency rewards once", (
   assert.equal(state.dailyMissions?.heroicCompletionRewardClaimed, true);
   assert.equal(state.dailyMissions?.isHeroicOpened, false);
   assert.equal(state.dailyMissions?.heroicPoints, 0);
+
+  const rewardedCards = finalResponse.HeroicMissionsCompletionRewardCardPack as string[];
+  assert.equal(rewardedCards.length, 10);
+  assert.equal(rewardedCards.slice(0, 7).every((id) => CARD_CATALOG[id]?.rarity === 1), true);
+  assert.equal(rewardedCards.slice(7).every((id) => [1, 2].includes(CARD_CATALOG[id]?.rarity ?? 0)), true);
+  assert.equal(
+    Object.values(state.cardInventory?.cardData ?? {}).reduce((sum, card) => sum + card.amount, 0),
+    10,
+  );
+  const unitName = state.dailyMissions!.heroicUnitReward;
+  assert.equal(finalResponse.HeroicMissionsCompletionRewardArmyUnitId, unitName);
+  assert.equal(finalResponse.HeroicMissionsCompletionRewardArmyUnitParts, 1);
+  assert.equal(state.itemInventory?.levelManagerData.savedArmies[unitName]?.parts, 1);
+
+  const replay = settleDailyMissionState(state, NOW + 200, 1, {
+    battleId: "player-1-heroic-4",
+    missionIndex: 4,
+    missionType: "Heroic",
+    endReason: 10,
+  }, POLICY);
+  assert.equal(replay.replayed, true);
+  assert.deepEqual(replay.response, finalResponse);
+  assert.equal(
+    Object.values(replay.state.cardInventory?.cardData ?? {}).reduce((sum, card) => sum + card.amount, 0),
+    10,
+  );
+  assert.equal(replay.state.itemInventory?.levelManagerData.savedArmies[unitName]?.parts, 1);
 });
 
 test("co-op client result cannot claim the co-op master's completion", () => {

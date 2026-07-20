@@ -1,4 +1,5 @@
-import { ApiError } from "../apiErrors";
+import { randomInt } from "node:crypto";
+import { ApiError, ApiErrorCode } from "../apiErrors";
 import type {
   ItemInventoryState,
   PlayerProgressionState,
@@ -1272,6 +1273,80 @@ function emptyUnit(definition?: UnitDefinition): SavedArmyState {
     equipped: false,
     eliteSlot: 0,
     parts: 0,
+  };
+}
+
+export interface MissionElitePartsRewardResult {
+  state: PlayerProgressionState;
+  itemInventory: ItemInventoryState;
+  unitName: string;
+  parts: number;
+}
+
+/**
+ * Choose the unit shown by DailyMissionsData.heroicUnitReward for a fresh Heroic chain.
+ *
+ * The client proves that this value is server-selected, but neither recovered APK contains
+ * the retired production weighting. Prefer bought permanent units so the reward is immediately
+ * useful; if an account has not persisted a unit yet, fall back to concrete LevelManager units
+ * currently unlocked by the player's zero-based level. Selection is cryptographic and the
+ * chosen name is persisted with the chain, so reconnects and the eventual fifth mission use
+ * one stable target. Helpers and rows without a LevelManager behaviour never enter this pool.
+ */
+export function selectMissionElitePartUnit(
+  state: PlayerProgressionState,
+  playerLevelIndex: number,
+  choose: (upperBound: number) => number = (upperBound) => randomInt(upperBound),
+): string {
+  const saved = itemInventoryStateFor(state).levelManagerData.savedArmies;
+  const bought = Object.keys(saved)
+    .filter((name) => saved[name]?.bought && PLAYER_UNIT_CATALOG[name])
+    .sort();
+  const unlocked = Object.values(PLAYER_UNIT_CATALOG)
+    .filter((definition) => definition.canBuyLevelIndex <= Math.max(0, Math.floor(playerLevelIndex)))
+    .map((definition) => definition.name)
+    .sort();
+  const candidates = bought.length > 0 ? bought : unlocked;
+  if (candidates.length === 0) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Heroic elite-parts reward pool is empty.");
+  }
+  const selected = choose(candidates.length);
+  if (!Number.isInteger(selected) || selected < 0 || selected >= candidates.length) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Heroic elite-parts selector is invalid.");
+  }
+  return candidates[selected]!;
+}
+
+/**
+ * Add unit-specific Heroic parts without incrementing progression revision.
+ *
+ * The enclosing mission settlement owns the revision and receipt. Creating the normal saved
+ * row for an unlocked-but-not-yet-bought unit is intentional: LevelManager loads `parts` from
+ * SavedArmySlots even before purchase, preserving the reward until that unit becomes owned.
+ */
+export function grantMissionElitePartsState(
+  state: PlayerProgressionState,
+  unitName: string,
+  parts: number,
+): MissionElitePartsRewardResult {
+  const definition = PLAYER_UNIT_CATALOG[unitName];
+  if (!definition || !Number.isSafeInteger(parts) || parts <= 0) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Heroic elite-parts reward is invalid.");
+  }
+  const itemInventory = itemInventoryStateFor(state);
+  const unit = itemInventory.levelManagerData.savedArmies[unitName] ?? emptyUnit(definition);
+  if (!Number.isSafeInteger(unit.parts) || unit.parts < 0 || unit.parts > Number.MAX_SAFE_INTEGER - parts) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Heroic unit parts overflowed.");
+  }
+  itemInventory.levelManagerData.savedArmies[unitName] = {
+    ...unit,
+    parts: unit.parts + parts,
+  };
+  return {
+    state: { ...state, itemInventory },
+    itemInventory,
+    unitName,
+    parts,
   };
 }
 

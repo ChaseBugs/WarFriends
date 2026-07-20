@@ -12,6 +12,7 @@ import { players } from "../db";
 import { config } from "../config";
 import { advanceAchievementState } from "./achievementService";
 import { calculateArmyPower } from "./armyPowerService";
+import { grantCardPackRewardState } from "./cardInventoryService";
 import { applyLevelExperienceState } from "./levelProgressionService";
 import {
   VIP_BATTLE_EXPERIENCE_MULTIPLIER,
@@ -20,6 +21,7 @@ import {
 } from "./matchService";
 import { mutateProgression } from "./progressionMutationService";
 import { progressionForPlayer, unixNow } from "./playerStateService";
+import { grantMissionElitePartsState, selectMissionElitePartUnit } from "./unitInventoryService";
 
 /**
  * Persistent daily/heroic mission lifecycle reconstructed from the Unity client contract.
@@ -54,21 +56,19 @@ const MAX_CONCURRENCY_RETRIES = 4;
 /**
  * Reward rows serialized on the MissionsRewards component in MainScene.unity.
  *
- * The scene includes card-pack and elite-part columns as well. They are deliberately not
- * represented here until the corresponding inventory schema is authoritative: silently
- * manufacturing card IDs would be less faithful than granting the recovered currency part
- * and keeping the missing inventory delivery visible in BACKEND_FEATURES.md.
+ * Every column is now represented. Card and unit inventories are authoritative, so completion
+ * can grant the source pack class and unit-specific Elite part together with these currencies.
  */
 const MISSION_REWARD_ROWS = [
-  { level: 5, dailyGold: 10, dailyTickets: 2, dailyScraps: 20, heroicGoldMission: 1, heroicGold: 15, heroicTickets: 10, heroicScraps: 30 },
-  { level: 10, dailyGold: 10, dailyTickets: 2, dailyScraps: 20, heroicGoldMission: 1, heroicGold: 15, heroicTickets: 10, heroicScraps: 30 },
-  { level: 15, dailyGold: 10, dailyTickets: 2, dailyScraps: 20, heroicGoldMission: 1, heroicGold: 15, heroicTickets: 10, heroicScraps: 30 },
-  { level: 20, dailyGold: 15, dailyTickets: 3, dailyScraps: 30, heroicGoldMission: 1, heroicGold: 20, heroicTickets: 13, heroicScraps: 40 },
-  { level: 25, dailyGold: 15, dailyTickets: 3, dailyScraps: 30, heroicGoldMission: 1, heroicGold: 20, heroicTickets: 13, heroicScraps: 40 },
-  { level: 30, dailyGold: 15, dailyTickets: 3, dailyScraps: 30, heroicGoldMission: 2, heroicGold: 20, heroicTickets: 13, heroicScraps: 40 },
-  { level: 35, dailyGold: 20, dailyTickets: 4, dailyScraps: 40, heroicGoldMission: 2, heroicGold: 30, heroicTickets: 17, heroicScraps: 60 },
-  { level: 40, dailyGold: 20, dailyTickets: 4, dailyScraps: 40, heroicGoldMission: 2, heroicGold: 30, heroicTickets: 17, heroicScraps: 60 },
-  { level: 43, dailyGold: 20, dailyTickets: 4, dailyScraps: 40, heroicGoldMission: 2, heroicGold: 30, heroicTickets: 17, heroicScraps: 60 },
+  { level: 5, dailyGold: 10, dailyTickets: 2, dailyScraps: 20, heroicGoldMission: 1, heroicGold: 15, heroicTickets: 10, heroicScraps: 30, heroicPack: "BRONZE_CARDPACK", heroicEliteParts: 1 },
+  { level: 10, dailyGold: 10, dailyTickets: 2, dailyScraps: 20, heroicGoldMission: 1, heroicGold: 15, heroicTickets: 10, heroicScraps: 30, heroicPack: "BRONZE_CARDPACK", heroicEliteParts: 1 },
+  { level: 15, dailyGold: 10, dailyTickets: 2, dailyScraps: 20, heroicGoldMission: 1, heroicGold: 15, heroicTickets: 10, heroicScraps: 30, heroicPack: "BRONZE_CARDPACK", heroicEliteParts: 1 },
+  { level: 20, dailyGold: 15, dailyTickets: 3, dailyScraps: 30, heroicGoldMission: 1, heroicGold: 20, heroicTickets: 13, heroicScraps: 40, heroicPack: "BRONZE_CARDPACK", heroicEliteParts: 1 },
+  { level: 25, dailyGold: 15, dailyTickets: 3, dailyScraps: 30, heroicGoldMission: 1, heroicGold: 20, heroicTickets: 13, heroicScraps: 40, heroicPack: "SILVER_CARDPACK", heroicEliteParts: 1 },
+  { level: 30, dailyGold: 15, dailyTickets: 3, dailyScraps: 30, heroicGoldMission: 2, heroicGold: 20, heroicTickets: 13, heroicScraps: 40, heroicPack: "SILVER_CARDPACK", heroicEliteParts: 1 },
+  { level: 35, dailyGold: 20, dailyTickets: 4, dailyScraps: 40, heroicGoldMission: 2, heroicGold: 30, heroicTickets: 17, heroicScraps: 60, heroicPack: "SILVER_CARDPACK", heroicEliteParts: 1 },
+  { level: 40, dailyGold: 20, dailyTickets: 4, dailyScraps: 40, heroicGoldMission: 2, heroicGold: 30, heroicTickets: 17, heroicScraps: 60, heroicPack: "GOLD_CARDPACK", heroicEliteParts: 1 },
+  { level: 43, dailyGold: 20, dailyTickets: 4, dailyScraps: 40, heroicGoldMission: 2, heroicGold: 30, heroicTickets: 17, heroicScraps: 60, heroicPack: "GOLD_CARDPACK", heroicEliteParts: 1 },
 ] as const;
 
 type MissionRewardRow = (typeof MISSION_REWARD_ROWS)[number];
@@ -101,6 +101,8 @@ export interface DailyMissionSettlementResult extends DailyMissionMutationResult
 export interface MissionBattleRewardPolicy {
   experience: number;
   warBucks: number;
+  /** Test seam for server-owned card identity selection; production uses crypto.randomInt. */
+  chooseCardIndex?: (upperBound: number) => number;
 }
 
 function checkedNonNegativeInteger(value: number, name: string): number {
@@ -263,6 +265,11 @@ export function dailyMissionsStateFor(
     // against their original startedAt value, even when GetPlayerData is called repeatedly.
     const cloned = cloneDailyMissions(existing);
     cloned.activeSessions = cloned.activeSessions.filter((session) => now - session.startedAt <= SESSION_LIFETIME_SECONDS);
+    // Accounts issued by the earlier currency-only reconstruction stored an empty target.
+    // Fill it once at the normal persistence boundary before any Heroic reward is claimable.
+    if (!cloned.heroicUnitReward) {
+      cloned.heroicUnitReward = selectMissionElitePartUnit(state, playerLevel);
+    }
     return cloned;
   }
 
@@ -272,6 +279,9 @@ export function dailyMissionsStateFor(
   // progress exists yet; isHeroicOpened itself remains true below.
   const keepOpenHeroic = previous?.isHeroicOpened === true && previous.heroicMissions.some((item) => item.completedSolo);
   const displayLevel = Math.max(1, Math.floor(playerLevel));
+  const heroicUnitReward = keepOpenHeroic && previous!.heroicUnitReward
+    ? previous!.heroicUnitReward
+    : selectMissionElitePartUnit(state, playerLevel);
   return {
     dailyMissions: newDailyMissionList(),
     heroicMissions: keepOpenHeroic ? previous!.heroicMissions : newHeroicMissionList(),
@@ -284,8 +294,9 @@ export function dailyMissionsStateFor(
     // DailyMissionsManager exposes these stored zero-based values as `value + 1`.
     dailyMissionLevel: displayLevel - 1,
     heroicMissionLevel: displayLevel - 1,
-    // The elite-parts unit is inventory-dependent and must not be guessed from a display row.
-    heroicUnitReward: keepOpenHeroic ? previous!.heroicUnitReward : "",
+    // The exact target is part of DailyMissionsData before the chain starts. Persisting it
+    // here keeps the Heroic rewards preview and eventual completion response on one unit.
+    heroicUnitReward,
     dayKey: key,
     dailyCompletionRewardClaimed: false,
     heroicCompletionRewardClaimed: keepOpenHeroic ? previous!.heroicCompletionRewardClaimed : false,
@@ -518,6 +529,7 @@ export function settleDailyMissionState(
   let addedTickets = 0;
   let addedScraps = 0;
   let heroicUnlocked = false;
+  let heroicChainCompleted = false;
   const response: Record<string, unknown> = {};
 
   if (newlyCompleted && (input.missionType === "Daily" || input.missionType === "Coop")) {
@@ -529,6 +541,7 @@ export function settleDailyMissionState(
       dailyMissions.isHeroicOpened = true;
       dailyMissions.heroicCompletionRewardClaimed = false;
       dailyMissions.heroicMissions = newHeroicMissionList();
+      dailyMissions.heroicUnitReward = selectMissionElitePartUnit(state, playerLevel);
       heroicUnlocked = true;
     }
   }
@@ -561,6 +574,7 @@ export function settleDailyMissionState(
     dailyMissions.heroicCompletionRewardClaimed = true;
     dailyMissions.isHeroicOpened = false;
     dailyMissions.heroicPoints = 0;
+    heroicChainCompleted = true;
     completionGold = checkedSum(completionGold, row.heroicGold, "Heroic completion Gold");
     addedTickets += row.heroicTickets;
     addedScraps += row.heroicScraps;
@@ -571,6 +585,32 @@ export function settleDailyMissionState(
 
   if (heroicUnlocked) response.HeroicMissionsUnlocked = 1;
   response.HeroicPoints = dailyMissions.heroicPoints;
+
+  let inventoryRewardState = state;
+  if (heroicChainCompleted) {
+    /*
+     * CBBKFKCOLPP consumes both inventory fields directly: the card field is a JSON array of
+     * IDs and the unit field is the exact Google2u sheet name paired with an integer part
+     * count. The target was selected when DailyMissionsData was issued, so the fifth mission
+     * cannot substitute another unit. Both grants enter the same settlement state and receipt
+     * as the currencies; a dropped response therefore cannot award either inventory twice.
+     */
+    const cardReward = grantCardPackRewardState(
+      inventoryRewardState,
+      row.heroicPack,
+      policy.chooseCardIndex,
+    );
+    inventoryRewardState = cardReward.state;
+    const partsReward = grantMissionElitePartsState(
+      inventoryRewardState,
+      dailyMissions.heroicUnitReward,
+      row.heroicEliteParts,
+    );
+    inventoryRewardState = partsReward.state;
+    response.HeroicMissionsCompletionRewardCardPack = [...cardReward.cards];
+    response.HeroicMissionsCompletionRewardArmyUnitId = partsReward.unitName;
+    response.HeroicMissionsCompletionRewardArmyUnitParts = partsReward.parts;
+  }
 
   /*
    * Normal battle rewards are separate from the one-time daily/heroic completion prizes.
@@ -594,7 +634,7 @@ export function settleDailyMissionState(
     ? checkedScaledInteger(baseWarBucks, VIP_BATTLE_WARBUCKS_MULTIPLIER, "Mission VIP WarBucks")
     : baseWarBucks;
 
-  const leveled = applyLevelExperienceState(state, playerLevel, experienceGained);
+  const leveled = applyLevelExperienceState(inventoryRewardState, playerLevel, experienceGained);
   const levelChanged = leveled.levelTo !== leveled.levelFrom;
   const baseGameGold = checkedSum(missionGold, leveled.goldGranted, "Mission GameGold reward");
   const actualGameGold = isVip
