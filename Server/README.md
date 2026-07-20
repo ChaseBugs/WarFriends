@@ -130,6 +130,9 @@ Working end-to-end (verified live):
   `MessageSent`, `GetAllMessages`, `ReadMessage`, `IgnoreMessage`, and `AcceptChallenge`
   (recipient-owned persistent inbox). Challenges expire logically and through MongoDB TTL;
   identical retries are deduplicated and player-generated traffic has a rolling sender limit.
+  The stock buffered `IgnoreMessage` path records a durable progression outbox entry beside
+  `BufferId`, performs the recipient-filtered inbox update, and clears the entry afterward, so
+  a process interruption is recoverable without allowing one player to hide another's message.
 - **Moderation reports**: authenticated player/cheater reports are validated, rate-limited,
   deduplicated for safe retries, and stored with review status and evidence metadata.
 - **Public-text moderation**: account/rename names, Squad names/descriptions, and direct messages
@@ -188,6 +191,9 @@ Working end-to-end (verified live):
   four-slot equipment, notification state, rollback data, and `BufferId` replay protection are
   atomic. Actions `104`/`105` now persist the weapon/unit `showed` flags through both direct and
   buffered transports without granting ownership; locked or unknown rows fail closed. Direct
+  action `194` and its stock buffered form are explicit telemetry acknowledgements, so opening a
+  notification cannot poison an otherwise valid RequestBuffer with `UnknownAction`; echoed player
+  and message identifiers never mutate progression.
   `BuyLootboxes` validates one of the six exact MainScene products (49/89/159/279/479/749 Gold
   for 5/10/20/40/80/150 one-part rewards), atomically debits Gold, persists every part and exact
   duplicate-WarBucks conversion, and returns the recovered `NewVisuals`/`Id`/`LootboxCost`
@@ -242,12 +248,15 @@ Working end-to-end (verified live):
   type-28 sender snapshot with one actor/target reminder per UTC day.
 - **Weapon inventory foundation**: private and public player snapshots now serialize the
   exact recovered `InventoryData.slots` and `LevelManagerData.savedWeapons` structures with
-  the 4.9.5 starter loadout. Stock buffered `BuyWeapon`/`EquipWeapon` supports all 84
+  the 4.9.5 starter loadout. Stock buffered `BuyWeapon`/`ActivateWeapon`/`EquipWeapon` supports all 84
   `PURCHASABLE: shop` rows that also have real LevelManager entries. Their obscured Gold and
   WarBucks prices, level gates, category masks, and non-sequential indexes are recovered from
   MainScene; purchases grant immediate ownership because every enabled row has
-  `DELIVERTIME=0`. Mutations include server price/discount validation, atomic debits,
-  category-safe equipment, Unity rollback fields, and `BufferId` replay protection. Nine
+  `DELIVERTIME=0`. Action `128` validates the preceding permanent purchase as an idempotent
+  zero-delivery acknowledgement and cannot grant or convert a rental. Mutations include server
+  price/discount validation, atomic debits, category-safe equipment, Unity rollback fields, and
+  `BufferId` replay protection. Timed `InstantBuyWeapon` remains rejected because no supported
+  source row can produce its required pending-delivery state. Nine
   shop-priced Pulse Rifle rows with null LevelManager entries, unknown catalog rows, and
   unrelated OfferManager-discounted purchases still fail closed.
   `../Tools/Extract-WeaponCatalog.ps1` reproduces the catalog by joining the serialized

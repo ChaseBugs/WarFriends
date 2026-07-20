@@ -211,6 +211,14 @@ export interface PlayerProgressionState {
    * state and so reconnects/devices restore one monotonic value.
    */
   lastSeenSquadChatTimestamp?: number;
+  /**
+   * Durable outbox for stock RequestBuffer action 12.
+   *
+   * Message documents live outside the embedded progression object. Recording the recipient's
+   * requested message IDs here in the same write as BufferId makes the later idempotent inbox
+   * update retryable across a process stop, without letting a reused BufferId target new data.
+   */
+  pendingMessageIgnores?: string[];
   /** Number of successful squad creations; the stock client derives the next WarBucks price from it. */
   squadCreationsCount?: number;
   /**

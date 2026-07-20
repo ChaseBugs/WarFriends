@@ -2,8 +2,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import generatedWeaponCatalog from "../data/weaponCatalog.generated.json";
 import { DbAction } from "../dbActions";
-import { processAssignmentBufferState } from "../services/assignmentService";
 import {
+  acknowledgeBufferedMessageIgnoresState,
+  processAssignmentBufferState,
+} from "../services/assignmentService";
+import {
+  activateWeaponState,
   activateWeaponUpgradeState,
   createInitialItemInventory,
   equipWeaponState,
@@ -19,6 +23,7 @@ import {
   ITEM_WRONG_INDEX_TO_ACTIVATE,
   ITEM_WEAPON_NOT_BOUGHT,
   parseWeaponUpgradeActivateData,
+  parseWeaponActivateData,
   parseWeaponUpgradeInstantData,
   parseWeaponUpgradePurchaseData,
   parseWeaponEquipData,
@@ -63,6 +68,10 @@ function equipData(overrides: Record<string, unknown> = {}): string {
     SpecialFeature: 0,
     ...overrides,
   });
+}
+
+function activateData(overrides: Record<string, unknown> = {}): string {
+  return JSON.stringify({ LevelName: FAMAS, ...overrides });
 }
 
 function upgradePurchaseData(overrides: Record<string, unknown> = {}): string {
@@ -549,6 +558,104 @@ test("weapon RequestBuffer purchase/equip is atomic and replay-safe by BufferId"
   assert.equal(replay.replayed, true);
   assert.equal(replay.state.gold, 51);
   assert.equal(replay.requestsResults, first.requestsResults);
+});
+
+test("ActivateWeapon validates a permanent purchase and never grants or debits twice", () => {
+  const initial = { ...createInitialProgression(NOW), gold: 1_000 };
+  const payload = parseWeaponActivateData(activateData());
+
+  assert.throws(
+    () => activateWeaponState(initial, payload),
+    (error: unknown) => (error as { code?: number }).code === ITEM_WRONG_INDEX_TO_ACTIVATE,
+  );
+
+  const bought = purchaseWeaponState(initial, 13, parseWeaponPurchaseData(purchaseData()));
+  const activated = activateWeaponState(bought.state, payload);
+  assert.equal(activated.state, bought.state);
+  assert.equal(activated.state.gold, 51);
+  assert.equal(activated.weapon.bought, true);
+});
+
+test("buffered BuyWeapon/ActivateWeapon and message impression are ordered and replay-safe", () => {
+  const initial = { ...createInitialProgression(NOW), gold: 1_000 };
+  const requests = [
+    { action: DbAction.BuyWeapon, data: purchaseData() },
+    { action: DbAction.ActivateWeapon, data: activateData() },
+    {
+      action: DbAction.MessageWasShown,
+      data: JSON.stringify({ MessageId: "message-1", PlayerId: "untrusted-echo" }),
+    },
+  ];
+  const first = processAssignmentBufferState(initial, NOW, "weapon-activate-buffer", requests, 13);
+  assert.deepEqual(JSON.parse(first.requestsResults), [
+    { ActionId: DbAction.BuyWeapon, Result: 1 },
+    { ActionId: DbAction.ActivateWeapon, Result: 1 },
+    { ActionId: DbAction.MessageWasShown, Result: 1 },
+  ]);
+  assert.equal(first.state.gold, 51);
+  assert.equal(first.state.itemInventory?.levelManagerData.savedWeapons[FAMAS]?.bought, true);
+
+  const replay = processAssignmentBufferState(
+    first.state,
+    NOW + 10,
+    "weapon-activate-buffer",
+    requests,
+    13,
+  );
+  assert.equal(replay.replayed, true);
+  assert.equal(replay.requestsResults, first.requestsResults);
+  assert.equal(replay.state.gold, 51);
+});
+
+test("buffered IgnoreMessage persists a bounded retryable outbox entry", () => {
+  const initial = createInitialProgression(NOW);
+  const request = [{ action: DbAction.IgnoreMessage, data: "message-123" }];
+  const first = processAssignmentBufferState(initial, NOW, "ignore-message-buffer", request);
+
+  assert.deepEqual(JSON.parse(first.requestsResults), [
+    { ActionId: DbAction.IgnoreMessage, Result: 1 },
+  ]);
+  assert.deepEqual(first.state.pendingMessageIgnores, ["message-123"]);
+
+  const replay = processAssignmentBufferState(
+    first.state,
+    NOW + 1,
+    "ignore-message-buffer",
+    request,
+  );
+  assert.equal(replay.replayed, true);
+  assert.deepEqual(replay.state.pendingMessageIgnores, ["message-123"]);
+  assert.equal(replay.requestsResults, first.requestsResults);
+});
+
+test("buffered IgnoreMessage rejects invalid IDs without discarding a full durable outbox", () => {
+  const pendingMessageIgnores = Array.from({ length: 100 }, (_, index) => `message-${index}`);
+  const initial = { ...createInitialProgression(NOW), pendingMessageIgnores };
+  const result = processAssignmentBufferState(
+    initial,
+    NOW,
+    "ignore-message-full",
+    [{ action: DbAction.IgnoreMessage, data: "message-new" }],
+  );
+  const [response] = JSON.parse(result.requestsResults) as Array<Record<string, unknown>>;
+
+  assert.equal(response.Result, 90);
+  assert.deepEqual(result.state.pendingMessageIgnores, pendingMessageIgnores);
+});
+
+test("completed message-ignore outbox entries are cleared selectively and idempotently", () => {
+  const initial = {
+    ...createInitialProgression(NOW),
+    pendingMessageIgnores: ["message-1", "message-2"],
+  };
+  const cleared = acknowledgeBufferedMessageIgnoresState(initial, ["message-1"]);
+  assert.deepEqual(cleared.pendingMessageIgnores, ["message-2"]);
+  assert.equal(cleared.revision, initial.revision + 1);
+
+  const repeated = acknowledgeBufferedMessageIgnoresState(cleared, ["message-1"]);
+  assert.equal(repeated, cleared);
+  const empty = acknowledgeBufferedMessageIgnoresState(cleared, ["message-2"]);
+  assert.equal(empty.pendingMessageIgnores, undefined);
 });
 
 test("failed buffered weapon purchase returns the exact rollback fields Unity consumes", () => {

@@ -2,6 +2,7 @@ import { ApiError, ApiErrorCode } from "../apiErrors";
 import { DbAction } from "../dbActions";
 import { ok } from "../dtos";
 import {
+  acknowledgeBufferedMessageIgnores,
   claimAssignment,
   claimAssignmentMegaReward,
   getOrCreateAssignments,
@@ -10,6 +11,7 @@ import {
   skipAssignment,
   type BufferedRequestInput,
 } from "../services/assignmentService";
+import { ignoreMessage } from "../services/socialService";
 import {
   claimStarterAssignment,
   completeStarterAssignments,
@@ -225,6 +227,16 @@ export const assignmentHandlers: Record<number, HandlerEntry> = {
       player!.progression?.vipExpiration ?? player!.player.vipExpiration,
       player!.player.leagueTier,
     );
+    const pendingMessageIgnores = result.state.pendingMessageIgnores ?? [];
+    if (pendingMessageIgnores.length > 0) {
+      // Action 12 is idempotent and recipient-filtered in socialService. Drain every durable
+      // outbox entry before acknowledging the HTTP request, then clear exactly those IDs from
+      // progression. If either database step fails, the uncleared entry survives for retry.
+      for (const messageId of pendingMessageIgnores) {
+        await ignoreMessage(player!.id, messageId);
+      }
+      await acknowledgeBufferedMessageIgnores(player!.id, pendingMessageIgnores);
+    }
     return ok(DbAction.SendRequestBuffer, {
       BufferId: id,
       RequestsResults: result.requestsResults,

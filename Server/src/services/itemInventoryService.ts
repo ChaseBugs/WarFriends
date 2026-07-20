@@ -281,6 +281,11 @@ export interface WeaponUpgradeActivatePayload {
   armyPower: number;
 }
 
+/** Payload of the separate zero-delivery purchase acknowledgement (action 128). */
+export interface WeaponActivatePayload {
+  name: string;
+}
+
 export interface ItemInventoryMutationResult {
   state: PlayerProgressionState;
   itemInventory: ItemInventoryState;
@@ -372,6 +377,12 @@ export function parseWeaponPurchaseData(value: string): WeaponPurchasePayload {
     startTime: integer(data.StartTime, "StartTime"),
     discount: integer(data.discount ?? 0, "discount"),
   };
+}
+
+/** Decode the exact `{ LevelName }` dictionary queued by WeaponScreen.GFDDLFMLJMJ. */
+export function parseWeaponActivateData(value: string): WeaponActivatePayload {
+  const data = parseObjectJson(value);
+  return { name: boundedName(data.LevelName) };
 }
 
 /** Decode the exact dictionary queued by WeaponScreen.EquipWeapon. */
@@ -595,6 +606,32 @@ export function purchaseWeaponState(
     itemInventory,
   };
   return { state: next, itemInventory, weapon, definition };
+}
+
+/**
+ * Acknowledge the client's post-purchase `ActivateWeapon` transition.
+ *
+ * Every supported 4.9.5 normal-shop weapon has `DELIVERTIME=0`; BuyWeapon already debits the
+ * wallet and creates permanent ownership in the preceding buffered subrequest. The stock
+ * client still calls `WeaponLevelsSetup.ActivateWeapon()` locally and queues action 128. This
+ * transition therefore validates that permanent ownership really exists, but intentionally
+ * changes no state and grants nothing. Treating it as an idempotent acknowledgement lets a
+ * repeated BufferId return the original result without turning activation into a second grant.
+ * Borrowed rental rows are rejected because their authority comes only from action 138 and a
+ * bounded trial; action 128 must never convert that temporary row into permanent ownership.
+ */
+export function activateWeaponState(
+  state: PlayerProgressionState,
+  payload: WeaponActivatePayload,
+): ItemInventoryMutationResult {
+  const definition = weaponDefinitionFor(payload.name);
+  const itemInventory = itemInventoryStateFor(state);
+  const weapon = definition ? itemInventory.levelManagerData.savedWeapons[definition.name] : undefined;
+  if (!definition) throw new ApiError(ITEM_PRICE_NOT_FOUND, "Weapon was not found.");
+  if (!weapon?.bought || weapon.borrowed) {
+    throw new ApiError(ITEM_WRONG_INDEX_TO_ACTIVATE, "A permanent weapon purchase must exist before activation.");
+  }
+  return { state, itemInventory, weapon, definition };
 }
 
 /**

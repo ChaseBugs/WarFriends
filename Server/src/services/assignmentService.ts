@@ -21,10 +21,12 @@ import {
   serializeStarterAssignmentsData,
 } from "./starterAssignmentService";
 import {
+  activateWeaponState,
   activateWeaponUpgradeState,
   equipWeaponState,
   instantWeaponUpgradeState,
   markWeaponShownState,
+  parseWeaponActivateData,
   parseWeaponUpgradeActivateData,
   parseWeaponUpgradeInstantData,
   parseWeaponUpgradePurchaseData,
@@ -106,6 +108,7 @@ const ASSIGNMENT_NOT_FOUND = 11201;
 const ASSIGNMENT_INCORRECT_REWARD = 11203;
 const MEGA_REWARD_POINTS = 50;
 const MAX_BUFFER_REPLAYS = 20;
+const MAX_PENDING_MESSAGE_IGNORES = 100;
 
 interface AssignmentTemplate {
   id: number;
@@ -438,15 +441,23 @@ function boundedReplayCache(
   return [...(existing ?? []).filter((entry) => entry.id !== item.id), item].slice(-MAX_BUFFER_REPLAYS);
 }
 
+function bufferedMessageId(value: string): string {
+  const id = value.trim();
+  if (id.length < 1 || id.length > 256 || /[\u0000-\u001f\u007f]/.test(id)) {
+    throw new ApiError(ApiErrorCode.UnknownAction, "Buffered message ID is invalid.");
+  }
+  return id;
+}
+
 /**
  * Process the stock RequestBuffer envelope in one progression transaction. Claim subrequests
  * are applied in numeric order and each receives the `ActionId`/`Result` object consumed by
  * OGLEHLIPEFM.JIMIKHFDEFC. The final serialized array is cached under BufferId, making a retry
  * after a lost response return the original result without crediting Gold again.
  *
- * SaveLastSeenSquadChatTimeStamp, ClaimStarterAssignment, achievement actions 218-220, and
- * the recovered weapon lifecycle, zero-delivery unit purchase/equip actions, and Elite-part
- * conversions are also supported because their managers append them to this same transport.
+ * SaveLastSeenSquadChatTimeStamp, IgnoreMessage, MessageWasShown, ClaimStarterAssignment,
+ * achievement actions 218-220, the recovered weapon lifecycle, zero-delivery unit purchase/equip
+ * actions, and Elite-part conversions are also supported because their managers use this transport.
  * Client progress, price, reward, ownership, and army-power fields are validation assertions,
  * not authority. Other buffered economy actions remain explicit per-item failures until their
  * resource rows and inventory lifecycles are recovered to the same standard.
@@ -529,6 +540,7 @@ export function processAssignmentBufferState(
 
     if (
       request.action === DbAction.BuyWeapon
+      || request.action === DbAction.ActivateWeapon
       || request.action === DbAction.EquipWeapon
       || request.action === DbAction.BuyWeaponUpgrade
       || request.action === DbAction.InstantWeaponUpgrade
@@ -546,6 +558,12 @@ export function processAssignmentBufferState(
             parseWeaponPurchaseData(request.data),
             now,
           ).state;
+        } else if (request.action === DbAction.ActivateWeapon) {
+          // All source-backed normal-shop rows activate immediately after BuyWeapon. The
+          // client nevertheless queues a distinct `{LevelName}` acknowledgement after its
+          // optimistic local ActivateWeapon call. Validate permanent ownership but do not
+          // debit, grant, or mutate again; the preceding BuyWeapon remains the sole authority.
+          working = activateWeaponState(working, parseWeaponActivateData(request.data)).state;
         } else if (request.action === DbAction.EquipWeapon) {
           // EquipWeapon is also optimistic on the client. Only the stored ownership record
           // and recovered slot-category mask are authoritative here; client ArmyPower is
@@ -888,6 +906,41 @@ export function processAssignmentBufferState(
       continue;
     }
 
+    if (request.action === DbAction.MessageWasShown) {
+      // MessageManager queues action 194 through RequestBuffer after a visible notification
+      // opens. The 1.6.0 request contains only MessageId and PlayerId and no durable gameplay
+      // transition consumes it. Acknowledge it explicitly so a legitimate mixed batch does
+      // not report UnknownAction; never trust the echoed player ID or change progression.
+      responses.push({ ActionId: request.action, Result: SUCCESS });
+      continue;
+    }
+
+    if (request.action === DbAction.IgnoreMessage) {
+      try {
+        const messageId = bufferedMessageId(request.data);
+        const pending = working.pendingMessageIgnores ?? [];
+        if (!pending.includes(messageId)) {
+          if (pending.length >= MAX_PENDING_MESSAGE_IGNORES) {
+            throw new ApiError(ApiErrorCode.UnknownAction, "Buffered message-ignore outbox is full.");
+          }
+          // The message collection cannot participate in this pure optimistic progression
+          // transition. Persist an outbox entry beside BufferId first; the HTTP handler then
+          // performs the recipient-filtered, idempotent message update and removes only IDs it
+          // completed. A crash leaves the entry available for the next identical buffer retry.
+          working = {
+            ...working,
+            revision: working.revision + 1,
+            pendingMessageIgnores: [...pending, messageId],
+          };
+        }
+        responses.push({ ActionId: request.action, Result: SUCCESS });
+      } catch (error) {
+        const code = error instanceof ApiError ? error.code : ApiErrorCode.InternalServerError;
+        responses.push({ ActionId: request.action, Result: code });
+      }
+      continue;
+    }
+
     if (
       request.action === DbAction.ClaimAchievement ||
       request.action === DbAction.ChangeAchievementOffset ||
@@ -1072,4 +1125,30 @@ export async function processAssignmentBuffer(
       playerLeagueTier,
       eventAssignment,
     ));
+}
+
+/** Remove only outbox entries whose recipient-filtered inbox writes have completed. */
+export function acknowledgeBufferedMessageIgnoresState(
+  state: PlayerProgressionState,
+  completedIds: readonly string[],
+): PlayerProgressionState {
+  const completed = new Set(completedIds);
+  const pending = state.pendingMessageIgnores ?? [];
+  const remaining = pending.filter((id) => !completed.has(id));
+  if (remaining.length === pending.length) return state;
+  const next: PlayerProgressionState = { ...state, revision: state.revision + 1 };
+  if (remaining.length > 0) next.pendingMessageIgnores = remaining;
+  else delete next.pendingMessageIgnores;
+  return next;
+}
+
+/** Persist acknowledgement of completed message-ignore outbox writes with revision safety. */
+export function acknowledgeBufferedMessageIgnores(
+  playerId: string,
+  completedIds: readonly string[],
+): Promise<AssignmentMutationResult> {
+  return mutateProgression(playerId, (state, now) => {
+    const next = acknowledgeBufferedMessageIgnoresState(state, completedIds);
+    return { state: next, assignments: assignmentStateFor(next, now) };
+  });
 }
