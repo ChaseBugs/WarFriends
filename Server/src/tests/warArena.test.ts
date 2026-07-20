@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { config } from "../config";
 import { claimAchievementState } from "../services/achievementService";
 import { DbAction } from "../dbActions";
 import { warArenaHandlers } from "../handlers/warArena";
@@ -98,7 +99,12 @@ test("WarArenaShown history stays bounded and never leaks into public WarArenaDa
 
 test("Arena battle receipts make wins replay-safe and reject conflicting replay results", () => {
   let state = enterWarArenaState(createInitialProgression(NOW), NOW, { usedGold: 0, opponents: [] }).state;
-  state = startWarArenaBattleState(state, NOW + 1, "arena-battle-1").state;
+  const enteredReplay = enterWarArenaState(state, NOW + 1, { usedGold: 0, opponents: [] });
+  assert.equal(enteredReplay.state, state, "entry replay must preserve state identity");
+  const started = startWarArenaBattleState(state, NOW + 1, "arena-battle-1");
+  state = started.state;
+  const startReplay = startWarArenaBattleState(state, NOW + 2, "arena-battle-1");
+  assert.equal(startReplay.state, state, "battle-start replay must preserve state identity");
   const won = settleWarArenaBattleState(state, NOW + 10, { battleId: "arena-battle-1", endReason: 2 });
   assert.equal(won.arena.wins, 1);
   assert.equal(won.arena.matches, 1);
@@ -108,6 +114,7 @@ test("Arena battle receipts make wins replay-safe and reject conflicting replay 
 
   const replay = settleWarArenaBattleState(won.state, NOW + 20, { battleId: "arena-battle-1", endReason: 2 });
   assert.equal(replay.replayed, true);
+  assert.equal(replay.state, won.state, "settlement replay must preserve state identity");
   assert.equal(replay.arena.wins, 1);
   assert.equal(replay.state.achievements?.data.find((group) => group.id === 3)?.value, 1);
   assert.deepEqual(replay.response, won.response);
@@ -147,6 +154,7 @@ test("three losses finish a run, scraps claim once, and the next entry charges T
   assert.equal(claimed.response.Scraps, arenaPolicy().guaranteedScraps);
   const replay = claimWarArenaScrapsState(claimed.state, NOW + 110, true);
   assert.equal(replay.replayed, true);
+  assert.equal(replay.state, claimed.state, "reward replay must preserve state identity");
   assert.equal(replay.state.scraps, arenaPolicy().guaranteedScraps);
 
   const next = enterWarArenaState(replay.state, NOW + 120, { usedGold: 0, opponents: [] });
@@ -164,6 +172,7 @@ test("heart purchase uses server price and duplicate life-take cannot consume tw
   assert.equal(firstTake.arena.lives, arenaPolicy().startingLives - 1);
   const duplicateTake = takeWarArenaLifeState(firstTake.state, NOW + 3);
   assert.equal(duplicateTake.replayed, true);
+  assert.equal(duplicateTake.state, firstTake.state, "life-take replay must preserve state identity");
   assert.equal(duplicateTake.arena.lives, arenaPolicy().startingLives - 1);
 
   // Move the same run to zero lives to exercise the exact direct-ticket heart path.
@@ -174,7 +183,19 @@ test("heart purchase uses server price and duplicate life-take cannot consume tw
   assert.equal(bought.response.ticketsSpent, arenaPolicy().heartTickets);
   const replay = buyWarArenaHeartState(bought.state, NOW + 20, { hearthPrice: arenaPolicy().heartTickets });
   assert.equal(replay.replayed, true);
+  assert.equal(replay.state, bought.state, "heart-purchase replay must preserve state identity");
   assert.equal(replay.state.tickets, bought.state.tickets);
+});
+
+test("expired Arena battle receipt is cleared without charging a life", () => {
+  let state = enterWarArenaState(createInitialProgression(NOW), NOW, { usedGold: 0, opponents: [] }).state;
+  state = startWarArenaBattleState(state, NOW + 1, "expired-arena-battle").state;
+  const livesBefore = state.warArena!.lives;
+  const cleared = takeWarArenaLifeState(state, NOW + 5 * 60 * 60);
+  assert.equal(cleared.replayed, true, "an expired receipt cannot prove an abandonment charge");
+  assert.equal(cleared.arena.lives, livesBefore);
+  assert.equal(cleared.arena.activeBattle, undefined);
+  assert.equal(cleared.state.revision, state.revision + 1, "receipt cleanup remains a real mutation");
 });
 
 test("final win grants the non-inventory fallback exactly once and closes the run", () => {
@@ -199,6 +220,7 @@ test("final win grants the non-inventory fallback exactly once and closes the ru
     battleId: `arena-win-${arenaPolicy().maxBattles - 1}`,
     endReason: 2,
   });
+  assert.equal(replay.state, state, "final settlement replay must preserve state identity");
   assert.equal(replay.state.scraps, arenaPolicy().guaranteedScraps);
   const next = enterWarArenaState(replay.state, NOW + 510, { usedGold: 0, opponents: [] });
   assert.equal(next.arena.runs, 2);
@@ -215,5 +237,30 @@ test("expired Arena settlement grants fallback scraps once and supplies NewArena
 
   const replay = endWarArenaState(ended.state, NOW + 1, oldArenaId);
   assert.equal(replay.response.Scraps, undefined);
+  assert.equal(replay.state, ended.state, "expired-event replay must preserve state identity");
   assert.equal(replay.state.scraps, arenaPolicy().guaranteedScraps);
+});
+
+test("zero-value expired Arena settlement still closes the run exactly once", () => {
+  const previousScraps = config.arenaGuaranteedScraps;
+  config.arenaGuaranteedScraps = 0;
+  try {
+    const previousMonth = Date.UTC(2026, 5, 30, 12, 0, 0) / 1_000;
+    const active = enterWarArenaState(
+      createInitialProgression(previousMonth),
+      previousMonth,
+      { usedGold: 0, opponents: [] },
+    ).state;
+    const ended = endWarArenaState(active, NOW, active.warArena!.arenaId);
+    assert.equal(ended.replayed, false);
+    assert.equal(ended.response.Scraps, undefined);
+    assert.equal(ended.state.revision, active.revision + 1);
+    assert.equal(ended.state.warArena?.runRewardClaimed, true);
+
+    const replay = endWarArenaState(ended.state, NOW + 1, active.warArena!.arenaId);
+    assert.equal(replay.replayed, true);
+    assert.equal(replay.state, ended.state);
+  } finally {
+    config.arenaGuaranteedScraps = previousScraps;
+  }
 });

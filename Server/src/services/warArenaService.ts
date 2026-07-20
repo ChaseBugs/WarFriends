@@ -194,7 +194,9 @@ export function enterWarArenaState(
 
   if (runIsActive(arena, now)) {
     const response = arena.lastEntryResponse ?? { WarArenaData: serializeWarArenaData(arena) };
-    return { state: withArena(state, arena), arena, response: cloneResponse(response), replayed: true };
+    // The entry receipt already contains the exact client-visible debit snapshot. A transport
+    // retry must return it without advancing revision or replacing an identical progression.
+    return { state, arena, response: cloneResponse(response), replayed: true };
   }
   if (arena.arenaId && arena.arenaId !== arenaId && !arena.runRewardClaimed) {
     throw new ApiError(ApiErrorCode.UnknownAction, "The expired Arena run must be settled first.");
@@ -262,28 +264,29 @@ export function startWarArenaBattleState(
 
   const settled = arena.recentSettlements.find((item) => item.battleId === battleId);
   if (settled) {
-    return { state: withArena(state, arena), arena, response: cloneResponse(settled.response), replayed: true };
+    return { state, arena, response: cloneResponse(settled.response), replayed: true };
   }
   if (arena.activeBattle && arena.activeBattle.battleId !== battleId) {
     throw new ApiError(ApiErrorCode.UnknownAction, "Another War Arena battle is already active.");
   }
-  const replayed = arena.activeBattle?.battleId === battleId;
-  arena.activeBattle ??= { battleId, startedAt: now, arenaId: arena.arenaId };
-  if (!replayed) {
-    // Once gameplay starts, a later EnterArena call is not a transport retry of the paid
-    // entry. Dropping the charged response prevents Unity from subtracting the price twice
-    // and prevents an old wins=0 JSON snapshot from overwriting current run progress.
-    arena.lastEntryResponse = undefined;
-    // Likewise, a bought heart has now been consumed by a real battle. If that battle ends
-    // quickly, the player may legitimately buy another heart inside the 60-second window.
-    arena.lastHeartPurchaseAt = undefined;
-    arena.lastHeartResponse = undefined;
+  if (arena.activeBattle?.battleId === battleId) {
+    return { state, arena, response: { BattleId: battleId }, replayed: true };
   }
+
+  arena.activeBattle = { battleId, startedAt: now, arenaId: arena.arenaId };
+  // Once gameplay starts, a later EnterArena call is not a transport retry of the paid
+  // entry. Dropping the charged response prevents Unity from subtracting the price twice
+  // and prevents an old wins=0 JSON snapshot from overwriting current run progress.
+  arena.lastEntryResponse = undefined;
+  // Likewise, a bought heart has now been consumed by a real battle. If that battle ends
+  // quickly, the player may legitimately buy another heart inside the 60-second window.
+  arena.lastHeartPurchaseAt = undefined;
+  arena.lastHeartResponse = undefined;
   return {
     state: withArena(state, arena),
     arena,
     response: { BattleId: battleId },
-    replayed,
+    replayed: false,
   };
 }
 
@@ -304,7 +307,7 @@ export function settleWarArenaBattleState(
     if (replay.endReason !== input.endReason) {
       throw new ApiError(ApiErrorCode.UnknownAction, "BattleId was already settled with another result.");
     }
-    return { state: withArena(state, arena), arena, response: cloneResponse(replay.response), replayed: true };
+    return { state, arena, response: cloneResponse(replay.response), replayed: true };
   }
 
   const receipt = arena.activeBattle;
@@ -393,7 +396,7 @@ export function buyWarArenaHeartState(
     && arena.lastHeartPurchaseAt !== undefined
     && now - arena.lastHeartPurchaseAt <= HEART_REPLAY_WINDOW_SECONDS
   ) {
-    return { state: withArena(state, arena), arena, response: cloneResponse(arena.lastHeartResponse), replayed: true };
+    return { state, arena, response: cloneResponse(arena.lastHeartResponse), replayed: true };
   }
   if (arena.arenaId !== currentArenaId(now) || arena.lives !== 0 || arena.wins >= values.maxBattles) {
     throw new ApiError(ApiErrorCode.UnknownAction, "An extra Arena life cannot be bought now.");
@@ -439,6 +442,7 @@ export function takeWarArenaLifeState(
   const consumedReceipt = Boolean(
     arena.activeBattle && now - arena.activeBattle.startedAt <= BATTLE_RECEIPT_LIFETIME_SECONDS,
   );
+  let clearedExpiredReceipt = false;
   if (consumedReceipt) {
     arena.activeBattle = undefined;
     arena.lives = Math.max(0, arena.lives - 1);
@@ -446,11 +450,15 @@ export function takeWarArenaLifeState(
   } else if (arena.activeBattle) {
     // Expired proof cannot cost a life, but it also must not block every future start.
     arena.activeBattle = undefined;
+    clearedExpiredReceipt = true;
   }
   // A duplicate action without a live receipt returns the current value but cannot remove
   // another life. ELDJABHIMEP only requires ArenaLives and invokes the result parser at zero.
   const response = { ArenaLives: arena.lives, ArenaWins: arena.wins, TopRun: arena.topRun, Flawless: arena.flawless };
-  return { state: withArena(state, arena), arena, response, replayed: !consumedReceipt };
+  // A true duplicate has no receipt and returns the exact input state. Clearing an expired
+  // receipt is still a real maintenance mutation even though no life was consumed.
+  const next = consumedReceipt || clearedExpiredReceipt ? withArena(state, arena) : state;
+  return { state: next, arena, response, replayed: !consumedReceipt };
 }
 
 /** Claim the configured currency fallback after a run is out of lives or fully won. */
@@ -461,7 +469,7 @@ export function claimWarArenaScrapsState(
 ): ArenaMutationResult {
   const arena = warArenaStateFor(state);
   if (arena.runRewardClaimed && arena.lastRunRewardResponse) {
-    return { state: withArena(state, arena), arena, response: cloneResponse(arena.lastRunRewardResponse), replayed: true };
+    return { state, arena, response: cloneResponse(arena.lastRunRewardResponse), replayed: true };
   }
   if (arena.lives > 0 && arena.wins < arenaPolicy().maxBattles) {
     throw new ApiError(ApiErrorCode.UnknownAction, "The current Arena run is not finished.");
@@ -480,6 +488,8 @@ export function claimWarArenaScrapsState(
   };
   arena.lastRunRewardResponse = cloneResponse(response);
   return {
+    // Claim state must persist even when an operator configures a zero-value fallback; otherwise
+    // the same finished run remains perpetually claimable.
     state: withArena({ ...state, scraps: state.scraps + scraps }, arena),
     arena,
     response,
@@ -499,17 +509,21 @@ export function endWarArenaState(
   }
 
   let scraps = 0;
+  let settledExpiredRun = false;
   if (arena.arenaId === requestedArenaId && !arena.runRewardClaimed) {
     scraps = arenaPolicy().guaranteedScraps;
     arena.runRewardClaimed = true;
+    settledExpiredRun = true;
   }
   const response: Record<string, unknown> = { NewArena: warArenaConfiguration(now) };
   if (scraps > 0) response.Scraps = scraps;
   return {
-    state: withArena({ ...state, scraps: state.scraps + scraps }, arena),
+    // Settlement and reward amount are separate facts. A zero-value operator policy must still
+    // persist runRewardClaimed, whereas a genuine replay must preserve state identity.
+    state: settledExpiredRun ? withArena({ ...state, scraps: state.scraps + scraps }, arena) : state,
     arena,
     response,
-    replayed: scraps === 0,
+    replayed: !settledExpiredRun,
   };
 }
 
