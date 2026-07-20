@@ -379,7 +379,8 @@ Working end-to-end (verified live):
   social/platform actions still requires provider integration.
 - **Assignments**: `GetNewAssignments`, both skip actions, assignment/mega claims, and the
   stock `SendRequestBuffer` path use a persistent UTC cycle. Only objectives derived from
-  confirmed PvP settlement advance; buffered claim retries are idempotent by `BufferId`, return
+  confirmed PvP settlement advance. Same-day `GetNewAssignments` reads preserve progression
+  identity while the UTC rollover persists once; buffered claim retries are idempotent by `BufferId`, return
   the cached response without a revision/write, and never roll an unrelated UTC cycle.
 - **Limited-time Event Assignments (authoritative claim foundation)**: client actions `222`/`223`
   belong to the separate Christmas-style `EventAssignmentManager`, not Squad Events. A strict,

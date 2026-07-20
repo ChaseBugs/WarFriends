@@ -4,6 +4,7 @@ import { DbAction } from "../dbActions";
 import {
   assignmentStateFor,
   claimAssignmentState,
+  ensureAssignmentsState,
   processAssignmentBufferState,
   recordPvpAssignmentProgressState,
 } from "../services/assignmentService";
@@ -27,6 +28,20 @@ test("assignment cycle is stable for one UTC day and rolls at midnight", () => {
   assert.equal(nextDay.completed, 0);
   assert.equal(nextDay.megaReward, 17);
   assert.notEqual(nextDay.dayKey, first.dayKey);
+});
+
+test("GetNewAssignments writes only when its UTC cycle changes", () => {
+  const initial = createInitialProgression(NOW);
+  const created = ensureAssignmentsState(initial, NOW);
+  assert.notEqual(created.state, initial);
+
+  const sameDay = ensureAssignmentsState(created.state, NOW + 60);
+  assert.equal(sameDay.state, created.state);
+
+  const nextDay = ensureAssignmentsState(created.state, Date.UTC(2026, 6, 20, 0, 0, 1) / 1_000);
+  assert.notEqual(nextDay.state, created.state);
+  assert.equal(nextDay.state.revision, created.state.revision + 1);
+  assert.equal(nextDay.assignments.dayKey, "2026-07-20");
 });
 
 test("only server-confirmed PvP facts advance assignment objectives", () => {

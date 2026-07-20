@@ -221,8 +221,13 @@ export function serializeAssignmentData(assignments: AssignmentState): string {
 /** Create or refresh the daily cycle without changing any balance. */
 export function ensureAssignmentsState(state: PlayerProgressionState, now: number): AssignmentMutationResult {
   const assignments = assignmentStateFor(state, now);
+  const existing = state.assignments;
+  const unchanged = existing?.dayKey === assignments.dayKey && existing.tomorrow === assignments.tomorrow;
   return {
-    state: { ...state, revision: state.revision + 1, assignments },
+    // assignmentStateFor clones its records for safe downstream mutation. GetNewAssignments is
+    // nevertheless only a read while the same UTC cycle is active, so retain state identity and
+    // write only when the cycle is first created or actually rolls at midnight.
+    state: unchanged ? state : { ...state, revision: state.revision + 1, assignments },
     assignments,
   };
 }
