@@ -19,6 +19,7 @@ import { getSquadEventWireFields } from "../services/squadEventService";
 import logger from "../utils/logger";
 import { playerLeagueBootFields } from "../services/playerLeagueContract";
 import { advanceRentalAfterBattle } from "../services/rentalService";
+import { VIP_LOOTBOX_MATCH_INTERVAL } from "../services/vipLootboxService";
 
 // PvP match lifecycle reported to the meta server. Live event traffic runs over /hub, while
 // these actions preserve compatibility with the recovered client's Photon-era REST calls.
@@ -210,7 +211,14 @@ export const matchHandlers: Record<number, HandlerEntry> = {
         rewardReceipt?.baseExperience ?? rewardReceipt?.experience ?? 0,
         rewardReceipt?.baseGold ?? rewardReceipt?.gold ?? 0,
         rewardReceipt?.isVip ?? false,
+        rewardReceipt?.newVisuals,
       ),
+      // OGLEHLIPEFM stores this outer field directly in PlayerAnalyticsData. Prefer the
+      // immutable settlement receipt so a delayed retry returns the exact countdown that
+      // accompanied its lootboxes even if later matches have already advanced live state.
+      MatchesToNextLootboxes: rewardReceipt?.matchesToNextLootboxes
+        ?? progression?.matchesToNextLootboxes
+        ?? VIP_LOOTBOX_MATCH_INTERVAL,
       // Level is not a normal snapshot field in this callback: its presence means level-up.
       // Omit it while the level is unchanged, but always provide LevelExperience.
       ...pvpLevelFields(

@@ -17,6 +17,7 @@ import {
   squadEventConfigHash,
   type SquadEventProjectionStatus,
 } from "./squadEventService";
+import { applyVipBattleLootboxState } from "./vipLootboxService";
 
 /**
  * Persistent PvP match lifecycle and reward settlement.
@@ -175,6 +176,7 @@ export function pvpGameReward(
   battleExperience = 0,
   gameGold = 0,
   isVip = false,
+  newVisuals?: string,
 ): Record<string, unknown> {
   return {
     Xp: {
@@ -193,6 +195,10 @@ export function pvpGameReward(
     // component when this flag is true, so it must describe an immutable settlement receipt
     // rather than the account's current VIP state at response/retry time.
     IsVip: resultAvailable && isVip,
+    // NewVisuals is itself a JSON dictionary string, not a nested object. Include it only in
+    // the immutable successful receipt; an empty key makes some recovered end-screen paths
+    // try to open a suitcase dialog with no entries.
+    ...(resultAvailable && newVisuals ? { NewVisuals: newVisuals } : {}),
   };
 }
 
@@ -249,6 +255,12 @@ export interface MatchPlayerReward {
   gold: number;
   /** Immutable settlement-time entitlement; later expiry must not rewrite a retry receipt. */
   isVip: boolean;
+  /** Authoritative countdown after this participant's confirmed settlement. */
+  matchesToNextLootboxes: number;
+  /** Exact JSON string for GameReward.NewVisuals; absent when this match did not grant boxes. */
+  newVisuals?: string;
+  /** Duplicate overflow already committed to progression.warBucks in the same transaction. */
+  lootboxWarBucks: number;
   levelFrom: number;
   levelTo: number;
   levelExperience: number;
@@ -291,18 +303,22 @@ async function settlePlayerCore(
   const squadPoints = won && player.player.squadName ? REWARDS.winSquadPoints : 0;
   const consumed = consumePvpUsedCardsState(initialState, usedCards);
   const leveled = applyLevelExperienceState(consumed.state, player.player.level, experience);
+  // Advance the periodic paid-VIP benefit before constructing the canonical progression.
+  // This pure transition persists its countdown, visual parts, and duplicate WarBucks in the
+  // same guarded player write and exposes presentation data for the immutable match receipt.
+  const vipLootboxes = applyVipBattleLootboxState(leveled.state, isVip);
   const baseGold = leveled.goldGranted;
   const gold = pvpLevelGoldAmount(baseGold, isVip);
   const vipLevelGoldBonus = gold - baseGold;
-  if (leveled.state.gold > Number.MAX_SAFE_INTEGER - vipLevelGoldBonus) {
+  if (vipLootboxes.state.gold > Number.MAX_SAFE_INTEGER - vipLevelGoldBonus) {
     throw new Error("PvP VIP level Gold balance overflowed.");
   }
   // applyLevelExperienceState grants the source row's base Gold. Add only the VIP delta here
   // so the level transition remains reusable and the progression wallet equals the amount
   // IIGFODGJBFA adds after applying its VipGoldMultiplier to GameGold.
   const canonical = canonicalProgression({
-    ...leveled.state,
-    gold: leveled.state.gold + vipLevelGoldBonus,
+    ...vipLootboxes.state,
+    gold: vipLootboxes.state.gold + vipLevelGoldBonus,
   });
   const levelChanged = leveled.levelTo !== leveled.levelFrom;
   const nextArmyPower = levelChanged
@@ -365,6 +381,9 @@ async function settlePlayerCore(
       baseGold,
       gold,
       isVip,
+      matchesToNextLootboxes: vipLootboxes.matchesToNextLootboxes,
+      newVisuals: vipLootboxes.newVisuals,
+      lootboxWarBucks: vipLootboxes.duplicateWarBucks,
       levelFrom: leveled.levelFrom,
       levelTo: leveled.levelTo,
       levelExperience: leveled.levelExperience,

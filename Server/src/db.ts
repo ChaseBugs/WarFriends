@@ -79,6 +79,16 @@ export interface PlayerProgressionState {
    */
   vipExpiration?: number;
   /**
+   * Confirmed VIP PvP battles remaining before the next two visual-part lootboxes.
+   *
+   * The recovered PlayerAnalyticsData field is named `matchesToNextLootboxes`, and the
+   * 4.9.5 Constants row `LootboxAfterBattles` decodes to four. The value is private economy
+   * authority even though it is projected into PlayerAnalyticsData and GameEnded: only an
+   * atomically settled match may decrement it, while reconnects and client analytics writes
+   * must never advance or reset the cycle.
+   */
+  matchesToNextLootboxes?: number;
+  /**
    * Private once-per-UTC-day cursor for the two paid-VIP War Cards.
    *
    * This state is deliberately not part of CardManagerData. Unity receives the granted cards

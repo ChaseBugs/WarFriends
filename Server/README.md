@@ -163,7 +163,11 @@ Working end-to-end (verified live):
   `EquipDecal`, `DecalWasShown`, and `VisualWasShown` validate source, price, category, VIP,
   ownership, expiry, and shop eligibility. Gold/WarBucks debit, permanent or timed ownership,
   four-slot equipment, notification state, rollback data, and `BufferId` replay protection are
-  atomic. Event/Arena/loyalty/assignment/value-pack grants, parts, visual rentals, and unsupported
+  atomic. Confirmed active-VIP PvP settlement also owns the source-defined four-battle countdown
+  and two one-part suitcase rewards: parts, exact duplicate WarBucks, `NewVisuals`, and immutable
+  retry receipts commit in the terminal match transaction. The retired production weights are
+  unavailable, so selection is explicitly reconstructed as uniform across the 73 normal-shop
+  part rows; event/Arena/loyalty/assignment/value-pack grants, visual rentals, and unsupported
   discounts remain fail-closed. Run `npm run verify:visual-catalog` to compare the artifact with
   MainScene.
 - **VIP purchase and expiry authority**: action `114` validates `VIP_1` through `VIP_4` against
@@ -175,8 +179,11 @@ Working end-to-end (verified live):
   daily War Cards through the recovered `VipReward1`/`VipReward2` response contract: each draw is
   Gold with the source-decoded 75% chance and Silver otherwise, while an atomic UTC cursor prevents
   reconnect, renewal, and concurrent-fetch duplicates. Login, VIP purchase, and daily-calendar
-  claims use their exact outer/nested parser locations. Nonzero VIP discounts stay rejected until
-  retired Fusebox offer definitions are recovered into a server allowlist.
+  claims use their exact outer/nested parser locations. The periodic benefit advances only on
+  confirmed active-VIP PvP, resets after four battles, grants two independently selected visual
+  parts, preserves duplicate `_#n-VIP` wire entries, and restores its countdown through
+  `PlayerAnalyticsData`. Nonzero VIP discounts stay rejected until retired Fusebox offer
+  definitions are recovered into a server allowlist.
 - **War Card inventory and card packs**: exact `CardManagerData` is persisted and returned at boot.
   `scripts/Extract-CardCatalog.mjs` reproduces 58 playable cards, 25 unresolved definitions, and
   four source-priced packs from MainScene. Buffered `BuyCardPack` validates unlock level, pack,
@@ -334,8 +341,9 @@ allowlist of analytics/impression actions is safely ignored.
   compatible replacement transport.
 - **Item economy expansion** — unit Elite upgrades, normal shop visuals, normal card-pack
   purchase, dedicated Black Market weapons, daily weapon/unit rentals, and complete active-loadout
-  ArmyPower are implemented. Add authoritative card reward and consumption events, server-selected card/Buddy RNG,
-  the remaining periodic VIP lootbox benefit, and non-shop visual reward delivery. Normal unit purchase is authoritative for 23
+  ArmyPower and periodic VIP visual-part lootboxes are implemented. Add authoritative card reward
+  and consumption events, server-selected card/Buddy RNG, and non-shop visual reward delivery.
+  Normal unit purchase is authoritative for 23
   non-tutorial roster units, and the tutorial unit is persisted through its first equip event;
   three helper rows and 18 ArmyUpgrades rows without LevelManager objects remain closed. All 84
   resolvable shop weapons and 81 concrete Black Market weapons support authoritative equip/upgrade

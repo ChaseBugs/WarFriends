@@ -523,6 +523,13 @@ test("PvP VIP receipts expose base XP while settlement persists the exact 50 per
     GameGold: { BattleRewards: 7, League: 0, offerMult: 1 },
     IsVip: true,
   });
+  assert.deepEqual(pvpGameReward(true, 30, 7, true, '{"HEAD_CLOWN-VIP":"1"}'), {
+    Xp: { BattleRewards: 30, ExtraRewards: 0, Winstreak: 0, Time: 0, offerMult: 1 },
+    GameGold: { BattleRewards: 7, League: 0, offerMult: 1 },
+    IsVip: true,
+    NewVisuals: '{"HEAD_CLOWN-VIP":"1"}',
+  });
+  assert.equal(pvpGameReward(false, 30, 7, true, "{}").NewVisuals, undefined);
 });
 
 test("PvP Level is emitted only when the server actually advances the level", () => {

@@ -5,6 +5,7 @@ import { createInitialVisualInventory } from "./visualInventoryService";
 import { createInitialCardCrafting, createInitialCardInventory } from "./cardInventoryService";
 import { warArenaConfiguration, warArenaWireData } from "./warArenaContract";
 import { playerLeagueBootFields } from "./playerLeagueContract";
+import { VIP_LOOTBOX_MATCH_INTERVAL } from "./vipLootboxService";
 
 /** Unix seconds are used throughout the recovered Beanstalk protocol. */
 export function unixNow(): number {
@@ -40,6 +41,7 @@ export function createInitialProgression(
     dogTagRefillSeconds: safeRefillSeconds,
     vipStart: 0,
     vipExpiration: 0,
+    matchesToNextLootboxes: VIP_LOOTBOX_MATCH_INTERVAL,
     itemInventory: createInitialItemInventory(),
     visualInventory: createInitialVisualInventory(),
     cardInventory: createInitialCardInventory(),
@@ -66,6 +68,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
     return {
       ...state,
       vipExpiration: state.vipExpiration ?? player.player.vipExpiration ?? 0,
+      matchesToNextLootboxes: state.matchesToNextLootboxes ?? VIP_LOOTBOX_MATCH_INTERVAL,
       itemInventory: state.itemInventory ?? createInitialItemInventory(),
       visualInventory: state.visualInventory ?? createInitialVisualInventory(),
       cardInventory: state.cardInventory ?? createInitialCardInventory(),
@@ -87,6 +90,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
     dogTagMax: cap * refillSeconds,
     dogTagRefillSeconds: refillSeconds,
     vipExpiration: state.vipExpiration ?? player.player.vipExpiration ?? 0,
+    matchesToNextLootboxes: state.matchesToNextLootboxes ?? VIP_LOOTBOX_MATCH_INTERVAL,
     itemInventory: state.itemInventory ?? createInitialItemInventory(),
     visualInventory: state.visualInventory ?? createInitialVisualInventory(),
     cardInventory: state.cardInventory ?? createInitialCardInventory(),
@@ -302,6 +306,10 @@ export function buildPlayerData(player: PlayerDocument): PlayerDataMap {
   addSerializedObject(data, "PlayerAnalyticsData", {
     lastSeenSquadChatTimeStampDB: state.lastSeenSquadChatTimestamp ?? 0,
     squadCreationsCount: state.squadCreationsCount ?? 0,
+    // PlayerAnalytics.remainingMatchesToNextLootbox renders this countdown before the next
+    // match. Sending the server-owned value on boot prevents reconnecting from restoring the
+    // client's local zero/default and accidentally desynchronizing the four-battle cycle.
+    matchesToNextLootboxes: state.matchesToNextLootboxes ?? VIP_LOOTBOX_MATCH_INTERVAL,
   });
 
   if (dto.facebookId !== -1) data.FacebookName = { S: dto.accountName };

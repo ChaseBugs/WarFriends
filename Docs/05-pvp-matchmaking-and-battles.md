@@ -102,10 +102,12 @@ player's 30/10 XP to current `LevelExperience`; every crossed row subtracts its 
 the zero-based `DatabasePlayer.Level`, and credits its `REWARDGOLD`. The new level's rank power is
 then included in a full authoritative Army Power recomputation.
 
-Level progress, Gold, public level, Army Power, card consumption, match rewards, and the terminal
-match state share the same MongoDB transaction. The match stores an immutable per-player receipt
-containing XP, Gold, old/new level, and remaining level XP. A finished `GameEnded` retry can
-therefore reproduce the original `GameReward.GameGold` and conditional `Level` response without
+Level progress, Gold, public level, Army Power, card consumption, periodic VIP visual parts,
+duplicate WarBucks, match rewards, and the terminal match state share the same MongoDB transaction.
+The match stores an immutable per-player receipt containing XP, Gold, old/new level, remaining
+level XP, the post-match VIP lootbox countdown, and the exact optional `GameReward.NewVisuals`
+dictionary string. A finished `GameEnded` retry can therefore reproduce the original
+`GameReward.GameGold`, conditional `Level`, `MatchesToNextLootboxes`, and suitcase pair without
 granting anything twice. At source level 58 there is no next row, so XP may continue accumulating
 but no repeated max-level Gold is granted.
 
