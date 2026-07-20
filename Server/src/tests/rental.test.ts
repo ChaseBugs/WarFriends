@@ -104,6 +104,20 @@ test("weapon rental is borrowable for one trial, becomes a post-battle sale, and
   assert.equal(sale.saleOffer?.accepted, 3);
   assert.equal(sale.state.itemInventory?.levelManagerData.savedWeapons[id], undefined);
   assert.deepEqual(sale.state.itemInventory?.inventoryData.slots[String(slotIndex)], previous);
+  const saleReplay = advanceRentalAfterBattleState(sale.state, "rental-battle", NOW + 4);
+  assert.equal(saleReplay.state, sale.state, "post-battle sale replay must not advance revision");
+  assert.deepEqual(saleReplay.saleOffer, sale.saleOffer);
+});
+
+test("post-battle rental hook is a true no-op without eligible rental authority", () => {
+  const initial = fundedState();
+  assert.equal(advanceRentalAfterBattleState(initial, "battle-without-rental", NOW).state, initial);
+  assert.equal(advanceRentalAfterBattleState(initial, "", NOW).state, initial);
+
+  const offered = issueType(0);
+  const ignored = advanceRentalAfterBattleState(offered.state, "battle-before-trial", NOW + 1);
+  assert.equal(ignored.state, offered.state);
+  assert.equal(ignored.saleOffer, undefined);
 });
 
 test("discounted rental purchase is server-priced, permanent, and idempotent for both item families", () => {

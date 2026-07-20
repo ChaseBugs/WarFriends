@@ -417,21 +417,20 @@ export function advanceRentalAfterBattleState(
   now: number,
 ): RentalMutationResult {
   const rental = state.rental;
-  // `mutateProgression` requires a real revision change to distinguish a successful
-  // optimistic write from MongoDB's `modifiedCount === 0`. A match response can race with
-  // action 138 or GetPlayerData after its caller inspected an older snapshot, so even the
-  // resulting no-op advances the revision and lets that race complete without four false
-  // concurrency retries. No wallet, inventory, or public rental field changes in this branch.
-  if (!rental || !battleId) return { state: { ...state, revision: state.revision + 1 } };
+  // The optimistic mutation helper now recognizes exact-state no-ops. Returning `state` is also
+  // the correct race behavior: if action 138 or GetPlayerData changed the rental after the match
+  // handler inspected it, this transition observes that newer snapshot and acknowledges it
+  // without inventing a revision or replacing MongoDB with identical progression.
+  if (!rental || !battleId) return { state };
   if (rental.status === "sale" && rental.saleBattleId === battleId && rental.saleExpiresAt > now) {
     return {
-      state: { ...state, revision: state.revision + 1 },
+      state,
       rental,
       saleOffer: saleWire(rental),
     };
   }
   if (rental.status !== "trial" || rental.trialExpiresAt <= now) {
-    return { state: { ...state, revision: state.revision + 1 }, rental };
+    return { state, rental };
   }
 
   const cleared = clearBorrowedItem(state, rental);
