@@ -93,6 +93,13 @@ Working end-to-end (verified live):
   unlink behavior. First-time `CreateGcAccount` commits the player and identity in one transaction,
   returns separate platform/session credentials, and supplies the recovered `15400` existing-account
   profile contract. Remaining response-contract work is tracked in `BACKEND_FEATURES.md`.
+- **Bootcamp/tutorial lifecycle**: authenticated actions `119` and `120` persist one
+  server-issued tutorial battle receipt and consume it only for the recovered Win end reason.
+  Completion establishes the XOR-decoded MainScene minimums of 75 Gold and 15,000 WarBucks,
+  starts the single placement match, and restores the presence-sensitive `TutorialData` marker
+  on every later `GetPlayerData`. Client-echoed score, boxes, cards, wallet, and Army Power are
+  ignored because the offline tutorial cannot prove them. Retries cannot refill spent currency;
+  old no-receipt accounts may migrate once only with the stock empty `BattleId`.
 - **HTTP abuse boundary**: every non-health API request passes through a continuously refilled,
   memory-bounded token bucket keyed by an HMAC-hidden client address. Reverse-proxy addresses are
   trusted only when `TRUST_PROXY_HOPS` is explicitly configured; rejected bursts receive HTTP 429
@@ -287,8 +294,9 @@ Working end-to-end (verified live):
   BufferId-replay-safe. Issued offers currently use recovered feature index 0; the original
   remote selection weights, trigger schedule, feature weights, and OfferManager discount
   entitlements remain reconstruction gaps.
-- **Daily weapon and unit rentals**: GetPlayerData issues the exact outer `Rental` object once
-  the zero-based player level reaches display rank 4. The 4.9.5 MainScene values decode to a
+- **Daily weapon and unit rentals**: GetPlayerData issues the exact outer `Rental` object only
+  after durable tutorial completion and once the zero-based player level reaches display rank 4.
+  The 4.9.5 MainScene values decode to a
   20-25% sale, a 12-hour free trial, a 24-hour offer, and 0/2/7 visual/weapon/unit weights;
   visual rentals are therefore deliberately not generated. Action `138` accepts only the
   recovered `buyRentalDiscounted` Boolean and returns the nested `RequestsResults` string

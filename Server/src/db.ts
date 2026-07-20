@@ -78,6 +78,10 @@ export interface PlayerProgressionState {
    * inventory are one optimistic transaction. The response adapter retains a legacy fallback.
    */
   vipExpiration?: number;
+  /** True only after the authenticated account completes action 120 once. */
+  tutorialFinished?: boolean;
+  /** Server-issued tutorial battle receipt consumed by TutorialEnded. */
+  tutorialBattle?: TutorialBattleState;
   /**
    * Confirmed VIP PvP battles remaining before the next two visual-part lootboxes.
    *
@@ -257,6 +261,11 @@ export interface PlayerProgressionState {
 export interface PvpWinStreakState {
   winCount: number;
   timestamp: number;
+}
+
+export interface TutorialBattleState {
+  battleId: string;
+  startedAt: number;
 }
 
 /** Immutable action-199 result fields needed by the recovered OGLEHLIPEFM parser. */

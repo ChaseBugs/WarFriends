@@ -202,6 +202,15 @@ export function ensureRentalOfferState(
   playerLevel: number,
   now: number,
 ): RentalMutationResult {
+  if (!state.tutorialFinished) {
+    // The recovered rental gate explicitly requires both level 4 and a finished tutorial.
+    // GetPlayerData must not issue a valuable free trial to an unfinished account even if a
+    // modified/debug client has raised its visible level. Remove any legacy borrowed row too.
+    if (!state.rental) return { state };
+    const cleared = clearBorrowedItem(state, state.rental);
+    const { rental: _rental, ...withoutRental } = cleared;
+    return { state: { ...withoutRental, revision: state.revision + 1 } };
+  }
   let working = state;
   let previousGeneration = Math.max(0, Math.floor(state.rental?.generation ?? 0));
   const current = state.rental;

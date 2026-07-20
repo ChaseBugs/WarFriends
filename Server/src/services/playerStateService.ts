@@ -46,6 +46,7 @@ export function createInitialProgression(
     dogTagRefillSeconds: safeRefillSeconds,
     vipStart: 0,
     vipExpiration: 0,
+    tutorialFinished: false,
     matchesToNextLootboxes: VIP_LOOTBOX_MATCH_INTERVAL,
     collectedRewards: {},
     itemInventory: createInitialItemInventory(),
@@ -346,6 +347,12 @@ export function buildPlayerData(player: PlayerDocument, now = unixNow()): Player
     instantBattles: state.instantBattle?.instantBattles ?? 0,
     paidInstantBattles: state.instantBattle?.paidInstantBattles ?? 0,
   });
+
+  if (state.tutorialFinished) {
+    // NCNNKGNJNOH uses only the presence of this Dynamo-style key to leave tutorial mode,
+    // stop all bootcamp managers, and unlock nonlocal asset bundles after a reconnect.
+    data.TutorialData = stringAttribute({});
+  }
 
   if (dto.facebookId !== -1) data.FacebookName = { S: dto.accountName };
   return data;

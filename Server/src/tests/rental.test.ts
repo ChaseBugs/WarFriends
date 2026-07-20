@@ -29,7 +29,12 @@ const NOW = 1_900_000_000;
 const SLOT_MASKS = [263, 1064, 592, 128] as const;
 
 function fundedState(): PlayerProgressionState {
-  return { ...createInitialProgression(NOW), gold: 10_000_000, warBucks: 10_000_000 };
+  return {
+    ...createInitialProgression(NOW),
+    gold: 10_000_000,
+    warBucks: 10_000_000,
+    tutorialFinished: true,
+  };
 }
 
 function issueType(type: RentalItemType) {
@@ -55,6 +60,17 @@ test("GetPlayerData rental generation uses the recovered duration, discount, and
   const replay = ensureRentalOfferState(issued.state, "rental-wire", 50, NOW + 60);
   assert.equal(replay.rental?.id, issued.rental.id);
   assert.deepEqual(replay.bootOffer, issued.bootOffer);
+});
+
+test("rental generation requires durable tutorial completion even at an eligible level", () => {
+  const unfinished = {
+    ...fundedState(),
+    tutorialFinished: false,
+  };
+  const result = ensureRentalOfferState(unfinished, "unfinished-rental", 50, NOW);
+  assert.equal(result.state, unfinished);
+  assert.equal(result.rental, undefined);
+  assert.equal(result.bootOffer, undefined);
 });
 
 test("weapon rental is borrowable for one trial, becomes a post-battle sale, and restores its slot", () => {
