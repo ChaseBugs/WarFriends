@@ -296,6 +296,13 @@ Working end-to-end (verified live):
   `dailyRewardData` calendar contract, one UTC-day unlock, ordered atomic Gold grants, and
   replay-safe claim cursors. Reward amounts are conservative environment-tunable defaults
   because the original remote live-ops reward sheet is not present in the recovered APK.
+- **One-time rewards**: action `161` accepts only the three source-backed Facebook Like, Twitter
+  Follow, and notification-permission DBKEYs; the separate Facebook-login reward requires a
+  successful authenticated provider link. The server credits their exact decoded Gold values once
+  and restores claim markers through `PlayerAnalyticsData.collectedRewards`. The
+  response omits the presence-sensitive `WasAdded` property on replay so the stock parser cannot
+  add local currency twice. Unknown/tutorial rows remain closed instead of receiving guessed
+  values, and production proof of the external social action still requires provider integration.
 - **Assignments**: `GetNewAssignments`, both skip actions, assignment/mega claims, and the
   stock `SendRequestBuffer` path use a persistent UTC cycle. Only objectives derived from
   confirmed PvP settlement advance; buffered claim retries are idempotent by `BufferId`.

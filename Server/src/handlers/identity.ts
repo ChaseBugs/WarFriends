@@ -13,6 +13,7 @@ import { findById } from "../services/playerService";
 import { buildDatabasePlayer, buildPlayerStateResponse } from "../services/playerStateService";
 import { createGameCenterAccount, type CreatedAccount } from "../services/authService";
 import { buildPlayerLeaderboardItem } from "../services/leaderboardService";
+import { claimOneTimeReward, oneTimeRewardWire } from "../services/oneTimeRewardService";
 import { authed, open, type HandlerEntry } from "./types";
 
 // Platform-account actions recovered from BeanstalkServerManager. Identity records are
@@ -88,7 +89,17 @@ function linkAction(action: DbAction, provider: IdentityProvider): HandlerEntry 
       identityCredential(req, provider),
       identityName(req),
     );
-    return ok(action, { Player: buildDatabasePlayer(updated), PlayerId: updated.id, Linked: true });
+    // FacebookLoginReward is tied to a successful provider link, never to a standalone
+    // client-supplied RewardId. Re-linking is safe: the persisted marker makes this a no-op.
+    const facebookReward = provider === "facebook"
+      ? await claimOneTimeReward(updated.id, "FacebookLoginReward", "facebook-link")
+      : null;
+    return ok(action, {
+      Player: buildDatabasePlayer(updated),
+      PlayerId: updated.id,
+      Linked: true,
+      ...(facebookReward ? oneTimeRewardWire(facebookReward) : {}),
+    });
   });
 }
 

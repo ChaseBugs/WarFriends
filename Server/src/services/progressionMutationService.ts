@@ -32,6 +32,12 @@ export async function mutateProgression<T extends ProgressionMutation>(
 
     const state = progressionForPlayer(player);
     const result = transition(state, unixNow());
+    // Pure transitions return the exact input object for an idempotent replay/no-op. Returning
+    // immediately avoids an unnecessary replacement and, more importantly, avoids depending on
+    // MongoDB `modifiedCount` for an identical document. In a race the losing request reaches
+    // this branch only after its failed revision filter causes a reload, so it observes the
+    // winner's committed receipt/marker before being acknowledged.
+    if (result.state === state) return result;
     const rawRevision = player.progression?.revision;
     const progressionFilter = player.progression
       ? rawRevision === undefined

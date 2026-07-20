@@ -42,6 +42,7 @@ export function createInitialProgression(
     vipStart: 0,
     vipExpiration: 0,
     matchesToNextLootboxes: VIP_LOOTBOX_MATCH_INTERVAL,
+    collectedRewards: {},
     itemInventory: createInitialItemInventory(),
     visualInventory: createInitialVisualInventory(),
     cardInventory: createInitialCardInventory(),
@@ -69,6 +70,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
       ...state,
       vipExpiration: state.vipExpiration ?? player.player.vipExpiration ?? 0,
       matchesToNextLootboxes: state.matchesToNextLootboxes ?? VIP_LOOTBOX_MATCH_INTERVAL,
+      collectedRewards: state.collectedRewards ?? {},
       itemInventory: state.itemInventory ?? createInitialItemInventory(),
       visualInventory: state.visualInventory ?? createInitialVisualInventory(),
       cardInventory: state.cardInventory ?? createInitialCardInventory(),
@@ -91,6 +93,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
     dogTagRefillSeconds: refillSeconds,
     vipExpiration: state.vipExpiration ?? player.player.vipExpiration ?? 0,
     matchesToNextLootboxes: state.matchesToNextLootboxes ?? VIP_LOOTBOX_MATCH_INTERVAL,
+    collectedRewards: state.collectedRewards ?? {},
     itemInventory: state.itemInventory ?? createInitialItemInventory(),
     visualInventory: state.visualInventory ?? createInitialVisualInventory(),
     cardInventory: state.cardInventory ?? createInitialCardInventory(),
@@ -313,6 +316,10 @@ export function buildPlayerData(player: PlayerDocument): PlayerDataMap {
   addSerializedObject(data, "PlayerAnalyticsData", {
     lastSeenSquadChatTimeStampDB: state.lastSeenSquadChatTimestamp ?? 0,
     squadCreationsCount: state.squadCreationsCount ?? 0,
+    // The stock UI checks this recovered dictionary before showing an already collected
+    // one-time reward. Restoring the server-owned markers prevents a reconnect/reinstall from
+    // presenting the button again even though a repeated action 161 would not pay twice.
+    collectedRewards: state.collectedRewards ?? {},
     // PlayerAnalytics.remainingMatchesToNextLootbox renders this countdown before the next
     // match. Sending the server-owned value on boot prevents reconnecting from restoring the
     // client's local zero/default and accidentally desynchronizing the four-battle cycle.

@@ -161,6 +161,25 @@ also protects Squad names/descriptions and normal inbox text, so a modified APK 
 by entering public text through another action. Reports remain unfiltered so moderators retain
 the submitted evidence.
 
+## One-time social and permission rewards
+
+Action `161` sends `RewardId` and no currency amount. Three client-observed direct rows have
+authoritative Gold values: `FacebookLike` 10, `TwitterFollow` 10, and
+`NotificationAllowReward` 4. The separate `FacebookLoginReward` row is 10 Gold and is granted only
+after the authenticated Facebook-link operation succeeds. These values come from CodeStage `ObscuredFloat`
+bytes with key 230887; they are not client-selected defaults. The server accepts only those exact,
+case-sensitive DBKEY/trigger pairs, atomically credits Gold, and records the ID in its private
+`collectedRewards` dictionary. A guest cannot submit the Facebook-login ID through action 161.
+Unknown/tutorial IDs remain closed until their reward rows and trigger contracts are recovered.
+
+The stock `OOIMBPCOENI` parser checks only whether `WasAdded` exists. A first claim therefore
+returns `WasAdded`, while a replay deliberately omits the property but still returns `RewardId`
+and `Gold`, which the parser reads unconditionally. Sending `WasAdded=false` would be incorrect:
+`ContainsKey` would still make the old client add the currency locally. On login, the authoritative
+markers are restored through `PlayerAnalyticsData.collectedRewards`, so claimed buttons stay hidden
+across devices and reinstallations. Simultaneous duplicate requests share the normal progression
+revision guard; after a collision, the loser reloads the winner's marker and becomes a no-op.
+
 ## Migration behavior
 
 Older development accounts may not contain the latest progression subdocuments. Read adapters
@@ -174,6 +193,8 @@ were persisted. The next authoritative mutation writes the canonical schema.
 - `Server/src/services/identityService.ts`
 - `Server/src/services/playerService.ts`
 - `Server/src/services/playerRenameService.ts`
+- `Server/src/services/oneTimeRewardService.ts`
 - `Server/src/services/playerStateService.ts`
 - `Server/src/services/progressionMutationService.ts`
-- `Server/src/handlers/auth.ts`, `Server/src/handlers/identity.ts`, and `Server/src/handlers/player.ts`
+- `Server/src/handlers/auth.ts`, `Server/src/handlers/identity.ts`, `Server/src/handlers/player.ts`,
+  and `Server/src/handlers/economy.ts`

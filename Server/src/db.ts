@@ -89,6 +89,15 @@ export interface PlayerProgressionState {
    */
   matchesToNextLootboxes?: number;
   /**
+   * Exactly-once action-161 reward markers, keyed by the server-approved Constants DBKEY.
+   *
+   * Unity keeps the same dictionary in `PlayerAnalyticsData.collectedRewards` and uses key
+   * presence to hide social/onboarding reward buttons after a restart. The values are kept as
+   * integers because that is the recovered `Dictionary<string, int>` wire type; the backend
+   * treats only value 1 as collected and never accepts this dictionary from the client.
+   */
+  collectedRewards?: Record<string, number>;
+  /**
    * Private once-per-UTC-day cursor for the two paid-VIP War Cards.
    *
    * This state is deliberately not part of CardManagerData. Unity receives the granted cards

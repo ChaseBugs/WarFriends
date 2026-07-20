@@ -1,6 +1,7 @@
 import { DbAction } from "../dbActions";
 import { ok } from "../dtos";
 import { refillDogTags, spendOneDogTag } from "../services/economyService";
+import { claimOneTimeReward, oneTimeRewardWire } from "../services/oneTimeRewardService";
 import { authed, type HandlerEntry } from "./types";
 
 // Currency/energy mutations are kept separate from profile handlers. Every operation here
@@ -26,5 +27,13 @@ export const economyHandlers: Record<number, HandlerEntry> = {
       Seconds: result.state.dogTagSeconds,
       DogTagMax: result.state.dogTagMax,
     });
+  }),
+
+  [DbAction.AddOneTimeReward]: authed(async ({ player, req }) => {
+    const result = await claimOneTimeReward(player!.id, req.RewardId);
+    // OOIMBPCOENI reads RewardId and Gold even on a replay, but it gates both wallet changes
+    // on the mere presence of WasAdded. Do not send WasAdded=false: ContainsKey would treat it
+    // as a fresh grant and the old client would add Gold locally despite the false value.
+    return ok(DbAction.AddOneTimeReward, oneTimeRewardWire(result));
   }),
 };
