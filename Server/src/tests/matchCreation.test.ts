@@ -3,6 +3,7 @@ import test from "node:test";
 import { League } from "../constants";
 import {
   MatchAdmissionError,
+  normalizeMatchCancelReason,
   type MatchPlayer,
   validateMatchParticipants,
 } from "../services/matchService";
@@ -18,6 +19,16 @@ function participant(playerId: string): MatchPlayer {
 
 test("match admission accepts two distinct server-derived participant snapshots", () => {
   assert.doesNotThrow(() => validateMatchParticipants(participant("player-a"), participant("player-b")));
+});
+
+test("match cancellation reasons remain bounded machine-readable audit values", () => {
+  assert.equal(normalizeMatchCancelReason("  server_restart  "), "server_restart");
+  for (const invalid of ["", "contains spaces", "bad\nreason", "x".repeat(65)]) {
+    assert.throws(
+      () => normalizeMatchCancelReason(invalid),
+      (error: unknown) => error instanceof MatchAdmissionError,
+    );
+  }
 });
 
 test("match admission rejects duplicate, corrupt, and out-of-range participants", () => {

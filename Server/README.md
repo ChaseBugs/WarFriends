@@ -150,6 +150,9 @@ Working end-to-end (verified live):
   durable row and reserves both current profiles as `InGame` in one MongoDB transaction; duplicate
   participants, corrupt snapshots, missing accounts, and concurrent active-match claims fail
   without partial state, and still-eligible connected players are restored to the bounded queue.
+  Cancellation likewise commits the terminal match and both presence releases together. On a
+  single-node restart, active/settling matches are cancelled and all residual `InGame` profiles
+  are repaired in the same transaction, including legacy partial cancellations.
   Replacement clients send an
   inventory-consuming activation as `MatchEvent { Event: "CardPlayed", Data: { Sequence,
   CardId } }`: the server validates the authenticated owner's complete candidate list, durably

@@ -122,22 +122,42 @@ export interface MatchDoc {
   cancelReason?: string;
 }
 
+/** Keep internal terminal reasons bounded and machine-readable in durable audit rows. */
+export function normalizeMatchCancelReason(reason: string): string {
+  const normalized = reason.trim();
+  if (!/^[a-z0-9][a-z0-9_:-]{0,63}$/u.test(normalized)) {
+    throw new MatchAdmissionError("Match cancellation reason is invalid.");
+  }
+  return normalized;
+}
+
 /**
  * Cancel an unresolved match without granting rewards and release both players back to
- * Online. The state transition is atomic, so competing disconnect timers cannot cancel a
- * match that has already been claimed for normal result settlement.
+ * Online. The match transition and every participant presence repair are atomic, so a crash
+ * cannot leave a cancelled match whose accounts remain blocked as InGame. Competing disconnect
+ * timers still cannot cancel a match already claimed for normal result settlement.
  */
 export async function cancelMatch(matchId: string, reason: string): Promise<boolean> {
-  const match = await getMatch(matchId);
-  if (!match) return false;
-  const claim = await matches().updateOne(
-    { matchId, state: "active" },
-    { $set: { state: "cancelled", cancelReason: reason, endedAt: new Date() } },
-  );
-  if (claim.modifiedCount !== 1) return false;
-  await Promise.all(match.players.map((participant) => updatePlayerFields(participant.playerId, { status: PlayerStatus.Online })));
-  logger.match.event("Match cancelled", { matchId, reason });
-  return true;
+  const cancelReason = normalizeMatchCancelReason(reason);
+  const cancelled = await withMongoTransaction(async (session) => {
+    const match = await matches().findOne({ matchId, state: "active" }, { session }) as unknown as MatchDoc | null;
+    if (!match) return false;
+    const claim = await matches().updateOne(
+      { matchId, state: "active" },
+      { $set: { state: "cancelled", cancelReason, endedAt: new Date() } },
+      { session },
+    );
+    if (claim.modifiedCount !== 1) return false;
+    const playerIds = [...new Set(match.players.map((participant) => participant.playerId))];
+    await players().updateMany(
+      { id: { $in: playerIds }, "player.status": PlayerStatus.InGame },
+      { $set: { "player.status": PlayerStatus.Online, updatedAt: new Date() } },
+      { session },
+    );
+    return true;
+  });
+  if (cancelled) logger.match.event("Match cancelled", { matchId, reason: cancelReason });
+  return cancelled;
 }
 
 /**
@@ -147,17 +167,33 @@ export async function cancelMatch(matchId: string, reason: string): Promise<bool
  * blocked by the InGame matchmaking guard.
  */
 export async function recoverInterruptedMatches(): Promise<number> {
-  const interrupted = (await matches().find({ state: { $in: ["active", "settling"] } }).toArray()) as unknown as MatchDoc[];
-  if (!interrupted.length) return 0;
-  const matchIds = interrupted.map((match) => match.matchId);
-  await matches().updateMany(
-    { matchId: { $in: matchIds }, state: { $in: ["active", "settling"] } },
-    { $set: { state: "cancelled", cancelReason: "server_restart", endedAt: new Date() } },
-  );
-  const playerIds = new Set(interrupted.flatMap((match) => match.players.map((participant) => participant.playerId)));
-  await Promise.all([...playerIds].map((playerId) => updatePlayerFields(playerId, { status: PlayerStatus.Online })));
-  logger.match.event("Recovered interrupted matches", { count: interrupted.length });
-  return interrupted.length;
+  const recovered = await withMongoTransaction(async (session) => {
+    const interrupted = await matches()
+      .find({ state: { $in: ["active", "settling"] } }, { session, projection: { matchId: 1 } })
+      .toArray();
+    const matchIds = interrupted.map((match) => String(match.matchId));
+    if (matchIds.length > 0) {
+      await matches().updateMany(
+        { matchId: { $in: matchIds }, state: { $in: ["active", "settling"] } },
+        { $set: { state: "cancelled", cancelReason: "server_restart", endedAt: new Date() } },
+        { session },
+      );
+    }
+    // PvP match admission is the only backend path that writes InGame. After a single-node
+    // process restart no RoomManager instance survives, so every remaining InGame profile is
+    // stale. Repairing the complete status set also heals rows left by pre-transaction builds
+    // whose match had already reached `cancelled` before the process crashed.
+    const presence = await players().updateMany(
+      { "player.status": PlayerStatus.InGame },
+      { $set: { "player.status": PlayerStatus.Online, updatedAt: new Date() } },
+      { session },
+    );
+    return { count: matchIds.length, repairedPlayers: presence.modifiedCount };
+  });
+  if (recovered.count > 0 || recovered.repairedPlayers > 0) {
+    logger.match.event("Recovered interrupted matches", recovered);
+  }
+  return recovered.count;
 }
 
 const REWARDS = {
