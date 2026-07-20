@@ -125,7 +125,7 @@ export const matchHandlers: Record<number, HandlerEntry> = {
       // BattleIds identify short-lived mission receipts, not two-player match documents.
       // The service still validates that this BattleId was issued by the matching start
       // action, so the presence of MissionType alone is not enough to obtain a reward.
-      const result = await settleDailyMission(player!.id, player!.player.level, {
+      const result = await settleDailyMission(player!.id, {
         battleId: id,
         missionIndex: integer(req.MissionIndex, "MissionIndex"),
         missionType: missionMode(req.MissionType),

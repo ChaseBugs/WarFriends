@@ -331,9 +331,13 @@ Working end-to-end (verified live):
   `GameEnded` use the exact `DailyMissionsData`, `SavedMission`, and compact `MissionUnit`
   fields. UTC issuance, start receipts, consumed failure receipts, mode/index/order checks,
   separate solo/co-op completion, response replay, the 30-point heroic gate, and recovered
-  currency rewards are persisted atomically. The archived server's random selection and
-  normal per-battle reward formula are explicitly reconstructed gaps; card-pack/elite-part
-  delivery remains disabled until inventory IDs are authoritative.
+  completion currencies are persisted atomically. Every successful mode now also grants the
+  explicit offline `MISSION_SUCCESS_XP` (30) and `MISSION_SUCCESS_WARBUCKS` (800) policy,
+  applies the source 1.5x/1.5x/2x VIP XP/WarBucks/GameGold rules, crosses exact rank rows,
+  grants rank-up Gold, refills dog tags, and recomputes rank Army Power in the same guarded
+  document write. Base `GameReward` components are cached with the receipt so retries cannot
+  multiply or duplicate them. The archived server's random selection and original normal
+  battle reward table remain reconstruction gaps; card-pack/elite-part delivery stays disabled.
 - **Starter assignments (authoritative subset)**: actions `185`/`186` restore the exact
   `StarterAssignmentsData` object and the MainScene-defined thresholds, order, Gold, and
   WarBucks rewards. Ranked wins, medal balance, level, lifetime squad points, and the first
@@ -401,7 +405,8 @@ allowlist of analytics/impression actions is safely ignored.
   league division documents and scheduled settlement; verify the final beginner weekly-medal reset
   from an archived service response. Arena debug mutations remain rejected.
 - **Mission fidelity** — recover the original mission-selection weighting and normal battle
-  reward formula, add combat-result validation, restore the missing recovered-client
+  reward table to replace the documented 30-XP/800-WarBucks/zero-ordinary-Gold
+  fallback, add combat-result validation, restore the missing recovered-client
   `MissionsSettings`/`UnitsInMissionsConfig` references, and deliver heroic inventory rewards.
   Remaining deployment, stolen-crate, and first-Squad-War achievement groups stay unclaimable until
   their gameplay events are authoritative. Group 17 uses accepted owned-card consumption but still

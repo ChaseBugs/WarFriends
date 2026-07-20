@@ -8,9 +8,11 @@ import {
   settleDailyMissionState,
   startDailyMissionState,
 } from "../services/dailyMissionService";
+import { playerLevelDefinition } from "../services/levelProgressionService";
 import { createInitialProgression } from "../services/playerStateService";
 
 const NOW = Date.UTC(2026, 6, 19, 12, 0, 0) / 1_000;
+const POLICY = { experience: 30, warBucks: 800 } as const;
 
 test("daily mission wire matches DailyMissionsData and rolls at UTC midnight", () => {
   const initial = createInitialProgression(NOW);
@@ -57,20 +59,26 @@ test("failed mission consumes its start receipt and a retry returns the stored r
     missionIndex: 0,
     missionType: "Daily",
     endReason: 9,
-  });
+  }, POLICY);
 
   assert.equal(failed.dailyMissions.activeSessions.length, 0);
   assert.equal(failed.dailyMissions.dailyMissions[0].completedSolo, false);
   assert.equal(failed.state.gold, 0);
-  assert.deepEqual(failed.response.GameReward, { Gold: 0, IsVip: false });
+  assert.deepEqual(failed.response.GameReward, {
+    Warbucks: { BattleRewards: 0, ExtraRewards: 0, Winstreak: 0, League: 0, offerMult: 1 },
+    Xp: { BattleRewards: 0, ExtraRewards: 0, Winstreak: 0, Time: 0, offerMult: 1 },
+    GameGold: { BattleRewards: 0, League: 0, offerMult: 1 },
+    IsVip: false,
+  });
 
   const replay = settleDailyMissionState(failed.state, NOW + 20, 1, {
     battleId: "player-1-100",
     missionIndex: 0,
     missionType: "Daily",
     endReason: 9,
-  });
+  }, POLICY);
   assert.equal(replay.replayed, true);
+  assert.equal(replay.state.revision, failed.state.revision);
   assert.equal(replay.state.gold, 0);
   assert.deepEqual(replay.response, failed.response);
 });
@@ -86,7 +94,7 @@ test("three unique solo completions grant one exact scene daily reward and achie
       missionIndex: index,
       missionType: "Daily",
       endReason: 10,
-    });
+    }, POLICY);
     state = result.state;
     finalResponse = result.response;
   }
@@ -95,7 +103,15 @@ test("three unique solo completions grant one exact scene daily reward and achie
   assert.equal(state.dailyMissions?.dailyCompletionRewardClaimed, true);
   assert.equal(state.dailyMissions?.heroicPoints, 3);
   assert.equal(state.gold, 10);
+  assert.equal(state.warBucks, 2_400);
+  assert.equal(state.levelExperience, 90);
   assert.equal(finalResponse.DailyMissionsCompletionRewardGold, 10);
+  assert.deepEqual(finalResponse.GameReward, {
+    Warbucks: { BattleRewards: 800, ExtraRewards: 0, Winstreak: 0, League: 0, offerMult: 1 },
+    Xp: { BattleRewards: 30, ExtraRewards: 0, Winstreak: 0, Time: 0, offerMult: 1 },
+    GameGold: { BattleRewards: 0, League: 0, offerMult: 1 },
+    IsVip: false,
+  });
   assert.equal(state.achievements?.data.find((group) => group.id === 5)?.value, 3);
 
   const replay = settleDailyMissionState(state, NOW + 100, 1, {
@@ -103,7 +119,7 @@ test("three unique solo completions grant one exact scene daily reward and achie
     missionIndex: 2,
     missionType: "Daily",
     endReason: 10,
-  });
+  }, POLICY);
   assert.equal(replay.replayed, true);
   assert.equal(replay.state.gold, 10);
   assert.equal(replay.state.achievements?.data.find((group) => group.id === 5)?.value, 3);
@@ -125,7 +141,7 @@ test("heroic chain is ordered and grants the recovered currency rewards once", (
         missionIndex: 1,
         missionType: "Heroic",
         endReason: 10,
-      });
+      }, POLICY);
     },
     (error: unknown) => (error as { code?: number }).code === 90,
   );
@@ -138,12 +154,14 @@ test("heroic chain is ordered and grants the recovered currency rewards once", (
       missionIndex: index,
       missionType: "Heroic",
       endReason: 10,
-    }).state;
+    }, POLICY).state;
   }
 
   // Five level-1 heroic missions grant 1 Gold each; completing all five adds 15 Gold,
   // 10 Tickets, and 30 Scraps from the first recovered MissionsRewards row.
   assert.equal(state.gold, 20);
+  assert.equal(state.warBucks, 4_000);
+  assert.equal(state.levelExperience, 150);
   assert.equal(state.tickets, 10);
   assert.equal(state.scraps, 30);
   assert.equal(state.dailyMissions?.heroicCompletionRewardClaimed, true);
@@ -159,8 +177,89 @@ test("co-op client result cannot claim the co-op master's completion", () => {
     missionIndex: 0,
     missionType: "CoopClient",
     endReason: 10,
-  });
+  }, POLICY);
   assert.equal(result.dailyMissions.dailyMissions[0].completedCoop, false);
   assert.equal(result.dailyMissions.heroicPoints, 0);
   assert.equal(result.state.gold, 0);
+  assert.equal(result.state.warBucks, 800);
+  assert.equal(result.state.levelExperience, 30);
+});
+
+test("active VIP multiplies persisted mission XP and WarBucks while wire components stay base", () => {
+  let state = createInitialProgression(NOW);
+  state = { ...state, vipExpiration: NOW + 3_600 };
+  state = startDailyMissionState(state, NOW, 1, "player-1-vip", DbAction.GameStartedCampaign).state;
+  const result = settleDailyMissionState(state, NOW + 10, 1, {
+    battleId: "player-1-vip",
+    missionIndex: 0,
+    missionType: "Daily",
+    endReason: 10,
+  }, POLICY);
+
+  assert.equal(result.experienceGained, 45);
+  assert.equal(result.state.levelExperience, 45);
+  assert.equal(result.state.warBucks, 1_200);
+  assert.deepEqual(result.response.GameReward, {
+    Warbucks: { BattleRewards: 800, ExtraRewards: 0, Winstreak: 0, League: 0, offerMult: 1 },
+    Xp: { BattleRewards: 30, ExtraRewards: 0, Winstreak: 0, Time: 0, offerMult: 1 },
+    GameGold: { BattleRewards: 0, League: 0, offerMult: 1 },
+    IsVip: true,
+  });
+});
+
+test("active VIP doubles heroic per-mission GameGold without multiplying chain prizes", () => {
+  let state = createInitialProgression(NOW);
+  const generated = dailyMissionsStateFor(state, NOW, 1);
+  state = {
+    ...state,
+    vipExpiration: NOW + 3_600,
+    dailyMissions: { ...generated, heroicPoints: 30, isHeroicOpened: true },
+  };
+  state = startDailyMissionState(state, NOW, 1, "player-1-vip-heroic", DbAction.GameStartedCampaign).state;
+  const result = settleDailyMissionState(state, NOW + 10, 1, {
+    battleId: "player-1-vip-heroic",
+    missionIndex: 0,
+    missionType: "Heroic",
+    endReason: 10,
+  }, { experience: 0, warBucks: 0 });
+
+  // The first source row grants one base Gold per heroic mission. IsVip tells the stock
+  // parser to render two, and the authoritative wallet persists that same doubled amount.
+  assert.equal(result.state.gold, 2);
+  assert.deepEqual(result.response.GameReward, {
+    Warbucks: { BattleRewards: 0, ExtraRewards: 0, Winstreak: 0, League: 0, offerMult: 1 },
+    Xp: { BattleRewards: 0, ExtraRewards: 0, Winstreak: 0, Time: 0, offerMult: 1 },
+    GameGold: { BattleRewards: 1, League: 0, offerMult: 1 },
+    IsVip: true,
+  });
+});
+
+test("mission XP level-up grants source Gold and durably refills dog tags", () => {
+  const definition = playerLevelDefinition(1);
+  let state = {
+    ...createInitialProgression(NOW),
+    levelExperience: definition.experience - 1,
+    dogTagSeconds: 0,
+  };
+  state = startDailyMissionState(state, NOW, 1, "player-1-level-up", DbAction.GameStartedCampaign).state;
+  const result = settleDailyMissionState(state, NOW + 10, 1, {
+    battleId: "player-1-level-up",
+    missionIndex: 0,
+    missionType: "Daily",
+    endReason: 10,
+  }, { experience: 1, warBucks: 0 });
+
+  assert.equal(result.levelFrom, 1);
+  assert.equal(result.levelTo, 2);
+  assert.equal(result.state.levelExperience, 0);
+  assert.equal(result.state.gold, definition.rewardGold);
+  assert.equal(result.state.dogTagSeconds, result.state.dogTagMax);
+  assert.equal(result.response.Level, 2);
+  assert.equal(result.response.DogtagsRefillRankUp, true);
+  assert.deepEqual(result.response.GameReward, {
+    Warbucks: { BattleRewards: 0, ExtraRewards: 0, Winstreak: 0, League: 0, offerMult: 1 },
+    Xp: { BattleRewards: 1, ExtraRewards: 0, Winstreak: 0, Time: 0, offerMult: 1 },
+    GameGold: { BattleRewards: definition.rewardGold, League: 0, offerMult: 1 },
+    IsVip: false,
+  });
 });

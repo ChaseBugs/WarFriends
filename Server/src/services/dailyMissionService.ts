@@ -5,10 +5,21 @@ import type {
   DailyMissionRecordState,
   DailyMissionsState,
   MissionUnitState,
+  PlayerDocument,
   PlayerProgressionState,
 } from "../db";
+import { players } from "../db";
+import { config } from "../config";
 import { advanceAchievementState } from "./achievementService";
+import { calculateArmyPower } from "./armyPowerService";
+import { applyLevelExperienceState } from "./levelProgressionService";
+import {
+  VIP_BATTLE_EXPERIENCE_MULTIPLIER,
+  VIP_BATTLE_WARBUCKS_MULTIPLIER,
+  VIP_LEVEL_GOLD_MULTIPLIER,
+} from "./matchService";
 import { mutateProgression } from "./progressionMutationService";
+import { progressionForPlayer, unixNow } from "./playerStateService";
 
 /**
  * Persistent daily/heroic mission lifecycle reconstructed from the Unity client contract.
@@ -38,6 +49,7 @@ const HEROIC_POINTS_TO_UNLOCK = 30;
 const MAX_ACTIVE_SESSIONS = 4;
 const MAX_RECENT_SETTLEMENTS = 20;
 const SESSION_LIFETIME_SECONDS = 4 * 60 * 60;
+const MAX_CONCURRENCY_RETRIES = 4;
 
 /**
  * Reward rows serialized on the MissionsRewards component in MainScene.unity.
@@ -81,6 +93,44 @@ export interface DailyMissionSettlementInput {
 export interface DailyMissionSettlementResult extends DailyMissionMutationResult {
   response: Record<string, unknown>;
   replayed: boolean;
+  levelFrom: number;
+  levelTo: number;
+  experienceGained: number;
+}
+
+export interface MissionBattleRewardPolicy {
+  experience: number;
+  warBucks: number;
+}
+
+function checkedNonNegativeInteger(value: number, name: string): number {
+  if (!Number.isSafeInteger(value) || value < 0) {
+    throw new ApiError(ApiErrorCode.InternalServerError, `${name} is invalid.`);
+  }
+  return value;
+}
+
+function checkedSum(left: number, right: number, name: string): number {
+  const value = left + right;
+  if (!Number.isSafeInteger(value) || value < 0) {
+    throw new ApiError(ApiErrorCode.InternalServerError, `${name} overflowed.`);
+  }
+  return value;
+}
+
+function checkedScaledInteger(value: number, multiplier: number, name: string): number {
+  const scaled = Math.trunc(value * multiplier);
+  if (!Number.isSafeInteger(scaled) || scaled < 0) {
+    throw new ApiError(ApiErrorCode.InternalServerError, `${name} overflowed.`);
+  }
+  return scaled;
+}
+
+function missionRewardPolicyFromConfig(): MissionBattleRewardPolicy {
+  return {
+    experience: checkedNonNegativeInteger(config.missionSuccessExperience, "Mission XP policy"),
+    warBucks: checkedNonNegativeInteger(config.missionSuccessWarBucks, "Mission WarBucks policy"),
+  };
 }
 
 function dateAt(now: number): Date {
@@ -387,8 +437,11 @@ export function settleDailyMissionState(
   now: number,
   playerLevel: number,
   input: DailyMissionSettlementInput,
+  policy: MissionBattleRewardPolicy = missionRewardPolicyFromConfig(),
 ): DailyMissionSettlementResult {
   validateBattleId(input.battleId);
+  checkedNonNegativeInteger(policy.experience, "Mission XP policy");
+  checkedNonNegativeInteger(policy.warBucks, "Mission WarBucks policy");
   if (!Number.isInteger(input.missionIndex) || ![MISSION_FAILED, MISSION_SUCCESS].includes(input.endReason)) {
     throw new ApiError(ApiErrorCode.UnknownAction, "Mission settlement fields are invalid.");
   }
@@ -404,10 +457,16 @@ export function settleDailyMissionState(
       throw new ApiError(ApiErrorCode.UnknownAction, "BattleId was already settled with different data.");
     }
     return {
-      state: { ...state, revision: state.revision + 1, dailyMissions },
+      // A transport retry returns the exact cached wire result without producing a new
+      // progression revision. The database wrapper therefore has no write to race and no
+      // opportunity to repeat XP, currency, level-up Gold, or the dog-tag refill.
+      state,
       dailyMissions,
       response: cloneResponse(replay.response),
       replayed: true,
+      levelFrom: playerLevel,
+      levelTo: playerLevel,
+      experienceGained: 0,
     };
   }
 
@@ -454,20 +513,12 @@ export function settleDailyMissionState(
   dailyMissions.activeSessions = dailyMissions.activeSessions.filter((item) => item.battleId !== input.battleId);
 
   const row = rewardRow(playerLevel);
-  let missionGold = newlyCompleted && input.missionType === "Heroic" ? row.heroicGoldMission : 0;
-  let addedGold = missionGold;
+  const missionGold = newlyCompleted && input.missionType === "Heroic" ? row.heroicGoldMission : 0;
+  let completionGold = 0;
   let addedTickets = 0;
   let addedScraps = 0;
   let heroicUnlocked = false;
-  const response: Record<string, unknown> = {
-    // OGLEHLIPEFM.KPPNCJBMDPE uses IsWarPath to select CBBKFKCOLPP, the mission-reward
-    // parser. Without it, the response goes through the PvP parser and the mission end UI
-    // never receives its reward model. IsMission is a descriptive replacement-client alias;
-    // the stock parser ignores unknown fields.
-    IsWarPath: 1,
-    IsMission: 1,
-    GameReward: { Gold: missionGold, IsVip: false },
-  };
+  const response: Record<string, unknown> = {};
 
   if (newlyCompleted && (input.missionType === "Daily" || input.missionType === "Coop")) {
     // One unique daily/co-op completion contributes one point. Replays and CoopClient
@@ -492,7 +543,7 @@ export function settleDailyMissionState(
     // recomputed and paid on every successful GameEnded response after all flags are true.
     const reward = completionReward(dailyMissions, row);
     dailyMissions.dailyCompletionRewardClaimed = true;
-    addedGold += reward.gold;
+    completionGold = checkedSum(completionGold, reward.gold, "Mission completion Gold");
     addedTickets += reward.tickets;
     addedScraps += reward.scraps;
     response[reward.field] = reward.gold || reward.tickets || reward.scraps;
@@ -510,7 +561,7 @@ export function settleDailyMissionState(
     dailyMissions.heroicCompletionRewardClaimed = true;
     dailyMissions.isHeroicOpened = false;
     dailyMissions.heroicPoints = 0;
-    addedGold += row.heroicGold;
+    completionGold = checkedSum(completionGold, row.heroicGold, "Heroic completion Gold");
     addedTickets += row.heroicTickets;
     addedScraps += row.heroicScraps;
     response.HeroicMissionsCompletionRewardGold = row.heroicGold;
@@ -521,12 +572,56 @@ export function settleDailyMissionState(
   if (heroicUnlocked) response.HeroicMissionsUnlocked = 1;
   response.HeroicPoints = dailyMissions.heroicPoints;
 
+  /*
+   * Normal battle rewards are separate from the one-time daily/heroic completion prizes.
+   * The original remote reward table was not present in either recovered APK, so the base
+   * values come from the explicit MISSION_SUCCESS_* server policy. Only MissionSuccess pays
+   * them; a CoopClient earns its personal battle payout but still cannot claim the master's
+   * completion flag or heroic point.
+   *
+   * CBBKFKCOLPP expects base components and applies its source VIP constants locally when
+   * IsVip is true. Persist the multiplied totals while sending the unmultiplied components,
+   * which keeps the stock result animation and the authoritative wallet in exact agreement.
+   */
+  const baseExperience = succeeded ? policy.experience : 0;
+  const baseWarBucks = succeeded ? policy.warBucks : 0;
+  const isVip = Number.isFinite(state.vipExpiration)
+    && Math.floor(state.vipExpiration ?? 0) > now;
+  const experienceGained = isVip
+    ? checkedScaledInteger(baseExperience, VIP_BATTLE_EXPERIENCE_MULTIPLIER, "Mission VIP XP")
+    : baseExperience;
+  const warBucksGained = isVip
+    ? checkedScaledInteger(baseWarBucks, VIP_BATTLE_WARBUCKS_MULTIPLIER, "Mission VIP WarBucks")
+    : baseWarBucks;
+
+  const leveled = applyLevelExperienceState(state, playerLevel, experienceGained);
+  const levelChanged = leveled.levelTo !== leveled.levelFrom;
+  const baseGameGold = checkedSum(missionGold, leveled.goldGranted, "Mission GameGold reward");
+  const actualGameGold = isVip
+    ? checkedScaledInteger(baseGameGold, VIP_LEVEL_GOLD_MULTIPLIER, "Mission VIP GameGold")
+    : baseGameGold;
+  // applyLevelExperienceState already included the base rank-up Gold. Replace only that base
+  // amount with the actual GameGold total, then add completion prizes, which the source parser
+  // treats as separate top-level rewards and does not multiply for VIP.
+  const goldWithoutBaseLevelReward = leveled.state.gold - leveled.goldGranted;
+  const goldWithGameReward = checkedSum(goldWithoutBaseLevelReward, actualGameGold, "Gold balance");
+  const nextGold = checkedSum(goldWithGameReward, completionGold, "Gold balance");
+  const nextWarBucks = checkedSum(leveled.state.warBucks, warBucksGained, "WarBucks balance");
+  const nextTickets = checkedSum(leveled.state.tickets, addedTickets, "Tickets balance");
+  const nextScraps = checkedSum(leveled.state.scraps, addedScraps, "Scraps balance");
+
   let nextState: PlayerProgressionState = {
-    ...state,
-    revision: state.revision + 1,
-    gold: state.gold + addedGold,
-    tickets: state.tickets + addedTickets,
-    scraps: state.scraps + addedScraps,
+    ...leveled.state,
+    revision: checkedSum(state.revision, 1, "Progression revision"),
+    gold: nextGold,
+    warBucks: nextWarBucks,
+    tickets: nextTickets,
+    scraps: nextScraps,
+    // Both mission and PvP result parsers refill energy when a rank marker is returned. The
+    // durable state must receive the same refill or reconnecting would undo the client UI.
+    ...(levelChanged
+      ? { dogTagSeconds: leveled.state.dogTagMax, dogTagLastUpdate: now }
+      : {}),
     dailyMissions,
   };
   // AchievementMissionsFinished reads StatsManager.missionsCompleted, which the recovered
@@ -535,8 +630,41 @@ export function settleDailyMissionState(
     nextState = advanceAchievementState(nextState, 5, 1).state;
   }
 
+  // OGLEHLIPEFM.KPPNCJBMDPE uses IsWarPath to select CBBKFKCOLPP. The nested component
+  // names and zero fields are intentionally exact: omitting one makes the archived parser
+  // dereference a missing dictionary or choose its legacy Gold-only branch.
+  response.IsWarPath = 1;
+  response.IsMission = 1;
+  response.GameReward = {
+    Warbucks: {
+      BattleRewards: baseWarBucks,
+      ExtraRewards: 0,
+      Winstreak: 0,
+      League: 0,
+      offerMult: 1,
+    },
+    Xp: {
+      BattleRewards: baseExperience,
+      ExtraRewards: 0,
+      Winstreak: 0,
+      Time: 0,
+      offerMult: 1,
+    },
+    GameGold: {
+      BattleRewards: baseGameGold,
+      League: 0,
+      offerMult: 1,
+    },
+    IsVip: isVip,
+  };
   response.DailyMissionsData = serializeDailyMissionsData(dailyMissions);
+  response.LevelExperience = nextState.levelExperience;
+  if (levelChanged) {
+    response.Level = leveled.levelTo;
+    response.DogtagsRefillRankUp = true;
+  }
   response.GoldBalance = nextState.gold;
+  response.WarBucksBalance = nextState.warBucks;
   response.TicketsBalance = nextState.tickets;
   response.ScrapsBalance = nextState.scraps;
 
@@ -556,7 +684,15 @@ export function settleDailyMissionState(
   ].slice(-MAX_RECENT_SETTLEMENTS);
   nextState = { ...nextState, dailyMissions };
 
-  return { state: nextState, dailyMissions, response, replayed: false };
+  return {
+    state: nextState,
+    dailyMissions,
+    response,
+    replayed: false,
+    levelFrom: leveled.levelFrom,
+    levelTo: leveled.levelTo,
+    experienceGained,
+  };
 }
 
 export function getOrCreateDailyMissions(playerId: string, playerLevel: number): Promise<DailyMissionMutationResult> {
@@ -573,10 +709,77 @@ export function startDailyMission(
     startDailyMissionState(state, now, playerLevel, battleId, startAction));
 }
 
-export function settleDailyMission(
+function progressionRevisionFilter(player: PlayerDocument): Record<string, unknown> {
+  if (!player.progression) return { progression: { $exists: false } };
+  return player.progression.revision === undefined
+    ? { "progression.revision": { $exists: false } }
+    : { "progression.revision": player.progression.revision };
+}
+
+/**
+ * Commit mission completion, currencies, XP/rank, dog tags, and Army Power atomically.
+ *
+ * A normal progression-only mutation is insufficient because a rank-up also changes the
+ * public DatabasePlayer snapshot and indexed root mirrors. The revision predicate makes a
+ * concurrent economy write lose cleanly; this loop then reloads the winner and recomputes
+ * the entire deterministic settlement instead of overwriting newer balances.
+ */
+export async function settleDailyMission(
   playerId: string,
-  playerLevel: number,
   input: DailyMissionSettlementInput,
 ): Promise<DailyMissionSettlementResult> {
-  return mutateProgression(playerId, (state, now) => settleDailyMissionState(state, now, playerLevel, input));
+  const policy = missionRewardPolicyFromConfig();
+  for (let attempt = 0; attempt < MAX_CONCURRENCY_RETRIES; attempt += 1) {
+    const player = await players().findOne({ id: playerId });
+    if (!player) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
+
+    const state = progressionForPlayer(player);
+    const result = settleDailyMissionState(
+      state,
+      unixNow(),
+      player.player.level,
+      input,
+      policy,
+    );
+    if (result.replayed) return result;
+
+    const nextLifetimeExperience = checkedSum(
+      player.player.experience,
+      result.experienceGained,
+      "Player lifetime experience",
+    );
+    const levelChanged = result.levelTo !== result.levelFrom;
+    const projected: PlayerDocument = {
+      ...player,
+      progression: result.state,
+      player: {
+        ...player.player,
+        experience: nextLifetimeExperience,
+        level: result.levelTo,
+      },
+    };
+    const armyPower = levelChanged ? calculateArmyPower(projected).total : player.player.armyPower;
+    const { dogTags: _legacyDogTags, ...canonicalState } = result.state;
+    const update = await players().updateOne(
+      { id: playerId, ...progressionRevisionFilter(player) },
+      {
+        $set: {
+          progression: canonicalState,
+          experience: nextLifetimeExperience,
+          "player.experience": nextLifetimeExperience,
+          "player.level": result.levelTo,
+          armyPower,
+          "player.armyPower": armyPower,
+          updatedAt: new Date(),
+        },
+      },
+    );
+    if (update.modifiedCount === 1) {
+      return { ...result, state: canonicalState };
+    }
+  }
+  throw new ApiError(
+    ApiErrorCode.InternalServerError,
+    "Concurrent mission settlement could not be completed.",
+  );
 }
