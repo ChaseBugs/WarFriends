@@ -100,6 +100,13 @@ Working end-to-end (verified live):
   on every later `GetPlayerData`. Client-echoed score, boxes, cards, wallet, and Army Power are
   ignored because the offline tutorial cannot prove them. Retries cannot refill spent currency;
   old no-receipt accounts may migrate once only with the stock empty `BattleId`.
+- **Play Warcards tutorial**: the later onboarding battle unlocks at the recovered display
+  level 6 and runs through the ordinary offline-bot action `64`/`62` path. The server projects
+  `PlayerAnalyticsData.cardTutState` from durable state, binds `TutorialWarcards=1` to the earlier
+  BattleId receipt, ignores forged `ObtainedCards`, and grants the exact MainScene
+  `TutorialRewardCards` list once: `CLUSTERGRENADE`, `ELITEPARA`, `HEAVYTURRET`,
+  `ELECTRICTRAPS`, and `SABOTAGE`. Losses complete it just like the recovered client; explicit
+  Forfeit grants nothing, clears the attempt receipt, and leaves the tutorial available to retry.
 - **HTTP abuse boundary**: every non-health API request passes through a continuously refilled,
   memory-bounded token bucket keyed by an HMAC-hidden client address. Reverse-proxy addresses are
   trusted only when `TRUST_PROXY_HOPS` is explicitly configured; rejected bursts receive HTTP 429
@@ -433,8 +440,9 @@ allowlist of analytics/impression actions is safely ignored.
 - **Item economy expansion** — unit Elite upgrades, normal shop visuals, Gold lootbox bundles,
   weapon/unit notification acknowledgements, normal card-pack
   purchase, dedicated Black Market weapons, daily weapon/unit rentals, and complete active-loadout
-  ArmyPower and periodic VIP visual-part lootboxes are implemented. Add authoritative card reward
-  and consumption events, server-selected card/Buddy RNG, and non-shop visual reward delivery.
+  ArmyPower, periodic VIP visual-part lootboxes, and the exact five-card Play Warcards tutorial
+  reward are implemented. Add the remaining authoritative combat card reward/consumption events,
+  server-selected card/Buddy RNG, and non-shop visual reward delivery.
   Normal unit purchase is authoritative for 23
   non-tutorial roster units, and the tutorial unit is persisted through its first equip event;
   three helper rows and 18 ArmyUpgrades rows without LevelManager objects remain closed. All 84

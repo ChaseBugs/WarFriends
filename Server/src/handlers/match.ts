@@ -23,6 +23,10 @@ import { advanceRentalAfterBattle } from "../services/rentalService";
 import { VIP_LOOTBOX_MATCH_INTERVAL } from "../services/vipLootboxService";
 import { parseInternetConnection, parseRegionPings } from "../services/regionPingService";
 import { updatePlayerFields } from "../services/playerService";
+import {
+  settleWarcardsTutorial,
+  startWarcardsTutorial,
+} from "../services/warcardsTutorialService";
 
 // PvP match lifecycle reported to the meta server. Live event traffic runs over /hub, while
 // these actions preserve compatibility with the recovered client's Photon-era REST calls.
@@ -90,7 +94,20 @@ export const matchHandlers: Record<number, HandlerEntry> = {
   // matchmaking service creates the persistent match row; a start report cannot create or
   // join an arbitrary match by itself.
   [DbAction.GameStartedMaster]: authed(async ({ player, req }) => {
-    if (!enabled(req.IsWarArenaBattle)) return ok(DbAction.GameStartedMaster, { Time: unixNow() });
+    if (!enabled(req.IsWarArenaBattle)) {
+      // StartTutorialMatch deliberately enters the normal offline deathmatch controller. Its
+      // LoadingStarted callback therefore looks like an ordinary bot action 64: matchmaking is
+      // enabled and BotId is present, but there is no dedicated tutorial flag until GameEnded.
+      // Only an account whose server-owned cardTutState would be 1 can create this receipt.
+      if (enabled(req.IsMatchMaking) && req.BotId !== undefined) {
+        const result = await startWarcardsTutorial(player!.id, player!.player.level, matchId(req));
+        return ok(DbAction.GameStartedMaster, {
+          Time: unixNow(),
+          Replayed: result.replayed,
+        });
+      }
+      return ok(DbAction.GameStartedMaster, { Time: unixNow() });
+    }
     const result = await startWarArenaBattle(player!.id, matchId(req));
     // NCAKLEOEDBO reads Time unconditionally and BattleId conditionally for every start
     // action. The Arena receipt uses the same parser as ordinary PvP starts.
@@ -104,6 +121,31 @@ export const matchHandlers: Record<number, HandlerEntry> = {
 
   [DbAction.GameEnded]: authed(async ({ player, req }) => {
     const id = matchId(req);
+    if (enabled(req.TutorialWarcards)) {
+      // This flag and ObtainedCards are both client-controlled. The service ignores the latter,
+      // requires the earlier action-64 BattleId receipt, and grants the fixed MainScene list at
+      // most once. Branch before PvP lookup because this tutorial is an offline bot match and
+      // correctly has no two-participant match-consensus document.
+      const result = await settleWarcardsTutorial(
+        player!.id,
+        player!.player.level,
+        id,
+        integer(req.EndReason, "EndReason"),
+      );
+      return ok(DbAction.GameEnded, {
+        Settled: result.awarded || result.replayed,
+        ResultStatus: result.awarded || result.replayed ? "finished" : "tutorial-forfeit",
+        GameReward: pvpGameReward(true),
+        LevelExperience: result.state.levelExperience,
+        Skill: player!.player.skill,
+        MedalsBalance: player!.player.medalsBalance,
+        PlacementMatchesRequired: player!.player.remainingMatches,
+        BeginnersLeague: player!.player.beginnersLeague,
+        MatchesToNextLootboxes: result.state.matchesToNextLootboxes ?? VIP_LOOTBOX_MATCH_INTERVAL,
+        Time: unixNow(),
+        Replayed: result.replayed,
+      });
+    }
     if (enabled(req.IsWarArena)) {
       // BeanstalkServerManager adds IsWarArena to action 62. Branch before normal PvP: an
       // Arena BattleId belongs to the player's persistent run receipt, not the two-party

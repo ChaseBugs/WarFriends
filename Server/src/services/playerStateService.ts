@@ -2,7 +2,7 @@ import type { PlayerDocument, PlayerProgressionState } from "../db";
 import { config } from "../config";
 import { createInitialItemInventory } from "./itemInventoryService";
 import { createInitialVisualInventory } from "./visualInventoryService";
-import { createInitialCardCrafting, createInitialCardInventory } from "./cardInventoryService";
+import { CARD_UNLOCK_LEVEL, createInitialCardCrafting, createInitialCardInventory } from "./cardInventoryService";
 import { warArenaConfiguration, warArenaWireData } from "./warArenaContract";
 import { playerLeagueBootFields } from "./playerLeagueContract";
 import { VIP_LOOTBOX_MATCH_INTERVAL } from "./vipLootboxService";
@@ -353,6 +353,15 @@ export function buildPlayerData(player: PlayerDocument, now = unixNow()): Player
     instantBattlesTime: state.instantBattle?.instantBattlesTime ?? 0,
     instantBattles: state.instantBattle?.instantBattles ?? 0,
     paidInstantBattles: state.instantBattle?.paidInstantBattles ?? 0,
+    // TutorialManagerPlayWarcards starts only when this recovered field equals 1 and the
+    // level-six War Card lock is already open. Value 2 is its durable terminal state. Derive
+    // both values from server-owned progression instead of accepting the client's analytics
+    // blob, otherwise reconnecting after the fixed reward would launch and pay it again.
+    cardTutState: state.warcardsTutorialFinished
+      ? 2
+      : state.tutorialFinished && dto.level >= CARD_UNLOCK_LEVEL - 1
+        ? 1
+        : 0,
   });
 
   if (state.tutorialFinished) {

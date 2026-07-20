@@ -83,6 +83,21 @@ export interface PlayerProgressionState {
   /** Server-issued tutorial battle receipt consumed by TutorialEnded. */
   tutorialBattle?: TutorialBattleState;
   /**
+   * True after the level-six Play Warcards tutorial has paid its fixed five-card reward.
+   *
+   * This is separate from `tutorialFinished`: that older flag belongs to the opening bootcamp,
+   * while TutorialManagerPlayWarcards starts later when PlayerAnalyticsData.cardTutState is 1.
+   * Keeping a durable terminal marker prevents action-62 retries from duplicating cards.
+   */
+  warcardsTutorialFinished?: boolean;
+  /**
+   * Server proof that the offline bot battle reported by action 64 actually started.
+   *
+   * The stock client sends `TutorialWarcards=1` only on GameEnded, but that flag is forgeable.
+   * Binding completion to this earlier BattleId makes an isolated action-62 request insufficient.
+   */
+  warcardsTutorialBattle?: TutorialBattleState;
+  /**
    * Confirmed VIP PvP battles remaining before the next two visual-part lootboxes.
    *
    * The recovered PlayerAnalyticsData field is named `matchesToNextLootboxes`, and the
