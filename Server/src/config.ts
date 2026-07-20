@@ -36,6 +36,7 @@ export const config = {
   websocketRateLimitMessages: Number(process.env.WEBSOCKET_RATE_LIMIT_MESSAGES ?? 120),
   websocketRateLimitWindowSeconds: Number(process.env.WEBSOCKET_RATE_LIMIT_WINDOW_SECONDS ?? 10),
   websocketRateLimitMaxViolations: Number(process.env.WEBSOCKET_RATE_LIMIT_MAX_VIOLATIONS ?? 3),
+  playerLeagueSchedulerIntervalSeconds: Number(process.env.PLAYER_LEAGUE_SCHEDULER_INTERVAL_SECONDS ?? 60),
 
   // Recovered from MainScene's Constants rows. Requests repeat these values for compatibility,
   // but economy logic always uses the server copy so a modified client cannot accelerate energy.

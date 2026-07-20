@@ -20,6 +20,7 @@ import {
 import { serverMetrics } from "./services/metricsService";
 import { requireAdmin } from "./services/adminAuthService";
 import { runWithRequestContext } from "./services/requestContextService";
+import { startPlayerLeagueSettlementScheduler } from "./services/playerLeagueSchedulerService";
 
 const app = express();
 
@@ -91,6 +92,7 @@ app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {
 const httpServer = createServer(app);
 let pvpCoordinatorHeartbeat: PvpCoordinatorHeartbeat | null = null;
 let pvpOrphanRecoveryTimer: NodeJS.Timeout | null = null;
+let playerLeagueSchedulerTimer: NodeJS.Timeout | null = null;
 // Let Unity's BestHTTP reuse keep-alive sockets; headersTimeout must exceed keepAliveTimeout.
 httpServer.keepAliveTimeout = 65_000;
 httpServer.headersTimeout = 66_000;
@@ -124,6 +126,7 @@ async function start(): Promise<void> {
     pvpOrphanRecoveryTimer.unref();
   }
   await createGameHub(httpServer);
+  playerLeagueSchedulerTimer = startPlayerLeagueSettlementScheduler();
 
   httpServer.listen(config.port, () => {
     logger.server.start(config.port, process.env.NODE_ENV ?? "development");
@@ -136,6 +139,7 @@ async function shutdown(signal: string): Promise<void> {
   logger.server.shutdown(signal);
   httpServer.close();
   if (pvpOrphanRecoveryTimer) clearInterval(pvpOrphanRecoveryTimer);
+  if (playerLeagueSchedulerTimer) clearInterval(playerLeagueSchedulerTimer);
   await pvpCoordinatorHeartbeat?.stop();
   await disconnectRedis();
   await disconnectMongo();

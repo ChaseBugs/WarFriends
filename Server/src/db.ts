@@ -860,6 +860,14 @@ let reportDeduplicationsCollection: Collection<ReportDeduplicationDocument> | nu
 let friendlyBattlesCollection: Collection<FriendlyBattleDocument> | null = null;
 let gameCatalogEntriesCollection: Collection<GameCatalogEntryDocument> | null = null;
 let gameCatalogReleasesCollection: Collection<GameCatalogReleaseDocument> | null = null;
+export interface ScheduledJobLeaseDocument extends Document {
+  _id: string;
+  ownerId: string;
+  acquiredAt: Date;
+  expiresAt: Date;
+}
+
+let scheduledJobLeasesCollection: Collection<ScheduledJobLeaseDocument> | null = null;
 
 export async function connectMongo(): Promise<void> {
   await client.connect();
@@ -879,6 +887,7 @@ export async function connectMongo(): Promise<void> {
   friendlyBattlesCollection = db.collection<FriendlyBattleDocument>("friendlyBattles");
   gameCatalogEntriesCollection = db.collection<GameCatalogEntryDocument>("gameCatalogEntries");
   gameCatalogReleasesCollection = db.collection<GameCatalogReleaseDocument>("gameCatalogReleases");
+  scheduledJobLeasesCollection = db.collection<ScheduledJobLeaseDocument>("scheduledJobLeases");
 
   await playersCollection.createIndex({ id: 1 }, { unique: true });
   await playersCollection.createIndex({ authToken: 1 });
@@ -999,6 +1008,7 @@ export async function disconnectMongo(): Promise<void> {
   friendlyBattlesCollection = null;
   gameCatalogEntriesCollection = null;
   gameCatalogReleasesCollection = null;
+  scheduledJobLeasesCollection = null;
 }
 
 /**
@@ -1049,6 +1059,10 @@ export function squadChatMessages(): Collection<SquadChatMessageDocument> {
 
 export function matches(): Collection<Document> {
   return requireCollection("matches", matchesCollection);
+}
+
+export function scheduledJobLeases(): Collection<ScheduledJobLeaseDocument> {
+  return requireCollection("scheduledJobLeases", scheduledJobLeasesCollection);
 }
 
 export function messages(): Collection<Document> {

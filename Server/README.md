@@ -222,7 +222,9 @@ Working end-to-end (verified live):
   `LeagueEvaluation`; confirmed PvP consumes placement; `FinishPlayerLeague` atomically
   promotes/relegates all members and queues the recovered type-23 result/reward messages. The same
   transitions persist exact group-13 league achievement progress (Silver II/Gold I/Master III for
-  5/10/20 Gold) from the server-owned profile tier.
+  5/10/20 Gold) from the server-owned profile tier. A background sweep discovers expired managed
+  divisions and reuses that transaction under one crash-expiring MongoDB lease, so inactive clients
+  do not block settlement and multiple nodes do not intentionally run the same scheduler job.
 - **Social / messaging**: `SearchPlayers` (name prefix), `GetAllPlayers`, exact Facebook-friend and
   authoritative squad-mate resolution through `GetFriendsInfo`, challenge and normal
   `MessageSent`, `GetAllMessages`, `ReadMessage`, `IgnoreMessage`, and `AcceptChallenge`
