@@ -164,6 +164,15 @@ export interface PlayerProgressionState {
    * of accepting an arbitrary price or upgraded weapon chosen by a modified client.
    */
   blackMarket?: BlackMarketOfferState;
+  /**
+   * Current two-stage daily rental offer consumed by GetPlayerData, GameEnded, and action 138.
+   *
+   * The stock request contains only `buyRentalDiscounted`; it never sends an item identity,
+   * discount, or price. Those values must therefore remain server-owned between the initial
+   * free trial, the post-battle sale, and final redemption. Private expiry/battle fields are
+   * intentionally stored outside the public `Rental` object returned to Unity.
+   */
+  rental?: RentalOfferState;
   /** Bounded replay cache for the stock client's batched RequestBuffer transport. */
   processedRequestBuffers?: ProcessedRequestBuffer[];
 }
@@ -184,6 +193,33 @@ export interface BlackMarketOfferState {
   /** Unix timestamp after which neither display nor purchase is authorized. */
   offerEnd: number;
   currentOffers: BlackMarketOfferedWeaponState[];
+}
+
+/** DKHAOLDJLMK from the recovered client: unit, weapon, or player visual. */
+export type RentalItemType = 0 | 1 | 2;
+
+/** Server lifecycle states corresponding to AINIEKCODDE and the two RentalDialog variants. */
+export type RentalOfferStatus = "offered" | "trial" | "sale" | "purchased" | "cooldown";
+
+export interface RentalOfferState {
+  /** Stable catalog identity; action 138 is not allowed to replace it with client input. */
+  id: string;
+  type: RentalItemType;
+  /** Integer percentage shown by RentalDialog and used for the discounted permanent price. */
+  discount: number;
+  status: RentalOfferStatus;
+  /** Lifetime issuance sequence used only to make reconstructed selection deterministic. */
+  generation: number;
+  /** Earliest time a replacement offer may be generated. */
+  nextGenerate: number;
+  /** Trial authority deadline; zero outside the trial state. */
+  trialExpiresAt: number;
+  /** Sale redemption deadline; zero until the trial has been consumed by one battle. */
+  saleExpiresAt: number;
+  /** Battle whose retry is allowed to reproduce the same post-trial sale response. */
+  saleBattleId?: string;
+  /** Weapon slot replaced by the temporary trial, restored when trial authority ends. */
+  previousWeaponSlot?: SerializedWeaponSlotState & { slotIndex: number };
 }
 
 export interface DailyRewardState {

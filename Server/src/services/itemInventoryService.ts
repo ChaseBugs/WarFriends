@@ -563,6 +563,7 @@ export function purchaseWeaponState(
 export function equipWeaponState(
   state: PlayerProgressionState,
   payload: WeaponEquipPayload,
+  now?: number,
 ): ItemInventoryMutationResult {
   const definition = weaponDefinitionFor(payload.name);
   const itemInventory = itemInventoryStateFor(state);
@@ -571,6 +572,13 @@ export function equipWeaponState(
   if (
     !definition
     || !weapon?.bought
+    || (weapon.borrowed && !(
+      Number.isInteger(now)
+      && state.rental?.status === "trial"
+      && state.rental.type === 1
+      && state.rental.id === definition.name
+      && state.rental.trialExpiresAt > now!
+    ))
     || payload.index !== definition.index
     || slotMask === undefined
     || (slotMask & definition.category) !== definition.category
@@ -608,8 +616,10 @@ function upgradeContext(
   if (!definition || !stages) {
     throw new ApiError(ITEM_PRICE_NOT_FOUND, "Weapon upgrade balancing was not found.");
   }
-  if (!weapon?.bought) {
-    throw new ApiError(ITEM_WEAPON_NOT_BOUGHT, "Weapon must be owned before it can be upgraded.");
+  if (!weapon?.bought || weapon.borrowed) {
+    // A rental can be equipped for its bounded trial, but it must never become a permanent
+    // upgraded item through the ordinary action-73 path. Only action 138 may convert it.
+    throw new ApiError(ITEM_WEAPON_NOT_BOUGHT, "A permanent weapon must be owned before it can be upgraded.");
   }
   return { definition, itemInventory, weapon, stages };
 }

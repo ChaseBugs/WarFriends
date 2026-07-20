@@ -1102,20 +1102,27 @@ export function unitArmyPower(state: PlayerProgressionState, name: string): numb
 }
 
 /**
- * Reproduce LevelManager.unitPower for the equipped, permanently owned unit roster.
+ * Reproduce LevelManager.unitPower for equipped permanent units and the exact active rental.
  *
  * LevelManager sums UpgradeSlots.armyPower as float32 in behaviour order and rounds once with
  * FloorToInt(total + 0.5f). Weapon and rank power are intentionally outside this helper; those
  * independent source tables must be recovered before UpdateArmyPower can replace the current
  * fail-closed client-echo boundary with a complete server-owned total.
  */
-export function equippedUnitPower(state: PlayerProgressionState): number {
+export function equippedUnitPower(state: PlayerProgressionState, now?: number): number {
   const saved = itemInventoryStateFor(state).levelManagerData.savedArmies;
   let total = Math.fround(0);
   for (const definition of Object.values(PLAYER_UNIT_CATALOG).sort((a, b) => a.index - b.index)) {
     const unit = saved[definition.name];
     const upgrades = UNIT_UPGRADE_CATALOG[definition.name];
-    if (!unit?.bought || !unit.equipped || unit.borrowed || !upgrades) continue;
+    if (!unit?.bought || !unit.equipped || !upgrades) continue;
+    if (unit.borrowed && !(
+      Number.isInteger(now)
+      && state.rental?.status === "trial"
+      && state.rental.type === 0
+      && state.rental.id === definition.name
+      && state.rental.trialExpiresAt > now!
+    )) continue;
     total = Math.fround(total + unitArmyPowerValue(definition, upgrades, unit));
   }
   return Math.floor(Math.fround(total + Math.fround(0.5)));
@@ -1141,6 +1148,7 @@ export function equippedUnitPower(state: PlayerProgressionState): number {
 export function updateEquippedUnitsState(
   state: PlayerProgressionState,
   payload: UnitEquipPayload,
+  now?: number,
 ): { state: PlayerProgressionState; itemInventory: ItemInventoryState } {
   if (payload.armyPower < 0) {
     throw new ApiError(UNIT_CANT_EQUIP, "Army power must be non-negative.");
@@ -1167,8 +1175,16 @@ export function updateEquippedUnitsState(
       unit = newlyOwnedUnit(definition);
       savedArmies[name] = unit;
     }
-    if (!unit?.bought || unit.borrowed) {
-      throw new ApiError(UNIT_CANT_EQUIP, "Only owned, non-rental units can be equipped.");
+    const activeRental = Boolean(
+      unit?.borrowed
+        && Number.isInteger(now)
+        && state.rental?.status === "trial"
+        && state.rental.type === 0
+        && state.rental.id === name
+        && state.rental.trialExpiresAt > now!,
+    );
+    if (!unit?.bought || (unit.borrowed && !activeRental)) {
+      throw new ApiError(UNIT_CANT_EQUIP, "Only permanent units or the active rental trial can be equipped.");
     }
     if (requested.equipped && !(requested.wasEquipped || unit.wasEquipped)) {
       throw new ApiError(UNIT_CANT_EQUIP, "An equipped unit must carry its wasEquipped history flag.");

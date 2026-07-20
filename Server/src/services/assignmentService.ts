@@ -475,7 +475,10 @@ export function processAssignmentBufferState(
           // EquipWeapon is also optimistic on the client. Only the stored ownership record
           // and recovered slot-category mask are authoritative here; client ArmyPower is
           // checked for shape but never written to the leaderboard/profile fields.
-          working = equipWeaponState(working, parseWeaponEquipData(request.data)).state;
+          // RentalDialog queues the ordinary EquipWeapon action after action 138 grants a
+          // borrowed trial. Pass the authoritative buffer time so only that live trial may
+          // cross the otherwise permanent-ownership equipment boundary.
+          working = equipWeaponState(working, parseWeaponEquipData(request.data), now).state;
         } else if (request.action === DbAction.BuyWeaponUpgrade) {
           // Buying an upgrade creates a shared LevelManager.weaponDelivery receipt but does
           // not increment boughtIndex. The response duration is important: on the last item
@@ -700,7 +703,7 @@ export function processAssignmentBufferState(
         // ArmyScreen sends this immediately after TryToEquip succeeds. The transition treats
         // the map as a full active-roster snapshot and independently enforces ownership plus
         // the recovered two-per-category and three-mechanical-unit limits.
-        working = updateEquippedUnitsState(working, parseUnitEquipData(request.data)).state;
+        working = updateEquippedUnitsState(working, parseUnitEquipData(request.data), now).state;
         responses.push({ ActionId: request.action, Result: SUCCESS });
       } catch (error) {
         const code = error instanceof ApiError ? error.code : ApiErrorCode.InternalServerError;

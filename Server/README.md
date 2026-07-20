@@ -151,9 +151,10 @@ Working end-to-end (verified live):
   rounds equipped-unit float power, equipped-weapon float DPS, and the current zero-based rank row
   exactly where `LevelManager` does, then atomically stores their sum in both indexed and public
   player state. `UpdateArmyPower` ignores the client's claimed value and recomputes against one
-  consistent progression revision; concurrent inventory changes force a reload. Unsupported
-  rental acquisition remains closed. Black Market weapons use their persisted offered
-  `boughtIndex` and special-feature index with the exact coefficient from all 11 category rows.
+  consistent progression revision; concurrent inventory changes force a reload. Active
+  weapon and unit rentals contribute only while the exact persisted 12-hour trial is
+  unexpired. Black Market weapons use their persisted offered `boughtIndex` and
+  special-feature index with the exact coefficient from all 11 category rows.
   Run `npm run verify:army-power` to compare the
   generated catalog with the recovered scene.
 - **Player visuals and decals**: `scripts/Extract-VisualCatalog.mjs` joins all four serialized
@@ -162,7 +163,7 @@ Working end-to-end (verified live):
   `EquipDecal`, `DecalWasShown`, and `VisualWasShown` validate source, price, category, VIP,
   ownership, expiry, and shop eligibility. Gold/WarBucks debit, permanent or timed ownership,
   four-slot equipment, notification state, rollback data, and `BufferId` replay protection are
-  atomic. Event/Arena/loyalty/assignment/value-pack grants, parts, rentals, and unsupported
+  atomic. Event/Arena/loyalty/assignment/value-pack grants, parts, visual rentals, and unsupported
   discounts remain fail-closed. Run `npm run verify:visual-catalog` to compare the artifact with
   MainScene.
 - **War Card inventory and card packs**: exact `CardManagerData` is persisted and returned at boot.
@@ -230,6 +231,18 @@ Working end-to-end (verified live):
   BufferId-replay-safe. Issued offers currently use recovered feature index 0; the original
   remote selection weights, trigger schedule, feature weights, and OfferManager discount
   entitlements remain reconstruction gaps.
+- **Daily weapon and unit rentals**: GetPlayerData issues the exact outer `Rental` object once
+  the zero-based player level reaches display rank 4. The 4.9.5 MainScene values decode to a
+  20-25% sale, a 12-hour free trial, a 24-hour offer, and 0/2/7 visual/weapon/unit weights;
+  visual rentals are therefore deliberately not generated. Action `138` accepts only the
+  recovered `buyRentalDiscounted` Boolean and returns the nested `RequestsResults` string
+  consumed by the old aggregate parser. A free trial materializes one borrowed item, permits
+  normal equip and Army Power only while its server deadline is live, then PvP, mission, or
+  Arena `GameEnded` removes the borrowed authority, restores a replaced weapon slot, and emits
+  the discounted sale variant. Permanent redemption recomputes the price from the stored
+  catalog row and discount, atomically debits the authoritative wallet, and is idempotent on
+  transport retry. Exact original remote item selection is unavailable, so eligible unowned
+  items use a documented deterministic replacement within the recovered three-level window.
 - **Unit purchase, loadout, and upgrade lifecycle**: `../Tools/Extract-UnitCatalog.ps1` joins the recovered
   `LevelManager.behaviours` and `additionalBehaviours` arrays through each behaviour's
   `UpgradeSlots` GameObject to the `Google2u.ArmyUpgrades` master row. The checked-in artifact
@@ -309,15 +322,15 @@ allowlist of analytics/impression actions is safely ignored.
   state is persistent, but actual channel delivery still requires Photon Chat repointing or a
   compatible replacement transport.
 - **Item economy expansion** — unit Elite upgrades, normal shop visuals, normal card-pack
-  purchase, dedicated Black Market weapons, and complete permanent-loadout ArmyPower are implemented.
-  Add authoritative card reward and consumption events, server-selected card/Buddy RNG, rentals,
+  purchase, dedicated Black Market weapons, daily weapon/unit rentals, and complete active-loadout
+  ArmyPower are implemented. Add authoritative card reward and consumption events, server-selected card/Buddy RNG,
   VIP purchasing, and non-shop visual reward delivery. Normal unit purchase is authoritative for 23
   non-tutorial roster units, and the tutorial unit is persisted through its first equip event;
   three helper rows and 18 ArmyUpgrades rows without LevelManager objects remain closed. All 84
   resolvable shop weapons and 81 concrete Black Market weapons support authoritative equip/upgrade
   state; the nine unresolved rows in each weapon family, two Black Market rows without
   `WEAPONPRICE`, unknown items, and
-  discount-bearing requests remain rejected instead of receiving guessed prices or unusable
+  unrelated discount-bearing requests remain rejected instead of receiving guessed prices or unusable
   inventory records.
 - **Player leagues** — the server owns source-backed 16-tier placement and season state,
   exact weekly-medal division ordering, recovered promotion/relegation percentages, the

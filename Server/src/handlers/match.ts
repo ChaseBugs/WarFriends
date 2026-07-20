@@ -1,6 +1,6 @@
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import { DbAction } from "../dbActions";
-import type { DailyMissionMode } from "../db";
+import type { DailyMissionMode, PlayerProgressionState } from "../db";
 import { ok } from "../dtos";
 import {
   getMatch,
@@ -18,6 +18,7 @@ import { authed, type HandlerEntry } from "./types";
 import { getSquadEventWireFields } from "../services/squadEventService";
 import logger from "../utils/logger";
 import { playerLeagueBootFields } from "../services/playerLeagueContract";
+import { advanceRentalAfterBattle } from "../services/rentalService";
 
 // PvP match lifecycle reported to the meta server. Live event traffic runs over /hub, while
 // these actions preserve compatibility with the recovered client's Photon-era REST calls.
@@ -49,6 +50,37 @@ function enabled(value: unknown): boolean {
   return value === true || value === 1 || value === "1" || value === "True" || value === "true";
 }
 
+/**
+ * Convert a consumed free trial into the sale variant embedded in GameEnded.
+ *
+ * Match/mission rewards may already be committed before this auxiliary progression write.
+ * A rental failure must therefore be logged and omitted instead of changing a successful
+ * battle into a retry that could confuse the end screen. The battle ID stored by the rental
+ * service makes a lost-response retry reproduce the same sale without consuming another item.
+ */
+async function rentalFieldsAfterBattle(
+  playerId: string,
+  battleId: string,
+  state: PlayerProgressionState,
+): Promise<Record<string, unknown>> {
+  const rental = state.rental;
+  if (!rental || !battleId || (
+    rental.status !== "trial"
+    && !(rental.status === "sale" && rental.saleBattleId === battleId)
+  )) return {};
+  try {
+    const result = await advanceRentalAfterBattle(playerId, battleId);
+    return result.saleOffer ? { Rental: result.saleOffer } : {};
+  } catch (error) {
+    logger.warnWithEmoji("⚠️", "Could not append rental sale to GameEnded", "RENTAL", {
+      playerId,
+      battleId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return {};
+  }
+}
+
 export const matchHandlers: Record<number, HandlerEntry> = {
   // These reports are lifecycle telemetry only. Match ownership is established when the
   // matchmaking service creates the persistent match row; a start report cannot create or
@@ -76,8 +108,10 @@ export const matchHandlers: Record<number, HandlerEntry> = {
         battleId: id,
         endReason: integer(req.EndReason, "EndReason"),
       });
+      const rentalFields = await rentalFieldsAfterBattle(player!.id, id, result.state);
       return ok(DbAction.GameEnded, {
         ...result.response,
+        ...rentalFields,
         LevelExperience: result.state.levelExperience,
         Time: unixNow(),
         Replayed: result.replayed,
@@ -95,8 +129,10 @@ export const matchHandlers: Record<number, HandlerEntry> = {
         missionType: missionMode(req.MissionType),
         endReason: integer(req.EndReason, "EndReason"),
       });
+      const rentalFields = await rentalFieldsAfterBattle(player!.id, id, result.state);
       return ok(DbAction.GameEnded, {
         ...result.response,
+        ...rentalFields,
         // OGLEHLIPEFM.PKAHEEJBBNP reads LevelExperience without a ContainsKey guard after
         // IsWarPath selects the mission parser. Return it for success, failure, and replay.
         LevelExperience: result.state.levelExperience,
@@ -134,6 +170,9 @@ export const matchHandlers: Record<number, HandlerEntry> = {
     const responseWinner = report.settlement?.winnerId ?? winnerId;
     const resultAvailable = report.status === "confirmed" || report.status === "finished";
     const rewardReceipt = report.settlement?.rewards?.[player!.id];
+    const rentalFields = progression && id && report.status !== "invalid" && report.status !== "conflict"
+      ? await rentalFieldsAfterBattle(player!.id, id, progression)
+      : {};
     const enteredLeague = Boolean(
       resultAvailable
       && updated
@@ -191,6 +230,7 @@ export const matchHandlers: Record<number, HandlerEntry> = {
         }
         : {}),
       ...squadEventFields,
+      ...rentalFields,
       Time: unixNow(),
     });
   }),

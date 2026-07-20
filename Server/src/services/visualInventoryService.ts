@@ -160,7 +160,10 @@ function ownsVisual(
   if (definition.purchasable === "shop" && definition.priceGold === 0 && definition.priceWarBucks === 0) {
     return true;
   }
-  if (saved?.borrowed) return false; // Rental authority is deliberately not implemented yet.
+  // MainScene's ServerRentalVisualProbability is exactly zero. Weapon/unit rentals have a
+  // dedicated authority path, but a borrowed visual remains invalid unless future source
+  // data enables and defines that family.
+  if (saved?.borrowed) return false;
   if (definition.durationSeconds > 0) return (saved?.expiresOn ?? 0) > now;
   return saved?.bought === true || (definition.parts > 0 && (saved?.parts ?? 0) >= definition.parts);
 }

@@ -19,17 +19,25 @@ import {
   PLAYER_RENAME_NOT_ENOUGH_GOLD,
   renamePlayer,
 } from "../services/playerRenameService";
+import { ensureRentalOffer } from "../services/rentalService";
 
 // Player profile and settings handlers. GetPlayerData is the client's primary state fetch
 // after login. Mutations validate and persist only their own fields, which prevents a stale
 // profile request from overwriting progression written concurrently by match or squad logic.
 
 export const playerHandlers: Record<number, HandlerEntry> = {
-  [DbAction.GetPlayerData]: authed(({ player }) => {
+  [DbAction.GetPlayerData]: authed(async ({ player }) => {
     // GetPlayerData does not deserialize DatabasePlayer. The recovered callback requires
     // Time and PlayerData, then reads league/profile aliases beside that map. Returning the
     // profile alone looked plausible in diagnostics but failed during actual Unity boot.
-    return ok(DbAction.GetPlayerData, buildPlayerStateResponse(player!));
+    const rental = await ensureRentalOffer(player!.id, player!.player.level);
+    // Rental is an outer GetPlayerData field, not part of the Dynamo-style PlayerData map.
+    // EGPLNLMMADN reads it directly and always opens this boot variant as a free trial.
+    const projected = { ...player!, progression: rental.state };
+    return ok(DbAction.GetPlayerData, {
+      ...buildPlayerStateResponse(projected),
+      ...(rental.bootOffer ? { Rental: rental.bootOffer } : {}),
+    });
   }),
 
   [DbAction.GetPlayerInfo]: authed(({ player }) => {

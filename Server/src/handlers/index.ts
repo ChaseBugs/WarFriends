@@ -21,6 +21,7 @@ import { warArenaHandlers } from "./warArena";
 import { visualHandlers } from "./visuals";
 import { cardHandlers } from "./cards";
 import { blackMarketHandlers } from "./blackMarket";
+import { rentalHandlers } from "./rentals";
 import type { HandlerEntry } from "./types";
 import logger from "../utils/logger";
 
@@ -52,6 +53,7 @@ const registry: Record<number, HandlerEntry> = {
   ...visualHandlers,
   ...cardHandlers,
   ...blackMarketHandlers,
+  ...rentalHandlers,
 };
 
 function clientVersion(req: RequestEnvelope): number {

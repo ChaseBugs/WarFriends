@@ -6,7 +6,7 @@ import {
   itemInventoryStateFor,
   weaponDefinitionFor,
 } from "./itemInventoryService";
-import { progressionForPlayer } from "./playerStateService";
+import { progressionForPlayer, unixNow } from "./playerStateService";
 import { equippedUnitPower } from "./unitInventoryService";
 
 interface WeaponPowerDefinition {
@@ -75,9 +75,10 @@ export function rankPower(playerLevelIndex: number): number {
  * feature's dpsCoef, accumulates every slot as float32, and rounds once. The authoritative
  * normal shop rows use their base coefficient. Dedicated Black Market rows load `special`
  * through WeaponFeatures.CreateFeature, so their recovered category/index coefficient is
- * applied here. Borrowed rental authority remains fail-closed.
+ * applied here. A borrowed weapon contributes only while it is the exact unexpired rental
+ * trial recorded in the same progression snapshot.
  */
-export function equippedWeaponPower(state: PlayerProgressionState): number {
+export function equippedWeaponPower(state: PlayerProgressionState, now?: number): number {
   const inventory = itemInventoryStateFor(state);
   const slots = Object.entries(inventory.inventoryData.slots)
     .sort(([left], [right]) => Number(left) - Number(right));
@@ -97,10 +98,14 @@ export function equippedWeaponPower(state: PlayerProgressionState): number {
       throw new ApiError(ApiErrorCode.UnknownAction, `Equipped weapon ${slot.name} is not authoritative.`);
     }
     if (saved.borrowed) {
-      throw new ApiError(
-        ApiErrorCode.UnknownAction,
-        `Weapon ${slot.name} uses unsupported rental authority.`,
-      );
+      const activeRental = Number.isInteger(now)
+        && state.rental?.status === "trial"
+        && state.rental.type === 1
+        && state.rental.id === slot.name
+        && state.rental.trialExpiresAt > now!;
+      if (!activeRental) {
+        throw new ApiError(ApiErrorCode.UnknownAction, `Weapon ${slot.name} has expired rental authority.`);
+      }
     }
     if (!Number.isInteger(saved.boughtIndex) || saved.boughtIndex < 0 || power.powerByLevel.length === 0) {
       throw new ApiError(ApiErrorCode.UnknownAction, `Weapon ${slot.name} has an invalid upgrade cursor.`);
@@ -131,10 +136,10 @@ export function equippedWeaponPower(state: PlayerProgressionState): number {
 }
 
 /** Calculate all three independently rounded LevelManager Army Power components. */
-export function calculateArmyPower(document: PlayerDocument): ArmyPowerBreakdown {
+export function calculateArmyPower(document: PlayerDocument, now = unixNow()): ArmyPowerBreakdown {
   const progression = progressionForPlayer(document);
-  const unitPower = equippedUnitPower(progression);
-  const weaponPower = equippedWeaponPower(progression);
+  const unitPower = equippedUnitPower(progression, now);
+  const weaponPower = equippedWeaponPower(progression, now);
   const currentRankPower = rankPower(document.player.level);
   return {
     unitPower,
