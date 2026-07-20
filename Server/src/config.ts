@@ -59,6 +59,12 @@ export const config = {
   googlePlaySubscriptionRevalidationBatchSize:
     Number(process.env.GOOGLE_PLAY_SUBSCRIPTION_REVALIDATION_BATCH_SIZE ?? 100),
 
+  // Optional signed publication manifest for the stock GetConfigurations raw-text protocol.
+  // Empty keeps bundled APK sheets active. The signing key is backend-only and protects the
+  // operator file from accidental or unauthorized modification before any values are served.
+  remoteConfigurationManifestPath: (process.env.REMOTE_CONFIGURATION_MANIFEST_PATH ?? "").trim(),
+  remoteConfigurationSigningSecret: process.env.REMOTE_CONFIGURATION_SIGNING_SECRET ?? "",
+
   // Recovered from MainScene's Constants rows. Requests repeat these values for compatibility,
   // but economy logic always uses the server copy so a modified client cannot accelerate energy.
   dogTagRefillSeconds: Number(process.env.DOG_TAG_REFILL_SECONDS ?? 900),

@@ -36,6 +36,12 @@ multi-document transactions, so enable a single-node replica set for local devel
 replicated/sharded managed deployment) and include `replicaSet` in `MONGO_URL`. Health check:
 `GET /health`.
 
+Remote Google2u sheets remain disabled unless `REMOTE_CONFIGURATION_MANIFEST_PATH` points to an
+operator-reviewed manifest signed with `REMOTE_CONFIGURATION_SIGNING_SECRET`. The exact stock
+semicolon/DynamoDB-shaped wire supports sheet versions, row IDs, AB variant, language, client-build
+range, and deterministic player rollout targeting. See `config/README.md`; unsigned or malformed
+publication data fails startup, while an empty path preserves the APK-bundled sheets.
+
 Google Play purchases are fail-closed by default. To enable verified Android currency and
 `subscription1` delivery, grant a service account Play Console purchase-read access, set
 `GOOGLE_APPLICATION_CREDENTIALS` to its JSON file outside this repository, and set

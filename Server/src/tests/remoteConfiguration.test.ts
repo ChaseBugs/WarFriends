@@ -1,0 +1,98 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import {
+  buildRemoteConfigurationResponse,
+  remoteConfigurationSignature,
+  selectRemoteConfiguration,
+  validateRemoteConfigurationManifest,
+} from "../services/remoteConfigurationService";
+
+const secret = "remote-configuration-test-secret-with-at-least-32-characters";
+
+function signedManifest() {
+  const value = {
+    schemaVersion: 1,
+    releaseId: "release-2026-07-21",
+    publications: [{
+      sheetConfiguration: "balance-v2",
+      variant: "economy-a",
+      languages: ["en", "ko"],
+      minimumClientVersion: 490,
+      maximumClientVersion: 500,
+      rolloutPercent: 100,
+      rolloutSalt: "balance-v2-rollout",
+      sheets: [{
+        id: "Constants",
+        version: "42",
+        columns: ["DBKEY", "STRINGVALUE"],
+        rowIds: ["DogTagCap", "Notice"],
+        rows: [["DogTagCap", "5"], ["Notice", "safe;message"]],
+      }],
+    }],
+    signature: "",
+  };
+  value.signature = remoteConfigurationSignature(value, secret);
+  return validateRemoteConfigurationManifest(value, secret);
+}
+
+test("signed remote publication emits the exact stock semicolon and DynamoDB-shaped sheet wire", () => {
+  const manifest = signedManifest();
+  const response = buildRemoteConfigurationResponse({
+    DbAction: 157,
+    PlayerId: "player-1",
+    SheetConfiguraton: "old",
+    abTestVariant: "economy-a",
+    Language: "en",
+    ClientVersion: 495,
+  }, manifest);
+  const segments = response.split(";");
+  assert.equal(segments.length, 4);
+  assert.equal(segments[0], "success");
+  assert.equal(segments[1], "balance-v2");
+  assert.deepEqual(JSON.parse(segments[2]!), { Constants: { N: "42" } });
+  const sheet = JSON.parse(segments[3]!);
+  assert.deepEqual(sheet.Id, { S: "Client_Constants" });
+  assert.deepEqual(sheet.ColumnNames, { S: "DBKEY/STRINGVALUE" });
+  assert.deepEqual(sheet.RowIDs.L, [{ S: "DogTagCap" }, { S: "Notice" }]);
+  assert.equal(sheet.Data.L[1].S, "Notice/safe;message");
+});
+
+test("current, untargeted, and pre-auth rollout clients retain bundled sheets", () => {
+  const manifest = signedManifest();
+  const targeted = {
+    DbAction: 157,
+    PlayerId: "player-1",
+    abTestVariant: "economy-a",
+    Language: "ko",
+    ClientVersion: 495,
+  };
+  assert.equal(
+    buildRemoteConfigurationResponse({ ...targeted, SheetConfiguraton: "balance-v2" }, manifest),
+    "success;balance-v2;{}",
+  );
+  assert.equal(selectRemoteConfiguration({ ...targeted, Language: "fr" }, manifest), null);
+  assert.equal(selectRemoteConfiguration({ ...targeted, ClientVersion: 501 }, manifest), null);
+
+  const rolloutManifest = {
+    ...manifest,
+    publications: [{ ...manifest.publications[0]!, rolloutPercent: 50 }],
+  };
+  assert.equal(selectRemoteConfiguration({
+    DbAction: 157,
+    abTestVariant: "economy-a",
+    Language: "en",
+    ClientVersion: 495,
+  }, rolloutManifest), null);
+});
+
+test("remote manifest rejects tampering and row delimiters that would corrupt the stock parser", () => {
+  const manifest = signedManifest();
+  assert.throws(
+    () => validateRemoteConfigurationManifest({ ...manifest, releaseId: "tampered" }, secret),
+    /signature is invalid/,
+  );
+  const invalid = JSON.parse(JSON.stringify(manifest));
+  invalid.publications[0].sheets[0].rows[0][1] = "bad/value";
+  invalid.signature = remoteConfigurationSignature(invalid, secret);
+  assert.throws(() => validateRemoteConfigurationManifest(invalid, secret), /wire-safe/);
+});

@@ -74,3 +74,25 @@ The claim foundation does not trust the stock `EventAssignmentUpdate` value: tha
 from the phone's local destroyed-box counter. A pure confirmed-progress transition exists for a
 future authoritative battle relay, but no current production request calls it. Therefore deploying
 a schedule makes claims correct but not naturally completable until trusted box telemetry is added.
+
+# Signed remote Google2u sheets
+
+`remote-configuration.example.json` documents the operator manifest accepted by
+`GetConfigurations`. Copy it to an untracked deployment path, define a stable independent
+`REMOTE_CONFIGURATION_SIGNING_SECRET` of at least 32 characters, then run:
+
+```powershell
+npm run sign:remote-config -- config/remote-configuration.json
+```
+
+Set `REMOTE_CONFIGURATION_MANIFEST_PATH` to that signed file and restart. Startup verifies the
+HMAC, schema, unique sheet/row IDs, column counts, client-version bounds, variant/language targets,
+rollout percentage, and delimiter safety before listening. Publications are evaluated in manifest
+order. A rollout below 100 percent requires a player ID; pre-login requests retain their bundled
+sheets. The same `sheetConfiguration` returns a three-segment no-change response.
+
+Each `rows` entry contains cell values in exactly the same order as `columns`. The stock client
+uses `/` inside each row and `;` between outer response segments, so `/` is rejected in cells and
+`;` is JSON-unicode-escaped on the wire. Do not place secrets in sheets: every selected value is
+sent to the game client. `SaveFuseConfigs` is intentionally not an administration route; its
+client-authored debug blob is ignored and can never replace the signed operator manifest.

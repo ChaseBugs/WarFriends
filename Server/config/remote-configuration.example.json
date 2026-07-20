@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "releaseId": "example-release",
+  "publications": [
+    {
+      "sheetConfiguration": "example-balance-v1",
+      "variant": "*",
+      "languages": ["*"],
+      "minimumClientVersion": 0,
+      "rolloutPercent": 100,
+      "rolloutSalt": "replace-for-each-rollout",
+      "sheets": [
+        {
+          "id": "Constants",
+          "version": "1",
+          "columns": ["DBKEY", "STRINGVALUE"],
+          "rowIds": ["ExampleRow"],
+          "rows": [["ExampleRow", "review-before-publishing"]]
+        }
+      ]
+    }
+  ],
+  "signature": "run-the-sign-remote-config-command"
+}

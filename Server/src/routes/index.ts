@@ -2,6 +2,7 @@ import { Router, type Request, type Response } from "express";
 import { dispatch } from "../handlers";
 import { DbAction } from "../dbActions";
 import type { RequestEnvelope } from "../dtos";
+import { buildRemoteConfigurationResponse } from "../services/remoteConfigurationService";
 
 // The recovered 1.6.0 client posts form fields to
 // <base>/<DatabaseAction>/<short-version> and repeats the action as `requestId`.
@@ -20,12 +21,7 @@ export function normalizeEnvelope(body: unknown, routeAction?: string): RequestE
 
 /** Build the special non-JSON response parsed by GameConfigurationManager. */
 export function configurationResponse(fields: RequestEnvelope): string {
-  const requested = fields.SheetConfiguraton ?? fields.SheetConfiguration ?? fields.SheetConfig ?? "0";
-  const sheetConfiguration = String(requested).replaceAll(";", "").trim() || "0";
-  // The recovered parser increments its segment counter for every semicolon. Segment three is the
-  // sheet-version JSON object; a trailing semicolon creates an empty fourth segment, which it then
-  // attempts to deserialize and index as a sheet object. End immediately after the JSON instead.
-  return `success;${sheetConfiguration};{}`;
+  return buildRemoteConfigurationResponse(fields);
 }
 
 async function handleEnvelope(req: Request, res: Response): Promise<void> {

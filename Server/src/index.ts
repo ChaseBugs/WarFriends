@@ -22,6 +22,7 @@ import { requireAdmin } from "./services/adminAuthService";
 import { runWithRequestContext } from "./services/requestContextService";
 import { startPlayerLeagueSettlementScheduler } from "./services/playerLeagueSchedulerService";
 import { startGooglePlaySubscriptionRevalidationScheduler } from "./services/googlePlaySubscriptionRevalidationService";
+import { initializeRemoteConfiguration } from "./services/remoteConfigurationService";
 
 const app = express();
 
@@ -115,6 +116,9 @@ async function start(): Promise<void> {
   if (config.googlePlaySubscriptionRevalidationEnabled && !config.googlePlayPurchasesEnabled) {
     throw new Error("Google Play subscription revalidation requires GOOGLE_PLAY_PURCHASES_ENABLED=true.");
   }
+  // Parse, schema-check, and authenticate the complete publication before opening MongoDB or a
+  // listener. A malformed live-ops file therefore fails deployment instead of reaching clients.
+  initializeRemoteConfiguration();
   await connectMongo();
   logger.db.connect("MongoDB connected", { provider: "mongodb", database: config.mongoDbName });
   // Migrations run before any repair or listener opens. A node with unknown/drifted history stays
