@@ -23,6 +23,7 @@ import { cardHandlers } from "./cards";
 import { blackMarketHandlers } from "./blackMarket";
 import { rentalHandlers } from "./rentals";
 import { vipHandlers } from "./vip";
+import { instantBattleHandlers } from "./instantBattle";
 import type { HandlerEntry } from "./types";
 import logger from "../utils/logger";
 
@@ -56,6 +57,7 @@ const registry: Record<number, HandlerEntry> = {
   ...blackMarketHandlers,
   ...rentalHandlers,
   ...vipHandlers,
+  ...instantBattleHandlers,
 };
 
 function clientVersion(req: RequestEnvelope): number {
@@ -116,7 +118,7 @@ export async function dispatch(req: RequestEnvelope): Promise<ResponseEnvelope> 
     return await entry.handler({ req, player });
   } catch (err) {
     if (err instanceof ApiError) {
-      return { DbAction: action, ...apiError(err.code, err.message) };
+      return { DbAction: action, ...apiError(err.code, err.message), ...(err.details ?? {}) };
     }
     const message = err instanceof Error ? err.message : String(err);
     logger.errorWithEmoji("❌", `Handler for ${dbActionName(action)} threw`, "DISPATCH", { error: message });

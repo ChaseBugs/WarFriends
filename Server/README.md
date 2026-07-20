@@ -134,6 +134,17 @@ Working end-to-end (verified live):
 - **Energy economy**: server-owned dog-tag seconds, passive regeneration, atomic
   `PayOneDogTag`, and gold-validated `RefillDogtags` using the recovered 900-second/5-tag
   balancing and refill-price formula.
+- **Instant Battle / Skirmish**: action `199` is server-authoritative from rank 9 onward. A
+  new account starts with five ready battles; after a batch is consumed, one battle recharges
+  every 48 minutes up to five. A free request consumes every currently ready battle. When none
+  are ready, the paid path verifies and debits the exact 35/70/140-Gold escalating price and
+  simulates a full five-battle batch. Timer, lifetime/paid counters, wallet, XP, level Gold,
+  dog-tag rank-up refill, and rank Army Power commit in one revision-guarded player write and
+  are restored through `PlayerAnalyticsData`. The hybrid MainScene's shifted five constants are
+  realigned to the old script's field order so its visible five-charge/35-Gold UI agrees with the
+  backend. The retired reward table is unavailable; `INSTANT_BATTLE_XP_PER_BATTLE` (20) and
+  `INSTANT_BATTLE_WARBUCKS_PER_BATTLE` (600) are explicit offline policy, while rare Gold/card/
+  extra-WarBucks rewards remain disabled rather than fabricated.
 - **Versioned client-data material database**: MongoDB collections `gameCatalogEntries` and
   `gameCatalogReleases` persist the recovered 4.9.5 weapon, soldier/unit, rank, power, player
   visual, War Card, and card-pack data as 531 queryable records. The 165 concrete weapon
@@ -311,6 +322,11 @@ Working end-to-end (verified live):
 - **Assignments**: `GetNewAssignments`, both skip actions, assignment/mega claims, and the
   stock `SendRequestBuffer` path use a persistent UTC cycle. Only objectives derived from
   confirmed PvP settlement advance; buffered claim retries are idempotent by `BufferId`.
+- **Limited-time Event Assignments (closed)**: client actions `222`/`223` belong to the separate
+  Christmas-style `EventAssignmentManager`, not the Squad Event system. Their requests contain
+  client-selected reward values and their known progress source is local destroyed-winter-box
+  telemetry. The backend intentionally rejects both until a reviewed `EventAssignmentConfig`,
+  server-observed progress, and server-owned day/milestone reward tables are available.
 - **Daily/co-op/heroic missions**: actions `67`-`69`, `215`, `216`, and mission-flavoured
   `GameEnded` use the exact `DailyMissionsData`, `SavedMission`, and compact `MissionUnit`
   fields. UTC issuance, start receipts, consumed failure receipts, mode/index/order checks,

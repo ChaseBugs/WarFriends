@@ -85,4 +85,11 @@ export const config = {
   // never values echoed by GameEnded's client-controlled WarbuckRewardWin/Loss fields.
   pvpWinWarBucks: Number(process.env.PVP_WIN_WARBUCKS ?? 800),
   pvpLoseWarBucks: Number(process.env.PVP_LOSE_WARBUCKS ?? 400),
+
+  // Action 199's timer, five-charge batch, and 35/70/140 Gold curve are recoverable from
+  // MainScene and the 1.6.0 client. Its retired server-side reward table is not in either APK.
+  // Keep this explicit offline reward policy independently tunable instead of accepting the
+  // client as economy authority or pretending these defaults came from the production service.
+  instantBattleExperiencePerBattle: Number(process.env.INSTANT_BATTLE_XP_PER_BATTLE ?? 20),
+  instantBattleWarBucksPerBattle: Number(process.env.INSTANT_BATTLE_WARBUCKS_PER_BATTLE ?? 600),
 };

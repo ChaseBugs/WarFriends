@@ -205,6 +205,15 @@ export interface PlayerProgressionState {
   /** Number of successful squad creations; the stock client derives the next WarBucks price from it. */
   squadCreationsCount?: number;
   /**
+   * Authoritative recharge and reward history for action 199 (Instant Battle / Skirmish).
+   *
+   * The three public counters are projected into `PlayerAnalyticsData`, because the stock
+   * client calculates the visible charge count and next Gold price from them. `lastReceipt`
+   * is private: action 199 has no operation UUID, so retaining the receipt lets the server
+   * collapse an immediate same-second transport replay without granting or charging twice.
+   */
+  instantBattle?: InstantBattleState;
+  /**
    * Server-issued Black Market weapon offers consumed by action 217 and buffered BuyWeapon.
    *
    * The public fields intentionally match BlackMarketManager.BlackMarketOfferData. Keeping
@@ -229,6 +238,33 @@ export interface PlayerProgressionState {
 export interface PvpWinStreakState {
   winCount: number;
   timestamp: number;
+}
+
+/** Immutable action-199 result fields needed by the recovered OGLEHLIPEFM parser. */
+export interface InstantBattleReceiptState {
+  settledAt: number;
+  /** Progression revision produced by this settlement; required by the narrow replay guard. */
+  progressionRevision: number;
+  paidCost: number;
+  battleCount: number;
+  experienceGained: number;
+  warBucks: number;
+  levelFrom: number;
+  levelTo: number;
+  levelExperience: number;
+  levelGold: number;
+  dogTagsRefilled: boolean;
+}
+
+/** PlayerAnalyticsData's public Skirmish counters plus one private replay receipt. */
+export interface InstantBattleState {
+  /** Unix anchor used by `GetInstantBattlesReady`; zero means the initial full batch. */
+  instantBattlesTime: number;
+  /** Lifetime number of simulated battles, retained for the client's analytics model. */
+  instantBattles: number;
+  /** Lifetime number of paid five-battle batches; this drives the 35/70/140 Gold curve. */
+  paidInstantBattles: number;
+  lastReceipt?: InstantBattleReceiptState;
 }
 
 /** BlackMarketManager.OfferedWeapon from the recovered 1.6.0 client. */

@@ -324,6 +324,12 @@ export function buildPlayerData(player: PlayerDocument): PlayerDataMap {
     // match. Sending the server-owned value on boot prevents reconnecting from restoring the
     // client's local zero/default and accidentally desynchronizing the four-battle cycle.
     matchesToNextLootboxes: state.matchesToNextLootboxes ?? VIP_LOOTBOX_MATCH_INTERVAL,
+    // PlayerAnalytics computes both the visible charge count and the escalating purchase
+    // price locally. Restoring all three server-owned action-199 counters prevents reconnects
+    // from resetting the timer to a free full batch or resetting a paid price to 35 Gold.
+    instantBattlesTime: state.instantBattle?.instantBattlesTime ?? 0,
+    instantBattles: state.instantBattle?.instantBattles ?? 0,
+    paidInstantBattles: state.instantBattle?.paidInstantBattles ?? 0,
   });
 
   if (dto.facebookId !== -1) data.FacebookName = { S: dto.accountName };

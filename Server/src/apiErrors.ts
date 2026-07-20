@@ -33,6 +33,10 @@ export const ApiErrorCode = {
   SquadJoinRequestNotExists: 13302,
   /** IJEAJGCCHEF.NoActiveEvent; action 113 uses this when no configured season is active. */
   NoActiveEvent: 11302,
+  /** IJEAJGCCHEF.NoSkirmishAvailable; the stock client asks the player to relog. */
+  NoSkirmishAvailable: 19901,
+  /** IJEAJGCCHEF.NotEnoughGoldForSkirmish; its error parser also consumes wallet snapshots. */
+  NotEnoughGoldForSkirmish: 19902,
   SquadFull: 62,
   NotSquadMember: 63,
   InsufficientRank: 64,
@@ -56,9 +60,15 @@ export function apiError(code: number, message: string): ApiErrorPayload {
 /** Thrown by handlers to short-circuit with a specific client-facing error. */
 export class ApiError extends Error {
   readonly code: number;
-  constructor(code: number, message: string) {
+  readonly details?: Readonly<Record<string, unknown>>;
+  constructor(code: number, message: string, details?: Readonly<Record<string, unknown>>) {
     super(message);
     this.name = "ApiError";
     this.code = code;
+    // Some recovered error callbacks require state-repair fields in addition to Result. For
+    // example, action 199 reads SkirmishCost, PaidBattles, and PlayerGold after a failed paid
+    // attempt. Keeping optional immutable details on the typed error preserves atomic service
+    // validation while allowing the common dispatcher to reproduce those exact contracts.
+    this.details = details;
   }
 }
