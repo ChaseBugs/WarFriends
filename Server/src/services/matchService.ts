@@ -46,7 +46,7 @@ import {
 } from "./rentalService";
 import { config } from "../config";
 import {
-  ensureActiveSquadWarSeason,
+  prepareSquadWarSettlement,
   recordConfirmedSquadWarProgress,
   type SquadWarProgressStatus,
 } from "./squadWarService";
@@ -1377,26 +1377,41 @@ export interface SettlementResult {
  * gameplay state, not disposable projections.
  */
 export async function settleResult(matchId: string, winnerId: string, reportedById?: string): Promise<SettlementResult> {
-  // Live-event configuration is resolved before opening the MongoDB transaction. A malformed
-  // operator file disables this optional projection for the match but must not prevent the
-  // already-confirmed participants from receiving their core PvP settlement.
+  // A completed match already contains every projection decision and immutable player receipt.
+  // Return it before consulting current live-event configuration: an operator file problem must
+  // block only a new atomic settlement, never prevent a client from recovering a response that
+  // committed earlier. The transaction repeats this check for races after this read.
+  const completed = await getMatch(matchId);
+  if (completed?.state === "finished") {
+    return {
+      matchId,
+      winnerId: completed.winnerId ?? winnerId,
+      rewarded: false,
+      rewards: completed.rewardReceipts,
+    };
+  }
+  // Live-event configuration is resolved before opening the MongoDB transaction. No configured
+  // or active season is a valid null result. A malformed operator file is logged and rethrown:
+  // finalizing the match would make its missing shared progress impossible to replay safely.
   const squadEventSeason = await getActiveConfiguredSquadEvent().catch((error: unknown) => {
     logger.warnWithEmoji("⚠️", "Squad Event configuration could not be used for PvP settlement", "MATCH", {
       matchId,
       error: error instanceof Error ? error.message : String(error),
     });
-    return null;
+    throw error;
   });
   const settlementTime = new Date();
   // Allocation must occur before the core transaction: creating a whole season can touch many
   // squads and does not belong in a two-player settlement. Once materialized, the per-player
   // score updates below share the terminal match transaction and are therefore exactly once.
-  const squadWarsAvailable = await ensureActiveSquadWarSeason(settlementTime).then(Boolean).catch((error: unknown) => {
+  const squadWarsAvailable = await prepareSquadWarSettlement(settlementTime).catch((error: unknown) => {
     logger.warnWithEmoji("âš ï¸", "Squad Wars could not be prepared for PvP settlement", "MATCH", {
       matchId,
       error: error instanceof Error ? error.message : String(error),
     });
-    return false;
+    // Core rewards have not started. Preserve that clean retry boundary instead of treating a
+    // database or maintenance failure as "wars disabled" and permanently dropping this score.
+    throw error;
   });
   const transaction = await withMongoTransaction(async (session) => {
     const match = await matches().findOne({ matchId }, { session }) as unknown as MatchDoc | null;

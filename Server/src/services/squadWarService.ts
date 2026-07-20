@@ -37,6 +37,29 @@ export type SquadWarProgressStatus =
   | "outside_round"
   | "no_points";
 
+/**
+ * Decide whether an authoritative match may project Squad War progress.
+ *
+ * Disabled wars and an explicitly terminal current window have no active destination, so PvP
+ * may settle without a projection. An enabled window that is neither active nor terminal is the
+ * short season-maintenance gap documented by `ensureActiveSquadWarSeason`; treating that gap as
+ * disabled would permanently lose points because the terminal match receipt cannot be applied
+ * twice. Throwing before the match transaction asks the client to retry with no partial reward.
+ */
+export function requireSquadWarSettlementAvailability(
+  enabled: boolean,
+  hasActiveSeason: boolean,
+  hasTerminalSeason: boolean,
+): boolean {
+  if (!enabled) return false;
+  if (hasActiveSeason) return true;
+  if (hasTerminalSeason) return false;
+  throw new ApiError(
+    ApiErrorCode.InternalServerError,
+    "Squad Wars season maintenance is still in progress; retry match settlement.",
+  );
+}
+
 function boundedLevel(value: unknown): number {
   const parsed = Number(value);
   if (!Number.isInteger(parsed)) return SQUAD_WAR_MIN_LEVEL;
@@ -156,6 +179,26 @@ export async function ensureActiveSquadWarSeason(now = new Date()): Promise<Squa
     if (!committed) throw error;
     return committed;
   }
+}
+
+/** Prepare the current Squad War window before an atomic PvP settlement begins. */
+export async function prepareSquadWarSettlement(now = new Date()): Promise<boolean> {
+  if (!config.squadWarsEnabled) return false;
+  // Database and allocation errors deliberately propagate. Core match rewards have not started,
+  // so failing here is retryable and safer than committing a match with permanently missing war
+  // score. `ensureActiveSquadWarSeason` returns null only for a terminal or maintenance window.
+  const active = await ensureActiveSquadWarSeason(now);
+  if (active) return true;
+  const window = squadWarWindowAt(now, config.squadWarsSeasonDurationSeconds);
+  // Re-read after preparation because another node may have completed allocation between the
+  // first check and this classification. A settled row is an intentional no-event window;
+  // absence means expired rounds are still being finalized and must be retried.
+  const current = await squadWarSeasons().findOne({ seasonId: window.seasonId });
+  return requireSquadWarSettlementAvailability(
+    true,
+    current?.status === "active",
+    current?.status === "settled",
+  );
 }
 
 /** Assign a squad created after the season snapshot to a bounded level-one division. */

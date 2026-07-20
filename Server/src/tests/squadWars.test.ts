@@ -8,7 +8,10 @@ import {
   squadWarRoundId,
   squadWarWindowAt,
 } from "../services/squadWarContract";
-import { squadWarRewardEligiblePlayerIds } from "../services/squadWarService";
+import {
+  requireSquadWarSettlementAvailability,
+  squadWarRewardEligiblePlayerIds,
+} from "../services/squadWarService";
 import {
   claimableMessageReward,
   toClientMessage,
@@ -70,6 +73,16 @@ test("Squad Wars reconstructed schedule emits client-parseable stable round IDs"
   assert.match(window.seasonId, /^sw[0-9a-z]+$/u);
   assert.match(squadWarRoundId(4, window, 3), /^4-[0-9a-z]+$/u);
   assert.equal(squadWarRoundId(4, window, 3), squadWarRoundId(4, window, 3));
+});
+
+test("Squad War settlement skips only disabled or terminal windows and retries maintenance", () => {
+  assert.equal(requireSquadWarSettlementAvailability(false, false, false), false);
+  assert.equal(requireSquadWarSettlementAvailability(true, true, false), true);
+  assert.equal(requireSquadWarSettlementAvailability(true, false, true), false);
+  assert.throws(
+    () => requireSquadWarSettlementAvailability(true, false, false),
+    /maintenance is still in progress/,
+  );
 });
 
 test("Squad Wars rewards only round-start members who still belong to the squad", () => {

@@ -175,7 +175,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   derives the caller's division from authenticated membership, rejects stale or foreign round
   IDs, and returns the exact recovered `LeagueId`/`SquadWarsId`/`Items` contract. Only a confirmed
   ranked PvP win adds server-derived Squad Points, and that score commits in the same transaction
-  as the terminal match receipt. A leased scheduler settles expired divisions exactly once,
+  as the terminal match receipt. An enabled season that is still being allocated/settled, or a
+  database error while preparing it, rejects the match before rewards start so a retry cannot
+  permanently lose War progress. A leased scheduler settles expired divisions exactly once,
   applies the source-exact 4.9.5 placement/reward/promotion rules, and sends each eligible
   round-start member who remains in the squad an exact type-9 `SquadWarEnd` message whose Gold is
   claimed once through action `91`. Leaving or being kicked irrevocably forfeits that round's
@@ -587,7 +589,8 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   `Tier`/`SquadId`/`Reward` message for every current member. Action `91` then credits that
   server-authored Gold exactly once and replays the original delta after a lost response. Final
   completion uses `ActiveTier == tierCount`; client `SquadEventUpdate` and claimed active tier are
-  ignored. Empty or unreviewed schedules remain disabled.
+  ignored. Empty schedules remain disabled, while an unreadable or invalid configured schedule
+  rejects match settlement before rewards rather than silently discarding live-event progress.
 - **Limited-time Event Assignments (authoritative claim foundation)**: client actions `222`/`223`
   belong to the separate Christmas-style `EventAssignmentManager`, not Squad Events. A strict,
   non-overlapping, disabled-by-default operator schedule publishes the exact outer
