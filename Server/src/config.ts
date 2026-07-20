@@ -28,6 +28,12 @@ export const config = {
   httpRateLimitWindowSeconds: Number(process.env.HTTP_RATE_LIMIT_WINDOW_SECONDS ?? 60),
   httpRateLimitMaxEntries: Number(process.env.HTTP_RATE_LIMIT_MAX_ENTRIES ?? 10_000),
 
+  // WebSocket frames bypass Express and therefore need their own payload/rate boundaries.
+  websocketMaxPayloadBytes: Number(process.env.WEBSOCKET_MAX_PAYLOAD_BYTES ?? 65_536),
+  websocketRateLimitMessages: Number(process.env.WEBSOCKET_RATE_LIMIT_MESSAGES ?? 120),
+  websocketRateLimitWindowSeconds: Number(process.env.WEBSOCKET_RATE_LIMIT_WINDOW_SECONDS ?? 10),
+  websocketRateLimitMaxViolations: Number(process.env.WEBSOCKET_RATE_LIMIT_MAX_VIOLATIONS ?? 3),
+
   // Recovered from MainScene's Constants rows. Requests repeat these values for compatibility,
   // but economy logic always uses the server copy so a modified client cannot accelerate energy.
   dogTagRefillSeconds: Number(process.env.DOG_TAG_REFILL_SECONDS ?? 900),

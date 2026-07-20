@@ -39,6 +39,11 @@ import {
   type SquadChatWireMessage,
 } from "./services/squadChatService";
 import { redisPublish, redisSubscribe } from "./redis";
+import {
+  WebSocketRateLimiter,
+  webSocketPayloadLimit,
+  webSocketViolationLimit,
+} from "./services/webSocketRateLimitService";
 
 /**
  * WebSocket coordinator for reconstructed PvP and Squad Chat transport.
@@ -69,6 +74,9 @@ interface Client {
   squadChatId?: string;
   /** Serialize one socket's messages so CardPlayed persistence completes before MatchResult. */
   processing: Promise<void>;
+  /** Frames are limited before JSON parsing or database work enters the serialized chain. */
+  rateLimiter: WebSocketRateLimiter;
+  consecutiveRateLimitViolations: number;
 }
 
 const clients = new Map<string, Client>();
@@ -294,15 +302,49 @@ export async function createGameHub(httpServer: HttpServer): Promise<WebSocketSe
     });
   });
 
-  const wss = new WebSocketServer({ server: httpServer, path: "/hub" });
+  const wss = new WebSocketServer({
+    server: httpServer,
+    path: "/hub",
+    // ws otherwise permits very large frames. Bound allocation at the protocol parser so a
+    // client cannot force JSON parsing or retain a giant opaque MatchEvent in memory.
+    maxPayload: webSocketPayloadLimit(config.websocketMaxPayloadBytes),
+  });
 
   wss.on("connection", (socket) => {
-    const client: Client = { id: randomUUID(), socket, processing: Promise.resolve() };
+    const client: Client = {
+      id: randomUUID(),
+      socket,
+      processing: Promise.resolve(),
+      rateLimiter: new WebSocketRateLimiter(
+        config.websocketRateLimitMessages,
+        config.websocketRateLimitWindowSeconds,
+      ),
+      consecutiveRateLimitViolations: 0,
+    };
     clients.set(client.id, client);
     logger.websocket.connected(client.id, { totalClients: clients.size });
     send(client, { Type: "Welcome", Payload: { ClientId: client.id } });
 
     socket.on("message", (raw) => {
+      const rate = client.rateLimiter.consume();
+      if (!rate.allowed) {
+        client.consecutiveRateLimitViolations += 1;
+        logger.warnWithEmoji("RATE", "WebSocket message rate limit exceeded", "SECURITY", {
+          clientId: client.id,
+          playerId: client.playerId,
+          retryAfterSeconds: rate.retryAfterSeconds,
+          violation: client.consecutiveRateLimitViolations,
+        });
+        send(client, {
+          Type: "RateLimited",
+          Payload: { RetryAfterSeconds: rate.retryAfterSeconds },
+        });
+        if (client.consecutiveRateLimitViolations >= webSocketViolationLimit(config.websocketRateLimitMaxViolations)) {
+          socket.close(1008, "Message rate limit exceeded");
+        }
+        return;
+      }
+      client.consecutiveRateLimitViolations = 0;
       let envelope: ClientEnvelope;
       try {
         envelope = JSON.parse(raw.toString()) as ClientEnvelope;

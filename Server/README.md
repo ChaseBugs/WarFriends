@@ -95,6 +95,12 @@ Working end-to-end (verified live):
   unlink behavior. First-time `CreateGcAccount` commits the player and identity in one transaction,
   returns separate platform/session credentials, and supplies the recovered `15400` existing-account
   profile contract. Remaining response-contract work is tracked in `BACKEND_FEATURES.md`.
+- **Transport abuse boundary**: Express requests use a bounded per-address token bucket and the
+  `/hub` WebSocket has an independent continuous-refill per-connection bucket before JSON parsing
+  or serialized gameplay work. The WebSocket parser rejects frames above the configured 64-KiB
+  default, rejected bursts receive `RateLimited { RetryAfterSeconds }`, and repeated consecutive
+  violations close with policy code `1008`. Payload/rate/violation limits are bounded even when an
+  unsafe environment value is supplied.
 - **Bootcamp/tutorial lifecycle**: authenticated actions `119` and `120` persist one
   server-issued tutorial battle receipt and consume it only for the recovered Win end reason.
   Completion establishes the XOR-decoded MainScene minimums of 75 Gold and 15,000 WarBucks,
