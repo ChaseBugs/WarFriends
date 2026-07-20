@@ -60,7 +60,9 @@ import {
 } from "./services/pvpSocketPresenceService";
 import {
   WebSocketRateLimiter,
+  consumeWebSocketRateLimit,
   webSocketPayloadLimit,
+  webSocketRateLimitKey,
   webSocketViolationLimit,
 } from "./services/webSocketRateLimitService";
 
@@ -98,6 +100,8 @@ interface Client {
   consecutiveRateLimitViolations: number;
   /** Renewable distributed route; only the exact owning socket may refresh or delete it. */
   presenceHeartbeat?: NodeJS.Timeout;
+  /** HMAC-hidden pre-auth address, replaced with the stable authenticated player identity. */
+  rateLimitKey: string;
 }
 
 const clients = new Map<string, Client>();
@@ -495,7 +499,7 @@ export async function createGameHub(httpServer: HttpServer): Promise<WebSocketSe
     maxPayload: webSocketPayloadLimit(config.websocketMaxPayloadBytes),
   });
 
-  wss.on("connection", (socket) => {
+  wss.on("connection", (socket, request) => {
     const client: Client = {
       id: randomUUID(),
       socket,
@@ -505,42 +509,48 @@ export async function createGameHub(httpServer: HttpServer): Promise<WebSocketSe
         config.websocketRateLimitWindowSeconds,
       ),
       consecutiveRateLimitViolations: 0,
+      rateLimitKey: webSocketRateLimitKey(request.socket.remoteAddress ?? "unknown"),
     };
     clients.set(client.id, client);
     logger.websocket.connected(client.id, { totalClients: clients.size });
     send(client, { Type: "Welcome", Payload: { ClientId: client.id } });
 
     socket.on("message", (raw) => {
-      const rate = client.rateLimiter.consume();
-      if (!rate.allowed) {
-        client.consecutiveRateLimitViolations += 1;
-        logger.warnWithEmoji("RATE", "WebSocket message rate limit exceeded", "SECURITY", {
-          clientId: client.id,
-          playerId: client.playerId,
-          retryAfterSeconds: rate.retryAfterSeconds,
-          violation: client.consecutiveRateLimitViolations,
-        });
-        send(client, {
-          Type: "RateLimited",
-          Payload: { RetryAfterSeconds: rate.retryAfterSeconds },
-        });
-        if (client.consecutiveRateLimitViolations >= webSocketViolationLimit(config.websocketRateLimitMaxViolations)) {
-          socket.close(1008, "Message rate limit exceeded");
+      // Serialize rate consumption with message handling. Without this chain, a burst of async
+      // Redis decisions could all observe/reorder around Identify or CardPlayed/MatchResult.
+      client.processing = client.processing.then(async () => {
+        const rate = await consumeWebSocketRateLimit(client.rateLimiter, client.rateLimitKey);
+        if (!rate.allowed) {
+          client.consecutiveRateLimitViolations += 1;
+          logger.warnWithEmoji("RATE", "WebSocket message rate limit exceeded", "SECURITY", {
+            clientId: client.id,
+            playerId: client.playerId,
+            retryAfterSeconds: rate.retryAfterSeconds,
+            violation: client.consecutiveRateLimitViolations,
+            distributed: rate.distributed,
+          });
+          send(client, {
+            Type: "RateLimited",
+            Payload: { RetryAfterSeconds: rate.retryAfterSeconds },
+          });
+          if (client.consecutiveRateLimitViolations >= webSocketViolationLimit(config.websocketRateLimitMaxViolations)) {
+            socket.close(1008, "Message rate limit exceeded");
+          }
+          return;
         }
-        return;
-      }
-      client.consecutiveRateLimitViolations = 0;
-      let envelope: ClientEnvelope;
-      try {
-        envelope = JSON.parse(raw.toString()) as ClientEnvelope;
-      } catch {
-        logger.websocket.error("Malformed message", { clientId: client.id });
-        return;
-      }
-      logger.websocket.message(client.id, envelope.Type);
-      client.processing = client.processing.then(() => handleMessage(client, envelope)).catch((error: unknown) => {
+        client.consecutiveRateLimitViolations = 0;
+        let envelope: ClientEnvelope;
+        try {
+          envelope = JSON.parse(raw.toString()) as ClientEnvelope;
+        } catch {
+          logger.websocket.error("Malformed message", { clientId: client.id });
+          return;
+        }
+        logger.websocket.message(client.id, envelope.Type);
+        await handleMessage(client, envelope);
+      }).catch((error: unknown) => {
         const message = error instanceof Error ? error.message : String(error);
-        logger.websocket.error("Message handler failed", { clientId: client.id, type: envelope.Type, error: message });
+        logger.websocket.error("Message handler failed", { clientId: client.id, error: message });
         send(client, { Type: "ServerError", Payload: { Message: "Unable to process message." } });
       });
     });
@@ -586,6 +596,9 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
         const previousClient = previousClientId ? clients.get(previousClientId) : undefined;
         if (previousClient && previousClient.id !== client.id) previousClient.socket.close(4001, "Signed in elsewhere");
         client.playerId = doc.id;
+        // Once authenticated, every connection/node for this account shares one player bucket.
+        // This prevents reconnecting or changing source addresses from resetting the WS allowance.
+        client.rateLimitKey = webSocketRateLimitKey(`player:${doc.id}`);
         onlinePlayers.set(doc.id, client.id);
         await startClientPresenceHeartbeat(client);
         send(client, { Type: "Identified", Payload: { PlayerId: doc.id } });

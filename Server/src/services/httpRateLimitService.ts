@@ -2,6 +2,7 @@ import { createHmac } from "crypto";
 import type { NextFunction, Request, Response } from "express";
 import { config } from "../config";
 import logger from "../utils/logger";
+import { consumeDistributedToken } from "./distributedRateLimitService";
 
 interface Bucket {
   tokens: number;
@@ -115,19 +116,26 @@ export function createHttpRateLimitMiddleware(
     }
 
     const key = httpRateLimitKey(req.ip || req.socket.remoteAddress || "unknown", config.authSecret);
-    const decision = limiter.consume(key);
-    res.setHeader("RateLimit-Limit", decision.limit);
-    res.setHeader("RateLimit-Remaining", decision.remaining);
-    if (decision.allowed) {
-      next();
-      return;
-    }
+    void consumeDistributedToken("http", key, limiter.capacity, limiter.windowMs)
+      .then((distributed) => {
+        const decision: RateLimitDecision = distributed
+          ? { ...distributed, limit: limiter.capacity }
+          : limiter.consume(key);
+        res.setHeader("RateLimit-Limit", decision.limit);
+        res.setHeader("RateLimit-Remaining", decision.remaining);
+        if (decision.allowed) {
+          next();
+          return;
+        }
 
-    res.setHeader("Retry-After", decision.retryAfterSeconds);
-    logger.warnWithEmoji("RATE", "HTTP rate limit exceeded", "SECURITY", {
-      clientKey: key.slice(0, 12),
-      retryAfterSeconds: decision.retryAfterSeconds,
-    });
-    res.status(429).json({ Code: 10, Message: "Too many requests. Try again later." });
+        res.setHeader("Retry-After", decision.retryAfterSeconds);
+        logger.warnWithEmoji("RATE", "HTTP rate limit exceeded", "SECURITY", {
+          clientKey: key.slice(0, 12),
+          retryAfterSeconds: decision.retryAfterSeconds,
+          distributed: Boolean(distributed),
+        });
+        res.status(429).json({ Code: 10, Message: "Too many requests. Try again later." });
+      })
+      .catch(next);
   };
 }

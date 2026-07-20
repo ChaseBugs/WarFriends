@@ -60,3 +60,21 @@ export class WebSocketRateLimiter {
     };
   }
 }
+
+/** HMAC-hide either the pre-auth address or authenticated player ID with a WS-specific domain. */
+export function webSocketRateLimitKey(identity: string, secret = config.authSecret): string {
+  return createHmac("sha256", secret).update("websocket-rate-limit\0").update(identity).digest("hex");
+}
+
+export async function consumeWebSocketRateLimit(
+  limiter: WebSocketRateLimiter,
+  identityKey: string,
+): Promise<WebSocketRateLimitDecision & { distributed: boolean }> {
+  const distributed = await consumeDistributedToken("ws", identityKey, limiter.capacity, limiter.windowMs);
+  return distributed
+    ? { ...distributed, distributed: true }
+    : { ...limiter.consume(), distributed: false };
+}
+import { createHmac } from "crypto";
+import { config } from "../config";
+import { consumeDistributedToken } from "./distributedRateLimitService";

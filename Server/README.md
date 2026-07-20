@@ -97,8 +97,11 @@ Working end-to-end (verified live):
   returns separate platform/session credentials, and supplies the recovered `15400` existing-account
   profile contract. Remaining response-contract work is tracked in `BACKEND_FEATURES.md`.
 - **Transport abuse boundary**: Express requests use a bounded per-address token bucket and the
-  `/hub` WebSocket has an independent continuous-refill per-connection bucket before JSON parsing
-  or serialized gameplay work. The WebSocket parser rejects frames above the configured 64-KiB
+  `/hub` WebSocket uses an independent continuous-refill bucket before JSON parsing. With Redis,
+  both are atomic across nodes and use Redis server time; authenticated sockets share one
+  HMAC-hidden player bucket across reconnects and addresses. Redis outages fall back to the bounded
+  local buckets. The WebSocket decision is serialized with gameplay messages before JSON parsing
+  or gameplay work. The WebSocket parser rejects frames above the configured 64-KiB
   default, rejected bursts receive `RateLimited { RetryAfterSeconds }`, and repeated consecutive
   violations close with policy code `1008`. Payload/rate/violation limits are bounded even when an
   unsafe environment value is supplied.
@@ -116,9 +119,10 @@ Working end-to-end (verified live):
   `TutorialRewardCards` list once: `CLUSTERGRENADE`, `ELITEPARA`, `HEAVYTURRET`,
   `ELECTRICTRAPS`, and `SABOTAGE`. Losses complete it just like the recovered client; explicit
   Forfeit grants nothing, clears the attempt receipt, and leaves the tutorial available to retry.
-- **HTTP abuse boundary**: every non-health API request passes through a continuously refilled,
-  memory-bounded token bucket keyed by an HMAC-hidden client address. Reverse-proxy addresses are
-  trusted only when `TRUST_PROXY_HOPS` is explicitly configured; rejected bursts receive HTTP 429
+- **HTTP abuse boundary**: every non-health API request passes through a continuously refilled
+  token bucket keyed by an HMAC-hidden client address. Redis provides bounded-TTL cross-process
+  enforcement, while the memory-bounded limiter remains the explicit outage fallback. Proxy
+  addresses are trusted only when `TRUST_PROXY_HOPS` is explicitly configured; rejected bursts receive HTTP 429
   and `Retry-After` without reaching request parsing or game handlers.
 - **Photon-region profile compatibility**: action `140` validates and atomically persists the
   recovered ten-region latency dictionary plus `None`/`Cellural`/`Wifi` connection type.

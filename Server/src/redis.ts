@@ -196,6 +196,19 @@ export async function redisEval(
   }
 }
 
+/** Read Redis server time so distributed algorithms do not depend on per-node wall clocks. */
+export async function redisTimeMs(): Promise<number | undefined> {
+  const client = getRedisDataClient();
+  if (!client || !isRedisAvailable()) return undefined;
+  try {
+    const [seconds, microseconds] = await client.time();
+    return Number(seconds) * 1_000 + Math.floor(Number(microseconds) / 1_000);
+  } catch (err) {
+    logger.redis.error("TIME failed", { error: (err as Error).message });
+    return undefined;
+  }
+}
+
 /** Add a member to a sorted set (leaderboards). Returns false when Redis is unavailable. */
 export async function redisZAdd(key: string, score: number, member: string): Promise<boolean> {
   const client = getRedisDataClient();

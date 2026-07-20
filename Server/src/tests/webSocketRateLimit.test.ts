@@ -2,9 +2,17 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   WebSocketRateLimiter,
+  webSocketRateLimitKey,
   webSocketPayloadLimit,
   webSocketViolationLimit,
 } from "../services/webSocketRateLimitService";
+
+test("WebSocket distributed keys hide and domain-separate stable identities", () => {
+  const key = webSocketRateLimitKey("player:abc", "secret");
+  assert.equal(key.length, 64);
+  assert.equal(key.includes("abc"), false);
+  assert.notEqual(key, webSocketRateLimitKey("player:abcd", "secret"));
+});
 
 test("WebSocket token bucket rejects a burst and refills continuously", () => {
   const limiter = new WebSocketRateLimiter(3, 6);

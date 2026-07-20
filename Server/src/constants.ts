@@ -73,6 +73,7 @@ export const RedisKeys = {
   session: (playerId: string) => `wf:session:${playerId}`,
   socketOfPlayer: (playerId: string) => `wf:socket:${playerId}`,
   pvpCoordinator: (instanceId: string) => `wf:pvp:coordinator:${instanceId}`,
+  distributedRateLimit: (scope: string, identity: string) => `wf:rate:${scope}:${identity}`,
   leaderboardExperience: "wf:lb:experience",
   leaderboardSquad: "wf:lb:squad",
 } as const;
