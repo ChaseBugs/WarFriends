@@ -71,7 +71,7 @@ function offeredWeapon(weaponId: string, playerLevel: number): BlackMarketOffere
 /**
  * Pure state transition used by action 217 and unit tests.
  *
- * Active state is returned byte-for-byte (apart from the outer progression revision). Once
+ * Active state is returned with the exact input progression identity. Once
  * expired, owned/starter/unresolved weapon rows are excluded, then at most four candidates
  * are selected. An empty set is still persisted with an expiry so accounts owning the full
  * supported catalog cannot spam generation or receive invalid duplicate purchases.
@@ -84,7 +84,9 @@ export function ensureBlackMarketOfferState(
 ): BlackMarketMutationResult {
   if (hasActiveOffer(state.blackMarket, now)) {
     return {
-      state: { ...state, revision: state.revision + 1 },
+      // Action 217 is both an issuance request and a read of the current set. A reconnect must
+      // not rotate offers, advance progression revision, or replace identical MongoDB state.
+      state,
       blackMarket: state.blackMarket!,
       issued: false,
     };

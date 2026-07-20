@@ -310,7 +310,8 @@ Working end-to-end (verified live):
   across retries; buffered `BuyWeapon` redemption requires the authenticated stored offer,
   its unexpired deadline, zero WarBucks, and its exact level price. Weapon level and special
   feature come only from server state, and the wallet/ownership mutation remains atomic and
-  BufferId-replay-safe. Issued offers currently use recovered feature index 0; the original
+  BufferId-replay-safe. Reading the same active action-217 set preserves progression identity
+  and does not rewrite MongoDB. Issued offers currently use recovered feature index 0; the original
   remote selection weights, trigger schedule, feature weights, and OfferManager discount
   entitlements remain reconstruction gaps.
 - **Daily weapon and unit rentals**: GetPlayerData issues the exact outer `Rental` object only

@@ -48,6 +48,7 @@ test("Black Market issues one stable four-weapon set and rotates it only after e
 
   const replay = ensureBlackMarketOfferState(issued.state, "player-black-market", 99, NOW + 60);
   assert.equal(replay.issued, false);
+  assert.equal(replay.state, issued.state, "active offer replay must not advance revision");
   assert.deepEqual(replay.blackMarket, issued.blackMarket);
 
   const rotated = ensureBlackMarketOfferState(

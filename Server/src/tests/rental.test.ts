@@ -58,6 +58,7 @@ test("GetPlayerData rental generation uses the recovered duration, discount, and
   assert.equal(issued.bootOffer.Amount, String(issued.rental.discount));
 
   const replay = ensureRentalOfferState(issued.state, "rental-wire", 50, NOW + 60);
+  assert.equal(replay.state, issued.state, "active boot offer must not advance revision");
   assert.equal(replay.rental?.id, issued.rental.id);
   assert.deepEqual(replay.bootOffer, issued.bootOffer);
 });
@@ -71,6 +72,13 @@ test("rental generation requires durable tutorial completion even at an eligible
   assert.equal(result.state, unfinished);
   assert.equal(result.rental, undefined);
   assert.equal(result.bootOffer, undefined);
+});
+
+test("ineligible account without a rental remains a no-write boot path", () => {
+  const initial = fundedState();
+  const result = ensureRentalOfferState(initial, "low-level-rental", 0, NOW);
+  assert.equal(result.state, initial);
+  assert.equal(result.rental, undefined);
 });
 
 test("weapon rental is borrowable for one trial, becomes a post-battle sale, and restores its slot", () => {

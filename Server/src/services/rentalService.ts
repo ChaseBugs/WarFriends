@@ -237,7 +237,9 @@ export function ensureRentalOfferState(
         : current.nextGenerate;
     if (deadline > now) {
       return {
-        state: { ...state, revision: state.revision + 1 },
+        // GetPlayerData may run repeatedly during reconnect. Projection of the same live offer
+        // is a read, so preserve state identity and avoid turning every boot into a write.
+        state,
         rental: current,
         ...(current.status === "offered" ? { bootOffer: bootWire(current) } : {}),
       };
@@ -246,6 +248,7 @@ export function ensureRentalOfferState(
   }
 
   if (Math.floor(playerLevel) < RENTAL_MIN_PLAYER_LEVEL_INDEX) {
+    if (!current) return { state };
     const { rental: _expired, ...withoutRental } = working;
     return { state: { ...withoutRental, revision: state.revision + 1 } };
   }
@@ -253,6 +256,7 @@ export function ensureRentalOfferState(
   const generation = previousGeneration + 1;
   const selected = selectRental(working, playerId, playerLevel, generation);
   if (!selected) {
+    if (!current) return { state };
     const { rental: _expired, ...withoutRental } = working;
     return { state: { ...withoutRental, revision: state.revision + 1 } };
   }
