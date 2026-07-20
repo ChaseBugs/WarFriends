@@ -156,6 +156,9 @@ Working end-to-end (verified live):
   can be relayed to the opponent's node through a bounded pub/sub instruction, but that receiving
   node re-reads MongoDB and proves active-match membership before sending anything to its socket.
   Without Redis, the same code retains the verified process-local queue and direct delivery path.
+  Match rows record their coordinator node, whose renewable Redis heartbeat separates crashed-room
+  orphans from live peer-owned matches. Startup and periodic recovery cancel confirmed orphans and
+  repair only unprotected `InGame` profiles; an unknown Redis observation is conservatively retried.
   Cancellation likewise commits the terminal match and both presence releases together. On a
   single-node restart, active/settling matches are cancelled and all residual `InGame` profiles
   are repaired in the same transaction, including legacy partial cancellations.

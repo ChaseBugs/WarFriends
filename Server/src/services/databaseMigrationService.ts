@@ -41,6 +41,17 @@ const migrations: readonly DatabaseMigration[] = [
       );
     },
   },
+  {
+    id: "20260721_002_match_coordinator_recovery",
+    checksum: "sha256:b10f9465ea19a752e5ff340f7254e542b70332828370472077c171e03ea5341e",
+    description: "Index coordinator-owned active match recovery scans.",
+    up: async (db) => {
+      await db.collection("matches").createIndex(
+        { state: 1, coordinatorId: 1, createdAt: 1 },
+        { name: "match_coordinator_recovery" },
+      );
+    },
+  },
 ];
 
 const receiptCollectionName = "schemaMigrations";

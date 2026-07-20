@@ -96,7 +96,7 @@ const disconnectTimers = new Map<string, NodeJS.Timeout>();
 // match already exists and both player records have been moved to InGame.
 const matchmakingTimers = new Map<string, NodeJS.Timeout>();
 const matchJoinTimers = new Map<string, NodeJS.Timeout>();
-const hubInstanceId = randomUUID();
+export const hubInstanceId = randomUUID();
 // Redis pub/sub is normally at-most-once, but reconnection or an operator bridge can repeat a
 // notice. Keep a bounded process-local delivery receipt so one message never appears twice.
 const deliveredSquadChatMessages = new Map<string, true>();
@@ -575,7 +575,7 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
       const other: MatchPlayer = { playerId: opponent.id, name: opponent.player.accountName, armyPower: opponent.player.armyPower, leagueTier: opponent.player.leagueTier };
       let matchId: string;
       try {
-        matchId = await createMatch(self, other);
+        matchId = await createMatch(self, other, hubInstanceId);
       } catch (error: unknown) {
         // Pairing removed both queue entries before durable admission. Re-read both profiles so
         // a player claimed by a concurrent match is never reintroduced into the queue, then

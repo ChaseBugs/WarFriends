@@ -6,11 +6,16 @@ import { apiRouter } from "./routes";
 import { config } from "./config";
 import { connectMongo, disconnectMongo } from "./db";
 import { connectRedis, disconnectRedis, isRedisAvailable, isRedisEnabled } from "./redis";
-import { createGameHub } from "./gameHub";
+import { createGameHub, hubInstanceId } from "./gameHub";
 import logger from "./utils/logger";
 import { recoverInterruptedMatches } from "./services/matchService";
 import { createHttpRateLimitMiddleware } from "./services/httpRateLimitService";
 import { runDatabaseMigrations } from "./services/databaseMigrationService";
+import {
+  isPvpCoordinatorAlive,
+  startPvpCoordinatorHeartbeat,
+  type PvpCoordinatorHeartbeat,
+} from "./services/pvpCoordinatorService";
 
 const app = express();
 
@@ -65,6 +70,8 @@ app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {
 });
 
 const httpServer = createServer(app);
+let pvpCoordinatorHeartbeat: PvpCoordinatorHeartbeat | null = null;
+let pvpOrphanRecoveryTimer: NodeJS.Timeout | null = null;
 // Let Unity's BestHTTP reuse keep-alive sockets; headersTimeout must exceed keepAliveTimeout.
 httpServer.keepAliveTimeout = 65_000;
 httpServer.headersTimeout = 66_000;
@@ -79,9 +86,21 @@ async function start(): Promise<void> {
   // out of service, and the database lease prevents two rolling-deployment nodes changing schema
   // concurrently.
   await runDatabaseMigrations();
-  await recoverInterruptedMatches();
-
   await connectRedis();
+  pvpCoordinatorHeartbeat = await startPvpCoordinatorHeartbeat(hubInstanceId);
+  await recoverInterruptedMatches(isRedisAvailable() ? isPvpCoordinatorAlive : undefined);
+  if (isRedisAvailable()) {
+    // A crashed coordinator key expires after 30 seconds. Periodic recovery then cancels only its
+    // orphan rows and releases those participants; healthy peer-owned matches remain untouched.
+    pvpOrphanRecoveryTimer = setInterval(() => {
+      void recoverInterruptedMatches(isPvpCoordinatorAlive).catch((error: unknown) => {
+        logger.match.error("PvP orphan recovery failed", {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      });
+    }, 30_000);
+    pvpOrphanRecoveryTimer.unref();
+  }
   await createGameHub(httpServer);
 
   httpServer.listen(config.port, () => {
@@ -94,6 +113,8 @@ async function start(): Promise<void> {
 async function shutdown(signal: string): Promise<void> {
   logger.server.shutdown(signal);
   httpServer.close();
+  if (pvpOrphanRecoveryTimer) clearInterval(pvpOrphanRecoveryTimer);
+  await pvpCoordinatorHeartbeat?.stop();
   await disconnectRedis();
   await disconnectMongo();
   process.exit(0);

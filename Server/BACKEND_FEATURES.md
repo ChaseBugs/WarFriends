@@ -60,6 +60,12 @@ node never trusts that instruction as match authority: it reloads MongoDB and pr
 target belongs to the named active match before delivering to the socket. Durable cross-node
 join/start/event/result/disconnect room coordination remains the next horizontal PvP layer.
 
+Each new match also stores its backend coordinator UUID. Redis carries a renewable crash-expiring
+heartbeat for that UUID, and startup plus periodic orphan recovery cancels only matches whose owner
+is confirmed dead. Live peer-owned matches survive rolling node starts; an unavailable Redis
+liveness read is treated as unknown and never as permission to cancel gameplay. Presence repair
+excludes every participant still protected by any active or settling match.
+
 `SetPlayerStatus` now preserves mode compatibility while protecting ranked admission: the active
 or settling match lookup and profile write share one MongoDB transaction, so a client heartbeat
 cannot clear the server-owned `InGame` reservation during admission, play, or settlement.

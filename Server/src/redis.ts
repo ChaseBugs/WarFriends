@@ -141,14 +141,14 @@ export async function redisSubscribe(channel: string, handler: (message: string)
   }
 }
 
-export async function redisGet(key: string): Promise<string | null> {
+export async function redisGet(key: string): Promise<string | null | undefined> {
   const client = getRedisDataClient();
-  if (!client) return null;
+  if (!client || !isRedisAvailable()) return undefined;
   try {
     return await client.get(key);
   } catch (err) {
     logger.redis.error("GET failed", { key, error: (err as Error).message });
-    return null;
+    return undefined;
   }
 }
 

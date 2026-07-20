@@ -97,6 +97,8 @@ export function validateMatchParticipants(a: MatchPlayer, b: MatchPlayer): void 
 
 export interface MatchDoc {
   matchId: string;
+  /** Backend node that owns transient timers/room state; liveness is advertised through Redis. */
+  coordinatorId?: string;
   players: MatchPlayer[];
   state: "active" | "settling" | "finished" | "cancelled";
   /** Written only by the atomic settlement claim and preserved for idempotent retries. */
@@ -161,15 +163,49 @@ export async function cancelMatch(matchId: string, reason: string): Promise<bool
 }
 
 /**
- * A process restart destroys in-memory rooms but not MongoDB match rows. In this
- * single-instance server, any active/settling row found during boot is therefore orphaned.
- * Mark it cancelled and restore player presence so accounts never remain permanently
- * blocked by the InGame matchmaking guard.
+ * A process restart destroys its in-memory rooms but not MongoDB match rows. Single-node startup
+ * treats every interrupted row as orphaned. A Redis-enabled cluster cancels only rows whose owning
+ * coordinator heartbeat has expired; live peer-owned matches survive rolling deployments.
  */
-export async function recoverInterruptedMatches(): Promise<number> {
+export async function selectOrphanMatchIds(
+  candidates: ReadonlyArray<{ matchId: unknown; coordinatorId?: unknown }>,
+  isCoordinatorAlive?: (coordinatorId: string) => Promise<boolean | null>,
+): Promise<string[]> {
+  const orphanIds: string[] = [];
+  for (const candidate of candidates) {
+    const coordinatorId = typeof candidate.coordinatorId === "string" ? candidate.coordinatorId : "";
+    const liveness = coordinatorId && isCoordinatorAlive ? await isCoordinatorAlive(coordinatorId) : false;
+    // `null` means the liveness backend could not answer. Preserve the row and retry on the next
+    // sweep rather than turning a transient Redis outage into a cluster-wide match cancellation.
+    if (liveness === true || liveness === null) continue;
+    orphanIds.push(String(candidate.matchId));
+  }
+  return orphanIds;
+}
+
+export async function recoverInterruptedMatches(
+  isCoordinatorAlive?: (coordinatorId: string) => Promise<boolean | null>,
+): Promise<number> {
+  // Coordinator liveness is checked before opening the transaction because it is an external
+  // Redis read. MongoDB transactions must not wait on another service or retry non-deterministic
+  // network observations. Rows without coordinatorId belong to legacy single-node builds.
+  const candidates = await matches()
+    .find(
+      { state: { $in: ["active", "settling"] } },
+      { projection: { matchId: 1, coordinatorId: 1 } },
+    )
+    .toArray();
+  const orphanIds = await selectOrphanMatchIds(
+    candidates.map((candidate) => ({ matchId: candidate.matchId, coordinatorId: candidate.coordinatorId })),
+    isCoordinatorAlive,
+  );
+
   const recovered = await withMongoTransaction(async (session) => {
     const interrupted = await matches()
-      .find({ state: { $in: ["active", "settling"] } }, { session, projection: { matchId: 1 } })
+      .find(
+        { matchId: { $in: orphanIds }, state: { $in: ["active", "settling"] } },
+        { session, projection: { matchId: 1, "players.playerId": 1 } },
+      )
       .toArray();
     const matchIds = interrupted.map((match) => String(match.matchId));
     if (matchIds.length > 0) {
@@ -179,12 +215,25 @@ export async function recoverInterruptedMatches(): Promise<number> {
         { session },
       );
     }
-    // PvP match admission is the only backend path that writes InGame. After a single-node
-    // process restart no RoomManager instance survives, so every remaining InGame profile is
-    // stale. Repairing the complete status set also heals rows left by pre-transaction builds
-    // whose match had already reached `cancelled` before the process crashed.
+    // Protect every participant still owned by a live active/settling match, including matches on
+    // peer nodes. Every other InGame profile is stale because PvP admission is the only backend
+    // path that writes this status. This also heals partial rows from pre-transaction builds.
+    const liveMatches = await matches()
+      .find(
+        { state: { $in: ["active", "settling"] } },
+        { session, projection: { "players.playerId": 1 } },
+      )
+      .toArray();
+    const protectedPlayerIds = liveMatches.flatMap((match) =>
+      Array.isArray(match.players)
+        ? match.players.map((participant: { playerId?: unknown }) => String(participant.playerId ?? "")).filter(Boolean)
+        : []
+    );
     const presence = await players().updateMany(
-      { "player.status": PlayerStatus.InGame },
+      {
+        "player.status": PlayerStatus.InGame,
+        ...(protectedPlayerIds.length > 0 ? { id: { $nin: protectedPlayerIds } } : {}),
+      },
       { $set: { "player.status": PlayerStatus.Online, updatedAt: new Date() } },
       { session },
     );
@@ -503,10 +552,20 @@ export function pvpLevelFields(
     : { LevelExperience: levelExperience };
 }
 
-export async function createMatch(a: MatchPlayer, b: MatchPlayer): Promise<string> {
+export async function createMatch(a: MatchPlayer, b: MatchPlayer, coordinatorId?: string): Promise<string> {
   validateMatchParticipants(a, b);
   const matchId = randomUUID();
-  const doc: MatchDoc = { matchId, players: [a, b], state: "active", createdAt: new Date() };
+  const normalizedCoordinatorId = coordinatorId?.trim();
+  if (normalizedCoordinatorId && (normalizedCoordinatorId.length > 128 || /\p{Cc}/u.test(normalizedCoordinatorId))) {
+    throw new MatchAdmissionError("Match coordinator identity is invalid.");
+  }
+  const doc: MatchDoc = {
+    matchId,
+    ...(normalizedCoordinatorId ? { coordinatorId: normalizedCoordinatorId } : {}),
+    players: [a, b],
+    state: "active",
+    createdAt: new Date(),
+  };
 
   await withMongoTransaction(async (session) => {
     const playerIds = [a.playerId, b.playerId];
