@@ -804,6 +804,14 @@ export interface AuthRateLimitDocument {
   expiresAt: Date;
 }
 
+export interface ReportRateLimitDocument {
+  key: string;
+  attemptCount: number;
+  windowStartedAt: Date;
+  updatedAt: Date;
+  expiresAt: Date;
+}
+
 /**
  * Server-only lifecycle receipt for one participant in a direct PvP challenge.
  *
@@ -840,6 +848,7 @@ let messagesCollection: Collection<Document> | null = null;
 let identitiesCollection: Collection<IdentityDocument> | null = null;
 let reportsCollection: Collection<Document> | null = null;
 let authRateLimitsCollection: Collection<AuthRateLimitDocument> | null = null;
+let reportRateLimitsCollection: Collection<ReportRateLimitDocument> | null = null;
 let friendlyBattlesCollection: Collection<FriendlyBattleDocument> | null = null;
 let gameCatalogEntriesCollection: Collection<GameCatalogEntryDocument> | null = null;
 let gameCatalogReleasesCollection: Collection<GameCatalogReleaseDocument> | null = null;
@@ -857,6 +866,7 @@ export async function connectMongo(): Promise<void> {
   identitiesCollection = db.collection<IdentityDocument>("identities");
   reportsCollection = db.collection("playerReports");
   authRateLimitsCollection = db.collection<AuthRateLimitDocument>("authRateLimits");
+  reportRateLimitsCollection = db.collection<ReportRateLimitDocument>("reportRateLimits");
   friendlyBattlesCollection = db.collection<FriendlyBattleDocument>("friendlyBattles");
   gameCatalogEntriesCollection = db.collection<GameCatalogEntryDocument>("gameCatalogEntries");
   gameCatalogReleasesCollection = db.collection<GameCatalogReleaseDocument>("gameCatalogReleases");
@@ -922,6 +932,8 @@ export async function connectMongo(): Promise<void> {
   // a second account directory. MongoDB removes inactive windows after their safety margin.
   await authRateLimitsCollection.createIndex({ key: 1 }, { unique: true });
   await authRateLimitsCollection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+  await reportRateLimitsCollection.createIndex({ key: 1 }, { unique: true });
+  await reportRateLimitsCollection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
   // A reconnect or lost HTTP response may repeat the same challenge start. The compound unique
   // key turns every process into the same idempotent writer, while TTL bounds telemetry storage.
@@ -958,6 +970,8 @@ export async function disconnectMongo(): Promise<void> {
   identitiesCollection = null;
   reportsCollection = null;
   authRateLimitsCollection = null;
+  reportRateLimitsCollection = null;
+  friendlyBattlesCollection = null;
   gameCatalogEntriesCollection = null;
   gameCatalogReleasesCollection = null;
 }
@@ -1026,6 +1040,10 @@ export function reports(): Collection<Document> {
 
 export function authRateLimits(): Collection<AuthRateLimitDocument> {
   return requireCollection("authRateLimits", authRateLimitsCollection);
+}
+
+export function reportRateLimits(): Collection<ReportRateLimitDocument> {
+  return requireCollection("reportRateLimits", reportRateLimitsCollection);
 }
 
 export function friendlyBattles(): Collection<FriendlyBattleDocument> {

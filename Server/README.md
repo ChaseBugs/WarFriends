@@ -210,7 +210,9 @@ Working end-to-end (verified live):
   `BufferId`, performs the recipient-filtered inbox update, and clears the entry afterward, so
   a process interruption is recoverable without allowing one player to hide another's message.
 - **Moderation reports**: authenticated player/cheater reports are validated, rate-limited,
-  deduplicated for safe retries, and stored with review status and evidence metadata. The submitted
+  deduplicated for safe retries, and stored with review status and evidence metadata. The
+  configurable five-per-hour default is reserved by one atomic MongoDB counter per reporter, so
+  simultaneous requests across backend processes cannot overrun it. The submitted
   Army Power/rank/time fields remain explicitly untrusted claims. When both accounts occur in a
   recent replacement-backend ranked match, the report also captures the exact server match ID,
   participant snapshots, state, terminal winner/cancellation, authenticated result claims, and

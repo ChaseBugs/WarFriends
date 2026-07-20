@@ -3,8 +3,8 @@ import { matches, reports } from "../db";
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import { findById } from "./playerService";
 import type { MatchDoc, MatchPlayer } from "./matchService";
+import { reserveReportSubmission } from "./reportRateLimitService";
 
-const REPORTS_PER_HOUR = 5;
 const DUPLICATE_WINDOW_MS = 10 * 60 * 1000;
 const MATCH_EVIDENCE_LOOKBACK_MS = 6 * 60 * 60 * 1000;
 
@@ -169,11 +169,7 @@ export async function submitPlayerReport(
   });
   if (duplicate) return duplicate as unknown as PlayerReportDocument;
 
-  const hourAgo = new Date(Date.now() - 60 * 60 * 1000);
-  const recentCount = await reports().countDocuments({ reporterPlayerId, createdAt: { $gte: hourAgo } });
-  if (recentCount >= REPORTS_PER_HOUR) {
-    throw new ApiError(ApiErrorCode.UnknownAction, "Report rate limit reached. Try again later.");
-  }
+  await reserveReportSubmission(reporterPlayerId);
 
   const createdAt = new Date();
   // Correlation is optional by design. SendPlayerReport is also available from social/profile

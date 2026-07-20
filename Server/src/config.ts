@@ -81,6 +81,7 @@ export const config = {
   // wire contract.
   challengeTtlSeconds: Number(process.env.CHALLENGE_TTL_SECONDS ?? 86_400),
   outgoingMessagesPerMinute: Number(process.env.OUTGOING_MESSAGES_PER_MINUTE ?? 20),
+  reportMaxPerHour: Number(process.env.REPORT_MAX_PER_HOUR ?? 5),
 
   // Photon Chat subscribed with the exact MainScene ChatMessagesLimit value of three. The
   // replacement hub preserves that visible history size while making retention, text length,
