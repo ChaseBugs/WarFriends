@@ -10,6 +10,7 @@ import {
 } from "../services/squadWarContract";
 import {
   requireSquadWarSettlementAvailability,
+  requireSquadWarScoringEntryIndex,
   squadWarRewardEligiblePlayerIds,
 } from "../services/squadWarService";
 import {
@@ -82,6 +83,26 @@ test("Squad War settlement skips only disabled or terminal windows and retries m
   assert.throws(
     () => requireSquadWarSettlementAvailability(true, false, false),
     /maintenance is still in progress/,
+  );
+});
+
+test("Squad War scoring requires an in-window round entry instead of silently losing points", () => {
+  const startsAt = new Date("2026-07-20T00:00:00Z");
+  const endsAt = new Date("2026-07-27T00:00:00Z");
+  const round = {
+    roundId: "war-round-1",
+    startsAt,
+    endsAt,
+    entries: [{ squadId: "Alpha" }],
+  };
+  assert.equal(requireSquadWarScoringEntryIndex(round, "Alpha", startsAt), 0);
+  assert.throws(
+    () => requireSquadWarScoringEntryIndex(round, "Bravo", startsAt),
+    /missing from assigned Squad Wars round/,
+  );
+  assert.throws(
+    () => requireSquadWarScoringEntryIndex(round, "Alpha", endsAt),
+    /outside the match settlement window/,
   );
 });
 

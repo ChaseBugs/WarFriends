@@ -33,9 +33,17 @@ export type SquadWarProgressStatus =
   | "disabled"
   | "no_squad"
   | "not_member"
+  // Older receipts may contain these values. New ranked-win settlement prepares every current
+  // participant squad first and treats either condition as an invariant failure, preserving the
+  // match for retry instead of finalizing it without the confirmed score.
   | "no_active_round"
   | "outside_round"
   | "no_points";
+
+type CurrentSquadWarProgressStatus = Exclude<
+  SquadWarProgressStatus,
+  "no_active_round" | "outside_round"
+>;
 
 /**
  * Decide whether an authoritative match may project Squad War progress.
@@ -208,12 +216,43 @@ export async function ensureSquadWarAssignment(squadId: string, now = new Date()
   return withMongoTransaction(async (session) => {
     const squad = await squads().findOne({ name: squadId }, { session });
     if (!squad) throw new ApiError(ApiErrorCode.SquadNoLongerExists, "Squad not found.");
-    if (squad.squadWarRoundId) {
-      const assigned = await squadWarRounds().findOne(
-        { roundId: squad.squadWarRoundId, seasonId: season.seasonId, status: "active" },
-        { session },
+    // The round entry is authoritative, while squadWarRoundId is a denormalized client pointer.
+    // Search by entry first so a stale or missing pointer is repaired without inserting the same
+    // squad into another division. More than one entry is ambiguous corruption and must not be
+    // hidden by whichever document MongoDB happens to return first.
+    const existingAssignments = await squadWarRounds().find(
+      { seasonId: season.seasonId, status: "active", "entries.squadId": squadId },
+      { session },
+    ).limit(2).toArray();
+    if (existingAssignments.length > 1) {
+      throw new ApiError(
+        ApiErrorCode.InternalServerError,
+        `Squad ${squadId} belongs to more than one active Squad Wars division.`,
       );
-      if (assigned) return assigned;
+    }
+    if (existingAssignments.length === 1) {
+      const assigned = existingAssignments[0]!;
+      const pointerNeedsRepair = squad.squadWarRoundId !== assigned.roundId
+        || squad.squadWarLevel !== assigned.level
+        || squad.leagueId !== assigned.roundId
+        || squad.leagueDivision !== season.seasonId;
+      if (pointerNeedsRepair) {
+        const repair = await squads().updateOne(
+          { name: squadId },
+          {
+            $set: {
+              squadWarLevel: assigned.level,
+              squadWarRoundId: assigned.roundId,
+              leagueId: assigned.roundId,
+              leagueDivision: season.seasonId,
+              updatedAt: now,
+            },
+          },
+          { session },
+        );
+        if (repair.matchedCount !== 1) throw new Error(`Squad Wars pointer repair rejected ${squadId}.`);
+      }
+      return assigned;
     }
 
     const current = await squadWarRounds().find(
@@ -254,7 +293,7 @@ export async function ensureSquadWarAssignment(squadId: string, now = new Date()
       await squadWarRounds().insertOne(round, { session });
     }
     if (!round) throw new Error(`Squad Wars assignment did not create a round for ${squadId}.`);
-    await squads().updateOne(
+    const assignment = await squads().updateOne(
       { name: squadId },
       {
         $set: {
@@ -267,8 +306,63 @@ export async function ensureSquadWarAssignment(squadId: string, now = new Date()
       },
       { session },
     );
+    if (assignment.matchedCount !== 1) throw new Error(`Squad Wars assignment pointer rejected ${squadId}.`);
     return round;
   });
+}
+
+/**
+ * Assign every actual participant squad before the terminal match transaction starts.
+ *
+ * Seasons snapshot the squads that exist at allocation time, but a new squad may be created and
+ * play a ranked match without first opening the Squad Wars screen. Preparing from authoritative
+ * roster membership closes that UI-order dependency. A membership race is safe: the scoring
+ * transaction rechecks the roster and aborts if a newly joined squad still lacks an assignment,
+ * then the next retry observes and assigns it here.
+ */
+export async function prepareSquadWarParticipantAssignments(
+  playerIds: readonly string[],
+  now = new Date(),
+): Promise<void> {
+  if (!config.squadWarsEnabled || playerIds.length === 0) return;
+  const ids = [...new Set(playerIds.filter(Boolean))];
+  if (ids.length === 0) return;
+  const participantSquads = await squads().find(
+    { "members.playerId": { $in: ids } },
+    { projection: { name: 1 } },
+  ).toArray();
+  // At most two squads normally participate, so sequential assignment is inexpensive and avoids
+  // manufacturing avoidable revision conflicts when both late squads enter the same division.
+  for (const squadId of [...new Set(participantSquads.map((squad) => squad.name))].sort()) {
+    const assignment = await ensureSquadWarAssignment(squadId, now);
+    if (!assignment) {
+      throw new ApiError(ApiErrorCode.InternalServerError, "Squad Wars assignment is not ready; retry match settlement.");
+    }
+  }
+}
+
+/** Prove that an assigned round can accept this confirmed score at the settlement timestamp. */
+export function requireSquadWarScoringEntryIndex(
+  round: Pick<SquadWarRoundDocument, "roundId" | "startsAt" | "endsAt"> & {
+    entries: readonly Pick<SquadWarEntry, "squadId">[];
+  },
+  squadId: string,
+  settledAt: Date,
+): number {
+  if (settledAt < round.startsAt || settledAt >= round.endsAt) {
+    throw new ApiError(
+      ApiErrorCode.InternalServerError,
+      `Squad Wars round ${round.roundId} is outside the match settlement window.`,
+    );
+  }
+  const entryIndex = round.entries.findIndex((entry) => entry.squadId === squadId);
+  if (entryIndex < 0) {
+    throw new ApiError(
+      ApiErrorCode.InternalServerError,
+      `Squad ${squadId} is missing from assigned Squad Wars round ${round.roundId}.`,
+    );
+  }
+  return entryIndex;
 }
 
 export interface SquadWarReadModel {
@@ -340,20 +434,27 @@ export async function recordConfirmedSquadWarProgress(
   won: boolean,
   confirmedPoints: number,
   settledAt: Date,
-): Promise<SquadWarProgressStatus> {
+): Promise<CurrentSquadWarProgressStatus> {
   if (!config.squadWarsEnabled) return "disabled";
   if (!squadId) return "no_squad";
   if (!won || !Number.isSafeInteger(confirmedPoints) || confirmedPoints <= 0) return "no_points";
   const squad = await squads().findOne({ name: squadId, "members.playerId": playerId }, { session });
   if (!squad) return "not_member";
   const roundId = squad.squadWarRoundId ?? "";
-  if (!roundId) return "no_active_round";
-  const round = await squadWarRounds().findOne({ roundId, status: "active" }, { session });
-  if (!round) return "no_active_round";
-  if (settledAt < round.startsAt || settledAt >= round.endsAt) return "outside_round";
-
-  const entryIndex = round.entries.findIndex((entry) => entry.squadId === squadId);
-  if (entryIndex < 0) return "no_active_round";
+  const round = roundId
+    ? await squadWarRounds().findOne({ roundId, status: "active", "entries.squadId": squadId }, { session })
+    : null;
+  // Participant assignment ran before this transaction. Missing authority here therefore means
+  // either a concurrent membership change or damaged data. Throwing rolls back both player
+  // rewards and the terminal match row; the next retry can assign the new squad or surface the
+  // corruption without permanently discarding a ranked win.
+  if (!round) {
+    throw new ApiError(
+      ApiErrorCode.InternalServerError,
+      `Squad ${squadId} has no active Squad Wars assignment; retry match settlement.`,
+    );
+  }
+  const entryIndex = requireSquadWarScoringEntryIndex(round, squadId, settledAt);
   const entry = round.entries[entryIndex]!;
   const rosterMember = squad.members.find((member) => member.playerId === playerId);
   if (!rosterMember) return "not_member";

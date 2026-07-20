@@ -175,9 +175,12 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   derives the caller's division from authenticated membership, rejects stale or foreign round
   IDs, and returns the exact recovered `LeagueId`/`SquadWarsId`/`Items` contract. Only a confirmed
   ranked PvP win adds server-derived Squad Points, and that score commits in the same transaction
-  as the terminal match receipt. An enabled season that is still being allocated/settled, or a
-  database error while preparing it, rejects the match before rewards start so a retry cannot
-  permanently lose War progress. A leased scheduler settles expired divisions exactly once,
+  as the terminal match receipt. Participant squads created after the season snapshot are assigned
+  before rewards begin, without requiring the War UI to be opened first; stale round pointers are
+  repaired from the authoritative round entry, while duplicate, missing, or out-of-window entries
+  reject settlement for retry. An enabled season that is still being allocated/settled, or a
+  database error while preparing it, likewise rejects the match before rewards start. A leased
+  scheduler settles expired divisions exactly once,
   applies the source-exact 4.9.5 placement/reward/promotion rules, and sends each eligible
   round-start member who remains in the squad an exact type-9 `SquadWarEnd` message whose Gold is
   claimed once through action `91`. Leaving or being kicked irrevocably forfeits that round's

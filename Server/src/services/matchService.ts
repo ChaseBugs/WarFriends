@@ -47,6 +47,7 @@ import {
 import { config } from "../config";
 import {
   prepareSquadWarSettlement,
+  prepareSquadWarParticipantAssignments,
   recordConfirmedSquadWarProgress,
   type SquadWarProgressStatus,
 } from "./squadWarService";
@@ -1413,6 +1414,15 @@ export async function settleResult(matchId: string, winnerId: string, reportedBy
     // database or maintenance failure as "wars disabled" and permanently dropping this score.
     throw error;
   });
+  if (squadWarsAvailable && completed && (completed.state === "active" || completed.state === "settling")) {
+    // New squads are not part of the season's original allocation snapshot. Assign every current
+    // participant roster before rewards begin so a first ranked win never depends on opening the
+    // Squad Wars UI. The transaction below still rechecks membership and round authority.
+    await prepareSquadWarParticipantAssignments(
+      completed.players.map((participant) => participant.playerId),
+      settlementTime,
+    );
+  }
   const transaction = await withMongoTransaction(async (session) => {
     const match = await matches().findOne({ matchId }, { session }) as unknown as MatchDoc | null;
     if (!match) return { result: { matchId, winnerId, rewarded: false }, grants: [] as CoreGrant[], unknown: true };
