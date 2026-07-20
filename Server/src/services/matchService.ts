@@ -18,6 +18,7 @@ import { progressionForPlayer } from "./playerStateService";
 import { applyLevelExperienceState } from "./levelProgressionService";
 import { calculateArmyPower } from "./armyPowerService";
 import {
+  advanceBeginnerLeagueAfterPvp,
   advancePlayerLeaguePlacementAfterPvp,
   BEGINNER_LEAGUE_REWARDS,
   playerLeagueRule,
@@ -580,10 +581,16 @@ async function settlePlayerCore(
       player: { ...player.player, level: leveled.levelTo },
     }).total
     : player.player.armyPower;
-  const leagueAdvance = advancePlayerLeaguePlacementAfterPvp(
+  const beginnerAdvance = advanceBeginnerLeagueAfterPvp(
     player.player,
-    Math.floor(settledAt.getTime() / 1_000),
+    medals.medalsBalance,
+    settlementUnix,
   );
+  const normalLeagueAdvance = beginnerAdvance ? null : advancePlayerLeaguePlacementAfterPvp(
+    player.player,
+    settlementUnix,
+  );
+  const leagueAdvance = beginnerAdvance ?? normalLeagueAdvance;
   const leagueFields: Record<string, unknown> = leagueAdvance
     ? {
       leagueTier: leagueAdvance.leagueTier,
@@ -594,6 +601,13 @@ async function settlePlayerCore(
     }
     : {};
   const placementMatchesRequired = leagueAdvance?.remainingMatches ?? player.player.remainingMatches;
+  const beginnersLeague = beginnerAdvance?.beginnersLeague ?? player.player.beginnersLeague;
+  const medalsBalance = beginnerAdvance?.medalsBalance ?? medals.medalsBalance;
+  const enteredNormalLeague = beginnerAdvance?.enteredNormalLeague
+    ? beginnerAdvance
+    : normalLeagueAdvance?.enteredLeague
+      ? normalLeagueAdvance
+      : null;
 
   const update = await players().updateOne(
     { id: playerId, ...progressionRevisionFilter(player) },
@@ -608,14 +622,15 @@ async function settlePlayerCore(
           // Skill and MedalsBalance are global and weekly medal mirrors in DatabasePlayer.
           // Use literal prevalidated values so the immutable receipt exactly matches this write.
           "player.skill": medals.skill,
-          "player.medalsBalance": medals.medalsBalance,
+          "player.medalsBalance": medalsBalance,
+          "player.beginnersLeague": beginnersLeague,
           "player.level": leveled.levelTo,
           "player.armyPower": nextArmyPower,
           armyPower: nextArmyPower,
           "player.status": PlayerStatus.Online,
-          // Placement advances only inside this confirmed two-party settlement. Folding it
-          // into the same player write prevents a forged standalone request or a replay from
-          // consuming the recovered one-match placement requirement.
+          // Beginner/placement advances occur only inside this confirmed two-party settlement.
+          // Folding them into the same player write prevents a forged standalone request or
+          // replay from changing leagues without the matching medal result.
           ...leagueFields,
           updatedAt: settledAt,
         },
@@ -640,14 +655,14 @@ async function settlePlayerCore(
       leagueWarBucks: leagueReward.warBucks,
       squadPoints,
       skill: medals.skill,
-      medalsBalance: medals.medalsBalance,
+      medalsBalance,
       placementMatchesRequired,
-      beginnersLeague: player.player.beginnersLeague,
-      ...(leagueAdvance?.enteredLeague
+      beginnersLeague,
+      ...(enteredNormalLeague
         ? {
-          enteredLeague: leagueAdvance.leagueId,
+          enteredLeague: enteredNormalLeague.leagueId,
           enteredNormalLeague: true,
-          leagueEvaluation: leagueAdvance.endsAt,
+          leagueEvaluation: enteredNormalLeague.endsAt,
         }
         : {}),
       baseExperience,

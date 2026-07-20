@@ -354,13 +354,17 @@ allowlist of analytics/impression actions is safely ignored.
 - **Player leagues** — the server owns source-backed 16-tier placement and season state,
   exact weekly-medal division ordering, recovered promotion/relegation percentages, the
   30-player underfilled rule, Champion/underfilled Gold rewards, and transactional action-198
-  settlement with type-23 inbox results. The local UTC-aligned allocator intentionally uses
-  one reconstructed division per tier until the retired production 100-player allocator and
-  background scheduler are recovered or replaced.
+  settlement with type-23 inbox results. Confirmed PvP also advances the three beginner stages
+  using the recovered 100-player rank curve, 50/100/150 maximums, 40/35/31 promotion positions,
+  and Unity-compatible rounding; UI-only random rank jitter is never backend authority. The final
+  stage atomically emits the stock normal-league handoff fields and enters the managed Bronze
+  division. The local UTC-aligned allocator intentionally uses one reconstructed division per tier
+  until the retired production 100-player allocator and background scheduler are recovered or
+  replaced; the final beginner weekly-medal reset remains explicit reconstruction policy.
 - **Arena fidelity / league operations** — recover production arena prices, rules, opponent
   weighting, lootbox/crown inventory payloads, and authoritative combat evidence; add bounded
-  league division documents, scheduled settlement, and beginner-league exit authority. Arena
-  debug mutations remain rejected.
+  league division documents and scheduled settlement; verify the final beginner weekly-medal reset
+  from an archived service response. Arena debug mutations remain rejected.
 - **Mission fidelity** — recover the original mission-selection weighting and normal battle
   reward formula, add combat-result validation, restore the missing recovered-client
   `MissionsSettings`/`UnitsInMissionsConfig` references, and deliver heroic inventory rewards.

@@ -146,6 +146,32 @@ therefore returns the values that belonged to that match rather than reading sta
 battles. The recovered per-tier `WINFACTOR`/`LOSEFACTOR` values remain recorded but intentionally
 unused until the missing original base formula and rounding order can be proven.
 
+## Beginner-league progression
+
+Beginner progression is evaluated only after a confirmed two-player PvP result has produced the
+authoritative weekly medal balance. The recovered `BeginnersLeagues` rows define maximum-medal
+curves of 50, 100, and 150, while `BeginnersPromotion` defines promotion positions 40, 35, and 31.
+The server reproduces `FakePlayersManager.GetCurrentPositionInBeginnersLeague`: it places the
+authenticated player among 100 competitors, applies the recovered 20 percent medal padding, and
+uses Unity-compatible positive single-precision rounding. This makes the first promotable
+cumulative medal totals 27, 59, and 95 respectively.
+
+The client also adds a private random offset from -2 through +2 when displaying the beginner
+leaderboard. That value is never sent to the backend and is deliberately excluded from promotion
+authority, otherwise identical accounts could receive different progression from UI-only random
+state. Medals carry forward from beginner stage 1 to 2 and from 2 to 3, matching the cumulative
+curves. A stale migrated account that is already above a boundary is repaired on its next confirmed
+settlement rather than requiring an untrusted client transition request.
+
+After stage 3, the response emits `BeginnersLeague=0`, `EnteredLeague`, `EnteredNormalLeague`, and
+`LeagueEvaluation` together, which follows the recovered `OGLEHLIPEFM` parser branch for leaving
+beginner leagues. The offline backend enters its currently managed Bronze division directly and
+resets weekly `MedalsBalance` to zero while preserving global `Skill`. The parser proves the shape
+of the handoff, but the retired service does not prove its original allocator or weekly-medal reset;
+those two choices are documented reconstruction policy. The transition and its receipt are written
+in the same transaction as the match reward, so retries cannot advance twice or show later league
+state.
+
 ## Timed win-streak rewards
 
 Ranked wins now advance a private server-owned streak and return the recovered outer `WinCount`

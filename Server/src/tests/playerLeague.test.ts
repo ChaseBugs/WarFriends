@@ -2,8 +2,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { League } from "../constants";
 import {
+  advanceBeginnerLeagueAfterPvp,
   advancePlayerLeaguePlacementAfterPvp,
   BEGINNER_LEAGUE_REWARDS,
+  BEGINNER_LEAGUE_RULES,
+  beginnerLeaguePosition,
   managedPlayerLeagueId,
   parseManagedPlayerLeagueId,
   PLAYER_LEAGUE_MINIMUM_PLAYERS,
@@ -42,6 +45,49 @@ test("recovered player-league table preserves all 16 source tiers and constants"
     { beginnersLeague: 2, rewardWarBucks: 400, rewardSquadPoints: 1 },
     { beginnersLeague: 3, rewardWarBucks: 600, rewardSquadPoints: 1 },
   ]);
+  assert.deepEqual([...BEGINNER_LEAGUE_RULES], [
+    { beginnersLeague: 1, maxMedals: 50, promoteAtOrAbovePosition: 40 },
+    { beginnersLeague: 2, maxMedals: 100, promoteAtOrAbovePosition: 35 },
+    { beginnersLeague: 3, maxMedals: 150, promoteAtOrAbovePosition: 31 },
+  ]);
+});
+
+test("beginner position math preserves exact recovered promotion boundaries", () => {
+  assert.equal(beginnerLeaguePosition(1, 26), 41);
+  assert.equal(beginnerLeaguePosition(1, 27), 39);
+  assert.equal(beginnerLeaguePosition(2, 58), 36);
+  assert.equal(beginnerLeaguePosition(2, 59), 35);
+  assert.equal(beginnerLeaguePosition(3, 94), 32);
+  assert.equal(beginnerLeaguePosition(3, 95), 31);
+  assert.throws(() => beginnerLeaguePosition(4, 100), /Unsupported beginner league/);
+});
+
+test("confirmed medal state advances beginner tiers and enters a managed normal league", () => {
+  const base = {
+    beginnersLeague: 1,
+    leagueTier: League.Bronze3,
+    leagueId: "",
+    leagueDivision: "",
+    remainingMatches: 1,
+  };
+  assert.equal(advanceBeginnerLeagueAfterPvp(base, 26, 1_700_000_000), null);
+  assert.deepEqual(advanceBeginnerLeagueAfterPvp(base, 27, 1_700_000_000), {
+    beginnersLeague: 2,
+    medalsBalance: 27,
+    leagueTier: League.Bronze3,
+    leagueId: "",
+    leagueDivision: "",
+    remainingMatches: 1,
+    enteredBeginnerLeague: true,
+    enteredNormalLeague: false,
+  });
+
+  const normal = advanceBeginnerLeagueAfterPvp({ ...base, beginnersLeague: 3 }, 95, 1_700_000_000);
+  assert.equal(normal?.beginnersLeague, 0);
+  assert.equal(normal?.medalsBalance, 0);
+  assert.equal(normal?.remainingMatches, 0);
+  assert.equal(normal?.enteredNormalLeague, true);
+  assert.match(normal?.leagueId ?? "", /^1-\d+-local$/);
 });
 
 test("managed IDs preserve Unity's tier-first and division-last parsing contract", () => {

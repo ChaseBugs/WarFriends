@@ -50,6 +50,113 @@ export const BEGINNER_LEAGUE_REWARDS = Object.freeze([
   { beginnersLeague: 3, rewardWarBucks: 600, rewardSquadPoints: 1 },
 ] as const);
 
+/**
+ * Recovered beginner leaderboard rows.
+ *
+ * `BeginnersLeagues` supplies the maximum-medal curve (50/100/150). Promotion into the
+ * next displayed league uses `BeginnersPromotion` keys 2/3/4 (positions 40/35/31). The
+ * client renders exactly 100 local fake competitors; its private randomPosition only moves
+ * the displayed player by at most two places and must not become backend reward authority.
+ */
+export const BEGINNER_LEAGUE_RULES = Object.freeze([
+  { beginnersLeague: 1, maxMedals: 50, promoteAtOrAbovePosition: 40 },
+  { beginnersLeague: 2, maxMedals: 100, promoteAtOrAbovePosition: 35 },
+  { beginnersLeague: 3, maxMedals: 150, promoteAtOrAbovePosition: 31 },
+] as const);
+
+export interface BeginnerLeagueAdvance {
+  beginnersLeague: number;
+  medalsBalance: number;
+  leagueTier: League;
+  leagueId: string;
+  leagueDivision: string;
+  remainingMatches: number;
+  enteredBeginnerLeague: boolean;
+  enteredNormalLeague: boolean;
+  endsAt?: number;
+}
+
+/** Match positive `Mathf.RoundToInt` arithmetic after each single-precision operation. */
+function unityPositiveRound(value: number): number {
+  return Math.floor(Math.fround(Math.fround(value) + Math.fround(0.5)));
+}
+
+/**
+ * Reproduce FakePlayersManager.GetCurrentPositionInBeginnersLeague without its visual jitter.
+ *
+ * The local random offset is stored only in FakePlayersManager and is not sent to the server.
+ * Using the deterministic base position gives every account the same promotion boundary while
+ * preserving the recovered 20% padding and 99-place linear medal curve.
+ */
+export function beginnerLeaguePosition(
+  beginnersLeague: number,
+  leagueMedals: number,
+  playersInLeague = 100,
+): number {
+  const rule = BEGINNER_LEAGUE_RULES.find((row) => row.beginnersLeague === beginnersLeague);
+  if (!rule) throw new Error(`Unsupported beginner league ${beginnersLeague}.`);
+  if (!Number.isSafeInteger(leagueMedals) || leagueMedals < 0
+    || !Number.isSafeInteger(playersInLeague) || playersInLeague < 2) {
+    throw new Error("Beginner league position input is invalid.");
+  }
+  const medalPadding = unityPositiveRound(Math.fround(rule.maxMedals * 0.2));
+  const adjustedMaximum = rule.maxMedals + medalPadding;
+  const adjustedMedals = leagueMedals + medalPadding;
+  const scaled = Math.fround(
+    Math.fround(adjustedMedals * (playersInLeague - 1)) / Math.fround(adjustedMaximum),
+  );
+  return playersInLeague - unityPositiveRound(scaled);
+}
+
+/**
+ * Advance one beginner league, or enter the managed Bronze division, after settlement.
+ *
+ * Beginner medal scores carry across tiers: the three recovered curves require roughly
+ * 27, 59, and 95 cumulative medals, matching their increasing maximums. On the final transition
+ * weekly medals reset to zero because they now belong to a new timed division, while global
+ * Skill remains untouched by this function. The final transition enters the managed tier
+ * directly; emitting both BeginnersLeague=0 and EnteredLeague matches OGLEHLIPEFM's explicit
+ * branch for leaving beginner leagues.
+ */
+export function advanceBeginnerLeagueAfterPvp(
+  player: PlayerLeaguePlacementInput,
+  postMatchLeagueMedals: number,
+  now: number,
+): BeginnerLeagueAdvance | null {
+  if (player.beginnersLeague <= 0) return null;
+  const rule = BEGINNER_LEAGUE_RULES.find((row) => row.beginnersLeague === player.beginnersLeague);
+  if (!rule) throw new Error(`Unsupported beginner league ${player.beginnersLeague}.`);
+  const position = beginnerLeaguePosition(player.beginnersLeague, postMatchLeagueMedals);
+  if (position > rule.promoteAtOrAbovePosition) return null;
+
+  if (player.beginnersLeague < BEGINNER_LEAGUE_RULES.length) {
+    return {
+      beginnersLeague: player.beginnersLeague + 1,
+      medalsBalance: postMatchLeagueMedals,
+      leagueTier: player.leagueTier,
+      leagueId: player.leagueId,
+      leagueDivision: player.leagueId ? (player.leagueDivision ?? "") : "",
+      remainingMatches: player.remainingMatches,
+      enteredBeginnerLeague: true,
+      enteredNormalLeague: false,
+    };
+  }
+
+  const tier = Math.min(League.Champion, Math.max(League.Bronze3, player.leagueTier)) as League;
+  const active = managedPlayerLeagueId(tier, now);
+  return {
+    beginnersLeague: 0,
+    medalsBalance: 0,
+    leagueTier: tier,
+    leagueId: active.leagueId,
+    leagueDivision: active.division,
+    remainingMatches: 0,
+    enteredBeginnerLeague: false,
+    enteredNormalLeague: true,
+    endsAt: active.endsAt,
+  };
+}
+
 /** MainScene Constants.NotEnoughPlayersForPlayerLeague (decoded ObscuredFloat). */
 export const PLAYER_LEAGUE_MINIMUM_PLAYERS = 30;
 /** MainScene Constants.LeaguePlacementMatches (decoded ObscuredFloat). */
@@ -77,6 +184,7 @@ export interface PlayerLeaguePlacementInput {
   beginnersLeague: number;
   leagueTier: League;
   leagueId: string;
+  leagueDivision?: string;
   remainingMatches: number;
 }
 
