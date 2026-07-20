@@ -58,8 +58,28 @@ test("buffer replay returns the original assignment result without granting Gold
   assert.equal(first.state.gold, state.gold + 2);
   assert.equal(first.assignments.assignments.find((item) => item.id === 5)?.claimed, true);
   assert.equal(replay.replayed, true);
+  assert.equal(replay.state, first.state, "BufferId replay must not advance progression revision");
   assert.equal(replay.state.gold, first.state.gold);
   assert.equal(replay.requestsResults, first.requestsResults);
+});
+
+test("BufferId replay after UTC midnight does not roll unrelated assignments", () => {
+  const beforeMidnight = Date.UTC(2026, 6, 19, 23, 59, 50) / 1_000;
+  const first = processAssignmentBufferState(
+    createInitialProgression(beforeMidnight),
+    beforeMidnight,
+    "midnight-buffer",
+    [],
+  );
+  const replay = processAssignmentBufferState(
+    first.state,
+    beforeMidnight + 20,
+    "midnight-buffer",
+    [],
+  );
+  assert.equal(replay.replayed, true);
+  assert.equal(replay.state, first.state);
+  assert.equal(replay.assignments.dayKey, "2026-07-19");
 });
 
 test("assignment claim validates the reward amount supplied by the old client", () => {

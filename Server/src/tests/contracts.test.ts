@@ -538,6 +538,7 @@ test("assignment RequestBuffer result is cached by BufferId without duplicate go
   assert.equal(first.replayed, false);
 
   const replay = processAssignmentBufferState(first.state, now + 1, "buffer-1", request);
+  assert.equal(replay.state, first.state);
   assert.equal(replay.state.gold, 2);
   assert.equal(replay.requestsResults, first.requestsResults);
   assert.equal(replay.replayed, true);

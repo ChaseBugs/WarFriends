@@ -480,10 +480,13 @@ export function processAssignmentBufferState(
     // Do not execute any subrequest again. Even deterministic validation is insufficient
     // here: a successful item earlier in the original batch may already have changed the
     // wallet, so recalculating later items against the new balance could produce a different
-    // response array. Return the exact bytes stored for the original attempt instead.
-    const assignments = assignmentStateFor(state, now);
+    // response array. Return the exact bytes stored for the original attempt instead. A retry
+    // is not permission to roll an unrelated daily assignment cycle at midnight; normal boot
+    // and GetNewAssignments own that transition. A legacy replay cache without assignment state
+    // still receives a usable in-memory projection, but it is not written as a side effect.
+    const assignments = state.assignments ?? assignmentStateFor(state, now);
     return {
-      state: { ...state, revision: state.revision + 1, assignments },
+      state,
       assignments,
       requestsResults: replay.result,
       replayed: true,
