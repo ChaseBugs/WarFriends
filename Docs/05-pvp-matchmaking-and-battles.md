@@ -53,7 +53,8 @@ A confirmed ranked result can update:
 - player experience and level-experience progress;
 - medal balance and squad points;
 - normal-card counts and unique Buddy-card ownership;
-- the server-owned lifetime War Card play counter used by starter assignment `ID_2`;
+- the server-owned lifetime War Card play counter used by starter assignment `ID_2` and
+  achievement group 8;
 - supported assignment and starter-assignment counters;
 - supported achievement groups;
 - online/in-game presence state.

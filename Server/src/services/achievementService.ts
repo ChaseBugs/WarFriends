@@ -4,7 +4,10 @@ import type {
   AchievementState,
   PlayerProgressionState,
 } from "../db";
+import { itemInventoryStateFor, weaponDefinitionFor } from "./itemInventoryService";
 import { mutateProgression } from "./progressionMutationService";
+import { UNIT_CATALOG } from "./unitInventoryService";
+import { VISUAL_CATALOG, visualInventoryStateFor } from "./visualInventoryService";
 
 /**
  * Server-authoritative achievement progression.
@@ -35,16 +38,28 @@ export interface AchievementTierDefinition {
 }
 
 /**
- * Achievement rows whose progress can currently be proven by reconstructed server events.
+ * Achievement rows whose progress can currently be proven by reconstructed server events or
+ * directly from server-owned inventory.
  *
  * These values are copied from the Achievements component serialized in MainScene.unity:
- * group 2 is ranked PvP wins, 5 is completed solo missions, 12 is completed assignments,
- * 14 is lifetime squad points, and 16 is claimed daily rewards. The other client rows are
- * intentionally not invented or trusted yet because unit deployment, inventory ownership,
- * arena, and war-card telemetry do not have authoritative server implementations in this
- * reconstruction.
+ * groups 0/1 are purchased units/weapons, 8 is confirmed War Cards played, 9/10 are
+ * soldier/mechanical normal upgrades, 11 is weapon upgrades, and 15 is paid permanent visuals.
+ * Group 2 is ranked PvP wins, 5 is completed solo missions, 12 is completed assignments, 14 is
+ * lifetime squad points, and 16 is claimed daily rewards. Combat-only rows remain intentionally
+ * disabled until their event facts are authoritative; a client-reported achievement value is
+ * never enough to enable one.
  */
 export const ACHIEVEMENT_DEFINITIONS: Readonly<Record<number, readonly AchievementTierDefinition[]>> = {
+  0: [
+    { target: 8, gold: 1, warBucks: 0, scraps: 0, tickets: 0 },
+    { target: 16, gold: 10, warBucks: 0, scraps: 0, tickets: 0 },
+    { target: 24, gold: 15, warBucks: 0, scraps: 0, tickets: 0 },
+  ],
+  1: [
+    { target: 5, gold: 1, warBucks: 0, scraps: 0, tickets: 0 },
+    { target: 10, gold: 10, warBucks: 0, scraps: 0, tickets: 0 },
+    { target: 15, gold: 15, warBucks: 0, scraps: 0, tickets: 0 },
+  ],
   2: [
     { target: 10, gold: 1, warBucks: 0, scraps: 0, tickets: 0 },
     { target: 50, gold: 5, warBucks: 0, scraps: 0, tickets: 0 },
@@ -54,6 +69,26 @@ export const ACHIEVEMENT_DEFINITIONS: Readonly<Record<number, readonly Achieveme
     { target: 10, gold: 1, warBucks: 0, scraps: 0, tickets: 0 },
     { target: 30, gold: 5, warBucks: 0, scraps: 0, tickets: 0 },
     { target: 60, gold: 10, warBucks: 0, scraps: 0, tickets: 0 },
+  ],
+  8: [
+    { target: 5, gold: 0, warBucks: 2_500, scraps: 0, tickets: 0 },
+    { target: 50, gold: 0, warBucks: 25_000, scraps: 0, tickets: 0 },
+    { target: 500, gold: 0, warBucks: 250_000, scraps: 0, tickets: 0 },
+  ],
+  9: [
+    { target: 10, gold: 1, warBucks: 0, scraps: 0, tickets: 0 },
+    { target: 25, gold: 5, warBucks: 0, scraps: 0, tickets: 0 },
+    { target: 100, gold: 25, warBucks: 0, scraps: 0, tickets: 0 },
+  ],
+  10: [
+    { target: 1, gold: 1, warBucks: 0, scraps: 0, tickets: 0 },
+    { target: 10, gold: 5, warBucks: 0, scraps: 0, tickets: 0 },
+    { target: 50, gold: 25, warBucks: 0, scraps: 0, tickets: 0 },
+  ],
+  11: [
+    { target: 15, gold: 1, warBucks: 0, scraps: 0, tickets: 0 },
+    { target: 150, gold: 5, warBucks: 0, scraps: 0, tickets: 0 },
+    { target: 300, gold: 25, warBucks: 0, scraps: 0, tickets: 0 },
   ],
   12: [
     { target: 3, gold: 1, warBucks: 0, scraps: 0, tickets: 0 },
@@ -65,12 +100,73 @@ export const ACHIEVEMENT_DEFINITIONS: Readonly<Record<number, readonly Achieveme
     { target: 150, gold: 5, warBucks: 0, scraps: 0, tickets: 0 },
     { target: 1_500, gold: 25, warBucks: 0, scraps: 0, tickets: 0 },
   ],
+  15: [
+    { target: 7, gold: 0, warBucks: 5_000, scraps: 0, tickets: 0 },
+    { target: 14, gold: 0, warBucks: 50_000, scraps: 0, tickets: 0 },
+    { target: 29, gold: 0, warBucks: 500_000, scraps: 0, tickets: 0 },
+  ],
   16: [
     { target: 7, gold: 0, warBucks: 5_000, scraps: 0, tickets: 0 },
     { target: 30, gold: 0, warBucks: 25_000, scraps: 0, tickets: 0 },
     { target: 100, gold: 0, warBucks: 100_000, scraps: 0, tickets: 0 },
   ],
 };
+
+/**
+ * Reproduce the inventory-backed StatsManager properties read by the six recovered classes.
+ *
+ * Purchases count only rows whose display unlock level is above three, exactly matching
+ * `StatsManager.weaponsPurchased` and `unitsPurchased`; this excludes the starter loadout and
+ * tutorial Assaulter. Upgrade counters are sums of the stored normal `boughtIndex`, not events,
+ * special slots, promotions, or Elite parts. Visuals exclude power bands and require a permanent
+ * bought row with a non-zero source shop price. Borrowed rentals are deliberately excluded from
+ * every count because they are temporary entitlements and must not unlock permanent rewards.
+ */
+function snapshotAchievementValues(state: PlayerProgressionState): Readonly<Record<number, number>> {
+  const itemInventory = itemInventoryStateFor(state);
+  let unitsPurchased = 0;
+  let weaponsPurchased = 0;
+  let soldierUpgrades = 0;
+  let mechanicalUpgrades = 0;
+  let weaponUpgrades = 0;
+
+  for (const [name, weapon] of Object.entries(itemInventory.levelManagerData.savedWeapons)) {
+    const definition = weaponDefinitionFor(name);
+    if (!definition || !weapon.bought || weapon.borrowed) continue;
+    if (definition.unlockLevel > 3) weaponsPurchased += 1;
+    weaponUpgrades += Math.max(0, weapon.boughtIndex);
+  }
+  for (const [name, unit] of Object.entries(itemInventory.levelManagerData.savedArmies)) {
+    const definition = UNIT_CATALOG[name];
+    if (!definition || !unit.bought || unit.borrowed) continue;
+    if (definition.unlockLevel > 3) unitsPurchased += 1;
+    if (definition.isSoldier) soldierUpgrades += Math.max(0, unit.boughtIndex);
+    else mechanicalUpgrades += Math.max(0, unit.boughtIndex);
+  }
+
+  const visuals = visualInventoryStateFor(state).visuals;
+  const paidVisuals = Object.entries(visuals).filter(([name, saved]) => {
+    const definition = VISUAL_CATALOG[name];
+    return Boolean(
+      definition
+      && definition.categoryId !== 3
+      && definition.priceGold + definition.priceWarBucks > 0
+      && saved.bought
+      && !saved.borrowed,
+    );
+  }).length;
+  return {
+    0: unitsPurchased,
+    1: weaponsPurchased,
+    // PvP settlement increments this only by cards it successfully validates and consumes.
+    // It is therefore the server equivalent of StatsManager.cardsPlayed, not client telemetry.
+    8: Math.max(0, state.warCardsPlayed ?? 0),
+    9: soldierUpgrades,
+    10: mechanicalUpgrades,
+    11: weaponUpgrades,
+    15: paidVisuals,
+  };
+}
 
 export interface AchievementMutationResult {
   state: PlayerProgressionState;
@@ -107,6 +203,15 @@ export function achievementStateFor(state: PlayerProgressionState): AchievementS
       continue;
     }
     while (existing.progress.length < tiers.length) existing.progress.push({ claimed: false });
+  }
+  // Inventory is already the authority for these counters. Re-deriving them on every read and
+  // buffered achievement action also migrates older accounts without trusting a client offset or
+  // requiring historical purchase events that predate this server implementation.
+  for (const [rawId, value] of Object.entries(snapshotAchievementValues(state))) {
+    const id = Number(rawId);
+    const group = byId.get(id);
+    const tiers = ACHIEVEMENT_DEFINITIONS[id];
+    if (group && tiers) group.value = Math.min(tiers[tiers.length - 1].target, value);
   }
   return { data: [...byId.values()].sort((left, right) => left.id - right.id) };
 }

@@ -324,10 +324,11 @@ Working end-to-end (verified live):
   are ordered, atomic, reward-validated, and replay safe. Unit deployment and war-card completions
   remain disabled until those event sources exist.
 - **Achievements (authoritative subset)**: actions `218`-`220` use the recovered
-  `AchievementsData`/RequestBuffer contract. Solo missions, ranked wins, assignment
-  completion, squad points, and daily-reward claims advance only from accepted server
-  settlements; tier rewards come from the serialized MainScene table and are granted
-  atomically and replay-safely.
+  `AchievementsData`/RequestBuffer contract. Solo missions, ranked wins, assignment completion,
+  squad points, and daily-reward claims advance only from accepted server settlements. Purchased
+  weapons/units, their normal upgrades, paid permanent visuals, and confirmed consumed War Cards
+  are re-derived from authoritative progression snapshots using the client's StatsManager rules.
+  Exact serialized MainScene tier rewards are granted atomically and replay-safely.
 - **Squad social state**: action `193` persists the monotonic Photon Chat unread cursor through
   the stock request buffer and restores it as `PlayerAnalyticsData`; squad-event notices are
   membership-validated, founder-targeted, durable, and duplicate-suppressed.
@@ -378,7 +379,8 @@ allowlist of analytics/impression actions is safely ignored.
 - **Mission fidelity** — recover the original mission-selection weighting and normal battle
   reward formula, add combat-result validation, restore the missing recovered-client
   `MissionsSettings`/`UnitsInMissionsConfig` references, and deliver heroic inventory rewards.
-  Remaining achievement groups stay unclaimable until their gameplay events are authoritative.
+  Remaining combat/deployment achievement groups stay unclaimable until their gameplay events are
+  authoritative.
 - **PvP reward tuning** — XP/medal/squad values in `matchService.REWARDS` remain reconstruction
   policy. Normal WarBucks uses server-owned `PVP_WIN_WARBUCKS` / `PVP_LOSE_WARBUCKS` defaults
   because the retired Fusebox `BattleWarbucksRewards` document is not present in either APK;

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { DbAction } from "../dbActions";
 import {
+  ACHIEVEMENT_DEFINITIONS,
   ACHIEVEMENT_ALREADY_CLAIMED,
   ACHIEVEMENT_REWARD_NOT_FOUND,
   acknowledgeAchievementOffsetState,
@@ -12,7 +13,13 @@ import {
   validateAchievementProgressState,
 } from "../services/achievementService";
 import { processAssignmentBufferState } from "../services/assignmentService";
+import {
+  BLACK_MARKET_WEAPON_CATALOG,
+  WEAPON_CATALOG,
+} from "../services/itemInventoryService";
 import { createInitialProgression } from "../services/playerStateService";
+import { UNIT_CATALOG } from "../services/unitInventoryService";
+import { VISUAL_CATALOG } from "../services/visualInventoryService";
 
 const NOW = Date.UTC(2026, 6, 19, 12, 0, 0) / 1_000;
 
@@ -44,6 +51,86 @@ test("only confirmed events can advance supported achievement counters", () => {
 
   const offset = acknowledgeAchievementOffsetState(advanced.state, 2, -999);
   assert.equal(offset.achievements.data.find((group) => group.id === 2)?.offset, 0);
+});
+
+test("inventory achievement groups preserve source tiers and derive StatsManager-equivalent values", () => {
+  assert.deepEqual(
+    [0, 1, 8, 9, 10, 11, 15].map((id) =>
+      ACHIEVEMENT_DEFINITIONS[id].map((tier) => [tier.target, tier.gold, tier.warBucks])),
+    [
+      [[8, 1, 0], [16, 10, 0], [24, 15, 0]],
+      [[5, 1, 0], [10, 10, 0], [15, 15, 0]],
+      [[5, 0, 2_500], [50, 0, 25_000], [500, 0, 250_000]],
+      [[10, 1, 0], [25, 5, 0], [100, 25, 0]],
+      [[1, 1, 0], [10, 5, 0], [50, 25, 0]],
+      [[15, 1, 0], [150, 5, 0], [300, 25, 0]],
+      [[7, 0, 5_000], [14, 0, 50_000], [29, 0, 500_000]],
+    ],
+  );
+
+  const state = createInitialProgression(NOW);
+  state.warCardsPlayed = 5;
+  const weapons = Object.values({ ...WEAPON_CATALOG, ...BLACK_MARKET_WEAPON_CATALOG })
+    .filter((definition) => definition.unlockLevel > 3)
+    .slice(0, 5);
+  for (const definition of weapons) {
+    state.itemInventory!.levelManagerData.savedWeapons[definition.name] = {
+      bought: true,
+      boughtIndex: 0,
+      showed: true,
+      borrowed: false,
+      specialFeature: 0,
+    };
+  }
+  state.itemInventory!.levelManagerData.savedWeapons["Google2u.AssaultRifle_AK47"]!.boughtIndex = 15;
+
+  const unitDefinitions = Object.values(UNIT_CATALOG).filter((definition) => definition.unlockLevel > 3);
+  const soldier = unitDefinitions.find((definition) => definition.isSoldier)!;
+  const mechanical = unitDefinitions.find((definition) => !definition.isSoldier)!;
+  const units = [soldier, mechanical, ...unitDefinitions
+    .filter((definition) => definition.name !== soldier.name && definition.name !== mechanical.name)
+    .slice(0, 6)];
+  for (const definition of units) {
+    state.itemInventory!.levelManagerData.savedArmies[definition.name] = {
+      bought: true,
+      boughtIndex: definition.name === soldier.name ? 10 : definition.name === mechanical.name ? 1 : 0,
+      specialSlot: 0,
+      showed: true,
+      tier: definition.startingTier,
+      borrowed: false,
+      wasEquipped: false,
+      equipped: false,
+      eliteSlot: 0,
+      parts: 0,
+    };
+  }
+
+  state.visualInventory = { visuals: {}, slots: {}, previousHeadDecal: "" };
+  const visuals = Object.values(VISUAL_CATALOG)
+    .filter((definition) =>
+      definition.categoryId !== 3 && definition.priceGold + definition.priceWarBucks > 0)
+    .slice(0, 7);
+  for (const definition of visuals) {
+    state.visualInventory.visuals[definition.name] = {
+      bought: true,
+      showed: true,
+      expiresOn: 0,
+      borrowed: false,
+      parts: 0,
+      notificate: false,
+    };
+  }
+
+  const achievements = achievementStateFor(state);
+  assert.deepEqual(
+    [0, 1, 8, 9, 10, 11, 15].map((id) => achievements.data.find((group) => group.id === id)?.value),
+    [8, 5, 5, 10, 1, 15, 7],
+  );
+  assert.doesNotThrow(() => validateAchievementProgressState(state, 15, 7));
+  assert.throws(
+    () => validateAchievementProgressState(state, 15, 8),
+    (error: unknown) => (error as { code?: number }).code === ACHIEVEMENT_REWARD_NOT_FOUND,
+  );
 });
 
 test("achievement claims enforce tier order and credit scene-defined rewards once", () => {

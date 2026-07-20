@@ -125,7 +125,7 @@ rejected mutation therefore returns authoritative Gold, WarBucks, and the comple
   uses the documented uniform normal-shop fallback.
 - Rental grants and expiration cleanup.
 - Offer-backed discounts and subscription/VIP purchase flows.
-- Server-confirmed achievement progress for collecting visuals.
+- Remaining non-ownership visual achievement or reward integrations.
 
 ## Key implementation files
 

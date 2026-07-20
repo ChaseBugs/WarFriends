@@ -69,8 +69,17 @@ Achievement state mirrors the recovered `{ data: [...] }` shape. Supported count
 from server-confirmed events such as ranked settlement, assignment claims, mission completion,
 squad points, and daily rewards. Tier claims are ordered and atomic.
 
-Inventory, card, and some Arena achievement groups remain inactive until their source events and
-reward inventory are authoritative.
+Seven additional MainScene groups are now reconstructed from server-owned snapshots: bought units
+(group 0), bought weapons (1), confirmed War Cards consumed in PvP (8), soldier normal upgrades
+(9), mechanical normal upgrades (10), weapon upgrades (11), and paid permanent visuals (15).
+Their exact three-tier targets and Gold/WarBucks rewards come from the serialized Achievements
+component. Purchase counters require source unlock level above three, upgrade counters sum only
+normal `boughtIndex`, visual counting excludes power bands, and temporary rentals never qualify.
+Recomputing these monotonic values from inventory also migrates older accounts without trusting
+the client's action-220 progress or offset.
+
+Deployment, per-match combat feats, and some Arena achievement groups remain inactive until their
+event facts and any non-currency reward inventory are authoritative.
 
 ## Key implementation files
 
