@@ -54,6 +54,10 @@ Status legend:
 or settling match lookup and profile write share one MongoDB transaction, so a client heartbeat
 cannot clear the server-owned `InGame` reservation during admission, play, or settlement.
 
+Moderation duplicate suppression is also cross-process: one HMAC-keyed atomic winner stores the
+complete first report payload for ten minutes, and every racing process upserts that same report
+ID. TTL removes old coordination rows but is never used as the logical replay clock.
+
 The replacement WebSocket transport now recognizes a typed
 `MatchEvent { Event: "CardPlayed", Data: { Sequence, CardId } }` contract. Each authenticated
 participant has a contiguous zero-based sequence capped by the recovered six-card selection

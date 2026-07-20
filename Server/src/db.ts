@@ -812,6 +812,13 @@ export interface ReportRateLimitDocument {
   expiresAt: Date;
 }
 
+export interface ReportDeduplicationDocument {
+  key: string;
+  report: Document;
+  reportCreatedAt: Date;
+  expiresAt: Date;
+}
+
 /**
  * Server-only lifecycle receipt for one participant in a direct PvP challenge.
  *
@@ -849,6 +856,7 @@ let identitiesCollection: Collection<IdentityDocument> | null = null;
 let reportsCollection: Collection<Document> | null = null;
 let authRateLimitsCollection: Collection<AuthRateLimitDocument> | null = null;
 let reportRateLimitsCollection: Collection<ReportRateLimitDocument> | null = null;
+let reportDeduplicationsCollection: Collection<ReportDeduplicationDocument> | null = null;
 let friendlyBattlesCollection: Collection<FriendlyBattleDocument> | null = null;
 let gameCatalogEntriesCollection: Collection<GameCatalogEntryDocument> | null = null;
 let gameCatalogReleasesCollection: Collection<GameCatalogReleaseDocument> | null = null;
@@ -867,6 +875,7 @@ export async function connectMongo(): Promise<void> {
   reportsCollection = db.collection("playerReports");
   authRateLimitsCollection = db.collection<AuthRateLimitDocument>("authRateLimits");
   reportRateLimitsCollection = db.collection<ReportRateLimitDocument>("reportRateLimits");
+  reportDeduplicationsCollection = db.collection<ReportDeduplicationDocument>("reportDeduplications");
   friendlyBattlesCollection = db.collection<FriendlyBattleDocument>("friendlyBattles");
   gameCatalogEntriesCollection = db.collection<GameCatalogEntryDocument>("gameCatalogEntries");
   gameCatalogReleasesCollection = db.collection<GameCatalogReleaseDocument>("gameCatalogReleases");
@@ -926,6 +935,7 @@ export async function connectMongo(): Promise<void> {
   // supports the rolling abuse-rate limit without scanning the complete collection.
   await reportsCollection.createIndex({ reportedPlayerId: 1, status: 1, createdAt: -1 });
   await reportsCollection.createIndex({ reporterPlayerId: 1, createdAt: -1 });
+  await reportsCollection.createIndex({ reportId: 1 }, { unique: true, sparse: true });
 
   // One atomic counter covers every process for a presented login identity. The key is an
   // HMAC rather than a raw player/provider identifier so expired throttle rows do not become
@@ -934,6 +944,8 @@ export async function connectMongo(): Promise<void> {
   await authRateLimitsCollection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
   await reportRateLimitsCollection.createIndex({ key: 1 }, { unique: true });
   await reportRateLimitsCollection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+  await reportDeduplicationsCollection.createIndex({ key: 1 }, { unique: true });
+  await reportDeduplicationsCollection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
   // A reconnect or lost HTTP response may repeat the same challenge start. The compound unique
   // key turns every process into the same idempotent writer, while TTL bounds telemetry storage.
@@ -971,6 +983,7 @@ export async function disconnectMongo(): Promise<void> {
   reportsCollection = null;
   authRateLimitsCollection = null;
   reportRateLimitsCollection = null;
+  reportDeduplicationsCollection = null;
   friendlyBattlesCollection = null;
   gameCatalogEntriesCollection = null;
   gameCatalogReleasesCollection = null;
@@ -1044,6 +1057,10 @@ export function authRateLimits(): Collection<AuthRateLimitDocument> {
 
 export function reportRateLimits(): Collection<ReportRateLimitDocument> {
   return requireCollection("reportRateLimits", reportRateLimitsCollection);
+}
+
+export function reportDeduplications(): Collection<ReportDeduplicationDocument> {
+  return requireCollection("reportDeduplications", reportDeduplicationsCollection);
 }
 
 export function friendlyBattles(): Collection<FriendlyBattleDocument> {

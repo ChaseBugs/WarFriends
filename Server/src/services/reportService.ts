@@ -1,6 +1,7 @@
-import { randomUUID } from "crypto";
-import { matches, reports } from "../db";
+import { createHmac, randomUUID } from "crypto";
+import { matches, reportDeduplications, reports } from "../db";
 import { ApiError, ApiErrorCode } from "../apiErrors";
+import { config } from "../config";
 import { findById } from "./playerService";
 import type { MatchDoc, MatchPlayer } from "./matchService";
 import { reserveReportSubmission } from "./reportRateLimitService";
@@ -42,6 +43,22 @@ export interface AuthoritativeMatchEvidence {
   relayedCardPlays: Record<string, string[]>;
   usedCardClaims: Record<string, string[]>;
   combatValidated: false;
+}
+
+export function reportDeduplicationKey(
+  reporterPlayerId: string,
+  reportedPlayerId: string,
+  reportType: number,
+  kind: "player" | "cheat",
+): string {
+  return createHmac("sha256", config.authSecret)
+    .update(`report-dedup:${reporterPlayerId}\0${reportedPlayerId}\0${reportType}\0${kind}`)
+    .digest("hex");
+}
+
+export function reportIsWithinDuplicateWindow(createdAt: Date, now: Date): boolean {
+  const age = now.getTime() - createdAt.getTime();
+  return age >= 0 && age < DUPLICATE_WINDOW_MS;
 }
 
 function boundedString(value: unknown, maxLength: number): string {
@@ -143,6 +160,53 @@ async function recentAuthoritativeMatchEvidence(
 }
 
 /**
+ * Select and persist one winning report payload for a target/type window.
+ *
+ * The atomic pipeline stores the full winner, not merely a lock. Every concurrent caller then
+ * upserts that exact reportId/payload, so a response race cannot produce duplicates or let a
+ * later request overwrite the first request's message/evidence. Logical expiry is checked here;
+ * MongoDB TTL is only delayed storage cleanup and never controls replay correctness.
+ */
+async function persistDeduplicatedReport(
+  candidate: PlayerReportDocument,
+  retry = 0,
+): Promise<PlayerReportDocument> {
+  const key = reportDeduplicationKey(
+    candidate.reporterPlayerId,
+    candidate.reportedPlayerId,
+    candidate.reportType,
+    candidate.kind,
+  );
+  const cutoff = new Date(candidate.createdAt.getTime() - DUPLICATE_WINDOW_MS);
+  const expiresAt = new Date(candidate.createdAt.getTime() + DUPLICATE_WINDOW_MS * 2);
+  try {
+    const winner = await reportDeduplications().findOneAndUpdate(
+      { key },
+      [
+        { $set: { _replace: { $lte: [{ $ifNull: ["$reportCreatedAt", new Date(0)] }, cutoff] } } },
+        { $set: {
+          key,
+          report: { $cond: ["$_replace", candidate, { $ifNull: ["$report", candidate] }] },
+          reportCreatedAt: { $cond: ["$_replace", candidate.createdAt, { $ifNull: ["$reportCreatedAt", candidate.createdAt] }] },
+          expiresAt: { $cond: ["$_replace", expiresAt, { $ifNull: ["$expiresAt", expiresAt] }] },
+        } },
+        { $unset: "_replace" },
+      ],
+      { upsert: true, returnDocument: "after" },
+    );
+    if (!winner?.report) throw new Error("Report deduplication winner was not persisted.");
+    const stored = winner.report as unknown as PlayerReportDocument;
+    await reports().updateOne({ reportId: stored.reportId }, { $setOnInsert: stored }, { upsert: true });
+    return stored;
+  } catch (error) {
+    if ((error as { code?: number }).code === 11000 && retry < 2) {
+      return persistDeduplicatedReport(candidate, retry + 1);
+    }
+    throw error;
+  }
+}
+
+/**
  * Persist a report with two abuse controls. A rolling per-reporter limit blocks report spam,
  * while an identical target/type report inside ten minutes reuses the existing record. The
  * latter makes client retries idempotent without hiding distinct reports about new behavior.
@@ -159,13 +223,14 @@ export async function submitPlayerReport(
     throw new ApiError(ApiErrorCode.PlayerNotFound, "Reported player not found.");
   }
 
-  const duplicateSince = new Date(Date.now() - DUPLICATE_WINDOW_MS);
+  // Preserve the cheap sequential lost-response path before reserving rate capacity. The atomic
+  // winner below is still required because simultaneous callers can both miss this read.
   const duplicate = await reports().findOne({
     reporterPlayerId,
     reportedPlayerId: input.reportedPlayerId,
     reportType: input.reportType,
     kind,
-    createdAt: { $gte: duplicateSince },
+    createdAt: { $gte: new Date(Date.now() - DUPLICATE_WINDOW_MS) },
   });
   if (duplicate) return duplicate as unknown as PlayerReportDocument;
 
@@ -189,6 +254,5 @@ export async function submitPlayerReport(
     ...(matchEvidence ? { matchEvidence } : {}),
     createdAt,
   };
-  await reports().insertOne(doc);
-  return doc;
+  return persistDeduplicatedReport(doc);
 }

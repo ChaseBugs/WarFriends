@@ -222,6 +222,9 @@ Working end-to-end (verified live):
   bounded relay/used-card observations. The snapshot keeps `combatValidated=false` because the
   relay still cannot prove damage, targets, timing, or card effects; social reports and legacy
   Photon matches remain valid reports with no fabricated match correlation.
+  Duplicate target/type requests also converge on one HMAC-keyed MongoDB winner containing the
+  complete first payload; all concurrent processes upsert that same report ID, while logical
+  ten-minute expiry is enforced independently of delayed TTL cleanup.
 - **Public-text moderation**: account/rename names, Squad names/descriptions, and direct messages
   share Unicode-normalized multilingual matching with punctuation/leetspeak resistance. Add
   deployment-specific comma-separated terms with `PROFANITY_EXTRA_TERMS`; report evidence is
