@@ -198,10 +198,17 @@ export function checkDailyRewardState(state: PlayerProgressionState, now: number
   const date = utcDate(now);
   const calendar = calendarFor(state, date);
   const today = utcDayKey(date);
-  if (calendar.lastCheckDay !== today) {
-    calendar.canClaim = Math.min(daysInMonth(calendar.year, calendar.month), calendar.canClaim + 1);
-    calendar.lastCheckDay = today;
+  if (calendar.lastCheckDay === today) {
+    // CheckDailyReward runs during ordinary reconnect/boot flows and the stock request has no
+    // replay identifier. Once today's login is recorded, the response is only a projection of
+    // the existing calendar. Return the exact input state so mutateProgression skips MongoDB;
+    // a repeated check must not create an artificial progression revision or contend with a
+    // simultaneous reward claim. `calendarFor` still returns a clone, preventing response code
+    // from mutating the persisted object by reference.
+    return { state, calendar };
   }
+  calendar.canClaim = Math.min(daysInMonth(calendar.year, calendar.month), calendar.canClaim + 1);
+  calendar.lastCheckDay = today;
   return {
     state: { ...state, revision: state.revision + 1, dailyReward: calendar },
     calendar,

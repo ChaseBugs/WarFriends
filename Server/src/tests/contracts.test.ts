@@ -337,6 +337,8 @@ test("daily reward checks unlock at most one ordered claim per UTC login day", (
 
   const repeatedCheck = checkDailyRewardState(firstCheck.state, noon + 60);
   assert.equal(repeatedCheck.calendar.canClaim, 1);
+  assert.equal(repeatedCheck.state, firstCheck.state);
+  assert.equal(repeatedCheck.state.revision, firstCheck.state.revision);
 
   const claim = claimDailyRewardState(repeatedCheck.state, noon + 120, 1);
   assert.equal(claim.calendar.claimReward, 1);
@@ -346,6 +348,25 @@ test("daily reward checks unlock at most one ordered claim per UTC login day", (
   const nextDayCheck = checkDailyRewardState(claim.state, noon + 86_400);
   assert.equal(nextDayCheck.calendar.canClaim, 2);
   assert.equal(nextDayCheck.calendar.claimReward, 1);
+  assert.notEqual(nextDayCheck.state, claim.state);
+  assert.equal(nextDayCheck.state.revision, claim.state.revision + 1);
+});
+
+test("daily reward month rollover remains a durable transition after same-day no-op checks", () => {
+  const july = Date.parse("2026-07-31T12:00:00Z") / 1000;
+  const first = checkDailyRewardState(createInitialProgression(july), july);
+  const repeated = checkDailyRewardState(first.state, july + 60);
+  const august = checkDailyRewardState(first.state, Date.parse("2026-08-01T12:00:00Z") / 1000);
+
+  assert.equal(repeated.state, first.state);
+  assert.notEqual(august.state, first.state);
+  assert.deepEqual(august.calendar, {
+    year: 2026,
+    month: 8,
+    canClaim: 1,
+    claimReward: 0,
+    lastCheckDay: "2026-08-01",
+  });
 });
 
 test("daily reward claims reject replays and locked future indexes", () => {
