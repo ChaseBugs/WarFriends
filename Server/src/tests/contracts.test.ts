@@ -53,7 +53,13 @@ function contractPlayer(): PlayerDocument {
     updatedAt: new Date("2023-11-14T22:13:20Z"),
   };
 }
-import { normalizeCountry, normalizeLocale, normalizePlayerName, parseNotificationSettings } from "../services/playerSettingsService";
+import {
+  normalizeCountry,
+  normalizeLocale,
+  normalizePlayerName,
+  notificationSettingsEqual,
+  parseNotificationSettings,
+} from "../services/playerSettingsService";
 import { normalizeReportInput } from "../services/reportService";
 import { reportHandlers } from "../handlers/reports";
 import { challengeIsExpired, toClientMessage, type MessageDoc } from "../services/socialService";
@@ -788,6 +794,9 @@ test("player settings parser accepts only the recovered boolean preference contr
   assert.equal(parsed.challenge, false);
   assert.equal(parsed.squadEvents, false);
   assert.equal(parsed.playerLeague, true);
+  assert.equal(notificationSettingsEqual(parsed, { ...parsed }), true);
+  assert.equal(notificationSettingsEqual(parsed, { ...parsed, challenge: true }), false);
+  assert.equal(notificationSettingsEqual(undefined, parsed), false);
   assert.throws(() => parseNotificationSettings(JSON.stringify({ challenge: "false" })));
   assert.throws(() => parseNotificationSettings("not-json"));
 });

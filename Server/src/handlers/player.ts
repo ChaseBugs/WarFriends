@@ -11,6 +11,7 @@ import {
   normalizeCountry,
   normalizeLocale,
   normalizePlayerName,
+  notificationSettingsEqual,
   parseNotificationSettings,
   settingsForPlayer,
 } from "../services/playerSettingsService";
@@ -73,23 +74,31 @@ export const playerHandlers: Record<number, HandlerEntry> = {
   [DbAction.SetPlayerStatus]: authed(async ({ player, req }) => {
     const status = Number(req.PlayerStatus ?? req.Status ?? PlayerStatus.Online);
     if (!Object.values(PlayerStatus).includes(status)) return ok(DbAction.SetPlayerStatus, { Status: player!.player.status });
-    player!.player.status = status;
-    await updatePlayerFields(player!.id, { status });
+    if (player!.player.status !== status) {
+      player!.player.status = status;
+      await updatePlayerFields(player!.id, { status });
+    }
     return ok(DbAction.SetPlayerStatus, { Status: status });
   }),
 
   [DbAction.UpdateDeviceToken]: authed(async ({ player, req }) => {
+    const fields: Parameters<typeof updatePlayerFields>[1] = {};
     if (typeof req.DeviceToken === "string") {
       // Push providers impose platform-specific token sizes. The server only needs a bounded,
       // non-whitespace value; an empty token deliberately unregisters the current device.
       const deviceToken = req.DeviceToken.trim().slice(0, 4096);
-      player!.player.deviceToken = deviceToken;
-      await updatePlayerFields(player!.id, { deviceToken });
+      if (player!.player.deviceToken !== deviceToken) fields.deviceToken = deviceToken;
     }
     if (typeof req.Locale === "string") {
       const locale = normalizeLocale(req.Locale);
-      player!.player.locale = locale;
-      await updatePlayerFields(player!.id, { locale });
+      if (player!.player.locale !== locale) fields.locale = locale;
+    }
+    if (Object.keys(fields).length > 0) {
+      // Device registration sends token and locale together. Publish their changed subset in one
+      // MongoDB update so a reconnect neither writes twice nor leaves a half-refreshed profile if
+      // the process stops between two independent writes. An exact retry performs no write.
+      Object.assign(player!.player, fields);
+      await updatePlayerFields(player!.id, fields);
     }
     return ok(DbAction.UpdateDeviceToken);
   }),
@@ -130,8 +139,10 @@ export const playerHandlers: Record<number, HandlerEntry> = {
     // The recovered 1.6.0 client sends NewCountryCode, not Country. Retaining Country as a
     // compatibility alias helps diagnostics and newer adapters without weakening validation.
     const country = normalizeCountry(req.NewCountryCode ?? req.Country);
-    player!.player.country = country;
-    await updatePlayerFields(player!.id, { country });
+    if (player!.player.country !== country) {
+      player!.player.country = country;
+      await updatePlayerFields(player!.id, { country });
+    }
     return ok(DbAction.ChangePlayerCountry, { Country: country, NewCountryCode: country });
   }),
 
@@ -152,15 +163,19 @@ export const playerHandlers: Record<number, HandlerEntry> = {
 
   [DbAction.UpdateSettings]: authed(async ({ player, req }) => {
     const notificationSettings = parseNotificationSettings(req.Settings, settingsForPlayer(player!));
-    player!.player.notificationSettings = notificationSettings;
-    await updatePlayerFields(player!.id, { notificationSettings });
+    if (!notificationSettingsEqual(player!.player.notificationSettings, notificationSettings)) {
+      player!.player.notificationSettings = notificationSettings;
+      await updatePlayerFields(player!.id, { notificationSettings });
+    }
     return ok(DbAction.UpdateSettings);
   }),
 
   [DbAction.ChangeLanguage]: authed(async ({ player, req }) => {
     const locale = normalizeLocale(req.Locale);
-    player!.player.locale = locale;
-    await updatePlayerFields(player!.id, { locale });
+    if (player!.player.locale !== locale) {
+      player!.player.locale = locale;
+      await updatePlayerFields(player!.id, { locale });
+    }
     return ok(DbAction.ChangeLanguage, { Locale: locale });
   }),
 

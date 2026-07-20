@@ -88,6 +88,8 @@ Working end-to-end (verified live):
   remain usable and provider credentials are never accepted by ordinary gameplay actions.
   Full-account creation hashes before its single insert, while the recovered action 121 publishes
   name, password digest, and rotated session atomically with a stale-session guard.
+  Repeated status, country, language, device-registration, and notification-setting values are
+  exact no-ops; token and locale changes from one device-registration request publish together.
 - **Platform identities**: Facebook, Google Play, and Game Center identities have unique
   ownership, HMAC-protected credentials, provider login, collision-safe link/update, and
   unlink behavior. First-time `CreateGcAccount` commits the player and identity in one transaction,

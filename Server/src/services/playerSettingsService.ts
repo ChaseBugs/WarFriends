@@ -89,3 +89,13 @@ export function normalizeCountry(value: unknown): string {
 export function settingsForPlayer(player: PlayerDocument): NotificationSettingsDTO {
   return player.player.notificationSettings ?? { ...DEFAULT_NOTIFICATION_SETTINGS };
 }
+
+/** Compare every recovered notification preference without depending on object key order. */
+export function notificationSettingsEqual(
+  left: NotificationSettingsDTO | undefined,
+  right: NotificationSettingsDTO,
+): boolean {
+  if (!left) return false;
+  return (Object.keys(DEFAULT_NOTIFICATION_SETTINGS) as (keyof NotificationSettingsDTO)[])
+    .every((key) => left[key] === right[key]);
+}
