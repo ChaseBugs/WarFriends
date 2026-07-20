@@ -54,7 +54,7 @@ A confirmed ranked result can update:
 - medal balance and squad points;
 - normal-card counts and unique Buddy-card ownership;
 - the server-owned lifetime War Card play counter used by starter assignment `ID_2` and
-  achievement group 8;
+  achievement group 8, plus the largest accepted one-match list used by achievement group 17;
 - supported assignment and starter-assignment counters;
 - supported achievement groups;
 - online/in-game presence state.
@@ -63,7 +63,7 @@ Only facts confirmed by settlement enter progression systems. Raw client battle 
 sufficient authority for rewards.
 
 The two player documents and terminal match row commit in one MongoDB transaction. Card
-consumption, lifetime card-play proof, XP, medals, squad points, presence, and level experience
+consumption, lifetime/one-match card-play proof, XP, medals, squad points, presence, and level experience
 therefore cannot be partially persisted across a process failure. Assignment, achievement, and
 squad aggregate projections run after the core transaction and cannot cause duplicate core
 rewards.

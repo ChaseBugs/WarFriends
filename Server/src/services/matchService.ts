@@ -14,6 +14,7 @@ import logger from "../utils/logger";
 import { recordPvpAssignmentProgress } from "./assignmentService";
 import {
   recordRankedPvpAchievements,
+  synchronizeCardsPlayedInMatchAchievementState,
   synchronizeLeagueAchievementState,
 } from "./achievementService";
 import { consumePvpUsedCardsState } from "./cardInventoryService";
@@ -551,7 +552,18 @@ async function settlePlayerCore(
   // lifetime squad achievements and squad aggregates tied to real membership at settlement.
   const squadPoints = player.player.squadName ? leagueReward.squadPoints : 0;
   const consumed = consumePvpUsedCardsState(initialState, usedCards);
-  const leveled = applyLevelExperienceState(consumed.state, player.player.level, experience);
+  // AchievementFiveCardsPlayedInMatch is a one-match maximum, not another lifetime counter.
+  // Couple it to the exact validated inventory consumption that already commits with PvP rewards;
+  // a retry reads the immutable finished match and never executes this participant transition again.
+  const cardsInMatchAchievement = synchronizeCardsPlayedInMatchAchievementState(
+    consumed.state,
+    consumed.usedCards.length,
+  );
+  const leveled = applyLevelExperienceState(
+    cardsInMatchAchievement.state,
+    player.player.level,
+    experience,
+  );
   // Advance the periodic paid-VIP benefit before constructing the canonical progression.
   // This pure transition persists its countdown, visual parts, and duplicate WarBucks in the
   // same guarded player write and exposes presentation data for the immutable match receipt.

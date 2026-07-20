@@ -333,8 +333,9 @@ Working end-to-end (verified live):
   Accepted Arena wins and maximum-win runs without an accepted loss advance exact MainScene groups
   3 and 4 inside the Arena receipt transition, so retries cannot duplicate their Ticket/Scraps
   progress. Group 13 mirrors the authenticated profile's highest reached league tier and rejects a
-  larger action-220 client value. Exact serialized MainScene tier rewards are granted atomically
-  and replay-safely.
+  larger action-220 client value. Group 17 retains the largest validated, inventory-consuming PvP
+  card list and grants the exact one-time 50,000-WarBucks reward at five cards. Exact serialized
+  MainScene tier rewards are granted atomically and replay-safely.
 - **Squad social state**: action `193` persists the monotonic Photon Chat unread cursor through
   the stock request buffer and restores it as `PlayerAnalyticsData`; squad-event notices are
   membership-validated, founder-targeted, durable, and duplicate-suppressed.
@@ -386,8 +387,9 @@ allowlist of analytics/impression actions is safely ignored.
 - **Mission fidelity** — recover the original mission-selection weighting and normal battle
   reward formula, add combat-result validation, restore the missing recovered-client
   `MissionsSettings`/`UnitsInMissionsConfig` references, and deliver heroic inventory rewards.
-  Remaining combat/deployment achievement groups stay unclaimable until their gameplay events are
-  authoritative.
+  Remaining deployment, stolen-crate, and first-Squad-War achievement groups stay unclaimable until
+  their gameplay events are authoritative. Group 17 uses accepted owned-card consumption but still
+  shares the documented missing live card-event-validation boundary.
 - **PvP reward tuning** — XP/medal/squad values in `matchService.REWARDS` remain reconstruction
   policy. Normal WarBucks uses server-owned `PVP_WIN_WARBUCKS` / `PVP_LOSE_WARBUCKS` defaults
   because the retired Fusebox `BattleWarbucksRewards` document is not present in either APK;

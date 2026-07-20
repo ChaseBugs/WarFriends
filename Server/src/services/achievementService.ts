@@ -47,7 +47,8 @@ export interface AchievementTierDefinition {
  * soldier/mechanical normal upgrades, 11 is weapon upgrades, and 15 is paid permanent visuals.
  * Group 2 is ranked PvP wins, 3/4 are accepted Arena wins/flawless runs, 5 is completed solo
  * missions, 12 is completed assignments, 13 is the highest server-owned player league reached,
- * 14 is lifetime squad points, and 16 is claimed daily rewards. Combat-detail-only rows remain
+ * 14 is lifetime squad points, 16 is claimed daily rewards, and 17 is the largest accepted
+ * inventory-consuming War Card list in one settled PvP match. Combat-detail-only rows remain
  * intentionally disabled until their event facts are authoritative; a client-reported
  * achievement value is never enough to enable one.
  */
@@ -126,6 +127,9 @@ export const ACHIEVEMENT_DEFINITIONS: Readonly<Record<number, readonly Achieveme
     { target: 7, gold: 0, warBucks: 5_000, scraps: 0, tickets: 0 },
     { target: 30, gold: 0, warBucks: 25_000, scraps: 0, tickets: 0 },
     { target: 100, gold: 0, warBucks: 100_000, scraps: 0, tickets: 0 },
+  ],
+  17: [
+    { target: 5, gold: 0, warBucks: 50_000, scraps: 0, tickets: 0 },
   ],
 };
 
@@ -285,6 +289,32 @@ export function synchronizeLeagueAchievementState(
   const group = achievements.data.find((candidate) => candidate.id === 13)!;
   const finalTarget = ACHIEVEMENT_DEFINITIONS[13][ACHIEVEMENT_DEFINITIONS[13].length - 1].target;
   group.value = Math.max(group.value, Math.min(finalTarget, leagueTier));
+  return {
+    state: { ...state, revision: state.revision + 1, achievements },
+    achievements,
+  };
+}
+
+/**
+ * Retain the largest accepted one-match War Card count for AchievementFiveCardsPlayedInMatch.
+ *
+ * Unity evaluates this class from `StatsManager.instance.matchStats.cardsPlayed`, then
+ * AchievementProgressGroup keeps the maximum rather than adding each match. The server mirrors
+ * that exact behavior only after `consumePvpUsedCardsState` has validated every ID, proved current
+ * ownership, and removed each occurrence in the terminal match transaction. The recovered card
+ * selection screen has at most six slots, so a larger internal value is rejected rather than
+ * silently completing the 50,000-WarBucks tier.
+ */
+export function synchronizeCardsPlayedInMatchAchievementState(
+  state: PlayerProgressionState,
+  cardsPlayedInMatch: number,
+): AchievementMutationResult {
+  if (!Number.isInteger(cardsPlayedInMatch) || cardsPlayedInMatch < 0 || cardsPlayedInMatch > 6) {
+    throw new ApiError(ACHIEVEMENT_REWARD_NOT_FOUND, "One-match War Card count is invalid.");
+  }
+  const achievements = achievementStateFor(state);
+  const group = achievements.data.find((candidate) => candidate.id === 17)!;
+  group.value = Math.max(group.value, Math.min(5, cardsPlayedInMatch));
   return {
     state: { ...state, revision: state.revision + 1, achievements },
     achievements,

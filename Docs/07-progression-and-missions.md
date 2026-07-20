@@ -89,9 +89,15 @@ the backend owns. Silver II, Gold I, and Master III unlock 5, 10, and 20 Gold re
 placement and season settlement persist this monotonic highest-tier value atomically with the
 profile transition; action 220 can only confirm a value at or below that server state.
 
+`AchievementFiveCardsPlayedInMatch` (group 17) reads the current match's card count, while the
+client achievement container retains its maximum. The backend mirrors this with the largest
+accepted inventory-consuming PvP usage list: five cards unlock the exact 50,000-WarBucks reward.
+The update commits with card removal and the terminal match, so retries cannot add or complete it
+again. This proves accepted ownership/consumption, not the missing live `PlayCardRPC` event stream.
+
 Arena combat details are still client-reported: these achievements are authoritative for the
 server's accepted receipt lifecycle, not proof that the client simulated combat honestly.
-Deployment and per-match combat-feat groups remain inactive until their event facts are
+Deployment, stolen-crate, and first-Squad-War groups remain inactive until their event facts are
 server-authoritative.
 
 ## Key implementation files

@@ -11,6 +11,7 @@ import {
   advanceAchievementState,
   claimAchievementState,
   serializeAchievementsData,
+  synchronizeCardsPlayedInMatchAchievementState,
   synchronizeLeagueAchievementState,
   validateAchievementProgressState,
 } from "../services/achievementService";
@@ -193,6 +194,25 @@ test("league achievement buffer claims only the authenticated profile tier", () 
   assert.deepEqual(JSON.parse(forged.requestsResults), [
     { ActionId: DbAction.ChangeAchievementProgres, Result: ACHIEVEMENT_REWARD_NOT_FOUND },
   ]);
+});
+
+test("five-card match achievement keeps the largest accepted one-match count", () => {
+  assert.deepEqual(
+    ACHIEVEMENT_DEFINITIONS[17].map((tier) => [tier.target, tier.warBucks]),
+    [[5, 50_000]],
+  );
+
+  const four = synchronizeCardsPlayedInMatchAchievementState(createInitialProgression(NOW), 4);
+  assert.equal(four.achievements.data.find((group) => group.id === 17)?.value, 4);
+  const laterTwo = synchronizeCardsPlayedInMatchAchievementState(four.state, 2);
+  assert.equal(laterTwo.achievements.data.find((group) => group.id === 17)?.value, 4);
+  const completed = synchronizeCardsPlayedInMatchAchievementState(laterTwo.state, 5);
+  assert.equal(completed.achievements.data.find((group) => group.id === 17)?.value, 5);
+  assert.equal(claimAchievementState(completed.state, 17, 0).state.warBucks, 50_000);
+  assert.throws(
+    () => synchronizeCardsPlayedInMatchAchievementState(completed.state, 7),
+    (error: unknown) => (error as { code?: number }).code === ACHIEVEMENT_REWARD_NOT_FOUND,
+  );
 });
 
 test("achievement claims enforce tier order and credit scene-defined rewards once", () => {

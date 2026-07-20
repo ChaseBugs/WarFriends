@@ -208,10 +208,17 @@ does not retain a spent amount-zero entry.
 This counter supplies the authoritative completion fact for starter assignment `ID_2`
 (PlayWarcard, target three). `StatsManager.cardsPlayed` remains client-owned and is ignored.
 
+The same terminal transition records the maximum accepted card count from any one PvP match for
+`AchievementFiveCardsPlayedInMatch`. The recovered class evaluates `matchStats.cardsPlayed` and its
+container preserves the maximum, so separate two-card and three-card matches never combine into
+the five-card target. An accepted five-card list unlocks the source-exact 50,000-WarBucks tier once;
+all five entries must be owned and are consumed before the match can commit.
+
 The old protocol cannot prove omitted usage: a player submits only its own list, while the opponent
 sees Photon `PlayCardRPC` traffic but does not report the opponent's IDs to this server. Reported
-ownership and consumption are authoritative, but detecting a modified client that sends an empty
-list requires live card-play event validation in a Photon plugin or replacement transport.
+ownership and consumption are authoritative, but detecting a modified client that omits a used ID
+or reports an owned card it did not actually play requires live card-play event validation in a
+Photon plugin or replacement transport. Achievement group 17 shares this explicit boundary.
 
 ## Compatibility and trust boundary
 
