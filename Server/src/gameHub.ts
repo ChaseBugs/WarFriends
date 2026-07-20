@@ -6,10 +6,13 @@ import { findById } from "./services/playerService";
 import { enqueueForHub, removeForHub as leaveQueue, restoreWaitingForHub } from "./services/matchmakingService";
 import {
   cancelMatch,
+  clearMatchParticipantDisconnected,
   createMatch,
+  findStartedMatchForPlayer,
   getMatch,
   joinActiveMatch,
   markRelayedCardDelivered,
+  markMatchParticipantDisconnected,
   recordRelayedCardPlay,
   reportMatchResult,
   settleResult,
@@ -48,6 +51,14 @@ import {
   PVP_FANOUT_REDIS_CHANNEL,
 } from "./services/pvpFanoutService";
 import {
+  claimPvpSocket,
+  isPvpPlayerConnected,
+  pvpSocketOwner,
+  refreshPvpSocket,
+  releasePvpSocket,
+  socketPresenceHeartbeatMs,
+} from "./services/pvpSocketPresenceService";
+import {
   WebSocketRateLimiter,
   webSocketPayloadLimit,
   webSocketViolationLimit,
@@ -85,6 +96,8 @@ interface Client {
   /** Frames are limited before JSON parsing or database work enters the serialized chain. */
   rateLimiter: WebSocketRateLimiter;
   consecutiveRateLimitViolations: number;
+  /** Renewable distributed route; only the exact owning socket may refresh or delete it. */
+  presenceHeartbeat?: NodeJS.Timeout;
 }
 
 const clients = new Map<string, Client>();
@@ -314,7 +327,13 @@ async function receiveRemotePvpFanout(raw: string): Promise<void> {
   const match = await getMatch(notice.matchId);
   if (!match || !match.players.some((participant) => participant.playerId === notice.targetPlayerId)) return;
   const type = notice.envelope.Type;
-  if ((type === "MatchFound" || type === "MatchStart" || type === "MatchEvent") && match.state !== "active") return;
+  if ([
+    "MatchFound",
+    "MatchStart",
+    "MatchEvent",
+    "OpponentDisconnected",
+    "OpponentReconnected",
+  ].includes(type) && match.state !== "active") return;
   if ((type === "MatchStart" || type === "MatchEvent") && !(match.roomStartedAt instanceof Date)) return;
   if (type === "MatchEvent") {
     const joined = new Set(match.joinedPlayerIds ?? []);
@@ -326,6 +345,14 @@ async function receiveRemotePvpFanout(raw: string): Promise<void> {
   }
   if (type === "MatchEnded" && match.state !== "finished" && match.state !== "cancelled") return;
   if (type === "MatchError" && match.state !== "cancelled") return;
+  if (type === "OpponentDisconnected" || type === "OpponentReconnected") {
+    const payload = notice.envelope.Payload as { PlayerId?: unknown };
+    if (!match.players.some((participant) => participant.playerId === payload.PlayerId)
+      || payload.PlayerId === notice.targetPlayerId) return;
+    const disconnected = typeof payload.PlayerId === "string" && match.disconnectedAt?.[payload.PlayerId] instanceof Date;
+    if ((type === "OpponentDisconnected" && !disconnected)
+      || (type === "OpponentReconnected" && disconnected)) return;
+  }
   sendToPlayer(notice.targetPlayerId, notice.envelope);
 }
 
@@ -358,6 +385,88 @@ async function broadcastDistributedMatch(
   envelope: ClientEnvelope,
 ): Promise<void> {
   await Promise.all(playerIds.map((playerId) => deliverPvpEnvelope(playerId, matchId, envelope)));
+}
+
+function scheduleDistributedDisconnectResolution(matchId: string, playerId: string, opponentId: string): void {
+  clearDisconnectTimer(matchId, playerId);
+  const timer = setTimeout(() => {
+    disconnectTimers.delete(disconnectKey(matchId, playerId));
+    void (async () => {
+      const match = await getMatch(matchId);
+      if (!match || match.state !== "active" || !match.disconnectedAt?.[playerId]) return;
+      const opponentOnline = await isPvpPlayerConnected(opponentId);
+      if (opponentOnline === null) {
+        // Liveness is unknown during a Redis outage. Retry a full grace window rather than turning
+        // an infrastructure failure into a player loss or an unearned opponent reward.
+        scheduleDistributedDisconnectResolution(matchId, playerId, opponentId);
+        return;
+      }
+      let ended: ClientEnvelope;
+      if (opponentOnline) {
+        const settlement = await settleResult(matchId, opponentId, opponentId);
+        ended = {
+          Type: "MatchEnded",
+          Payload: { MatchId: matchId, WinnerId: settlement.winnerId, Reason: "OpponentForfeit" },
+        };
+      } else {
+        const cancelled = await cancelMatch(matchId, "both_players_disconnected");
+        if (!cancelled) return;
+        ended = { Type: "MatchEnded", Payload: { MatchId: matchId, Reason: "BothPlayersDisconnected" } };
+      }
+      await broadcastDistributedMatch(matchId, match.players.map((participant) => participant.playerId), ended);
+      clearMatchDisconnectTimers(matchId);
+      clearMatchJoinTimer(matchId);
+    })().catch((error: unknown) => {
+      logger.match.error("Distributed disconnect resolution failed", {
+        matchId,
+        playerId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    });
+  }, Math.max(1, config.matchDisconnectGraceSeconds) * 1000);
+  timer.unref();
+  disconnectTimers.set(disconnectKey(matchId, playerId), timer);
+}
+
+async function handleDistributedSocketClose(client: Client, releaseAttempt = 0): Promise<void> {
+  if (!client.playerId) return;
+  const owner = pvpSocketOwner(hubInstanceId, client.id);
+  // A replacement Identify may already own the route. In that case this old socket did not make
+  // the player offline and must not start a false disconnect grace timer.
+  const released = await releasePvpSocket(client.playerId, owner);
+  if (released === null && releaseAttempt < 30) {
+    const retry = setTimeout(() => {
+      void handleDistributedSocketClose(client, releaseAttempt + 1);
+    }, 2_000);
+    retry.unref();
+    return;
+  }
+  if (released !== true) return;
+  const match = await findStartedMatchForPlayer(client.playerId);
+  if (!match) return;
+  const opponentId = match.players.find((participant) => participant.playerId !== client.playerId)?.playerId;
+  if (!opponentId) return;
+  const marked = await markMatchParticipantDisconnected(match.matchId, client.playerId);
+  if (!marked) return;
+  await deliverPvpEnvelope(opponentId, match.matchId, {
+    Type: "OpponentDisconnected",
+    Payload: { MatchId: match.matchId, PlayerId: client.playerId },
+  });
+  scheduleDistributedDisconnectResolution(match.matchId, client.playerId, opponentId);
+}
+
+async function startClientPresenceHeartbeat(client: Client): Promise<void> {
+  if (!client.playerId || !isRedisAvailable()) return;
+  if (client.presenceHeartbeat) clearInterval(client.presenceHeartbeat);
+  const owner = pvpSocketOwner(hubInstanceId, client.id);
+  await claimPvpSocket(client.playerId, owner);
+  client.presenceHeartbeat = setInterval(() => {
+    if (!client.playerId) return;
+    void refreshPvpSocket(client.playerId, owner).then((owned) => {
+      if (owned === false) client.socket.close(4001, "Signed in elsewhere");
+    });
+  }, socketPresenceHeartbeatMs);
+  client.presenceHeartbeat.unref();
 }
 
 export async function createGameHub(httpServer: HttpServer): Promise<WebSocketServer> {
@@ -437,8 +546,19 @@ export async function createGameHub(httpServer: HttpServer): Promise<WebSocketSe
     });
 
     socket.on("close", () => {
-      const eviction = roomManager.evictClient(client.id);
-      if (eviction) scheduleDisconnectResolution(eviction);
+      const distributedPresence = Boolean(client.presenceHeartbeat);
+      if (client.presenceHeartbeat) clearInterval(client.presenceHeartbeat);
+      if (distributedPresence) {
+        void handleDistributedSocketClose(client).catch((error: unknown) => {
+          logger.match.error("Distributed socket close failed", {
+            playerId: client.playerId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        });
+      } else {
+        const eviction = roomManager.evictClient(client.id);
+        if (eviction) scheduleDisconnectResolution(eviction);
+      }
       if (client.playerId) {
         void leaveQueue(client.playerId);
         clearMatchmakingTimer(client.playerId);
@@ -467,6 +587,7 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
         if (previousClient && previousClient.id !== client.id) previousClient.socket.close(4001, "Signed in elsewhere");
         client.playerId = doc.id;
         onlinePlayers.set(doc.id, client.id);
+        await startClientPresenceHeartbeat(client);
         send(client, { Type: "Identified", Payload: { PlayerId: doc.id } });
       } catch {
         send(client, { Type: "AuthError", Payload: { Message: "Invalid credentials." } });
@@ -678,7 +799,7 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
     case "JoinMatch": {
       if (!client.playerId) return send(client, { Type: "AuthError", Payload: { Message: "Identify first." } });
       const p = envelope.Payload as JoinMatchPayload;
-      if (isRedisAvailable()) {
+      if (client.presenceHeartbeat) {
         const joined = await joinActiveMatch(p?.MatchId, client.playerId);
         if (!joined) {
           return send(client, {
@@ -694,6 +815,18 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
             Participants: joined.joinedCount,
           },
         });
+        const reconnected = await clearMatchParticipantDisconnected(p.MatchId, client.playerId);
+        if (reconnected) {
+          clearDisconnectTimer(p.MatchId, client.playerId);
+          const opponentId = joined.match.players
+            .find((participant) => participant.playerId !== client.playerId)?.playerId;
+          if (opponentId) {
+            await deliverPvpEnvelope(opponentId, p.MatchId, {
+              Type: "OpponentReconnected",
+              Payload: { MatchId: p.MatchId, PlayerId: client.playerId },
+            });
+          }
+        }
         if (joined.activatedByCaller) {
           const started: ClientEnvelope = { Type: "MatchStart", Payload: { MatchId: p.MatchId } };
           // The compare-and-set winner emits exactly one start instruction per assigned player.
@@ -732,7 +865,7 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
     case "MatchEvent": {
       if (!client.playerId) return;
       const p = envelope.Payload as MatchEventPayload;
-      if (isRedisAvailable()) {
+      if (client.presenceHeartbeat) {
         const opponentId = await distributedMatchOpponent(p?.MatchId, client.playerId);
         if (!opponentId) {
           return send(client, {
@@ -828,7 +961,7 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
     case "MatchResult": {
       if (!client.playerId) return;
       const p = envelope.Payload as MatchResultPayload;
-      if (isRedisAvailable()) {
+      if (client.presenceHeartbeat) {
         const active = await getMatch(p?.MatchId);
         const joined = new Set(active?.joinedPlayerIds ?? []);
         if (!active

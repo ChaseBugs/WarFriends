@@ -103,6 +103,8 @@ export interface MatchDoc {
   joinedPlayerIds?: string[];
   /** Written once when every assigned participant has joined the distributed room. */
   roomStartedAt?: Date;
+  /** Server-owned disconnect clocks used by cross-node grace/forfeit resolution. */
+  disconnectedAt?: Record<string, Date>;
   players: MatchPlayer[];
   state: "active" | "settling" | "finished" | "cancelled";
   /** Written only by the atomic settlement claim and preserved for idempotent retries. */
@@ -1003,6 +1005,40 @@ export async function joinActiveMatch(matchId: string, playerId: string): Promis
     started: match.roomStartedAt instanceof Date,
     activatedByCaller,
   };
+}
+
+export async function findStartedMatchForPlayer(playerId: string): Promise<MatchDoc | null> {
+  return await matches().findOne({
+    state: "active",
+    roomStartedAt: { $exists: true },
+    "players.playerId": playerId,
+    joinedPlayerIds: playerId,
+  }) as unknown as MatchDoc | null;
+}
+
+export async function markMatchParticipantDisconnected(matchId: string, playerId: string): Promise<MatchDoc | null> {
+  const path = `disconnectedAt.${playerId}`;
+  const updated = await matches().findOneAndUpdate(
+    {
+      matchId,
+      state: "active",
+      roomStartedAt: { $exists: true },
+      "players.playerId": playerId,
+      joinedPlayerIds: playerId,
+    },
+    { $set: { [path]: new Date() } },
+    { returnDocument: "after" },
+  );
+  return updated as unknown as MatchDoc | null;
+}
+
+export async function clearMatchParticipantDisconnected(matchId: string, playerId: string): Promise<boolean> {
+  const path = `disconnectedAt.${playerId}`;
+  const cleared = await matches().updateOne(
+    { matchId, state: "active", [path]: { $exists: true } },
+    { $unset: { [path]: "" } },
+  );
+  return cleared.modifiedCount === 1;
 }
 
 export async function isMatchParticipant(matchId: string, playerId: string): Promise<boolean> {

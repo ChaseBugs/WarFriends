@@ -68,3 +68,13 @@ test("PvP terminal fan-out remains match-bound", () => {
     Payload: { MatchId: "match-4", WinnerId: "player-a" },
   }))?.envelope.Type, "MatchEnded");
 });
+
+test("PvP opponent presence notifications identify the other assigned player", () => {
+  for (const type of ["OpponentDisconnected", "OpponentReconnected"]) {
+    const encoded = buildPvpFanoutNotice("node-a", "player-b", "match-5", {
+      Type: type,
+      Payload: { MatchId: "match-5", PlayerId: "player-a" },
+    });
+    assert.equal(parsePvpFanoutNotice(encoded)?.envelope.Type, type);
+  }
+});

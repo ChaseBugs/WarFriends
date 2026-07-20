@@ -64,7 +64,10 @@ both nodes. Started distributed rooms now authorize events from durable joined m
 fan-out to the authenticated source and assigned opponent, persist CardPlayed evidence plus a
 separate successful-delivery receipt for safe transport retries, and settle two durable matching
 result reports before broadcasting the terminal row to both nodes. Cross-node reconnect,
-disconnect-grace, and forfeit coordination remains the next horizontal PvP layer.
+disconnect-grace, and forfeit coordination now uses renewable compare-owned Redis socket routes,
+durable per-participant disconnect clocks, MongoDB-validated opponent notifications, retry-safe
+rejoin clearing, and grace-expiry forfeit or both-offline cancellation. Unknown Redis liveness
+extends the grace instead of manufacturing a loss.
 
 Each new match also stores its backend coordinator UUID. Redis carries a renewable crash-expiring
 heartbeat for that UUID, and startup plus periodic orphan recovery cancels only matches whose owner

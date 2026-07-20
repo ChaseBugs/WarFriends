@@ -166,6 +166,10 @@ Working end-to-end (verified live):
   evidence separately from the successful live-delivery receipt, allowing a failed handoff retry
   without duplicating an already delivered effect. Results use MongoDB's two-party consensus and
   terminal settlement before `MatchEnded` or `ResultConflict` is delivered across nodes.
+  Every distributed socket also owns a renewable Redis route that an older/replaced socket cannot
+  refresh or delete. A real close writes a durable disconnect clock and notifies the opponent;
+  `JoinMatch` clears it on re-entry. Grace expiry grants a forfeit only while the opponent remains
+  connected, cancels when both are offline, and waits rather than guessing when Redis is unknown.
   Cancellation likewise commits the terminal match and both presence releases together. On a
   single-node restart, active/settling matches are cancelled and all residual `InGame` profiles
   are repaired in the same transaction, including legacy partial cancellations.

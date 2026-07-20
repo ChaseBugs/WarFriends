@@ -42,6 +42,7 @@ export function parsePvpFanoutNotice(raw: string): PvpFanoutNotice | null {
       MatchId?: unknown;
       Opponent?: unknown;
       Event?: unknown;
+      PlayerId?: unknown;
     } | undefined;
     const envelopeType = value.envelope?.Type;
     if (value.version !== 1
@@ -49,7 +50,15 @@ export function parsePvpFanoutNotice(raw: string): PvpFanoutNotice | null {
       || typeof value.targetPlayerId !== "string" || value.targetPlayerId.length === 0 || value.targetPlayerId.length > 128
       || typeof value.matchId !== "string" || value.matchId.length === 0 || value.matchId.length > 128
       || !value.envelope || typeof value.envelope !== "object"
-      || !["MatchFound", "MatchStart", "MatchEvent", "MatchEnded", "MatchError"].includes(String(envelopeType))
+      || ![
+        "MatchFound",
+        "MatchStart",
+        "MatchEvent",
+        "MatchEnded",
+        "MatchError",
+        "OpponentDisconnected",
+        "OpponentReconnected",
+      ].includes(String(envelopeType))
       || !payload || payload.MatchId !== value.matchId
       || (envelopeType === "MatchFound"
         && (typeof payload.Opponent !== "string" || payload.Opponent.length === 0 || payload.Opponent.length > 64))
@@ -59,7 +68,11 @@ export function parsePvpFanoutNotice(raw: string): PvpFanoutNotice | null {
           || value.sourcePlayerId.length > 128
           || typeof payload.Event !== "string"
           || payload.Event.length === 0
-          || payload.Event.length > 128))) return null;
+          || payload.Event.length > 128))
+      || ((envelopeType === "OpponentDisconnected" || envelopeType === "OpponentReconnected")
+        && (typeof payload.PlayerId !== "string"
+          || payload.PlayerId.length === 0
+          || payload.PlayerId.length > 128))) return null;
     return value as PvpFanoutNotice;
   } catch {
     return null;
