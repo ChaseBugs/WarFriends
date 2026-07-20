@@ -23,6 +23,7 @@ import type {
   MatchEventPayload,
   MatchResultPayload,
   SendSquadChatPayload,
+  SquadChatHistoryPayload,
 } from "./gameRooms/types";
 import logger from "./utils/logger";
 import { PlayerStatus } from "./constants";
@@ -367,10 +368,37 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
         client.squadChatId = history.squadId;
         send(client, {
           Type: "SquadChatSubscribed",
-          Payload: { SquadId: history.squadId, Messages: history.messages },
+          Payload: {
+            SquadId: history.squadId,
+            Messages: history.messages,
+            NextBeforeCursor: history.nextBeforeCursor,
+          },
         });
       } catch (error: unknown) {
         client.squadChatId = undefined;
+        sendSquadChatError(client, error);
+      }
+      return;
+    }
+
+    case "GetSquadChatHistory": {
+      if (!client.playerId) return send(client, { Type: "AuthError", Payload: { Message: "Identify first." } });
+      const payload = envelope.Payload as SquadChatHistoryPayload | undefined;
+      try {
+        const history = await getSquadChatHistory(
+          client.playerId,
+          typeof payload?.BeforeCursor === "string" ? payload.BeforeCursor : undefined,
+        );
+        client.squadChatId = history.squadId;
+        send(client, {
+          Type: "SquadChatHistory",
+          Payload: {
+            SquadId: history.squadId,
+            Messages: history.messages,
+            NextBeforeCursor: history.nextBeforeCursor,
+          },
+        });
+      } catch (error: unknown) {
         sendSquadChatError(client, error);
       }
       return;

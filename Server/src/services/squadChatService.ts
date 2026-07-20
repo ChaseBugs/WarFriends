@@ -1,4 +1,5 @@
 import { randomUUID } from "crypto";
+import type { Filter } from "mongodb";
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import { config } from "../config";
 import {
@@ -39,6 +40,14 @@ export const SQUAD_CHAT_REDIS_CHANNEL = "warfriends:squad-chat:v1";
 export interface SquadChatFanoutNotice {
   originId: string;
   messageId: string;
+}
+
+interface SquadChatHistoryCursor {
+  v: 1;
+  /** Exact server millisecond, not the legacy display timestamp rounded to seconds. */
+  t: number;
+  /** Stable tie-breaker for messages persisted within the same millisecond. */
+  id: string;
 }
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -142,6 +151,30 @@ export function parseSquadChatFanoutNotice(raw: string): SquadChatFanoutNotice |
   }
 }
 
+/** Create an opaque URL-safe cursor from the oldest row in a descending database page. */
+export function createSquadChatHistoryCursor(
+  message: Pick<SquadChatMessageDocument, "createdAt" | "messageId">,
+): string {
+  if (!UUID_PATTERN.test(message.messageId) || !Number.isSafeInteger(message.createdAt.getTime())) {
+    throw new Error("Squad Chat history cursor requires a valid persisted message.");
+  }
+  const value: SquadChatHistoryCursor = { v: 1, t: message.createdAt.getTime(), id: message.messageId };
+  return Buffer.from(JSON.stringify(value), "utf8").toString("base64url");
+}
+
+/** Decode a bounded cursor without trusting it for squad identity or page size. */
+export function parseSquadChatHistoryCursor(raw: string): SquadChatHistoryCursor | null {
+  if (!raw || raw.length > 256 || !/^[A-Za-z0-9_-]+$/.test(raw)) return null;
+  try {
+    const value = JSON.parse(Buffer.from(raw, "base64url").toString("utf8")) as Partial<SquadChatHistoryCursor> | null;
+    if (!value || value.v !== 1 || !Number.isSafeInteger(value.t) || (value.t ?? -1) < 0
+      || typeof value.id !== "string" || !UUID_PATTERN.test(value.id)) return null;
+    return { v: 1, t: value.t as number, id: value.id };
+  } catch {
+    return null;
+  }
+}
+
 function recoveredLeagueValue(player: PlayerDocument): number {
   // CreateChatMessage encoded beginner stages as negative values and ordinary League enum values
   // as positive integers. The backend has both dimensions and reproduces that display contract.
@@ -166,20 +199,46 @@ async function enforceRateLimit(senderId: string, now: Date): Promise<void> {
 }
 
 /** Return the recovered last-N channel history, oldest first for direct UI append order. */
-export async function getSquadChatHistory(playerId: string): Promise<{
+export async function getSquadChatHistory(playerId: string, beforeCursor?: string): Promise<{
   squadId: string;
   messages: SquadChatWireMessage[];
+  nextBeforeCursor: string | null;
 }> {
   const membership = await currentMembership(playerId);
   const limit = positiveInteger(config.squadChatHistoryLimit, 3);
   const now = new Date();
+  const cursor = beforeCursor ? parseSquadChatHistoryCursor(beforeCursor) : null;
+  if (beforeCursor && !cursor) {
+    throw new ApiError(ApiErrorCode.UnknownAction, "Squad Chat history cursor is invalid.");
+  }
+  // Squad identity is always taken from authenticated membership. The cursor contributes only
+  // an older-than boundary, so modifying it can neither cross channels nor increase page size.
+  const filter: Filter<SquadChatMessageDocument> = {
+    squadId: membership.squad.name,
+    expiresAt: { $gt: now },
+    ...(cursor ? {
+      $or: [
+        { createdAt: { $lt: new Date(cursor.t) } },
+        { createdAt: new Date(cursor.t), messageId: { $lt: cursor.id } },
+      ],
+    } : {}),
+  };
   const rows = await squadChatMessages()
-    .find({ squadId: membership.squad.name, expiresAt: { $gt: now } })
+    .find(filter)
     .sort({ createdAt: -1, messageId: -1 })
-    .limit(limit)
+    .limit(limit + 1)
     .toArray();
-  rows.reverse();
-  return { squadId: membership.squad.name, messages: rows.map(toSquadChatWireMessage) };
+  const hasMore = rows.length > limit;
+  const page = rows.slice(0, limit);
+  const nextBeforeCursor = hasMore && page.length > 0
+    ? createSquadChatHistoryCursor(page[page.length - 1])
+    : null;
+  page.reverse();
+  return {
+    squadId: membership.squad.name,
+    messages: page.map(toSquadChatWireMessage),
+    nextBeforeCursor,
+  };
 }
 
 /**

@@ -153,8 +153,11 @@ Working end-to-end (verified live):
   enum and require matching durable reports from both assigned participants before rewards.
 - **Squad Chat (WebSocket `/hub`)**: after `Identify`, a replacement client sends
   `SubscribeSquadChat` to receive `SquadChatSubscribed { SquadId, Messages }`, using the exact
-  recovered three-message history default. It sends text with `SendSquadChat { ClientMessageId,
-  Text }`; the server returns `SquadChatMessageAccepted` and delivers a persisted
+  recovered three-message history default. When `NextBeforeCursor` is non-null,
+  `GetSquadChatHistory { BeforeCursor }` returns the next older page without changing the bounded
+  server page size; the opaque versioned cursor combines exact milliseconds and message UUID so
+  equal-time rows are not skipped. It sends text with `SendSquadChat { ClientMessageId, Text }`;
+  the server returns `SquadChatMessageAccepted` and delivers a persisted
   `SquadChatMessage` to connected, subscribed current roster members. Player/squad mirrors,
   roster membership, rank, sender name, level, league, and timestamp are all server-owned. A
   sender-scoped 64-character nonce makes reconnect retries idempotent, while moderation,

@@ -7,8 +7,10 @@ import { newPlayer, newSquad } from "../dtos";
 import { createInitialProgression } from "../services/playerStateService";
 import {
   buildSquadChatFanoutNotice,
+  createSquadChatHistoryCursor,
   normalizeSquadChatSend,
   parseSquadChatFanoutNotice,
+  parseSquadChatHistoryCursor,
   resolveSquadChatMembership,
   toSquadChatWireMessage,
 } from "../services/squadChatService";
@@ -133,4 +135,17 @@ test("cross-node Squad Chat notices carry UUID identity but no trusted content",
   assert.equal(parseSquadChatFanoutNotice("not-json"), null);
   assert.equal(parseSquadChatFanoutNotice(JSON.stringify({ originId, messageId: "../../message" })), null);
   assert.throws(() => buildSquadChatFanoutNotice("invalid", messageId));
+});
+
+test("Squad Chat history cursor preserves millisecond and UUID tie-break position", () => {
+  const messageId = "dff18ca4-1677-421c-bec4-62fcd96ea10d";
+  const cursor = createSquadChatHistoryCursor({ createdAt: new Date(NOW + 321), messageId });
+
+  assert.deepEqual(parseSquadChatHistoryCursor(cursor), { v: 1, t: NOW + 321, id: messageId });
+  assert.equal(parseSquadChatHistoryCursor(""), null);
+  assert.equal(parseSquadChatHistoryCursor("not+base64"), null);
+  const unsupported = Buffer.from(JSON.stringify({ v: 2, t: NOW, id: messageId })).toString("base64url");
+  assert.equal(parseSquadChatHistoryCursor(unsupported), null);
+  const invalidId = Buffer.from(JSON.stringify({ v: 1, t: NOW, id: "not-a-uuid" })).toString("base64url");
+  assert.equal(parseSquadChatHistoryCursor(invalidId), null);
 });

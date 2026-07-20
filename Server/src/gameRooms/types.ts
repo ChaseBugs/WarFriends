@@ -19,6 +19,11 @@ export interface SendSquadChatPayload {
   Text: string;
 }
 
+/** Optional cursor for requesting the next older persistent Squad Chat page. */
+export interface SquadChatHistoryPayload {
+  BeforeCursor?: string;
+}
+
 export interface JoinMatchPayload {
   MatchId: string;
 }
