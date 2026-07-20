@@ -1,3 +1,4 @@
+import { randomInt } from "node:crypto";
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import { DbAction } from "../dbActions";
 import type {
@@ -12,7 +13,11 @@ import { players } from "../db";
 import { config } from "../config";
 import { advanceAchievementState } from "./achievementService";
 import { calculateArmyPower } from "./armyPowerService";
-import { grantCardPackRewardState } from "./cardInventoryService";
+import {
+  CARD_UNLOCK_LEVEL,
+  grantCardPackRewardState,
+  grantMissionCardsState,
+} from "./cardInventoryService";
 import { applyLevelExperienceState } from "./levelProgressionService";
 import {
   VIP_BATTLE_EXPERIENCE_MULTIPLIER,
@@ -60,15 +65,15 @@ const MAX_CONCURRENCY_RETRIES = 4;
  * can grant the source pack class and unit-specific Elite part together with these currencies.
  */
 const MISSION_REWARD_ROWS = [
-  { level: 5, dailyGold: 10, dailyTickets: 2, dailyScraps: 20, heroicGoldMission: 1, heroicGold: 15, heroicTickets: 10, heroicScraps: 30, heroicPack: "BRONZE_CARDPACK", heroicEliteParts: 1 },
-  { level: 10, dailyGold: 10, dailyTickets: 2, dailyScraps: 20, heroicGoldMission: 1, heroicGold: 15, heroicTickets: 10, heroicScraps: 30, heroicPack: "BRONZE_CARDPACK", heroicEliteParts: 1 },
-  { level: 15, dailyGold: 10, dailyTickets: 2, dailyScraps: 20, heroicGoldMission: 1, heroicGold: 15, heroicTickets: 10, heroicScraps: 30, heroicPack: "BRONZE_CARDPACK", heroicEliteParts: 1 },
-  { level: 20, dailyGold: 15, dailyTickets: 3, dailyScraps: 30, heroicGoldMission: 1, heroicGold: 20, heroicTickets: 13, heroicScraps: 40, heroicPack: "BRONZE_CARDPACK", heroicEliteParts: 1 },
-  { level: 25, dailyGold: 15, dailyTickets: 3, dailyScraps: 30, heroicGoldMission: 1, heroicGold: 20, heroicTickets: 13, heroicScraps: 40, heroicPack: "SILVER_CARDPACK", heroicEliteParts: 1 },
-  { level: 30, dailyGold: 15, dailyTickets: 3, dailyScraps: 30, heroicGoldMission: 2, heroicGold: 20, heroicTickets: 13, heroicScraps: 40, heroicPack: "SILVER_CARDPACK", heroicEliteParts: 1 },
-  { level: 35, dailyGold: 20, dailyTickets: 4, dailyScraps: 40, heroicGoldMission: 2, heroicGold: 30, heroicTickets: 17, heroicScraps: 60, heroicPack: "SILVER_CARDPACK", heroicEliteParts: 1 },
-  { level: 40, dailyGold: 20, dailyTickets: 4, dailyScraps: 40, heroicGoldMission: 2, heroicGold: 30, heroicTickets: 17, heroicScraps: 60, heroicPack: "GOLD_CARDPACK", heroicEliteParts: 1 },
-  { level: 43, dailyGold: 20, dailyTickets: 4, dailyScraps: 40, heroicGoldMission: 2, heroicGold: 30, heroicTickets: 17, heroicScraps: 60, heroicPack: "GOLD_CARDPACK", heroicEliteParts: 1 },
+  { level: 5, dailyGold: 10, dailyTickets: 2, dailyScraps: 20, dailyCards: [8, 5, 3], heroicGoldMission: 1, heroicGold: 15, heroicTickets: 10, heroicScraps: 30, heroicPack: "BRONZE_CARDPACK", heroicEliteParts: 1 },
+  { level: 10, dailyGold: 10, dailyTickets: 2, dailyScraps: 20, dailyCards: [8, 5, 3], heroicGoldMission: 1, heroicGold: 15, heroicTickets: 10, heroicScraps: 30, heroicPack: "BRONZE_CARDPACK", heroicEliteParts: 1 },
+  { level: 15, dailyGold: 10, dailyTickets: 2, dailyScraps: 20, dailyCards: [8, 5, 3], heroicGoldMission: 1, heroicGold: 15, heroicTickets: 10, heroicScraps: 30, heroicPack: "BRONZE_CARDPACK", heroicEliteParts: 1 },
+  { level: 20, dailyGold: 15, dailyTickets: 3, dailyScraps: 30, dailyCards: [9, 6, 4], heroicGoldMission: 1, heroicGold: 20, heroicTickets: 13, heroicScraps: 40, heroicPack: "BRONZE_CARDPACK", heroicEliteParts: 1 },
+  { level: 25, dailyGold: 15, dailyTickets: 3, dailyScraps: 30, dailyCards: [9, 6, 4], heroicGoldMission: 1, heroicGold: 20, heroicTickets: 13, heroicScraps: 40, heroicPack: "SILVER_CARDPACK", heroicEliteParts: 1 },
+  { level: 30, dailyGold: 15, dailyTickets: 3, dailyScraps: 30, dailyCards: [9, 6, 4], heroicGoldMission: 2, heroicGold: 20, heroicTickets: 13, heroicScraps: 40, heroicPack: "SILVER_CARDPACK", heroicEliteParts: 1 },
+  { level: 35, dailyGold: 20, dailyTickets: 4, dailyScraps: 40, dailyCards: [10, 7, 5], heroicGoldMission: 2, heroicGold: 30, heroicTickets: 17, heroicScraps: 60, heroicPack: "SILVER_CARDPACK", heroicEliteParts: 1 },
+  { level: 40, dailyGold: 20, dailyTickets: 4, dailyScraps: 40, dailyCards: [10, 7, 5], heroicGoldMission: 2, heroicGold: 30, heroicTickets: 17, heroicScraps: 60, heroicPack: "GOLD_CARDPACK", heroicEliteParts: 1 },
+  { level: 43, dailyGold: 20, dailyTickets: 4, dailyScraps: 40, dailyCards: [10, 7, 5], heroicGoldMission: 2, heroicGold: 30, heroicTickets: 17, heroicScraps: 60, heroicPack: "GOLD_CARDPACK", heroicEliteParts: 1 },
 ] as const;
 
 type MissionRewardRow = (typeof MISSION_REWARD_ROWS)[number];
@@ -247,6 +252,25 @@ function rewardRow(playerLevel: number): MissionRewardRow {
     ?? MISSION_REWARD_ROWS[MISSION_REWARD_ROWS.length - 1];
 }
 
+export function selectDailyCompletionRewardIndex(
+  playerLevelIndex: number,
+  choose: (upperBound: number) => number = (upperBound) => randomInt(upperBound),
+): number {
+  /*
+   * DailyMissionsData proves that the backend chooses one of six reward types for the whole
+   * UTC cycle, but the production weights are retired. Use a uniform cryptographic fallback
+   * across Gold/Tickets/Scraps and, after the source War Card unlock display level, the three
+   * exact-rarity card variants. Persisting the index makes every device preview the same prize.
+  */
+  const cardRewardsUnlocked = Math.max(0, Math.floor(playerLevelIndex)) >= CARD_UNLOCK_LEVEL - 1;
+  const upperBound = cardRewardsUnlocked ? 6 : 3;
+  const selected = choose(upperBound);
+  if (!Number.isInteger(selected) || selected < 0 || selected >= upperBound) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Daily mission reward selector is invalid.");
+  }
+  return selected;
+}
+
 /**
  * Materialize the current UTC mission cycle without trusting a client-supplied save blob.
  * Heroic progress survives a daily rollover; the three daily records and their completion
@@ -288,9 +312,7 @@ export function dailyMissionsStateFor(
     heroicPoints: Math.min(HEROIC_POINTS_TO_UNLOCK, Math.max(0, previous?.heroicPoints ?? 0)),
     isHeroicOpened: previous?.isHeroicOpened ?? false,
     tomorrow: nextUtcMidnight(now),
-    // The original random choice among Gold/Tickets/Scraps/cards is absent from the archive.
-    // Index 0 selects the exact scene-defined Gold reward until card inventory is recovered.
-    dailyMissionRewardInd: 0,
+    dailyMissionRewardInd: selectDailyCompletionRewardIndex(playerLevel),
     // DailyMissionsManager exposes these stored zero-based values as `value + 1`.
     dailyMissionLevel: displayLevel - 1,
     heroicMissionLevel: displayLevel - 1,
@@ -417,7 +439,14 @@ function missionListFor(value: DailyMissionsState, missionType: DailyMissionMode
 function completionReward(
   value: DailyMissionsState,
   row: MissionRewardRow,
-): { gold: number; tickets: number; scraps: number; field: string } {
+): {
+  gold: number;
+  tickets: number;
+  scraps: number;
+  field: string;
+  cardRarity?: number;
+  cardCount?: number;
+} {
   // dailyMissionRewardInd is chosen when the daily set is issued and must stay server-owned.
   // The response key matters as much as the amount because CBBKFKCOLPP selects the wallet
   // operation by checking which one of these exact keys exists.
@@ -428,10 +457,14 @@ function completionReward(
       return { gold: 0, tickets: row.dailyTickets, scraps: 0, field: "DailyMissionsCompletionRewardTickets" };
     case 2:
       return { gold: 0, tickets: 0, scraps: row.dailyScraps, field: "DailyMissionsCompletionRewardScraps" };
+    case 3:
+      return { gold: 0, tickets: 0, scraps: 0, field: "DailyMissionsCompletionRewardCards", cardRarity: 1, cardCount: row.dailyCards[0] };
+    case 4:
+      return { gold: 0, tickets: 0, scraps: 0, field: "DailyMissionsCompletionRewardCards", cardRarity: 2, cardCount: row.dailyCards[1] };
+    case 5:
+      return { gold: 0, tickets: 0, scraps: 0, field: "DailyMissionsCompletionRewardCards", cardRarity: 3, cardCount: row.dailyCards[2] };
     default:
-      // Indices 3-5 are card rewards. Existing legacy rows may contain one, but awarding an
-      // empty card array would consume the claim without delivering the configured items.
-      throw new ApiError(ApiErrorCode.UnknownAction, "Daily mission card reward delivery is not recovered.");
+      throw new ApiError(ApiErrorCode.InternalServerError, "Stored Daily mission reward index is invalid.");
   }
 }
 
@@ -530,6 +563,7 @@ export function settleDailyMissionState(
   let addedScraps = 0;
   let heroicUnlocked = false;
   let heroicChainCompleted = false;
+  let dailyCardReward: { rarity: number; count: number } | undefined;
   const response: Record<string, unknown> = {};
 
   if (newlyCompleted && (input.missionType === "Daily" || input.missionType === "Coop")) {
@@ -559,7 +593,11 @@ export function settleDailyMissionState(
     completionGold = checkedSum(completionGold, reward.gold, "Mission completion Gold");
     addedTickets += reward.tickets;
     addedScraps += reward.scraps;
-    response[reward.field] = reward.gold || reward.tickets || reward.scraps;
+    if (reward.cardRarity !== undefined && reward.cardCount !== undefined) {
+      dailyCardReward = { rarity: reward.cardRarity, count: reward.cardCount };
+    } else {
+      response[reward.field] = reward.gold || reward.tickets || reward.scraps;
+    }
   }
 
   if (
@@ -587,6 +625,20 @@ export function settleDailyMissionState(
   response.HeroicPoints = dailyMissions.heroicPoints;
 
   let inventoryRewardState = state;
+  if (dailyCardReward) {
+    // The stock mission parser iterates this exact array and calls CardManager.AddCard once
+    // per ID. Persist the identical selections before caching the response, so retrying the
+    // third mission returns its original cards without incrementing authoritative ownership.
+    const cards = grantMissionCardsState(
+      inventoryRewardState,
+      dailyCardReward.rarity,
+      dailyCardReward.count,
+      playerLevel,
+      policy.chooseCardIndex,
+    );
+    inventoryRewardState = cards.state;
+    response.DailyMissionsCompletionRewardCards = [...cards.cards];
+  }
   if (heroicChainCompleted) {
     /*
      * CBBKFKCOLPP consumes both inventory fields directly: the card field is a JSON array of

@@ -75,6 +75,12 @@ export interface CardInventoryMutationResult {
   cards: string[];
 }
 
+export interface MissionCardRewardResult {
+  state: PlayerProgressionState;
+  cardInventory: CardInventoryState;
+  cards: string[];
+}
+
 export interface CardCraftingMutationResult {
   state: PlayerProgressionState;
   cardInventory: CardInventoryState;
@@ -507,6 +513,61 @@ export function grantCardPackRewardState(
     state: { ...state, cardInventory },
     cardInventory,
     pack,
+    cards,
+  };
+}
+
+/**
+ * Grant the exact-rarity loose cards used by the three-Daily-mission completion reward.
+ *
+ * CardDefinitions.FROMMISSION is the only recovered eligibility marker for this acquisition
+ * path: normal rows use 1, later rows use 10/40, and unavailable rows use 99. The archived
+ * client exposes the value but the retired server-side selector is absent, so interpreting it
+ * as a display-level threshold is an explicit reconstruction boundary. Eligible IDs then use
+ * a documented uniform cryptographic replacement. As with the Heroic pack helper, the enclosing
+ * mission receipt owns the single progression revision.
+ */
+export function grantMissionCardsState(
+  state: PlayerProgressionState,
+  rarity: number,
+  count: number,
+  playerLevelIndex: number,
+  choose: (upperBound: number) => number = (upperBound) => randomInt(upperBound),
+): MissionCardRewardResult {
+  if (!Number.isSafeInteger(rarity) || rarity < 1 || rarity > 3 || !Number.isSafeInteger(count) || count <= 0) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Daily mission card reward is invalid.");
+  }
+  const displayLevel = Math.max(1, Math.floor(playerLevelIndex) + 1);
+  const pool = Object.values(CARD_CATALOG)
+    .filter((card) => (
+      card.implemented
+      && card.rarity === rarity
+      && card.fromMission <= displayLevel
+    ))
+    .map((card) => card.name)
+    .sort();
+  if (pool.length === 0) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Daily mission card reward pool is empty.");
+  }
+
+  const cardInventory = cardInventoryStateFor(state);
+  const cards: string[] = [];
+  for (let index = 0; index < count; index += 1) {
+    const selected = choose(pool.length);
+    if (!Number.isInteger(selected) || selected < 0 || selected >= pool.length) {
+      throw new ApiError(ApiErrorCode.InternalServerError, "Daily mission card selector is invalid.");
+    }
+    const id = pool[selected]!;
+    const current = cardInventory.cardData[id]?.amount ?? 0;
+    if (!Number.isSafeInteger(current) || current < 0 || current === Number.MAX_SAFE_INTEGER) {
+      throw new ApiError(ApiErrorCode.InternalServerError, `Card count for ${id} is invalid.`);
+    }
+    cardInventory.cardData[id] = { amount: current + 1 };
+    cards.push(id);
+  }
+  return {
+    state: { ...state, cardInventory },
+    cardInventory,
     cards,
   };
 }

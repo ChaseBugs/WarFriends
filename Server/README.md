@@ -340,7 +340,11 @@ Working end-to-end (verified live):
   battle reward table remain reconstruction gaps. Completing the fifth Heroic mission now also
   grants the exact level-row Bronze/Silver/Gold ten-card pack and one Elite part for the unit
   target persisted in `DailyMissionsData`; identities, inventory, currencies, and receipt commit
-  together, with bought units preferred by the documented replacement selector.
+  together, with bought units preferred by the documented replacement selector. The daily cycle
+  now cryptographically selects all six source reward variants after the rank-6 War Card unlock
+  (currency-only before it); Bronze/Silver/Gold card variants grant their exact 8/5/3, 9/6/4, or
+  10/7/5 level-row counts through `DailyMissionsCompletionRewardCards`. The missing production
+  reward-type weights and `FROMMISSION` selector semantics remain explicit uniform/level fallbacks.
 - **Starter assignments (authoritative subset)**: actions `185`/`186` restore the exact
   `StarterAssignmentsData` object and the MainScene-defined thresholds, order, Gold, and
   WarBucks rewards. Ranked wins, medal balance, level, lifetime squad points, and the first

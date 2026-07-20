@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { ApiErrorCode } from "../apiErrors";
 import { DbAction } from "../dbActions";
 import { CARD_CATALOG } from "../services/cardInventoryService";
 import {
   dailyMissionsStateFor,
   dailyMissionsWireData,
+  selectDailyCompletionRewardIndex,
   serializeDailyMissionsData,
   settleDailyMissionState,
   startDailyMissionState,
@@ -53,6 +55,15 @@ test("daily mission wire matches DailyMissionsData and rolls at UTC midnight", (
   assert.equal(nextDay.dailyMissions.every((item) => !item.completedSolo), true);
 });
 
+test("daily completion reward selection enables card variants only after War Cards unlock", () => {
+  assert.equal(selectDailyCompletionRewardIndex(4, (upperBound) => upperBound - 1), 2);
+  assert.equal(selectDailyCompletionRewardIndex(5, (upperBound) => upperBound - 1), 5);
+  assert.throws(
+    () => selectDailyCompletionRewardIndex(5, (upperBound) => upperBound),
+    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.InternalServerError,
+  );
+});
+
 test("failed mission consumes its start receipt and a retry returns the stored response", () => {
   let state = createInitialProgression(NOW);
   state = startDailyMissionState(state, NOW, 1, "player-1-100", DbAction.GameStartedCampaign).state;
@@ -87,6 +98,13 @@ test("failed mission consumes its start receipt and a retry returns the stored r
 
 test("three unique solo completions grant one exact scene daily reward and achievement progress", () => {
   let state = createInitialProgression(NOW);
+  state = {
+    ...state,
+    dailyMissions: {
+      ...dailyMissionsStateFor(state, NOW, 1),
+      dailyMissionRewardInd: 0,
+    },
+  };
   let finalResponse: Record<string, unknown> = {};
   for (let index = 0; index < 3; index += 1) {
     const id = `player-1-daily-${index}`;
@@ -125,6 +143,53 @@ test("three unique solo completions grant one exact scene daily reward and achie
   assert.equal(replay.replayed, true);
   assert.equal(replay.state.gold, 10);
   assert.equal(replay.state.achievements?.data.find((group) => group.id === 5)?.value, 3);
+});
+
+test("daily card completion grants the exact row count and replays without duplicate ownership", () => {
+  let state = createInitialProgression(NOW);
+  state = {
+    ...state,
+    dailyMissions: {
+      ...dailyMissionsStateFor(state, NOW, 5),
+      dailyMissionRewardInd: 5,
+    },
+  };
+  let finalResponse: Record<string, unknown> = {};
+  for (let index = 0; index < 3; index += 1) {
+    const battleId = `player-1-daily-card-${index}`;
+    state = startDailyMissionState(state, NOW + index * 20, 5, battleId, DbAction.GameStartedCampaign).state;
+    const settled = settleDailyMissionState(state, NOW + index * 20 + 10, 5, {
+      battleId,
+      missionIndex: index,
+      missionType: "Daily",
+      endReason: 10,
+    }, { ...POLICY, chooseCardIndex: () => 0 });
+    state = settled.state;
+    finalResponse = settled.response;
+  }
+
+  const cards = finalResponse.DailyMissionsCompletionRewardCards as string[];
+  assert.equal(cards.length, 3);
+  assert.equal(cards.every((id) => CARD_CATALOG[id]?.rarity === 3), true);
+  assert.equal(cards.every((id) => (CARD_CATALOG[id]?.fromMission ?? 99) <= 6), true);
+  assert.equal(
+    Object.values(state.cardInventory?.cardData ?? {}).reduce((sum, card) => sum + card.amount, 0),
+    3,
+  );
+  assert.equal(state.gold, 0);
+
+  const replay = settleDailyMissionState(state, NOW + 100, 5, {
+    battleId: "player-1-daily-card-2",
+    missionIndex: 2,
+    missionType: "Daily",
+    endReason: 10,
+  }, POLICY);
+  assert.equal(replay.replayed, true);
+  assert.deepEqual(replay.response, finalResponse);
+  assert.equal(
+    Object.values(replay.state.cardInventory?.cardData ?? {}).reduce((sum, card) => sum + card.amount, 0),
+    3,
+  );
 });
 
 test("heroic chain is ordered and grants the recovered currency rewards once", () => {
