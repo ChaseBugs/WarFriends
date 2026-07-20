@@ -309,7 +309,10 @@ export function acceptRentalOfferState(
   if (!buyRentalDiscounted) {
     if (rental.status === "trial" && rental.trialExpiresAt > now) {
       return {
-        state: { ...state, revision: state.revision + 1 },
+        // Action 138 may be retried after Unity loses the response. The borrowed item and
+        // trial deadline already exist, so return the exact input progression and let
+        // mutateProgression skip an unnecessary MongoDB replacement.
+        state,
         rental,
         resultAction: DbAction.AcceptRentalOffer,
         resultFields: { Rental: bootWire(rental) },
@@ -346,7 +349,9 @@ export function acceptRentalOfferState(
 
   if (rental.status === "purchased" && rental.nextGenerate > now) {
     return {
-      state: { ...state, revision: state.revision + 1 },
+      // Permanent ownership and the debit were committed together on the first request.
+      // Replaying the purchase must not manufacture a new revision as a fake side effect.
+      state,
       rental,
       resultAction: successfulPurchaseAction(rental.type),
       resultFields: {},

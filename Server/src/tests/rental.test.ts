@@ -82,6 +82,9 @@ test("weapon rental is borrowable for one trial, becomes a post-battle sale, and
   assert.equal(trial.rental?.status, "trial");
   assert.equal(trial.rental?.trialExpiresAt, NOW + 1 + RENTAL_TRIAL_SECONDS);
   assert.equal(trial.state.itemInventory?.levelManagerData.savedWeapons[id]?.borrowed, true);
+  const trialReplay = acceptRentalOfferState(trial.state, false, NOW + 2);
+  assert.equal(trialReplay.replayed, true);
+  assert.equal(trialReplay.state, trial.state, "trial acceptance replay must not advance revision");
 
   const slotIndex = SLOT_MASKS.findIndex((mask) => (mask & definition.category) === definition.category);
   assert.notEqual(slotIndex, -1);
@@ -134,6 +137,7 @@ test("discounted rental purchase is server-priced, permanent, and idempotent for
 
     const replay = acceptRentalOfferState(bought.state, true, NOW + 4);
     assert.equal(replay.replayed, true);
+    assert.equal(replay.state, bought.state, "rental purchase replay must not advance revision");
     assert.equal(replay.state.gold, bought.state.gold);
     assert.equal(replay.state.warBucks, bought.state.warBucks);
   }

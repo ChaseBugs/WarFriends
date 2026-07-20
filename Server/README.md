@@ -324,7 +324,9 @@ Working end-to-end (verified live):
   Arena `GameEnded` removes the borrowed authority, restores a replaced weapon slot, and emits
   the discounted sale variant. Permanent redemption recomputes the price from the stored
   catalog row and discount, atomically debits the authoritative wallet, and is idempotent on
-  transport retry. Exact original remote item selection is unavailable, so eligible unowned
+  transport retry. Repeated trial acceptance or permanent redemption returns the existing
+  result without incrementing progression revision or replacing an identical MongoDB document.
+  Exact original remote item selection is unavailable, so eligible unowned
   items use a documented deterministic replacement within the recovered three-level window.
 - **Unit purchase, loadout, and upgrade lifecycle**: `../Tools/Extract-UnitCatalog.ps1` joins the recovered
   `LevelManager.behaviours` and `additionalBehaviours` arrays through each behaviour's
