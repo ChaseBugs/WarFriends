@@ -27,14 +27,15 @@ import { instantBattleHandlers } from "./instantBattle";
 import { lootboxHandlers } from "./lootboxes";
 import { inventoryImpressionHandlers } from "./inventoryImpressions";
 import { tutorialHandlers } from "./tutorial";
+import { analyticsHandlers } from "./analytics";
 import type { HandlerEntry } from "./types";
 import logger from "../utils/logger";
 
 const benignNoOpActions = new Set<number>([
   92, // client error report
-  141, 163, 166, 168, 169, // crash/log/UI telemetry
-  179, 180, 183, 194, // analytics and UI impression telemetry
-  212, 213, 1007, // feature/offer impression telemetry
+  141, 166, // crash/log telemetry
+  179, 194, // broad analytics blob and message impression telemetry
+  212, 1007, // Arena/offer impression telemetry
 ]);
 
 // The dispatch table: DbAction code → handler. Grouped registries are merged here; later
@@ -62,6 +63,7 @@ const registry: Record<number, HandlerEntry> = {
   ...lootboxHandlers,
   ...inventoryImpressionHandlers,
   ...tutorialHandlers,
+  ...analyticsHandlers,
 };
 
 function clientVersion(req: RequestEnvelope): number {

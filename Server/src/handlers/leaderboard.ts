@@ -4,7 +4,6 @@ import {
   playerRank,
   topPlayersByExperience,
   topArenaPlayers,
-  topSquads,
 } from "../services/leaderboardService";
 import { buildDatabasePlayer } from "../services/playerStateService";
 import {
@@ -79,9 +78,5 @@ export const leaderboardHandlers: Record<number, HandlerEntry> = {
     // GEKJKNLPJIL.LLCLNJKBGGM unconditionally casts Items to JArray and parses each entry
     // through FHIPGDADNFG.MAINIENLLIL, including its WarArenaData string attribute.
     ok(DbAction.GetArenaLeaderboards, { Items: await topArenaPlayers() }),
-  ),
-
-  [DbAction.LeagueLeaderboardShown]: authed(async () =>
-    ok(DbAction.LeagueLeaderboardShown, { Items: await topSquads() }),
   ),
 };

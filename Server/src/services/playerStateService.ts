@@ -362,6 +362,15 @@ export function buildPlayerData(player: PlayerDocument, now = unixNow()): Player
       : state.tutorialFinished && dto.level >= CARD_UNLOCK_LEVEL - 1
         ? 1
         : 0,
+    // These one-way booleans are written only by their parameterless recovered actions. They
+    // must cross the boot boundary or feature-introduction dialogs can repeat after reinstall.
+    chatShown: state.featureIntroductions?.chatShown ?? false,
+    elitesShown: state.featureIntroductions?.elitesShown ?? false,
+    customizationShown: state.featureIntroductions?.customizationShown ?? false,
+    warpathShown: state.featureIntroductions?.warpathShown ?? false,
+    cardpoolShown: state.featureIntroductions?.cardpoolShown ?? false,
+    craftingShown: state.featureIntroductions?.craftingShown ?? false,
+    leagueLeaderboardsShown: state.featureIntroductions?.leagueLeaderboardsShown ?? false,
   });
 
   if (state.tutorialFinished) {

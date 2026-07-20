@@ -98,6 +98,13 @@ export interface PlayerProgressionState {
    */
   warcardsTutorialBattle?: TutorialBattleState;
   /**
+   * Monotonic feature-introduction flags stored by the client's dedicated shown actions.
+   *
+   * These are public PlayerAnalyticsData fields, not economic authority. Persisting them keeps
+   * one-time onboarding dialogs from reopening on another device or after local-data loss.
+   */
+  featureIntroductions?: PlayerFeatureIntroductionState;
+  /**
    * Confirmed VIP PvP battles remaining before the next two visual-part lootboxes.
    *
    * The recovered PlayerAnalyticsData field is named `matchesToNextLootboxes`, and the
@@ -276,6 +283,17 @@ export interface PlayerProgressionState {
 export interface PvpWinStreakState {
   winCount: number;
   timestamp: number;
+}
+
+/** Exact boolean field names recovered from PlayerAnalytics.PlayerAnalyticsData. */
+export interface PlayerFeatureIntroductionState {
+  chatShown?: boolean;
+  elitesShown?: boolean;
+  customizationShown?: boolean;
+  warpathShown?: boolean;
+  cardpoolShown?: boolean;
+  craftingShown?: boolean;
+  leagueLeaderboardsShown?: boolean;
 }
 
 export interface TutorialBattleState {

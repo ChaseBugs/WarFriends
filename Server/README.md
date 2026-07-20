@@ -116,6 +116,13 @@ Working end-to-end (verified live):
   Public `DatabasePlayer` snapshots restore the exact `Regions: { S: "..." }` contract used by
   stock challenge/PvP code to choose the lowest combined-latency region. These client-measured
   values remain routing hints and never authorize a match result or gameplay reward.
+- **Feature-introduction persistence**: parameterless actions `163`, `168`, `169`, `180`,
+  `182`, `183`, and `213` now require authentication and monotonically persist the recovered
+  chat, customization, Warpath, card-pool, league-leaderboard, crafting, and Elites booleans.
+  `GetPlayerData` restores all seven through `PlayerAnalyticsData`, preventing onboarding UI
+  from repeating after reconnect or reinstall. Action `182` was corrected from an unrelated
+  top-Squads response to its real `leagueLeaderboardsShown` write. The broad action `179` blob
+  remains ignored because it also contains client-controlled economy and progression counters.
 - **Squads (core membership)**: create / unique-name check / public or requested join /
   invite / accept / decline / promote / demote / kick / leadership transfer / guarded
   leave, plus details and full member snapshots. Client ranks exactly mirror
