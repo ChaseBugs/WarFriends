@@ -365,7 +365,11 @@ allowlist of analytics/impression actions is safely ignored.
   reward formula, add combat-result validation, restore the missing recovered-client
   `MissionsSettings`/`UnitsInMissionsConfig` references, and deliver heroic inventory rewards.
   Remaining achievement groups stay unclaimable until their gameplay events are authoritative.
-- **Reward tuning** — `matchService.REWARDS` is placeholder; wire to the client's
-  MatchMakingConstants / reward config once extracted.
+- **PvP reward tuning** — XP/medal/squad values in `matchService.REWARDS` remain reconstruction
+  policy. Normal WarBucks uses server-owned `PVP_WIN_WARBUCKS` / `PVP_LOSE_WARBUCKS` defaults
+  because the retired Fusebox `BattleWarbucksRewards` document is not present in either APK;
+  client-echoed reward values are never trusted. VIP's 1.5x WarBucks multiplier is source-decoded.
+- **REST result consensus** — `MATCH_RESULT_CONSENSUS_WAIT_MS` bounds the read-only wait that lets
+  the first stock `GameEnded` request receive the receipt committed by the second agreeing report.
 - **Client integration** — form request routing is implemented, but exact response keys for
   every action and the Photon→WebSocket client repoint remain `⚠ RE-NEEDED`.

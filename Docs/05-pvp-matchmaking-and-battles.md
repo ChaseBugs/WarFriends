@@ -29,6 +29,14 @@ The server requires compatible reports from both recorded participants before no
 are granted. The recovered `EndReason` is interpreted from each player's perspective so one report
 must describe the same winner/loser outcome as the other.
 
+The first `GameEnded` HTTP request waits for up to five seconds (configurable through
+`MATCH_RESULT_CONSENSUS_WAIT_MS`) for the other participant's already-in-flight report. This wait
+does not weaken consensus or create a result: it only lets the first stock client receive the same
+immutable receipt that the second agreeing request commits. Previously that client immediately
+received a pending, zero-valued result and had no second callback for its result screen. If the
+other report never arrives, the bounded wait still returns pending and grants nothing. Rental
+trials also advance only after a confirmed/finished receipt, never from a pending report.
+
 Settlement is idempotent. Once a match ID is consumed, a retry returns the stored outcome rather
 than granting experience, medals, squad progress, or assignment progress again.
 
@@ -68,6 +76,13 @@ therefore includes the minimum exact object:
 
 ```json
 {
+  "Warbucks": {
+    "BattleRewards": 800,
+    "ExtraRewards": 0,
+    "Winstreak": 0,
+    "League": 0,
+    "offerMult": 1
+  },
   "Xp": {
     "BattleRewards": 30,
     "ExtraRewards": 0,
@@ -90,6 +105,16 @@ thresholds, so its normal value is zero. A finished retry returns the original X
 Pending, conflicting, or invalid reports still receive structurally valid zero values, so the stock
 end screen remains safe without displaying an uncommitted reward.
 
+Normal PvP also credits `Warbucks.BattleRewards` in the settlement transaction: the offline
+defaults are 800 for a win and 400 for a loss. The exact production values were delivered by the
+retired Fusebox `BattleWarbucksRewards` document and are absent from both recovered APKs, so these
+numbers are explicitly reconstruction policy, not claimed production balancing. Operators may
+replace them with `PVP_WIN_WARBUCKS` and `PVP_LOSE_WARBUCKS`. The request's
+`WarbuckRewardWin`/`WarbuckRewardLoss` echoes are ignored because a modified client could otherwise
+mint arbitrary currency. Active VIP settlement persists 1.5 times the base using the C# parser's
+positive float-to-int truncation, while the response sends the base plus `IsVip=true` so the
+client applies that decoded multiplier exactly once.
+
 `LevelExperience` is returned on every outcome because the parser reads it unconditionally.
 `Level` is different: its presence is a transition marker, and the client sets
 `LevelManager.isLevelUp = true` whenever the key exists. The server therefore emits `Level` only
@@ -104,7 +129,7 @@ then included in a full authoritative Army Power recomputation.
 
 Level progress, Gold, public level, Army Power, card consumption, periodic VIP visual parts,
 duplicate WarBucks, match rewards, and the terminal match state share the same MongoDB transaction.
-The match stores an immutable per-player receipt containing XP, Gold, old/new level, remaining
+The match stores an immutable per-player receipt containing WarBucks, XP, Gold, old/new level, remaining
 level XP, the post-match VIP lootbox countdown, and the exact optional `GameReward.NewVisuals`
 dictionary string. A finished `GameEnded` retry can therefore reproduce the original
 `GameReward.GameGold`, conditional `Level`, `MatchesToNextLootboxes`, and suitcase pair without

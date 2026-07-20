@@ -89,6 +89,7 @@ import {
   pvpGameReward,
   pvpLevelGoldAmount,
   pvpLevelFields,
+  pvpWarBucksAmounts,
   winnerFromEndReason,
 } from "../services/matchService";
 import { buildDatabaseSquad, buildSquadWarsDivision } from "../services/squadWireService";
@@ -492,25 +493,28 @@ test("PvP EndReason inference agrees from winner and loser perspectives", () => 
   assert.equal(winnerFromEndReason(participants, "master", 10), null);
 });
 
-test("PvP GameReward keeps the stock result parser non-null and exposes only settled XP", () => {
-  assert.deepEqual(pvpGameReward(true, 30, 5), {
+test("PvP GameReward keeps the stock result parser non-null and exposes only settled rewards", () => {
+  assert.deepEqual(pvpGameReward(true, 30, 5, false, undefined, 800), {
+    Warbucks: { BattleRewards: 800, ExtraRewards: 0, Winstreak: 0, League: 0, offerMult: 1 },
     Xp: { BattleRewards: 30, ExtraRewards: 0, Winstreak: 0, Time: 0, offerMult: 1 },
     GameGold: { BattleRewards: 5, League: 0, offerMult: 1 },
     IsVip: false,
   });
   assert.deepEqual(pvpGameReward(true, 10), {
+    Warbucks: { BattleRewards: 0, ExtraRewards: 0, Winstreak: 0, League: 0, offerMult: 1 },
     Xp: { BattleRewards: 10, ExtraRewards: 0, Winstreak: 0, Time: 0, offerMult: 1 },
     GameGold: { BattleRewards: 0, League: 0, offerMult: 1 },
     IsVip: false,
   });
   assert.deepEqual(pvpGameReward(false, 30, 5, true), {
+    Warbucks: { BattleRewards: 0, ExtraRewards: 0, Winstreak: 0, League: 0, offerMult: 1 },
     Xp: { BattleRewards: 0, ExtraRewards: 0, Winstreak: 0, Time: 0, offerMult: 1 },
     GameGold: { BattleRewards: 0, League: 0, offerMult: 1 },
     IsVip: false,
   });
 });
 
-test("PvP VIP receipts expose base XP while settlement persists the exact 50 percent bonus", () => {
+test("PvP VIP receipts expose base XP and WarBucks while settlement persists exact bonuses", () => {
   assert.deepEqual(pvpExperienceAmounts(true, false), { baseExperience: 30, experience: 30 });
   assert.deepEqual(pvpExperienceAmounts(false, false), { baseExperience: 10, experience: 10 });
   assert.deepEqual(pvpExperienceAmounts(true, true), { baseExperience: 30, experience: 45 });
@@ -518,12 +522,18 @@ test("PvP VIP receipts expose base XP while settlement persists the exact 50 per
   assert.equal(pvpLevelGoldAmount(7, false), 7);
   assert.equal(pvpLevelGoldAmount(7, true), 14);
   assert.throws(() => pvpLevelGoldAmount(-1, true), /invalid/);
-  assert.deepEqual(pvpGameReward(true, 30, 7, true), {
+  assert.deepEqual(pvpWarBucksAmounts(true, false), { baseWarBucks: 800, warBucks: 800 });
+  assert.deepEqual(pvpWarBucksAmounts(false, false), { baseWarBucks: 400, warBucks: 400 });
+  assert.deepEqual(pvpWarBucksAmounts(true, true), { baseWarBucks: 800, warBucks: 1200 });
+  assert.deepEqual(pvpWarBucksAmounts(false, true), { baseWarBucks: 400, warBucks: 600 });
+  assert.deepEqual(pvpGameReward(true, 30, 7, true, undefined, 800), {
+    Warbucks: { BattleRewards: 800, ExtraRewards: 0, Winstreak: 0, League: 0, offerMult: 1 },
     Xp: { BattleRewards: 30, ExtraRewards: 0, Winstreak: 0, Time: 0, offerMult: 1 },
     GameGold: { BattleRewards: 7, League: 0, offerMult: 1 },
     IsVip: true,
   });
-  assert.deepEqual(pvpGameReward(true, 30, 7, true, '{"HEAD_CLOWN-VIP":"1"}'), {
+  assert.deepEqual(pvpGameReward(true, 30, 7, true, '{"HEAD_CLOWN-VIP":"1"}', 800), {
+    Warbucks: { BattleRewards: 800, ExtraRewards: 0, Winstreak: 0, League: 0, offerMult: 1 },
     Xp: { BattleRewards: 30, ExtraRewards: 0, Winstreak: 0, Time: 0, offerMult: 1 },
     GameGold: { BattleRewards: 7, League: 0, offerMult: 1 },
     IsVip: true,

@@ -7,6 +7,7 @@ import {
   pvpGameReward,
   pvpLevelFields,
   reportMatchResult,
+  waitForMatchResolution,
   winnerFromEndReason,
 } from "../services/matchService";
 import { settleDailyMission } from "../services/dailyMissionService";
@@ -159,9 +160,16 @@ export const matchHandlers: Record<number, HandlerEntry> = {
     // the replacement transport's empty-list shorthand; malformed, over-limit,
     // unknown, or unowned IDs are rejected by the card inventory service before consensus.
     const usedCards = parsePvpUsedCards(req.UsedCards ?? []);
-    const report = id && winnerId
+    let report = id && winnerId
       ? await reportMatchResult(id, player!.id, winnerId, usedCards)
       : { status: "invalid" as const };
+
+    // Both stock clients normally post GameEnded almost together. If this request recorded
+    // the first half of consensus, wait briefly for the second request to commit the shared
+    // immutable receipt. This fixes the old first-reporter path that returned zero rewards
+    // even though the match settled immediately afterward. The wait is read-only and bounded;
+    // a missing or disagreeing opponent can never be converted into a reward by this branch.
+    if (report.status === "pending" && id) report = await waitForMatchResolution(id);
 
     const updated = await findById(player!.id);
     const progression = updated ? progressionForPlayer(updated) : null;
@@ -171,7 +179,10 @@ export const matchHandlers: Record<number, HandlerEntry> = {
     const responseWinner = report.settlement?.winnerId ?? winnerId;
     const resultAvailable = report.status === "confirmed" || report.status === "finished";
     const rewardReceipt = report.settlement?.rewards?.[player!.id];
-    const rentalFields = progression && id && report.status !== "invalid" && report.status !== "conflict"
+    // A pending report has not proven that a battle settled. Advancing the one-battle rental
+    // at that point used to consume the trial even when the opponent never confirmed or sent
+    // a conflicting result. Only an immutable confirmed/finished receipt may end the trial.
+    const rentalFields = progression && id && resultAvailable
       ? await rentalFieldsAfterBattle(player!.id, id, progression)
       : {};
     const enteredLeague = Boolean(
@@ -212,6 +223,7 @@ export const matchHandlers: Record<number, HandlerEntry> = {
         rewardReceipt?.baseGold ?? rewardReceipt?.gold ?? 0,
         rewardReceipt?.isVip ?? false,
         rewardReceipt?.newVisuals,
+        rewardReceipt?.baseWarBucks ?? rewardReceipt?.warBucks ?? 0,
       ),
       // OGLEHLIPEFM stores this outer field directly in PlayerAnalyticsData. Prefer the
       // immutable settlement receipt so a delayed retry returns the exact countdown that

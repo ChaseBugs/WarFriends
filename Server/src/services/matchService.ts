@@ -18,6 +18,7 @@ import {
   type SquadEventProjectionStatus,
 } from "./squadEventService";
 import { applyVipBattleLootboxState } from "./vipLootboxService";
+import { config } from "../config";
 
 /**
  * Persistent PvP match lifecycle and reward settlement.
@@ -66,6 +67,8 @@ export interface MatchDoc {
   createdAt: Date;
   /** Terminal timestamp for both normal completion and cancellation. */
   endedAt?: Date;
+  /** Server-only reason retained when an unresolved match is cancelled without rewards. */
+  cancelReason?: string;
 }
 
 /**
@@ -126,6 +129,39 @@ const REWARDS = {
  */
 export const VIP_BATTLE_EXPERIENCE_MULTIPLIER = 1.5;
 export const VIP_LEVEL_GOLD_MULTIPLIER = 2;
+/** `VipWarbucksMultiplier` decoded from the 4.9.5 MainScene Constants component. */
+export const VIP_BATTLE_WARBUCKS_MULTIPLIER = 1.5;
+
+function configuredNonNegativeInteger(value: number, fallback: number): number {
+  // Environment configuration is an operator-controlled economy input, but it still must
+  // not introduce NaN, fractions, negative grants, or integers Mongo/JavaScript cannot
+  // represent exactly. Falling back keeps a malformed local .env from corrupting wallets.
+  return Number.isSafeInteger(value) && value >= 0 ? value : fallback;
+}
+
+/**
+ * Resolve the base and durable normal PvP WarBucks grant.
+ *
+ * The recovered GameEnded request echoes Fusebox's `BattleWarbucksRewards.Win/Loss` values,
+ * but accepting either field would let a modified client mint arbitrary currency. The old
+ * remote document is not packaged in the 1.6.0 or 4.9.5 APK, so the offline server uses the
+ * reviewed, environment-tunable defaults in config.ts. IIGFODGJBFA applies the 1.5x VIP
+ * multiplier to the unmultiplied `Warbucks.BattleRewards` component and truncates the
+ * positive float-to-int conversion; durable state performs the identical calculation.
+ */
+export function pvpWarBucksAmounts(won: boolean, isVip: boolean): {
+  baseWarBucks: number;
+  warBucks: number;
+} {
+  const baseWarBucks = won
+    ? configuredNonNegativeInteger(config.pvpWinWarBucks, 800)
+    : configuredNonNegativeInteger(config.pvpLoseWarBucks, 400);
+  const warBucks = isVip
+    ? Math.trunc(baseWarBucks * VIP_BATTLE_WARBUCKS_MULTIPLIER)
+    : baseWarBucks;
+  if (!Number.isSafeInteger(warBucks)) throw new Error("PvP VIP WarBucks overflowed.");
+  return { baseWarBucks, warBucks };
+}
 
 /**
  * Derive the base client component and the authoritative amount for one PvP result.
@@ -177,8 +213,19 @@ export function pvpGameReward(
   gameGold = 0,
   isVip = false,
   newVisuals?: string,
+  battleWarBucks = 0,
 ): Record<string, unknown> {
   return {
+    Warbucks: {
+      // The first reconstruction omitted this object entirely, so ordinary PvP never paid
+      // the game's main soft currency. Send the base component: IsVip tells the recovered
+      // parser to apply its local 1.5x constant exactly once for display and wallet parity.
+      BattleRewards: resultAvailable ? battleWarBucks : 0,
+      ExtraRewards: 0,
+      Winstreak: 0,
+      League: 0,
+      offerMult: 1,
+    },
     Xp: {
       BattleRewards: resultAvailable ? battleExperience : 0,
       ExtraRewards: 0,
@@ -245,6 +292,10 @@ interface CoreGrant {
 }
 
 export interface MatchPlayerReward {
+  /** Unmultiplied Warbucks.BattleRewards value from server-owned offline reward policy. */
+  baseWarBucks: number;
+  /** Actual normal battle WarBucks committed after the settlement-time VIP multiplier. */
+  warBucks: number;
   /** Unmultiplied Xp.BattleRewards value consumed by the stock client reward parser. */
   baseExperience: number;
   /** Actual XP committed to the player after the settlement-time VIP multiplier. */
@@ -299,6 +350,7 @@ async function settlePlayerCore(
   const settlementUnix = Math.floor(settledAt.getTime() / 1_000);
   const isVip = Math.floor(initialState.vipExpiration ?? 0) > settlementUnix;
   const { baseExperience, experience } = pvpExperienceAmounts(won, isVip);
+  const { baseWarBucks, warBucks } = pvpWarBucksAmounts(won, isVip);
   const medalDelta = won ? REWARDS.winMedals : REWARDS.loseMedals;
   const squadPoints = won && player.player.squadName ? REWARDS.winSquadPoints : 0;
   const consumed = consumePvpUsedCardsState(initialState, usedCards);
@@ -313,12 +365,16 @@ async function settlePlayerCore(
   if (vipLootboxes.state.gold > Number.MAX_SAFE_INTEGER - vipLevelGoldBonus) {
     throw new Error("PvP VIP level Gold balance overflowed.");
   }
+  if (vipLootboxes.state.warBucks > Number.MAX_SAFE_INTEGER - warBucks) {
+    throw new Error("PvP WarBucks balance overflowed.");
+  }
   // applyLevelExperienceState grants the source row's base Gold. Add only the VIP delta here
   // so the level transition remains reusable and the progression wallet equals the amount
   // IIGFODGJBFA adds after applying its VipGoldMultiplier to GameGold.
   const canonical = canonicalProgression({
     ...vipLootboxes.state,
     gold: vipLootboxes.state.gold + vipLevelGoldBonus,
+    warBucks: vipLootboxes.state.warBucks + warBucks,
   });
   const levelChanged = leveled.levelTo !== leveled.levelFrom;
   const nextArmyPower = levelChanged
@@ -376,6 +432,8 @@ async function settlePlayerCore(
     squadName: player.player.squadName,
     squadPoints,
     reward: {
+      baseWarBucks,
+      warBucks,
       baseExperience,
       experience,
       baseGold,
@@ -540,6 +598,47 @@ export async function reportMatchResult(
 
   const settlement = await settleResult(matchId, reportedWinners[0], reporterId);
   return { status: "confirmed", settlement };
+}
+
+/**
+ * Briefly wait for the other participant's already-in-flight REST report.
+ *
+ * `reportMatchResult` intentionally requires two matching authenticated reports. Without
+ * this bridge, whichever stock client reports first receives a zero-valued pending response
+ * and never gets the immutable receipt produced milliseconds later by the second request.
+ * Polling is bounded and read-only: it cannot settle, change a report, or turn a timeout into
+ * a win. Finished rows reproduce their stored winner and receipts; a conflict/cancellation
+ * remains non-rewarding, and an absent second report still returns pending at the deadline.
+ */
+export async function waitForMatchResolution(
+  matchId: string,
+  timeoutMilliseconds = config.matchResultConsensusWaitMilliseconds,
+): Promise<MatchReportResult> {
+  const boundedTimeout = Number.isFinite(timeoutMilliseconds)
+    ? Math.max(0, Math.min(15_000, Math.floor(timeoutMilliseconds)))
+    : 5_000;
+  const deadline = Date.now() + boundedTimeout;
+  do {
+    const match = await getMatch(matchId);
+    if (!match) return { status: "invalid" };
+    if (match.state === "finished") {
+      return {
+        status: "finished",
+        settlement: {
+          matchId,
+          winnerId: match.winnerId ?? "",
+          rewarded: false,
+          rewards: match.rewardReceipts,
+        },
+      };
+    }
+    if (match.state === "cancelled") {
+      return { status: match.cancelReason === "result_conflict" ? "conflict" : "invalid" };
+    }
+    if (Date.now() >= deadline) break;
+    await new Promise<void>((resolve) => setTimeout(resolve, Math.min(100, deadline - Date.now())));
+  } while (Date.now() <= deadline);
+  return { status: "pending" };
 }
 
 export interface SettlementResult {

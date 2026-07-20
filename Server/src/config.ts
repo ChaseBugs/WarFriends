@@ -75,4 +75,14 @@ export const config = {
   // separate from queue timeout because the match already exists and both players are InGame.
   matchJoinTimeoutSeconds: Number(process.env.MATCH_JOIN_TIMEOUT_SECONDS ?? 30),
   matchDisconnectGraceSeconds: Number(process.env.MATCH_DISCONNECT_GRACE_SECONDS ?? 20),
+  // The two stock clients normally submit GameEnded within the same few seconds. Keep the
+  // first HTTP request open briefly so it can return the immutable receipt created by the
+  // second agreeing report instead of showing a false zero-reward result screen.
+  matchResultConsensusWaitMilliseconds: Number(process.env.MATCH_RESULT_CONSENSUS_WAIT_MS ?? 5_000),
+
+  // The retired Fusebox `BattleWarbucksRewards` document was downloaded at runtime and is
+  // absent from both recovered APKs. These are explicit offline reconstruction defaults,
+  // never values echoed by GameEnded's client-controlled WarbuckRewardWin/Loss fields.
+  pvpWinWarBucks: Number(process.env.PVP_WIN_WARBUCKS ?? 800),
+  pvpLoseWarBucks: Number(process.env.PVP_LOSE_WARBUCKS ?? 400),
 };
