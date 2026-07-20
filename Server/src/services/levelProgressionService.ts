@@ -1,6 +1,7 @@
 import generatedArmyPowerCatalog from "../data/armyPowerCatalog.generated.json";
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import type { PlayerProgressionState } from "../db";
+import { checkedRewardBalance } from "./rewardMathService";
 
 export interface PlayerLevelDefinition {
   /** Zero-based LevelManager.GameLevel.index and DatabasePlayer.Level value. */
@@ -70,12 +71,6 @@ export function applyLevelExperienceState(
   if (!Number.isSafeInteger(state.levelExperience) || state.levelExperience < 0) {
     throw new ApiError(ApiErrorCode.InternalServerError, "Stored level experience is invalid.");
   }
-  // Refunded currency may leave a valid negative balance. Level-up Gold pays that debt down;
-  // only a non-integer value is corrupt state.
-  if (!Number.isSafeInteger(state.gold)) {
-    throw new ApiError(ApiErrorCode.InternalServerError, "Stored Gold balance is invalid.");
-  }
-
   let levelTo = currentLevel;
   let levelExperience = state.levelExperience + experienceGranted;
   if (!Number.isSafeInteger(levelExperience)) {
@@ -89,15 +84,15 @@ export function applyLevelExperienceState(
     levelTo += 1;
     goldGranted += definition.rewardGold;
   }
-  if (!Number.isSafeInteger(goldGranted) || state.gold > Number.MAX_SAFE_INTEGER - goldGranted) {
-    throw new ApiError(ApiErrorCode.InternalServerError, "Level-up Gold overflowed.");
-  }
+  // Refunded currency may leave a valid negative balance. The shared reward guard pays that debt
+  // down while still rejecting a corrupt stored balance or a sum JavaScript cannot represent.
+  const gold = checkedRewardBalance(state.gold, goldGranted, "Level-up Gold");
 
   return {
     state: {
       ...state,
       levelExperience,
-      gold: state.gold + goldGranted,
+      gold,
     },
     experienceGranted,
     goldGranted,

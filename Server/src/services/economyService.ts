@@ -3,6 +3,7 @@ import { ApiError, ApiErrorCode } from "../apiErrors";
 import { mutateProgression } from "./progressionMutationService";
 import { config } from "../config";
 import { playerLevelDefinition } from "./levelProgressionService";
+import { checkedRewardBalance } from "./rewardMathService";
 
 export interface DogTagMutationResult {
   state: PlayerProgressionState;
@@ -84,17 +85,16 @@ export function convertGoldToWarBucksState(
   const level = playerLevelDefinition(playerLevelIndex);
   const units = variant === "b" ? definition.variantUnits : definition.standardUnits;
   const warBucksAdded = units * level.convertGoldToWarBucks;
-  if (!Number.isSafeInteger(warBucksAdded) || warBucksAdded <= 0
-    || !Number.isSafeInteger(state.warBucks)
-    || state.warBucks > Number.MAX_SAFE_INTEGER - warBucksAdded) {
+  if (!Number.isSafeInteger(warBucksAdded) || warBucksAdded <= 0) {
     throw new ApiError(ApiErrorCode.InternalServerError, "WarBucks conversion overflowed.");
   }
+  const warBucks = checkedRewardBalance(state.warBucks, warBucksAdded, "Gold conversion WarBucks");
   const revision = state.revision + 1;
   const next: PlayerProgressionState = {
     ...state,
     revision,
     gold: state.gold - definition.goldPrice,
-    warBucks: state.warBucks + warBucksAdded,
+    warBucks,
     warBucksConversion: {
       id: requestedId,
       goldDeducted: definition.goldPrice,

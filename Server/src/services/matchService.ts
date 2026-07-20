@@ -40,6 +40,7 @@ import {
   type SquadEventProjectionStatus,
 } from "./squadEventService";
 import { applyVipBattleLootboxState } from "./vipLootboxService";
+import { checkedRewardBalance } from "./rewardMathService";
 import {
   advanceRentalAfterBattleState,
   type RentalWireOffer,
@@ -850,21 +851,20 @@ async function settlePlayerCore(
   const baseGold = leveled.goldGranted;
   const gold = pvpLevelGoldAmount(baseGold, isVip);
   const vipLevelGoldBonus = gold - baseGold;
-  if (vipLootboxes.state.gold > Number.MAX_SAFE_INTEGER - vipLevelGoldBonus) {
-    throw new Error("PvP VIP level Gold balance overflowed.");
-  }
   const totalPvpWarBucks = warBucks + winStreak.warBucks + leagueReward.warBucks;
-  if (!Number.isSafeInteger(totalPvpWarBucks)
-    || vipLootboxes.state.warBucks > Number.MAX_SAFE_INTEGER - totalPvpWarBucks) {
-    throw new Error("PvP WarBucks balance overflowed.");
-  }
+  const settledGold = checkedRewardBalance(vipLootboxes.state.gold, vipLevelGoldBonus, "PvP VIP level Gold");
+  const settledWarBucks = checkedRewardBalance(
+    vipLootboxes.state.warBucks,
+    totalPvpWarBucks,
+    "PvP WarBucks",
+  );
   // applyLevelExperienceState grants the source row's base Gold. Add only the VIP delta here
   // so the level transition remains reusable and the progression wallet equals the amount
   // IIGFODGJBFA adds after applying its VipGoldMultiplier to GameGold.
   let canonical = canonicalProgression({
     ...vipLootboxes.state,
-    gold: vipLootboxes.state.gold + vipLevelGoldBonus,
-    warBucks: vipLootboxes.state.warBucks + totalPvpWarBucks,
+    gold: settledGold,
+    warBucks: settledWarBucks,
     pvpWinStreak: winStreak.state,
   });
   const levelChanged = leveled.levelTo !== leveled.levelFrom;

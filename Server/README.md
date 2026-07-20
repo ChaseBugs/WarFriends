@@ -586,10 +586,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   identity while the UTC rollover persists once; buffered claim retries are idempotent by `BufferId`, return
   the cached response without a revision/write, and never roll an unrelated UTC cycle.
 - **Reward arithmetic boundary**: server-authored nonnegative currency rewards use one shared
-  safe-integer addition guard before publishing their claim or receipt markers. Starter/daily
-  assignments, achievements, inbox rewards, Elite-part conversion, and War Arena fallback Scraps
-  therefore reject invalid or overflowing rewards atomically while preserving legitimate negative
-  Gold or WarBucks chargeback balances.
+  safe-integer addition guard before publishing their claim or receipt markers. Assignment,
+  achievement, inbox, conversion, level-up, lootbox, core-PvP, Elite-part, and War Arena rewards
+  therefore reject invalid or overflowing balances atomically while preserving legitimate negative
+  Gold or WarBucks chargeback debt.
 - **Squad Events (reviewed seasons only)**: action `113` joins the authenticated current roster to
   one immutable operator-configured season. Confirmed PvP wins/plays advance only recovered
   assignment IDs `7` and `8` as Unity-compatible binary32 fractions. Completing every assignment

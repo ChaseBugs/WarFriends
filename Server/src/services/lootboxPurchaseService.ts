@@ -1,6 +1,7 @@
 import { randomInt } from "node:crypto";
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import type { PlayerProgressionState, SavedVisualState } from "../db";
+import { checkedRewardBalance } from "./rewardMathService";
 import { VISUAL_CATALOG, visualInventoryStateFor } from "./visualInventoryService";
 import { VIP_LOOTBOX_ELIGIBLE_VISUAL_IDS } from "./vipLootboxService";
 
@@ -151,14 +152,14 @@ export function grantLootboxPartsState(
     };
   }
 
-  if (state.warBucks > Number.MAX_SAFE_INTEGER - duplicateWarBucks) {
-    throw new Error("Purchasable lootbox WarBucks balance overflowed.");
-  }
+  // Validate the wallet before the caller can publish its purchase receipt. In particular, a
+  // corrupt NaN balance must not silently survive the old `>` overflow comparison.
+  const warBucks = checkedRewardBalance(state.warBucks, duplicateWarBucks, "Purchasable lootbox WarBucks");
   const rewards: PurchasedLootboxReward[] = selectedIds.map((visualId) => ({ visualId, parts: 1 }));
   return {
     state: {
       ...state,
-      warBucks: state.warBucks + duplicateWarBucks,
+      warBucks,
       visualInventory,
     },
     rewards,

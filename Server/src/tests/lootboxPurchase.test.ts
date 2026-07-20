@@ -63,6 +63,19 @@ test("parts after completion convert with the exact per-visual duplicate value",
   assert.equal(result.state.gold, 51);
 });
 
+test("duplicate conversion pays chargeback debt and rejects a corrupt persisted wallet", () => {
+  const debt = { ...createInitialProgression(NOW), gold: 100, warBucks: -4_000 };
+  const paidDown = purchaseLootboxesState(debt, "lootboxes1", 0, selectVisual("HEAD_CLOWN"));
+  assert.equal(paidDown.duplicateWarBucks, 3_000);
+  assert.equal(paidDown.state.warBucks, -1_000);
+
+  const corrupt = { ...debt, warBucks: Number.NaN };
+  assert.throws(
+    () => purchaseLootboxesState(corrupt, "lootboxes1", 0, selectVisual("HEAD_CLOWN")),
+    /reward balance is invalid/,
+  );
+});
+
 test("purchase rejects client-authored discounts and insufficient balances with stock fields", () => {
   const initial = { ...createInitialProgression(NOW), gold: 48 };
   assert.throws(

@@ -1,5 +1,6 @@
 import { randomInt } from "node:crypto";
 import type { PlayerProgressionState, SavedVisualState } from "../db";
+import { checkedRewardBalance } from "./rewardMathService";
 import { VISUAL_CATALOG, visualInventoryStateFor } from "./visualInventoryService";
 
 /** Source-decoded 4.9.5 `Constants.LootboxAfterBattles` value. */
@@ -182,9 +183,9 @@ export function applyVipBattleLootboxState(
     };
   }
 
-  if (state.warBucks > Number.MAX_SAFE_INTEGER - duplicateWarBucks) {
-    throw new Error("VIP lootbox WarBucks balance overflowed.");
-  }
+  // This transition is part of the terminal match transaction. Compute the exact wallet first so
+  // invalid persisted data rolls the match back instead of consuming the four-battle countdown.
+  const warBucks = checkedRewardBalance(state.warBucks, duplicateWarBucks, "VIP lootbox WarBucks");
   const rewards: VipLootboxVisualReward[] = selectedIds.map((visualId) => ({
     visualId,
     parts: VIP_LOOTBOX_PARTS_PER_REWARD,
@@ -195,7 +196,7 @@ export function applyVipBattleLootboxState(
     state: {
       ...state,
       revision: state.revision + 1,
-      warBucks: state.warBucks + duplicateWarBucks,
+      warBucks,
       visualInventory,
       matchesToNextLootboxes,
     },

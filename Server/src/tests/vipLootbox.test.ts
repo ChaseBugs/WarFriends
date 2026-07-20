@@ -118,6 +118,29 @@ test("completed visual draws convert each part with the exact source WarBucks va
   assert.equal(result.state.visualInventory?.visuals.HEAD_CLOWN?.notificate, false);
 });
 
+test("VIP duplicate rewards pay chargeback debt and reject a corrupt wallet before settlement", () => {
+  const definition = VISUAL_CATALOG.HEAD_CLOWN;
+  const debt = createInitialProgression(NOW);
+  debt.matchesToNextLootboxes = 1;
+  debt.warBucks = -2_500;
+  debt.visualInventory!.visuals.HEAD_CLOWN = {
+    bought: true,
+    showed: false,
+    expiresOn: 0,
+    borrowed: false,
+    parts: definition.parts,
+    notificate: false,
+  };
+  const paidDown = applyVipBattleLootboxState(debt, true, selectVisual("HEAD_CLOWN"));
+  assert.equal(paidDown.state.warBucks, -500);
+
+  const corrupt = { ...debt, warBucks: Number.NaN };
+  assert.throws(
+    () => applyVipBattleLootboxState(corrupt, true, selectVisual("HEAD_CLOWN")),
+    /reward balance is invalid/,
+  );
+});
+
 test("countdown migration and duplicate wire suffixes match the recovered parser", () => {
   assert.equal(normalizedVipLootboxCountdown(undefined), 4);
   assert.equal(normalizedVipLootboxCountdown(0), 4);
