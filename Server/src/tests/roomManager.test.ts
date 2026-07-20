@@ -56,3 +56,22 @@ test("disconnect keeps the authorized room available for a legitimate reconnect"
   assert.equal(manager.isParticipant("m4", "p1"), true);
   assert.equal(manager.relay("m4", "p1", { Type: "after-reconnect" }), true);
 });
+
+test("CardPlayed delivery retries only when durable evidence was not delivered before reconnect", () => {
+  const manager = new RoomManager();
+  const sent: Array<{ clientId: string; envelope: unknown }> = [];
+  manager.setSender((clientId, envelope) => sent.push({ clientId, envelope }));
+  manager.join("m5", "p1", "c1", ["p1", "p2"]);
+  manager.join("m5", "p2", "c2", ["p1", "p2"]);
+
+  const event = { Type: "MatchEvent", Payload: { Event: "CardPlayed", Sequence: 0 } };
+  assert.equal(manager.relayCardEvent("m5", "p1", 0, event), "delivered");
+  assert.equal(manager.relayCardEvent("m5", "p1", 0, event), "replayed");
+  assert.equal(sent.filter((item) => item.envelope === event).length, 1);
+
+  manager.evictClient("c2");
+  assert.equal(manager.relayCardEvent("m5", "p1", 1, event), "invalid");
+  manager.join("m5", "p2", "c3", ["p1", "p2"]);
+  assert.equal(manager.relayCardEvent("m5", "p1", 1, event), "delivered");
+  assert.equal(sent.filter((item) => item.clientId === "c3" && item.envelope === event).length, 1);
+});

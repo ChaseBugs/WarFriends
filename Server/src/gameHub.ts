@@ -4,11 +4,20 @@ import { WebSocket, WebSocketServer } from "ws";
 import { authenticate } from "./services/authService";
 import { findById } from "./services/playerService";
 import { enqueue, remove as leaveQueue } from "./services/matchmakingService";
-import { cancelMatch, createMatch, getMatch, reportMatchResult, settleResult, type MatchPlayer } from "./services/matchService";
+import {
+  cancelMatch,
+  createMatch,
+  getMatch,
+  recordRelayedCardPlay,
+  reportMatchResult,
+  settleResult,
+  type MatchPlayer,
+} from "./services/matchService";
 import { parsePvpUsedCards } from "./services/cardInventoryService";
 import { roomManager } from "./gameRooms/roomManager";
 import type {
   ClientEnvelope,
+  CardPlayedEventData,
   IdentifyPayload,
   JoinMatchPayload,
   MatchEventPayload,
@@ -42,6 +51,8 @@ interface Client {
   id: string;
   socket: WebSocket;
   playerId?: string;
+  /** Serialize one socket's messages so CardPlayed persistence completes before MatchResult. */
+  processing: Promise<void>;
 }
 
 const clients = new Map<string, Client>();
@@ -217,7 +228,7 @@ export function createGameHub(httpServer: HttpServer): WebSocketServer {
   const wss = new WebSocketServer({ server: httpServer, path: "/hub" });
 
   wss.on("connection", (socket) => {
-    const client: Client = { id: randomUUID(), socket };
+    const client: Client = { id: randomUUID(), socket, processing: Promise.resolve() };
     clients.set(client.id, client);
     logger.websocket.connected(client.id, { totalClients: clients.size });
     send(client, { Type: "Welcome", Payload: { ClientId: client.id } });
@@ -231,7 +242,7 @@ export function createGameHub(httpServer: HttpServer): WebSocketServer {
         return;
       }
       logger.websocket.message(client.id, envelope.Type);
-      void handleMessage(client, envelope).catch((error: unknown) => {
+      client.processing = client.processing.then(() => handleMessage(client, envelope)).catch((error: unknown) => {
         const message = error instanceof Error ? error.message : String(error);
         logger.websocket.error("Message handler failed", { clientId: client.id, type: envelope.Type, error: message });
         send(client, { Type: "ServerError", Payload: { Message: "Unable to process message." } });
@@ -358,6 +369,42 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
     case "MatchEvent": {
       if (!client.playerId) return;
       const p = envelope.Payload as MatchEventPayload;
+      if (p?.Event === "CardPlayed") {
+        const data = p.Data as CardPlayedEventData | undefined;
+        const sequence = Number(data?.Sequence);
+        try {
+          const room = roomManager.getRoom(p.MatchId);
+          if (room?.state !== "active" || !roomManager.isParticipant(p.MatchId, client.playerId)) {
+            return send(client, { Type: "MatchError", Payload: { MatchId: p.MatchId, Reason: "NotInActiveMatch" } });
+          }
+          const recorded = await recordRelayedCardPlay(
+            p.MatchId,
+            client.playerId,
+            sequence,
+            typeof data?.CardId === "string" ? data.CardId : "",
+          );
+          // Room-local delivery tracking distinguishes a lost sender acknowledgement from
+          // evidence that committed immediately before the opponent disconnected. The former is
+          // suppressed; the latter may be delivered once after a valid room reconnection.
+          const delivery = roomManager.relayCardEvent(p.MatchId, client.playerId, sequence, envelope);
+          if (delivery === "invalid") {
+            return send(client, { Type: "MatchError", Payload: { MatchId: p.MatchId, Reason: "NotInActiveMatch" } });
+          }
+          send(client, {
+            Type: "MatchEventAccepted",
+            Payload: {
+              MatchId: p.MatchId,
+              Event: p.Event,
+              Sequence: sequence,
+              Replayed: delivery === "replayed",
+              EvidenceReplayed: recorded.replayed,
+            },
+          });
+        } catch {
+          send(client, { Type: "MatchError", Payload: { MatchId: p?.MatchId, Reason: "InvalidCardPlay" } });
+        }
+        return;
+      }
       if (!roomManager.relay(p?.MatchId, client.playerId, envelope)) {
         send(client, { Type: "MatchError", Payload: { MatchId: p?.MatchId, Reason: "NotInActiveMatch" } });
       }
@@ -379,6 +426,7 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
           client.playerId,
           p.WinnerId,
           parsePvpUsedCards(p.UsedCards ?? []),
+          true,
         );
       } catch {
         return send(client, { Type: "MatchError", Payload: { MatchId: p?.MatchId, Reason: "InvalidUsedCards" } });

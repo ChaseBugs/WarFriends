@@ -19,9 +19,16 @@ export interface JoinMatchPayload {
 
 export interface MatchEventPayload {
   MatchId: string;
-  /** Opaque in-match action/turn payload relayed verbatim to the opponent. */
+  /** `CardPlayed` has a validated payload; other recovered events remain opaque relay data. */
   Event: string;
   Data?: unknown;
+}
+
+/** Replacement-client evidence for one inventory-consuming War Card activation. */
+export interface CardPlayedEventData {
+  /** Zero-based per-player sequence; retries must repeat the same sequence and identity. */
+  Sequence: number;
+  CardId: string;
 }
 
 export interface MatchResultPayload {

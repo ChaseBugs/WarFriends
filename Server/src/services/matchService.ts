@@ -17,7 +17,13 @@ import {
   synchronizeCardsPlayedInMatchAchievementState,
   synchronizeLeagueAchievementState,
 } from "./achievementService";
-import { consumePvpUsedCardsState } from "./cardInventoryService";
+import {
+  CARD_NOT_FOUND,
+  MAX_PVP_CARDS_PER_MATCH,
+  consumePvpUsedCardsState,
+  parsePvpUsedCards,
+} from "./cardInventoryService";
+import { ApiError } from "../apiErrors";
 import { progressionForPlayer } from "./playerStateService";
 import { applyLevelExperienceState } from "./levelProgressionService";
 import { calculateArmyPower } from "./armyPowerService";
@@ -72,6 +78,8 @@ export interface MatchDoc {
   resultReports?: Record<string, string>;
   /** Authenticated reporter's own card IDs; never accepted for the opponent. */
   usedCardsReports?: Record<string, string[]>;
+  /** Sequenced CardPlayed events accepted from the authenticated replacement-room transport. */
+  relayedCardPlays?: Record<string, string[]>;
   /** Immutable core reward receipts returned unchanged by finished GameEnded retries. */
   rewardReceipts?: Record<string, MatchPlayerReward>;
   /** Audit receipt for Squad Event projection committed with the terminal match transition. */
@@ -763,6 +771,96 @@ export async function isMatchParticipant(matchId: string, playerId: string): Pro
   return (await matches().countDocuments({ matchId, "players.playerId": playerId }, { limit: 1 })) === 1;
 }
 
+export interface RelayedCardPlayResult {
+  cards: string[];
+  replayed: boolean;
+}
+
+/**
+ * Validate one participant's ordered CardPlayed evidence without mutating the stored list.
+ *
+ * Sequence numbers make a lost acknowledgement retry distinguishable from a second activation.
+ * A repeated sequence is accepted only for the same CardId, gaps are rejected, and the recovered
+ * six-slot selection limit bounds both memory and the eventual inventory debit.
+ */
+export function applyRelayedCardPlay(
+  existing: readonly string[],
+  sequence: number,
+  cardId: string,
+): RelayedCardPlayResult {
+  const [normalized] = parsePvpUsedCards([cardId]);
+  if (!Number.isInteger(sequence) || sequence < 0 || sequence >= MAX_PVP_CARDS_PER_MATCH || !normalized) {
+    throw new ApiError(CARD_NOT_FOUND, "CardPlayed sequence or identity is invalid.");
+  }
+  if (sequence < existing.length) {
+    if (existing[sequence] !== normalized) {
+      throw new ApiError(CARD_NOT_FOUND, "CardPlayed sequence was already used for another card.");
+    }
+    return { cards: [...existing], replayed: true };
+  }
+  if (sequence !== existing.length || existing.length >= MAX_PVP_CARDS_PER_MATCH) {
+    throw new ApiError(CARD_NOT_FOUND, "CardPlayed events must be contiguous and bounded.");
+  }
+  return { cards: [...existing, normalized], replayed: false };
+}
+
+/** Require the terminal list to reproduce the durable relay evidence byte-for-byte. */
+export function validateRelayedCardReport(
+  relayedCards: readonly string[],
+  reportedCards: readonly string[],
+): string[] {
+  const normalized = parsePvpUsedCards([...reportedCards]);
+  if (
+    normalized.length !== relayedCards.length
+    || normalized.some((cardId, index) => cardId !== relayedCards[index])
+  ) {
+    throw new ApiError(CARD_NOT_FOUND, "UsedCards does not match sequenced CardPlayed evidence.");
+  }
+  return [...relayedCards];
+}
+
+/**
+ * Persist one validated replacement-room card activation with optimistic list sequencing.
+ *
+ * Ownership is checked against the complete candidate list before the match row advances. The
+ * final settlement repeats that check inside its MongoDB transaction, so spending or moving a
+ * card concurrently cannot turn this earlier observation into an unauthorized debit. A retry of
+ * an already committed sequence returns without writing or relaying the effect twice.
+ */
+export async function recordRelayedCardPlay(
+  matchId: string,
+  playerId: string,
+  sequence: number,
+  cardId: string,
+): Promise<RelayedCardPlayResult> {
+  const path = `relayedCardPlays.${playerId}`;
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const match = await getMatch(matchId);
+    if (!match || match.state !== "active" || !match.players.some((player) => player.playerId === playerId)) {
+      throw new ApiError(CARD_NOT_FOUND, "CardPlayed sender is not in an active match.");
+    }
+    const existing = match.relayedCardPlays?.[playerId] ?? [];
+    const result = applyRelayedCardPlay(existing, sequence, cardId);
+    if (result.replayed) return result;
+
+    const player = await findById(playerId);
+    if (!player) throw new ApiError(CARD_NOT_FOUND, "CardPlayed owner was not found.");
+    consumePvpUsedCardsState(progressionForPlayer(player), result.cards);
+
+    const update = await matches().updateOne(
+      {
+        matchId,
+        state: "active",
+        "players.playerId": playerId,
+        [path]: existing.length === 0 ? { $exists: false } : existing,
+      },
+      { $set: { [path]: result.cards } },
+    );
+    if (update.modifiedCount === 1) return result;
+  }
+  throw new ApiError(CARD_NOT_FOUND, "CardPlayed evidence changed concurrently.");
+}
+
 export type MatchReportStatus = "pending" | "confirmed" | "conflict" | "invalid" | "finished";
 
 export interface MatchReportResult {
@@ -804,6 +902,7 @@ export async function reportMatchResult(
   reporterId: string,
   winnerId: string,
   usedCards: readonly string[] = [],
+  requireRelayedCardEvidence = false,
 ): Promise<MatchReportResult> {
   const match = await getMatch(matchId);
   if (!match || !match.players.some((player) => player.playerId === reporterId)) return { status: "invalid" };
@@ -821,20 +920,24 @@ export async function reportMatchResult(
   }
   if (match.state !== "active") return { status: "invalid" };
 
+  const authoritativeCards = requireRelayedCardEvidence
+    ? validateRelayedCardReport(match.relayedCardPlays?.[reporterId] ?? [], usedCards)
+    : parsePvpUsedCards([...usedCards]);
+
   // Validate only the authenticated reporter's own list before persisting it. Replaying a
   // report may overwrite that same key, but cannot submit cards on behalf of the opponent.
   // The pure transition is repeated inside the final MongoDB transaction so an overlapping
   // economy mutation cannot make this stale ownership check authoritative.
   const reporter = await findById(reporterId);
   if (!reporter) return { status: "invalid" };
-  consumePvpUsedCardsState(progressionForPlayer(reporter), usedCards);
+  consumePvpUsedCardsState(progressionForPlayer(reporter), authoritativeCards);
 
   await matches().updateOne(
     { matchId, state: "active", "players.playerId": reporterId },
     {
       $set: {
         [`resultReports.${reporterId}`]: winnerId,
-        [`usedCardsReports.${reporterId}`]: [...usedCards],
+        [`usedCardsReports.${reporterId}`]: authoritativeCards,
       },
     },
   );
@@ -944,7 +1047,12 @@ export async function settleResult(matchId: string, winnerId: string, reportedBy
 
     const grants: CoreGrant[] = [];
     for (const participant of match.players) {
-      const cards = match.usedCardsReports?.[participant.playerId] ?? [];
+      // A disconnect-forfeit may settle before the disconnected player submits MatchResult.
+      // Durable CardPlayed evidence still represents effects already relayed to the opponent and
+      // must therefore be consumed. A normal terminal report stores the exact same list above.
+      const cards = match.usedCardsReports?.[participant.playerId]
+        ?? match.relayedCardPlays?.[participant.playerId]
+        ?? [];
       grants.push(await settlePlayerCore(
         session,
         participant.playerId,

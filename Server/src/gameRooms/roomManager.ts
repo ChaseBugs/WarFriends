@@ -25,6 +25,8 @@ export interface MatchRoom {
   allowedPlayerIds: Set<string>;
   /** Per-participant winner reports used to detect agreement or conflict. */
   resultReports: Map<string, string>; // reporter playerId -> winner playerId
+  /** CardPlayed sequences already delivered to the opponent on this process-local room. */
+  deliveredCardSequences: Map<string, Set<number>>;
   /** Local creation time used by diagnostics; it is not a durable match timestamp. */
   createdAt: number;
 }
@@ -71,6 +73,7 @@ export class RoomManager {
         participants: new Map(),
         allowedPlayerIds: new Set(allowedPlayerIds),
         resultReports: new Map(),
+        deliveredCardSequences: new Map(),
         createdAt: Date.now(),
       };
       this.rooms.set(matchId, room);
@@ -103,6 +106,39 @@ export class RoomManager {
       if (p.playerId !== fromPlayerId) this.send(p.clientId, envelope);
     }
     return true;
+  }
+
+  /**
+   * Relay one durably accepted CardPlayed sequence at most once per live room.
+   *
+   * Durable match evidence and transient socket delivery have different failure boundaries. If
+   * MongoDB commits immediately before an opponent disconnect, the sender can retry after that
+   * opponent rejoins and this method delivers the still-undelivered sequence. If only the sender's
+   * acknowledgement was lost, the local delivered set suppresses a second opponent effect. Active
+   * matches are cancelled on process restart, so process-local delivery memory cannot be mistaken
+   * for a resumable cross-restart guarantee.
+   */
+  relayCardEvent(
+    matchId: string,
+    fromPlayerId: string,
+    sequence: number,
+    envelope: unknown,
+  ): "delivered" | "replayed" | "invalid" {
+    const room = this.rooms.get(matchId);
+    if (
+      !room
+      || room.state !== "active"
+      || room.participants.size !== room.allowedPlayerIds.size
+      || !room.participants.has(fromPlayerId)
+    ) return "invalid";
+    const delivered = room.deliveredCardSequences.get(fromPlayerId) ?? new Set<number>();
+    if (delivered.has(sequence)) return "replayed";
+    for (const participant of room.participants.values()) {
+      if (participant.playerId !== fromPlayerId) this.send(participant.clientId, envelope);
+    }
+    delivered.add(sequence);
+    room.deliveredCardSequences.set(fromPlayerId, delivered);
+    return "delivered";
   }
 
   isParticipant(matchId: string, playerId: string): boolean {

@@ -48,6 +48,21 @@ Status legend:
 | P2 | Analytics and impressions | analytics, shown/impression, and crash/log actions | Partial | Weapon/unit shown actions `104`/`105` persist only source-valid unlocked `showed` state through direct or replay-safe buffered transport; seven parameterless introduction actions now authenticate and monotonically persist exact `PlayerAnalyticsData` booleans for chat, customization, Warpath, card pool, league leaderboards, crafting, and Elites, with boot restoration and replay safety; action `182` no longer incorrectly returns the top-Squads board; action `212` validates and remembers only the active server-generated Arena event without leaking backend metadata into `WarArenaData`; broad action `179` and remaining explicit telemetry return `Ignored` without changing gameplay | Optional durable analytics pipeline and privacy/retention controls; recover the special-offer impression retention contract before persisting action `1007`; never trust action `179` economy counters |
 | P0 | Operations and security | health, MongoDB, optional Redis, auth secret | Partial | Health endpoint, bounded Redis fallback, graceful shutdown, production default-secret rejection; persistent login, inbox, challenge, and report abuse limits; global HTTP token bucket with continuous refill, bounded LRU storage, HMAC-hidden client keys, explicit trusted-proxy hop policy, and standard 429 retry signaling | Shared cross-process HTTP/WS limiting, structured metrics/tracing, backup/restore, migrations, admin auth, horizontal WebSocket coordination |
 
+### Current PvP relay increment
+
+The replacement WebSocket transport now recognizes a typed
+`MatchEvent { Event: "CardPlayed", Data: { Sequence, CardId } }` contract. Each authenticated
+participant has a contiguous zero-based sequence capped by the recovered six-card selection
+limit. The backend validates ownership against the complete candidate list, persists evidence
+before relaying the effect, acknowledges an exact retry without relaying it twice, serializes each
+socket's messages so `MatchResult` cannot overtake its last card activation, and requires terminal
+`UsedCards` order and multiplicity to match. Disconnect-forfeit settlement consumes the same
+durable evidence even when the disconnected participant never submits a result.
+
+The PvP row's remaining live-card boundary now applies to the legacy Photon/REST client path and
+to card-effect semantics such as timing, target, damage, and deployment. A Photon-to-WebSocket
+adapter must emit these typed events; the backend does not infer them from a terminal list.
+
 ## Implementation order
 
 1. Extend server-owned economy transactions to remaining combat-proven card consumption/rewards, non-shop visual rewards, Black Market selection/feature-weight/discount fidelity, and special/VIP offers.

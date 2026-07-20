@@ -140,7 +140,13 @@ Working end-to-end (verified live):
   a widening league window) → `MatchFound` → `JoinMatch` → `MatchStart` → in-match
   `MatchEvent` relay to the opponent → `MatchResult`. Room joins/events are restricted to
   recorded match participants, WebSocket settlement requires matching reports from both
-  participants, and the database settlement claim is idempotent. Players move from
+  participants, and the database settlement claim is idempotent. Replacement clients send an
+  inventory-consuming activation as `MatchEvent { Event: "CardPlayed", Data: { Sequence,
+  CardId } }`: the server validates the authenticated owner's complete candidate list, durably
+  appends contiguous evidence before relaying the effect, acknowledges exact retries without
+  relaying twice, and requires terminal `UsedCards` order and multiplicity to match. Per-socket
+  message serialization prevents a sender's result from overtaking its last card event; durable
+  evidence is also consumed when a disconnect forfeit settles before MatchResult. Players move from
   `InGame` back to `Online`. Disconnects allow a configurable reconnect grace period,
   then resolve as a forfeit or no-reward cancellation; interrupted matches are recovered
   on server restart. Photon-era `GameEnded` reports interpret the recovered `EndReason`
