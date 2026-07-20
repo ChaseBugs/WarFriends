@@ -56,6 +56,45 @@ test("only confirmed events can advance supported achievement counters", () => {
   assert.equal(offset.achievements.data.find((group) => group.id === 2)?.offset, 0);
 });
 
+test("achievement acknowledgements and satisfied projections preserve exact state identity", () => {
+  const initial = createInitialProgression(NOW);
+  const materialized = advanceAchievementState(initial, 2, 100);
+  const revision = materialized.state.revision;
+
+  const zeroAdvance = advanceAchievementState(materialized.state, 2, 0);
+  const cappedAdvance = advanceAchievementState(materialized.state, 2, 1_000);
+  const confirmedProgress = validateAchievementProgressState(materialized.state, 2, 10);
+  const zeroOffset = acknowledgeAchievementOffsetState(materialized.state, 2, -999);
+
+  assert.equal(zeroAdvance.state, materialized.state);
+  assert.equal(cappedAdvance.state, materialized.state);
+  assert.equal(confirmedProgress.state, materialized.state);
+  assert.equal(zeroOffset.state, materialized.state);
+  assert.equal(materialized.state.revision, revision);
+
+  const league = synchronizeLeagueAchievementState(materialized.state, League.Gold1);
+  assert.notEqual(league.state, materialized.state);
+  assert.equal(synchronizeLeagueAchievementState(league.state, League.Silver3).state, league.state);
+
+  const cards = synchronizeCardsPlayedInMatchAchievementState(league.state, 5);
+  assert.notEqual(cards.state, league.state);
+  assert.equal(synchronizeCardsPlayedInMatchAchievementState(cards.state, 2).state, cards.state);
+});
+
+test("no-op achievement actions still persist a stale account normalization exactly once", () => {
+  const legacy = createInitialProgression(NOW);
+  legacy.achievements = {
+    data: [{ id: 2, offset: 9, value: 0, progress: [{ claimed: false }] }],
+  };
+
+  const normalized = acknowledgeAchievementOffsetState(legacy, 2, 0);
+  assert.notEqual(normalized.state, legacy);
+  assert.equal(normalized.state.revision, legacy.revision + 1);
+  assert.equal(normalized.achievements.data.find((group) => group.id === 2)?.offset, 0);
+  assert.equal(normalized.achievements.data.find((group) => group.id === 2)?.progress.length, 3);
+  assert.equal(acknowledgeAchievementOffsetState(normalized.state, 2, 0).state, normalized.state);
+});
+
 test("inventory achievement groups preserve source tiers and derive StatsManager-equivalent values", () => {
   assert.deepEqual(
     [0, 1, 8, 9, 10, 11, 15].map((id) =>

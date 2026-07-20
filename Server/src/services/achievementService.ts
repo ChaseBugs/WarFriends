@@ -244,6 +244,55 @@ export function serializeAchievementsData(achievements: AchievementState): strin
 }
 
 /**
+ * Compare the persisted wire model with a freshly derived achievement model.
+ *
+ * Identity alone cannot detect a no-op because `achievementStateFor` intentionally clones every
+ * group before applying schema and inventory projections. Conversely, comparing only the group
+ * touched by the caller would lose migrations for another newly supported group or tier. This
+ * field-by-field comparison covers the complete client-visible model and deliberately treats a
+ * different group order as normalization work: the derived order is stable by group Id, which
+ * keeps boot payloads and future comparisons deterministic.
+ */
+function achievementStatesEqual(
+  persisted: AchievementState | undefined,
+  derived: AchievementState,
+): boolean {
+  if (!persisted || persisted.data.length !== derived.data.length) return false;
+  return persisted.data.every((left, groupIndex) => {
+    const right = derived.data[groupIndex];
+    return Boolean(
+      right
+      && left.id === right.id
+      && left.offset === right.offset
+      && left.value === right.value
+      && left.progress.length === right.progress.length
+      && left.progress.every((tier, tierIndex) => tier.claimed === right.progress[tierIndex]?.claimed),
+    );
+  });
+}
+
+/**
+ * Persist an achievement model only when it changes durable player data.
+ *
+ * Buffered client acknowledgements and monotonic projections are routinely repeated. Returning
+ * the exact input object lets `mutateProgression` skip MongoDB completely for those replays. A
+ * legacy or stale model still receives one real revision because missing groups/tiers and changed
+ * inventory-backed values are meaningful migrations even when the requested group itself did not
+ * advance.
+ */
+function applyAchievementState(
+  state: PlayerProgressionState,
+  achievements: AchievementState,
+): AchievementMutationResult {
+  return achievementStatesEqual(state.achievements, achievements)
+    ? { state, achievements }
+    : {
+      state: { ...state, revision: state.revision + 1, achievements },
+      achievements,
+    };
+}
+
+/**
  * Advance a monotonic achievement counter from a fact already accepted by the server.
  * Values are capped at the final configured tier because the client applies the same clamp
  * in AchievementProgressGroup.SetLocalCurrentValue and no later reward depends on overflow.
@@ -263,10 +312,7 @@ export function advanceAchievementState(
   const group = achievements.data.find((candidate) => candidate.id === groupId)!;
   const finalTarget = definitions[definitions.length - 1].target;
   group.value = Math.min(finalTarget, group.value + amount);
-  return {
-    state: { ...state, revision: state.revision + 1, achievements },
-    achievements,
-  };
+  return applyAchievementState(state, achievements);
 }
 
 /**
@@ -289,10 +335,7 @@ export function synchronizeLeagueAchievementState(
   const group = achievements.data.find((candidate) => candidate.id === 13)!;
   const finalTarget = ACHIEVEMENT_DEFINITIONS[13][ACHIEVEMENT_DEFINITIONS[13].length - 1].target;
   group.value = Math.max(group.value, Math.min(finalTarget, leagueTier));
-  return {
-    state: { ...state, revision: state.revision + 1, achievements },
-    achievements,
-  };
+  return applyAchievementState(state, achievements);
 }
 
 /**
@@ -315,10 +358,7 @@ export function synchronizeCardsPlayedInMatchAchievementState(
   const achievements = achievementStateFor(state);
   const group = achievements.data.find((candidate) => candidate.id === 17)!;
   group.value = Math.max(group.value, Math.min(5, cardsPlayedInMatch));
-  return {
-    state: { ...state, revision: state.revision + 1, achievements },
-    achievements,
-  };
+  return applyAchievementState(state, achievements);
 }
 
 /**
@@ -337,10 +377,9 @@ export function validateAchievementProgressState(
   if (!group || !Number.isInteger(requestedProgress) || requestedProgress < 0 || requestedProgress > group.value) {
     throw new ApiError(ACHIEVEMENT_REWARD_NOT_FOUND, "Achievement progress is not confirmed by the server.");
   }
-  return {
-    state: { ...state, revision: state.revision + 1, achievements },
-    achievements,
-  };
+  // Action 220 carries no server-owned mutation. It persists only if deriving the authoritative
+  // snapshot above discovered an old schema or an inventory counter that needs normalization.
+  return applyAchievementState(state, achievements);
 }
 
 /**
@@ -360,10 +399,7 @@ export function acknowledgeAchievementOffsetState(
     throw new ApiError(ACHIEVEMENT_REWARD_NOT_FOUND, "Achievement offset is invalid.");
   }
   group.offset = 0;
-  return {
-    state: { ...state, revision: state.revision + 1, achievements },
-    achievements,
-  };
+  return applyAchievementState(state, achievements);
 }
 
 /**
@@ -423,14 +459,12 @@ export function recordRankedPvpAchievements(
     if (won) result = advanceAchievementState(result.state, 2, 1);
     if (squadPointsAwarded > 0) result = advanceAchievementState(result.state, 14, squadPointsAwarded);
 
-    // A loss by a player without a squad still materializes the recovered achievement shape
-    // so subsequent boot responses have a stable AchievementsData object.
+    // A loss by a player without a squad still materializes the recovered achievement shape on
+    // a legacy account. Once that shape is current, repeating this zero-progress synchronization
+    // returns the exact state so a normal loss does not create an unrelated MongoDB write.
     if (result.state === state) {
       const achievements = achievementStateFor(state);
-      result = {
-        state: { ...state, revision: state.revision + 1, achievements },
-        achievements,
-      };
+      result = applyAchievementState(state, achievements);
     }
     return result;
   });
