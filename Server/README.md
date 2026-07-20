@@ -373,13 +373,15 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   replacement IDs on success, so identities inside the verified rarity envelope remain
   client-selected until a nonce or client adapter is added. Run `npm run verify:card-catalog` to
   verify the generated artifact.
-- **Timed War Card crafting**: exact `CraftData` is returned at boot. Direct `CraftCard` atomically
+- **Timed and subscription War Card crafting**: exact `CraftData` is returned at boot. Direct `CraftCard` atomically
   consumes three same-rarity owned cards and creates the extracted 30-minute Bronze-to-Silver or
   60-minute Silver-to-Gold receipt. `ClaimCraftedCard` enforces server time, selects one playable
   next-rarity result with cryptographic randomness, grants once, and clears the receipt. Recovered
   17401/17601/17701 recovery bodies restore client state, and a claimed Gold craft proves starter
-  assignment ID_8. Platform subscription authority is now available, but subscription-only
-  `CraftAndClaimCard` remains rejected until its purchase action is wired to that entitlement.
+  assignment ID_8. Subscription-only action `2000` now validates the server-owned Play expiry,
+  consumes the same three-card recipe, grants a server-selected result, and leaves no timed receipt,
+  all in one progression revision. Inactive subscribers receive the recovery body that restores the
+  stock client's optimistic card removals.
 - **Squad War Card pool**: `DepositCards` validates the nested
   `AddedCards`/`RemovedCards` dictionaries, ownership, and the recovered 3-10 slot squad-level
   capacity before atomically exchanging inventory and `depositedCardsDic`. `WithdrawCard` verifies

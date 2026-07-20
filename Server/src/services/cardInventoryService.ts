@@ -364,6 +364,55 @@ export function claimCraftedCardState(
   return { state: next, cardInventory: inventory, cardCrafting, cardId };
 }
 
+/**
+ * Consume one valid recipe and grant its result immediately for an active subscriber.
+ *
+ * CardCraftingManager.CraftInstantWarcard removes the three inputs optimistically and sends
+ * action 2000 with the same `Cards` JSON used by timed crafting. Its success path is deliberately
+ * shared with ClaimCraftedCard and reads exactly `CardId`, so this transition must finish the
+ * whole exchange in one progression revision and leave no timed CraftData receipt behind.
+ *
+ * Subscription expiry is checked against server time. Returning CARD_NOT_FOUND for an inactive
+ * subscription is intentional: that recovered error branch reloads CardManagerData and clears
+ * `waitingForServerResponse`, restoring the stock client's optimistic local removals. The old
+ * protocol has no subscription-specific crafting error with equivalent recovery behavior.
+ */
+export function craftAndClaimSubscribedCardState(
+  state: PlayerProgressionState,
+  now: number,
+  cards: readonly string[],
+  choose: (upperBound: number) => number = (upperBound) => randomInt(upperBound),
+): CardCraftingMutationResult {
+  if (state.subscription?.type !== "subscription1" || state.subscription.expireTime <= now) {
+    throw new ApiError(CARD_NOT_FOUND, "An active subscription is required for instant crafting.");
+  }
+  const existing = cardCraftingStateFor(state);
+  if (existing.cards.length > 0 && existing.start < existing.end) {
+    throw new ApiError(ALREADY_CRAFTING, "Player is already crafting a card.");
+  }
+
+  const inputRarity = recipeRarity(cards);
+  const inventory = cardInventoryStateFor(state);
+  ensureOwnedRecipe(inventory, cards);
+  consumeRecipe(inventory, cards);
+
+  const cardId = craftedResultCard(inputRarity, choose);
+  const current = inventory.cardData[cardId]?.amount ?? 0;
+  if (!Number.isSafeInteger(current) || current < 0 || current === Number.MAX_SAFE_INTEGER) {
+    throw new ApiError(ApiErrorCode.InternalServerError, `Card count for ${cardId} is invalid.`);
+  }
+  inventory.cardData[cardId] = { amount: current + 1 };
+  const cardCrafting = createInitialCardCrafting();
+  const next: PlayerProgressionState = {
+    ...state,
+    revision: state.revision + 1,
+    cardInventory: inventory,
+    cardCrafting,
+    goldCardsCrafted: (state.goldCardsCrafted ?? 0) + (inputRarity === 2 ? 1 : 0),
+  };
+  return { state: next, cardInventory: inventory, cardCrafting, cardId };
+}
+
 export function serializeCardCrafting(value: CardCraftingState): string {
   return JSON.stringify(value);
 }

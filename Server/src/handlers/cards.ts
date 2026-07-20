@@ -7,6 +7,7 @@ import {
   cardCraftingStateFor,
   cardInventoryStateFor,
   claimCraftedCardState,
+  craftAndClaimSubscribedCardState,
   parseCraftingCards,
   serializeCardCrafting,
   serializeCardInventory,
@@ -28,7 +29,7 @@ import { authed, type HandlerEntry } from "./types";
  * client cannot remain desynchronized after a rejected request.
  */
 async function craftingFailure(
-  action: DbAction.CraftCard | DbAction.ClaimCraftedCard,
+  action: DbAction.CraftCard | DbAction.ClaimCraftedCard | DbAction.CraftAndClaimCard,
   player: PlayerDocument,
   error: unknown,
 ): Promise<ResponseEnvelope> {
@@ -140,6 +141,19 @@ export const cardHandlers: Record<number, HandlerEntry> = {
       return ok(DbAction.ClaimCraftedCard, { CardId: result.cardId });
     } catch (error) {
       return craftingFailure(DbAction.ClaimCraftedCard, player!, error);
+    }
+  }),
+
+  [DbAction.CraftAndClaimCard]: authed(async ({ player, req }) => {
+    try {
+      const cards = parseCraftingCards(req.Cards);
+      const result = await mutateProgression(player!.id, (state, now) =>
+        craftAndClaimSubscribedCardState(state, now, cards));
+      // The recovered action-2000 parser falls through to GDNAPODCNCI, the same method used by
+      // ClaimCraftedCard. It reads only CardId, grants that identity locally, and clears CraftData.
+      return ok(DbAction.CraftAndClaimCard, { CardId: result.cardId });
+    } catch (error) {
+      return craftingFailure(DbAction.CraftAndClaimCard, player!, error);
     }
   }),
 };

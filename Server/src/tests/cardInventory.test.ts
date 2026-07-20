@@ -20,6 +20,7 @@ import {
   consumePvpUsedCardsState,
   createInitialCardCrafting,
   createInitialCardInventory,
+  craftAndClaimSubscribedCardState,
   parsePvpUsedCards,
   purchaseCardPackState,
   startCardCraftingState,
@@ -247,6 +248,52 @@ test("crafting rejects invalid recipes, insufficient ownership, concurrent recei
     (error: unknown) => (error as { code?: number }).code === CRAFTED_CARD_NOT_READY,
   );
   assert.equal(claimed.cardInventory.cardData[claimed.cardId!]?.amount, beforeClaim + 1);
+});
+
+test("active subscription crafts and claims immediately in one atomic state transition", () => {
+  const initial = createInitialProgression(NOW);
+  initial.subscription = {
+    type: "subscription1",
+    subscribeSince: NOW - 100,
+    expireTime: NOW + 3_600,
+    dogTagTimerLock: NOW - 100,
+  };
+  initial.cardInventory = {
+    ...createInitialCardInventory(),
+    cardData: { AMMOCRATE: { amount: 3 } },
+  };
+
+  const result = craftAndClaimSubscribedCardState(
+    initial,
+    NOW,
+    ["AMMOCRATE", "AMMOCRATE", "AMMOCRATE"],
+    () => 0,
+  );
+  const definition = generatedCardCatalog.cards.find((card) => card.name === result.cardId);
+  assert.equal(definition?.rarity, 2);
+  assert.equal(result.cardInventory.cardData.AMMOCRATE, undefined);
+  assert.equal(result.cardInventory.cardData[result.cardId!]?.amount, 1);
+  assert.deepEqual(result.cardCrafting, createInitialCardCrafting());
+  assert.equal(result.state.revision, initial.revision + 1);
+
+  const expired = {
+    ...initial,
+    subscription: { ...initial.subscription, expireTime: NOW },
+  };
+  assert.throws(
+    () => craftAndClaimSubscribedCardState(expired, NOW, ["AMMOCRATE", "AMMOCRATE", "AMMOCRATE"]),
+    (error: unknown) => (error as { code?: number }).code === CARD_NOT_FOUND,
+  );
+
+  const activeCraft = startCardCraftingState(initial, NOW, ["AMMOCRATE", "AMMOCRATE", "AMMOCRATE"]);
+  assert.throws(
+    () => craftAndClaimSubscribedCardState(
+      activeCraft.state,
+      NOW + 1,
+      ["AMMOCRATE", "AMMOCRATE", "AMMOCRATE"],
+    ),
+    (error: unknown) => (error as { code?: number }).code === ALREADY_CRAFTING,
+  );
 });
 
 test("normal squad-card deposits atomically exchange inventory and enforce source capacity", () => {
