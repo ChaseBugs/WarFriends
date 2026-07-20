@@ -5,6 +5,7 @@ import { AccountType } from "../constants";
 import type { PlayerDocument, SquadEventProgressDocument } from "../db";
 import { newPlayer } from "../dtos";
 import {
+  applyConfirmedPvpSquadEventProgress,
   buildSquadEventDefinition,
   buildSquadEventProgress,
   joinSquadEvent,
@@ -23,14 +24,14 @@ const SEASON = {
       reward: 100,
       assignments: [
         { id: 7, target: 12 },
-        { id: 9, target: 3, param: "2.5" },
+        { id: 8, target: 3, param: "2.5" },
       ],
     },
     {
       reward: 200,
       assignments: [
-        { id: 8, target: 20 },
-        { id: 10, target: 5 },
+        { id: 7, target: 20 },
+        { id: 8, target: 5 },
       ],
     },
   ],
@@ -71,6 +72,12 @@ test("Squad Event configuration rejects ambiguous schedules and incompatible tie
     }),
     /reward must be an integer/,
   );
+  assert.throws(
+    () => parseSquadEventConfig({
+      seasons: [{ ...SEASON, tiers: [{ ...SEASON.tiers[0], assignments: [{ id: 14, target: 1 }] }] }],
+    }),
+    /not backed by a server-confirmed gameplay fact/,
+  );
 });
 
 test("EventDefinition uses the exact flattened stock-client field names", () => {
@@ -81,10 +88,10 @@ test("EventDefinition uses the exact flattened stock-client field names", () => 
     assignmentCount: 2,
     T0Reward: 100,
     T0A0Id: 7,
-    T0A1Id: 9,
+    T0A1Id: 8,
     T1Reward: 200,
-    T1A0Id: 8,
-    T1A1Id: 10,
+    T1A0Id: 7,
+    T1A1Id: 8,
   });
 });
 
@@ -99,7 +106,7 @@ test("SquadEventProgress uses exact DynamoDB S/N wrappers and zero-based tier ke
       reward: 100,
       assignments: [
         { id: 7, value: 4.5, target: 12 },
-        { id: 9, value: 1, target: 3, param: "2.5" },
+        { id: 8, value: 1, target: 3, param: "2.5" },
       ],
     }],
     revision: 3,
@@ -118,6 +125,55 @@ test("SquadEventProgress uses exact DynamoDB S/N wrappers and zero-based tier ke
     T0A1Target: { N: "3" },
     T0A1Param: { N: "2.5" },
   });
+});
+
+test("confirmed PvP facts advance only recovered win and play assignment fractions", () => {
+  const now = new Date("2026-07-20T01:00:00Z");
+  const initial: SquadEventProgressDocument = {
+    squadId: "Alpha",
+    eventId: SEASON.id,
+    configHash: squadEventConfigHash(SEASON),
+    activeTier: 0,
+    tiers: [
+      {
+        reward: 100,
+        assignments: [
+          { id: 7, value: 0, target: 12 },
+          { id: 8, value: 0, target: 3, param: "2.5" },
+        ],
+      },
+      {
+        reward: 200,
+        assignments: [
+          { id: 7, value: 0, target: 20 },
+          { id: 8, value: 0, target: 5 },
+        ],
+      },
+    ],
+    revision: 0,
+    joinedAt: now,
+    updatedAt: now,
+  };
+
+  const winner = applyConfirmedPvpSquadEventProgress(initial, SEASON, true, now);
+  assert.equal(winner.changed, true);
+  assert.equal(winner.progress.tiers[0].assignments[0].value, Math.fround(1 / 12));
+  assert.equal(winner.progress.tiers[0].assignments[1].value, Math.fround(1 / 3));
+  assert.equal(winner.progress.tiers[1].assignments[0].value, 0);
+  assert.equal(winner.progress.activeTier, 0);
+  assert.equal(winner.progress.revision, 1);
+  assert.equal(initial.tiers[0].assignments[0].value, 0);
+
+  const loser = applyConfirmedPvpSquadEventProgress(initial, SEASON, false, now);
+  assert.equal(loser.progress.tiers[0].assignments[0].value, 0);
+  assert.equal(loser.progress.tiers[0].assignments[1].value, Math.fround(1 / 3));
+
+  const damaged = structuredClone(initial);
+  damaged.tiers[0].assignments[0].value = Number.NaN;
+  assert.throws(
+    () => applyConfirmedPvpSquadEventProgress(damaged, SEASON, true, now),
+    /does not match its immutable season definition/,
+  );
 });
 
 test("LevelProgress reproduces the viewer-specific LevelManager float calculation", () => {

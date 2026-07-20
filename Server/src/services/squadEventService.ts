@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { createHash } from "node:crypto";
+import type { ClientSession } from "mongodb";
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import { config } from "../config";
 import {
@@ -15,6 +16,12 @@ const MAX_UNIX_SECONDS = 2_147_483_647;
 const MAX_SEASONS = 128;
 const MAX_TIERS = 32;
 const MAX_ASSIGNMENTS = 32;
+
+/**
+ * Assignment.BFLFNAENJMJ IDs whose facts the current backend proves at PvP settlement.
+ * Combat-stat IDs remain closed until the Photon/replacement relay validates those events.
+ */
+export const SUPPORTED_SQUAD_EVENT_ASSIGNMENT_IDS = new Set([7, 8]);
 
 export interface SquadEventAssignmentConfig {
   id: number;
@@ -121,6 +128,11 @@ export function parseSquadEventConfig(input: unknown): SquadEventConfig {
         const assignment = object(rawAssignment, `${id}.tiers[${tierIndex}].assignments[${assignmentIndex}]`);
         exactKeys(assignment, ["id", "target", "param"], `${id}.tiers[${tierIndex}].assignments[${assignmentIndex}]`);
         const assignmentId = integer(assignment.id, `${id}.assignment.id`, 0);
+        if (!SUPPORTED_SQUAD_EVENT_ASSIGNMENT_IDS.has(assignmentId)) {
+          throw new Error(
+            `${id}.assignment.id ${assignmentId} is not backed by a server-confirmed gameplay fact.`,
+          );
+        }
         if (assignmentIds.has(assignmentId)) throw new Error(`${id} tier ${tierIndex} repeats assignment ${assignmentId}.`);
         assignmentIds.add(assignmentId);
         return {
@@ -165,7 +177,7 @@ export function squadEventConfigHash(season: SquadEventSeasonConfig): string {
   return createHash("sha256").update(JSON.stringify(season)).digest("hex");
 }
 
-async function activeSquadEvent(now: Date): Promise<SquadEventSeasonConfig | null> {
+export async function getActiveConfiguredSquadEvent(now = new Date()): Promise<SquadEventSeasonConfig | null> {
   return selectActiveSquadEvent(await configuredSeasons(), Math.floor(now.getTime() / 1000));
 }
 
@@ -249,6 +261,32 @@ function assertProgressMatchesSeason(
       "The active Squad Event definition changed after progress was created.",
     );
   }
+  const validShape = Number.isSafeInteger(progress.activeTier)
+    && progress.activeTier >= 0
+    && progress.activeTier < season.tiers.length
+    && Number.isSafeInteger(progress.revision)
+    && progress.revision >= 0
+    && progress.tiers.length === season.tiers.length
+    && progress.tiers.every((tier, tierIndex) => {
+      const configuredTier = season.tiers[tierIndex];
+      return tier.reward === configuredTier.reward
+        && tier.assignments.length === configuredTier.assignments.length
+        && tier.assignments.every((assignment, assignmentIndex) => {
+          const configured = configuredTier.assignments[assignmentIndex];
+          return assignment.id === configured.id
+            && assignment.target === configured.target
+            && assignment.param === configured.param
+            && Number.isFinite(assignment.value)
+            && assignment.value >= 0
+            && assignment.value <= 1;
+        });
+    });
+  if (!validShape) {
+    throw new ApiError(
+      ApiErrorCode.InternalServerError,
+      "Stored Squad Event progress does not match its immutable season definition.",
+    );
+  }
   return progress;
 }
 
@@ -281,9 +319,109 @@ export async function joinSquadEventForSeason(
 }
 
 export async function joinSquadEvent(player: PlayerDocument, now = new Date()): Promise<SquadEventProgressDocument> {
-  const season = await activeSquadEvent(now);
+  const season = await getActiveConfiguredSquadEvent(now);
   if (!season) throw new ApiError(ApiErrorCode.NoActiveEvent, "No Squad Event is active.");
   return joinSquadEventForSeason(player, season, now);
+}
+
+export interface SquadEventPvpProgressResult {
+  progress: SquadEventProgressDocument;
+  changed: boolean;
+}
+
+/**
+ * Apply only facts proven by the two-party PvP settlement.
+ *
+ * The recovered assignment classes return a fraction for one battle, not a raw count:
+ * WinMultiplayerMatches (7) contributes `1 / target` only to the winner and
+ * PlayMultiplayerMatches (8) contributes `1 / target` to either participant. Math.fround
+ * reproduces the binary32 values that the original Unity client serialized in
+ * `SquadEventUpdate`. No tier is advanced and no reward is granted here; those rules were
+ * live-ops/backend-owned and have not been recovered.
+ */
+export function applyConfirmedPvpSquadEventProgress(
+  current: SquadEventProgressDocument,
+  season: SquadEventSeasonConfig,
+  won: boolean,
+  now = new Date(),
+): SquadEventPvpProgressResult {
+  assertProgressMatchesSeason(current, season);
+  const tier = current.tiers[current.activeTier];
+  if (!tier) return { progress: current, changed: false };
+  let changed = false;
+  const assignments = tier.assignments.map((assignment) => {
+    const eligible = assignment.id === 8 || (assignment.id === 7 && won);
+    if (!eligible || assignment.value >= 1) return assignment;
+    const value = Math.min(1, Math.fround(assignment.value + Math.fround(1 / assignment.target)));
+    if (value === assignment.value) return assignment;
+    changed = true;
+    return { ...assignment, value };
+  });
+  if (!changed) return { progress: current, changed: false };
+  return {
+    changed: true,
+    progress: {
+      ...current,
+      tiers: current.tiers.map((entry, index) => (index === current.activeTier
+        ? { ...entry, assignments }
+        : entry)),
+      revision: current.revision + 1,
+      updatedAt: now,
+    },
+  };
+}
+
+export type SquadEventProjectionStatus =
+  | "not_joined"
+  | "not_member"
+  | "unchanged"
+  | "updated"
+  | "config_mismatch"
+  | "invalid_progress";
+
+/**
+ * Project one confirmed participant result inside the match settlement transaction.
+ *
+ * The match's `active -> finished` compare-and-set is the idempotency key: this function is
+ * reached only by the transaction that wins that transition. Roster membership is rechecked
+ * in the same snapshot, so a stale player mirror cannot contribute to a squad the player left.
+ */
+export async function recordConfirmedPvpSquadEventProgress(
+  session: ClientSession,
+  season: SquadEventSeasonConfig,
+  playerId: string,
+  squadId: string,
+  won: boolean,
+  now = new Date(),
+): Promise<SquadEventProjectionStatus> {
+  if (!squadId || !(await squads().findOne({ name: squadId, "members.playerId": playerId }, { session }))) {
+    return "not_member";
+  }
+  const current = await squadEventProgress().findOne({ squadId, eventId: season.id }, { session });
+  if (!current) return "not_joined";
+  if (current.configHash !== squadEventConfigHash(season)) return "config_mismatch";
+  let next: SquadEventPvpProgressResult;
+  try {
+    next = applyConfirmedPvpSquadEventProgress(current, season, won, now);
+  } catch (error) {
+    // A damaged projection is isolated from core match settlement. Its audit status remains on
+    // the terminal match so operators can repair it without granting the same PvP rewards twice.
+    if (error instanceof ApiError) return "invalid_progress";
+    throw error;
+  }
+  if (!next.changed) return "unchanged";
+  const update = await squadEventProgress().updateOne(
+    { _id: current._id, revision: current.revision, configHash: current.configHash },
+    {
+      $set: { tiers: next.progress.tiers, updatedAt: now },
+      $inc: { revision: 1 },
+    },
+    { session },
+  );
+  if (update.modifiedCount !== 1) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Concurrent Squad Event progress update was rejected.");
+  }
+  return "updated";
 }
 
 /** Optional event fields appended to squad-detail responses for the currently active season. */
@@ -292,7 +430,7 @@ export async function getSquadEventWireFields(
   playerLevel: number,
   now = new Date(),
 ): Promise<Record<string, unknown>> {
-  const season = await activeSquadEvent(now);
+  const season = await getActiveConfiguredSquadEvent(now);
   if (!season) return {};
   const progress = await squadEventProgress().findOne({ squadId, eventId: season.id });
   return {

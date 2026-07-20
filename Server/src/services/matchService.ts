@@ -10,6 +10,12 @@ import { consumePvpUsedCardsState } from "./cardInventoryService";
 import { progressionForPlayer } from "./playerStateService";
 import { applyLevelExperienceState } from "./levelProgressionService";
 import { calculateArmyPower } from "./armyPowerService";
+import {
+  getActiveConfiguredSquadEvent,
+  recordConfirmedPvpSquadEventProgress,
+  squadEventConfigHash,
+  type SquadEventProjectionStatus,
+} from "./squadEventService";
 
 /**
  * Persistent PvP match lifecycle and reward settlement.
@@ -49,6 +55,12 @@ export interface MatchDoc {
   usedCardsReports?: Record<string, string[]>;
   /** Immutable core reward receipts returned unchanged by finished GameEnded retries. */
   rewardReceipts?: Record<string, MatchPlayerReward>;
+  /** Audit receipt for Squad Event projection committed with the terminal match transition. */
+  squadEventProjection?: {
+    eventId: string;
+    configHash: string;
+    participants: Array<{ playerId: string; squadId: string; status: SquadEventProjectionStatus }>;
+  };
   createdAt: Date;
   /** Terminal timestamp for both normal completion and cancellation. */
   endedAt?: Date;
@@ -425,10 +437,22 @@ export interface SettlementResult {
 
 /**
  * Settle a finished match. Idempotent: a second call for an already-finished match is a
- * no-op. Core rewards, reported War Card consumption, and the terminal match row commit in
- * one transaction. Secondary assignment/achievement projections run only after that commit.
+ * no-op. Core rewards, reported War Card consumption, supported Squad Event progress, and the
+ * terminal match row commit in one transaction. Non-critical daily-assignment and achievement
+ * projections run only after that commit and cannot cause the client to retry core rewards.
  */
 export async function settleResult(matchId: string, winnerId: string, reportedById?: string): Promise<SettlementResult> {
+  // Live-event configuration is resolved before opening the MongoDB transaction. A malformed
+  // operator file disables this optional projection for the match but must not prevent the
+  // already-confirmed participants from receiving their core PvP settlement.
+  const squadEventSeason = await getActiveConfiguredSquadEvent().catch((error: unknown) => {
+    logger.warnWithEmoji("⚠️", "Squad Event configuration could not be used for PvP settlement", "MATCH", {
+      matchId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return null;
+  });
+  const settlementTime = new Date();
   const transaction = await withMongoTransaction(async (session) => {
     const match = await matches().findOne({ matchId }, { session }) as unknown as MatchDoc | null;
     if (!match) return { result: { matchId, winnerId, rewarded: false }, grants: [] as CoreGrant[], unknown: true };
@@ -464,9 +488,41 @@ export async function settleResult(matchId: string, winnerId: string, reportedBy
     const rewardReceipts = Object.fromEntries(
       grants.map((grant) => [grant.playerId, grant.reward]),
     );
+    const eventParticipants: Array<{
+      playerId: string;
+      squadId: string;
+      status: SquadEventProjectionStatus;
+    }> = [];
+    if (squadEventSeason) {
+      for (const grant of grants) {
+        const status = await recordConfirmedPvpSquadEventProgress(
+          session,
+          squadEventSeason,
+          grant.playerId,
+          grant.squadName,
+          grant.won,
+          settlementTime,
+        );
+        eventParticipants.push({ playerId: grant.playerId, squadId: grant.squadName, status });
+      }
+    }
     const finish = await matches().updateOne(
       { matchId, state: "active" },
-      { $set: { state: "finished", winnerId, rewardReceipts, endedAt: new Date() } },
+      {
+        $set: {
+          state: "finished",
+          winnerId,
+          rewardReceipts,
+          endedAt: settlementTime,
+          ...(squadEventSeason ? {
+            squadEventProjection: {
+              eventId: squadEventSeason.id,
+              configHash: squadEventConfigHash(squadEventSeason),
+              participants: eventParticipants,
+            },
+          } : {}),
+        },
+      },
       { session },
     );
     if (finish.modifiedCount !== 1) throw new Error(`Concurrent settlement rejected match ${matchId}.`);

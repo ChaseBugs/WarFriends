@@ -19,7 +19,7 @@ Each season uses this strict shape:
         {
           "reward": 100,
           "assignments": [
-            { "id": 1, "target": 10, "param": 2 }
+            { "id": 7, "target": 10 }
           ]
         }
       ]
@@ -32,6 +32,12 @@ Times are UTC Unix seconds. Seasons may not overlap. Every tier must have the sa
 count because the stock client definition contains one global `assignmentCount`. `reward`,
 assignment `id`, target semantics, and optional numeric `param` must come from reviewed live-ops
 data; the example above demonstrates syntax only and is not a recovered WarFriends season.
+
+The current authoritative assignment allowlist is deliberately limited to recovered IDs `7`
+(`WinMultiplayerMatches`) and `8` (`PlayMultiplayerMatches`). Both are derived from the durable
+two-participant PvP result consensus. Other IDs depend on combat events the current relay cannot
+yet prove, so configuration loading fails instead of publishing an event that can be advanced by
+forged client statistics.
 
 Configuration is loaded on first use and retained for the process lifetime. Restart the backend
 after deploying a reviewed schedule. A malformed configured file fails the request instead of

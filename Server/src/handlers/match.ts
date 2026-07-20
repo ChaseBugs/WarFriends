@@ -15,6 +15,8 @@ import { findById } from "../services/playerService";
 import { progressionForPlayer, unixNow } from "../services/playerStateService";
 import { parsePvpUsedCards } from "../services/cardInventoryService";
 import { authed, type HandlerEntry } from "./types";
+import { getSquadEventWireFields } from "../services/squadEventService";
+import logger from "../utils/logger";
 
 // PvP match lifecycle reported to the meta server. Live event traffic runs over /hub, while
 // these actions preserve compatibility with the recovered client's Photon-era REST calls.
@@ -131,6 +133,22 @@ export const matchHandlers: Record<number, HandlerEntry> = {
     const responseWinner = report.settlement?.winnerId ?? winnerId;
     const resultAvailable = report.status === "confirmed" || report.status === "finished";
     const rewardReceipt = report.settlement?.rewards?.[player!.id];
+    let squadEventFields: Record<string, unknown> = {};
+    if (resultAvailable && updated?.player.squadName) {
+      try {
+        const fields = await getSquadEventWireFields(updated.player.squadName, updated.player.level);
+        // The GameEnded parser consumes only SquadEventProgress. EventDefinition is refreshed
+        // by squad-detail reads and is intentionally not duplicated into every match response.
+        if (fields.SquadEventProgress) squadEventFields = { SquadEventProgress: fields.SquadEventProgress };
+      } catch (error) {
+        // Core settlement may already be committed. A configuration/read problem must not turn
+        // that success into a retryable GameEnded failure after rewards and progress changed.
+        logger.warnWithEmoji("⚠️", "Could not append Squad Event progress to GameEnded", "MATCH", {
+          playerId: player!.id,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
     return ok(DbAction.GameEnded, {
       Settled: report.settlement?.rewarded ?? false,
       ResultStatus: report.status,
@@ -155,6 +173,7 @@ export const matchHandlers: Record<number, HandlerEntry> = {
       MedalsBalance: updated?.player.medalsBalance ?? player!.player.medalsBalance,
       PlacementMatchesRequired: updated?.player.remainingMatches ?? player!.player.remainingMatches,
       BeginnersLeague: updated?.player.beginnersLeague ?? player!.player.beginnersLeague,
+      ...squadEventFields,
       Time: unixNow(),
     });
   }),

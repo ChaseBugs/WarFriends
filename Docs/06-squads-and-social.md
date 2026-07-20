@@ -87,8 +87,8 @@ squad or manager should own a player.
 adds its one-based `Position` plus the requested `RoundId`. Results are ordered from the
 MongoDB-authoritative squad leaderboard. Because the archived production season scheduler is not
 present in either recovered APK, `SquadWarsId` is deliberately prefixed `reconstructed-`; it must
-not be mistaken for recovered live-ops data. Joining seasons, contributions, and reward claims
-remain separate state-changing work.
+not be mistaken for recovered live-ops data. Wars scheduling and rewards remain separate
+state-changing work.
 
 ## Squad Event participation
 
@@ -127,12 +127,21 @@ interpolate the viewing player's assignment reward display. The backend reproduc
 viewer and does not persist one member's level ratio into shared squad progress.
 
 `GetSquadDetails` and `GetFullSquadInfo` expose the active definition and, after the squad joins,
-its progress. This is intentionally only the participation foundation. The old client sends
-`SquadEventUpdate` floats from `GameEnded`, but modified clients can forge them; the backend does
-not accept those values as authoritative. Contributions, tier advancement, and claims remain
-closed until assignment IDs can be mapped to server-confirmed match facts and reviewed reward
-definitions. Actions 222/223 belong to the separate Event Assignment feature and are not treated
-as Squad Event claims.
+its progress. Confirmed two-player PvP settlement advances only recovered assignment IDs `7`
+(`WinMultiplayerMatches`) and `8` (`PlayMultiplayerMatches`). The same MongoDB transaction that
+consumes the active match records and commits both players' core rewards increments the current
+tier's Unity-compatible binary32 fractions, updates the shared event revision, and stores a match
+audit receipt. A retry cannot advance progress after the match has already become `finished`.
+`GameEnded` returns the new `SquadEventProgress` snapshot when available. A corrupted progress row
+is recorded as `invalid_progress` in the match audit receipt and skipped, so optional live-event
+state cannot roll back otherwise valid core PvP rewards.
+
+The old client also submits a `SquadEventUpdate` float array, but the backend ignores it. Modified
+clients can forge those values. Configuration rejects every other assignment ID—including kills,
+crates, deployments, and War Cards—until the Photon/replacement relay can prove the corresponding
+combat facts. Reaching fraction 1 does not advance `ActiveTier` or grant a reward: tier completion,
+reward delivery, and claim rules were not recovered and remain closed. Actions 222/223 belong to
+the separate Event Assignment feature and are not treated as Squad Event claims.
 
 ## Squad creation economy
 

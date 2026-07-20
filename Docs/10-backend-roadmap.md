@@ -56,7 +56,7 @@ and persists per-player match receipts for exact finished-request replay.
 ## Social and operations
 
 - replace or repoint Photon Chat;
-- derive Squad Event contributions from confirmed matches, then add reviewed claims and wars;
+- extend Squad Event facts beyond confirmed PvP win/play, then add reviewed tier claims and wars;
 - add friend graph, pagination, and push delivery;
 - add moderation review, sanctions, and appeals;
 - extend the process-local HTTP token bucket to shared HTTP/WebSocket enforcement, then add
