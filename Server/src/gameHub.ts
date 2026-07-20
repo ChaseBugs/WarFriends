@@ -3,7 +3,7 @@ import type { Server as HttpServer } from "http";
 import { WebSocket, WebSocketServer } from "ws";
 import { authenticate } from "./services/authService";
 import { findById } from "./services/playerService";
-import { enqueue, remove as leaveQueue, restoreWaiting } from "./services/matchmakingService";
+import { enqueueForHub, removeForHub as leaveQueue, restoreWaitingForHub } from "./services/matchmakingService";
 import {
   cancelMatch,
   createMatch,
@@ -38,7 +38,12 @@ import {
   SQUAD_CHAT_REDIS_CHANNEL,
   type SquadChatWireMessage,
 } from "./services/squadChatService";
-import { redisPublish, redisSubscribe } from "./redis";
+import { isRedisAvailable, redisPublish, redisSubscribe } from "./redis";
+import {
+  buildPvpFanoutNotice,
+  parsePvpFanoutNotice,
+  PVP_FANOUT_REDIS_CHANNEL,
+} from "./services/pvpFanoutService";
 import {
   WebSocketRateLimiter,
   webSocketPayloadLimit,
@@ -110,10 +115,17 @@ function scheduleMatchmakingTimeout(playerId: string): void {
     matchmakingTimers.delete(playerId);
     // remove returns false when the player was paired just before this callback. In that
     // race, suppressing MatchSearchTimedOut prevents a stale timeout after MatchFound.
-    if (!leaveQueue(playerId)) return;
-    sendToPlayer(playerId, {
-      Type: "MatchSearchTimedOut",
-      Payload: { TimeoutSeconds: Math.max(1, config.matchmakingTimeout) },
+    void leaveQueue(playerId).then((removed) => {
+      if (!removed) return;
+      sendToPlayer(playerId, {
+        Type: "MatchSearchTimedOut",
+        Payload: { TimeoutSeconds: Math.max(1, config.matchmakingTimeout) },
+      });
+    }).catch((error: unknown) => {
+      logger.match.error("Matchmaking timeout cleanup failed", {
+        playerId,
+        error: error instanceof Error ? error.message : String(error),
+      });
     });
   }, delayMs);
   timer.unref();
@@ -291,12 +303,44 @@ async function receiveRemoteSquadChat(raw: string): Promise<void> {
   if (fanout) deliverSquadChatMessage(fanout.message, fanout.memberPlayerIds);
 }
 
+async function receiveRemotePvpFanout(raw: string): Promise<void> {
+  const notice = parsePvpFanoutNotice(raw);
+  if (!notice || notice.originId === hubInstanceId || !onlinePlayers.has(notice.targetPlayerId)) return;
+  // MongoDB is the authority for both membership and lifecycle. Redis cannot make an arbitrary
+  // local socket believe it owns a match merely by naming that player in a pub/sub payload.
+  const match = await getMatch(notice.matchId);
+  if (!match
+    || match.state !== "active"
+    || !match.players.some((participant) => participant.playerId === notice.targetPlayerId)) return;
+  sendToPlayer(notice.targetPlayerId, notice.envelope);
+}
+
+async function deliverMatchFound(
+  playerId: string,
+  matchId: string,
+  envelope: ClientEnvelope,
+): Promise<boolean> {
+  if (sendToPlayer(playerId, envelope)) return true;
+  if (!isRedisAvailable()) return false;
+  return redisPublish(
+    PVP_FANOUT_REDIS_CHANNEL,
+    buildPvpFanoutNotice(hubInstanceId, playerId, matchId, envelope),
+  );
+}
+
 export async function createGameHub(httpServer: HttpServer): Promise<WebSocketServer> {
   roomManager.setSender(sendToClientId);
 
   await redisSubscribe(SQUAD_CHAT_REDIS_CHANNEL, (raw) => {
     void receiveRemoteSquadChat(raw).catch((error: unknown) => {
       logger.websocket.error("Remote Squad Chat fan-out failed", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    });
+  });
+  await redisSubscribe(PVP_FANOUT_REDIS_CHANNEL, (raw) => {
+    void receiveRemotePvpFanout(raw).catch((error: unknown) => {
+      logger.websocket.error("Remote PvP fan-out failed", {
         error: error instanceof Error ? error.message : String(error),
       });
     });
@@ -364,7 +408,7 @@ export async function createGameHub(httpServer: HttpServer): Promise<WebSocketSe
       const eviction = roomManager.evictClient(client.id);
       if (eviction) scheduleDisconnectResolution(eviction);
       if (client.playerId) {
-        leaveQueue(client.playerId);
+        void leaveQueue(client.playerId);
         clearMatchmakingTimer(client.playerId);
         if (onlinePlayers.get(client.playerId) === client.id) onlinePlayers.delete(client.playerId);
       }
@@ -489,11 +533,20 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
       if (doc.player.status === PlayerStatus.InGame) {
         return send(client, { Type: "MatchError", Payload: { Reason: "AlreadyInBattle" } });
       }
-      const opponentId = enqueue({
-        playerId: doc.id,
-        armyPower: doc.player.armyPower,
-        leagueTier: doc.player.leagueTier,
-      });
+      let opponentId: string | null;
+      try {
+        opponentId = await enqueueForHub({
+          playerId: doc.id,
+          armyPower: doc.player.armyPower,
+          leagueTier: doc.player.leagueTier,
+        });
+      } catch (error: unknown) {
+        logger.match.error("Matchmaking coordination failed", {
+          playerId: doc.id,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        return send(client, { Type: "MatchError", Payload: { Reason: "CoordinationUnavailable" } });
+      }
       if (!opponentId) {
         scheduleMatchmakingTimeout(doc.id);
         send(client, { Type: "Searching", Payload: {} });
@@ -502,14 +555,18 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
       clearMatchmakingTimer(doc.id);
       clearMatchmakingTimer(opponentId);
       const opponent = await findById(opponentId);
-      const opponentClientId = onlinePlayers.get(opponentId);
-      const opponentClient = opponentClientId ? clients.get(opponentClientId) : undefined;
       if (!opponent
-        || opponent.player.status === PlayerStatus.InGame
-        || !opponentClient
-        || opponentClient.socket.readyState !== WebSocket.OPEN) {
+        || opponent.player.status === PlayerStatus.InGame) {
         // Opponent vanished between queueing and pairing; requeue this player.
-        enqueue({ playerId: doc.id, armyPower: doc.player.armyPower, leagueTier: doc.player.leagueTier });
+        try {
+          await restoreWaitingForHub([{
+            playerId: doc.id,
+            armyPower: doc.player.armyPower,
+            leagueTier: doc.player.leagueTier,
+          }]);
+        } catch {
+          return send(client, { Type: "MatchError", Payload: { Reason: "CoordinationUnavailable" } });
+        }
         scheduleMatchmakingTimeout(doc.id);
         send(client, { Type: "Searching", Payload: {} });
         return;
@@ -527,11 +584,9 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
         const candidates: MatchPlayer[] = [];
         for (const [index, candidate] of [self, other].entries()) {
           const current = fresh[index];
-          const currentClientId = onlinePlayers.get(candidate.playerId);
-          const currentClient = currentClientId ? clients.get(currentClientId) : undefined;
           if (!current
             || current.player.status === PlayerStatus.InGame
-            || currentClient?.socket.readyState !== WebSocket.OPEN) continue;
+            || (!isRedisAvailable() && !onlinePlayers.has(candidate.playerId))) continue;
           // A profile may have changed Army Power, league, or display name between queueing and
           // admission. Restore its fresh server snapshot so the next pairing can pass the same
           // transaction guard instead of looping on stale queue data.
@@ -542,10 +597,15 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
             leagueTier: current.player.leagueTier,
           });
         }
-        restoreWaiting(candidates);
+        await restoreWaitingForHub(candidates);
         for (const candidate of candidates) {
-          scheduleMatchmakingTimeout(candidate.playerId);
-          sendToPlayer(candidate.playerId, { Type: "Searching", Payload: { Restored: true } });
+          // A remote candidate's original node still owns its timer and already shows Searching.
+          // Starting a second timer here could remove the restored row before that owning node can
+          // notify its socket. Only refresh timer/UI state for candidates attached to this process.
+          if (onlinePlayers.has(candidate.playerId)) {
+            scheduleMatchmakingTimeout(candidate.playerId);
+            sendToPlayer(candidate.playerId, { Type: "Searching", Payload: { Restored: true } });
+          }
         }
         logger.match.error("Atomic match admission failed", {
           players: [self.playerId, other.playerId],
@@ -559,14 +619,24 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
       }
       scheduleMatchJoinTimeout(matchId, [self.playerId, other.playerId]);
       const found = (opponentName: string) => ({ Type: "MatchFound", Payload: { MatchId: matchId, Opponent: opponentName } });
-      send(client, found(other.name));
-      sendToPlayer(opponent.id, found(self.name));
+      const selfDelivered = await deliverMatchFound(self.playerId, matchId, found(other.name));
+      const opponentDelivered = await deliverMatchFound(opponent.id, matchId, found(self.name));
+      if (!selfDelivered || !opponentDelivered) {
+        await cancelMatch(matchId, "match_found_delivery_failed");
+        clearMatchJoinTimer(matchId);
+        const failed: ClientEnvelope = {
+          Type: "MatchError",
+          Payload: { MatchId: matchId, Reason: "DeliveryFailed" },
+        };
+        if (selfDelivered) sendToPlayer(self.playerId, failed);
+        if (opponentDelivered) sendToPlayer(opponent.id, failed);
+      }
       return;
     }
 
     case "CancelMatch": {
       if (client.playerId) {
-        leaveQueue(client.playerId);
+        await leaveQueue(client.playerId);
         clearMatchmakingTimer(client.playerId);
       }
       send(client, { Type: "MatchCancelled", Payload: {} });

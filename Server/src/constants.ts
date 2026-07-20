@@ -69,6 +69,7 @@ export const ResultCollections = {
 /** Redis key builders. */
 export const RedisKeys = {
   matchmakingQueue: "wf:mm:queue",
+  matchmakingEntries: "wf:mm:entries",
   session: (playerId: string) => `wf:session:${playerId}`,
   socketOfPlayer: (playerId: string) => `wf:socket:${playerId}`,
   leaderboardExperience: "wf:lb:experience",

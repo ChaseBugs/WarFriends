@@ -50,6 +50,16 @@ Status legend:
 
 ### Current PvP relay increment
 
+Redis-enabled deployments now use one atomic Lua operation for cross-node queue deduplication,
+timeout-based stale cleanup, a bounded widening-league candidate scan, pairing, and removal. Failed
+MongoDB admission restores the whole candidate batch atomically without immediately re-pairing the
+same two accounts. Redis-disabled or unavailable deployments retain the tested in-memory queue.
+
+`MatchFound` can cross backend nodes through a size/type-bounded pub/sub instruction. The receiving
+node never trusts that instruction as match authority: it reloads MongoDB and proves that the local
+target belongs to the named active match before delivering to the socket. Durable cross-node
+join/start/event/result/disconnect room coordination remains the next horizontal PvP layer.
+
 `SetPlayerStatus` now preserves mode compatibility while protecting ranked admission: the active
 or settling match lookup and profile write share one MongoDB transaction, so a client heartbeat
 cannot clear the server-owned `InGame` reservation during admission, play, or settlement.

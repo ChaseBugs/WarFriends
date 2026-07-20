@@ -177,6 +177,25 @@ export async function redisDel(key: string): Promise<boolean> {
   }
 }
 
+/**
+ * Execute one bounded atomic coordination script. Callers must still keep MongoDB as gameplay
+ * authority: this helper is intended for transient queues, leases, and fan-out coordination.
+ */
+export async function redisEval(
+  script: string,
+  keys: readonly string[],
+  args: ReadonlyArray<string | number>,
+): Promise<unknown | undefined> {
+  const client = getRedisDataClient();
+  if (!client || !isRedisAvailable()) return undefined;
+  try {
+    return await client.eval(script, keys.length, ...keys, ...args.map(String));
+  } catch (err) {
+    logger.redis.error("EVAL failed", { error: (err as Error).message });
+    return undefined;
+  }
+}
+
 /** Add a member to a sorted set (leaderboards). Returns false when Redis is unavailable. */
 export async function redisZAdd(key: string, score: number, member: string): Promise<boolean> {
   const client = getRedisDataClient();

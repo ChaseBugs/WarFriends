@@ -151,6 +151,11 @@ Working end-to-end (verified live):
   durable row and reserves both current profiles as `InGame` in one MongoDB transaction; duplicate
   participants, corrupt snapshots, missing accounts, and concurrent active-match claims fail
   without partial state, and still-eligible connected players are restored to the bounded queue.
+  With Redis available, queue deduplication, stale cleanup, bounded candidate selection, pairing,
+  removal, and failed-admission restoration execute atomically across backend nodes. `MatchFound`
+  can be relayed to the opponent's node through a bounded pub/sub instruction, but that receiving
+  node re-reads MongoDB and proves active-match membership before sending anything to its socket.
+  Without Redis, the same code retains the verified process-local queue and direct delivery path.
   Cancellation likewise commits the terminal match and both presence releases together. On a
   single-node restart, active/settling matches are cancelled and all residual `InGame` profiles
   are repaired in the same transaction, including legacy partial cancellations.

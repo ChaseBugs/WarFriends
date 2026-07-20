@@ -1,0 +1,40 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { buildPvpFanoutNotice, parsePvpFanoutNotice } from "../services/pvpFanoutService";
+
+test("PvP fan-out accepts only bounded MatchFound delivery notices", () => {
+  const encoded = buildPvpFanoutNotice("node-a", "player-b", "match-1", {
+    Type: "MatchFound",
+    Payload: { MatchId: "match-1", Opponent: "Player A" },
+  });
+  assert.deepEqual(parsePvpFanoutNotice(encoded), {
+    version: 1,
+    originId: "node-a",
+    targetPlayerId: "player-b",
+    matchId: "match-1",
+    envelope: { Type: "MatchFound", Payload: { MatchId: "match-1", Opponent: "Player A" } },
+  });
+  assert.equal(parsePvpFanoutNotice(JSON.stringify({
+    version: 1,
+    originId: "node-a",
+    targetPlayerId: "player-b",
+    matchId: "match-1",
+    envelope: { Type: "MatchEnded" },
+  })), null);
+  assert.equal(parsePvpFanoutNotice(buildPvpFanoutNotice("node-a", "player-b", "match-1", {
+    Type: "MatchFound",
+    Payload: { MatchId: "different-match", Opponent: "Player A" },
+  })), null);
+  assert.equal(parsePvpFanoutNotice("x".repeat(32_769)), null);
+});
+
+test("PvP fan-out rejects malformed identities and JSON", () => {
+  assert.equal(parsePvpFanoutNotice("{"), null);
+  assert.equal(parsePvpFanoutNotice(JSON.stringify({
+    version: 1,
+    originId: "",
+    targetPlayerId: "player-b",
+    matchId: "match-1",
+    envelope: { Type: "MatchFound" },
+  })), null);
+});
