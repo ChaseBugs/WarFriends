@@ -70,6 +70,7 @@ import {
   materializeDogTags,
   refillDogTagsState,
   spendOneDogTagState,
+  SUBSCRIPTION_DOG_TAG_REFILL_SECONDS,
 } from "../services/economyService";
 import { economyHandlers } from "../handlers/economy";
 import {
@@ -246,6 +247,39 @@ test("dog-tag state uses accumulated seconds and recovered 900-second balancing"
   const regenerated = materializeDogTags(partiallyEmpty, 1_450);
   assert.equal(regenerated.dogTagSeconds, 2_250);
   assert.equal(currentDogTagCount(regenerated), 2);
+});
+
+test("subscription refills dog tags every recovered 450 seconds between lock and expiry", () => {
+  assert.equal(SUBSCRIPTION_DOG_TAG_REFILL_SECONDS, 450);
+  const initial = {
+    ...createInitialProgression(1_000),
+    dogTagSeconds: 0,
+    subscription: {
+      type: "subscription1" as const,
+      subscribeSince: 1_000,
+      expireTime: 2_000,
+      dogTagTimerLock: 1_000,
+    },
+  };
+  const beforeFirstRefill = materializeDogTags(initial, 1_449);
+  assert.equal(beforeFirstRefill.dogTagSeconds, 898);
+  assert.equal(currentDogTagCount(beforeFirstRefill), 0);
+  const firstRefill = materializeDogTags(initial, 1_450);
+  assert.equal(firstRefill.dogTagSeconds, 900);
+  assert.equal(currentDogTagCount(firstRefill), 1);
+
+  // A future lock preserves progress already earned at the normal rate before purchase.
+  const locked = materializeDogTags({
+    ...initial,
+    subscription: { ...initial.subscription, dogTagTimerLock: 1_300 },
+  }, 1_600);
+  assert.equal(locked.dogTagSeconds, 900);
+  assert.equal(currentDogTagCount(locked), 1);
+
+  // When reconnecting after expiry, only the historical active interval is accelerated.
+  const afterExpiry = materializeDogTags(initial, 2_450);
+  assert.equal(afterExpiry.dogTagSeconds, 2_450);
+  assert.equal(currentDogTagCount(afterExpiry), 2);
 });
 
 test("dog-tag spend and refill transitions preserve partial time and charge server price", () => {

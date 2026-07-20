@@ -115,6 +115,9 @@ export function convertGoldToWarBucksState(
 /** Exact 4.9.5 MainScene `VipDogtags` value and localized VIP benefit count. */
 export const VIP_DOG_TAG_COUNT = 2;
 
+/** Exact 4.9.5 MainScene `DogTagSubscriptionRefillTime` value. */
+export const SUBSCRIPTION_DOG_TAG_REFILL_SECONDS = 450;
+
 /**
  * Return the virtual capacity credit used by the recovered DogTagManager.
  *
@@ -131,12 +134,45 @@ export function vipDogTagBonusSeconds(state: PlayerProgressionState): number {
 }
 
 /**
+ * Convert subscription-active wall time into additional normal-rate dog-tag credit.
+ *
+ * The recovered Client keeps DogTagSeconds and DogTagMax in normal 900-second units even while
+ * its visible timer runs at 450 seconds. Its integer factor is normal/subscription (900/450 = 2),
+ * so every active wall-clock second contributes one ordinary second plus one bonus second. The
+ * lock returned by BuyInApp protects the partially completed interval at purchase time; expiry
+ * ends acceleration without needing a background mutation. Calculating the overlap historically
+ * also means the correct credit is recovered when the first request arrives after expiry.
+ */
+function subscriptionDogTagBonusSeconds(
+  state: PlayerProgressionState,
+  from: number,
+  to: number,
+): number {
+  const subscription = state.subscription;
+  if (!subscription || subscription.type !== "subscription1") return 0;
+  const normalRefillSeconds = Math.max(1, Math.floor(state.dogTagRefillSeconds));
+  const accelerationFactor = Math.floor(normalRefillSeconds / SUBSCRIPTION_DOG_TAG_REFILL_SECONDS);
+  if (accelerationFactor <= 1) return 0;
+
+  const lock = Number.isFinite(subscription.dogTagTimerLock)
+    ? Math.floor(subscription.dogTagTimerLock)
+    : 0;
+  const acceleratedFrom = Math.max(Math.floor(from), lock);
+  const acceleratedTo = Math.min(Math.floor(to), Math.floor(subscription.expireTime));
+  const acceleratedWallSeconds = Math.max(0, acceleratedTo - acceleratedFrom);
+  return acceleratedWallSeconds * (accelerationFactor - 1);
+}
+
+/**
  * Apply elapsed server time to the stored energy credit. Time is capped at DogTagMax, so
  * remaining logged-out time cannot be banked beyond the configured capacity. The timestamp
  * moves to `now` only in the returned state; callers persist it inside an atomic mutation.
  */
 export function materializeDogTags(state: PlayerProgressionState, now: number): PlayerProgressionState {
-  const elapsed = Math.max(0, Math.floor(now) - Math.floor(state.dogTagLastUpdate));
+  const previousUpdate = Math.floor(state.dogTagLastUpdate);
+  const currentTime = Math.max(previousUpdate, Math.floor(now));
+  const elapsed = currentTime - previousUpdate;
+  const subscriptionBonus = subscriptionDogTagBonusSeconds(state, previousUpdate, currentTime);
   const refillSeconds = Math.max(1, Math.floor(state.dogTagRefillSeconds));
   // Spending the two virtual VIP tags can legitimately make the stored base credit negative.
   // The stock client then adds elapsed time to that debt, so clamping to zero here would grant
@@ -147,9 +183,9 @@ export function materializeDogTags(state: PlayerProgressionState, now: number): 
     ...state,
     dogTagSeconds: Math.min(
       state.dogTagMax,
-      Math.max(minimumBaseSeconds, state.dogTagSeconds + elapsed),
+      Math.max(minimumBaseSeconds, state.dogTagSeconds + elapsed + subscriptionBonus),
     ),
-    dogTagLastUpdate: Math.floor(now),
+    dogTagLastUpdate: currentTime,
   };
 }
 
