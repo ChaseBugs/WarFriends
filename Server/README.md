@@ -619,6 +619,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   squad points, and daily-reward claims advance only from accepted server settlements. Purchased
   weapons/units, their normal upgrades, paid permanent visuals, and confirmed consumed War Cards
   are re-derived from authoritative progression snapshots using the client's StatsManager rules.
+  The exact 4.9.5 tiers for soldier deployment (group 6), vehicle deployment (group 7), and stolen
+  crates (group 18) are present in the wire model, but their values are pinned to zero and their
+  claim paths fail closed because stock `GameEnded.Stats` is self-authored combat telemetry.
   Accepted Arena wins and maximum-win runs without an accepted loss advance exact MainScene groups
   3 and 4 inside the Arena receipt transition, so retries cannot duplicate their Ticket/Scraps
   progress. Group 13 mirrors the authenticated profile's highest reached league tier and rejects a

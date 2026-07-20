@@ -39,6 +39,16 @@ export interface AchievementTierDefinition {
 }
 
 /**
+ * Scene-defined rows whose counters still depend on unverified battle telemetry.
+ *
+ * Keeping these IDs in the wire model is required for 4.9.5 UI compatibility, but merely knowing
+ * their tiers does not make the client-reported Stats value trustworthy. Every mutation entry
+ * point checks this set, and schema normalization pins the visible server value to zero until a
+ * future combat authority can remove an ID from this boundary and supply validated increments.
+ */
+export const NON_AUTHORITATIVE_ACHIEVEMENT_GROUPS: ReadonlySet<number> = new Set([6, 7, 18]);
+
+/**
  * Achievement rows whose progress can currently be proven by reconstructed server events or
  * directly from server-owned inventory.
  *
@@ -82,6 +92,16 @@ export const ACHIEVEMENT_DEFINITIONS: Readonly<Record<number, readonly Achieveme
     { target: 10, gold: 1, warBucks: 0, scraps: 0, tickets: 0 },
     { target: 30, gold: 5, warBucks: 0, scraps: 0, tickets: 0 },
     { target: 60, gold: 10, warBucks: 0, scraps: 0, tickets: 0 },
+  ],
+  6: [
+    { target: 100, gold: 1, warBucks: 0, scraps: 0, tickets: 0 },
+    { target: 1_000, gold: 5, warBucks: 0, scraps: 0, tickets: 0 },
+    { target: 10_000, gold: 10, warBucks: 0, scraps: 0, tickets: 0 },
+  ],
+  7: [
+    { target: 30, gold: 1, warBucks: 0, scraps: 0, tickets: 0 },
+    { target: 300, gold: 5, warBucks: 0, scraps: 0, tickets: 0 },
+    { target: 3_000, gold: 10, warBucks: 0, scraps: 0, tickets: 0 },
   ],
   8: [
     { target: 5, gold: 0, warBucks: 2_500, scraps: 0, tickets: 0 },
@@ -130,6 +150,11 @@ export const ACHIEVEMENT_DEFINITIONS: Readonly<Record<number, readonly Achieveme
   ],
   17: [
     { target: 5, gold: 0, warBucks: 50_000, scraps: 0, tickets: 0 },
+  ],
+  18: [
+    { target: 15, gold: 1, warBucks: 0, scraps: 0, tickets: 0 },
+    { target: 150, gold: 5, warBucks: 0, scraps: 0, tickets: 0 },
+    { target: 1_500, gold: 25, warBucks: 0, scraps: 0, tickets: 0 },
   ],
   // MainScene 4.9.5 adds this one-tier row after the old 1.6 achievement table. The backend can
   // safely own it now because a player receives progress only while an expired Squad War round
@@ -209,7 +234,7 @@ function cloneGroup(group: AchievementGroupState): AchievementGroupState {
 }
 
 /**
- * Materialize every server-supported group without deleting future/legacy groups.
+ * Materialize every scene-defined group without deleting future/legacy groups.
  *
  * AchievementProgressGroups.EnsureInitialized merges server rows with the local scene
  * definitions and extends short progress arrays. Mirroring that behavior here makes schema
@@ -239,6 +264,16 @@ export function achievementStateFor(state: PlayerProgressionState): AchievementS
     const group = byId.get(id);
     const tiers = ACHIEVEMENT_DEFINITIONS[id];
     if (group && tiers) group.value = Math.min(tiers[tiers.length - 1].target, value);
+  }
+  // Groups 6, 7, and 18 are present in MainScene and must exist in AchievementsData, but their
+  // local StatsManager values are self-authored. Pin them to zero at every read/mutation boundary
+  // so an old imported blob or a modified action-220 payload cannot become economy authority.
+  for (const id of NON_AUTHORITATIVE_ACHIEVEMENT_GROUPS) {
+    const group = byId.get(id);
+    if (group) {
+      group.offset = 0;
+      group.value = 0;
+    }
   }
   return { data: [...byId.values()].sort((left, right) => left.id - right.id) };
 }
@@ -310,6 +345,9 @@ export function advanceAchievementState(
 ): AchievementMutationResult {
   const definitions = ACHIEVEMENT_DEFINITIONS[groupId];
   if (!definitions) return { state, achievements: achievementStateFor(state) };
+  if (NON_AUTHORITATIVE_ACHIEVEMENT_GROUPS.has(groupId)) {
+    throw new ApiError(ACHIEVEMENT_REWARD_NOT_FOUND, "Achievement event is not authoritative.");
+  }
   if (!Number.isInteger(amount) || amount < 0) {
     throw new ApiError(ACHIEVEMENT_REWARD_NOT_FOUND, "Achievement progress increment is invalid.");
   }
@@ -435,6 +473,9 @@ export function claimAchievementState(
   groupId: number,
   progressId: number,
 ): AchievementMutationResult {
+  if (NON_AUTHORITATIVE_ACHIEVEMENT_GROUPS.has(groupId)) {
+    throw new ApiError(ACHIEVEMENT_REWARD_NOT_FOUND, "Achievement event is not authoritative.");
+  }
   const definitions = ACHIEVEMENT_DEFINITIONS[groupId];
   const achievements = achievementStateFor(state);
   const group = achievements.data.find((candidate) => candidate.id === groupId);

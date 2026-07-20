@@ -6,6 +6,7 @@ import {
   ACHIEVEMENT_DEFINITIONS,
   ACHIEVEMENT_ALREADY_CLAIMED,
   ACHIEVEMENT_REWARD_NOT_FOUND,
+  NON_AUTHORITATIVE_ACHIEVEMENT_GROUPS,
   acknowledgeAchievementOffsetState,
   achievementStateFor,
   advanceAchievementState,
@@ -30,6 +31,10 @@ const NOW = Date.UTC(2026, 6, 19, 12, 0, 0) / 1_000;
 test("achievement state uses the exact recovered AchievementsData wire fields", () => {
   const achievements = achievementStateFor(createInitialProgression(NOW));
   const rankedWins = achievements.data.find((group) => group.id === 2)!;
+
+  // MainScene 4.9.5 contains every group from 0 through 19. Even the combat-telemetry rows must
+  // be present at zero so the stock UI can merge its scene definitions with the server model.
+  assert.deepEqual(achievements.data.map((group) => group.id), Array.from({ length: 20 }, (_, id) => id));
 
   assert.deepEqual(rankedWins, {
     id: 2,
@@ -71,6 +76,38 @@ test("finishing a Squad War completes the exact one-time 4.9.5 achievement", () 
   // cannot manufacture another progression revision or a second claimable reward.
   const replay = completeFirstSquadWarAchievementState(completed.state);
   assert.equal(replay.state, completed.state);
+});
+
+test("combat-telemetry achievements keep their exact 4.9.5 wire tiers but remain locked", () => {
+  assert.deepEqual([...NON_AUTHORITATIVE_ACHIEVEMENT_GROUPS], [6, 7, 18]);
+  assert.deepEqual(
+    [6, 7, 18].map((id) => ACHIEVEMENT_DEFINITIONS[id].map((tier) => [tier.target, tier.gold])),
+    [
+      [[100, 1], [1_000, 5], [10_000, 10]],
+      [[30, 1], [300, 5], [3_000, 10]],
+      [[15, 1], [150, 5], [1_500, 25]],
+    ],
+  );
+
+  const imported = createInitialProgression(NOW);
+  imported.achievements = {
+    data: [
+      { id: 6, offset: 99, value: 10_000, progress: [{ claimed: false }, { claimed: false }, { claimed: false }] },
+    ],
+  };
+  const normalized = achievementStateFor(imported);
+  assert.deepEqual(
+    normalized.data.find((group) => group.id === 6),
+    { id: 6, offset: 0, value: 0, progress: [{ claimed: false }, { claimed: false }, { claimed: false }] },
+  );
+  assert.throws(
+    () => advanceAchievementState(imported, 6, 100),
+    (error: unknown) => (error as { code?: number }).code === ACHIEVEMENT_REWARD_NOT_FOUND,
+  );
+  assert.throws(
+    () => claimAchievementState(imported, 6, 0),
+    (error: unknown) => (error as { code?: number }).code === ACHIEVEMENT_REWARD_NOT_FOUND,
+  );
 });
 
 test("achievement acknowledgements and satisfied projections preserve exact state identity", () => {
