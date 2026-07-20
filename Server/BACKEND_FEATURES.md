@@ -50,6 +50,10 @@ Status legend:
 
 ### Current PvP relay increment
 
+`SetPlayerStatus` now preserves mode compatibility while protecting ranked admission: the active
+or settling match lookup and profile write share one MongoDB transaction, so a client heartbeat
+cannot clear the server-owned `InGame` reservation during admission, play, or settlement.
+
 The replacement WebSocket transport now recognizes a typed
 `MatchEvent { Event: "CardPlayed", Data: { Sequence, CardId } }` contract. Each authenticated
 participant has a contiguous zero-based sequence capped by the recovered six-card selection

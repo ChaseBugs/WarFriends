@@ -22,6 +22,7 @@ import {
 } from "../services/playerRenameService";
 import { ensureRentalOffer } from "../services/rentalService";
 import { ensureDailyVipCards } from "../services/vipService";
+import { setPlayerPresence } from "../services/playerPresenceService";
 import {
   buildEventAssignmentClientConfig,
   ensureActiveEventAssignment,
@@ -74,11 +75,9 @@ export const playerHandlers: Record<number, HandlerEntry> = {
   [DbAction.SetPlayerStatus]: authed(async ({ player, req }) => {
     const status = Number(req.PlayerStatus ?? req.Status ?? PlayerStatus.Online);
     if (!Object.values(PlayerStatus).includes(status)) return ok(DbAction.SetPlayerStatus, { Status: player!.player.status });
-    if (player!.player.status !== status) {
-      player!.player.status = status;
-      await updatePlayerFields(player!.id, { status });
-    }
-    return ok(DbAction.SetPlayerStatus, { Status: status });
+    const effective = await setPlayerPresence(player!.id, status as PlayerStatus);
+    player!.player.status = effective;
+    return ok(DbAction.SetPlayerStatus, { Status: effective });
   }),
 
   [DbAction.UpdateDeviceToken]: authed(async ({ player, req }) => {

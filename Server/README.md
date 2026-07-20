@@ -164,6 +164,9 @@ Working end-to-end (verified live):
   then resolve as a forfeit or no-reward cancellation; interrupted matches are recovered
   on server restart. Photon-era `GameEnded` reports interpret the recovered `EndReason`
   enum and require matching durable reports from both assigned participants before rewards.
+  Action `29` remains the presence heartbeat for non-ranked modes, but its active-match read and
+  profile write share a MongoDB transaction. An active/settling ranked reservation always wins
+  over a forged or early `Online`/`Offline` report.
 - **Squad Chat (WebSocket `/hub`)**: after `Identify`, a replacement client sends
   `SubscribeSquadChat` to receive `SquadChatSubscribed { SquadId, Messages }`, using the exact
   recovered three-message history default. When `NextBeforeCursor` is non-null,
