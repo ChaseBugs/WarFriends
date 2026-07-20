@@ -283,7 +283,9 @@ Working end-to-end (verified live):
   `DELIVERTIME=0`. Action `128` validates the preceding permanent purchase as an idempotent
   zero-delivery acknowledgement and cannot grant or convert a rental. Mutations include server
   price/discount validation, atomic debits, category-safe equipment, Unity rollback fields, and
-  `BufferId` replay protection. Timed `InstantBuyWeapon` remains rejected because no supported
+  `BufferId` replay protection. Re-equipping the exact current weapon is validated but preserves
+  progression identity instead of creating an unrelated inventory revision. Timed
+  `InstantBuyWeapon` remains rejected because no supported
   source row can produce its required pending-delivery state. Nine
   shop-priced Pulse Rifle rows with null LevelManager entries, unknown catalog rows, and
   unrelated OfferManager-discounted purchases still fail closed.
@@ -344,7 +346,8 @@ Working end-to-end (verified live):
   acknowledgement rather than a fabricated timer. `UpdateEquippedUnits` persists the tutorial
   Assaulter's first backend-visible grant and the full owned roster while enforcing the recovered
   two-per-category and three-mechanical-unit caps; invalid changes receive the exact 11406 rollback
-  dictionary. The same extractor records 4,124 normal, 684 special, and 216 elite per-level rows
+  dictionary. Replaying an identical valid roster returns exact state, while a missing tutorial
+  grant still persists once. The same extractor records 4,124 normal, 684 special, and 216 elite per-level rows
   across all 24 player tables, including absolute source offsets, tier, float ArmyPower,
   XOR-decoded WarBucks price, delivery duration, and Elite parts price. Buffered actions `77`-`79`
   use those rows to enforce separate normal and

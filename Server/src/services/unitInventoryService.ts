@@ -1291,6 +1291,34 @@ export function updateEquippedUnitsState(
   if (categoryCounts.some((count) => count > 2) || mechanicalCount > 3) {
     throw new ApiError(UNIT_CANT_EQUIP, "Equipped units exceed recovered category or mechanical limits.");
   }
+  const persistedArmies = state.itemInventory?.levelManagerData.savedArmies ?? {};
+  const persistedNames = Object.keys(persistedArmies);
+  const derivedNames = Object.keys(savedArmies);
+  const unchanged = persistedNames.length === derivedNames.length && derivedNames.every((name) => {
+    const left = persistedArmies[name];
+    const right = savedArmies[name];
+    return Boolean(
+      left
+      && right
+      && left.bought === right.bought
+      && left.boughtIndex === right.boughtIndex
+      && left.specialSlot === right.specialSlot
+      && left.showed === right.showed
+      && left.tier === right.tier
+      && left.borrowed === right.borrowed
+      && left.wasEquipped === right.wasEquipped
+      && left.equipped === right.equipped
+      && left.eliteSlot === right.eliteSlot
+      && left.parts === right.parts,
+    );
+  });
+  if (unchanged) {
+    // UpdateEquippedUnits sends the full selected-unit dictionary and has no independent UUID.
+    // Validate the entire reconstructed loadout first, then preserve exact state when every
+    // SavedArmy field already matches. This also keeps a repeated tutorial-unit grant harmless;
+    // a missing tutorial row still differs and is persisted on its first valid request.
+    return { state, itemInventory };
+  }
   const next: PlayerProgressionState = {
     ...state,
     revision: state.revision + 1,

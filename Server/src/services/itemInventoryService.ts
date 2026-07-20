@@ -669,6 +669,15 @@ export function equipWeaponState(
     throw new ApiError(ITEM_WEAPON_NOT_BOUGHT, "Weapon is not owned or cannot be equipped in this slot.");
   }
 
+  const currentSlot = itemInventory.inventoryData.slots[String(payload.slotIndex)];
+  if (currentSlot?.name === definition.name && currentSlot.weaponIndex === definition.index) {
+    // EquipWeapon is commonly adjacent to a purchase in RequestBuffer, but it can also be
+    // repeated independently after the client has already selected this slot. All ownership,
+    // rental, category, index, and feature checks above still run; only the identical durable
+    // assignment is skipped. Returning the original state prevents a false inventory revision.
+    return { state, itemInventory, weapon, definition };
+  }
+
   itemInventory.inventoryData.slots[String(payload.slotIndex)] = {
     name: definition.name,
     weaponIndex: definition.index,

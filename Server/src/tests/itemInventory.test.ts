@@ -538,6 +538,9 @@ test("EquipWeapon requires ownership, exact catalog index, and a compatible slot
   });
   // The untrusted client-calculated ArmyPower is not copied into server progression.
   assert.equal("armyPower" in equipped.state, false);
+  const replay = equipWeaponState(equipped.state, equip);
+  assert.equal(replay.state, equipped.state);
+  assert.equal(replay.state.revision, equipped.state.revision);
 });
 
 test("weapon RequestBuffer purchase/equip is atomic and replay-safe by BufferId", () => {

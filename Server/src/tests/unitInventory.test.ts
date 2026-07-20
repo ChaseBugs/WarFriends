@@ -816,6 +816,14 @@ test("UpdateEquippedUnits persists the tutorial grant from its first backend-vis
     eliteSlot: 0,
     parts: 0,
   });
+  const replay = updateEquippedUnitsState(
+    updated.state,
+    parseUnitEquipData(equippedData({
+      [TUTORIAL_ASSAULTER]: { wasEquipped: true, equipped: true },
+    })),
+  );
+  assert.equal(replay.state, updated.state);
+  assert.equal(replay.state.revision, updated.state.revision);
 });
 
 test("UpdateEquippedUnits enforces ownership and the recovered two-per-category cap", () => {
