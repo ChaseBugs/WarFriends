@@ -19,6 +19,7 @@ import {
 } from "./services/pvpCoordinatorService";
 import { serverMetrics } from "./services/metricsService";
 import { requireAdmin } from "./services/adminAuthService";
+import { runWithRequestContext } from "./services/requestContextService";
 
 const app = express();
 
@@ -36,14 +37,16 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   const requestPath = req.path;
   res.locals.requestId = requestId;
   res.setHeader("X-Request-ID", requestId);
-  serverMetrics.beginHttp();
-  logger.api.request(req.method, requestPath, { requestId });
-  res.on("finish", () => {
-    const durationMs = Date.now() - startedAt;
-    serverMetrics.finishHttp(req.method, res.statusCode, durationMs);
-    logger.api.response(req.method, requestPath, res.statusCode, { requestId, duration: `${durationMs}ms` });
+  runWithRequestContext(requestId, () => {
+    serverMetrics.beginHttp();
+    logger.api.request(req.method, requestPath);
+    res.on("finish", () => {
+      const durationMs = Date.now() - startedAt;
+      serverMetrics.finishHttp(req.method, res.statusCode, durationMs);
+      logger.api.response(req.method, requestPath, res.statusCode, { duration: `${durationMs}ms` });
+    });
+    next();
   });
-  next();
 });
 
 app.use(cors());

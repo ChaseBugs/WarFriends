@@ -41,7 +41,8 @@ Operational metrics are available at authenticated `GET /metrics` in Prometheus 
 requires a separate secret of at least 32 characters. Labels are fixed and
 never contain paths, actions, players, addresses, tokens, or arbitrary WebSocket types. Every HTTP
 response also includes a generated `X-Request-ID`; request/response/error boundary logs include the
-same ID while logging only the query-free request path.
+same ID while logging only the query-free request path. Async-local context automatically adds that
+ID to downstream authentication, database, economy, and gameplay logger helpers across awaited work.
 
 ## How the client talks to it
 

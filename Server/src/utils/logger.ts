@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import winston from "winston";
+import { currentRequestId } from "../services/requestContextService";
 
 // Levels/format/file-layout follow the project's shared Logging Structure Rules
 // (per-level files rotated by process start time, emoji console output in dev).
@@ -82,6 +83,11 @@ const baseLogger = winston.createLogger({
   levels,
   level: process.env.NODE_ENV === "production" ? "info" : "debug",
   format: winston.format.combine(
+    winston.format((info) => {
+      const requestId = currentRequestId();
+      if (requestId && info.requestId === undefined) info.requestId = requestId;
+      return info;
+    })(),
     winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss.SSS" }),
     winston.format.errors({ stack: true }),
     fileFormat,
