@@ -19,7 +19,7 @@ import {
 } from "./cardInventoryService";
 import { findById } from "./playerService";
 import { progressionForPlayer, unixNow } from "./playerStateService";
-import { itemInventoryStateFor, WEAPON_CATALOG } from "./itemInventoryService";
+import { itemInventoryStateFor, weaponDefinitionFor } from "./itemInventoryService";
 import { visualInventoryStateFor } from "./visualInventoryService";
 
 const MAX_CONCURRENCY_RETRIES = 4;
@@ -239,7 +239,7 @@ export function buddyDepositAuthorityFor(
   const itemInventory = itemInventoryStateFor(state);
   const weapons = ["0", "1", "2", "3"].map((slotId) => {
     const slot = itemInventory.inventoryData.slots[slotId];
-    const definition = slot ? WEAPON_CATALOG[slot.name] : undefined;
+    const definition = slot ? weaponDefinitionFor(slot.name) : undefined;
     const saved = slot ? itemInventory.levelManagerData.savedWeapons[slot.name] : undefined;
     if (!slot || !definition || definition.index !== slot.weaponIndex || !saved?.bought) {
       throw new ApiError(BUDDY_CARD_NOT_READY, `Buddy source weapon slot ${slotId} is invalid.`);

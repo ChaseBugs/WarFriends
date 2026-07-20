@@ -50,7 +50,7 @@ test("Army Power extraction covers rank rows and every normal weapon power row",
     rewardGold: 60,
     armyPower: 1_060,
   });
-  assert.equal(generatedArmyPowerCatalog.weapons.length, 84);
+  assert.equal(generatedArmyPowerCatalog.weapons.length, 165);
   assert.equal(generatedArmyPowerCatalog.featureDpsCoefficients.length, 11);
   assert.equal(
     generatedArmyPowerCatalog.featureDpsCoefficients.every((row) => row.dpsByFeature.length === 9),
@@ -58,7 +58,7 @@ test("Army Power extraction covers rank rows and every normal weapon power row",
   );
   assert.equal(
     generatedArmyPowerCatalog.weapons.reduce((total, weapon) => total + weapon.powerByLevel.length, 0),
-    5_865,
+    11_805,
   );
   for (const weapon of generatedArmyPowerCatalog.weapons) {
     assert.equal(weapon.powerByLevel.length, WEAPON_UPGRADE_CATALOG[weapon.name]!.length + 1);

@@ -155,8 +155,35 @@ export interface PlayerProgressionState {
   lastSeenSquadChatTimestamp?: number;
   /** Number of successful squad creations; the stock client derives the next WarBucks price from it. */
   squadCreationsCount?: number;
+  /**
+   * Server-issued Black Market weapon offers consumed by action 217 and buffered BuyWeapon.
+   *
+   * The public fields intentionally match BlackMarketManager.BlackMarketOfferData. Keeping
+   * the selected weapon level and special feature in the same progression snapshot as the
+   * wallet lets BuyWeapon prove that a premium price came from a still-active offer instead
+   * of accepting an arbitrary price or upgraded weapon chosen by a modified client.
+   */
+  blackMarket?: BlackMarketOfferState;
   /** Bounded replay cache for the stock client's batched RequestBuffer transport. */
   processedRequestBuffers?: ProcessedRequestBuffer[];
+}
+
+/** BlackMarketManager.OfferedWeapon from the recovered 1.6.0 client. */
+export interface BlackMarketOfferedWeaponState {
+  level: number;
+  special: number;
+  weaponId: string;
+}
+
+/** BlackMarketManager.BlackMarketOfferData from the recovered 1.6.0 client. */
+export interface BlackMarketOfferState {
+  /** Lifetime number of offer sets issued to this account. */
+  offersTotal: number;
+  /** Analytics label describing which server path generated the current set. */
+  lastTrigger: string;
+  /** Unix timestamp after which neither display nor purchase is authorized. */
+  offerEnd: number;
+  currentOffers: BlackMarketOfferedWeaponState[];
 }
 
 export interface DailyRewardState {

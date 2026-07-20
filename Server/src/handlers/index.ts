@@ -20,6 +20,7 @@ import { dailyMissionHandlers } from "./dailyMissions";
 import { warArenaHandlers } from "./warArena";
 import { visualHandlers } from "./visuals";
 import { cardHandlers } from "./cards";
+import { blackMarketHandlers } from "./blackMarket";
 import type { HandlerEntry } from "./types";
 import logger from "../utils/logger";
 
@@ -50,6 +51,7 @@ const registry: Record<number, HandlerEntry> = {
   ...warArenaHandlers,
   ...visualHandlers,
   ...cardHandlers,
+  ...blackMarketHandlers,
 };
 
 function clientVersion(req: RequestEnvelope): number {

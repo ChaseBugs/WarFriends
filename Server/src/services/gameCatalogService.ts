@@ -6,7 +6,10 @@ import generatedUnitUpgradeCatalog from "../data/unitUpgradeCatalog.generated.js
 import generatedWeaponCatalog from "../data/weaponCatalog.generated.json";
 import generatedVisualCatalog from "../data/visualCatalog.generated.json";
 import generatedCardCatalog from "../data/cardCatalog.generated.json";
-import { WEAPON_UPGRADE_CATALOG } from "../data/weaponUpgradeCatalog.generated";
+import {
+  WEAPON_BLACK_MARKET_PRICES,
+  WEAPON_UPGRADE_CATALOG,
+} from "../data/weaponUpgradeCatalog.generated";
 
 export const GAME_CATALOG_CLIENT_VERSION = "4.9.5";
 
@@ -85,6 +88,8 @@ interface CatalogArtifact<Row> {
 
 interface WeaponArtifact extends CatalogArtifact<Record<string, unknown>> {
   unresolvedShopRows: Array<Record<string, unknown>>;
+  blackMarketCatalog: Array<Record<string, unknown>>;
+  unresolvedBlackMarketRows: Array<Record<string, unknown>>;
 }
 
 interface UnitArtifact extends CatalogArtifact<Record<string, unknown>> {
@@ -223,6 +228,34 @@ export function buildGameCatalog(): BuiltGameCatalog {
     });
   }
 
+  for (const definition of weapons.blackMarketCatalog) {
+    const key = requiredName(definition, "Black Market weapon");
+    const stages = WEAPON_UPGRADE_CATALOG[key];
+    if (!stages) throw new Error(`Resolved Black Market weapon ${key} has no upgrade table.`);
+    const power = weaponPowerByName.get(key);
+    if (!power || power.index !== definition.index || power.powerByLevel.length !== stages.length + 1) {
+      throw new Error(`Resolved Black Market weapon ${key} has an incompatible Army Power table.`);
+    }
+
+    rawEntries.push({
+      kind: "weapon",
+      key,
+      availability: "playable",
+      ...weaponSource,
+      data: {
+        definition,
+        purchaseFamily: "blackmarket",
+        blackMarketPrices: WEAPON_BLACK_MARKET_PRICES[key] ?? [],
+        upgradeLevels: stages.map(([warBucks, deliverySeconds], level) => ({
+          level,
+          warBucks,
+          deliverySeconds,
+        })),
+        powerByLevel: power.powerByLevel,
+      },
+    });
+  }
+
   for (const definition of weapons.unresolvedShopRows) {
     rawEntries.push({
       kind: "weapon",
@@ -230,6 +263,16 @@ export function buildGameCatalog(): BuiltGameCatalog {
       availability: "unresolved",
       ...weaponSource,
       data: { definition, upgradeLevels: [] },
+    });
+  }
+
+  for (const definition of weapons.unresolvedBlackMarketRows) {
+    rawEntries.push({
+      kind: "weapon",
+      key: requiredName(definition, "Unresolved Black Market weapon"),
+      availability: "unresolved",
+      ...weaponSource,
+      data: { definition, purchaseFamily: "blackmarket", upgradeLevels: [], blackMarketPrices: [] },
     });
   }
 
@@ -292,8 +335,8 @@ export function buildGameCatalog(): BuiltGameCatalog {
     rawEntries.push({
       kind: "weaponFeature",
       key: `WeaponFeature.${definition.category}`,
-      // Coefficients are verified reference data, but their black-market acquisition flow is
-      // not implemented. A distinct availability prevents data presence from authorizing sale.
+      // Black Market ArmyPower consumes these coefficients, but the rows are balancing
+      // references rather than independently purchasable inventory definitions.
       availability: "reference",
       ...rankSource,
       data: { definition },

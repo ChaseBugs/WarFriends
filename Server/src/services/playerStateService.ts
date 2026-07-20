@@ -223,6 +223,18 @@ export function buildPlayerData(player: PlayerDocument): PlayerDataMap {
   addSerializedObject(data, "CardManagerData", state.cardInventory);
   addSerializedObject(data, "CraftData", state.cardCrafting);
   addSerializedObject(data, "StatisticsData", dto.statisticsData);
+  if (state.blackMarket) {
+    // BlackMarketManager inherits DatabaseSerializedObjectGeneric<BlackMarketOfferData>, so
+    // the boot lookup key is the nested type name. Action 217 uses the historic response key
+    // `BlackMarketOffer`; these two names are intentionally different parts of the client
+    // contract. Loading persisted state here keeps an active offer visible after relogging.
+    addSerializedObject(data, "BlackMarketOfferData", {
+      offersTotal: state.blackMarket.offersTotal,
+      lastTrigger: state.blackMarket.lastTrigger,
+      offerEnd: state.blackMarket.offerEnd,
+      currentOffers: state.blackMarket.currentOffers.map((offer) => ({ ...offer })),
+    });
+  }
 
   if (state.assignments) {
     // AssignmentsManager derives from DatabaseSerializedObjectGeneric<AssignmentData>, so

@@ -7,7 +7,11 @@ import type {
   PlayerProgressionState,
   SavedWeaponState,
 } from "../db";
-import { WEAPON_UPGRADE_CATALOG } from "../data/weaponUpgradeCatalog.generated";
+import generatedWeaponCatalog from "../data/weaponCatalog.generated.json";
+import {
+  WEAPON_BLACK_MARKET_PRICES,
+  WEAPON_UPGRADE_CATALOG,
+} from "../data/weaponUpgradeCatalog.generated";
 
 /**
  * Recovered weapon ownership and loadout logic.
@@ -46,7 +50,7 @@ export const ITEM_NO_DISCOUNT_FOUND = 13601;
 export const WEAPON_GOLD_COEFFICIENT = 0.6325;
 export const WEAPON_GOLD_EXP_COEFFICIENT = -0.175;
 
-interface WeaponDefinition {
+export interface WeaponDefinition {
   /** GetType().ToString() value written by WeaponLevelsSetup.DHHKOKKDDDO. */
   name: string;
   /** Position in LevelManager.weaponLevelsSetups, sent as EquipWeapon.Index. */
@@ -197,6 +201,23 @@ export const WEAPON_CATALOG: Readonly<Record<string, WeaponDefinition>> = Object
   Object.fromEntries(RECOVERED_WEAPON_ROWS.map((definition) => [definition.name, definition])),
 );
 
+/**
+ * Dedicated `PURCHASABLE: blackmarket` LevelManager setups recovered by the same catalog
+ * extractor as normal shop weapons. They are separate runtime types and indexes; treating a
+ * Black Market offer as a discount on WEAPON_CATALOG would grant the wrong client object.
+ */
+export const BLACK_MARKET_WEAPON_CATALOG: Readonly<Record<string, WeaponDefinition>> = Object.freeze(
+  Object.fromEntries(generatedWeaponCatalog.blackMarketCatalog.map((definition) => [
+    definition.name,
+    Object.freeze({ ...definition, starterOwned: false }),
+  ])),
+);
+
+/** Resolve either authoritative weapon family for shared equip/upgrade/power code. */
+export function weaponDefinitionFor(name: string): WeaponDefinition | undefined {
+  return WEAPON_CATALOG[name] ?? BLACK_MARKET_WEAPON_CATALOG[name];
+}
+
 // These are the four category masks serialized on PlayerInventory.inventorySlots in the
 // 4.9.5 MainScene. A weapon category must be wholly contained in its destination mask.
 const WEAPON_SLOT_MASKS = [263, 1064, 592, 128] as const;
@@ -278,8 +299,8 @@ function emptyDelivery(): ItemDeliveryState {
   return { activationNeeded: false, boughtIndex: 0, end: 0, itemId: "", slotId: 0, start: 0 };
 }
 
-function ownedWeapon(): SavedWeaponState {
-  return { bought: true, boughtIndex: 0, showed: true, borrowed: false, specialFeature: 0 };
+function ownedWeapon(boughtIndex = 0, specialFeature = 0): SavedWeaponState {
+  return { bought: true, boughtIndex, showed: true, borrowed: false, specialFeature };
 }
 
 /** Construct the exact starter objects expected by PlayerInventory and LevelManager. */
@@ -432,28 +453,55 @@ export function itemInventoryStateFor(state: PlayerProgressionState): ItemInvent
 }
 
 /**
- * Atomically debit a verified 4.9.5 price and grant one weapon.
+ * Atomically debit a verified 4.9.5 shop or active Black Market price and grant one weapon.
  *
  * The request's price, unlock level, start time, and discount are assertions only. The
  * server selects the catalog row by name and recalculates every authoritative value. A
- * non-zero discount is rejected because the offer subsystem is not implemented and cannot
- * prove entitlement; silently accepting it would let a modified APK choose its own price.
+ * A Black Market purchase is recognized only when the authenticated progression contains a
+ * matching, unexpired offer and the request exactly echoes that offer level's scene-extracted
+ * WEAPONPRICE with zero WarBucks. The request does not contain level/special fields, so those
+ * values always come from stored offer authority. Non-zero OfferManager discounts remain
+ * closed because their separate entitlement source has not been reconstructed.
  */
 export function purchaseWeaponState(
   state: PlayerProgressionState,
   playerLevel: number,
   payload: WeaponPurchasePayload,
+  now?: number,
 ): ItemInventoryMutationResult {
-  const definition = WEAPON_CATALOG[payload.name];
+  const shopDefinition = WEAPON_CATALOG[payload.name];
+  const blackMarketDefinition = BLACK_MARKET_WEAPON_CATALOG[payload.name];
+  const definition = shopDefinition ?? blackMarketDefinition;
   if (!definition || definition.starterOwned) {
     throw new ApiError(ITEM_PRICE_NOT_FOUND, "Weapon is not available for this purchase path.");
   }
   if (payload.discount !== 0) {
     throw new ApiError(13601, "Weapon discount is not backed by an active server offer.");
   }
+  const offered = state.blackMarket?.currentOffers.find((offer) => offer.weaponId === definition.name);
+  const blackMarketPrices = WEAPON_BLACK_MARKET_PRICES[definition.name];
+  const blackMarketGold = offered && blackMarketPrices?.[offered.level];
+  const isBlackMarketPurchase = Boolean(
+    offered
+      && Number.isInteger(now)
+      && state.blackMarket!.offerEnd > now!
+      && Number.isInteger(offered.level)
+      && offered.level >= 0
+      && Number.isInteger(offered.special)
+      && offered.special >= 0
+      && offered.special <= 8
+      && Number.isInteger(blackMarketGold)
+      && blackMarketGold! >= 0
+      && payload.warBucks === 0
+      && payload.gold === blackMarketGold,
+  );
+  const isNormalShopPurchase = Boolean(
+    shopDefinition
+      && payload.gold === shopDefinition.gold
+      && payload.warBucks === shopDefinition.warBucks,
+  );
   if (
-    payload.gold !== definition.gold
-    || payload.warBucks !== definition.warBucks
+    (!isBlackMarketPurchase && !isNormalShopPurchase)
     || payload.unlockLevel !== definition.unlockLevel
     || payload.gold < 0
     || payload.warBucks < 0
@@ -466,7 +514,7 @@ export function purchaseWeaponState(
   // DatabasePlayer.Level is passed directly to LevelManager.LoadData and stored as the
   // zero-based levelNumber. Comparing it to a display level here would create an off-by-one
   // purchase gate relative to WeaponLevelsSetup.canBeBought.
-  if (Math.max(0, Math.floor(playerLevel)) < definition.canBuyLevelIndex) {
+  if (!isBlackMarketPurchase && Math.max(0, Math.floor(playerLevel)) < definition.canBuyLevelIndex) {
     throw new ApiError(ITEM_NOT_ENOUGH_LEVEL, "Player level is too low for this weapon.");
   }
 
@@ -478,12 +526,19 @@ export function purchaseWeaponState(
     // buffered purchase created a second item.
     throw new ApiError(102, "Weapon is already owned.");
   }
-  if (state.gold < definition.gold) throw new ApiError(ITEM_NOT_ENOUGH_GOLD, "Not enough Gold.");
-  if (state.warBucks < definition.warBucks) {
+  const goldCost = isBlackMarketPurchase ? blackMarketGold! : definition.gold;
+  const warBucksCost = isBlackMarketPurchase ? 0 : definition.warBucks;
+  if (state.gold < goldCost) throw new ApiError(ITEM_NOT_ENOUGH_GOLD, "Not enough Gold.");
+  if (state.warBucks < warBucksCost) {
     throw new ApiError(ITEM_NOT_ENOUGH_WARBUCKS, "Not enough WarBucks.");
   }
 
-  const weapon = ownedWeapon();
+  // Black Market level/special are server-issued. Never copy them from BuyWeapon data: the
+  // stock request does not send either field, and a patched client must not be able to mint
+  // a maximum-level or enhanced weapon by adding unrecognized JSON properties.
+  const weapon = isBlackMarketPurchase
+    ? ownedWeapon(offered!.level, offered!.special)
+    : ownedWeapon();
   itemInventory.levelManagerData.savedWeapons[definition.name] = weapon;
   // Every enabled 4.9.5 shop row has DELIVERTIME=0, including WarBucks-priced weapons.
   // Ownership therefore becomes active immediately and no pending delivery may be fabricated.
@@ -491,8 +546,8 @@ export function purchaseWeaponState(
   const next: PlayerProgressionState = {
     ...state,
     revision: state.revision + 1,
-    gold: state.gold - definition.gold,
-    warBucks: state.warBucks - definition.warBucks,
+    gold: state.gold - goldCost,
+    warBucks: state.warBucks - warBucksCost,
     itemInventory,
   };
   return { state: next, itemInventory, weapon, definition };
@@ -509,7 +564,7 @@ export function equipWeaponState(
   state: PlayerProgressionState,
   payload: WeaponEquipPayload,
 ): ItemInventoryMutationResult {
-  const definition = WEAPON_CATALOG[payload.name];
+  const definition = weaponDefinitionFor(payload.name);
   const itemInventory = itemInventoryStateFor(state);
   const weapon = definition ? itemInventory.levelManagerData.savedWeapons[definition.name] : undefined;
   const slotMask = WEAPON_SLOT_MASKS[payload.slotIndex];
@@ -546,7 +601,7 @@ function upgradeContext(
   weapon: SavedWeaponState;
   stages: NonNullable<(typeof WEAPON_UPGRADE_CATALOG)[string]>;
 } {
-  const definition = WEAPON_CATALOG[name];
+  const definition = weaponDefinitionFor(name);
   const stages = WEAPON_UPGRADE_CATALOG[name];
   const itemInventory = itemInventoryStateFor(state);
   const weapon = definition ? itemInventory.levelManagerData.savedWeapons[name] : undefined;
@@ -775,7 +830,7 @@ export function weaponRecoveryFields(
   requestedName: string,
 ): Record<string, unknown> {
   const itemInventory = itemInventoryStateFor(state);
-  const name = WEAPON_CATALOG[requestedName]?.name ?? "Google2u.AssaultRifle_AK47";
+  const name = weaponDefinitionFor(requestedName)?.name ?? "Google2u.AssaultRifle_AK47";
   const weapon = itemInventory.levelManagerData.savedWeapons[name] ?? {
     bought: false, boughtIndex: 0, showed: false, borrowed: false, specialFeature: 0,
   };

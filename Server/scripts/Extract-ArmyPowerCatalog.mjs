@@ -77,7 +77,11 @@ function dpsRows(componentId) {
 }
 
 const weaponPower = [];
-for (const definition of weaponCatalog.catalog) {
+// Black Market weapons are dedicated LevelManager setups. Once purchased they participate
+// in the same equipped-slot ArmyPower calculation, so their normal DPS rows must be just as
+// authoritative as normal-shop weapons rather than falling back to a client echo.
+const weaponDefinitions = [...weaponCatalog.catalog, ...weaponCatalog.blackMarketCatalog];
+for (const definition of weaponDefinitions) {
   const setupId = setupIds[definition.index];
   if (!setupId || setupId === "0") {
     throw new Error(`Weapon ${definition.name} has no LevelManager setup at index ${definition.index}.`);

@@ -15,13 +15,13 @@ test("material database joins every recovered gameplay inventory family", () => 
 
   assert.equal(catalog.clientVersion, GAME_CATALOG_CLIENT_VERSION);
   assert.match(catalog.catalogRevision, /^[0-9a-f]{64}$/);
-  assert.equal(catalog.entries.length, 441);
+  assert.equal(catalog.entries.length, 531);
   assert.deepEqual(catalog.counts, {
-    weapons: 93,
-    playableWeapons: 84,
-    unresolvedWeapons: 9,
-    weaponUpgradeLevels: 5_781,
-    weaponPowerLevels: 5_865,
+    weapons: 183,
+    playableWeapons: 165,
+    unresolvedWeapons: 18,
+    weaponUpgradeLevels: 11_640,
+    weaponPowerLevels: 11_805,
     rankPowerLevels: 58,
     weaponFeatureRows: 11,
     visuals: 147,
@@ -50,6 +50,12 @@ test("material database joins every recovered gameplay inventory family", () => 
     deliverySeconds: 60,
   });
   assert.equal((ak47?.data.powerByLevel as number[])[0], 68.544);
+
+  const blackMarketWeapon = catalog.entries.find((entry) =>
+    entry.kind === "weapon" && entry.key === "Google2u.AssaultRifle_AKS47UBM");
+  assert.equal(blackMarketWeapon?.availability, "playable");
+  assert.equal(blackMarketWeapon?.data.purchaseFamily, "blackmarket");
+  assert.ok((blackMarketWeapon?.data.blackMarketPrices as number[]).length > 0);
 
   const firstRank = catalog.entries.find((entry) =>
     entry.kind === "rank" && entry.key === "Level.1");
@@ -147,5 +153,5 @@ test("catalog sync writes all immutable entries before publishing the release po
   assert.deepEqual(calls, ["entries", "release"]);
   assert.equal(entryOperations, built.entries.length);
   assert.equal(publishedRelease?.catalogRevision, built.catalogRevision);
-  assert.equal(publishedRelease?.entryCount, 441);
+  assert.equal(publishedRelease?.entryCount, 531);
 });

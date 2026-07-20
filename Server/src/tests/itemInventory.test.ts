@@ -27,10 +27,14 @@ import {
   serializeInventoryData,
   serializeLevelManagerData,
   startWeaponUpgradeState,
+  BLACK_MARKET_WEAPON_CATALOG,
   WEAPON_CATALOG,
   weaponUpgradeInstantPrice,
 } from "../services/itemInventoryService";
-import { WEAPON_UPGRADE_CATALOG } from "../data/weaponUpgradeCatalog.generated";
+import {
+  WEAPON_BLACK_MARKET_PRICES,
+  WEAPON_UPGRADE_CATALOG,
+} from "../data/weaponUpgradeCatalog.generated";
 import { createInitialProgression } from "../services/playerStateService";
 
 const NOW = Date.UTC(2026, 6, 19, 12, 0, 0) / 1_000;
@@ -166,12 +170,18 @@ test("weapon catalog contains every shop row with a resolvable LevelManager entr
   assert.equal(WEAPON_CATALOG["Google2u.PulseRifle_PR9"], undefined);
 });
 
-test("weapon upgrade catalog covers all enabled weapons with recovered variable-length stages", () => {
-  assert.equal(Object.keys(WEAPON_UPGRADE_CATALOG).length, 84);
-  assert.deepEqual(Object.keys(WEAPON_UPGRADE_CATALOG).sort(), Object.keys(WEAPON_CATALOG).sort());
+test("weapon upgrade catalog covers shop and Black Market families with recovered variable-length stages", () => {
+  const allNames = [...Object.keys(WEAPON_CATALOG), ...Object.keys(BLACK_MARKET_WEAPON_CATALOG)].sort();
+  assert.equal(Object.keys(WEAPON_UPGRADE_CATALOG).length, 165);
+  assert.deepEqual(Object.keys(WEAPON_UPGRADE_CATALOG).sort(), allNames);
   assert.equal(
     Object.values(WEAPON_UPGRADE_CATALOG).reduce((total, stages) => total + stages.length, 0),
-    5_781,
+    11_640,
+  );
+  assert.equal(Object.keys(WEAPON_BLACK_MARKET_PRICES).length, 79);
+  assert.equal(
+    Object.values(WEAPON_BLACK_MARKET_PRICES).reduce((total, prices) => total + prices.length, 0),
+    5_860,
   );
   assert.deepEqual(WEAPON_UPGRADE_CATALOG[AK47]?.[0], [500, 60]);
   assert.deepEqual(WEAPON_UPGRADE_CATALOG[FAMAS]?.[0], [10_900, 60]);
@@ -412,11 +422,15 @@ test("buffered weapon upgrade returns duration and instant completion is replay-
 
 test("runtime weapon catalog exactly matches the reproducible 4.9.5 extraction artifact", () => {
   const runtimeRows = Object.values(WEAPON_CATALOG).sort((left, right) => left.index - right.index);
+  const blackMarketRows = Object.values(BLACK_MARKET_WEAPON_CATALOG)
+    .sort((left, right) => left.index - right.index);
 
   assert.equal(generatedWeaponCatalog.schemaVersion, 1);
   assert.equal(generatedWeaponCatalog.source, "Client/ExportedProject/Assets/Scenes/MainScene.unity");
   assert.match(generatedWeaponCatalog.sourceSha256, /^[0-9a-f]{64}$/);
   assert.deepEqual(runtimeRows, generatedWeaponCatalog.catalog);
+  assert.deepEqual(blackMarketRows, generatedWeaponCatalog.blackMarketCatalog);
+  assert.equal(generatedWeaponCatalog.unresolvedBlackMarketRows.length, 9);
   assert.deepEqual(
     generatedWeaponCatalog.unresolvedShopRows.map((row) => row.name).sort(),
     [

@@ -1,7 +1,11 @@
 import generatedArmyPowerCatalog from "../data/armyPowerCatalog.generated.json";
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import { players, type PlayerDocument, type PlayerProgressionState } from "../db";
-import { itemInventoryStateFor, WEAPON_CATALOG } from "./itemInventoryService";
+import {
+  BLACK_MARKET_WEAPON_CATALOG,
+  itemInventoryStateFor,
+  weaponDefinitionFor,
+} from "./itemInventoryService";
 import { progressionForPlayer } from "./playerStateService";
 import { equippedUnitPower } from "./unitInventoryService";
 
@@ -17,6 +21,10 @@ interface ArmyPowerArtifact {
   source: string;
   sourceSha256: string;
   rankLevels: Array<{ index: number; displayLevel: number; armyPower: number }>;
+  featureDpsCoefficients: Array<{
+    categoryMask: number;
+    dpsByFeature: Array<{ index: number; coefficient: number }>;
+  }>;
   weapons: WeaponPowerDefinition[];
 }
 
@@ -34,6 +42,12 @@ const WEAPON_POWER = Object.freeze(Object.fromEntries(
     powerByLevel: Object.freeze([...weapon.powerByLevel]),
   })]),
 )) as Readonly<Record<string, Readonly<WeaponPowerDefinition>>>;
+const FEATURE_DPS = Object.freeze(Object.fromEntries(
+  artifact.featureDpsCoefficients.map((category) => [
+    category.categoryMask,
+    Object.freeze(Object.fromEntries(category.dpsByFeature.map((feature) => [feature.index, feature.coefficient]))),
+  ]),
+)) as Readonly<Record<number, Readonly<Record<number, number>>>>;
 
 function roundPositiveUnityFloat(value: number): number {
   // MEJMLNDFDBP.LJDADOKBBNA is the positive Army Power rounding boundary used by
@@ -59,8 +73,9 @@ export function rankPower(playerLevelIndex: number): number {
  *
  * WeaponLevelsSetup selects DPS by the stored normal boughtIndex, multiplies it by the active
  * feature's dpsCoef, accumulates every slot as float32, and rounds once. The authoritative
- * server currently grants only normal feature `0`; a borrowed or black-market feature fails
- * closed until its acquisition and WeaponFeatures coefficient table are server-owned.
+ * normal shop rows use their base coefficient. Dedicated Black Market rows load `special`
+ * through WeaponFeatures.CreateFeature, so their recovered category/index coefficient is
+ * applied here. Borrowed rental authority remains fail-closed.
  */
 export function equippedWeaponPower(state: PlayerProgressionState): number {
   const inventory = itemInventoryStateFor(state);
@@ -69,7 +84,7 @@ export function equippedWeaponPower(state: PlayerProgressionState): number {
   let total = Math.fround(0);
 
   for (const [, slot] of slots) {
-    const definition = WEAPON_CATALOG[slot.name];
+    const definition = weaponDefinitionFor(slot.name);
     const power = WEAPON_POWER[slot.name];
     const saved = inventory.levelManagerData.savedWeapons[slot.name];
     if (
@@ -81,10 +96,10 @@ export function equippedWeaponPower(state: PlayerProgressionState): number {
     ) {
       throw new ApiError(ApiErrorCode.UnknownAction, `Equipped weapon ${slot.name} is not authoritative.`);
     }
-    if (saved.borrowed || saved.specialFeature !== 0) {
+    if (saved.borrowed) {
       throw new ApiError(
         ApiErrorCode.UnknownAction,
-        `Weapon ${slot.name} uses an unsupported rental or black-market feature.`,
+        `Weapon ${slot.name} uses unsupported rental authority.`,
       );
     }
     if (!Number.isInteger(saved.boughtIndex) || saved.boughtIndex < 0 || power.powerByLevel.length === 0) {
@@ -95,8 +110,21 @@ export function equippedWeaponPower(state: PlayerProgressionState): number {
     // removed the final WARARENA-only source row, so the final array index is the same normal
     // clamp boundary used by the recovered client.
     const levelIndex = Math.min(saved.boughtIndex, power.powerByLevel.length - 1);
-    const dps = power.powerByLevel[levelIndex]!;
-    total = Math.fround(total + Math.fround(dps));
+    const baseDps = power.powerByLevel[levelIndex]!;
+    let coefficient = 1;
+    if (BLACK_MARKET_WEAPON_CATALOG[slot.name]) {
+      coefficient = FEATURE_DPS[definition.category]?.[saved.specialFeature] ?? Number.NaN;
+      if (!Number.isFinite(coefficient) || coefficient <= 0) {
+        throw new ApiError(
+          ApiErrorCode.UnknownAction,
+          `Weapon ${slot.name} has an unsupported Black Market feature.`,
+        );
+      }
+    } else if (saved.specialFeature !== 0) {
+      throw new ApiError(ApiErrorCode.UnknownAction, `Normal weapon ${slot.name} has an invalid feature.`);
+    }
+    const dps = Math.fround(Math.fround(baseDps) * Math.fround(coefficient));
+    total = Math.fround(total + dps);
   }
 
   return roundPositiveUnityFloat(total);

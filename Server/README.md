@@ -134,7 +134,9 @@ Working end-to-end (verified live):
   balancing and refill-price formula.
 - **Versioned client-data material database**: MongoDB collections `gameCatalogEntries` and
   `gameCatalogReleases` persist the recovered 4.9.5 weapon, soldier/unit, rank, power, player
-  visual, War Card, and card-pack data as 441 queryable records. Every playable weapon record joins its shop row to the full
+  visual, War Card, and card-pack data as 531 queryable records. The 165 concrete weapon
+  records comprise 84 shop and 81 dedicated Black Market LevelManager setups; 18 unresolved
+  rows retain nine members from each family. Every playable weapon record joins its source row to the full
   upgrade table; every playable unit joins roster/deployment/purchase data to normal, special, and
   elite level rows; every visual joins its price/effect row to a serialized client asset. Nine
   unresolved Pulse Rifles, three helper units, 18 unresolved unit rows, and the assetless
@@ -144,14 +146,15 @@ Working end-to-end (verified live):
   balancing changes auditable. Startup idempotently writes all immutable revision entries before switching the
   current 4.9.5 release pointer, so readers cannot observe a partial synchronization. Run
   `npm run sync:catalog` to publish explicitly; normal server startup performs the same sync.
-- **Authoritative Army Power**: `scripts/Extract-ArmyPowerCatalog.mjs` reproduces 5,865 normal
+- **Authoritative Army Power**: `scripts/Extract-ArmyPowerCatalog.mjs` reproduces 11,805 normal
   weapon DPS rows and all 58 player-rank `ARMYPOWER` rows from MainScene. The server independently
   rounds equipped-unit float power, equipped-weapon float DPS, and the current zero-based rank row
   exactly where `LevelManager` does, then atomically stores their sum in both indexed and public
   player state. `UpdateArmyPower` ignores the client's claimed value and recomputes against one
   consistent progression revision; concurrent inventory changes force a reload. Unsupported
-  rental and black-market acquisition remains closed, while all 11 category coefficient rows are
-  retained as reference data for that future flow. Run `npm run verify:army-power` to compare the
+  rental acquisition remains closed. Black Market weapons use their persisted offered
+  `boughtIndex` and special-feature index with the exact coefficient from all 11 category rows.
+  Run `npm run verify:army-power` to compare the
   generated catalog with the recovered scene.
 - **Player visuals and decals**: `scripts/Extract-VisualCatalog.mjs` joins all four serialized
   customization categories to the 4.9.5 PlayerVisuals sheet, producing 146 playable and one
@@ -198,14 +201,15 @@ Working end-to-end (verified live):
   `DELIVERTIME=0`. Mutations include server price/discount validation, atomic debits,
   category-safe equipment, Unity rollback fields, and `BufferId` replay protection. Nine
   shop-priced Pulse Rifle rows with null LevelManager entries, unknown catalog rows, and
-  offer-discounted purchases still fail closed.
+  unrelated OfferManager-discounted purchases still fail closed.
   `../Tools/Extract-WeaponCatalog.ps1` reproduces the catalog by joining the serialized
   LevelManager setup array to the Google2u component on each weapon GameObject, resolving
   Unity DLL script IDs through the recovered assemblies, and XOR-decoding both currency
   fields. Run `npm run verify:weapon-catalog` to prove that the checked-in extraction artifact
   and the runtime catalog still match the recovered 4.9.5 scene exactly.
-- **Weapon upgrade lifecycle**: buffered actions `73`-`75` use all 84 recovered per-level
-  Google2u tables (5,781 normal-level transitions). BuyWeaponUpgrade validates the old index
+- **Weapon upgrade lifecycle**: buffered actions `73`-`75` use all 165 recovered per-level
+  Google2u tables across shop and Black Market families (11,640 normal-level transitions).
+  BuyWeaponUpgrade validates the old index
   and source duration, debits the server-owned WarBucks price, and creates the single shared
   `weaponDelivery` receipt used by
   LevelManager. Normal activation enforces its server end time; instant activation derives
@@ -215,6 +219,17 @@ Working end-to-end (verified live):
   paths increment `boughtIndex` once, clear delivery atomically, return Unity rollback fields
   on failure, and inherit `BufferId` replay protection. Run `npm run verify:weapon-upgrades`
   to compare the generated price/time catalog with MainScene.
+- **Black Market weapon offers**: action `217` returns the exact serialized
+  `BlackMarketOfferData` contract and persists the same object into boot data. The existing
+  weapon extractor now also XOR-decodes all 5,860 normal-level `WEAPONPRICE` Gold values
+  across the 79 concrete Black Market rows that contain that purchase column.
+  Active sets contain up to four unowned supported weapons for 24 hours and are deterministic
+  across retries; buffered `BuyWeapon` redemption requires the authenticated stored offer,
+  its unexpired deadline, zero WarBucks, and its exact level price. Weapon level and special
+  feature come only from server state, and the wallet/ownership mutation remains atomic and
+  BufferId-replay-safe. Issued offers currently use recovered feature index 0; the original
+  remote selection weights, trigger schedule, feature weights, and OfferManager discount
+  entitlements remain reconstruction gaps.
 - **Unit purchase, loadout, and upgrade lifecycle**: `../Tools/Extract-UnitCatalog.ps1` joins the recovered
   `LevelManager.behaviours` and `additionalBehaviours` arrays through each behaviour's
   `UpgradeSlots` GameObject to the `Google2u.ArmyUpgrades` master row. The checked-in artifact
@@ -294,13 +309,14 @@ allowlist of analytics/impression actions is safely ignored.
   state is persistent, but actual channel delivery still requires Photon Chat repointing or a
   compatible replacement transport.
 - **Item economy expansion** — unit Elite upgrades, normal shop visuals, normal card-pack
-  purchase, and complete normal-loadout ArmyPower are implemented. Add authoritative card reward
-  and consumption events, server-selected card/Buddy RNG, black-market features, rentals,
+  purchase, dedicated Black Market weapons, and complete permanent-loadout ArmyPower are implemented.
+  Add authoritative card reward and consumption events, server-selected card/Buddy RNG, rentals,
   VIP purchasing, and non-shop visual reward delivery. Normal unit purchase is authoritative for 23
   non-tutorial roster units, and the tutorial unit is persisted through its first equip event;
-  three helper rows and 18 ArmyUpgrades rows without LevelManager objects remain closed. All 84 resolvable
-  shop weapons support exact Gold or WarBucks purchase/equip plus server-owned upgrade
-  delivery/activation; the nine null-reference Pulse Rifle rows, unknown items, and
+  three helper rows and 18 ArmyUpgrades rows without LevelManager objects remain closed. All 84
+  resolvable shop weapons and 81 concrete Black Market weapons support authoritative equip/upgrade
+  state; the nine unresolved rows in each weapon family, two Black Market rows without
+  `WEAPONPRICE`, unknown items, and
   discount-bearing requests remain rejected instead of receiving guessed prices or unusable
   inventory records.
 - **Player leagues** — the server owns source-backed 16-tier placement and season state,

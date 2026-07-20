@@ -297,6 +297,7 @@ try {
     ))
     $mappedNames = [Collections.Generic.HashSet[string]]::new()
     $catalog = [Collections.Generic.List[object]]::new()
+    $blackMarketCatalog = [Collections.Generic.List[object]]::new()
     $unresolvedSetups = [Collections.Generic.List[object]]::new()
 
     for ($index = 0; $index -lt $setupIds.Count; $index++) {
@@ -331,11 +332,7 @@ try {
         if ([int]$setup.category -ne [int]$weaponRow.category) {
             throw "$typeName category differs between LevelManager and the balancing row."
         }
-        if ($weaponRow.purchasable -ne "shop") {
-            continue
-        }
-
-        $catalog.Add([ordered]@{
+        $resolved = [ordered]@{
             name = $typeName
             index = $index
             category = [int]$weaponRow.category
@@ -345,15 +342,29 @@ try {
             gold = Decode-Price $weaponRow "gold"
             deliverySeconds = [int]$weaponRow.deliverySeconds
             starterOwned = $starterNames.Contains($typeName)
-        })
+        }
+        if ($weaponRow.purchasable -eq "shop") {
+            $catalog.Add($resolved)
+        }
+        elseif ($weaponRow.purchasable -eq "blackmarket") {
+            # These are distinct LevelManager weapon setups, not discounted aliases of shop
+            # rows. Their master PRICE fields are retained for audit, while actual redemption
+            # Gold comes from the selected level table's WEAPONPRICE.
+            $resolved.starterOwned = $false
+            $blackMarketCatalog.Add($resolved)
+        }
     }
 
     $unresolvedShopRows = [Collections.Generic.List[object]]::new()
+    $unresolvedBlackMarketRows = [Collections.Generic.List[object]]::new()
     foreach ($weaponRow in ($weaponRows.Values | Sort-Object { [string]$_['name'] })) {
-        if ($weaponRow.purchasable -ne "shop" -or $mappedNames.Contains([string]$weaponRow.name)) {
+        if ($mappedNames.Contains([string]$weaponRow.name)) {
             continue
         }
-        $unresolvedShopRows.Add([ordered]@{
+        if ($weaponRow.purchasable -ne "shop" -and $weaponRow.purchasable -ne "blackmarket") {
+            continue
+        }
+        $unresolved = [ordered]@{
             name = [string]$weaponRow.name
             category = [int]$weaponRow.category
             canBuyLevelIndex = [Math]::Max(0, [int]$weaponRow.canBeBought - 1)
@@ -362,18 +373,31 @@ try {
             gold = Decode-Price $weaponRow "gold"
             deliverySeconds = [int]$weaponRow.deliverySeconds
             reason = "No non-null LevelManager.weaponLevelsSetups entry resolves this row."
-        })
+        }
+        if ($weaponRow.purchasable -eq "shop") {
+            $unresolvedShopRows.Add($unresolved)
+        }
+        else {
+            $unresolvedBlackMarketRows.Add($unresolved)
+        }
     }
 
     # OrderedDictionary keys are not normal CLR properties, so use explicit indexers in sort
     # expressions. Plain `Sort-Object index` silently treats every key as null and leaves the
     # hash-derived input order intact on Windows PowerShell 5.1.
     $orderedCatalog = @($catalog | Sort-Object { [int]$_['index'] })
+    $orderedBlackMarketCatalog = @($blackMarketCatalog | Sort-Object { [int]$_['index'] })
     if ($orderedCatalog.Count -ne 84) {
         throw "Expected 84 resolvable shop weapons from the 4.9.5 scene, found $($orderedCatalog.Count)."
     }
     if ($unresolvedShopRows.Count -ne 9) {
         throw "Expected 9 unresolved shop rows from the 4.9.5 scene, found $($unresolvedShopRows.Count)."
+    }
+    if ($orderedBlackMarketCatalog.Count -ne 81) {
+        throw "Expected 81 resolvable Black Market weapons from the 4.9.5 scene, found $($orderedBlackMarketCatalog.Count)."
+    }
+    if ($unresolvedBlackMarketRows.Count -ne 9) {
+        throw "Expected 9 unresolved Black Market rows from the 4.9.5 scene, found $($unresolvedBlackMarketRows.Count)."
     }
     if (@($orderedCatalog | Where-Object { $_.deliverySeconds -ne 0 }).Count -ne 0) {
         throw "At least one enabled shop weapon has a non-zero delivery time."
@@ -391,6 +415,8 @@ try {
         sourceSha256 = (Get-FileHash -LiteralPath $scene -Algorithm SHA256).Hash.ToLowerInvariant()
         catalog = $orderedCatalog
         unresolvedShopRows = @($unresolvedShopRows | Sort-Object { [string]$_['name'] })
+        blackMarketCatalog = $orderedBlackMarketCatalog
+        unresolvedBlackMarketRows = @($unresolvedBlackMarketRows | Sort-Object { [string]$_['name'] })
     }
     $json = $document | ConvertTo-Json -Depth 6
     $expectedText = $json + [Environment]::NewLine
@@ -403,7 +429,7 @@ try {
         if ($actualText -ne $expectedText) {
             throw "Generated catalog is stale. Run Tools\Extract-WeaponCatalog.ps1 and commit the result."
         }
-        Write-Host "Weapon catalog is current: 84 enabled rows, 9 unresolved rows."
+        Write-Host "Weapon catalog is current: 84 shop rows, $($orderedBlackMarketCatalog.Count) Black Market rows, 9 unresolved shop rows, and $($unresolvedBlackMarketRows.Count) unresolved Black Market rows."
     }
     else {
         $outputDirectory = Split-Path -Parent $OutputPath
@@ -411,7 +437,7 @@ try {
             [void](New-Item -ItemType Directory -Path $outputDirectory)
         }
         [IO.File]::WriteAllText($OutputPath, $expectedText, [Text.UTF8Encoding]::new($false))
-        Write-Host "Wrote $OutputPath with 84 enabled rows and 9 unresolved rows."
+        Write-Host "Wrote $OutputPath with 84 shop rows, $($orderedBlackMarketCatalog.Count) Black Market rows, 9 unresolved shop rows, and $($unresolvedBlackMarketRows.Count) unresolved Black Market rows."
     }
 
     if ($unresolvedSetups.Count -gt 0) {

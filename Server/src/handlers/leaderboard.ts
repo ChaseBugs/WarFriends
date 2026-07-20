@@ -67,7 +67,13 @@ export const leaderboardHandlers: Record<number, HandlerEntry> = {
     });
   }),
 
-  [DbAction.GetMissionLeaderboards]: authed(() => ok(DbAction.GetMissionLeaderboards, { Items: [] })),
+  [DbAction.GetMissionLeaderboards]: authed(() => {
+    // The recovered 1.6.0 dispatcher routes action 111 to KBBIOFPIJFI, whose entire body is
+    // `Debug.LogError("TODO remove - obsolete")`. It never reads Items or populates the
+    // `missionLeaderboards` cache. Preserve authenticated wire compatibility without
+    // inventing a ranking model for a protocol the shipped client had already retired.
+    return ok(DbAction.GetMissionLeaderboards, { Items: [] });
+  }),
 
   [DbAction.GetArenaLeaderboards]: authed(async () =>
     // GEKJKNLPJIL.LLCLNJKBGGM unconditionally casts Items to JArray and parses each entry

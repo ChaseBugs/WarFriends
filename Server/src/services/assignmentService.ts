@@ -469,6 +469,7 @@ export function processAssignmentBufferState(
             working,
             playerLevel,
             parseWeaponPurchaseData(request.data),
+            now,
           ).state;
         } else if (request.action === DbAction.EquipWeapon) {
           // EquipWeapon is also optimistic on the client. Only the stored ownership record
