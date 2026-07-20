@@ -434,17 +434,43 @@ export function serializeDailyMissionsData(value: DailyMissionsState): string {
   return JSON.stringify(dailyMissionsWireData(value));
 }
 
+/**
+ * dailyMissionsStateFor clones every nested list for safe mutation, so reference equality cannot
+ * distinguish a read from maintenance. Within one UTC cycle it can change only two stored facts:
+ * prune expired private sessions and fill a missing legacy Heroic reward target. Day keys and
+ * deadlines cover rollover. Keeping this comparison explicit avoids serializing the full mission
+ * document on every boot while still committing every real normalization.
+ */
+function dailyMissionNormalizationChanged(
+  existing: DailyMissionsState | undefined,
+  normalized: DailyMissionsState,
+): boolean {
+  return !existing
+    || existing.dayKey !== normalized.dayKey
+    || existing.tomorrow !== normalized.tomorrow
+    || existing.activeSessions.length !== normalized.activeSessions.length
+    || existing.heroicUnitReward !== normalized.heroicUnitReward;
+}
+
+function stateAfterDailyMissionNormalization(
+  state: PlayerProgressionState,
+  dailyMissions: DailyMissionsState,
+): PlayerProgressionState {
+  return dailyMissionNormalizationChanged(state.dailyMissions, dailyMissions)
+    ? { ...state, revision: state.revision + 1, dailyMissions }
+    : state;
+}
+
 export function ensureDailyMissionsState(
   state: PlayerProgressionState,
   now: number,
   playerLevel: number,
 ): DailyMissionMutationResult {
-  // Persist generated/rolled state on read so every device receives the same mission set.
-  // Revision is incremented even when the public day is unchanged because expired private
-  // receipts may have been pruned by dailyMissionsStateFor.
+  // Persist generated/rolled state, expired receipt pruning, and the legacy Heroic-target
+  // migration. An unchanged same-day read returns the exact input so reconnect does not write.
   const dailyMissions = dailyMissionsStateFor(state, now, playerLevel);
   return {
-    state: { ...state, revision: state.revision + 1, dailyMissions },
+    state: stateAfterDailyMissionNormalization(state, dailyMissions),
     dailyMissions,
   };
 }
@@ -484,7 +510,7 @@ export function startDailyMissionState(
   const previousSettlement = dailyMissions.recentSettlements.find((item) => item.battleId === battleId);
   if (previousSettlement) {
     return {
-      state: { ...state, revision: state.revision + 1, dailyMissions },
+      state: stateAfterDailyMissionNormalization(state, dailyMissions),
       dailyMissions,
       battleId,
       replayed: true,
@@ -502,7 +528,11 @@ export function startDailyMissionState(
     ].slice(-MAX_ACTIVE_SESSIONS);
   }
   return {
-    state: { ...state, revision: state.revision + 1, dailyMissions },
+    // A same-receipt retry is a true no-op unless normalization pruned another expired receipt
+    // or performed a day/migration transition before the replay was recognized.
+    state: existing
+      ? stateAfterDailyMissionNormalization(state, dailyMissions)
+      : { ...state, revision: state.revision + 1, dailyMissions },
     dailyMissions,
     battleId,
     replayed: Boolean(existing),

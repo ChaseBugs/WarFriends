@@ -6,6 +6,7 @@ import { CARD_CATALOG } from "../services/cardInventoryService";
 import {
   dailyMissionsStateFor,
   dailyMissionsWireData,
+  ensureDailyMissionsState,
   missionBattleRewardFor,
   selectDailyCompletionRewardIndex,
   serializeDailyMissionsData,
@@ -17,6 +18,45 @@ import { createInitialProgression } from "../services/playerStateService";
 
 const NOW = Date.UTC(2026, 6, 19, 12, 0, 0) / 1_000;
 const POLICY = { experience: 30, warBucks: 800 } as const;
+
+test("unchanged mission boot and start receipt replays do not write progression", () => {
+  const initial = createInitialProgression(NOW);
+  const ensured = ensureDailyMissionsState(initial, NOW, 1);
+  assert.notEqual(ensured.state, initial);
+  const bootReplay = ensureDailyMissionsState(ensured.state, NOW + 1, 1);
+  assert.equal(bootReplay.state, ensured.state);
+
+  const started = startDailyMissionState(
+    ensured.state,
+    NOW + 2,
+    1,
+    "mission-start-replay",
+    DbAction.GameStartedCampaign,
+  );
+  const startReplay = startDailyMissionState(
+    started.state,
+    NOW + 3,
+    1,
+    "mission-start-replay",
+    DbAction.GameStartedCampaign,
+  );
+  assert.equal(startReplay.replayed, true);
+  assert.equal(startReplay.state, started.state);
+});
+
+test("mission boot still persists expired receipt cleanup", () => {
+  const ensured = ensureDailyMissionsState(createInitialProgression(NOW), NOW, 1);
+  const started = startDailyMissionState(
+    ensured.state,
+    NOW,
+    1,
+    "mission-expired-receipt",
+    DbAction.GameStartedCampaign,
+  );
+  const cleaned = ensureDailyMissionsState(started.state, NOW + 5 * 60 * 60, 1);
+  assert.equal(cleaned.dailyMissions.activeSessions.length, 0);
+  assert.equal(cleaned.state.revision, started.state.revision + 1);
+});
 
 test("daily mission wire matches DailyMissionsData and rolls at UTC midnight", () => {
   const initial = createInitialProgression(NOW);
@@ -127,6 +167,15 @@ test("failed mission consumes its start receipt and a retry returns the stored r
   }, POLICY);
 
   assert.equal(failed.dailyMissions.activeSessions.length, 0);
+  const startReplay = startDailyMissionState(
+    failed.state,
+    NOW + 11,
+    1,
+    "player-1-100",
+    DbAction.GameStartedCampaign,
+  );
+  assert.equal(startReplay.replayed, true);
+  assert.equal(startReplay.state, failed.state);
   assert.equal(failed.dailyMissions.dailyMissions[0].completedSolo, false);
   assert.equal(failed.state.gold, 0);
   assert.deepEqual(failed.response.GameReward, {

@@ -393,6 +393,7 @@ Working end-to-end (verified live):
 - **Daily/co-op/heroic missions**: actions `67`-`69`, `215`, `216`, and mission-flavoured
   `GameEnded` use the exact `DailyMissionsData`, `SavedMission`, and compact `MissionUnit`
   fields. UTC issuance, start receipts, consumed failure receipts, mode/index/order checks,
+  no-write same-day boot/start/settled-receipt replay, durable expired-session pruning,
   separate solo/co-op completion, response replay, the 30-point heroic gate, and recovered
   completion currencies are persisted atomically. Mission XP and WarBucks now reproduce the
   recovered `MissionsConstants` exponential level formula, per-slot `MissionsSettings`
