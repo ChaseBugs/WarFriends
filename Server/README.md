@@ -210,7 +210,8 @@ Working end-to-end (verified live):
   unexpired. Black Market weapons use their persisted offered `boughtIndex` and
   special-feature index with the exact coefficient from all 11 category rows.
   Run `npm run verify:army-power` to compare the
-  generated catalog with the recovered scene.
+  generated catalog with the recovered scene. Action `192` confirms the source progression
+  revision and performs no write when both denormalized Army Power copies are already current.
 - **Player visuals and decals**: `scripts/Extract-VisualCatalog.mjs` joins all four serialized
   customization categories to the 4.9.5 PlayerVisuals sheet, producing 146 playable and one
   unresolved row. `DecalManagerData` is server-owned and boot-safe; buffered `BuyDecal`,

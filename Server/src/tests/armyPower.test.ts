@@ -6,6 +6,7 @@ import type { PlayerDocument } from "../db";
 import { newPlayer } from "../dtos";
 import { WEAPON_UPGRADE_CATALOG } from "../data/weaponUpgradeCatalog.generated";
 import {
+  armyPowerCacheIsCurrent,
   calculateArmyPower,
   equippedWeaponPower,
   rankPower,
@@ -82,6 +83,13 @@ test("starter weapon and rank power reproduce LevelManager float32 component rou
     rankPower: 97,
     total: 307,
   });
+  const breakdown = calculateArmyPower(document);
+  assert.equal(armyPowerCacheIsCurrent(document, breakdown), false);
+  document.armyPower = breakdown.total;
+  document.player.armyPower = breakdown.total;
+  assert.equal(armyPowerCacheIsCurrent(document, breakdown), true);
+  document.player.armyPower += 1;
+  assert.equal(armyPowerCacheIsCurrent(document, breakdown), false);
 });
 
 test("weapon power uses stored upgrade cursors and rejects unsupported feature authority", () => {

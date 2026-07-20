@@ -35,6 +35,14 @@ export interface ArmyPowerBreakdown {
   total: number;
 }
 
+/** Both denormalized copies must agree before an Army Power refresh can be a no-op. */
+export function armyPowerCacheIsCurrent(
+  document: PlayerDocument,
+  breakdown: ArmyPowerBreakdown,
+): boolean {
+  return document.armyPower === breakdown.total && document.player.armyPower === breakdown.total;
+}
+
 const artifact = generatedArmyPowerCatalog as ArmyPowerArtifact;
 const WEAPON_POWER = Object.freeze(Object.fromEntries(
   artifact.weapons.map((weapon) => [weapon.name, Object.freeze({
@@ -163,6 +171,19 @@ export async function recomputePlayerArmyPower(playerId: string): Promise<ArmyPo
     const revisionFilter = revision === undefined
       ? { "progression.revision": { $exists: false } }
       : { "progression.revision": revision };
+    if (armyPowerCacheIsCurrent(document, breakdown)) {
+      // UpdateArmyPower is a client signal to refresh a denormalized cache, not permission to
+      // touch updatedAt on every reconnect. Confirm that the progression revision used for the
+      // calculation still exists with a read-only query. If inventory changed concurrently the
+      // query misses and the loop recalculates; otherwise both cached copies are already exact and
+      // no MongoDB write is necessary.
+      const stable = await players().findOne(
+        { id: playerId, ...revisionFilter },
+        { projection: { _id: 1 } },
+      );
+      if (stable) return breakdown;
+      continue;
+    }
     const result = await players().updateOne(
       { id: playerId, ...revisionFilter },
       {
