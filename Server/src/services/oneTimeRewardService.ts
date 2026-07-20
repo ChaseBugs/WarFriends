@@ -1,11 +1,27 @@
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import type { PlayerProgressionState } from "../db";
+import {
+  assertTutorialWeaponUpgradeEligible,
+  tutorialWeaponUpgradeFunding,
+} from "./itemInventoryService";
 import { mutateProgression } from "./progressionMutationService";
+import {
+  assertTutorialUnitUpgradeEligible,
+  tutorialUnitUpgradeFunding,
+} from "./unitInventoryService";
+
+export type OneTimeRewardTrigger = "direct" | "facebook-link";
 
 export interface OneTimeRewardRule {
   id: string;
   gold: number;
-  trigger: "direct" | "facebook-link";
+  trigger: OneTimeRewardTrigger;
+}
+
+export interface OneTimeRewardGrant {
+  id: string;
+  gold: number;
+  warBucks?: number;
 }
 
 /**
@@ -27,7 +43,7 @@ export const ONE_TIME_REWARD_RULES = Object.freeze([
 
 export interface OneTimeRewardResult {
   state: PlayerProgressionState;
-  reward: OneTimeRewardRule;
+  reward: OneTimeRewardGrant;
   wasAdded: boolean;
 }
 
@@ -36,6 +52,9 @@ export function oneTimeRewardWire(result: OneTimeRewardResult): Record<string, u
   return {
     RewardId: result.reward.id,
     Gold: result.reward.gold,
+    // TutorialManagerStage4/5 reads this optional field and adds it only inside the same
+    // presence-sensitive WasAdded branch. Social rewards do not return a zero-valued key.
+    ...(result.reward.warBucks !== undefined ? { WarBucks: result.reward.warBucks } : {}),
     // The parser calls ContainsKey rather than reading a Boolean value. Omitting this property
     // is therefore the only correct replay representation; `WasAdded=false` would still pay.
     ...(result.wasAdded ? { WasAdded: true } : {}),
@@ -44,7 +63,7 @@ export function oneTimeRewardWire(result: OneTimeRewardResult): Record<string, u
 
 export function oneTimeRewardRule(
   rewardId: unknown,
-  trigger: OneTimeRewardRule["trigger"] = "direct",
+  trigger: OneTimeRewardTrigger = "direct",
 ): OneTimeRewardRule {
   if (typeof rewardId !== "string" || rewardId.length < 1 || rewardId !== rewardId.trim()) {
     throw new ApiError(ApiErrorCode.UnknownAction, "RewardId is invalid.");
@@ -59,6 +78,40 @@ export function oneTimeRewardRule(
   return rule;
 }
 
+function rewardIdString(rewardId: unknown): string {
+  if (typeof rewardId !== "string" || rewardId.length < 1 || rewardId !== rewardId.trim()) {
+    throw new ApiError(ApiErrorCode.UnknownAction, "RewardId is invalid.");
+  }
+  return rewardId;
+}
+
+/**
+ * Resolve tutorial currency exclusively from recovered upgrade catalogs.
+ *
+ * `Parameter` is supplied by the APK, so both funding helpers require the exact target selected
+ * by the corresponding tutorial manager. Eligibility is separated from amount resolution: the
+ * first claim checks stored inventory, while a collected replay can still return the original
+ * static amount after the upgrade has changed that inventory.
+ */
+function tutorialReward(
+  rewardId: string,
+  parameter: unknown,
+  checkEligibility: boolean,
+  state: PlayerProgressionState,
+): OneTimeRewardGrant | undefined {
+  if (rewardId === "WeaponTutorial") {
+    const funding = tutorialWeaponUpgradeFunding(parameter);
+    if (checkEligibility) assertTutorialWeaponUpgradeEligible(state, parameter);
+    return { id: rewardId, gold: funding.gold, warBucks: funding.warBucks };
+  }
+  if (rewardId === "UnitTutorial") {
+    const funding = tutorialUnitUpgradeFunding(parameter);
+    if (checkEligibility) assertTutorialUnitUpgradeEligible(state, parameter);
+    return { id: rewardId, gold: funding.gold, warBucks: funding.warBucks };
+  }
+  return undefined;
+}
+
 /**
  * Apply one reward to a progression snapshot without mutating the caller's objects.
  *
@@ -71,23 +124,36 @@ export function oneTimeRewardRule(
 export function applyOneTimeRewardState(
   state: PlayerProgressionState,
   rewardId: unknown,
-  trigger: OneTimeRewardRule["trigger"] = "direct",
+  trigger: OneTimeRewardTrigger = "direct",
+  parameter?: unknown,
 ): OneTimeRewardResult {
-  const reward = oneTimeRewardRule(rewardId, trigger);
+  const id = rewardIdString(rewardId);
   const collectedRewards = state.collectedRewards ?? {};
-  if (collectedRewards[reward.id] === 1) {
+  const collected = collectedRewards[id] === 1;
+
+  // Tutorial rewards are direct action-161 requests only. Keeping the trigger check here makes
+  // it impossible for a future identity-provider path to grant onboarding currency by accident.
+  if ((id === "WeaponTutorial" || id === "UnitTutorial") && trigger !== "direct") {
+    throw new ApiError(ApiErrorCode.RequestNotAuthorized, `One-time reward ${id} has an invalid trigger.`);
+  }
+  const tutorial = tutorialReward(id, parameter, !collected, state);
+  const rule = tutorial ? undefined : oneTimeRewardRule(id, trigger);
+  const reward: OneTimeRewardGrant = tutorial ?? { id: rule!.id, gold: rule!.gold };
+  if (collected) {
     return { state, reward, wasAdded: false };
   }
 
   const gold = state.gold + reward.gold;
-  if (!Number.isSafeInteger(gold)) {
-    throw new ApiError(ApiErrorCode.InternalServerError, "One-time reward Gold overflowed.");
+  const warBucks = state.warBucks + (reward.warBucks ?? 0);
+  if (!Number.isSafeInteger(gold) || !Number.isSafeInteger(warBucks)) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "One-time reward currency overflowed.");
   }
   return {
     state: {
       ...state,
       revision: state.revision + 1,
       gold,
+      warBucks,
       collectedRewards: { ...collectedRewards, [reward.id]: 1 },
     },
     reward,
@@ -98,7 +164,11 @@ export function applyOneTimeRewardState(
 export function claimOneTimeReward(
   playerId: string,
   rewardId: unknown,
-  trigger: OneTimeRewardRule["trigger"] = "direct",
+  trigger: OneTimeRewardTrigger = "direct",
+  parameter?: unknown,
 ): Promise<OneTimeRewardResult> {
-  return mutateProgression(playerId, (state) => applyOneTimeRewardState(state, rewardId, trigger));
+  return mutateProgression(
+    playerId,
+    (state) => applyOneTimeRewardState(state, rewardId, trigger, parameter),
+  );
 }

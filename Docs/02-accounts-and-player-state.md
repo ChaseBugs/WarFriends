@@ -163,14 +163,23 @@ the submitted evidence.
 
 ## One-time social and permission rewards
 
-Action `161` sends `RewardId` and no currency amount. Three client-observed direct rows have
-authoritative Gold values: `FacebookLike` 10, `TwitterFollow` 10, and
-`NotificationAllowReward` 4. The separate `FacebookLoginReward` row is 10 Gold and is granted only
-after the authenticated Facebook-link operation succeeds. These values come from CodeStage `ObscuredFloat`
-bytes with key 230887; they are not client-selected defaults. The server accepts only those exact,
-case-sensitive DBKEY/trigger pairs, atomically credits Gold, and records the ID in its private
-`collectedRewards` dictionary. A guest cannot submit the Facebook-login ID through action 161.
-Unknown/tutorial IDs remain closed until their reward rows and trigger contracts are recovered.
+Action `161` sends `RewardId`, an optional `Parameter`, and no currency amount. Three
+client-observed direct rows have authoritative Gold values: `FacebookLike` 10, `TwitterFollow` 10,
+and `NotificationAllowReward` 4. The separate `FacebookLoginReward` row is 10 Gold and is granted
+only after the authenticated Facebook-link operation succeeds. These values come from CodeStage
+`ObscuredFloat` bytes with key 230887; they are not client-selected defaults. The server accepts
+only those exact, case-sensitive DBKEY/trigger pairs, atomically credits Gold, and records the ID
+in its private `collectedRewards` dictionary. A guest cannot submit the Facebook-login ID through
+action 161.
+
+The two onboarding upgrade rewards are also authoritative. `TutorialManagerStage4.ChooseWeapon`
+always selects `Google2u.AssaultRifle_AK47`; its first generated upgrade row costs 500 WarBucks and
+60 seconds, whose recovered float32 Gold-time formula produces 1 Gold. Stage 5 likewise selects
+only `Google2u.DBUpgradeSlotsAssaulter`, with a first normal upgrade costing 375 WarBucks and 60
+seconds (also 1 Gold). The server treats `Parameter` only as an assertion of those exact targets,
+requires the permanent item at cursor zero with an empty shared delivery receipt, and calculates
+the grants from the same generated catalogs used by the purchase endpoints. Thus a modified APK
+cannot nominate a higher-cost item or claim funding after starting another upgrade.
 
 The stock `OOIMBPCOENI` parser checks only whether `WasAdded` exists. A first claim therefore
 returns `WasAdded`, while a replay deliberately omits the property but still returns `RewardId`
@@ -179,6 +188,10 @@ and `Gold`, which the parser reads unconditionally. Sending `WasAdded=false` wou
 markers are restored through `PlayerAnalyticsData.collectedRewards`, so claimed buttons stay hidden
 across devices and reinstallations. Simultaneous duplicate requests share the normal progression
 revision guard; after a collision, the loser reloads the winner's marker and becomes a no-op.
+Tutorial replays validate the exact target but intentionally check the marker before mutable
+upgrade eligibility, so a retry after the forced upgrade completes still returns its original
+Gold/WarBucks fields without `WasAdded`. Unknown and still-unrecovered archived reward IDs remain
+closed.
 
 ## Migration behavior
 

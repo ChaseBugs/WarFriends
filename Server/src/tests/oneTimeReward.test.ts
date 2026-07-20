@@ -6,11 +6,22 @@ import type { PlayerDocument } from "../db";
 import { newPlayer } from "../dtos";
 import { buildPlayerData, createInitialProgression } from "../services/playerStateService";
 import {
+  ITEM_ALREADY_UPGRADING,
+  ITEM_PRICE_NOT_FOUND,
+  ITEM_WRONG_INDEX_TO_ACTIVATE,
+  itemInventoryStateFor,
+  TUTORIAL_WEAPON_NAME,
+} from "../services/itemInventoryService";
+import {
   applyOneTimeRewardState,
   ONE_TIME_REWARD_RULES,
   oneTimeRewardRule,
   oneTimeRewardWire,
 } from "../services/oneTimeRewardService";
+import {
+  TUTORIAL_UNIT_NAME,
+  updateEquippedUnitsState,
+} from "../services/unitInventoryService";
 
 function playerDocument(): PlayerDocument {
   const player = newPlayer("one-time-player", "OneTimePlayer", AccountType.Guest);
@@ -78,6 +89,108 @@ test("unknown and malformed one-time reward IDs fail closed", () => {
       && "code" in error && error.code === ApiErrorCode.RequestNotAuthorized,
   );
   assert.equal(oneTimeRewardRule("FacebookLoginReward", "facebook-link").gold, 10);
+});
+
+test("WeaponTutorial funds exactly the recovered first AK47 transition once", () => {
+  const initial = { ...createInitialProgression(1_700_000_000), gold: 9, warBucks: 11 };
+  const first = applyOneTimeRewardState(initial, "WeaponTutorial", "direct", TUTORIAL_WEAPON_NAME);
+  assert.equal(first.wasAdded, true);
+  assert.equal(first.state.gold, 10);
+  assert.equal(first.state.warBucks, 511);
+  assert.deepEqual(oneTimeRewardWire(first), {
+    RewardId: "WeaponTutorial",
+    Gold: 1,
+    WarBucks: 500,
+    WasAdded: true,
+  });
+
+  // Model the completed forced upgrade. The collected marker must be checked before inventory
+  // eligibility so a network retry remains a no-op after boughtIndex advances.
+  const itemInventory = itemInventoryStateFor(first.state);
+  itemInventory.levelManagerData.savedWeapons[TUTORIAL_WEAPON_NAME]!.boughtIndex = 1;
+  const completed = { ...first.state, itemInventory };
+  const replay = applyOneTimeRewardState(completed, "WeaponTutorial", "direct", TUTORIAL_WEAPON_NAME);
+  assert.equal(replay.state, completed);
+  assert.equal(replay.wasAdded, false);
+  assert.deepEqual(oneTimeRewardWire(replay), {
+    RewardId: "WeaponTutorial",
+    Gold: 1,
+    WarBucks: 500,
+  });
+});
+
+test("UnitTutorial funds exactly the recovered first Assaulter transition once", () => {
+  const owned = updateEquippedUnitsState(
+    createInitialProgression(1_700_000_000),
+    {
+      armyPower: 0,
+      equips: { [TUTORIAL_UNIT_NAME]: { wasEquipped: true, equipped: true } },
+    },
+  ).state;
+  const first = applyOneTimeRewardState(owned, "UnitTutorial", "direct", TUTORIAL_UNIT_NAME);
+  assert.equal(first.state.gold, owned.gold + 1);
+  assert.equal(first.state.warBucks, owned.warBucks + 375);
+  assert.deepEqual(oneTimeRewardWire(first), {
+    RewardId: "UnitTutorial",
+    Gold: 1,
+    WarBucks: 375,
+    WasAdded: true,
+  });
+
+  const itemInventory = itemInventoryStateFor(first.state);
+  itemInventory.levelManagerData.savedArmies[TUTORIAL_UNIT_NAME]!.boughtIndex = 1;
+  const completed = { ...first.state, itemInventory };
+  const replay = applyOneTimeRewardState(completed, "UnitTutorial", "direct", TUTORIAL_UNIT_NAME);
+  assert.equal(replay.state, completed);
+  assert.equal(replay.wasAdded, false);
+  assert.deepEqual(oneTimeRewardWire(replay), {
+    RewardId: "UnitTutorial",
+    Gold: 1,
+    WarBucks: 375,
+  });
+});
+
+test("tutorial rewards reject altered targets and ineligible first claims", () => {
+  const initial = createInitialProgression(1_700_000_000);
+  assert.throws(
+    () => applyOneTimeRewardState(initial, "WeaponTutorial", "direct", "Google2u.AssaultRifle_Famas"),
+    (error: unknown) => (error as { code?: number }).code === ITEM_PRICE_NOT_FOUND,
+  );
+  assert.throws(
+    () => applyOneTimeRewardState(initial, "UnitTutorial", "direct", TUTORIAL_UNIT_NAME),
+    (error: unknown) => (error as { code?: number }).code === ITEM_PRICE_NOT_FOUND,
+  );
+
+  const upgradedInventory = itemInventoryStateFor(initial);
+  upgradedInventory.levelManagerData.savedWeapons[TUTORIAL_WEAPON_NAME]!.boughtIndex = 1;
+  assert.throws(
+    () => applyOneTimeRewardState(
+      { ...initial, itemInventory: upgradedInventory },
+      "WeaponTutorial",
+      "direct",
+      TUTORIAL_WEAPON_NAME,
+    ),
+    (error: unknown) => (error as { code?: number }).code === ITEM_WRONG_INDEX_TO_ACTIVATE,
+  );
+
+  const deliveringInventory = itemInventoryStateFor(initial);
+  deliveringInventory.levelManagerData.weaponDelivery = {
+    activationNeeded: true,
+    boughtIndex: 0,
+    end: 1_700_000_060,
+    itemId: TUTORIAL_WEAPON_NAME,
+    slotId: 0,
+    start: 1_700_000_000,
+  };
+  assert.throws(
+    () => applyOneTimeRewardState(
+      { ...initial, itemInventory: deliveringInventory },
+      "WeaponTutorial",
+      "direct",
+      TUTORIAL_WEAPON_NAME,
+    ),
+    (error: unknown) => (error as { code?: number }).code === ITEM_ALREADY_UPGRADING,
+  );
 });
 
 test("PlayerAnalyticsData restores authoritative collected reward markers", () => {

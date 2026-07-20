@@ -30,10 +30,10 @@ export const economyHandlers: Record<number, HandlerEntry> = {
   }),
 
   [DbAction.AddOneTimeReward]: authed(async ({ player, req }) => {
-    const result = await claimOneTimeReward(player!.id, req.RewardId);
+    const result = await claimOneTimeReward(player!.id, req.RewardId, "direct", req.Parameter);
     // OOIMBPCOENI reads RewardId and Gold even on a replay, but it gates both wallet changes
-    // on the mere presence of WasAdded. Do not send WasAdded=false: ContainsKey would treat it
-    // as a fresh grant and the old client would add Gold locally despite the false value.
+    // (including optional tutorial WarBucks) on the mere presence of WasAdded. Do not send
+    // WasAdded=false: ContainsKey would treat it as a fresh grant despite the false value.
     return ok(DbAction.AddOneTimeReward, oneTimeRewardWire(result));
   }),
 };

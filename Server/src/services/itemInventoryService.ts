@@ -721,6 +721,57 @@ export function weaponUpgradeInstantPrice(remainingSeconds: number): number {
   );
 }
 
+export interface TutorialUpgradeFunding {
+  warBucks: number;
+  gold: number;
+}
+
+/** The only weapon selected by TutorialManagerStage4.ChooseWeapon. */
+export const TUTORIAL_WEAPON_NAME = "Google2u.AssaultRifle_AK47";
+
+/**
+ * Derive the tutorial wallet grant from the same recovered row used by BuyWeaponUpgrade.
+ *
+ * Action 161 sends a sheet name but no currency values. Keeping the amount derived from stage
+ * zero prevents a modified client from selecting a more expensive weapon and also prevents the
+ * reward from drifting away from the purchase validator when the generated catalog is refreshed.
+ * This helper intentionally performs no player-state checks so an already-collected replay can
+ * reproduce the original response amounts after the player has spent them.
+ */
+export function tutorialWeaponUpgradeFunding(name: unknown): TutorialUpgradeFunding {
+  if (name !== TUTORIAL_WEAPON_NAME) {
+    throw new ApiError(ITEM_PRICE_NOT_FOUND, "WeaponTutorial is restricted to the recovered AK47 target.");
+  }
+  const stage = WEAPON_UPGRADE_CATALOG[TUTORIAL_WEAPON_NAME]?.[0];
+  if (!stage || stage[0] < 0 || stage[1] < 0) {
+    throw new ApiError(ITEM_PRICE_NOT_FOUND, "The tutorial weapon upgrade row is unavailable.");
+  }
+  return { warBucks: stage[0], gold: weaponUpgradeInstantPrice(stage[1]) };
+}
+
+/**
+ * Prove that a first-time WeaponTutorial claim can still fund its intended transition.
+ *
+ * The stock tutorial is suppressed once any weapon upgrade exists or a weapon delivery is
+ * active. The backend cannot trust those local StatsManager checks, so it independently requires
+ * the permanent starter AK47 at cursor zero and the shared delivery slot to be empty. Replays do
+ * not call this function: their collected marker is authority and they must remain harmless even
+ * after the tutorial upgrade advances the cursor.
+ */
+export function assertTutorialWeaponUpgradeEligible(
+  state: PlayerProgressionState,
+  name: unknown,
+): void {
+  tutorialWeaponUpgradeFunding(name);
+  const { itemInventory, weapon } = upgradeContext(state, TUTORIAL_WEAPON_NAME);
+  if (weapon.boughtIndex !== 0) {
+    throw new ApiError(ITEM_WRONG_INDEX_TO_ACTIVATE, "The tutorial weapon has already been upgraded.");
+  }
+  if (activeWeaponDelivery(itemInventory.levelManagerData.weaponDelivery)) {
+    throw new ApiError(ITEM_ALREADY_UPGRADING, "A weapon delivery is already active.");
+  }
+}
+
 function matchingDelivery(
   itemInventory: ItemInventoryState,
   weapon: SavedWeaponState,

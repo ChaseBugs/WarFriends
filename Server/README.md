@@ -301,8 +301,11 @@ Working end-to-end (verified live):
   successful authenticated provider link. The server credits their exact decoded Gold values once
   and restores claim markers through `PlayerAnalyticsData.collectedRewards`. The
   response omits the presence-sensitive `WasAdded` property on replay so the stock parser cannot
-  add local currency twice. Unknown/tutorial rows remain closed instead of receiving guessed
-  values, and production proof of the external social action still requires provider integration.
+  add local currency twice. The recovered `WeaponTutorial` and `UnitTutorial` paths are restricted
+  to the exact AK47 and Assaulter parameters, require cursor zero and an empty delivery slot, and
+  derive their 500/375 WarBucks plus 1 Gold funding from the same generated first-upgrade rows used
+  by inventory validation. Unknown archived rows remain closed, and production proof of external
+  social/platform actions still requires provider integration.
 - **Assignments**: `GetNewAssignments`, both skip actions, assignment/mega claims, and the
   stock `SendRequestBuffer` path use a persistent UTC cycle. Only objectives derived from
   confirmed PvP settlement advance; buffered claim retries are idempotent by `BufferId`.

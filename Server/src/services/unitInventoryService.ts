@@ -21,6 +21,7 @@ import {
   WEAPON_GOLD_COEFFICIENT,
   WEAPON_GOLD_EXP_COEFFICIENT,
   itemInventoryStateFor,
+  type TutorialUpgradeFunding,
   weaponUpgradeInstantPrice,
 } from "./itemInventoryService";
 
@@ -651,6 +652,54 @@ function assertUnitUpgradeTransition(
     throw new ApiError(ITEM_PRICE_NOT_FOUND, "Recovered unit upgrade balancing is invalid.");
   }
   return level;
+}
+
+/** The exact sheet returned by TutorialManagerStage5.ChooseUnit. */
+export const TUTORIAL_UNIT_NAME = "Google2u.DBUpgradeSlotsAssaulter";
+
+/**
+ * Derive the UnitTutorial grant from the Assaulter's first normal-upgrade row.
+ *
+ * The optional action-161 Parameter is client input, so accepting any other sheet would let a
+ * modified APK ask the tutorial to fund a more expensive unit. The value is calculated without
+ * consulting mutable player state because an idempotent replay must return the original amounts
+ * after the player has consumed the grant and completed the upgrade.
+ */
+export function tutorialUnitUpgradeFunding(name: unknown): TutorialUpgradeFunding {
+  if (name !== TUTORIAL_UNIT_NAME) {
+    throw new ApiError(ITEM_PRICE_NOT_FOUND, "UnitTutorial is restricted to the recovered Assaulter target.");
+  }
+  const level = UNIT_UPGRADE_CATALOG[TUTORIAL_UNIT_NAME]?.normalLevels[0];
+  if (!level || level.slot !== 0 || level.warBucks < 0 || level.deliverySeconds < 0) {
+    throw new ApiError(ITEM_PRICE_NOT_FOUND, "The tutorial unit upgrade row is unavailable.");
+  }
+  return {
+    warBucks: level.warBucks,
+    gold: weaponUpgradeInstantPrice(level.deliverySeconds),
+  };
+}
+
+/**
+ * Enforce the server equivalent of TutorialManagerStage5's local start conditions.
+ *
+ * By stage five the tutorial Assaulter has already reached the backend through the dedicated
+ * UpdateEquippedUnits grant. It must be permanently owned, on normal cursor zero, eligible for
+ * its first normal transition, and have no unit receipt occupying the shared delivery slot.
+ * These checks run only for the first claim; collected replays deliberately skip them.
+ */
+export function assertTutorialUnitUpgradeEligible(
+  state: PlayerProgressionState,
+  name: unknown,
+): void {
+  tutorialUnitUpgradeFunding(name);
+  const { definition, upgrades, itemInventory, unit } = unitUpgradeContext(state, TUTORIAL_UNIT_NAME);
+  if (unit.boughtIndex !== 0) {
+    throw new ApiError(ITEM_WRONG_INDEX_TO_ACTIVATE, "The tutorial unit has already been upgraded.");
+  }
+  assertUnitUpgradeTransition(definition, unit, upgrades, 0, 0);
+  if (activeUnitDelivery(itemInventory.levelManagerData.unitDelivery)) {
+    throw new ApiError(ITEM_ALREADY_UPGRADING, "A unit delivery is already active.");
+  }
 }
 
 /**
