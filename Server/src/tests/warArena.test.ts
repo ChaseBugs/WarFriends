@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { claimAchievementState } from "../services/achievementService";
 import { createInitialProgression } from "../services/playerStateService";
 import {
   arenaPolicy,
@@ -62,15 +63,32 @@ test("Arena battle receipts make wins replay-safe and reject conflicting replay 
   assert.equal(won.arena.matches, 1);
   assert.equal(won.response.IsWarArena, 1);
   assert.equal(won.response.ArenaWins, 1);
+  assert.equal(won.state.achievements?.data.find((group) => group.id === 3)?.value, 1);
 
   const replay = settleWarArenaBattleState(won.state, NOW + 20, { battleId: "arena-battle-1", endReason: 2 });
   assert.equal(replay.replayed, true);
   assert.equal(replay.arena.wins, 1);
+  assert.equal(replay.state.achievements?.data.find((group) => group.id === 3)?.value, 1);
   assert.deepEqual(replay.response, won.response);
   assert.throws(
     () => settleWarArenaBattleState(won.state, NOW + 20, { battleId: "arena-battle-1", endReason: 1 }),
     (error: unknown) => (error as { code?: number }).code === 90,
   );
+});
+
+test("accepted Arena wins unlock the exact Ticket achievement without replay progress", () => {
+  let state = enterWarArenaState(createInitialProgression(NOW), NOW, { usedGold: 0, opponents: [] }).state;
+  for (let index = 0; index < 2; index += 1) {
+    const battleId = `arena-achievement-${index}`;
+    state = startWarArenaBattleState(state, NOW + index * 20 + 1, battleId).state;
+    state = settleWarArenaBattleState(state, NOW + index * 20 + 10, {
+      battleId,
+      endReason: 2,
+    }).state;
+  }
+  assert.equal(state.achievements?.data.find((group) => group.id === 3)?.value, 2);
+  const claimed = claimAchievementState(state, 3, 0);
+  assert.equal(claimed.state.tickets, state.tickets + 5);
 });
 
 test("three losses finish a run, scraps claim once, and the next entry charges Tickets", () => {
@@ -131,6 +149,7 @@ test("final win grants the non-inventory fallback exactly once and closes the ru
   }
   assert.equal(state.warArena?.wins, arenaPolicy().maxBattles);
   assert.equal(state.warArena?.flawless, 1);
+  assert.equal(state.achievements?.data.find((group) => group.id === 4)?.value, 1);
   assert.equal(state.warArena?.runRewardClaimed, true);
   assert.equal(state.scraps, arenaPolicy().guaranteedScraps);
   assert.equal(finalResponse.Scraps, arenaPolicy().guaranteedScraps);

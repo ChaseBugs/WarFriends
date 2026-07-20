@@ -44,10 +44,10 @@ export interface AchievementTierDefinition {
  * These values are copied from the Achievements component serialized in MainScene.unity:
  * groups 0/1 are purchased units/weapons, 8 is confirmed War Cards played, 9/10 are
  * soldier/mechanical normal upgrades, 11 is weapon upgrades, and 15 is paid permanent visuals.
- * Group 2 is ranked PvP wins, 5 is completed solo missions, 12 is completed assignments, 14 is
- * lifetime squad points, and 16 is claimed daily rewards. Combat-only rows remain intentionally
- * disabled until their event facts are authoritative; a client-reported achievement value is
- * never enough to enable one.
+ * Group 2 is ranked PvP wins, 3/4 are accepted Arena wins/flawless runs, 5 is completed solo
+ * missions, 12 is completed assignments, 14 is lifetime squad points, and 16 is claimed daily
+ * rewards. Combat-detail-only rows remain intentionally disabled until their event facts are
+ * authoritative; a client-reported achievement value is never enough to enable one.
  */
 export const ACHIEVEMENT_DEFINITIONS: Readonly<Record<number, readonly AchievementTierDefinition[]>> = {
   0: [
@@ -64,6 +64,16 @@ export const ACHIEVEMENT_DEFINITIONS: Readonly<Record<number, readonly Achieveme
     { target: 10, gold: 1, warBucks: 0, scraps: 0, tickets: 0 },
     { target: 50, gold: 5, warBucks: 0, scraps: 0, tickets: 0 },
     { target: 100, gold: 10, warBucks: 0, scraps: 0, tickets: 0 },
+  ],
+  3: [
+    { target: 2, gold: 0, warBucks: 0, scraps: 0, tickets: 5 },
+    { target: 10, gold: 0, warBucks: 0, scraps: 0, tickets: 15 },
+    { target: 100, gold: 0, warBucks: 0, scraps: 0, tickets: 50 },
+  ],
+  4: [
+    { target: 1, gold: 0, warBucks: 0, scraps: 50, tickets: 0 },
+    { target: 3, gold: 0, warBucks: 0, scraps: 150, tickets: 0 },
+    { target: 10, gold: 0, warBucks: 0, scraps: 250, tickets: 0 },
   ],
   5: [
     { target: 10, gold: 1, warBucks: 0, scraps: 0, tickets: 0 },

@@ -133,6 +133,20 @@ test("inventory achievement groups preserve source tiers and derive StatsManager
   );
 });
 
+test("Arena achievement definitions preserve exact Ticket and Scraps rewards", () => {
+  assert.deepEqual(
+    [3, 4].map((id) => ACHIEVEMENT_DEFINITIONS[id].map((tier) => [
+      tier.target,
+      tier.scraps,
+      tier.tickets,
+    ])),
+    [
+      [[2, 0, 5], [10, 0, 15], [100, 0, 50]],
+      [[1, 50, 0], [3, 150, 0], [10, 250, 0]],
+    ],
+  );
+});
+
 test("achievement claims enforce tier order and credit scene-defined rewards once", () => {
   let state = createInitialProgression(NOW);
   state = advanceAchievementState(state, 2, 10).state;

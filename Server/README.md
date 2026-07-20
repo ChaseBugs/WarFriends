@@ -328,7 +328,9 @@ Working end-to-end (verified live):
   squad points, and daily-reward claims advance only from accepted server settlements. Purchased
   weapons/units, their normal upgrades, paid permanent visuals, and confirmed consumed War Cards
   are re-derived from authoritative progression snapshots using the client's StatsManager rules.
-  Exact serialized MainScene tier rewards are granted atomically and replay-safely.
+  Accepted Arena wins and maximum-win runs without an accepted loss advance exact MainScene groups
+  3 and 4 inside the Arena receipt transition, so retries cannot duplicate their Ticket/Scraps
+  progress. Exact serialized MainScene tier rewards are granted atomically and replay-safely.
 - **Squad social state**: action `193` persists the monotonic Photon Chat unread cursor through
   the stock request buffer and restores it as `PlayerAnalyticsData`; squad-event notices are
   membership-validated, founder-targeted, durable, and duplicate-suppressed.
@@ -336,7 +338,8 @@ Working end-to-end (verified live):
   `WarArenaConfig`, while `EnterArena`, action-64/65 starts, Arena `GameEnded`, heart/life
   actions, scraps claims, rollover, and `GetArenaLeaderboards` use the exact `WarArenaData`
   contract. Runs and prices are server-owned, battle IDs are receipt-bound, and result/reward
-  retries are idempotent. The retired remote price/lootbox tables are absent from both APKs,
+  retries are idempotent. Arena achievement progress shares this receipt authority; combat outcomes
+  remain client-reported pending authoritative validation. The retired remote price/lootbox tables are absent from both APKs,
   so entry/heart/scraps values are environment-tunable and final lootboxes currently use a
   documented scraps fallback rather than fabricated inventory objects.
 

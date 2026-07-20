@@ -69,6 +69,12 @@ Achievement state mirrors the recovered `{ data: [...] }` shape. Supported count
 from server-confirmed events such as ranked settlement, assignment claims, mission completion,
 squad points, and daily rewards. Tier claims are ordered and atomic.
 
+Accepted Arena settlements now advance the two MainScene Arena groups in the same atomic state
+transition that consumes the battle receipt. `AchievementWinArenaBattles` (group 3) grants 5, 15,
+and 50 Tickets at 2, 10, and 100 accepted wins. `AchievementFlawlessHero` (group 4) grants 50,
+150, and 250 Scraps after 1, 3, and 10 complete maximum-win runs with no accepted loss. Replaying
+the same battle receipt returns its stored response, so neither counter can advance twice.
+
 Seven additional MainScene groups are now reconstructed from server-owned snapshots: bought units
 (group 0), bought weapons (1), confirmed War Cards consumed in PvP (8), soldier normal upgrades
 (9), mechanical normal upgrades (10), weapon upgrades (11), and paid permanent visuals (15).
@@ -78,8 +84,10 @@ normal `boughtIndex`, visual counting excludes power bands, and temporary rental
 Recomputing these monotonic values from inventory also migrates older accounts without trusting
 the client's action-220 progress or offset.
 
-Deployment, per-match combat feats, and some Arena achievement groups remain inactive until their
-event facts and any non-currency reward inventory are authoritative.
+Arena combat details are still client-reported: these achievements are authoritative for the
+server's accepted receipt lifecycle, not proof that the client simulated combat honestly.
+Deployment and per-match combat-feat groups remain inactive until their event facts are
+server-authoritative.
 
 ## Key implementation files
 

@@ -1,5 +1,6 @@
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import type { PlayerProgressionState, WarArenaState } from "../db";
+import { advanceAchievementState } from "./achievementService";
 import { mutateProgression } from "./progressionMutationService";
 import {
   arenaPolicy,
@@ -271,10 +272,15 @@ export function settleWarArenaBattleState(
 
   arena.activeBattle = undefined;
   arena.matches += 1;
-  if (ARENA_WIN.has(input.endReason)) {
+  const won = ARENA_WIN.has(input.endReason);
+  let completedFlawlessRun = false;
+  if (won) {
     arena.wins = Math.min(arenaPolicy().maxBattles, arena.wins + 1);
     arena.topRun = Math.max(arena.topRun, arena.wins);
-    if (arena.wins === arenaPolicy().maxBattles && arena.runLosses === 0) arena.flawless += 1;
+    if (arena.wins === arenaPolicy().maxBattles && arena.runLosses === 0) {
+      arena.flawless += 1;
+      completedFlawlessRun = true;
+    }
   } else {
     arena.lives = Math.max(0, arena.lives - 1);
     arena.runLosses += 1;
@@ -306,8 +312,21 @@ export function settleWarArenaBattleState(
     { battleId: input.battleId, endReason: input.endReason, settledAt: now, response: cloneResponse(response) },
   ].slice(-MAX_RECENT_SETTLEMENTS);
 
+  let next = withArena({ ...state, scraps: state.scraps + awardedScraps }, arena);
+  if (won) {
+    // AchievementWinArenaBattles reads the accepted Arena win count. Advancing inside this
+    // receipt-consuming transition guarantees that a stored settlement replay cannot count the
+    // same win twice, even when GameEnded is retried after the response is lost.
+    next = advanceAchievementState(next, 3, 1).state;
+  }
+  if (completedFlawlessRun) {
+    // AchievementFlawlessHero counts complete max-win runs with no accepted losses. It must be
+    // coupled to the exact transition that increments `arena.flawless`; deriving it later from
+    // the current run would lose lifetime history when EnterArena resets wins and runLosses.
+    next = advanceAchievementState(next, 4, 1).state;
+  }
   return {
-    state: withArena({ ...state, scraps: state.scraps + awardedScraps }, arena),
+    state: next,
     arena,
     response,
     replayed: false,

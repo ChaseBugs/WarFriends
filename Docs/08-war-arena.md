@@ -23,6 +23,16 @@ retries do not charge twice or generate a different run.
 Abandoned battle handling consumes life only once. Expired events roll to a new generated Arena
 configuration without allowing an old receipt to claim a new-season reward.
 
+An accepted win also advances `AchievementWinArenaBattles` in this receipt-consuming transition:
+2, 10, and 100 wins award 5, 15, and 50 Tickets. Completing the configured maximum-win run without
+an accepted loss advances `AchievementFlawlessHero`: 1, 3, and 10 flawless runs award 50, 150, and
+250 Scraps. Because both updates happen before the immutable settlement replay is stored, retrying
+`GameEnded` cannot duplicate achievement progress or rewards.
+
+The receipt proves that the server accepted one start/end lifecycle and enum-valid result; the
+stock client still reports the combat outcome. These counters therefore share the current Arena
+authority boundary and do not replace the remaining authoritative combat-validation work.
+
 ## Rewards
 
 The reconstructed server currently provides a one-time Scraps fallback at exhausted/final-win
