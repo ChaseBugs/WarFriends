@@ -1,4 +1,5 @@
 import { randomUUID } from "crypto";
+import type { Document, Filter } from "mongodb";
 import {
   messages,
   players,
@@ -60,6 +61,12 @@ export interface MessageDoc {
   claimResponse?: { Gold: number; Warbucks: number };
   /** Present only for ephemeral inbox types such as PvP challenges. */
   expiresAt?: Date;
+}
+
+interface InboxCursor {
+  v: 1;
+  t: number;
+  id: string;
 }
 
 const CHALLENGE_RETRY_WINDOW_MS = 10_000;
@@ -231,20 +238,83 @@ export async function sendChallenge(from: PlayerDocument, input: ChallengeMessag
   return doc;
 }
 
-export async function inbox(playerId: string, limit = 50): Promise<MessageDoc[]> {
+/** Encode a stable older-than boundary; recipient identity is deliberately not client-owned. */
+export function createInboxCursor(message: Pick<MessageDoc, "createdAt" | "messageId">): string {
+  const timestamp = message.createdAt.getTime();
+  if (!Number.isSafeInteger(timestamp) || timestamp < 0
+    || !message.messageId || message.messageId.length > 256 || /\p{Cc}/u.test(message.messageId)) {
+    throw new Error("Inbox cursor requires a valid persisted message.");
+  }
+  const cursor: InboxCursor = { v: 1, t: timestamp, id: message.messageId };
+  return Buffer.from(JSON.stringify(cursor), "utf8").toString("base64url");
+}
+
+/** Decode only position. The authenticated player and bounded page size remain server-owned. */
+export function parseInboxCursor(raw: string): InboxCursor | null {
+  if (!raw || raw.length > 512 || !/^[A-Za-z0-9_-]+$/.test(raw)) return null;
+  try {
+    const value = JSON.parse(Buffer.from(raw, "base64url").toString("utf8")) as Partial<InboxCursor> | null;
+    if (!value || value.v !== 1 || !Number.isSafeInteger(value.t) || (value.t ?? -1) < 0
+      || typeof value.id !== "string" || !value.id || value.id.length > 256 || /\p{Cc}/u.test(value.id)) return null;
+    return { v: 1, t: value.t as number, id: value.id };
+  } catch {
+    return null;
+  }
+}
+
+export interface InboxPage {
+  messages: MessageDoc[];
+  nextCursor: string | null;
+}
+
+/**
+ * Return one stable newest-first inbox page for the authenticated recipient.
+ *
+ * The query fetches one extra row only to decide whether another page exists. `messageId` is the
+ * tie-breaker for server notifications created in the same millisecond; without it, an older-than
+ * timestamp cursor could permanently skip rows. Expired challenges remain hidden immediately even
+ * when MongoDB's asynchronous TTL monitor has not deleted them yet.
+ */
+export async function inboxPage(
+  playerId: string,
+  limit = 50,
+  beforeCursor?: string,
+): Promise<InboxPage> {
   const safeLimit = Math.min(100, Math.max(1, Math.floor(limit)));
+  const cursor = beforeCursor ? parseInboxCursor(beforeCursor) : null;
+  if (beforeCursor && !cursor) throw new ApiError(ApiErrorCode.UnknownAction, "Inbox cursor is invalid.");
+  const conditions: Filter<Document>[] = [
+    { $or: [{ expiresAt: { $exists: false } }, { expiresAt: { $gt: new Date() } }] },
+  ];
+  if (cursor) {
+    conditions.push({
+      $or: [
+        { createdAt: { $lt: new Date(cursor.t) } },
+        { createdAt: new Date(cursor.t), messageId: { $lt: cursor.id } },
+      ],
+    });
+  }
   const docs = await messages()
     .find({
       toPlayerId: playerId,
       ignored: { $ne: true },
-      // TTL deletion is deliberately asynchronous. This filter makes an expired challenge
-      // disappear at its exact logical deadline even if MongoDB has not removed it yet.
-      $or: [{ expiresAt: { $exists: false } }, { expiresAt: { $gt: new Date() } }],
+      $and: conditions,
     })
-    .sort({ createdAt: -1 })
-    .limit(safeLimit)
+    .sort({ createdAt: -1, messageId: -1 })
+    .limit(safeLimit + 1)
     .toArray();
-  return docs as unknown as MessageDoc[];
+  const typed = docs as unknown as MessageDoc[];
+  const hasMore = typed.length > safeLimit;
+  const page = typed.slice(0, safeLimit);
+  return {
+    messages: page,
+    nextCursor: hasMore && page.length > 0 ? createInboxCursor(page[page.length - 1]) : null,
+  };
+}
+
+/** Backward-compatible service helper for callers that need only the first page. */
+export async function inbox(playerId: string, limit = 50): Promise<MessageDoc[]> {
+  return (await inboxPage(playerId, limit)).messages;
 }
 
 export async function markRead(playerId: string, messageId: string): Promise<void> {

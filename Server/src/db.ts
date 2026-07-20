@@ -870,6 +870,9 @@ export async function connectMongo(): Promise<void> {
   // Inbox reads exclude soft-ignored rows and sort newest first, so one compound index covers
   // the ownership filter, visibility filter, and ordering without an in-memory sort.
   await messagesCollection.createIndex({ toPlayerId: 1, ignored: 1, createdAt: -1 });
+  // Stable cursor pagination adds messageId as a same-millisecond tie-breaker. Keep the older
+  // index declaration compatible with existing deployments while this covering index rolls out.
+  await messagesCollection.createIndex({ toPlayerId: 1, ignored: 1, createdAt: -1, messageId: -1 });
   // Outgoing-message rate limits use this index for a bounded rolling-window count.
   await messagesCollection.createIndex({ fromPlayerId: 1, createdAt: -1 });
   // Only expiring message types carry expiresAt. MongoDB's TTL monitor removes stale

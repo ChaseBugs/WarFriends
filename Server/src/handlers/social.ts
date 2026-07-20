@@ -4,7 +4,7 @@ import {
   acceptChallenge,
   claimMessageReward,
   ignoreMessage,
-  inbox,
+  inboxPage,
   listPlayers,
   markRead,
   searchPlayers,
@@ -60,8 +60,17 @@ export const socialHandlers: Record<number, HandlerEntry> = {
   }),
 
   [DbAction.GetAllMessages]: authed(async ({ player, req }) => {
-    const items = (await inbox(player!.id, Number(req.Limit) || 50)).map(toClientMessage);
-    return ok(DbAction.GetAllMessages, { Items: items });
+    const page = await inboxPage(
+      player!.id,
+      Number(req.Limit) || 50,
+      str(req.BeforeCursor) || undefined,
+    );
+    // The stock parser reads only Items and safely ignores NextCursor. A replacement client can
+    // round-trip that cursor to reach older durable rows without changing the legacy contract.
+    return ok(DbAction.GetAllMessages, {
+      Items: page.messages.map(toClientMessage),
+      NextCursor: page.nextCursor,
+    });
   }),
 
   [DbAction.ReadMessage]: authed(async ({ player, req }) => {

@@ -180,6 +180,10 @@ Working end-to-end (verified live):
   `MessageSent`, `GetAllMessages`, `ReadMessage`, `IgnoreMessage`, and `AcceptChallenge`
   (recipient-owned persistent inbox). Challenges expire logically and through MongoDB TTL;
   identical retries are deduplicated and player-generated traffic has a rolling sender limit.
+  `GetAllMessages` keeps the stock `Items` array and adds an optional `NextCursor`; a replacement
+  client sends it back as `BeforeCursor` to read older pages. The cursor combines exact
+  milliseconds with the message ID, page size remains server-bounded, and every query retains the
+  authenticated recipient filter and immediate challenge-expiry rule.
   The stock buffered `IgnoreMessage` path records a durable progression outbox entry beside
   `BufferId`, performs the recipient-filtered inbox update, and clears the entry afterward, so
   a process interruption is recoverable without allowing one player to hide another's message.
