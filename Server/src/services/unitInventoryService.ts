@@ -487,6 +487,41 @@ function newlyOwnedUnit(definition: UnitDefinition): SavedArmyState {
 }
 
 /**
+ * Persist ArmyScreen's acknowledgement that an unlocked roster unit was displayed.
+ *
+ * Like the weapon equivalent, this is notification state rather than ownership authority.
+ * The complete unowned SavedArmySlots row is materialized because LevelManager reads tier,
+ * upgrade cursors, equip flags, and parts from the same object on boot. Existing purchase,
+ * rental, upgrade, equipment, and part fields are preserved byte-for-byte; only `showed`
+ * changes. Helper units and source rows without a concrete player behaviour remain excluded
+ * by UNIT_CATALOG, and a modified client cannot acknowledge a unit before its level gate.
+ */
+export function markUnitShownState(
+  state: PlayerProgressionState,
+  playerLevel: number,
+  name: string,
+): UnitInventoryMutationResult {
+  const definition = UNIT_CATALOG[name];
+  if (!definition) throw new ApiError(ITEM_PRICE_NOT_FOUND, "Unit was not found.");
+  if (!Number.isInteger(playerLevel) || playerLevel < definition.canBuyLevelIndex) {
+    throw new ApiError(ITEM_NOT_ENOUGH_LEVEL, "Unit is still locked for this player.");
+  }
+  const itemInventory = itemInventoryStateFor(state);
+  const current = itemInventory.levelManagerData.savedArmies[definition.name];
+  if (current?.showed) {
+    return { state, itemInventory, unit: current, definition };
+  }
+  const unit: SavedArmyState = { ...(current ?? emptyUnit(definition)), showed: true };
+  itemInventory.levelManagerData.savedArmies[definition.name] = unit;
+  return {
+    state: { ...state, revision: state.revision + 1, itemInventory },
+    itemInventory,
+    unit,
+    definition,
+  };
+}
+
+/**
  * Debit a recovered price and grant one roster unit atomically.
  *
  * Prices, unlock display value, level gate, discount, and delivery duration come from the

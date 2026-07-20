@@ -24,6 +24,7 @@ import {
   activateWeaponUpgradeState,
   equipWeaponState,
   instantWeaponUpgradeState,
+  markWeaponShownState,
   parseWeaponUpgradeActivateData,
   parseWeaponUpgradeInstantData,
   parseWeaponUpgradePurchaseData,
@@ -41,6 +42,7 @@ import {
   convertUnitPartsToScrapsState,
   equippedUnitsRecoveryFields,
   instantUnitUpgradeState,
+  markUnitShownState,
   parseUnitActivateData,
   parseUnitEquipData,
   parseUnitEliteUpgradeData,
@@ -490,6 +492,41 @@ export function processAssignmentBufferState(
     // error result but does not abort the remaining batch, matching the stock parser's
     // one-result-per-action contract. The outer optimistic transaction commits the final
     // working snapshot and the replay record together.
+    if (request.action === DbAction.WeaponWasShown) {
+      try {
+        // WeaponScreen.WasShown queues the raw runtime name after displaying an unlocked
+        // weapon. Persist only the badge flag; catalog, level, ownership, and equipment stay
+        // server-owned and the enclosing BufferId makes this acknowledgement replay-safe.
+        working = markWeaponShownState(working, playerLevel, request.data).state;
+        responses.push({ ActionId: request.action, Result: SUCCESS });
+      } catch (error) {
+        const code = error instanceof ApiError ? error.code : ApiErrorCode.InternalServerError;
+        responses.push({
+          ActionId: request.action,
+          Result: code,
+          ...weaponRecoveryFields(working, request.data),
+        });
+      }
+      continue;
+    }
+
+    if (request.action === DbAction.ArmyUnitWasShown) {
+      try {
+        // ArmyScreen sends the raw unit sheet name under the same conditions. The sparse
+        // SavedArmySlots row survives login but cannot be equipped or upgraded as ownership.
+        working = markUnitShownState(working, playerLevel, request.data).state;
+        responses.push({ ActionId: request.action, Result: SUCCESS });
+      } catch (error) {
+        const code = error instanceof ApiError ? error.code : ApiErrorCode.InternalServerError;
+        responses.push({
+          ActionId: request.action,
+          Result: code,
+          ...unitRecoveryFields(working, request.data),
+        });
+      }
+      continue;
+    }
+
     if (
       request.action === DbAction.BuyWeapon
       || request.action === DbAction.EquipWeapon

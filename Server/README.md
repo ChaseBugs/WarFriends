@@ -186,7 +186,13 @@ Working end-to-end (verified live):
   `EquipDecal`, `DecalWasShown`, and `VisualWasShown` validate source, price, category, VIP,
   ownership, expiry, and shop eligibility. Gold/WarBucks debit, permanent or timed ownership,
   four-slot equipment, notification state, rollback data, and `BufferId` replay protection are
-  atomic. Confirmed active-VIP PvP settlement also owns the source-defined four-battle countdown
+  atomic. Actions `104`/`105` now persist the weapon/unit `showed` flags through both direct and
+  buffered transports without granting ownership; locked or unknown rows fail closed. Direct
+  `BuyLootboxes` validates one of the six exact MainScene products (49/89/159/279/479/749 Gold
+  for 5/10/20/40/80/150 one-part rewards), atomically debits Gold, persists every part and exact
+  duplicate-WarBucks conversion, and returns the recovered `NewVisuals`/`Id`/`LootboxCost`
+  contract. Client-authored sales remain rejected. Confirmed active-VIP PvP settlement also owns
+  the source-defined four-battle countdown
   and two one-part suitcase rewards: parts, exact duplicate WarBucks, `NewVisuals`, and immutable
   retry receipts commit in the terminal match transaction. The retired production weights are
   unavailable, so selection is explicitly reconstructed as uniform across the 73 normal-shop
@@ -402,7 +408,8 @@ allowlist of analytics/impression actions is safely ignored.
   notifications validate same-roster membership and use daily actor/target idempotency. Chat unread
   state is persistent, but actual channel delivery still requires Photon Chat repointing or a
   compatible replacement transport.
-- **Item economy expansion** — unit Elite upgrades, normal shop visuals, normal card-pack
+- **Item economy expansion** — unit Elite upgrades, normal shop visuals, Gold lootbox bundles,
+  weapon/unit notification acknowledgements, normal card-pack
   purchase, dedicated Black Market weapons, daily weapon/unit rentals, and complete active-loadout
   ArmyPower and periodic VIP visual-part lootboxes are implemented. Add authoritative card reward
   and consumption events, server-selected card/Buddy RNG, and non-shop visual reward delivery.

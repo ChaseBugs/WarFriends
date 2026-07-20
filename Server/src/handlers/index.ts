@@ -24,12 +24,13 @@ import { blackMarketHandlers } from "./blackMarket";
 import { rentalHandlers } from "./rentals";
 import { vipHandlers } from "./vip";
 import { instantBattleHandlers } from "./instantBattle";
+import { lootboxHandlers } from "./lootboxes";
+import { inventoryImpressionHandlers } from "./inventoryImpressions";
 import type { HandlerEntry } from "./types";
 import logger from "../utils/logger";
 
 const benignNoOpActions = new Set<number>([
   92, // client error report
-  104, 105, // content impression telemetry
   119, 120, // tutorial start/end telemetry
   141, 163, 166, 168, 169, // crash/log/UI telemetry
   179, 180, 183, 194, // analytics and UI impression telemetry
@@ -58,6 +59,8 @@ const registry: Record<number, HandlerEntry> = {
   ...rentalHandlers,
   ...vipHandlers,
   ...instantBattleHandlers,
+  ...lootboxHandlers,
+  ...inventoryImpressionHandlers,
 };
 
 function clientVersion(req: RequestEnvelope): number {

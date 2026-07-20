@@ -453,6 +453,50 @@ export function itemInventoryStateFor(state: PlayerProgressionState): ItemInvent
 }
 
 /**
+ * Persist the one-time "new weapon" badge acknowledgement sent by WeaponScreen.WasShown.
+ *
+ * The client queues only the exact runtime weapon name after the player opens an unlocked
+ * weapon. This action never grants ownership, changes a level, or equips a slot. A sparse
+ * non-owned SavedWeapon row is intentional: LevelManager overlays that row onto its scene
+ * definition during the next login and therefore stops showing the badge without treating
+ * the weapon as purchased. Repeated acknowledgements are true no-ops so a direct retry or a
+ * later RequestBuffer cannot create needless progression revisions.
+ */
+export function markWeaponShownState(
+  state: PlayerProgressionState,
+  playerLevel: number,
+  name: string,
+): ItemInventoryMutationResult {
+  const definition = weaponDefinitionFor(name);
+  if (!definition) throw new ApiError(ITEM_PRICE_NOT_FOUND, "Weapon was not found.");
+  if (!Number.isInteger(playerLevel) || playerLevel < definition.canBuyLevelIndex) {
+    throw new ApiError(ITEM_NOT_ENOUGH_LEVEL, "Weapon is still locked for this player.");
+  }
+  const itemInventory = itemInventoryStateFor(state);
+  const current = itemInventory.levelManagerData.savedWeapons[definition.name];
+  if (current?.showed) {
+    return { state, itemInventory, weapon: current, definition };
+  }
+  const weapon: SavedWeaponState = {
+    ...(current ?? {
+      bought: false,
+      boughtIndex: 0,
+      showed: false,
+      borrowed: false,
+      specialFeature: 0,
+    }),
+    showed: true,
+  };
+  itemInventory.levelManagerData.savedWeapons[definition.name] = weapon;
+  return {
+    state: { ...state, revision: state.revision + 1, itemInventory },
+    itemInventory,
+    weapon,
+    definition,
+  };
+}
+
+/**
  * Atomically debit a verified 4.9.5 shop or active Black Market price and grant one weapon.
  *
  * The request's price, unlock level, start time, and discount are assertions only. The
