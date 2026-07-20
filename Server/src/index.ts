@@ -18,6 +18,7 @@ import {
   type PvpCoordinatorHeartbeat,
 } from "./services/pvpCoordinatorService";
 import { serverMetrics } from "./services/metricsService";
+import { requireAdmin } from "./services/adminAuthService";
 
 const app = express();
 
@@ -63,7 +64,7 @@ app.get("/health", (_req, res) => {
   });
 });
 
-app.get("/metrics", (_req, res) => {
+app.get("/metrics", requireAdmin, (_req, res) => {
   res.type("text/plain; version=0.0.4; charset=utf-8").send(serverMetrics.render(isRedisAvailable()));
 });
 
@@ -94,6 +95,9 @@ httpServer.headersTimeout = 66_000;
 async function start(): Promise<void> {
   if (process.env.NODE_ENV === "production" && config.authSecret === "change-me-in-production") {
     throw new Error("AUTH_SECRET must be changed before starting in production.");
+  }
+  if (process.env.NODE_ENV === "production" && config.adminSecret.length < 32) {
+    throw new Error("ADMIN_SECRET must contain at least 32 characters in production.");
   }
   await connectMongo();
   logger.db.connect("MongoDB connected", { provider: "mongodb", database: config.mongoDbName });

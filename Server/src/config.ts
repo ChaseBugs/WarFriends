@@ -12,6 +12,9 @@ export const config = {
   redisLeaderboardTtl: Number(process.env.REDIS_LEADERBOARD_TTL ?? 15),
 
   authSecret: process.env.AUTH_SECRET ?? "change-me-in-production",
+  // Separate operator credential. It is never accepted by gameplay authentication and protects
+  // metrics/maintenance routes when configured.
+  adminSecret: process.env.ADMIN_SECRET ?? "",
   // LoginToCustomAccount is the only route allowed to verify a durable password/provider
   // credential. These values bound repeated guesses for the same presented identity while
   // leaving normal session-token gameplay requests unaffected.

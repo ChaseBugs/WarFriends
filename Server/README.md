@@ -36,7 +36,9 @@ multi-document transactions, so enable a single-node replica set for local devel
 replicated/sharded managed deployment) and include `replicaSet` in `MONGO_URL`. Health check:
 `GET /health`.
 
-Operational metrics are available at `GET /metrics` in Prometheus text format. Labels are fixed and
+Operational metrics are available at authenticated `GET /metrics` in Prometheus text format. Send
+`Authorization: Bearer <ADMIN_SECRET>`; an empty secret disables the endpoint, and production
+requires a separate secret of at least 32 characters. Labels are fixed and
 never contain paths, actions, players, addresses, tokens, or arbitrary WebSocket types. Every HTTP
 response also includes a generated `X-Request-ID`; request/response/error boundary logs include the
 same ID while logging only the query-free request path.
