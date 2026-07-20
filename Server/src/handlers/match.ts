@@ -288,9 +288,17 @@ export const matchHandlers: Record<number, HandlerEntry> = {
     // A pending report has not proven that a battle settled. Advancing the one-battle rental
     // at that point used to consume the trial even when the opponent never confirmed or sent
     // a conflicting result. Only an immutable confirmed/finished receipt may end the trial.
-    const rentalFields = progression && id && resultAvailable
-      ? await rentalFieldsAfterBattle(player!.id, id, progression)
-      : {};
+    // New match receipts contain the rental sale committed in the settlement transaction.
+    // Keep the helper only as a migration path for matches finalized before that receipt field
+    // existed; a new receipt must never depend on a second database write to end the trial.
+    let rentalFields: Record<string, unknown> = {};
+    if (rewardReceipt?.rental) {
+      rentalFields = { Rental: rewardReceipt.rental };
+    } else if (!rewardReceipt?.rentalSettled && progression && id && resultAvailable) {
+      // A missing marker identifies an old receipt. A marked receipt with no sale proves that
+      // no trial existed at settlement time, so it must not consume a rental accepted later.
+      rentalFields = await rentalFieldsAfterBattle(player!.id, id, progression);
+    }
     // New receipts preserve this transition explicitly. The comparison remains only as a
     // compatibility path for matches settled before immutable league response fields existed.
     const enteredLeagueId = rewardReceipt?.enteredLeague ?? (resultAvailable

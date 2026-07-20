@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { ApiErrorCode } from "../apiErrors";
 import { DbAction } from "../dbActions";
+import type { PlayerProgressionState } from "../db";
 import { CARD_CATALOG } from "../services/cardInventoryService";
 import {
   dailyMissionsStateFor,
@@ -18,6 +19,22 @@ import { createInitialProgression } from "../services/playerStateService";
 
 const NOW = Date.UTC(2026, 6, 19, 12, 0, 0) / 1_000;
 const POLICY = { experience: 30, warBucks: 800 } as const;
+
+function withActiveRental(state: PlayerProgressionState): PlayerProgressionState {
+  return {
+    ...state,
+    rental: {
+      id: "mission-test-rental",
+      type: 0,
+      discount: 20,
+      status: "trial",
+      generation: 1,
+      nextGenerate: NOW + 24 * 60 * 60,
+      trialExpiresAt: NOW + 12 * 60 * 60,
+      saleExpiresAt: 0,
+    },
+  };
+}
 
 test("unchanged mission boot and start receipt replays do not write progression", () => {
   const initial = createInitialProgression(NOW);
@@ -195,6 +212,42 @@ test("failed mission consumes its start receipt and a retry returns the stored r
   assert.equal(replay.state.revision, failed.state.revision);
   assert.equal(replay.state.gold, 0);
   assert.deepEqual(replay.response, failed.response);
+});
+
+test("mission settlement atomically ends a rental trial and caches its exact sale response", () => {
+  let state = withActiveRental(createInitialProgression(NOW));
+  state = startDailyMissionState(
+    state,
+    NOW + 1,
+    1,
+    "mission-rental-atomic",
+    DbAction.GameStartedCampaign,
+  ).state;
+  const settled = settleDailyMissionState(state, NOW + 10, 1, {
+    battleId: "mission-rental-atomic",
+    missionIndex: 0,
+    missionType: "Daily",
+    endReason: 9,
+  }, POLICY);
+
+  assert.equal(settled.state.rental?.status, "sale");
+  assert.equal(settled.state.rental?.saleBattleId, "mission-rental-atomic");
+  assert.deepEqual(settled.response.Rental, {
+    Id: "mission-test-rental",
+    Amount: "20",
+    Type: 0,
+    nextGenerate: String(NOW + 10 + 24 * 60 * 60),
+    accepted: 3,
+  });
+
+  const replay = settleDailyMissionState(settled.state, NOW + 20, 1, {
+    battleId: "mission-rental-atomic",
+    missionIndex: 0,
+    missionType: "Daily",
+    endReason: 9,
+  }, POLICY);
+  assert.equal(replay.state, settled.state);
+  assert.deepEqual(replay.response, settled.response);
 });
 
 test("three unique solo completions grant one exact scene daily reward and achievement progress", () => {

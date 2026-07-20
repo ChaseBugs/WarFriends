@@ -25,6 +25,7 @@ import {
 } from "./matchService";
 import { mutateProgression } from "./progressionMutationService";
 import { progressionForPlayer, unixNow } from "./playerStateService";
+import { advanceRentalAfterBattleState } from "./rentalService";
 import { grantMissionElitePartsState, selectMissionElitePartUnit } from "./unitInventoryService";
 
 /**
@@ -855,6 +856,16 @@ export function settleDailyMissionState(
   if (newlyCompleted && input.missionType === "Daily") {
     nextState = advanceAchievementState(nextState, 5, 1).state;
   }
+
+  /*
+   * A rental trial is authority over a borrowed inventory row, not an end-screen decoration.
+   * Consume that authority in this same pure settlement before the guarded player write. The
+   * former handler-level follow-up could fail after XP/currency had committed; without another
+   * client retry the borrowed item then survived more than its source-defined one battle.
+   */
+  const rental = advanceRentalAfterBattleState(nextState, input.battleId, now);
+  nextState = rental.state;
+  if (rental.saleOffer) response.Rental = rental.saleOffer;
 
   // OGLEHLIPEFM.KPPNCJBMDPE uses IsWarPath to select CBBKFKCOLPP. The nested component
   // names and zero fields are intentionally exact: omitting one makes the archived parser

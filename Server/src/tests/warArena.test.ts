@@ -3,6 +3,7 @@ import test from "node:test";
 import { config } from "../config";
 import { claimAchievementState } from "../services/achievementService";
 import { DbAction } from "../dbActions";
+import type { PlayerProgressionState } from "../db";
 import { warArenaHandlers } from "../handlers/warArena";
 import { createInitialProgression } from "../services/playerStateService";
 import {
@@ -24,6 +25,22 @@ import {
 } from "../services/warArenaService";
 
 const NOW = Date.UTC(2026, 6, 19, 12, 0, 0) / 1_000;
+
+function withActiveRental(state: PlayerProgressionState): PlayerProgressionState {
+  return {
+    ...state,
+    rental: {
+      id: "arena-test-rental",
+      type: 0,
+      discount: 25,
+      status: "trial",
+      generation: 1,
+      nextGenerate: NOW + 24 * 60 * 60,
+      trialExpiresAt: NOW + 12 * 60 * 60,
+      saleExpiresAt: 0,
+    },
+  };
+}
 
 test("War Arena config and persisted wire use the recovered client field names", () => {
   const configuration = warArenaConfiguration(NOW);
@@ -122,6 +139,33 @@ test("Arena battle receipts make wins replay-safe and reject conflicting replay 
     () => settleWarArenaBattleState(won.state, NOW + 20, { battleId: "arena-battle-1", endReason: 1 }),
     (error: unknown) => (error as { code?: number }).code === 90,
   );
+});
+
+test("Arena settlement atomically ends a rental trial and replays the cached sale", () => {
+  let state = withActiveRental(createInitialProgression(NOW));
+  state = enterWarArenaState(state, NOW, { usedGold: 0, opponents: [] }).state;
+  state = startWarArenaBattleState(state, NOW + 1, "arena-rental-atomic").state;
+  const settled = settleWarArenaBattleState(state, NOW + 10, {
+    battleId: "arena-rental-atomic",
+    endReason: 2,
+  });
+
+  assert.equal(settled.state.rental?.status, "sale");
+  assert.equal(settled.state.rental?.saleBattleId, "arena-rental-atomic");
+  assert.deepEqual(settled.response.Rental, {
+    Id: "arena-test-rental",
+    Amount: "25",
+    Type: 0,
+    nextGenerate: String(NOW + 10 + 24 * 60 * 60),
+    accepted: 3,
+  });
+
+  const replay = settleWarArenaBattleState(settled.state, NOW + 20, {
+    battleId: "arena-rental-atomic",
+    endReason: 2,
+  });
+  assert.equal(replay.state, settled.state);
+  assert.deepEqual(replay.response, settled.response);
 });
 
 test("accepted Arena wins unlock the exact Ticket achievement without replay progress", () => {

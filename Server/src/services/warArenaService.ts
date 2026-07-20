@@ -2,6 +2,7 @@ import { ApiError, ApiErrorCode } from "../apiErrors";
 import type { PlayerProgressionState, WarArenaState } from "../db";
 import { advanceAchievementState } from "./achievementService";
 import { mutateProgression } from "./progressionMutationService";
+import { advanceRentalAfterBattleState } from "./rentalService";
 import {
   arenaPolicy,
   currentArenaId,
@@ -357,11 +358,6 @@ export function settleWarArenaBattleState(
     arena.runRewardClaimed = true;
     response.Scraps = awardedScraps;
   }
-  arena.recentSettlements = [
-    ...arena.recentSettlements,
-    { battleId: input.battleId, endReason: input.endReason, settledAt: now, response: cloneResponse(response) },
-  ].slice(-MAX_RECENT_SETTLEMENTS);
-
   let next = withArena({ ...state, scraps: state.scraps + awardedScraps }, arena);
   if (won) {
     // AchievementWinArenaBattles reads the accepted Arena win count. Advancing inside this
@@ -375,6 +371,22 @@ export function settleWarArenaBattleState(
     // the current run would lose lifetime history when EnterArena resets wins and runLosses.
     next = advanceAchievementState(next, 4, 1).state;
   }
+  /*
+   * Ending a rental trial changes inventory authority and must commit with the accepted Arena
+   * result. A handler-level best-effort write could leave the borrowed item active forever if
+   * the successful client never retried GameEnded. Cache the sale object in the Arena receipt
+   * as well, so a dropped response replays the exact dialog without consuming another battle.
+   */
+  const rental = advanceRentalAfterBattleState(next, input.battleId, now);
+  next = rental.state;
+  if (rental.saleOffer) response.Rental = rental.saleOffer;
+  arena.recentSettlements = [
+    ...arena.recentSettlements,
+    { battleId: input.battleId, endReason: input.endReason, settledAt: now, response: cloneResponse(response) },
+  ].slice(-MAX_RECENT_SETTLEMENTS);
+  // `advanceRentalAfterBattleState` copied the previous Arena snapshot before the receipt was
+  // appended. Reattach the final Arena object without a second revision increment.
+  next = { ...next, warArena: arena };
   return {
     state: next,
     arena,

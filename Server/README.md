@@ -516,11 +516,14 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   consumed by the old aggregate parser. A free trial materializes one borrowed item, permits
   normal equip and Army Power only while its server deadline is live, then PvP, mission, or
   Arena `GameEnded` removes the borrowed authority, restores a replaced weapon slot, and emits
-  the discounted sale variant. Permanent redemption recomputes the price from the stored
+  the discounted sale variant. That cleanup now commits inside the same authoritative battle
+  transition as rewards/lives and is cached in the mission, Arena, or ranked-match receipt;
+  a process failure can no longer commit the battle while accidentally preserving the trial.
+  Permanent redemption recomputes the price from the stored
   catalog row and discount, atomically debits the authoritative wallet, and is idempotent on
   transport retry. Repeated trial acceptance or permanent redemption returns the existing
   result without incrementing progression revision or replacing an identical MongoDB document;
-  the post-battle hook has the same no-write behavior when no trial can advance or its sale is replayed.
+  legacy pre-migration match receipts retain a retry-safe post-battle repair hook.
   Exact original remote item selection is unavailable, so eligible unowned
   items use a documented deterministic replacement within the recovered three-level window.
 - **Unit purchase, loadout, and upgrade lifecycle**: `../Tools/Extract-UnitCatalog.ps1` joins the recovered

@@ -40,6 +40,10 @@ import {
   type SquadEventProjectionStatus,
 } from "./squadEventService";
 import { applyVipBattleLootboxState } from "./vipLootboxService";
+import {
+  advanceRentalAfterBattleState,
+  type RentalWireOffer,
+} from "./rentalService";
 import { config } from "../config";
 import {
   ensureActiveSquadWarSeason,
@@ -682,6 +686,30 @@ export function applyConfirmedPvpProgressionState(
   return next;
 }
 
+/**
+ * Compose the personal PvP counters with the one-battle rental transition.
+ *
+ * Returning the sale payload beside the next progression snapshot gives the transaction one
+ * value to persist in both the player document and immutable match receipt. This is deliberately
+ * pure so receipt/revision behavior can be verified without relying on a live MongoDB replica set.
+ */
+export function applyConfirmedPvpBattleState(
+  state: PlayerProgressionState,
+  settledAtUnix: number,
+  won: boolean,
+  squadPointsAwarded: number,
+  battleId: string,
+): { state: PlayerProgressionState; rental?: RentalWireOffer } {
+  const progressed = applyConfirmedPvpProgressionState(
+    state,
+    settledAtUnix,
+    won,
+    squadPointsAwarded,
+  );
+  const rental = advanceRentalAfterBattleState(progressed, battleId, settledAtUnix);
+  return { state: rental.state, rental: rental.saleOffer };
+}
+
 export interface MatchPlayerReward {
   /** Unmultiplied Warbucks.BattleRewards value from server-owned offline reward policy. */
   baseWarBucks: number;
@@ -730,6 +758,10 @@ export interface MatchPlayerReward {
   levelFrom: number;
   levelTo: number;
   levelExperience: number;
+  /** Marker distinguishing new no-rental receipts from legacy receipts that need repair. */
+  rentalSettled: true;
+  /** Exact post-trial sale dialog committed with this match and replayed from its receipt. */
+  rental?: RentalWireOffer;
 }
 
 function progressionRevisionFilter(player: { progression?: PlayerProgressionState }): Record<string, unknown> {
@@ -754,6 +786,7 @@ function canonicalProgression(state: PlayerProgressionState): PlayerProgressionS
  */
 async function settlePlayerCore(
   session: ClientSession,
+  battleId: string,
   playerId: string,
   won: boolean,
   usedCards: readonly string[],
@@ -797,14 +830,15 @@ async function settlePlayerCore(
   // Daily assignments plus ranked-win/squad-point achievements are progression data, so they
   // must be calculated before the guarded player replacement below. The match's active ->
   // finished compare-and-set is the exactly-once receipt for all three counters.
-  const confirmedProgress = applyConfirmedPvpProgressionState(
+  const confirmedBattle = applyConfirmedPvpBattleState(
     cardsInMatchAchievement.state,
     settlementUnix,
     won,
     squadPoints,
+    battleId,
   );
   const leveled = applyLevelExperienceState(
-    confirmedProgress,
+    confirmedBattle.state,
     player.player.level,
     experience,
   );
@@ -965,6 +999,8 @@ async function settlePlayerCore(
       levelFrom: leveled.levelFrom,
       levelTo: leveled.levelTo,
       levelExperience: leveled.levelExperience,
+      rentalSettled: true,
+      rental: confirmedBattle.rental,
     },
   };
 }
@@ -1394,6 +1430,7 @@ export async function settleResult(matchId: string, winnerId: string, reportedBy
         ?? [];
       grants.push(await settlePlayerCore(
         session,
+        matchId,
         participant.playerId,
         participant.playerId === winnerId,
         cards,
