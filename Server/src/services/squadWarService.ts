@@ -54,12 +54,14 @@ function initialEntry(squad: SquadDocument): SquadWarEntry {
     baseScore: Math.max(0, Math.floor(squad.squadPoints)),
     score: 0,
     wins: 0,
-    // Roster members begin at zero. A member who joins later is appended only after a confirmed
-    // win; settlement still includes every then-current member with an explicit zero if needed.
+    // Round-start roster members begin at zero and are reward-eligible. A player who joins later
+    // is appended only after a confirmed win, may help placement, but is marked ineligible for
+    // the first-week personal reward required by the recovered leave/join warning.
     members: squad.members.map((member) => ({
       playerId: member.playerId,
       name: member.name,
       score: 0,
+      rewardEligible: true,
     })),
   };
 }
@@ -315,7 +317,12 @@ export async function recordConfirmedSquadWarProgress(
   const memberIndex = entry.members.findIndex((member) => member.playerId === playerId);
   const members = entry.members.map((member) => ({ ...member }));
   if (memberIndex >= 0) members[memberIndex]!.score += confirmedPoints;
-  else members.push({ playerId, name: rosterMember.name, score: confirmedPoints });
+  else {
+    // The recovered leave/join warning states that a player receives no first-week Squad War
+    // reward in the new squad. Their confirmed win still helps the squad's shared placement, but
+    // the durable false flag prevents settlement from sending a personal type-9 reward.
+    members.push({ playerId, name: rosterMember.name, score: confirmedPoints, rewardEligible: false });
+  }
   const entries = round.entries.map((candidate, index) => index === entryIndex
     ? {
       ...candidate,
@@ -331,6 +338,59 @@ export async function recordConfirmedSquadWarProgress(
   );
   if (update.modifiedCount !== 1) throw new Error(`Concurrent Squad Wars score rejected ${roundId}.`);
   return "recorded";
+}
+
+/**
+ * Permanently revoke this round's personal reward when a member leaves or is kicked.
+ *
+ * The change shares the enclosing membership transaction: if roster removal fails, eligibility
+ * is restored by rollback; if this compare-and-set loses a concurrent score update, the complete
+ * transaction aborts and retries from the newer round snapshot. A later rejoin therefore cannot
+ * recover the first-week reward, while the player's already-confirmed score remains part of the
+ * squad total used for division placement.
+ */
+export async function invalidateSquadWarRewardEligibility(
+  session: ClientSession,
+  roundId: string,
+  squadId: string,
+  playerId: string,
+  changedAt: Date,
+): Promise<boolean> {
+  if (!roundId || !squadId || !playerId) return false;
+  const round = await squadWarRounds().findOne({ roundId, status: "active" }, { session });
+  if (!round) return false;
+  const entryIndex = round.entries.findIndex((entry) => entry.squadId === squadId);
+  if (entryIndex < 0) return false;
+  const memberIndex = round.entries[entryIndex]!.members.findIndex((member) => member.playerId === playerId);
+  if (memberIndex < 0 || round.entries[entryIndex]!.members[memberIndex]!.rewardEligible === false) return false;
+
+  const entries = round.entries.map((entry, currentEntryIndex) => currentEntryIndex === entryIndex
+    ? {
+      ...entry,
+      members: entry.members.map((member, currentMemberIndex) => currentMemberIndex === memberIndex
+        ? { ...member, rewardEligible: false }
+        : { ...member }),
+    }
+    : entry);
+  const update = await squadWarRounds().updateOne(
+    { roundId, status: "active", revision: round.revision },
+    { $set: { entries, updatedAt: changedAt }, $inc: { revision: 1 } },
+    { session },
+  );
+  if (update.modifiedCount !== 1) {
+    throw new Error(`Concurrent Squad Wars reward eligibility update rejected ${roundId}.`);
+  }
+  return true;
+}
+
+/** Select result recipients from the immutable round roster and the current squad roster. */
+export function squadWarRewardEligiblePlayerIds(
+  entry: Pick<SquadWarEntry, "members">,
+  currentRosterIds: ReadonlySet<string>,
+): string[] {
+  return entry.members
+    .filter((member) => member.rewardEligible !== false && currentRosterIds.has(member.playerId))
+    .map((member) => member.playerId);
 }
 
 function memberSnapshot(player: PlayerDocument, roundScore: number): Record<string, unknown> {
@@ -390,8 +450,11 @@ export async function settleSquadWarRound(roundId: string, now = new Date()): Pr
       const entry = round.entries.find((candidate) => candidate.squadId === placement.squadId)!;
       const squad = await squads().findOne({ name: placement.squadId }, { session });
       if (!squad) continue;
-      const rosterIds = squad.members.map((member) => member.playerId);
-      const playerDocs = await players().find({ id: { $in: rosterIds } }, { session }).toArray();
+      const currentRosterIds = new Set(squad.members.map((member) => member.playerId));
+      const eligiblePlayerIds = squadWarRewardEligiblePlayerIds(entry, currentRosterIds);
+      const playerDocs = eligiblePlayerIds.length > 0
+        ? await players().find({ id: { $in: eligiblePlayerIds } }, { session }).toArray()
+        : [];
       const roundScoreByPlayer = new Map(entry.members.map((member) => [member.playerId, member.score]));
       const rankedMembers = [...playerDocs].sort((left, right) =>
         (roundScoreByPlayer.get(right.id) ?? 0) - (roundScoreByPlayer.get(left.id) ?? 0)
@@ -402,9 +465,9 @@ export async function settleSquadWarRound(roundId: string, now = new Date()): Pr
       for (let index = 0; index < rankedMembers.length; index += 1) {
         const member = rankedMembers[index]!;
         const rewardGold = squadWarMemberReward(placement.tier, round.level, index + 1);
-        // A current roster member finishes the war when this result is issued, including a
-        // zero-score member. Couple group 19 to the same transaction so scheduler retries can
-        // neither omit the achievement nor increment it twice.
+        // An eligible round-start member finishes the war when this result is issued, including
+        // an eligible zero-score member. Couple group 19 to the same transaction so scheduler
+        // retries can neither omit the achievement nor increment it twice.
         await completeFirstSquadWarAchievement(member, session, now);
         const message: MessageDoc = {
           messageId: `SquadWarEnd-${round.roundId}-${member.id}`,

@@ -807,6 +807,12 @@ export interface SquadWarMemberScore {
   name: string;
   /** Points earned by this member from confirmed ranked PvP during this round only. */
   score: number;
+  /**
+   * True only when the player belonged to this squad when the round was allocated and has not
+   * left or been kicked since. Missing means true for rounds created before this field existed.
+   * A late joiner may contribute to the shared score but cannot receive the first-week reward.
+   */
+  rewardEligible?: boolean;
 }
 
 export interface SquadWarEntry {

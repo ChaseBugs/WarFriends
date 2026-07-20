@@ -16,6 +16,7 @@ import { reclaimDepositedCardsForDepartureState } from "./squadCardPoolService";
 import { buildSquadKickMessage } from "./socialService";
 import logger from "../utils/logger";
 import { requireModeratedText } from "./textModerationService";
+import { invalidateSquadWarRewardEligibility } from "./squadWarService";
 
 /**
  * Squad membership, admission, rank authority, and denormalized player mirrors.
@@ -582,6 +583,19 @@ export async function leaveSquad(playerId: string, requestedName: string): Promi
       }
     }
 
+    // The stock confirmation dialog explicitly says that leaving forfeits the current reward and
+    // that joining another squad does not grant a first-week reward. Persist that irreversible
+    // round fact before clearing the player mirror; it commits or rolls back with membership.
+    if (plan.departed && squad?.squadWarRoundId) {
+      await invalidateSquadWarRewardEligibility(
+        session,
+        squad.squadWarRoundId,
+        squad.name,
+        player.id,
+        now,
+      );
+    }
+
     const depositedCards = player.player.depositedCardsDic ?? {};
     const reclaim = reclaimDepositedCardsForDepartureState(
       progressionForPlayer(player),
@@ -727,6 +741,15 @@ async function changeMemberRankTransaction(
     );
     if (squadUpdate.modifiedCount !== 1) {
       throw new ApiError(ApiErrorCode.InternalServerError, "Squad rank changed concurrently.");
+    }
+    if (squad.squadWarRoundId) {
+      await invalidateSquadWarRewardEligibility(
+        session,
+        squad.squadWarRoundId,
+        squad.name,
+        targetPlayer.id,
+        now,
+      );
     }
     const playerUpdate = await players().updateOne(
       {

@@ -176,8 +176,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   IDs, and returns the exact recovered `LeagueId`/`SquadWarsId`/`Items` contract. Only a confirmed
   ranked PvP win adds server-derived Squad Points, and that score commits in the same transaction
   as the terminal match receipt. A leased scheduler settles expired divisions exactly once,
-  applies the source-exact 4.9.5 placement/reward/promotion rules, and sends each current member an
-  exact type-9 `SquadWarEnd` message whose Gold is claimed once through action `91`. Settlement
+  applies the source-exact 4.9.5 placement/reward/promotion rules, and sends each eligible
+  round-start member who remains in the squad an exact type-9 `SquadWarEnd` message whose Gold is
+  claimed once through action `91`. Leaving or being kicked irrevocably forfeits that round's
+  personal reward, while late joiners may add confirmed placement score but receive no first-week
+  reward. Settlement
   also completes the exact 4.9.5 group-19 first-Squad-War achievement for each eligible result
   recipient in the same transaction. Its single 5,000-WarBucks tier is replay-idempotent. The
   weekly Monday calendar is explicit reconstruction policy because neither recovered APK contains the

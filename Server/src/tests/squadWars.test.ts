@@ -8,6 +8,7 @@ import {
   squadWarRoundId,
   squadWarWindowAt,
 } from "../services/squadWarContract";
+import { squadWarRewardEligiblePlayerIds } from "../services/squadWarService";
 import {
   claimableMessageReward,
   toClientMessage,
@@ -69,6 +70,22 @@ test("Squad Wars reconstructed schedule emits client-parseable stable round IDs"
   assert.match(window.seasonId, /^sw[0-9a-z]+$/u);
   assert.match(squadWarRoundId(4, window, 3), /^4-[0-9a-z]+$/u);
   assert.equal(squadWarRoundId(4, window, 3), squadWarRoundId(4, window, 3));
+});
+
+test("Squad Wars rewards only round-start members who still belong to the squad", () => {
+  const entry = {
+    members: [
+      // Missing rewardEligible represents a legacy round and remains eligible for compatibility.
+      { playerId: "legacy", name: "Legacy", score: 0 },
+      { playerId: "starter", name: "Starter", score: 10, rewardEligible: true },
+      { playerId: "late", name: "Late", score: 20, rewardEligible: false },
+      { playerId: "left", name: "Left", score: 30, rewardEligible: true },
+    ],
+  };
+  assert.deepEqual(
+    squadWarRewardEligiblePlayerIds(entry, new Set(["legacy", "starter", "late"])),
+    ["legacy", "starter"],
+  );
 });
 
 test("SquadWarEnd message exposes the exact type-9 Dynamo contract and server-owned claim", () => {
