@@ -83,7 +83,13 @@ import {
   skipAssignmentState,
 } from "../services/assignmentService";
 import { assignmentHandlers } from "../handlers/assignments";
-import { pvpGameReward, pvpLevelFields, winnerFromEndReason } from "../services/matchService";
+import {
+  pvpExperienceAmounts,
+  pvpGameReward,
+  pvpLevelGoldAmount,
+  pvpLevelFields,
+  winnerFromEndReason,
+} from "../services/matchService";
 import { buildDatabaseSquad, buildSquadWarsDivision } from "../services/squadWireService";
 import { buildPlayerLeaderboardItem } from "../services/leaderboardService";
 import {
@@ -408,20 +414,35 @@ test("PvP EndReason inference agrees from winner and loser perspectives", () => 
 });
 
 test("PvP GameReward keeps the stock result parser non-null and exposes only settled XP", () => {
-  assert.deepEqual(pvpGameReward("winner", "winner", true, 5), {
+  assert.deepEqual(pvpGameReward(true, 30, 5), {
     Xp: { BattleRewards: 30, ExtraRewards: 0, Winstreak: 0, Time: 0, offerMult: 1 },
     GameGold: { BattleRewards: 5, League: 0, offerMult: 1 },
     IsVip: false,
   });
-  assert.deepEqual(pvpGameReward("loser", "winner", true), {
+  assert.deepEqual(pvpGameReward(true, 10), {
     Xp: { BattleRewards: 10, ExtraRewards: 0, Winstreak: 0, Time: 0, offerMult: 1 },
     GameGold: { BattleRewards: 0, League: 0, offerMult: 1 },
     IsVip: false,
   });
-  assert.deepEqual(pvpGameReward("winner", "winner", false, 5), {
+  assert.deepEqual(pvpGameReward(false, 30, 5, true), {
     Xp: { BattleRewards: 0, ExtraRewards: 0, Winstreak: 0, Time: 0, offerMult: 1 },
     GameGold: { BattleRewards: 0, League: 0, offerMult: 1 },
     IsVip: false,
+  });
+});
+
+test("PvP VIP receipts expose base XP while settlement persists the exact 50 percent bonus", () => {
+  assert.deepEqual(pvpExperienceAmounts(true, false), { baseExperience: 30, experience: 30 });
+  assert.deepEqual(pvpExperienceAmounts(false, false), { baseExperience: 10, experience: 10 });
+  assert.deepEqual(pvpExperienceAmounts(true, true), { baseExperience: 30, experience: 45 });
+  assert.deepEqual(pvpExperienceAmounts(false, true), { baseExperience: 10, experience: 15 });
+  assert.equal(pvpLevelGoldAmount(7, false), 7);
+  assert.equal(pvpLevelGoldAmount(7, true), 14);
+  assert.throws(() => pvpLevelGoldAmount(-1, true), /invalid/);
+  assert.deepEqual(pvpGameReward(true, 30, 7, true), {
+    Xp: { BattleRewards: 30, ExtraRewards: 0, Winstreak: 0, Time: 0, offerMult: 1 },
+    GameGold: { BattleRewards: 7, League: 0, offerMult: 1 },
+    IsVip: true,
   });
 });
 

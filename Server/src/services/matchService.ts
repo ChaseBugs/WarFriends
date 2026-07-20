@@ -114,6 +114,56 @@ const REWARDS = {
 } as const;
 
 /**
+ * VIP battle multipliers decoded from the 4.9.5 MainScene Constants component.
+ *
+ * The scene stores CodeStage ObscuredFloat values. `VipExperienceMultiplier` decodes to
+ * 1.5 and `VipGoldMultiplier` decodes to 2.0. The recovered 1.6.0 IIGFODGJBFA reward
+ * parser expects the server to send the unmultiplied component values together with
+ * `IsVip=true`; it applies these same constants for the wallet/results presentation.
+ * Durable settlement must nevertheless store the multiplied totals, otherwise the client
+ * would display a reward that disappears on the next authoritative PlayerData refresh.
+ */
+export const VIP_BATTLE_EXPERIENCE_MULTIPLIER = 1.5;
+export const VIP_LEVEL_GOLD_MULTIPLIER = 2;
+
+/**
+ * Derive the base client component and the authoritative amount for one PvP result.
+ *
+ * C# converts the positive float product to int by truncation. Math.trunc therefore keeps
+ * this service bit-for-bit compatible if a future base reward is not evenly divisible by
+ * two. VIP eligibility is sampled at settlement time, not when matchmaking began: this is
+ * the only moment at which rewards become durable and matches VipManager's strict
+ * `vipExpiration > currentTimestamp` check.
+ */
+export function pvpExperienceAmounts(won: boolean, isVip: boolean): {
+  baseExperience: number;
+  experience: number;
+} {
+  const baseExperience = won ? REWARDS.winExperience : REWARDS.loseExperience;
+  return {
+    baseExperience,
+    experience: isVip
+      ? Math.trunc(baseExperience * VIP_BATTLE_EXPERIENCE_MULTIPLIER)
+      : baseExperience,
+  };
+}
+
+/**
+ * Convert the source level-row Gold into the amount committed by a PvP settlement.
+ * Keeping this beside the XP calculation makes the otherwise easy-to-miss 2x VIP rule
+ * directly testable. The guard also prevents a corrupted/oversized reward from overflowing
+ * JavaScript's exact-integer range before it reaches the MongoDB transaction.
+ */
+export function pvpLevelGoldAmount(baseGold: number, isVip: boolean): number {
+  if (!Number.isSafeInteger(baseGold) || baseGold < 0) {
+    throw new Error("PvP base level Gold is invalid.");
+  }
+  const gold = isVip ? Math.trunc(baseGold * VIP_LEVEL_GOLD_MULTIPLIER) : baseGold;
+  if (!Number.isSafeInteger(gold)) throw new Error("PvP VIP level Gold overflowed.");
+  return gold;
+}
+
+/**
  * Build the minimum exact object consumed by IIGFODGJBFA before the GameEnded parser reads
  * Skill and medal fields. The parser dereferences ServerResultsCache.lastGameReward whenever
  * Skill exists, so omitting this object causes a null reference even when every balance was
@@ -121,17 +171,14 @@ const REWARDS = {
  * results and finished retries receive the deterministic server XP for that participant.
  */
 export function pvpGameReward(
-  playerId: string,
-  winnerId: string,
   resultAvailable: boolean,
+  battleExperience = 0,
   gameGold = 0,
+  isVip = false,
 ): Record<string, unknown> {
-  const experience = resultAvailable
-    ? (playerId === winnerId ? REWARDS.winExperience : REWARDS.loseExperience)
-    : 0;
   return {
     Xp: {
-      BattleRewards: experience,
+      BattleRewards: resultAvailable ? battleExperience : 0,
       ExtraRewards: 0,
       Winstreak: 0,
       Time: 0,
@@ -142,7 +189,10 @@ export function pvpGameReward(
       League: 0,
       offerMult: 1,
     },
-    IsVip: false,
+    // Never mark a pending/conflicting response as VIP. IIGFODGJBFA multiplies every
+    // component when this flag is true, so it must describe an immutable settlement receipt
+    // rather than the account's current VIP state at response/retry time.
+    IsVip: resultAvailable && isVip,
   };
 }
 
@@ -189,8 +239,16 @@ interface CoreGrant {
 }
 
 export interface MatchPlayerReward {
+  /** Unmultiplied Xp.BattleRewards value consumed by the stock client reward parser. */
+  baseExperience: number;
+  /** Actual XP committed to the player after the settlement-time VIP multiplier. */
   experience: number;
+  /** Unmultiplied GameGold.BattleRewards value; the client doubles it for VIP receipts. */
+  baseGold: number;
+  /** Actual level-up Gold committed to progression after the VIP multiplier. */
   gold: number;
+  /** Immutable settlement-time entitlement; later expiry must not rewrite a retry receipt. */
+  isVip: boolean;
   levelFrom: number;
   levelTo: number;
   levelExperience: number;
@@ -225,12 +283,27 @@ async function settlePlayerCore(
 ): Promise<CoreGrant> {
   const player = await players().findOne({ id: playerId }, { session });
   if (!player) throw new Error(`Match participant ${playerId} was not found.`);
-  const experience = won ? REWARDS.winExperience : REWARDS.loseExperience;
+  const initialState = progressionForPlayer(player);
+  const settlementUnix = Math.floor(settledAt.getTime() / 1_000);
+  const isVip = Math.floor(initialState.vipExpiration ?? 0) > settlementUnix;
+  const { baseExperience, experience } = pvpExperienceAmounts(won, isVip);
   const medalDelta = won ? REWARDS.winMedals : REWARDS.loseMedals;
   const squadPoints = won && player.player.squadName ? REWARDS.winSquadPoints : 0;
-  const consumed = consumePvpUsedCardsState(progressionForPlayer(player), usedCards);
+  const consumed = consumePvpUsedCardsState(initialState, usedCards);
   const leveled = applyLevelExperienceState(consumed.state, player.player.level, experience);
-  const canonical = canonicalProgression(leveled.state);
+  const baseGold = leveled.goldGranted;
+  const gold = pvpLevelGoldAmount(baseGold, isVip);
+  const vipLevelGoldBonus = gold - baseGold;
+  if (leveled.state.gold > Number.MAX_SAFE_INTEGER - vipLevelGoldBonus) {
+    throw new Error("PvP VIP level Gold balance overflowed.");
+  }
+  // applyLevelExperienceState grants the source row's base Gold. Add only the VIP delta here
+  // so the level transition remains reusable and the progression wallet equals the amount
+  // IIGFODGJBFA adds after applying its VipGoldMultiplier to GameGold.
+  const canonical = canonicalProgression({
+    ...leveled.state,
+    gold: leveled.state.gold + vipLevelGoldBonus,
+  });
   const levelChanged = leveled.levelTo !== leveled.levelFrom;
   const nextArmyPower = levelChanged
     ? calculateArmyPower({
@@ -287,8 +360,11 @@ async function settlePlayerCore(
     squadName: player.player.squadName,
     squadPoints,
     reward: {
+      baseExperience,
       experience,
-      gold: leveled.goldGranted,
+      baseGold,
+      gold,
+      isVip,
       levelFrom: leveled.levelFrom,
       levelTo: leveled.levelTo,
       levelExperience: leveled.levelExperience,

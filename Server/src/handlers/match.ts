@@ -203,10 +203,13 @@ export const matchHandlers: Record<number, HandlerEntry> = {
       // Always return a valid object, including a zero-XP pending/conflict result, to avoid
       // dereferencing a null ServerResultsCache.lastGameReward on the stock end screen.
       GameReward: pvpGameReward(
-        player!.id,
-        responseWinner,
         resultAvailable,
-        rewardReceipt?.gold ?? 0,
+        // The receipt contains both base wire components and authoritative multiplied totals.
+        // IIGFODGJBFA applies the 4.9.5 VIP constants locally when IsVip is true, so sending
+        // the multiplied values here would grant/display each VIP bonus twice.
+        rewardReceipt?.baseExperience ?? rewardReceipt?.experience ?? 0,
+        rewardReceipt?.baseGold ?? rewardReceipt?.gold ?? 0,
+        rewardReceipt?.isVip ?? false,
       ),
       // Level is not a normal snapshot field in this callback: its presence means level-up.
       // Omit it while the level is unchanged, but always provide LevelExperience.
