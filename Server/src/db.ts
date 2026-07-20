@@ -58,11 +58,15 @@ export interface PlayerProgressionState {
   tickets: number;
   scraps: number;
   levelExperience: number;
-  /** Accumulated energy-time credit; the client derives tag count by dividing by refill seconds. */
+  /**
+   * Normal-cap energy-time credit. It may be negative down to two refill intervals after the
+   * player consumes virtual VIP tags; the client adds the active VIP bonus before rendering.
+   */
   dogTagSeconds: number;
   /** Transitional field written by an early reconstruction build; read-only migration support. */
   dogTags?: number;
   dogTagLastUpdate: number;
+  /** Normal five-tag cap in seconds; VIP capacity is derived from its deadline, not stored here. */
   dogTagMax: number;
   dogTagRefillSeconds: number;
   vipStart: number;

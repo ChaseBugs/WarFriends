@@ -60,6 +60,7 @@ import { challengeIsExpired, toClientMessage, type MessageDoc } from "../service
 import {
   currentDogTagCount,
   dogTagRefillPrice,
+  maximumDogTagCount,
   materializeDogTags,
   refillDogTagsState,
   spendOneDogTagState,
@@ -265,6 +266,59 @@ test("dog-tag transitions reject empty spends, full refills, and insufficient go
   assert.throws(() => spendOneDogTagState({ ...initial, dogTagSeconds: 0 }, 1_000));
   assert.throws(() => refillDogTagsState(initial, 1_000));
   assert.throws(() => refillDogTagsState({ ...initial, dogTagSeconds: 0, gold: 0 }, 1_000));
+});
+
+test("active VIP adds two virtual dog tags without rewriting or stacking the base cap", () => {
+  const now = 1_000;
+  const initial = {
+    ...createInitialProgression(now, 900, 5),
+    gold: 100,
+    vipExpiration: now + 3_600,
+  };
+  assert.equal(initial.dogTagMax, 4_500);
+  assert.equal(currentDogTagCount(initial), 7);
+  assert.equal(maximumDogTagCount(initial), 7);
+
+  // Each spend reduces the server's base time credit. Once both virtual tags are consumed,
+  // the stored value is two intervals below zero and cannot be replayed as fresh VIP energy.
+  let state = { ...initial, dogTagSeconds: 0 };
+  const first = spendOneDogTagState(state, now);
+  assert.equal(first.state.dogTagSeconds, -900);
+  assert.equal(first.currentDogTags, 1);
+  const second = spendOneDogTagState(first.state, now);
+  assert.equal(second.state.dogTagSeconds, -1_800);
+  assert.equal(second.currentDogTags, 0);
+  assert.throws(() => spendOneDogTagState(second.state, now));
+
+  // Renewal extends the same entitlement deadline and therefore still exposes only two
+  // virtual capacity slots; the count is derived from activity, never accumulated in state.
+  state = { ...initial, vipExpiration: now + 86_400 };
+  assert.equal(maximumDogTagCount(state), 7);
+});
+
+test("VIP dog-tag debt regenerates with time and disappears cleanly at expiry", () => {
+  const now = 1_000;
+  const active = {
+    ...createInitialProgression(now, 900, 5),
+    gold: 100,
+    dogTagSeconds: -1_800,
+    vipExpiration: now + 1_000,
+  };
+  const regenerated = materializeDogTags(active, now + 900);
+  assert.equal(regenerated.dogTagSeconds, -900);
+  assert.equal(currentDogTagCount(regenerated), 1);
+
+  const expired = materializeDogTags(regenerated, now + 1_001);
+  assert.equal(maximumDogTagCount(expired), 5);
+  assert.equal(currentDogTagCount(expired), 0);
+
+  // RefillAll stores only the normal base cap. The stock client adds the virtual two when
+  // active, producing seven visible tags without making them permanent after expiration.
+  const refilled = refillDogTagsState({ ...active, dogTagSeconds: 0 }, now);
+  assert.equal(refilled.state.dogTagSeconds, 4_500);
+  assert.equal(refilled.state.dogTagMax, 4_500);
+  assert.equal(refilled.currentDogTags, 7);
+  assert.equal(refilled.goldSpent, 31);
 });
 
 test("daily reward checks unlock at most one ordered claim per UTC login day", () => {

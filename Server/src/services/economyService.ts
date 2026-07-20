@@ -8,6 +8,24 @@ export interface DogTagMutationResult {
   goldSpent: number;
 }
 
+/** Exact 4.9.5 MainScene `VipDogtags` value and localized VIP benefit count. */
+export const VIP_DOG_TAG_COUNT = 2;
+
+/**
+ * Return the virtual capacity credit used by the recovered DogTagManager.
+ *
+ * VIP does not rewrite the server-provided DogTagMax. DogTagManager.GOFEHOCFIMM adds two
+ * refill intervals to both the visible balance and maximum while VipManager reports an
+ * active deadline. Keeping the bonus virtual is important: purchase immediately exposes two
+ * full tags, renewal does not stack another two, and expiry removes the capacity without a
+ * migration or background job.
+ */
+export function vipDogTagBonusSeconds(state: PlayerProgressionState): number {
+  return Math.floor(state.vipExpiration ?? 0) > Math.floor(state.dogTagLastUpdate)
+    ? VIP_DOG_TAG_COUNT * Math.max(1, Math.floor(state.dogTagRefillSeconds))
+    : 0;
+}
+
 /**
  * Apply elapsed server time to the stored energy credit. Time is capped at DogTagMax, so
  * remaining logged-out time cannot be banked beyond the configured capacity. The timestamp
@@ -15,15 +33,38 @@ export interface DogTagMutationResult {
  */
 export function materializeDogTags(state: PlayerProgressionState, now: number): PlayerProgressionState {
   const elapsed = Math.max(0, Math.floor(now) - Math.floor(state.dogTagLastUpdate));
+  const refillSeconds = Math.max(1, Math.floor(state.dogTagRefillSeconds));
+  // Spending the two virtual VIP tags can legitimately make the stored base credit negative.
+  // The stock client then adds elapsed time to that debt, so clamping to zero here would grant
+  // a consumed VIP tag again on every request. Bound the debt to the only source-backed bonus
+  // while continuing to cap positive base credit at the normal (non-VIP) DogTagMax.
+  const minimumBaseSeconds = -VIP_DOG_TAG_COUNT * refillSeconds;
   return {
     ...state,
-    dogTagSeconds: Math.min(state.dogTagMax, Math.max(0, state.dogTagSeconds) + elapsed),
+    dogTagSeconds: Math.min(
+      state.dogTagMax,
+      Math.max(minimumBaseSeconds, state.dogTagSeconds + elapsed),
+    ),
     dogTagLastUpdate: Math.floor(now),
   };
 }
 
 export function currentDogTagCount(state: PlayerProgressionState): number {
-  return Math.floor(Math.max(0, state.dogTagSeconds) / Math.max(1, state.dogTagRefillSeconds));
+  const refillSeconds = Math.max(1, Math.floor(state.dogTagRefillSeconds));
+  const vipBonus = vipDogTagBonusSeconds(state);
+  const effectiveSeconds = Math.min(
+    state.dogTagMax + vipBonus,
+    Math.max(0, state.dogTagSeconds + vipBonus),
+  );
+  return Math.floor(effectiveSeconds / refillSeconds);
+}
+
+/** Visible maximum; DogTagMax itself deliberately remains the normal five-tag base cap. */
+export function maximumDogTagCount(state: PlayerProgressionState): number {
+  return Math.floor(
+    (state.dogTagMax + vipDogTagBonusSeconds(state))
+      / Math.max(1, Math.floor(state.dogTagRefillSeconds)),
+  );
 }
 
 /** Exact formula recovered from DogTagManager.dogtagRefillPrice. */
@@ -53,7 +94,7 @@ export function spendOneDogTagState(state: PlayerProgressionState, now: number):
 export function refillDogTagsState(state: PlayerProgressionState, now: number): DogTagMutationResult {
   const materialized = materializeDogTags(state, now);
   const currentDogTags = currentDogTagCount(materialized);
-  const maximumDogTags = Math.floor(materialized.dogTagMax / materialized.dogTagRefillSeconds);
+  const maximumDogTags = maximumDogTagCount(materialized);
   if (currentDogTags >= maximumDogTags) {
     throw new ApiError(ApiErrorCode.UnknownAction, "Dog tags are already full.");
   }
