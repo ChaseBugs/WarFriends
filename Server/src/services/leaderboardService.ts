@@ -84,11 +84,6 @@ export async function topArenaPlayers(limit = 100): Promise<PlayerLeaderboardIte
   return docs.map((doc, index) => buildArenaLeaderboardItem(doc, index + 1));
 }
 
-/** Return full documents for the recovered league-member DatabasePlayer parser. */
-export async function playersInLeague(leagueTier: number, limit = 100): Promise<PlayerDocument[]> {
-  return players().find({ leagueTier }).sort({ experience: -1 }).limit(limit).toArray();
-}
-
 /** 1-based global rank by experience (players strictly ahead plus one). */
 export async function playerRank(playerId: string): Promise<number> {
   const doc = await players().findOne({ id: playerId });

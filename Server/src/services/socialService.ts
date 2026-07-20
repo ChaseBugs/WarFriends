@@ -1,7 +1,13 @@
 import { randomUUID } from "crypto";
-import { messages, players, type PlayerDocument } from "../db";
+import {
+  messages,
+  players,
+  withMongoTransaction,
+  type PlayerDocument,
+  type PlayerProgressionState,
+} from "../db";
 import { ApiError, ApiErrorCode } from "../apiErrors";
-import { buildDatabasePlayer } from "./playerStateService";
+import { buildDatabasePlayer, progressionForPlayer } from "./playerStateService";
 import { config } from "../config";
 import { requireModeratedText } from "./textModerationService";
 
@@ -37,15 +43,21 @@ export interface MessageDoc {
   /**
    * Recovered inbox enum values currently emitted by this backend:
    * Challenge(0), SquadDemotion/kick(3), InformSquadLeaderAboutEvent(21),
-   * InGameMessage(27), and DepositWarcards(28).
+   * PlayerLeagueFinished(23), InGameMessage(27), and DepositWarcards(28).
    */
-  messageType: 0 | 3 | 21 | 27 | 28;
+  messageType: 0 | 3 | 21 | 23 | 27 | 28;
   payload: Record<string, string | number>;
   otherPlayerJson: string;
   read: boolean;
   ignored: boolean;
   accepted: boolean;
   createdAt: Date;
+  /** Deterministic key for server-generated events which must survive request retries once. */
+  idempotencyKey?: string;
+  /** Server-owned terminal marker for action 91; never inferred from the client's UI state. */
+  rewardClaimed?: boolean;
+  /** Stored response lets a lost HTTP response replay without crediting currency twice. */
+  claimResponse?: { Gold: number; Warbucks: number };
   /** Present only for ephemeral inbox types such as PvP challenges. */
   expiresAt?: Date;
 }
@@ -249,6 +261,80 @@ export async function ignoreMessage(playerId: string, messageId: string): Promis
   return result.matchedCount === 1;
 }
 
+function canonicalProgression(state: PlayerProgressionState): PlayerProgressionState {
+  const { dogTags: _legacyDogTags, ...canonical } = state;
+  return canonical;
+}
+
+export interface ClaimedMessageReward {
+  Gold: number;
+  Warbucks: number;
+  replayed: boolean;
+}
+
+/** Pure allowlist used by action 91 before it touches player currency. */
+export function claimableMessageReward(
+  message: Pick<MessageDoc, "messageType" | "payload">,
+): { Gold: number; Warbucks: number } | null {
+  const rewardGold = message.messageType === 23 ? Number(message.payload.RewardGold ?? 0) : 0;
+  if (!Number.isSafeInteger(rewardGold) || rewardGold <= 0) return null;
+  return { Gold: rewardGold, Warbucks: 0 };
+}
+
+/**
+ * Claim one server-generated inbox reward with exactly-once authoritative delivery.
+ *
+ * BeanstalkServerManager sends only MessageId for action 91. Currency amounts therefore come
+ * exclusively from the stored message payload, never from the request. The player balance and
+ * terminal message state commit in one MongoDB transaction so a crash cannot delete an unpaid
+ * reward or pay one while leaving it claimable. A transport retry receives the original delta,
+ * which the stock FABILEDDNIM parser requires to update its local Wallet after a lost response.
+ */
+export async function claimMessageReward(playerId: string, messageId: string): Promise<ClaimedMessageReward> {
+  if (!messageId) throw new ApiError(ApiErrorCode.UnknownAction, "MessageId is required.");
+
+  return withMongoTransaction(async (session) => {
+    const message = await messages().findOne({ messageId, toPlayerId: playerId }, { session }) as unknown as MessageDoc | null;
+    if (!message) throw new ApiError(ApiErrorCode.UnknownAction, "Reward message was not found.");
+    if (message.rewardClaimed && message.claimResponse) {
+      return { ...message.claimResponse, replayed: true };
+    }
+
+    // Only recovered message types with an explicit server-authored reward are claimable.
+    // Supporting arbitrary Title/Text messages here would turn the generic inbox into an
+    // economy endpoint. PlayerLeagueFinished currently carries Gold and never WarBucks.
+    const reward = claimableMessageReward(message);
+    if (!reward) {
+      throw new ApiError(ApiErrorCode.UnknownAction, "Message has no claimable reward.");
+    }
+
+    const player = await players().findOne({ id: playerId }, { session });
+    if (!player) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
+    const progression = progressionForPlayer(player);
+    const nextProgression = canonicalProgression({
+      ...progression,
+      revision: progression.revision + 1,
+      gold: progression.gold + reward.Gold,
+    });
+    const response = reward;
+
+    const playerUpdate = await players().updateOne(
+      { id: playerId },
+      { $set: { progression: nextProgression, updatedAt: new Date() } },
+      { session },
+    );
+    if (playerUpdate.modifiedCount !== 1) throw new Error(`Could not credit inbox reward for ${playerId}.`);
+
+    const messageUpdate = await messages().updateOne(
+      { messageId, toPlayerId: playerId, rewardClaimed: { $ne: true } },
+      { $set: { rewardClaimed: true, claimResponse: response, read: true, ignored: true } },
+      { session },
+    );
+    if (messageUpdate.modifiedCount !== 1) throw new Error(`Concurrent reward claim rejected for ${messageId}.`);
+    return { ...response, replayed: false };
+  });
+}
+
 export async function acceptChallenge(playerId: string, messageId: string): Promise<boolean> {
   const now = new Date();
   const result = await messages().updateOne(
@@ -315,6 +401,25 @@ export function toClientMessage(doc: MessageDoc): Record<string, DynamoValue> {
     wire.SquadId = { S: String(doc.payload.SquadId ?? "") };
     wire.SquadRank = { N: String(doc.payload.SquadRank ?? 0) };
     wire.AdminPlayerId = { S: String(doc.payload.AdminPlayerId ?? doc.fromPlayerId) };
+  } else if (doc.messageType === 23) {
+    // MMKFEEGDFKN parses this type-23 document before it performs any UI work. LeagueId is
+    // mandatory and numeric; the remaining values are optional DynamoDB attributes. The
+    // stock client compares FormerFullLeagueId with its current ID before moving locally to
+    // the new tier's placement division, which prevents a delayed old result from replacing
+    // a newer season.
+    wire.LeagueId = { N: String(doc.payload.LeagueId ?? 0) };
+    if (doc.payload.BeforeLeagueId !== undefined) {
+      wire.BeforeLeagueId = { N: String(doc.payload.BeforeLeagueId) };
+    }
+    if (doc.payload.Medals !== undefined) wire.Medals = { N: String(doc.payload.Medals) };
+    if (doc.payload.FormerFullLeagueId !== undefined) {
+      wire.FormerFullLeagueId = { S: String(doc.payload.FormerFullLeagueId) };
+    }
+    if (doc.payload.RewardGold !== undefined) wire.RewardGold = { N: String(doc.payload.RewardGold) };
+    if (doc.payload.Position !== undefined) wire.Position = { N: String(doc.payload.Position) };
+    // MMKFEEGDFKN only checks whether this attribute exists. BOOL expresses that semantic
+    // directly and avoids suggesting that its numeric value is part of the reward formula.
+    if (doc.payload.NotEnoughPlayers !== undefined) wire.NotEnoughPlayers = { BOOL: true };
   } else {
     wire.Title = { S: doc.fromName };
     wire.Text = { S: doc.body };

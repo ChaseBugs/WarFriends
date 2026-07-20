@@ -2,6 +2,7 @@ import { DbAction } from "../dbActions";
 import { ok } from "../dtos";
 import {
   acceptChallenge,
+  claimMessageReward,
   ignoreMessage,
   inbox,
   listPlayers,
@@ -72,6 +73,17 @@ export const socialHandlers: Record<number, HandlerEntry> = {
   [DbAction.IgnoreMessage]: authed(async ({ player, req }) => {
     const messageId = str(req.MessageId) || str(req.Id) || str(req.ObjData);
     return ok(DbAction.IgnoreMessage, { Ignored: messageId ? await ignoreMessage(player!.id, messageId) : false });
+  }),
+
+  [DbAction.ClaimReward]: authed(async ({ player, req }) => {
+    const result = await claimMessageReward(player!.id, str(req.MessageId) || str(req.Id));
+    // FABILEDDNIM reads Gold and Warbucks without ContainsKey guards. Always provide both
+    // deltas, including zero Warbucks for a PlayerLeagueFinished Gold reward.
+    return ok(DbAction.ClaimReward, {
+      Gold: result.Gold,
+      Warbucks: result.Warbucks,
+      Replayed: result.replayed,
+    });
   }),
 
   [DbAction.AcceptChallenge]: authed(async ({ player, req }) => {

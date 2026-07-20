@@ -4,6 +4,7 @@ import { createInitialItemInventory } from "./itemInventoryService";
 import { createInitialVisualInventory } from "./visualInventoryService";
 import { createInitialCardCrafting, createInitialCardInventory } from "./cardInventoryService";
 import { warArenaConfiguration, warArenaWireData } from "./warArenaContract";
+import { playerLeagueBootFields } from "./playerLeagueContract";
 
 /** Unix seconds are used throughout the recovered Beanstalk protocol. */
 export function unixNow(): number {
@@ -301,6 +302,11 @@ export function buildPlayerStateResponse(player: PlayerDocument, now = unixNow()
     Skill: player.player.skill,
     MedalsBalance: player.player.medalsBalance,
     PlacementMatchesRequired: player.player.remainingMatches,
+    // The recovered GetPlayerData parser passes LeagueEvaluation to LeagueArcManager and
+    // uses the mere presence of PlayerLeagueProcessing to disable stale division UI. Only
+    // locally managed IDs expose these fields; unknown production-era IDs fail closed until
+    // an explicit migration can preserve their original deadline.
+    ...playerLeagueBootFields(player.player.leagueId, now),
     UtcOffset: 0,
     DeviceToken: player.player.deviceToken,
     PlayerData: buildPlayerData(player),

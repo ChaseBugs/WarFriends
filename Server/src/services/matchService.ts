@@ -10,6 +10,7 @@ import { consumePvpUsedCardsState } from "./cardInventoryService";
 import { progressionForPlayer } from "./playerStateService";
 import { applyLevelExperienceState } from "./levelProgressionService";
 import { calculateArmyPower } from "./armyPowerService";
+import { advancePlayerLeaguePlacementAfterPvp } from "./playerLeagueContract";
 import {
   getActiveConfiguredSquadEvent,
   recordConfirmedPvpSquadEventProgress,
@@ -220,6 +221,7 @@ async function settlePlayerCore(
   playerId: string,
   won: boolean,
   usedCards: readonly string[],
+  settledAt: Date,
 ): Promise<CoreGrant> {
   const player = await players().findOne({ id: playerId }, { session });
   if (!player) throw new Error(`Match participant ${playerId} was not found.`);
@@ -237,6 +239,19 @@ async function settlePlayerCore(
       player: { ...player.player, level: leveled.levelTo },
     }).total
     : player.player.armyPower;
+  const leagueAdvance = advancePlayerLeaguePlacementAfterPvp(
+    player.player,
+    Math.floor(settledAt.getTime() / 1_000),
+  );
+  const leagueFields: Record<string, unknown> = leagueAdvance
+    ? {
+      leagueTier: leagueAdvance.leagueTier,
+      "player.leagueTier": leagueAdvance.leagueTier,
+      "player.leagueId": leagueAdvance.leagueId,
+      "player.leagueDivision": leagueAdvance.leagueDivision,
+      "player.remainingMatches": leagueAdvance.remainingMatches,
+    }
+    : {};
 
   const update = await players().updateOne(
     { id: playerId, ...progressionRevisionFilter(player) },
@@ -255,7 +270,11 @@ async function settlePlayerCore(
           "player.armyPower": nextArmyPower,
           armyPower: nextArmyPower,
           "player.status": PlayerStatus.Online,
-          updatedAt: "$$NOW",
+          // Placement advances only inside this confirmed two-party settlement. Folding it
+          // into the same player write prevents a forged standalone request or a replay from
+          // consuming the recovered one-match placement requirement.
+          ...leagueFields,
+          updatedAt: settledAt,
         },
       },
     ],
@@ -483,6 +502,7 @@ export async function settleResult(matchId: string, winnerId: string, reportedBy
         participant.playerId,
         participant.playerId === winnerId,
         cards,
+        settlementTime,
       ));
     }
     const rewardReceipts = Object.fromEntries(

@@ -17,6 +17,7 @@ import { parsePvpUsedCards } from "../services/cardInventoryService";
 import { authed, type HandlerEntry } from "./types";
 import { getSquadEventWireFields } from "../services/squadEventService";
 import logger from "../utils/logger";
+import { playerLeagueBootFields } from "../services/playerLeagueContract";
 
 // PvP match lifecycle reported to the meta server. Live event traffic runs over /hub, while
 // these actions preserve compatibility with the recovered client's Photon-era REST calls.
@@ -133,6 +134,12 @@ export const matchHandlers: Record<number, HandlerEntry> = {
     const responseWinner = report.settlement?.winnerId ?? winnerId;
     const resultAvailable = report.status === "confirmed" || report.status === "finished";
     const rewardReceipt = report.settlement?.rewards?.[player!.id];
+    const enteredLeague = Boolean(
+      resultAvailable
+      && updated
+      && updated.player.leagueId !== player!.player.leagueId
+      && updated.player.leagueId.endsWith("-local"),
+    );
     let squadEventFields: Record<string, unknown> = {};
     if (resultAvailable && updated?.player.squadName) {
       try {
@@ -173,6 +180,16 @@ export const matchHandlers: Record<number, HandlerEntry> = {
       MedalsBalance: updated?.player.medalsBalance ?? player!.player.medalsBalance,
       PlacementMatchesRequired: updated?.player.remainingMatches ?? player!.player.remainingMatches,
       BeginnersLeague: updated?.player.beginnersLeague ?? player!.player.beginnersLeague,
+      // DMGJCGJDDID treats EnteredLeague as the signal to replace the local placement ID.
+      // The value is never taken from the result request; it is the managed ID committed by
+      // the same confirmed match transaction that consumed the final placement match.
+      ...(enteredLeague && updated
+        ? {
+          EnteredLeague: updated.player.leagueId,
+          EnteredNormalLeague: true,
+          ...playerLeagueBootFields(updated.player.leagueId, unixNow()),
+        }
+        : {}),
       ...squadEventFields,
       Time: unixNow(),
     });

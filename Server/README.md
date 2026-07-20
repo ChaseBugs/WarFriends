@@ -113,10 +113,11 @@ Working end-to-end (verified live):
   on server restart. Photon-era `GameEnded` reports interpret the recovered `EndReason`
   enum and require matching durable reports from both assigned participants before rewards.
 
-- **Leaderboards / leagues**: `GetPlayersByExperience` (global player board),
-  `GetPlayerLeaguesDivision` (league + 1-based global rank), squad board via
-  `GetSquadsByExperience` / `LeagueLeaderboardShown`. MongoDB-authoritative (indexed on
-  `experience`), Redis sorted-set cache warmed opportunistically.
+- **Leaderboards / player leagues**: `GetPlayersByExperience` and squad boards remain
+  MongoDB-authoritative with opportunistic Redis warming. `GetPlayerLeaguesDivision` now
+  materializes a stable UTC season, ranks the exact division by weekly medals, and returns
+  `LeagueEvaluation`; confirmed PvP consumes placement; `FinishPlayerLeague` atomically
+  promotes/relegates all members and queues the recovered type-23 result/reward messages.
 - **Social / messaging**: `SearchPlayers` (name prefix), `GetAllPlayers`, exact Facebook-friend and
   authoritative squad-mate resolution through `GetFriendsInfo`, challenge and normal
   `MessageSent`, `GetAllMessages`, `ReadMessage`, `IgnoreMessage`, and `AcceptChallenge`
@@ -302,9 +303,16 @@ allowlist of analytics/impression actions is safely ignored.
   delivery/activation; the nine null-reference Pulse Rifle rows, unknown items, and
   discount-bearing requests remain rejected instead of receiving guessed prices or unusable
   inventory records.
-- **Arena fidelity / leagues** — recover production arena prices, rules, opponent weighting,
-  lootbox/crown inventory payloads, and authoritative combat evidence; implement league
-  promotion/relegation on `FinishPlayerLeague`. Arena debug mutations remain rejected.
+- **Player leagues** — the server owns source-backed 16-tier placement and season state,
+  exact weekly-medal division ordering, recovered promotion/relegation percentages, the
+  30-player underfilled rule, Champion/underfilled Gold rewards, and transactional action-198
+  settlement with type-23 inbox results. The local UTC-aligned allocator intentionally uses
+  one reconstructed division per tier until the retired production 100-player allocator and
+  background scheduler are recovered or replaced.
+- **Arena fidelity / league operations** — recover production arena prices, rules, opponent
+  weighting, lootbox/crown inventory payloads, and authoritative combat evidence; add bounded
+  league division documents, scheduled settlement, and beginner-league exit authority. Arena
+  debug mutations remain rejected.
 - **Mission fidelity** — recover the original mission-selection weighting and normal battle
   reward formula, add combat-result validation, restore the missing recovered-client
   `MissionsSettings`/`UnitsInMissionsConfig` references, and deliver heroic inventory rewards.
