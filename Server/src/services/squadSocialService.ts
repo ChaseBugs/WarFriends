@@ -35,7 +35,15 @@ export function advanceSquadChatCursorState(
     throw new ApiError(ApiErrorCode.UnknownAction, "Squad chat timestamp is too far in the future.");
   }
 
-  const timestamp = Math.max(state.lastSeenSquadChatTimestamp ?? 0, requestedTimestamp);
+  const current = state.lastSeenSquadChatTimestamp ?? 0;
+  if (requestedTimestamp <= current) {
+    // A second device can flush an older RequestBuffer after another device has already read
+    // further into the channel. Acknowledge the authoritative cursor without fabricating a
+    // progression revision or replacing identical state.
+    return { state, timestamp: current };
+  }
+
+  const timestamp = requestedTimestamp;
   return {
     state: {
       ...state,

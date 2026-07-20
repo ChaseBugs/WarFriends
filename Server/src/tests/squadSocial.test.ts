@@ -42,6 +42,9 @@ test("squad chat cursor is monotonic and rejects destructive future values", () 
 
   assert.equal(first.timestamp, NOW - 20);
   assert.equal(rollback.timestamp, NOW - 20);
+  assert.equal(rollback.state, first.state, "stale cursor must not advance progression revision");
+  const equal = advanceSquadChatCursorState(first.state, NOW, NOW - 20);
+  assert.equal(equal.state, first.state, "equal cursor must not advance progression revision");
   assert.throws(
     () => advanceSquadChatCursorState(rollback.state, NOW, NOW + 301),
     (error: unknown) => (error as { code?: number }).code === ApiErrorCode.UnknownAction,

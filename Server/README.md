@@ -430,7 +430,8 @@ Working end-to-end (verified live):
   card list and grants the exact one-time 50,000-WarBucks reward at five cards. Exact serialized
   MainScene tier rewards are granted atomically and replay-safely.
 - **Squad social state**: action `193` persists the monotonic Photon Chat unread cursor through
-  the stock request buffer and restores it as `PlayerAnalyticsData`; squad-event notices are
+  the stock request buffer and restores it as `PlayerAnalyticsData`; equal or stale cross-device
+  cursor updates return the authoritative value without a false revision/write. Squad-event notices are
   membership-validated, founder-targeted, durable, and duplicate-suppressed.
 - **War Arena (persistent core)**: login supplies the recovered Dynamo-style
   `WarArenaConfig`, while `EnterArena`, action-64/65 starts, Arena `GameEnded`, heart/life
