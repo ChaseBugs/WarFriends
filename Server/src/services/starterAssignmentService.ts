@@ -184,8 +184,15 @@ export function completeStarterAssignmentsState(
       claimed: existing?.claimed ?? false,
     };
   }
+  const changed = definitions.some((definition) => (
+    !state.starterAssignments?.assignments[definition.id]?.completed
+  ));
   return {
-    state: { ...state, revision: state.revision + 1, starterAssignments },
+    // CompleteStarterAssignments may be retried directly after the server committed but the
+    // response was lost. The recovered protocol has no request UUID, so already-completed IDs
+    // are accepted idempotently. Returning the exact state here makes that promise durable: it
+    // avoids a second MongoDB replacement while still returning the complete cloned wire model.
+    state: changed ? { ...state, revision: state.revision + 1, starterAssignments } : state,
     starterAssignments,
   };
 }

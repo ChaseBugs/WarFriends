@@ -215,7 +215,9 @@ Working end-to-end (verified live):
   `EquipDecal`, `DecalWasShown`, and `VisualWasShown` validate source, price, category, VIP,
   ownership, expiry, and shop eligibility. Gold/WarBucks debit, permanent or timed ownership,
   four-slot equipment, notification state, rollback data, and `BufferId` replay protection are
-  atomic. Actions `104`/`105` now persist the weapon/unit `showed` flags through both direct and
+  atomic. Re-equipping the current category item and replaying an already-cleared visual badge
+  acknowledgement preserve exact state identity instead of creating false inventory revisions.
+  Actions `104`/`105` now persist the weapon/unit `showed` flags through both direct and
   buffered transports without granting ownership; locked or unknown rows fail closed. Direct
   action `194` and its stock buffered form are explicit telemetry acknowledgements, so opening a
   notification cannot poison an otherwise valid RequestBuffer with `UnknownAction`; echoed player

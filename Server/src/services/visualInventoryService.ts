@@ -293,6 +293,13 @@ export function equipVisualState(
 
   const slotKey = String(category.id);
   const current = visualInventory.slots[slotKey]?.equippedID ?? category.defaultId;
+  if (current === definition.name) {
+    // EquipDecal is buffered and can be resent after a response loss. Ownership/expiry was
+    // validated above, but selecting the item that already occupies its immutable category is
+    // only an acknowledgement. Preserve exact state identity so the enclosing BufferId does not
+    // manufacture an inventory revision for an unchanged loadout.
+    return { state, visualInventory, definition, expiresOn: saved?.expiresOn ?? 0 };
+  }
   // The client uses previousHeadDecal to restore a normal helmet after an Arena helmet expires.
   if (category.id === 1 && definition.purchasable === "arena") {
     const currentDefinition = VISUAL_CATALOG[current];
@@ -317,8 +324,16 @@ export function markVisualShownState(
   const definition = VISUAL_CATALOG[name];
   if (!definition) throw new ApiError(VISUAL_CATEGORY_NOT_FOUND, "Visual was not found.");
   const visualInventory = visualInventoryStateFor(state);
+  const current = visualInventory.visuals[definition.name];
+  if (current?.showed && !current.notificate) {
+    // Both DecalWasShown and VisualWasShown may report the same badge. Once `showed` is true and
+    // the reward notification is cleared, another acknowledgement has no durable effect. Return
+    // the clone for response serialization but retain the original progression object so
+    // mutateProgression can skip the database write.
+    return { state, visualInventory, definition, expiresOn: 0 };
+  }
   visualInventory.visuals[definition.name] = {
-    ...(visualInventory.visuals[definition.name] ?? emptySavedVisual()),
+    ...(current ?? emptySavedVisual()),
     showed: true,
     notificate: false,
   };

@@ -57,6 +57,16 @@ test("starter completion accepts server-owned facts and rejects unrecovered unit
   assert.equal(completed.starterAssignments.assignments.ID_10.completed, true);
   assert.equal(completed.starterAssignments.assignments.ID_6.completed, true);
 
+  const replay = completeStarterAssignmentsState(
+    completed.state,
+    NOW + 11,
+    NOW,
+    FACTS,
+    ["ID_1", "ID_4"],
+  );
+  assert.equal(replay.state, completed.state);
+  assert.equal(replay.state.revision, completed.state.revision);
+
   const crafted = { ...completed.state, goldCardsCrafted: 1 };
   const craftedCompleted = completeStarterAssignmentsState(
     crafted,

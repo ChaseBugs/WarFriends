@@ -97,6 +97,22 @@ test("WarBucks visual purchase and equip use the source row and owned category",
 
   const shown = markVisualShownState(equipped.state, "HEAD_CIGAR");
   assert.equal(shown.visualInventory.visuals.HEAD_CIGAR?.showed, true);
+  assert.equal(equipVisualState(equipped.state, NOW, "HEAD_CIGAR").state, equipped.state);
+  assert.equal(markVisualShownState(shown.state, "HEAD_CIGAR").state, shown.state);
+
+  const notification = {
+    ...shown.state,
+    visualInventory: {
+      ...shown.state.visualInventory!,
+      visuals: {
+        ...shown.state.visualInventory!.visuals,
+        HEAD_CIGAR: { ...shown.state.visualInventory!.visuals.HEAD_CIGAR!, notificate: true },
+      },
+    },
+  };
+  const clearedNotification = markVisualShownState(notification, "HEAD_CIGAR");
+  assert.notEqual(clearedNotification.state, notification);
+  assert.equal(clearedNotification.visualInventory.visuals.HEAD_CIGAR?.notificate, false);
 
   const publicPlayer = playerDocument();
   publicPlayer.progression = equipped.state;
