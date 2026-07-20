@@ -669,6 +669,11 @@ export interface WarArenaState {
   shields: number;
   played: boolean;
   heartDialogShown: boolean;
+  /**
+   * Backend-only IDs whose event-opening dialog was acknowledged by action 212.
+   * This is bounded by the service and deliberately omitted from WarArenaData.
+   */
+  shownArenaIds: string[];
   runLosses: number;
   runRewardClaimed: boolean;
   activeBattle?: WarArenaBattleSessionState;

@@ -428,8 +428,11 @@ Working end-to-end (verified live):
 - **War Arena (persistent core)**: login supplies the recovered Dynamo-style
   `WarArenaConfig`, while `EnterArena`, action-64/65 starts, Arena `GameEnded`, heart/life
   actions, scraps claims, rollover, and `GetArenaLeaderboards` use the exact `WarArenaData`
-  contract. Runs and prices are server-owned, battle IDs are receipt-bound, and result/reward
-  retries are idempotent. Arena achievement progress shares this receipt authority; combat outcomes
+  contract. Action `212` requires authentication, accepts only the active server-generated
+  `ArenaId`, and retains a bounded two-year event-dialog acknowledgement history without exposing
+  it in the public wire object. Replays do not increment progression revision or write MongoDB,
+  and acknowledging a dialog cannot enter an event or grant value. Runs and prices are server-owned,
+  battle IDs are receipt-bound, and result/reward retries are idempotent. Arena achievement progress shares this receipt authority; combat outcomes
   remain client-reported pending authoritative validation. The retired remote price/lootbox tables are absent from both APKs,
   so entry/heart/scraps values are environment-tunable and final lootboxes currently use a
   documented scraps fallback rather than fabricated inventory objects.

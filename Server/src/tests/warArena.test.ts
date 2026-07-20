@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { claimAchievementState } from "../services/achievementService";
+import { DbAction } from "../dbActions";
+import { warArenaHandlers } from "../handlers/warArena";
 import { createInitialProgression } from "../services/playerStateService";
 import {
   arenaPolicy,
@@ -13,6 +15,8 @@ import {
   claimWarArenaScrapsState,
   endWarArenaState,
   enterWarArenaState,
+  initialWarArenaState,
+  markWarArenaShownState,
   settleWarArenaBattleState,
   startWarArenaBattleState,
   takeWarArenaLifeState,
@@ -53,6 +57,43 @@ test("War Arena config and persisted wire use the recovered client field names",
     "heartDialogShown",
   ]);
   assert.deepEqual(wire.opponents, ["p2", "p3"]);
+});
+
+test("WarArenaShown accepts only the current event and is replay safe", () => {
+  const initial = createInitialProgression(NOW);
+  const arenaId = currentArenaId(NOW);
+  const marked = markWarArenaShownState(initial, NOW, arenaId);
+  assert.equal(marked.changed, true);
+  assert.equal(marked.state.revision, initial.revision + 1);
+  assert.deepEqual(marked.arena.shownArenaIds, [arenaId]);
+
+  const replay = markWarArenaShownState(marked.state, NOW + 60, arenaId);
+  assert.equal(replay.changed, false);
+  assert.equal(replay.state, marked.state, "a replay must not trigger a database write");
+  assert.equal(warArenaHandlers[DbAction.WarArenaShown]?.requiresAuth, true);
+
+  assert.throws(
+    () => markWarArenaShownState(initial, NOW, "arena-2099-01"),
+    (error: unknown) => (error as { code?: number }).code === 90,
+  );
+  assert.throws(
+    () => markWarArenaShownState(initial, NOW, ""),
+    (error: unknown) => (error as { code?: number }).code === 90,
+  );
+});
+
+test("WarArenaShown history stays bounded and never leaks into public WarArenaData", () => {
+  const initial = createInitialProgression(NOW);
+  initial.warArena = {
+    ...initialWarArenaState(),
+    shownArenaIds: Array.from({ length: 24 }, (_, index) => `legacy-${index}`),
+  };
+  const currentId = currentArenaId(NOW);
+  const marked = markWarArenaShownState(initial, NOW, currentId);
+  assert.equal(marked.arena.shownArenaIds.length, 24);
+  assert.equal(marked.arena.shownArenaIds[0], "legacy-1");
+  assert.equal(marked.arena.shownArenaIds.at(-1), currentId);
+  assert.equal("shownArenaIds" in warArenaWireData(marked.arena), false);
 });
 
 test("Arena battle receipts make wins replay-safe and reject conflicting replay results", () => {

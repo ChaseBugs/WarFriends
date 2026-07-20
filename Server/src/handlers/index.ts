@@ -35,7 +35,7 @@ const benignNoOpActions = new Set<number>([
   92, // client error report
   141, 166, // crash/log telemetry
   179, 194, // broad analytics blob and message impression telemetry
-  212, 1007, // Arena/offer impression telemetry
+  1007, // special-offer impression telemetry
 ]);
 
 // The dispatch table: DbAction code → handler. Grouped registries are merged here; later

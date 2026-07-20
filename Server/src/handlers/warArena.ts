@@ -7,6 +7,7 @@ import {
   claimWarArenaScraps,
   endWarArena,
   enterWarArena,
+  markWarArenaShown,
   takeWarArenaLife,
 } from "../services/warArenaService";
 import { authed, type HandlerEntry } from "./types";
@@ -77,5 +78,13 @@ export const warArenaHandlers: Record<number, HandlerEntry> = {
     const arenaId = typeof req.ArenaId === "string" ? req.ArenaId : "";
     const result = await endWarArena(player!.id, arenaId);
     return ok(DbAction.WarArenaEnded, { ...result.response, Replayed: result.replayed });
+  }),
+
+  [DbAction.WarArenaShown]: authed(async ({ player, req }) => {
+    // FCIGAKGDAHO sends the configured ArenaId and ignores all response fields. Persisting a
+    // small Changed flag still helps diagnostics while remaining compatible with that parser.
+    const arenaId = typeof req.ArenaId === "string" ? req.ArenaId : "";
+    const result = await markWarArenaShown(player!.id, arenaId);
+    return ok(DbAction.WarArenaShown, { Changed: result.changed });
   }),
 };
