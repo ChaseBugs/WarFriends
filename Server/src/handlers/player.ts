@@ -20,6 +20,7 @@ import {
   renamePlayer,
 } from "../services/playerRenameService";
 import { ensureRentalOffer } from "../services/rentalService";
+import { ensureDailyVipCards } from "../services/vipService";
 
 // Player profile and settings handlers. GetPlayerData is the client's primary state fetch
 // after login. Mutations validate and persist only their own fields, which prevents a stale
@@ -33,10 +34,22 @@ export const playerHandlers: Record<number, HandlerEntry> = {
     const rental = await ensureRentalOffer(player!.id, player!.player.level);
     // Rental is an outer GetPlayerData field, not part of the Dynamo-style PlayerData map.
     // EGPLNLMMADN reads it directly and always opens this boot variant as a free trial.
-    const projected = { ...player!, progression: rental.state };
+    const vipCards = await ensureDailyVipCards(player!.id);
+    // ensureDailyVipCards reloads after the rental transition and returns the newest complete
+    // progression snapshot. Building PlayerData from rental.state here would omit the newly
+    // committed cards and make the popup disagree with CardManagerData after this response.
+    const projected = { ...player!, progression: vipCards.state };
     return ok(DbAction.GetPlayerData, {
       ...buildPlayerStateResponse(projected),
       ...(rental.bootOffer ? { Rental: rental.bootOffer } : {}),
+      ...(vipCards.reward ? {
+        // NCNNKGNJNOH has already loaded the authoritative CardManagerData from PlayerData by
+        // the time it queues this dialog. Unlike BuyVip, this callback intentionally does not
+        // call AddCard again; returning only the IDs here is therefore presentation metadata.
+        VipReward1: vipCards.reward.cardIds[0],
+        VipReward2: vipCards.reward.cardIds[1],
+        VipRewardForDay: vipCards.reward.dayKey,
+      } : {}),
     });
   }),
 

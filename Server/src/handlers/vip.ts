@@ -48,6 +48,14 @@ export const vipHandlers: Record<number, HandlerEntry> = {
         // the remaining balance. Returning the balance here would subtract it a second time.
         Gold: result.cost,
         Id: result.product.id,
+        ...(result.dailyCardReward ? {
+          // GFGIJJMCPLO reads these exact outer keys and calls CardManager.AddCard for both
+          // identities. VipRewardForDay becomes the suffix of the queued message ID, so the
+          // UTC key also prevents two local dialogs for one day without changing card display.
+          VipReward1: result.dailyCardReward.cardIds[0],
+          VipReward2: result.dailyCardReward.cardIds[1],
+          VipRewardForDay: result.dailyCardReward.dayKey,
+        } : {}),
       });
     } catch (error) {
       if (!(error instanceof ApiError)) throw error;

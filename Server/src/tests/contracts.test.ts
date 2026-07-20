@@ -361,6 +361,31 @@ test("daily reward claims reject replays and locked future indexes", () => {
   );
 });
 
+test("daily calendar claim composes the active VIP card pair into the same state transition", () => {
+  const now = Date.parse("2026-07-19T12:00:00Z") / 1000;
+  const active = {
+    ...createInitialProgression(now),
+    vipStart: now - 60,
+    vipExpiration: now + 3_600,
+  };
+  const available = checkDailyRewardState(active, now);
+  const choices = [0, 0, 9_999, 0];
+  const claimed = claimDailyRewardState(available.state, now, 1, (upperBound) => {
+    const value = choices.shift();
+    assert.notEqual(value, undefined);
+    assert.ok(value! < upperBound);
+    return value!;
+  });
+
+  assert.equal(claimed.vipDailyCardReward?.cardIds.length, 2);
+  assert.equal(claimed.vipDailyCardReward?.dayKey, "2026-07-19");
+  for (const id of claimed.vipDailyCardReward!.cardIds) {
+    assert.equal(claimed.state.cardInventory?.cardData[id]?.amount, 1);
+  }
+  assert.equal(claimed.state.dailyReward?.claimReward, 1);
+  assert.equal(claimed.state.gold, dailyRewardGoldForDay(1));
+});
+
 test("daily reward wire data matches the recovered Unity calendar parser", () => {
   const now = Date.parse("2026-02-10T23:59:00Z") / 1000;
   const checked = checkDailyRewardState(createInitialProgression(now), now);

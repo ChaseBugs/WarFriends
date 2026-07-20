@@ -38,6 +38,14 @@ export const dailyRewardHandlers: Record<number, HandlerEntry> = {
         // ParseReward expects MDNLFMNBNEG.Gold (1) and reads the credited delta from `added`.
         addedType: 1,
         added: result.goldAdded,
+        ...(result.vipDailyCardReward ? {
+          // DailyRewardManager.ParseReward receives this nested object, queues NGGINCOPKKJ,
+          // and invokes AddCard for both IDs. Keeping the fields beside `added` matches that
+          // exact parser surface; placing them on the outer action response would be ignored.
+          VipReward1: result.vipDailyCardReward.cardIds[0],
+          VipReward2: result.vipDailyCardReward.cardIds[1],
+          VipRewardForDay: result.vipDailyCardReward.dayKey,
+        } : {}),
       },
     });
   }),

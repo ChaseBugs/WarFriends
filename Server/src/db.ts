@@ -79,6 +79,15 @@ export interface PlayerProgressionState {
    */
   vipExpiration?: number;
   /**
+   * Private once-per-UTC-day cursor for the two paid-VIP War Cards.
+   *
+   * This state is deliberately not part of CardManagerData. Unity receives the granted cards
+   * through the normal authoritative card inventory, while this cursor prevents a reconnect,
+   * repeated GetPlayerData call, or VIP renewal from granting the same calendar day's pair
+   * again. `lastRewardIds` is retained for audit/debugging and never acts as inventory itself.
+   */
+  vipDailyCards?: VipDailyCardRewardState;
+  /**
    * Monthly login-calendar cursor. `canClaim` counts distinct UTC days seen by the server;
    * `claimReward` counts rewards already collected in order. Keeping both counters makes a
    * check request idempotent and prevents a client from skipping directly to a later prize.
@@ -362,6 +371,16 @@ export interface CardInventoryState {
   nextWithdraw: number;
   nextBuddyDeposit: number;
   extraSlot: boolean;
+}
+
+/** Server-only receipt for the source-defined daily paid-VIP card benefit. */
+export interface VipDailyCardRewardState {
+  /** ISO YYYY-MM-DD in UTC; lexical equality is sufficient for duplicate suppression. */
+  lastGrantDay: string;
+  /** Authoritative server time at which the inventory mutation committed. */
+  lastGrantedAt: number;
+  /** The exact pair added by that transition, including a legal duplicate card ID. */
+  lastRewardIds: [string, string];
 }
 
 /** CardCraftingManager.CraftData; only these three fields are serialized to Unity. */

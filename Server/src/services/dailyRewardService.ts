@@ -3,6 +3,11 @@ import { config } from "../config";
 import type { DailyRewardState, PlayerProgressionState } from "../db";
 import { advanceAchievementState } from "./achievementService";
 import { mutateProgression } from "./progressionMutationService";
+import {
+  grantDailyVipCardsState,
+  type VipDailyCardReward,
+  type VipRandomIndex,
+} from "./vipService";
 
 // MDNLFMNBNEG.Gold and LGCDFAELDNL.None from the recovered 1.6.0 assemblies.
 const GOLD_REWARD_TYPE = 1;
@@ -29,6 +34,8 @@ export interface DailyRewardMutationResult {
   calendar: DailyRewardState;
   rewardDay?: number;
   goldAdded?: number;
+  /** Optional paid-VIP pair carried inside the recovered dailyRewardData response object. */
+  vipDailyCardReward?: VipDailyCardReward;
 }
 
 function utcDate(now: number): Date {
@@ -118,6 +125,7 @@ export function claimDailyRewardState(
   state: PlayerProgressionState,
   now: number,
   requestedDay: number,
+  chooseVipCard?: VipRandomIndex,
 ): DailyRewardMutationResult {
   const calendar = calendarFor(state, utcDate(now));
   const expectedDay = calendar.claimReward + 1;
@@ -141,11 +149,18 @@ export function claimDailyRewardState(
   // transition ensures the login reward and achievement progress either both commit or both
   // retry under the progression revision guard; a dropped HTTP response cannot count twice.
   const achievementResult = advanceAchievementState(rewardedState, 16, 1);
+  // DailyRewardManager.ParseReward explicitly reads VipReward1/2 from this same response object
+  // and adds both identities locally. Compose the independent paid-VIP benefit before MongoDB's
+  // revision guard so Gold, achievement progress, cards, and both cursors commit or retry together.
+  const vipResult = chooseVipCard
+    ? grantDailyVipCardsState(achievementResult.state, now, chooseVipCard)
+    : grantDailyVipCardsState(achievementResult.state, now);
   return {
-    state: achievementResult.state,
+    state: vipResult.state,
     calendar,
     rewardDay: requestedDay,
     goldAdded,
+    vipDailyCardReward: vipResult.reward,
   };
 }
 

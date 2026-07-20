@@ -75,6 +75,33 @@ fields consumed by the old client: `Gold`, `WarBucks`, `CardManagerData`, and `S
 Recovered result codes are 100 for insufficient currency, 112 for an invalid/unavailable pack or
 roll, and 13601 for a discount without a server-owned entitlement.
 
+## Daily paid-VIP War Cards
+
+The recovered client does not send a daily-card claim action. Instead, several response callbacks
+look for three optional outer fields: `VipReward1`, `VipReward2`, and `VipRewardForDay`. The normal
+`GetPlayerData` callback loads authoritative `CardManagerData` and uses those IDs only to queue
+`DailyVIPCardsScreen`; the `BuyVip` callback also calls `CardManager.AddCard` once for each field
+because that response does not contain a complete PlayerData refresh. The backend therefore emits
+the same fields from login, purchase, and the nested daily-calendar claim payload while persisting
+the two increments exactly once.
+
+`VipGoldCardRewardChance` is source-decoded from the 4.9.5 MainScene ObscuredFloat as `0.75`.
+Each of the two independent daily draws selects a playable Gold card with 75% probability and a
+playable Silver card otherwise. Selection uses the cryptographic integer RNG, may legally choose
+the same identity twice, and never includes unresolved catalog rows. A private ISO UTC day cursor
+is committed with the card amounts, so reconnects, repeated state fetches, and same-day VIP
+renewals cannot duplicate the pair. `VipRewardForDay` carries that stable day key, which gives the
+client's `VipCardMessage {0}` queue entry a unique ID without becoming inventory authority.
+
+The membership deadline is checked at the same authoritative timestamp as the mutation. Purchase,
+Gold debit, entitlement extension, both card increments, and the daily cursor share one optimistic
+state transition. For an existing member, `GetPlayerData` performs the same grant before building
+PlayerData, ensuring the popup IDs and returned `CardManagerData` always describe one committed
+snapshot.
+An active member who remains connected across midnight can receive the new pair with the normal
+calendar claim as well; its Gold reward, achievement progress, VIP card amounts, and both daily
+cursors are composed before the same revision-guarded database write.
+
 ## Timed card crafting
 
 The backend also persists the exact `CardCraftingManager.CraftData` login and recovery object:
