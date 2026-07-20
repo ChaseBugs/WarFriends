@@ -342,6 +342,35 @@ test("normal unit upgrade debits extracted price and waits for server delivery",
   assert.equal(activated.itemInventory.levelManagerData.unitDelivery.activationNeeded, false);
 });
 
+test("active subscription applies the recovered 0.8 unit delivery multiplier", () => {
+  const owned = purchaseUnitState(createInitialProgression(NOW), 0, parseUnitPurchaseData(buyData()));
+  const subscribed = {
+    ...owned.state,
+    warBucks: 375,
+    subscription: {
+      type: "subscription1" as const,
+      subscribeSince: NOW - 1,
+      expireTime: NOW + 3_600,
+      dogTagTimerLock: NOW,
+    },
+  };
+  const started = startUnitUpgradeState(
+    subscribed,
+    NOW,
+    parseUnitUpgradePurchaseData(upgradePurchaseData(SHOTGUNNER, false, { DeliveryTime: 48 })),
+  );
+  assert.equal(started.deliveryTime, 48);
+  assert.equal(started.itemInventory.levelManagerData.unitDelivery.end, NOW + 48);
+  assert.throws(
+    () => startUnitUpgradeState(
+      subscribed,
+      NOW,
+      parseUnitUpgradePurchaseData(upgradePurchaseData()),
+    ),
+    (error: unknown) => (error as { code?: number }).code === ITEM_PRICE_MISMATCH,
+  );
+});
+
 test("unit upgrade rejects an unowned roster row with a client-handled rollback code", () => {
   assert.throws(
     () => startUnitUpgradeState(

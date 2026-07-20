@@ -417,8 +417,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   and the runtime catalog still match the recovered 4.9.5 scene exactly.
 - **Weapon upgrade lifecycle**: buffered actions `73`-`75` use all 165 recovered per-level
   Google2u tables across shop and Black Market families (11,640 normal-level transitions).
-  BuyWeaponUpgrade validates the old index
-  and source duration, debits the server-owned WarBucks price, and creates the single shared
+  BuyWeaponUpgrade validates the old index and server-derived duration, including the recovered
+  float32 `ceil(source * 0.8)` reduction while a verified subscription is active, debits the
+  server-owned WarBucks price, and creates the single shared
   `weaponDelivery` receipt used by
   LevelManager. Normal activation enforces its server end time; instant activation derives
   Gold from the recovered float32 `0.6325`/`-0.175` formula and the persisted delivery receipt.
@@ -473,15 +474,16 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   XOR-decoded WarBucks price, delivery duration, and Elite parts price. Buffered actions `77`-`79`
   use those rows to enforce separate normal and
   special cursors, promotion-gated special access, current-tier maximums, one shared unit-delivery
-  receipt, server time, exact WarBucks debit, receipt-backed instant Gold cost, atomic completion,
-  Unity rollback, and replay safety. `PromoteUnit` then validates normal-tier completion, the
+  receipt, server time, the same subscription-expiry-gated float32 0.8 duration, exact WarBucks
+  debit, receipt-backed instant Gold cost, atomic completion, Unity rollback, and replay safety.
+  `PromoteUnit` then validates normal-tier completion, the
   recovered one-based `UNLOCKTIER2`-`UNLOCKTIER6` level gates, maximum tier 6, ownership, and an
   empty delivery receipt before advancing only `tier`; the exact 11405 level error includes the
   diagnostics consumed by the client warning handler. `UpgradeEliteSlot` action `209` now validates
   the relative Elite cursor and exact source parts/WarBucks cost, performs the immediate atomic
   debit/increment, returns the recovered `104`/`20902`/`20903` failures, and is replay-safe. Unit
   ArmyPower reproduces Unity float32 addition for normal, promoted-special, and bought-Elite rows
-  and sums only equipped permanent units. Helper/unresolved rows and offer/subscription discounts
+  and sums only equipped permanent units. Helper/unresolved rows and unproven offer discounts
   remain fail-closed. The authoritative ArmyPower service combines this unit component with the
   recovered weapon DPS and player-rank components, then persists the complete total through a
   progression-revision compare-and-swap. Run

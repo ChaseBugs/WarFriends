@@ -12,6 +12,7 @@ import {
   WEAPON_BLACK_MARKET_PRICES,
   WEAPON_UPGRADE_CATALOG,
 } from "../data/weaponUpgradeCatalog.generated";
+import { subscriptionUpgradeDeliverySeconds } from "./subscriptionBenefitService";
 
 /**
  * Recovered weapon ownership and loadout logic.
@@ -750,12 +751,13 @@ export function startWeaponUpgradeState(
   const { definition, itemInventory, weapon, stages } = upgradeContext(state, payload.name);
   assertUpgradeIndex(weapon, payload.boughtIndex);
   assertTransitionExists(stages, weapon.boughtIndex);
-  const [warBucks, deliverySeconds] = stages[weapon.boughtIndex]!;
+  const [warBucks, sourceDeliverySeconds] = stages[weapon.boughtIndex]!;
+  const deliverySeconds = subscriptionUpgradeDeliverySeconds(state, now, sourceDeliverySeconds);
 
   if (payload.discount !== 0 || payload.deliveryReduce !== 0) {
     throw new ApiError(ITEM_NO_DISCOUNT_FOUND, "Weapon upgrade offer is not backed by the server.");
   }
-  if (warBucks < 0 || deliverySeconds < 0) {
+  if (warBucks < 0 || sourceDeliverySeconds < 0) {
     throw new ApiError(ITEM_PRICE_NOT_FOUND, "Recovered weapon upgrade balancing is invalid.");
   }
   if (payload.deliveryTime !== deliverySeconds || payload.startTime < 0) {

@@ -41,6 +41,10 @@ import {
   WEAPON_UPGRADE_CATALOG,
 } from "../data/weaponUpgradeCatalog.generated";
 import { createInitialProgression } from "../services/playerStateService";
+import {
+  SUBSCRIPTION_UPGRADE_TIME_MULTIPLIER,
+  subscriptionUpgradeDeliverySeconds,
+} from "../services/subscriptionBenefitService";
 
 const NOW = Date.UTC(2026, 6, 19, 12, 0, 0) / 1_000;
 const FAMAS = "Google2u.AssaultRifle_Famas";
@@ -241,6 +245,37 @@ test("weapon upgrade purchase debits WarBucks and activation waits for server de
     slotId: 0,
     start: 0,
   });
+});
+
+test("active subscription applies the recovered float32 0.8 weapon delivery multiplier", () => {
+  const initial = {
+    ...createInitialProgression(NOW),
+    warBucks: 2_000,
+    subscription: {
+      type: "subscription1" as const,
+      subscribeSince: NOW - 1,
+      expireTime: NOW + 3_600,
+      dogTagTimerLock: NOW,
+    },
+  };
+  assert.equal(SUBSCRIPTION_UPGRADE_TIME_MULTIPLIER, Math.fround(0.8));
+  assert.equal(subscriptionUpgradeDeliverySeconds(initial, NOW, 60), 48);
+  const started = startWeaponUpgradeState(
+    initial,
+    NOW,
+    parseWeaponUpgradePurchaseData(upgradePurchaseData({ DeliveryTime: 48 })),
+  );
+  assert.equal(started.deliveryTime, 48);
+  assert.equal(started.itemInventory.levelManagerData.weaponDelivery.end, NOW + 48);
+  assert.throws(
+    () => startWeaponUpgradeState(
+      initial,
+      NOW,
+      parseWeaponUpgradePurchaseData(upgradePurchaseData({ DeliveryTime: 60 })),
+    ),
+    (error: unknown) => (error as { code?: number }).code === ITEM_PRICE_MISMATCH,
+  );
+  assert.equal(subscriptionUpgradeDeliverySeconds(initial, NOW + 3_600, 60), 60);
 });
 
 test("weapon upgrade rejects stale indexes and a second shared delivery", () => {

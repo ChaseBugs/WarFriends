@@ -25,6 +25,7 @@ import {
   type TutorialUpgradeFunding,
   weaponUpgradeInstantPrice,
 } from "./itemInventoryService";
+import { subscriptionUpgradeDeliverySeconds } from "./subscriptionBenefitService";
 
 /** IJEAJGCCHEF.CantEquipUnit, consumed by UpdateEquippedUnits rollback logic. */
 export const UNIT_CANT_EQUIP = 11406;
@@ -749,8 +750,8 @@ export function assertTutorialUnitUpgradeEligible(
  * ArmyScreen sends the lane and current cursor but keeps the optimistic WarBucks debit in
  * RequestBuffer analytics arguments. Therefore the backend must select the cost itself. The
  * one LevelManager.unitDelivery object is shared by every unit and both lanes, so only one
- * receipt may be pending. Discounts, subscription time multipliers, and offer reductions are
- * rejected until the corresponding server entitlements can be proven.
+ * receipt may be pending. The verified subscription applies the recovered 0.8 time multiplier;
+ * offer discounts and delivery reductions remain rejected until those entitlements are proven.
  */
 export function startUnitUpgradeState(
   state: PlayerProgressionState,
@@ -766,10 +767,11 @@ export function startUnitUpgradeState(
     slotId,
     payload.boughtIndex,
   );
+  const deliverySeconds = subscriptionUpgradeDeliverySeconds(state, now, level.deliverySeconds);
   if (payload.discount !== 0 || payload.deliveryReduce !== 0) {
     throw new ApiError(ITEM_NO_DISCOUNT_FOUND, "Unit upgrade offer is not backed by the server.");
   }
-  if (payload.deliveryTime !== level.deliverySeconds || payload.startTime < 0) {
+  if (payload.deliveryTime !== deliverySeconds || payload.startTime < 0) {
     throw new ApiError(ITEM_PRICE_MISMATCH, "Unit upgrade duration or start time does not match balancing.");
   }
   if (activeUnitDelivery(itemInventory.levelManagerData.unitDelivery)) {
@@ -783,7 +785,7 @@ export function startUnitUpgradeState(
   itemInventory.levelManagerData.unitDelivery = {
     activationNeeded: true,
     boughtIndex: payload.boughtIndex,
-    end: start + level.deliverySeconds,
+    end: start + deliverySeconds,
     itemId: definition.name,
     slotId,
     start,
@@ -794,7 +796,7 @@ export function startUnitUpgradeState(
     warBucks: state.warBucks - level.warBucks,
     itemInventory,
   };
-  return { state: next, itemInventory, unit, definition, deliveryTime: level.deliverySeconds };
+  return { state: next, itemInventory, unit, definition, deliveryTime: deliverySeconds };
 }
 
 function matchingUnitDelivery(
