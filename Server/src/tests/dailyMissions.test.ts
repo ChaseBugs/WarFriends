@@ -6,6 +6,7 @@ import { CARD_CATALOG } from "../services/cardInventoryService";
 import {
   dailyMissionsStateFor,
   dailyMissionsWireData,
+  missionBattleRewardFor,
   selectDailyCompletionRewardIndex,
   serializeDailyMissionsData,
   settleDailyMissionState,
@@ -62,6 +63,56 @@ test("daily completion reward selection enables card variants only after War Car
     () => selectDailyCompletionRewardIndex(5, (upperBound) => upperBound),
     (error: unknown) => (error as { code?: number }).code === ApiErrorCode.InternalServerError,
   );
+});
+
+test("mission battle rewards reproduce scene scaling, slot modifiers, and co-op shares", () => {
+  // Level 1 exercises the negative exponent used below the formula's level-3 anchor. The
+  // values are the recovered C# float calculation rounded upward to the next 50.
+  assert.deepEqual(missionBattleRewardFor(1, "Daily", 0), {
+    experience: 7_150,
+    warBucks: 8_050,
+  });
+  assert.deepEqual(missionBattleRewardFor(1, "Daily", 2), {
+    experience: 9_450,
+    warBucks: 10_700,
+  });
+  assert.deepEqual(missionBattleRewardFor(1, "Heroic", 4), {
+    experience: 8_950,
+    warBucks: 10_150,
+  });
+  assert.deepEqual(missionBattleRewardFor(1, "Coop", 0), {
+    experience: 0,
+    warBucks: 0,
+  });
+  assert.deepEqual(missionBattleRewardFor(1, "CoopClient", 0), {
+    experience: 3_600,
+    warBucks: 4_050,
+  });
+  // A high-level row guards the positive exponent and float32 operation order.
+  assert.deepEqual(missionBattleRewardFor(43, "Heroic", 4), {
+    experience: 476_750,
+    warBucks: 39_550,
+  });
+});
+
+test("default settlement pays the recovered mission formula instead of an offline constant", () => {
+  let state = createInitialProgression(NOW);
+  state = startDailyMissionState(state, NOW, 1, "player-1-source-reward", DbAction.GameStartedCampaign).state;
+  const result = settleDailyMissionState(state, NOW + 10, 1, {
+    battleId: "player-1-source-reward",
+    missionIndex: 0,
+    missionType: "Daily",
+    endReason: 10,
+  });
+
+  assert.equal(result.experienceGained, 7_150);
+  assert.equal(result.state.warBucks, 8_050);
+  assert.deepEqual(result.response.GameReward, {
+    Warbucks: { BattleRewards: 8_050, ExtraRewards: 0, Winstreak: 0, League: 0, offerMult: 1 },
+    Xp: { BattleRewards: 7_150, ExtraRewards: 0, Winstreak: 0, Time: 0, offerMult: 1 },
+    GameGold: { BattleRewards: 0, League: 0, offerMult: 1 },
+    IsVip: false,
+  });
 });
 
 test("failed mission consumes its start receipt and a retry returns the stored response", () => {

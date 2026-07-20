@@ -331,13 +331,14 @@ Working end-to-end (verified live):
   `GameEnded` use the exact `DailyMissionsData`, `SavedMission`, and compact `MissionUnit`
   fields. UTC issuance, start receipts, consumed failure receipts, mode/index/order checks,
   separate solo/co-op completion, response replay, the 30-point heroic gate, and recovered
-  completion currencies are persisted atomically. Every successful mode now also grants the
-  explicit offline `MISSION_SUCCESS_XP` (30) and `MISSION_SUCCESS_WARBUCKS` (800) policy,
-  applies the source 1.5x/1.5x/2x VIP XP/WarBucks/GameGold rules, crosses exact rank rows,
+  completion currencies are persisted atomically. Mission XP and WarBucks now reproduce the
+  recovered `MissionsConstants` exponential level formula, per-slot `MissionsSettings`
+  modifiers, upward-to-50 rounding, zero co-op-master share, and half co-op-client share. The
+  result applies the source 1.5x/1.5x/2x VIP XP/WarBucks/GameGold rules, crosses exact rank rows,
   grants rank-up Gold, refills dog tags, and recomputes rank Army Power in the same guarded
   document write. Base `GameReward` components are cached with the receipt so retries cannot
-  multiply or duplicate them. The archived server's random selection and original normal
-  battle reward table remain reconstruction gaps. Completing the fifth Heroic mission now also
+  multiply or duplicate them. The archived server's random mission selection remains a
+  reconstruction gap. Completing the fifth Heroic mission now also
   grants the exact level-row Bronze/Silver/Gold ten-card pack and one Elite part for the unit
   target persisted in `DailyMissionsData`; identities, inventory, currencies, and receipt commit
   together, with bought units preferred by the documented replacement selector. The daily cycle
@@ -411,11 +412,10 @@ allowlist of analytics/impression actions is safely ignored.
   weighting, lootbox/crown inventory payloads, and authoritative combat evidence; add bounded
   league division documents and scheduled settlement; verify the final beginner weekly-medal reset
   from an archived service response. Arena debug mutations remain rejected.
-- **Mission fidelity** — recover the original mission-selection weighting and normal battle
-  reward table to replace the documented 30-XP/800-WarBucks/zero-ordinary-Gold
-  fallback, add combat-result validation, restore the missing recovered-client
-  `MissionsSettings`/`UnitsInMissionsConfig` references, and recover the production Heroic unit
-  selection weighting to replace the documented bought-first cryptographic fallback.
+- **Mission fidelity** — recover the original mission-selection and daily-reward-type weighting,
+  exact `FROMMISSION` card eligibility semantics, and production Heroic unit selection weighting
+  to replace the documented uniform and bought-first cryptographic fallbacks; add combat-result
+  validation.
   Remaining deployment, stolen-crate, and first-Squad-War achievement groups stay unclaimable until
   their gameplay events are authoritative. Group 17 uses accepted owned-card consumption but still
   shares the documented missing live card-event-validation boundary.

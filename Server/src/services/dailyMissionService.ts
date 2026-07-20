@@ -10,7 +10,6 @@ import type {
   PlayerProgressionState,
 } from "../db";
 import { players } from "../db";
-import { config } from "../config";
 import { advanceAchievementState } from "./achievementService";
 import { calculateArmyPower } from "./armyPowerService";
 import {
@@ -58,6 +57,24 @@ const MAX_RECENT_SETTLEMENTS = 20;
 const SESSION_LIFETIME_SECONDS = 4 * 60 * 60;
 const MAX_CONCURRENCY_RETRIES = 4;
 
+/*
+ * Exact mission battle-reward inputs recovered from MainScene's MissionsConstants and
+ * MissionsSettings components. The spelling `RweardModifier` is preserved in the scene,
+ * but these arrays contain its values in Daily1..3 and Heroic1..5 order.
+ *
+ * DailyMission.GenerateRewards uses the same modifier for XP and WarBucks. It first divides
+ * one slot by the sum of all slots in that mission family, multiplies by the family size,
+ * applies exponential player-level scaling, and finally rounds upward to the next 50. This
+ * deliberately replaces the earlier fixed offline payout; no retired remote table is needed
+ * for mission battle rewards because the complete formula survived in the 1.6.0 client.
+ */
+const MISSION_REWARD_XP_ROOT = Math.fround(1.09934);
+const MISSION_REWARD_WARBUCKS_ROOT = Math.fround(1.033);
+const MISSION_REWARD_XP_BASE = Math.fround(10_000);
+const MISSION_REWARD_WARBUCKS_BASE = Math.fround(10_000);
+const DAILY_REWARD_MODIFIERS = [2, 2.33, 2.66].map((value) => Math.fround(value));
+const HEROIC_REWARD_MODIFIERS = [3, 3.12, 3.24, 3.36, 3.5].map((value) => Math.fround(value));
+
 /**
  * Reward rows serialized on the MissionsRewards component in MainScene.unity.
  *
@@ -104,10 +121,17 @@ export interface DailyMissionSettlementResult extends DailyMissionMutationResult
 }
 
 export interface MissionBattleRewardPolicy {
-  experience: number;
-  warBucks: number;
+  /** Test-only override. Production derives the amount from the recovered source formula. */
+  experience?: number;
+  /** Test-only override. Production derives the amount from the recovered source formula. */
+  warBucks?: number;
   /** Test seam for server-owned card identity selection; production uses crypto.randomInt. */
   chooseCardIndex?: (upperBound: number) => number;
+}
+
+export interface MissionBattleReward {
+  experience: number;
+  warBucks: number;
 }
 
 function checkedNonNegativeInteger(value: number, name: string): number {
@@ -133,10 +157,70 @@ function checkedScaledInteger(value: number, multiplier: number, name: string): 
   return scaled;
 }
 
-function missionRewardPolicyFromConfig(): MissionBattleRewardPolicy {
+function unityModifierSum(values: readonly number[]): number {
+  // The client accumulates into a C# float. Rounding every addition avoids a rare one-step
+  // difference at a 50-unit boundary that a JavaScript double-only implementation can cause.
+  return values.reduce((sum, value) => Math.fround(sum + value), Math.fround(0));
+}
+
+function unityMissionRewardAmount(
+  base: number,
+  root: number,
+  playerLevel: number,
+  modifiers: readonly number[],
+  missionIndex: number,
+  modeMultiplier: number,
+): number {
+  const modifierSum = unityModifierSum(modifiers);
+  const levelExponent = Math.fround(Math.max(1, Math.floor(playerLevel)) - 3);
+
+  // Match the left-to-right float operations in DailyMission.GenerateRewards. Mathf.Pow
+  // returns a float, and EDEIDMHHCAO divides the final float by 50 before Math.Ceiling.
+  let value = Math.fround(base * Math.fround(Math.pow(root, levelExponent)));
+  value = Math.fround(value * Math.fround(modifiers.length));
+  value = Math.fround(value * Math.fround(modifiers[missionIndex] / modifierSum));
+  value = Math.fround(value * Math.fround(modeMultiplier));
+  return checkedNonNegativeInteger(Math.ceil(Math.fround(value / 50)) * 50, "Mission reward");
+}
+
+/**
+ * Calculate the exact base components displayed by the recovered mission result screen.
+ *
+ * Daily and Heroic missions pay their full slot-scaled amounts. A co-op master receives only
+ * the Heroic unlock point in the stock client and therefore has zero personal XP/WarBucks.
+ * A joining co-op client receives half of the Daily slot amount, rounded upward after the
+ * half multiplier. VIP multiplication is intentionally not performed here; the result parser
+ * applies that entitlement to these base components and the server mirrors it at settlement.
+ */
+export function missionBattleRewardFor(
+  playerLevel: number,
+  missionType: DailyMissionMode,
+  missionIndex: number,
+): MissionBattleReward {
+  if (missionType === "Coop") return { experience: 0, warBucks: 0 };
+
+  const modifiers = missionType === "Heroic" ? HEROIC_REWARD_MODIFIERS : DAILY_REWARD_MODIFIERS;
+  if (!Number.isInteger(missionIndex) || missionIndex < 0 || missionIndex >= modifiers.length) {
+    throw new ApiError(ApiErrorCode.UnknownAction, "Mission reward index is invalid.");
+  }
+  const modeMultiplier = missionType === "CoopClient" ? 0.5 : 1;
   return {
-    experience: checkedNonNegativeInteger(config.missionSuccessExperience, "Mission XP policy"),
-    warBucks: checkedNonNegativeInteger(config.missionSuccessWarBucks, "Mission WarBucks policy"),
+    experience: unityMissionRewardAmount(
+      MISSION_REWARD_XP_BASE,
+      MISSION_REWARD_XP_ROOT,
+      playerLevel,
+      modifiers,
+      missionIndex,
+      modeMultiplier,
+    ),
+    warBucks: unityMissionRewardAmount(
+      MISSION_REWARD_WARBUCKS_BASE,
+      MISSION_REWARD_WARBUCKS_ROOT,
+      playerLevel,
+      modifiers,
+      missionIndex,
+      modeMultiplier,
+    ),
   };
 }
 
@@ -481,11 +565,9 @@ export function settleDailyMissionState(
   now: number,
   playerLevel: number,
   input: DailyMissionSettlementInput,
-  policy: MissionBattleRewardPolicy = missionRewardPolicyFromConfig(),
+  policy: MissionBattleRewardPolicy = {},
 ): DailyMissionSettlementResult {
   validateBattleId(input.battleId);
-  checkedNonNegativeInteger(policy.experience, "Mission XP policy");
-  checkedNonNegativeInteger(policy.warBucks, "Mission WarBucks policy");
   if (!Number.isInteger(input.missionIndex) || ![MISSION_FAILED, MISSION_SUCCESS].includes(input.endReason)) {
     throw new ApiError(ApiErrorCode.UnknownAction, "Mission settlement fields are invalid.");
   }
@@ -666,17 +748,24 @@ export function settleDailyMissionState(
 
   /*
    * Normal battle rewards are separate from the one-time daily/heroic completion prizes.
-   * The original remote reward table was not present in either recovered APK, so the base
-   * values come from the explicit MISSION_SUCCESS_* server policy. Only MissionSuccess pays
-   * them; a CoopClient earns its personal battle payout but still cannot claim the master's
-   * completion flag or heroic point.
+   * Calculate the source base components before applying VIP. Optional values on `policy`
+   * exist only as deterministic test seams; the database path never supplies them.
    *
    * CBBKFKCOLPP expects base components and applies its source VIP constants locally when
    * IsVip is true. Persist the multiplied totals while sending the unmultiplied components,
    * which keeps the stock result animation and the authoritative wallet in exact agreement.
    */
-  const baseExperience = succeeded ? policy.experience : 0;
-  const baseWarBucks = succeeded ? policy.warBucks : 0;
+  const sourceBattleReward = missionBattleRewardFor(playerLevel, input.missionType, input.missionIndex);
+  const successfulExperience = checkedNonNegativeInteger(
+    policy.experience ?? sourceBattleReward.experience,
+    "Mission XP reward",
+  );
+  const successfulWarBucks = checkedNonNegativeInteger(
+    policy.warBucks ?? sourceBattleReward.warBucks,
+    "Mission WarBucks reward",
+  );
+  const baseExperience = succeeded ? successfulExperience : 0;
+  const baseWarBucks = succeeded ? successfulWarBucks : 0;
   const isVip = Number.isFinite(state.vipExpiration)
     && Math.floor(state.vipExpiration ?? 0) > now;
   const experienceGained = isVip
@@ -820,7 +909,6 @@ export async function settleDailyMission(
   playerId: string,
   input: DailyMissionSettlementInput,
 ): Promise<DailyMissionSettlementResult> {
-  const policy = missionRewardPolicyFromConfig();
   for (let attempt = 0; attempt < MAX_CONCURRENCY_RETRIES; attempt += 1) {
     const player = await players().findOne({ id: playerId });
     if (!player) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
@@ -831,7 +919,6 @@ export async function settleDailyMission(
       unixNow(),
       player.player.level,
       input,
-      policy,
     );
     if (result.replayed) return result;
 

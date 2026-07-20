@@ -92,10 +92,4 @@ export const config = {
   // client as economy authority or pretending these defaults came from the production service.
   instantBattleExperiencePerBattle: Number(process.env.INSTANT_BATTLE_XP_PER_BATTLE ?? 20),
   instantBattleWarBucksPerBattle: Number(process.env.INSTANT_BATTLE_WARBUCKS_PER_BATTLE ?? 600),
-
-  // Daily/Co-op/Heroic mission result envelopes support normal XP and WarBucks components,
-  // but their retired level-scaled backend table is absent. These explicit defaults keep the
-  // playable mission loop rewarding while preserving a clear replacement boundary.
-  missionSuccessExperience: Number(process.env.MISSION_SUCCESS_XP ?? 30),
-  missionSuccessWarBucks: Number(process.env.MISSION_SUCCESS_WARBUCKS ?? 800),
 };
