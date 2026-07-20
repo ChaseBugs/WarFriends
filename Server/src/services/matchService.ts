@@ -113,6 +113,8 @@ export interface MatchDoc {
   usedCardsReports?: Record<string, string[]>;
   /** Sequenced CardPlayed events accepted from the authenticated replacement-room transport. */
   relayedCardPlays?: Record<string, string[]>;
+  /** CardPlayed sequences successfully handed to the live-room transport. */
+  relayedCardDeliveries?: Record<string, number[]>;
   /** Immutable core reward receipts returned unchanged by finished GameEnded retries. */
   rewardReceipts?: Record<string, MatchPlayerReward>;
   /** Audit receipt for Squad Event projection committed with the terminal match transition. */
@@ -1095,6 +1097,30 @@ export async function recordRelayedCardPlay(
     if (update.modifiedCount === 1) return result;
   }
   throw new ApiError(CARD_NOT_FOUND, "CardPlayed evidence changed concurrently.");
+}
+
+export async function wasRelayedCardDelivered(
+  matchId: string,
+  playerId: string,
+  sequence: number,
+): Promise<boolean> {
+  return (await matches().countDocuments({
+    matchId,
+    "players.playerId": playerId,
+    [`relayedCardDeliveries.${playerId}`]: sequence,
+  }, { limit: 1 })) === 1;
+}
+
+/** Persist transport handoff only after local send or Redis publish succeeds. */
+export async function markRelayedCardDelivered(
+  matchId: string,
+  playerId: string,
+  sequence: number,
+): Promise<void> {
+  await matches().updateOne(
+    { matchId, state: "active", "players.playerId": playerId },
+    { $addToSet: { [`relayedCardDeliveries.${playerId}`]: sequence } },
+  );
 }
 
 export type MatchReportStatus = "pending" | "confirmed" | "conflict" | "invalid" | "finished";

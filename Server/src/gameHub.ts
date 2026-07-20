@@ -9,10 +9,12 @@ import {
   createMatch,
   getMatch,
   joinActiveMatch,
+  markRelayedCardDelivered,
   recordRelayedCardPlay,
   reportMatchResult,
   settleResult,
   type MatchPlayer,
+  wasRelayedCardDelivered,
 } from "./services/matchService";
 import { parsePvpUsedCards } from "./services/cardInventoryService";
 import { roomManager } from "./gameRooms/roomManager";
@@ -310,10 +312,20 @@ async function receiveRemotePvpFanout(raw: string): Promise<void> {
   // MongoDB is the authority for both membership and lifecycle. Redis cannot make an arbitrary
   // local socket believe it owns a match merely by naming that player in a pub/sub payload.
   const match = await getMatch(notice.matchId);
-  if (!match
-    || match.state !== "active"
-    || !match.players.some((participant) => participant.playerId === notice.targetPlayerId)
-    || (notice.envelope.Type === "MatchStart" && !(match.roomStartedAt instanceof Date))) return;
+  if (!match || !match.players.some((participant) => participant.playerId === notice.targetPlayerId)) return;
+  const type = notice.envelope.Type;
+  if ((type === "MatchFound" || type === "MatchStart" || type === "MatchEvent") && match.state !== "active") return;
+  if ((type === "MatchStart" || type === "MatchEvent") && !(match.roomStartedAt instanceof Date)) return;
+  if (type === "MatchEvent") {
+    const joined = new Set(match.joinedPlayerIds ?? []);
+    if (!notice.sourcePlayerId
+      || notice.sourcePlayerId === notice.targetPlayerId
+      || !match.players.some((participant) => participant.playerId === notice.sourcePlayerId)
+      || !joined.has(notice.sourcePlayerId)
+      || !joined.has(notice.targetPlayerId)) return;
+  }
+  if (type === "MatchEnded" && match.state !== "finished" && match.state !== "cancelled") return;
+  if (type === "MatchError" && match.state !== "cancelled") return;
   sendToPlayer(notice.targetPlayerId, notice.envelope);
 }
 
@@ -321,13 +333,31 @@ async function deliverPvpEnvelope(
   playerId: string,
   matchId: string,
   envelope: ClientEnvelope,
+  sourcePlayerId?: string,
 ): Promise<boolean> {
   if (sendToPlayer(playerId, envelope)) return true;
   if (!isRedisAvailable()) return false;
   return redisPublish(
     PVP_FANOUT_REDIS_CHANNEL,
-    buildPvpFanoutNotice(hubInstanceId, playerId, matchId, envelope),
+    buildPvpFanoutNotice(hubInstanceId, playerId, matchId, envelope, sourcePlayerId),
   );
+}
+
+async function distributedMatchOpponent(matchId: string, playerId: string): Promise<string | null> {
+  const match = await getMatch(matchId);
+  if (!match || match.state !== "active" || !(match.roomStartedAt instanceof Date)) return null;
+  const playerIds = match.players.map((participant) => participant.playerId);
+  const joined = new Set(match.joinedPlayerIds ?? []);
+  if (!playerIds.includes(playerId) || !playerIds.every((id) => joined.has(id))) return null;
+  return playerIds.find((id) => id !== playerId) ?? null;
+}
+
+async function broadcastDistributedMatch(
+  matchId: string,
+  playerIds: readonly string[],
+  envelope: ClientEnvelope,
+): Promise<void> {
+  await Promise.all(playerIds.map((playerId) => deliverPvpEnvelope(playerId, matchId, envelope)));
 }
 
 export async function createGameHub(httpServer: HttpServer): Promise<WebSocketServer> {
@@ -702,6 +732,57 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
     case "MatchEvent": {
       if (!client.playerId) return;
       const p = envelope.Payload as MatchEventPayload;
+      if (isRedisAvailable()) {
+        const opponentId = await distributedMatchOpponent(p?.MatchId, client.playerId);
+        if (!opponentId) {
+          return send(client, {
+            Type: "MatchError",
+            Payload: { MatchId: p?.MatchId, Reason: "NotInActiveMatch" },
+          });
+        }
+        if (p?.Event === "CardPlayed") {
+          const data = p.Data as CardPlayedEventData | undefined;
+          const sequence = Number(data?.Sequence);
+          try {
+            const recorded = await recordRelayedCardPlay(
+              p.MatchId,
+              client.playerId,
+              sequence,
+              typeof data?.CardId === "string" ? data.CardId : "",
+            );
+            // Evidence persistence and live delivery have separate failure boundaries. If Redis
+            // failed after evidence committed, the same sequence may retry delivery; once the
+            // handoff receipt exists, an acknowledgement retry cannot emit a second effect.
+            const alreadyDelivered = await wasRelayedCardDelivered(p.MatchId, client.playerId, sequence);
+            const delivered = alreadyDelivered
+              || await deliverPvpEnvelope(opponentId, p.MatchId, envelope, client.playerId);
+            if (!delivered) {
+              return send(client, {
+                Type: "MatchError",
+                Payload: { MatchId: p.MatchId, Reason: "EventDeliveryFailed" },
+              });
+            }
+            if (!alreadyDelivered) await markRelayedCardDelivered(p.MatchId, client.playerId, sequence);
+            send(client, {
+              Type: "MatchEventAccepted",
+              Payload: {
+                MatchId: p.MatchId,
+                Event: p.Event,
+                Sequence: sequence,
+                Replayed: alreadyDelivered,
+                EvidenceReplayed: recorded.replayed,
+              },
+            });
+          } catch {
+            send(client, { Type: "MatchError", Payload: { MatchId: p?.MatchId, Reason: "InvalidCardPlay" } });
+          }
+          return;
+        }
+        if (!await deliverPvpEnvelope(opponentId, p.MatchId, envelope, client.playerId)) {
+          send(client, { Type: "MatchError", Payload: { MatchId: p.MatchId, Reason: "EventDeliveryFailed" } });
+        }
+        return;
+      }
       if (p?.Event === "CardPlayed") {
         const data = p.Data as CardPlayedEventData | undefined;
         const sequence = Number(data?.Sequence);
@@ -747,6 +828,60 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
     case "MatchResult": {
       if (!client.playerId) return;
       const p = envelope.Payload as MatchResultPayload;
+      if (isRedisAvailable()) {
+        const active = await getMatch(p?.MatchId);
+        const joined = new Set(active?.joinedPlayerIds ?? []);
+        if (!active
+          || active.state !== "active"
+          || !(active.roomStartedAt instanceof Date)
+          || !active.players.some((participant) => participant.playerId === client.playerId)
+          || !active.players.every((participant) => joined.has(participant.playerId))) {
+          return send(client, { Type: "MatchError", Payload: { MatchId: p?.MatchId, Reason: "InvalidResult" } });
+        }
+        let durable;
+        try {
+          durable = await reportMatchResult(
+            p.MatchId,
+            client.playerId,
+            p.WinnerId,
+            parsePvpUsedCards(p.UsedCards ?? []),
+            true,
+          );
+        } catch {
+          return send(client, { Type: "MatchError", Payload: { MatchId: p?.MatchId, Reason: "InvalidUsedCards" } });
+        }
+        if (durable.status === "conflict") {
+          const conflict: ClientEnvelope = {
+            Type: "MatchError",
+            Payload: { MatchId: p.MatchId, Reason: "ResultConflict" },
+          };
+          await broadcastDistributedMatch(p.MatchId, active.players.map((participant) => participant.playerId), conflict);
+          return;
+        }
+        if (durable.status === "pending") {
+          return send(client, { Type: "ResultPending", Payload: { MatchId: p.MatchId } });
+        }
+        if (!durable.settlement) {
+          return send(client, { Type: "MatchError", Payload: { MatchId: p.MatchId, Reason: "InvalidResult" } });
+        }
+        const ended: ClientEnvelope = {
+          Type: "MatchEnded",
+          Payload: { MatchId: p.MatchId, WinnerId: durable.settlement.winnerId },
+        };
+        await broadcastDistributedMatch(
+          p.MatchId,
+          active.players.map((participant) => participant.playerId),
+          ended,
+        );
+        clearMatchJoinTimer(p.MatchId);
+        clearMatchDisconnectTimers(p.MatchId);
+        logger.match.event("Distributed match result received", {
+          matchId: p.MatchId,
+          winnerId: p.WinnerId,
+          rewarded: durable.settlement.rewarded,
+        });
+        return;
+      }
       // Settle only after both participants report the same winner.
       const report = roomManager.recordResult(p?.MatchId, client.playerId, p?.WinnerId);
       if (report === "invalid") {

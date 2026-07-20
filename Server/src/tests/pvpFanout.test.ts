@@ -46,3 +46,25 @@ test("PvP fan-out accepts a start instruction bound to the same durable match", 
   });
   assert.equal(parsePvpFanoutNotice(encoded)?.envelope.Type, "MatchStart");
 });
+
+test("PvP event fan-out requires an authenticated bounded source identity", () => {
+  const event = {
+    Type: "MatchEvent",
+    Payload: { MatchId: "match-3", Event: "CardPlayed", Data: { Sequence: 0, CardId: "card-1" } },
+  };
+  const encoded = buildPvpFanoutNotice("node-a", "player-b", "match-3", event, "player-a");
+  assert.equal(parsePvpFanoutNotice(encoded)?.sourcePlayerId, "player-a");
+  assert.equal(parsePvpFanoutNotice(buildPvpFanoutNotice(
+    "node-a",
+    "player-b",
+    "match-3",
+    event,
+  )), null);
+});
+
+test("PvP terminal fan-out remains match-bound", () => {
+  assert.equal(parsePvpFanoutNotice(buildPvpFanoutNotice("node-a", "player-b", "match-4", {
+    Type: "MatchEnded",
+    Payload: { MatchId: "match-4", WinnerId: "player-a" },
+  }))?.envelope.Type, "MatchEnded");
+});

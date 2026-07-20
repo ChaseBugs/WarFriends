@@ -162,6 +162,10 @@ Working end-to-end (verified live):
   Distributed `JoinMatch` writes authenticated participant membership idempotently to MongoDB. The
   request that atomically completes the assigned pair writes `roomStartedAt` once and fans a
   MongoDB-validated `MatchStart` to both nodes; late join-timeout callbacks cannot cancel it.
+  In-match fan-out is source-bound and requires both durable joins. Card activations store ordered
+  evidence separately from the successful live-delivery receipt, allowing a failed handoff retry
+  without duplicating an already delivered effect. Results use MongoDB's two-party consensus and
+  terminal settlement before `MatchEnded` or `ResultConflict` is delivered across nodes.
   Cancellation likewise commits the terminal match and both presence releases together. On a
   single-node restart, active/settling matches are cancelled and all residual `InGame` profiles
   are repaired in the same transaction, including legacy partial cancellations.
