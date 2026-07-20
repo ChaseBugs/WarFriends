@@ -91,6 +91,7 @@ export const playerHandlers: Record<number, HandlerEntry> = {
       const latest = await findById(player!.id) ?? player!;
       return {
         DbAction: DbAction.ChangePlayerName,
+        Result: error.code,
         Code: error.code,
         Message: error.message,
         // LEDNENKKDJM's 11402 branch uses both fields to restore the optimistic wallet and

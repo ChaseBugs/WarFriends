@@ -48,5 +48,8 @@ export interface ResponseEnvelope {
 }
 
 export function ok(action: number, payload: Record<string, unknown> = {}): ResponseEnvelope {
-  return { DbAction: action, ...payload };
+  // Every normal JSON response is parsed through Convert.ToInt32(response["Result"]) before
+  // the action-specific callback runs. Omitting this field made otherwise-correct payloads
+  // fail in Unity before their data could be consumed.
+  return { DbAction: action, Result: 1, ...payload };
 }

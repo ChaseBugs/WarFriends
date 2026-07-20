@@ -32,7 +32,16 @@ export const visualHandlers: Record<number, HandlerEntry> = {
     if (typeof raw !== "string") throw new ApiError(ApiErrorCode.UnknownAction, "Visual purchase data is missing.");
     const payload = parseVisualPurchaseData(raw);
     const result = await mutateProgression(player!.id, (state, now) =>
-      purchaseVisualState(state, now, player!.player.level, player!.player.vipExpiration, payload));
+      // Read VIP from the same optimistic progression snapshot as the Gold debit. A purchase
+      // arriving beside BuyVip must either observe the committed entitlement or retry against
+      // it; the stale authentication document must not decide access to a VIP-only visual.
+      purchaseVisualState(
+        state,
+        now,
+        player!.player.level,
+        state.vipExpiration ?? player!.player.vipExpiration,
+        payload,
+      ));
     return ok(DbAction.BuyDecal, {
       DecalId: result.definition.name,
       ExpiresOn: result.expiresOn,

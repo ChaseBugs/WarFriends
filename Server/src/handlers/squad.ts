@@ -147,6 +147,7 @@ export const squadHandlers: Record<number, HandlerEntry> = {
       const progression = progressionForPlayer(latest);
       return {
         DbAction: DbAction.CreateSquad,
+        Result: error.code,
         Code: error.code,
         Message: error.message,
         // LEDNENKKDJM's 11403 branch uses both values to reverse the client's optimistic
@@ -184,6 +185,7 @@ export const squadHandlers: Record<number, HandlerEntry> = {
       const targetPlayer = await findById(target);
       return {
         DbAction: DbAction.AcceptSquadJoinRequest,
+        Result: error.code,
         Code: error.code,
         Message: error.message,
         // LEDNENKKDJM removes this stale row from AwaitingSquadMembersManager. Error 13301
@@ -231,6 +233,7 @@ export const squadHandlers: Record<number, HandlerEntry> = {
       const members = (await getSquadMemberPlayers(name)).map(buildDatabasePlayer);
       return {
         DbAction: DbAction.PromotePlayer,
+        Result: error.code,
         Code: error.code,
         Message: error.message,
         // The stock 5501 parser calls LoadSquadMembers to undo an optimistic rank display.
@@ -262,6 +265,7 @@ export const squadHandlers: Record<number, HandlerEntry> = {
       const members = (await getSquadMemberPlayers(name)).map(buildDatabasePlayer);
       return {
         DbAction: DbAction.DemotePlayer,
+        Result: error.code,
         Code: error.code,
         Message: error.message,
         SquadMembers: members,

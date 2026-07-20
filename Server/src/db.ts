@@ -67,6 +67,14 @@ export interface PlayerProgressionState {
   dogTagRefillSeconds: number;
   vipStart: number;
   /**
+   * Unix deadline for the paid VIP entitlement.
+   *
+   * Older reconstruction documents kept this only in `player.vipExpiration`. New economy
+   * mutations store it beside the wallet so buying VIP, spending Gold, and unlocking VIP-only
+   * inventory are one optimistic transaction. The response adapter retains a legacy fallback.
+   */
+  vipExpiration?: number;
+  /**
    * Monthly login-calendar cursor. `canClaim` counts distinct UTC days seen by the server;
    * `claimReward` counts rewards already collected in order. Keeping both counters makes a
    * check request idempotent and prevents a client from skipping directly to a later prize.

@@ -1,13 +1,16 @@
 // Error payloads returned to the client. The recovered client parses server JSON with
-// Newtonsoft.Json and (per BeanstalkServerManager) treats an empty body as an error and
-// surfaces ErrorMessage/SystemMessage. Exact server error codes are still ⚠ RE-NEEDED
-// (BACKEND.md §5); these are provisional and MUST be numeric (no StringEnumConverter on
-// the client).
+// Newtonsoft.Json, reads a numeric `Result` first, and enters its failure dispatcher only for
+// values greater than ten. Source-named codes below are exact IJEAJGCCHEF values; the remaining
+// generic reconstruction codes stay numeric and above that parser boundary.
 export const ApiErrorCode = {
-  InternalServerError: 0,
-  RequestNotAuthorized: 10,
-  InvalidClientVersion: 20,
-  PlayerNotFound: 50,
+  /** IJEAJGCCHEF.ServerError. Values at or below 10 enter Unity's success dispatcher. */
+  InternalServerError: 99_996,
+  /** IJEAJGCCHEF.UnAuthorizedAction. */
+  RequestNotAuthorized: 99_998,
+  /** IJEAJGCCHEF.OldClientVersion. */
+  InvalidClientVersion: 99_997,
+  /** IJEAJGCCHEF.PlayerNotExists. */
+  PlayerNotFound: 3_002,
   OpponentNotFound: 51,
   SquadNotFound: 60,
   /** IJEAJGCCHEF.SquadnameTaken; the stock create dialog handles this exact code. */
@@ -41,10 +44,13 @@ export const ApiErrorCode = {
   DailyRewardAlreadyClaimed: 1000002,
 } as const;
 
-export type ApiErrorPayload = { Code: number; Message: string };
+export type ApiErrorPayload = { Result: number; Code: number; Message: string };
 
 export function apiError(code: number, message: string): ApiErrorPayload {
-  return { Code: code, Message: message };
+  // OGLEHLIPEFM reads `Result` before it dispatches either the success or failure parser.
+  // Keep `Code` as a diagnostic/new-adapter alias, but never make the stock Unity client
+  // depend on it because the recovered Beanstalk protocol does not inspect that property.
+  return { Result: code, Code: code, Message: message };
 }
 
 /** Thrown by handlers to short-circuit with a specific client-facing error. */

@@ -166,6 +166,13 @@ Working end-to-end (verified live):
   atomic. Event/Arena/loyalty/assignment/value-pack grants, parts, visual rentals, and unsupported
   discounts remain fail-closed. Run `npm run verify:visual-catalog` to compare the artifact with
   MainScene.
+- **VIP purchase and expiry authority**: action `114` validates `VIP_1` through `VIP_4` against
+  the 4.9.5 MainScene table (49 Gold/12 hours, 249/3 days, 499/7 days, and 1799/30 days), debits
+  Gold and extends the Unix entitlement in one revision-safe transaction, emits the exact
+  `Vip`/`VipStart`/`Gold`/`Id` success contract, and returns recovered `11401`/`13601` recovery
+  payloads. Active VIP is read from progression by direct and buffered VIP-only visual purchases;
+  action `195` is a deadline-based acknowledgement. Nonzero VIP discounts stay rejected until
+  retired Fusebox offer definitions are recovered into a server allowlist.
 - **War Card inventory and card packs**: exact `CardManagerData` is persisted and returned at boot.
   `scripts/Extract-CardCatalog.mjs` reproduces 58 playable cards, 25 unresolved definitions, and
   four source-priced packs from MainScene. Buffered `BuyCardPack` validates unlock level, pack,
@@ -324,7 +331,7 @@ allowlist of analytics/impression actions is safely ignored.
 - **Item economy expansion** — unit Elite upgrades, normal shop visuals, normal card-pack
   purchase, dedicated Black Market weapons, daily weapon/unit rentals, and complete active-loadout
   ArmyPower are implemented. Add authoritative card reward and consumption events, server-selected card/Buddy RNG,
-  VIP purchasing, and non-shop visual reward delivery. Normal unit purchase is authoritative for 23
+  remaining VIP gameplay bonuses, and non-shop visual reward delivery. Normal unit purchase is authoritative for 23
   non-tutorial roster units, and the tutorial unit is persisted through its first equip event;
   three helper rows and 18 ArmyUpgrades rows without LevelManager objects remain closed. All 84
   resolvable shop weapons and 81 concrete Black Market weapons support authoritative equip/upgrade

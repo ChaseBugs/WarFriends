@@ -13,8 +13,9 @@ import {
 } from "../handlers/identity";
 import { authHandlers } from "../handlers/auth";
 import { DbAction } from "../dbActions";
+import { ApiErrorCode, apiError } from "../apiErrors";
 import type { PlayerDocument } from "../db";
-import { newPlayer, newSquad } from "../dtos";
+import { newPlayer, newSquad, ok } from "../dtos";
 import {
   buildDatabasePlayer,
   buildPlayerData,
@@ -131,6 +132,22 @@ test("configuration response matches the recovered raw client parser", () => {
   assert.equal(configurationResponse({ DbAction: 157 }).split(";").length, 3);
 });
 
+test("JSON responses always pass the stock Result gate before action parsing", () => {
+  assert.deepEqual(ok(DbAction.GetPlayerInfo, { Value: 7 }), {
+    DbAction: DbAction.GetPlayerInfo,
+    Result: 1,
+    Value: 7,
+  });
+  assert.deepEqual(apiError(ApiErrorCode.InternalServerError, "failed"), {
+    Result: 99_996,
+    Code: 99_996,
+    Message: "failed",
+  });
+  assert.ok(ApiErrorCode.RequestNotAuthorized > 10);
+  assert.ok(ApiErrorCode.InvalidClientVersion > 10);
+  assert.ok(ApiErrorCode.PlayerNotFound > 10);
+});
+
 test("account types map only to their matching external identity provider", () => {
   assert.equal(providerForAccountType(AccountType.Guest), null);
   assert.equal(providerForAccountType(AccountType.Facebook), "facebook");
@@ -171,6 +188,7 @@ test("Game Center account creation matches the shared stock account parser", () 
 
 test("duplicate Game Center creation returns the existing public profile for UserExistsDialog", () => {
   const payload = buildExistingGameCenterPayload(contractPlayer(), "gc-existing");
+  assert.equal(payload.Result, 15400);
   assert.equal(payload.Code, 15400);
   assert.equal(payload.GameCenterId, "gc-existing");
   const publicData = payload.PlayerData as Record<string, unknown>;

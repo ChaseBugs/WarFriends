@@ -430,6 +430,9 @@ export function processAssignmentBufferState(
   playerLevel = 1,
   playerVipExpiration = 0,
 ): AssignmentBufferResult {
+  // VIP is part of the same progression revision as buffered visual purchases. The optional
+  // argument exists only for legacy documents whose entitlement still lives in the profile.
+  const effectiveVipExpiration = state.vipExpiration ?? playerVipExpiration;
   const replay = state.processedRequestBuffers?.find((entry) => entry.id === bufferId);
   if (replay) {
     // Do not execute any subrequest again. Even deterministic validation is insufficient
@@ -734,7 +737,7 @@ export function processAssignmentBufferState(
             working,
             now,
             playerLevel,
-            playerVipExpiration,
+            effectiveVipExpiration,
             parseVisualPurchaseData(request.data),
           );
           working = result.state;

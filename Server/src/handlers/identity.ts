@@ -69,6 +69,7 @@ export function buildExistingGameCenterPayload(
   gameCenterId: string,
 ): Record<string, unknown> {
   return {
+    Result: ApiErrorCode.GameCenterAlreadyCreated,
     Code: ApiErrorCode.GameCenterAlreadyCreated,
     Message: "Game Center account already exists.",
     GameCenterId: gameCenterId,

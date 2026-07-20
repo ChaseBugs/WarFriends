@@ -37,6 +37,7 @@ async function craftingFailure(
   const state = progressionForPlayer(latest);
   return {
     DbAction: action,
+    Result: error.code,
     Code: error.code,
     Message: error.message,
     CardManagerData: serializeCardInventory(cardInventoryStateFor(state)),
@@ -67,6 +68,7 @@ async function cardPoolFailure(
   const state = progressionForPlayer(recovered);
   return {
     DbAction: action,
+    Result: error.code,
     Code: error.code,
     Message: error.message,
     CardManagerData: serializeCardInventory(cardInventoryStateFor(state)),

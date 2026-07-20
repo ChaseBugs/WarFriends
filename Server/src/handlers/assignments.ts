@@ -183,7 +183,7 @@ export const assignmentHandlers: Record<number, HandlerEntry> = {
       id,
       requests,
       player!.player.level,
-      player!.player.vipExpiration,
+      player!.progression?.vipExpiration ?? player!.player.vipExpiration,
     );
     return ok(DbAction.SendRequestBuffer, {
       BufferId: id,

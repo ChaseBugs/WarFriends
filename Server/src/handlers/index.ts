@@ -1,4 +1,4 @@
-import { ApiError, apiError } from "../apiErrors";
+import { ApiError, ApiErrorCode, apiError } from "../apiErrors";
 import { config } from "../config";
 import { DbAction, dbActionName } from "../dbActions";
 import type { RequestEnvelope, ResponseEnvelope } from "../dtos";
@@ -22,6 +22,7 @@ import { visualHandlers } from "./visuals";
 import { cardHandlers } from "./cards";
 import { blackMarketHandlers } from "./blackMarket";
 import { rentalHandlers } from "./rentals";
+import { vipHandlers } from "./vip";
 import type { HandlerEntry } from "./types";
 import logger from "../utils/logger";
 
@@ -54,6 +55,7 @@ const registry: Record<number, HandlerEntry> = {
   ...cardHandlers,
   ...blackMarketHandlers,
   ...rentalHandlers,
+  ...vipHandlers,
 };
 
 function clientVersion(req: RequestEnvelope): number {
@@ -72,7 +74,7 @@ export async function dispatch(req: RequestEnvelope): Promise<ResponseEnvelope> 
   logger.api.action(dbActionName(action), action);
 
   if (config.minClientVersion > 0 && clientVersion(req) < config.minClientVersion) {
-    return { DbAction: action, ...apiError(20, "Client version too old.") };
+    return { DbAction: action, ...apiError(ApiErrorCode.InvalidClientVersion, "Client version too old.") };
   }
 
   const entry = registry[action];
@@ -118,6 +120,6 @@ export async function dispatch(req: RequestEnvelope): Promise<ResponseEnvelope> 
     }
     const message = err instanceof Error ? err.message : String(err);
     logger.errorWithEmoji("❌", `Handler for ${dbActionName(action)} threw`, "DISPATCH", { error: message });
-    return { DbAction: action, ...apiError(0, "Internal server error.") };
+    return { DbAction: action, ...apiError(ApiErrorCode.InternalServerError, "Internal server error.") };
   }
 }
