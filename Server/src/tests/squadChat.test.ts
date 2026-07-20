@@ -6,7 +6,9 @@ import type { PlayerDocument, SquadChatMessageDocument, SquadDocument } from "..
 import { newPlayer, newSquad } from "../dtos";
 import { createInitialProgression } from "../services/playerStateService";
 import {
+  buildSquadChatFanoutNotice,
   normalizeSquadChatSend,
+  parseSquadChatFanoutNotice,
   resolveSquadChatMembership,
   toSquadChatWireMessage,
 } from "../services/squadChatService";
@@ -118,4 +120,17 @@ test("squad chat wire output contains server-owned display metadata and Unix tim
     Text: "Ready for battle!",
     Timestamp: NOW / 1_000,
   });
+});
+
+test("cross-node Squad Chat notices carry UUID identity but no trusted content", () => {
+  const originId = "1d7bb8b2-e3eb-4d6a-8f13-3758fe109d20";
+  const messageId = "dff18ca4-1677-421c-bec4-62fcd96ea10d";
+  const serialized = buildSquadChatFanoutNotice(originId, messageId);
+
+  assert.deepEqual(JSON.parse(serialized), { originId, messageId });
+  assert.deepEqual(parseSquadChatFanoutNotice(serialized), { originId, messageId });
+  assert.equal("text" in JSON.parse(serialized), false);
+  assert.equal(parseSquadChatFanoutNotice("not-json"), null);
+  assert.equal(parseSquadChatFanoutNotice(JSON.stringify({ originId, messageId: "../../message" })), null);
+  assert.throws(() => buildSquadChatFanoutNotice("invalid", messageId));
 });

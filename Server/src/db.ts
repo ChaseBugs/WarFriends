@@ -860,6 +860,7 @@ export async function connectMongo(): Promise<void> {
   // A reconnect may resend the same client message after losing its acknowledgement. The
   // sender-scoped nonce makes that retry return the original row on every backend process.
   await squadChatMessagesCollection.createIndex({ idempotencyKey: 1 }, { unique: true });
+  await squadChatMessagesCollection.createIndex({ messageId: 1 }, { unique: true });
   await squadChatMessagesCollection.createIndex({ squadId: 1, createdAt: -1, messageId: -1 });
   await squadChatMessagesCollection.createIndex({ senderId: 1, createdAt: -1 });
   await squadChatMessagesCollection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });

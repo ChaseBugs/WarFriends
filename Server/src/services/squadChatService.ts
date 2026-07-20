@@ -34,6 +34,15 @@ export interface SquadChatMembership {
   rank: number;
 }
 
+export const SQUAD_CHAT_REDIS_CHANNEL = "warfriends:squad-chat:v1";
+
+export interface SquadChatFanoutNotice {
+  originId: string;
+  messageId: string;
+}
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 function positiveInteger(value: number, fallback: number): number {
   return Number.isSafeInteger(value) && value > 0 ? value : fallback;
 }
@@ -112,6 +121,27 @@ export function toSquadChatWireMessage(message: SquadChatMessageDocument): Squad
   };
 }
 
+/** Serialize only durable identity across Redis; MongoDB remains the authority for the content. */
+export function buildSquadChatFanoutNotice(originId: string, messageId: string): string {
+  if (!UUID_PATTERN.test(originId) || !UUID_PATTERN.test(messageId)) {
+    throw new Error("Squad Chat fan-out notice requires UUID identities.");
+  }
+  return JSON.stringify({ originId, messageId } satisfies SquadChatFanoutNotice);
+}
+
+/** Reject malformed or unversioned pub/sub input before it can trigger a database lookup. */
+export function parseSquadChatFanoutNotice(raw: string): SquadChatFanoutNotice | null {
+  try {
+    const value = JSON.parse(raw) as Partial<SquadChatFanoutNotice> | null;
+    if (!value || typeof value !== "object"
+      || typeof value.originId !== "string" || !UUID_PATTERN.test(value.originId)
+      || typeof value.messageId !== "string" || !UUID_PATTERN.test(value.messageId)) return null;
+    return { originId: value.originId, messageId: value.messageId };
+  } catch {
+    return null;
+  }
+}
+
 function recoveredLeagueValue(player: PlayerDocument): number {
   // CreateChatMessage encoded beginner stages as negative values and ordinary League enum values
   // as positive integers. The backend has both dimensions and reproduces that display contract.
@@ -150,6 +180,28 @@ export async function getSquadChatHistory(playerId: string): Promise<{
     .toArray();
   rows.reverse();
   return { squadId: membership.squad.name, messages: rows.map(toSquadChatWireMessage) };
+}
+
+/**
+ * Resolve a cross-node notice through durable storage and the current squad roster.
+ *
+ * Redis carries only a message UUID, never trusted display text or recipient IDs. This lookup
+ * both rejects forged/stale notices and ensures a member kicked after the originating node's
+ * insert cannot receive the message from a slower remote node.
+ */
+export async function getSquadChatFanout(messageId: string): Promise<{
+  message: SquadChatWireMessage;
+  memberPlayerIds: string[];
+} | null> {
+  if (!UUID_PATTERN.test(messageId)) return null;
+  const document = await squadChatMessages().findOne({ messageId, expiresAt: { $gt: new Date() } });
+  if (!document) return null;
+  const squad = await squads().findOne({ name: document.squadId });
+  if (!squad) return null;
+  return {
+    message: toSquadChatWireMessage(document),
+    memberPlayerIds: squad.members.map((member) => member.playerId),
+  };
 }
 
 /**

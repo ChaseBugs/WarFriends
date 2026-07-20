@@ -77,7 +77,7 @@ async function start(): Promise<void> {
   await recoverInterruptedMatches();
 
   await connectRedis();
-  createGameHub(httpServer);
+  await createGameHub(httpServer);
 
   httpServer.listen(config.port, () => {
     logger.server.start(config.port, process.env.NODE_ENV ?? "development");

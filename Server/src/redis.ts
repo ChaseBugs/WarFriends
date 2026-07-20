@@ -3,13 +3,14 @@ import { config } from "./config";
 import logger from "./utils/logger";
 
 // Redis is optional. It backs the matchmaking queue, leaderboard sorted sets, and a
-// pub/sub backbone so multiple hub instances can relay match traffic. When disabled (or
+// pub/sub backbone so multiple hub instances can relay persisted Squad Chat traffic. When disabled (or
 // unreachable) every helper below degrades to null/no-op so callers don't have to gate on
 // availability — matchmaking then falls back to a Mongo scan.
 let publisher: Redis | null = null;
 let subscriber: Redis | null = null;
 let dataClient: Redis | null = null;
 let redisAvailable = false;
+const channelHandlers = new Map<string, Set<(message: string) => void>>();
 
 const redisOptions: RedisOptions = {
   lazyConnect: true,
@@ -41,6 +42,17 @@ export function getRedisSubscriber(): Redis | null {
   if (!subscriber) {
     subscriber = new Redis(config.redisUrl, redisOptions);
     subscriber.on("error", (err) => logger.redis.error("Subscriber connection error", { error: err.message }));
+    // ioredis emits every subscribed channel through one connection-level event. Route it to
+    // registered channel handlers here so feature modules never add duplicate global listeners.
+    subscriber.on("message", (channel, message) => {
+      for (const handler of channelHandlers.get(channel) ?? []) {
+        try {
+          handler(message);
+        } catch (err) {
+          logger.redis.error("Pub/sub handler failed", { channel, error: (err as Error).message });
+        }
+      }
+    });
   }
   return subscriber;
 }
@@ -83,6 +95,50 @@ export async function disconnectRedis(): Promise<void> {
   subscriber = null;
   dataClient = null;
   redisAvailable = false;
+  channelHandlers.clear();
+}
+
+/** Publish transient fan-out data without making Redis part of durable gameplay authority. */
+export async function redisPublish(channel: string, message: string): Promise<boolean> {
+  if (!isRedisAvailable()) return false;
+  const client = getRedisPublisher();
+  if (!client) return false;
+  try {
+    await client.publish(channel, message);
+    return true;
+  } catch (err) {
+    logger.redis.error("PUBLISH failed", { channel, error: (err as Error).message });
+    return false;
+  }
+}
+
+/**
+ * Register a process-local handler for one Redis channel.
+ *
+ * The handler is installed before SUBSCRIBE so a message arriving immediately after the server
+ * acknowledgement cannot be lost locally. A failed subscription removes only this registration;
+ * MongoDB history and same-process WebSocket delivery continue to work without Redis.
+ */
+export async function redisSubscribe(channel: string, handler: (message: string) => void): Promise<boolean> {
+  if (!isRedisAvailable()) return false;
+  const client = getRedisSubscriber();
+  if (!client) return false;
+  let handlers = channelHandlers.get(channel);
+  const firstHandler = !handlers;
+  if (!handlers) {
+    handlers = new Set();
+    channelHandlers.set(channel, handlers);
+  }
+  handlers.add(handler);
+  try {
+    if (firstHandler) await client.subscribe(channel);
+    return true;
+  } catch (err) {
+    handlers.delete(handler);
+    if (handlers.size === 0) channelHandlers.delete(channel);
+    logger.redis.error("SUBSCRIBE failed", { channel, error: (err as Error).message });
+    return false;
+  }
 }
 
 export async function redisGet(key: string): Promise<string | null> {

@@ -22,16 +22,25 @@ import type {
   JoinMatchPayload,
   MatchEventPayload,
   MatchResultPayload,
+  SendSquadChatPayload,
 } from "./gameRooms/types";
 import logger from "./utils/logger";
 import { PlayerStatus } from "./constants";
 import { config } from "./config";
 import { ApiError } from "./apiErrors";
-import { getSquadChatHistory, sendSquadChatMessage } from "./services/squadChatService";
-import type { SendSquadChatPayload } from "./gameRooms/types";
+import {
+  buildSquadChatFanoutNotice,
+  getSquadChatFanout,
+  getSquadChatHistory,
+  parseSquadChatFanoutNotice,
+  sendSquadChatMessage,
+  SQUAD_CHAT_REDIS_CHANNEL,
+  type SquadChatWireMessage,
+} from "./services/squadChatService";
+import { redisPublish, redisSubscribe } from "./redis";
 
 /**
- * WebSocket coordinator for the reconstructed PvP transport.
+ * WebSocket coordinator for reconstructed PvP and Squad Chat transport.
  *
  * The recovered client originally used Photon. This server exposes the same high-level flow
  * over `/hub`: authenticate, enter matchmaking, receive MatchFound, join the assigned room,
@@ -45,9 +54,10 @@ import type { SendSquadChatPayload } from "./gameRooms/types";
  * join timeout cancels a pair that never forms a live room, and reconnect timeout resolves an
  * active disconnect without letting a third party claim the vacant slot.
  *
- * Match event payloads remain opaque until the original Photon RPC/event schema is fully
- * recovered. The current authority boundary validates authentication, assigned membership,
- * room lifecycle, and two-party result consensus, but does not simulate combat.
+ * Match event payloads other than the validated CardPlayed event remain opaque until the original
+ * Photon RPC/event schema is fully recovered. The current authority boundary validates
+ * authentication, assigned membership, room lifecycle, and two-party result consensus, but does
+ * not simulate combat. Squad Chat uses MongoDB authority plus optional Redis live fan-out.
  */
 
 interface Client {
@@ -72,6 +82,10 @@ const disconnectTimers = new Map<string, NodeJS.Timeout>();
 // match already exists and both player records have been moved to InGame.
 const matchmakingTimers = new Map<string, NodeJS.Timeout>();
 const matchJoinTimers = new Map<string, NodeJS.Timeout>();
+const hubInstanceId = randomUUID();
+// Redis pub/sub is normally at-most-once, but reconnection or an operator bridge can repeat a
+// notice. Keep a bounded process-local delivery receipt so one message never appears twice.
+const deliveredSquadChatMessages = new Map<string, true>();
 
 function clearMatchmakingTimer(playerId: string): void {
   const timer = matchmakingTimers.get(playerId);
@@ -238,8 +252,46 @@ function sendSquadChatError(client: Client, error: unknown): void {
   });
 }
 
-export function createGameHub(httpServer: HttpServer): WebSocketServer {
+function rememberSquadChatDelivery(messageId: string): boolean {
+  if (deliveredSquadChatMessages.has(messageId)) return false;
+  deliveredSquadChatMessages.set(messageId, true);
+  if (deliveredSquadChatMessages.size > 10_000) {
+    const oldest = deliveredSquadChatMessages.keys().next().value as string | undefined;
+    if (oldest) deliveredSquadChatMessages.delete(oldest);
+  }
+  return true;
+}
+
+function deliverSquadChatMessage(message: SquadChatWireMessage, memberPlayerIds: readonly string[]): void {
+  if (!rememberSquadChatDelivery(message.MessageId)) return;
+  const currentMembers = new Set(memberPlayerIds);
+  for (const subscriber of clients.values()) {
+    if (!subscriber.playerId
+      || subscriber.squadChatId !== message.SquadId
+      || !currentMembers.has(subscriber.playerId)) continue;
+    send(subscriber, { Type: "SquadChatMessage", Payload: message });
+  }
+}
+
+async function receiveRemoteSquadChat(raw: string): Promise<void> {
+  const notice = parseSquadChatFanoutNotice(raw);
+  if (!notice || notice.originId === hubInstanceId) return;
+  // Redis input is a wake-up hint only. Reloading by the unique message ID proves persistence,
+  // applies immediate expiry, and refreshes the recipient roster on this receiving node.
+  const fanout = await getSquadChatFanout(notice.messageId);
+  if (fanout) deliverSquadChatMessage(fanout.message, fanout.memberPlayerIds);
+}
+
+export async function createGameHub(httpServer: HttpServer): Promise<WebSocketServer> {
   roomManager.setSender(sendToClientId);
+
+  await redisSubscribe(SQUAD_CHAT_REDIS_CHANNEL, (raw) => {
+    void receiveRemoteSquadChat(raw).catch((error: unknown) => {
+      logger.websocket.error("Remote Squad Chat fan-out failed", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    });
+  });
 
   const wss = new WebSocketServer({ server: httpServer, path: "/hub" });
 
@@ -339,16 +391,16 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
           text: typeof payload?.Text === "string" ? payload.Text : "",
         });
         client.squadChatId = result.message.SquadId;
-        const currentMembers = new Set(result.memberPlayerIds);
         // Checking the current roster returned by the persistence service closes the privacy
         // gap where a kicked member retains an old in-process channel subscription.
         if (!result.replayed) {
-          for (const subscriber of clients.values()) {
-            if (!subscriber.playerId
-              || subscriber.squadChatId !== result.message.SquadId
-              || !currentMembers.has(subscriber.playerId)) continue;
-            send(subscriber, { Type: "SquadChatMessage", Payload: result.message });
-          }
+          deliverSquadChatMessage(result.message, result.memberPlayerIds);
+          // Same-process delivery is complete even when Redis is disabled or unavailable. Remote
+          // nodes treat this UUID as a hint and load authoritative content from MongoDB.
+          void redisPublish(
+            SQUAD_CHAT_REDIS_CHANNEL,
+            buildSquadChatFanoutNotice(hubInstanceId, result.message.MessageId),
+          );
         }
         send(client, {
           Type: "SquadChatMessageAccepted",
