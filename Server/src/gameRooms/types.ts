@@ -13,6 +13,12 @@ export interface IdentifyPayload {
   Token: string;
 }
 
+/** Sender-owned retry identity and text for the persistent Squad Chat replacement. */
+export interface SendSquadChatPayload {
+  ClientMessageId: string;
+  Text: string;
+}
+
 export interface JoinMatchPayload {
   MatchId: string;
 }

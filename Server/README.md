@@ -151,6 +151,16 @@ Working end-to-end (verified live):
   then resolve as a forfeit or no-reward cancellation; interrupted matches are recovered
   on server restart. Photon-era `GameEnded` reports interpret the recovered `EndReason`
   enum and require matching durable reports from both assigned participants before rewards.
+- **Squad Chat (WebSocket `/hub`)**: after `Identify`, a replacement client sends
+  `SubscribeSquadChat` to receive `SquadChatSubscribed { SquadId, Messages }`, using the exact
+  recovered three-message history default. It sends text with `SendSquadChat { ClientMessageId,
+  Text }`; the server returns `SquadChatMessageAccepted` and delivers a persisted
+  `SquadChatMessage` to locally connected, subscribed current roster members. Player/squad mirrors,
+  roster membership, rank, sender name, level, league, and timestamp are all server-owned. A
+  sender-scoped 64-character nonce makes reconnect retries idempotent, while moderation,
+  single-line validation, a persistent rolling rate limit, immediate expiry filtering, and a
+  MongoDB TTL index bound abuse and retention. This is a replacement protocol: the stock client
+  still needs its Photon Chat adapter repointed to these typed messages.
 
 - **Leaderboards / player leagues**: `GetPlayersByExperience` and squad boards remain
   MongoDB-authoritative with opportunistic Redis warming. `GetPlayerLeaguesDivision` now
@@ -446,7 +456,9 @@ Working end-to-end (verified live):
 - **Squad social state**: action `193` persists the monotonic Photon Chat unread cursor through
   the stock request buffer and restores it as `PlayerAnalyticsData`; equal or stale cross-device
   cursor updates return the authoritative value without a false revision/write. Squad-event notices are
-  membership-validated, founder-targeted, durable, and duplicate-suppressed.
+  membership-validated, founder-targeted, durable, and duplicate-suppressed. The `/hub` replacement
+  now persists moderated Squad Chat messages, returns recovered-size history, suppresses nonce
+  retries, and fans out only to authenticated subscribers still present in the current roster.
 - **War Arena (persistent core)**: login supplies the recovered Dynamo-style
   `WarArenaConfig`, while `EnterArena`, action-64/65 starts, Arena `GameEnded`, heart/life
   actions, scraps claims, rollover, and `GetArenaLeaderboards` use the exact `WarArenaData`
@@ -468,9 +480,9 @@ allowlist of analytics/impression actions is safely ignored.
 
 - **Squad extensions** — normal/Buddy pool deposits and withdrawals are implemented.
   Server-selected Buddy unit-type RNG and squad events/wars remain. Type-28 card-pool request
-  notifications validate same-roster membership and use daily actor/target idempotency. Chat unread
-  state is persistent, but actual channel delivery still requires Photon Chat repointing or a
-  compatible replacement transport.
+  notifications validate same-roster membership and use daily actor/target idempotency. Persistent
+  Squad Chat delivery now exists on `/hub`; add the Unity Photon-to-WebSocket adapter, multi-node
+  Redis/pub-sub fan-out, and offline platform push notifications.
 - **Item economy expansion** — unit Elite upgrades, normal shop visuals, Gold lootbox bundles,
   weapon/unit notification acknowledgements, normal card-pack
   purchase, dedicated Black Market weapons, daily weapon/unit rentals, and complete active-loadout

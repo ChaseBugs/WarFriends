@@ -76,6 +76,14 @@ export const config = {
   challengeTtlSeconds: Number(process.env.CHALLENGE_TTL_SECONDS ?? 86_400),
   outgoingMessagesPerMinute: Number(process.env.OUTGOING_MESSAGES_PER_MINUTE ?? 20),
 
+  // Photon Chat subscribed with the exact MainScene ChatMessagesLimit value of three. The
+  // replacement hub preserves that visible history size while making retention, text length,
+  // and abuse controls explicit server policy instead of accepting client-selected bounds.
+  squadChatHistoryLimit: Number(process.env.SQUAD_CHAT_HISTORY_LIMIT ?? 3),
+  squadChatRetentionDays: Number(process.env.SQUAD_CHAT_RETENTION_DAYS ?? 30),
+  squadChatMessagesPerMinute: Number(process.env.SQUAD_CHAT_MESSAGES_PER_MINUTE ?? 10),
+  squadChatMaxLength: Number(process.env.SQUAD_CHAT_MAX_LENGTH ?? 256),
+
   matchmakingTimeout: Number(process.env.MATCHMAKING_TIMEOUT ?? 30),
   // Once two players are paired they must both join the room within this window. This is
   // separate from queue timeout because the match already exists and both players are InGame.

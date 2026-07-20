@@ -755,6 +755,25 @@ export interface SquadEventProgressDocument {
   updatedAt: Date;
 }
 
+/** Durable replacement for one message formerly stored and relayed by Photon Chat. */
+export interface SquadChatMessageDocument {
+  messageId: string;
+  /** Unique sender-owned request identity; prevents reconnect/retry duplication. */
+  idempotencyKey: string;
+  clientMessageId: string;
+  squadId: string;
+  senderId: string;
+  senderName: string;
+  senderLevel: number;
+  /** Negative values retain the recovered client's beginner-league convention. */
+  senderLeague: number;
+  senderSquadRank: number;
+  text: string;
+  createdAt: Date;
+  /** MongoDB TTL cleanup; reads also exclude expired rows immediately. */
+  expiresAt: Date;
+}
+
 /**
  * Server-only authentication record for a linked platform account.
  *
@@ -791,6 +810,7 @@ let db: Db | null = null;
 let playersCollection: Collection<PlayerDocument> | null = null;
 let squadsCollection: Collection<SquadDocument> | null = null;
 let squadEventProgressCollection: Collection<SquadEventProgressDocument> | null = null;
+let squadChatMessagesCollection: Collection<SquadChatMessageDocument> | null = null;
 let matchesCollection: Collection<Document> | null = null;
 let messagesCollection: Collection<Document> | null = null;
 let identitiesCollection: Collection<IdentityDocument> | null = null;
@@ -806,6 +826,7 @@ export async function connectMongo(): Promise<void> {
   playersCollection = db.collection<PlayerDocument>("players");
   squadsCollection = db.collection<SquadDocument>("squads");
   squadEventProgressCollection = db.collection<SquadEventProgressDocument>("squadEventProgress");
+  squadChatMessagesCollection = db.collection<SquadChatMessageDocument>("squadChatMessages");
   matchesCollection = db.collection("matches");
   messagesCollection = db.collection("messages");
   identitiesCollection = db.collection<IdentityDocument>("identities");
@@ -835,6 +856,13 @@ export async function connectMongo(): Promise<void> {
   // shared row rather than creating separate member-owned progress or duplicate rewards.
   await squadEventProgressCollection.createIndex({ squadId: 1, eventId: 1 }, { unique: true });
   await squadEventProgressCollection.createIndex({ eventId: 1, updatedAt: -1 });
+
+  // A reconnect may resend the same client message after losing its acknowledgement. The
+  // sender-scoped nonce makes that retry return the original row on every backend process.
+  await squadChatMessagesCollection.createIndex({ idempotencyKey: 1 }, { unique: true });
+  await squadChatMessagesCollection.createIndex({ squadId: 1, createdAt: -1, messageId: -1 });
+  await squadChatMessagesCollection.createIndex({ senderId: 1, createdAt: -1 });
+  await squadChatMessagesCollection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
   await matchesCollection.createIndex({ matchId: 1 }, { unique: true });
   await matchesCollection.createIndex({ "players.playerId": 1, createdAt: -1 });
@@ -889,6 +917,7 @@ export async function disconnectMongo(): Promise<void> {
   playersCollection = null;
   squadsCollection = null;
   squadEventProgressCollection = null;
+  squadChatMessagesCollection = null;
   matchesCollection = null;
   messagesCollection = null;
   identitiesCollection = null;
@@ -938,6 +967,10 @@ export function squads(): Collection<SquadDocument> {
 
 export function squadEventProgress(): Collection<SquadEventProgressDocument> {
   return requireCollection("squadEventProgress", squadEventProgressCollection);
+}
+
+export function squadChatMessages(): Collection<SquadChatMessageDocument> {
+  return requireCollection("squadChatMessages", squadChatMessagesCollection);
 }
 
 export function matches(): Collection<Document> {

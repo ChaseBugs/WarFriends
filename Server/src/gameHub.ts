@@ -26,6 +26,9 @@ import type {
 import logger from "./utils/logger";
 import { PlayerStatus } from "./constants";
 import { config } from "./config";
+import { ApiError } from "./apiErrors";
+import { getSquadChatHistory, sendSquadChatMessage } from "./services/squadChatService";
+import type { SendSquadChatPayload } from "./gameRooms/types";
 
 /**
  * WebSocket coordinator for the reconstructed PvP transport.
@@ -51,6 +54,8 @@ interface Client {
   id: string;
   socket: WebSocket;
   playerId?: string;
+  /** Current replacement-chat subscription; every delivery is still re-bound to live roster. */
+  squadChatId?: string;
   /** Serialize one socket's messages so CardPlayed persistence completes before MatchResult. */
   processing: Promise<void>;
 }
@@ -222,6 +227,17 @@ function sendToClientId(clientId: string, envelope: unknown): void {
   if (client) send(client, envelope as ClientEnvelope);
 }
 
+function sendSquadChatError(client: Client, error: unknown): void {
+  const apiError = error instanceof ApiError ? error : null;
+  send(client, {
+    Type: "SquadChatError",
+    Payload: {
+      Code: apiError?.code ?? 99_996,
+      Message: apiError?.message ?? "Unable to process Squad Chat request.",
+    },
+  });
+}
+
 export function createGameHub(httpServer: HttpServer): WebSocketServer {
   roomManager.setSender(sendToClientId);
 
@@ -291,6 +307,58 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
     case "Ping":
       send(client, { Type: "Pong", Payload: envelope.Payload });
       return;
+
+    case "SubscribeSquadChat": {
+      if (!client.playerId) return send(client, { Type: "AuthError", Payload: { Message: "Identify first." } });
+      try {
+        const history = await getSquadChatHistory(client.playerId);
+        client.squadChatId = history.squadId;
+        send(client, {
+          Type: "SquadChatSubscribed",
+          Payload: { SquadId: history.squadId, Messages: history.messages },
+        });
+      } catch (error: unknown) {
+        client.squadChatId = undefined;
+        sendSquadChatError(client, error);
+      }
+      return;
+    }
+
+    case "UnsubscribeSquadChat": {
+      client.squadChatId = undefined;
+      send(client, { Type: "SquadChatUnsubscribed", Payload: {} });
+      return;
+    }
+
+    case "SendSquadChat": {
+      if (!client.playerId) return send(client, { Type: "AuthError", Payload: { Message: "Identify first." } });
+      const payload = envelope.Payload as SendSquadChatPayload | undefined;
+      try {
+        const result = await sendSquadChatMessage(client.playerId, {
+          clientMessageId: typeof payload?.ClientMessageId === "string" ? payload.ClientMessageId : "",
+          text: typeof payload?.Text === "string" ? payload.Text : "",
+        });
+        client.squadChatId = result.message.SquadId;
+        const currentMembers = new Set(result.memberPlayerIds);
+        // Checking the current roster returned by the persistence service closes the privacy
+        // gap where a kicked member retains an old in-process channel subscription.
+        if (!result.replayed) {
+          for (const subscriber of clients.values()) {
+            if (!subscriber.playerId
+              || subscriber.squadChatId !== result.message.SquadId
+              || !currentMembers.has(subscriber.playerId)) continue;
+            send(subscriber, { Type: "SquadChatMessage", Payload: result.message });
+          }
+        }
+        send(client, {
+          Type: "SquadChatMessageAccepted",
+          Payload: { MessageId: result.message.MessageId, Replayed: result.replayed },
+        });
+      } catch (error: unknown) {
+        sendSquadChatError(client, error);
+      }
+      return;
+    }
 
     case "FindMatch": {
       if (!client.playerId) return send(client, { Type: "AuthError", Payload: { Message: "Identify first." } });
