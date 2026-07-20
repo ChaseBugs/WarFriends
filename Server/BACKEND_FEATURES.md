@@ -98,6 +98,13 @@ The PvP row's remaining live-card boundary now applies to the legacy Photon/REST
 to card-effect semantics such as timing, target, damage, and deployment. A Photon-to-WebSocket
 adapter must emit these typed events; the backend does not infer them from a terminal list.
 
+Confirmed PvP's personal daily-assignment counters, ranked-win and lifetime squad-point
+achievements, squad leaderboard aggregate, and embedded member contribution now commit inside the
+same MongoDB transaction as both player rewards and the terminal match receipt. Membership is
+re-read from the squad roster in that transaction instead of trusting the profile mirror. This
+removes the former best-effort post-commit window in which a crash could permanently lose progress;
+finished-match retries return the immutable receipt without applying any counter again.
+
 ## Implementation order
 
 1. Extend server-owned economy transactions to remaining combat-proven card consumption/rewards, Black Market selection/feature-weight/discount fidelity, and special/VIP offers; connect action 156 to provider-signed ad completion when a replacement ad SDK is selected.

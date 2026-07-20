@@ -511,25 +511,3 @@ export function claimAchievementState(
 export function advanceAchievement(playerId: string, groupId: number, amount: number): Promise<AchievementMutationResult> {
   return mutateProgression(playerId, (state) => advanceAchievementState(state, groupId, amount));
 }
-
-/** Apply the two achievement facts produced by authoritative ranked PvP settlement. */
-export function recordRankedPvpAchievements(
-  playerId: string,
-  won: boolean,
-  squadPointsAwarded: number,
-): Promise<AchievementMutationResult> {
-  return mutateProgression(playerId, (state) => {
-    let result: AchievementMutationResult = { state, achievements: achievementStateFor(state) };
-    if (won) result = advanceAchievementState(result.state, 2, 1);
-    if (squadPointsAwarded > 0) result = advanceAchievementState(result.state, 14, squadPointsAwarded);
-
-    // A loss by a player without a squad still materializes the recovered achievement shape on
-    // a legacy account. Once that shape is current, repeating this zero-progress synchronization
-    // returns the exact state so a normal loss does not create an unrelated MongoDB write.
-    if (result.state === state) {
-      const achievements = achievementStateFor(state);
-      result = applyAchievementState(state, achievements);
-    }
-    return result;
-  });
-}

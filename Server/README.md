@@ -189,7 +189,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   a widening league window) → `MatchFound` → `JoinMatch` → `MatchStart` → in-match
   `MatchEvent` relay to the opponent → `MatchResult`. Room joins/events are restricted to
   recorded match participants, WebSocket settlement requires matching reports from both
-  participants, and the database settlement claim is idempotent. Match creation inserts the
+  participants, and the database settlement claim is idempotent. The terminal transaction now
+  includes daily PvP assignments, ranked-win/squad-point achievements, and both the squad total
+  and embedded member contribution. A crash therefore cannot commit the immutable reward receipt
+  while losing one of those client-visible counters, and a finished-match retry cannot count the
+  battle again. Match creation inserts the
   durable row and reserves both current profiles as `InGame` in one MongoDB transaction; duplicate
   participants, corrupt snapshots, missing accounts, and concurrent active-match claims fail
   without partial state, and still-eligible connected players are restored to the bounded queue.

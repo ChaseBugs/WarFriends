@@ -11,9 +11,9 @@ import {
 import { findById, updatePlayerFields } from "./playerService";
 import { League, PlayerStatus } from "../constants";
 import logger from "../utils/logger";
-import { recordPvpAssignmentProgress } from "./assignmentService";
+import { recordPvpAssignmentProgressState } from "./assignmentService";
 import {
-  recordRankedPvpAchievements,
+  advanceAchievementState,
   synchronizeCardsPlayedInMatchAchievementState,
   synchronizeLeagueAchievementState,
 } from "./achievementService";
@@ -652,6 +652,36 @@ interface CoreGrant {
   reward: MatchPlayerReward;
 }
 
+/**
+ * Apply every personal counter proven by one confirmed ranked PvP settlement.
+ *
+ * This helper intentionally contains no database write and no client-authored values. The
+ * caller must execute it only while atomically claiming an active match. Keeping assignment,
+ * ranked-win, and squad-point achievement progress in the resulting progression document fixes
+ * the former post-commit projection window: a process crash can no longer leave the match reward
+ * committed while these counters are missing, and a finished-match retry cannot count them twice.
+ */
+export function applyConfirmedPvpProgressionState(
+  state: PlayerProgressionState,
+  settledAtUnix: number,
+  won: boolean,
+  squadPointsAwarded: number,
+): PlayerProgressionState {
+  if (!Number.isSafeInteger(settledAtUnix) || settledAtUnix < 0) {
+    throw new Error("PvP progression settlement time is invalid.");
+  }
+  if (!Number.isSafeInteger(squadPointsAwarded) || squadPointsAwarded < 0) {
+    throw new Error("PvP squad-point achievement amount is invalid.");
+  }
+
+  let next = recordPvpAssignmentProgressState(state, settledAtUnix, won).state;
+  // A zero increment still materializes/migrates the recovered achievement wire model on a
+  // legacy account. The win value itself advances only for a server-confirmed winner.
+  next = advanceAchievementState(next, 2, won ? 1 : 0).state;
+  next = advanceAchievementState(next, 14, squadPointsAwarded).state;
+  return next;
+}
+
 export interface MatchPlayerReward {
   /** Unmultiplied Warbucks.BattleRewards value from server-owned offline reward policy. */
   baseWarBucks: number;
@@ -744,9 +774,18 @@ async function settlePlayerCore(
     player.player.leagueTier,
   );
   const medals = pvpMedalBalances(player.player.skill, player.player.medalsBalance, won);
-  // A player outside a squad still receives the personal reward receipt as zero. This keeps
-  // lifetime squad achievements and squad aggregates tied to real membership at settlement.
-  const squadPoints = player.player.squadName ? leagueReward.squadPoints : 0;
+  // The profile mirror alone is not membership authority: a leave/kick transaction may have
+  // removed the roster row just before settlement. Resolve membership from the squad document
+  // in this same MongoDB snapshot. A concurrent roster change then causes a write conflict and
+  // retries the whole transaction instead of granting points against stale membership.
+  const activeSquad = player.player.squadName
+    ? await squads().findOne(
+      { name: player.player.squadName, "members.playerId": playerId },
+      { session, projection: { name: 1 } },
+    )
+    : null;
+  const squadName = activeSquad?.name ?? "";
+  const squadPoints = squadName ? leagueReward.squadPoints : 0;
   const consumed = consumePvpUsedCardsState(initialState, usedCards);
   // AchievementFiveCardsPlayedInMatch is a one-match maximum, not another lifetime counter.
   // Couple it to the exact validated inventory consumption that already commits with PvP rewards;
@@ -755,8 +794,17 @@ async function settlePlayerCore(
     consumed.state,
     consumed.usedCards.length,
   );
-  const leveled = applyLevelExperienceState(
+  // Daily assignments plus ranked-win/squad-point achievements are progression data, so they
+  // must be calculated before the guarded player replacement below. The match's active ->
+  // finished compare-and-set is the exactly-once receipt for all three counters.
+  const confirmedProgress = applyConfirmedPvpProgressionState(
     cardsInMatchAchievement.state,
+    settlementUnix,
+    won,
+    squadPoints,
+  );
+  const leveled = applyLevelExperienceState(
+    confirmedProgress,
     player.player.level,
     experience,
   );
@@ -864,10 +912,26 @@ async function settlePlayerCore(
     { session },
   );
   if (update.modifiedCount !== 1) throw new Error(`Concurrent settlement rejected player ${playerId}.`);
+  if (squadPoints > 0) {
+    // The squad leaderboard total and embedded member contribution are not a best-effort cache:
+    // both are client-visible economy/progression state. Updating them inside the match
+    // transaction guarantees equality with the player's mirrored lifetime squad points.
+    const squadUpdate = await squads().updateOne(
+      { name: squadName, "members.playerId": playerId },
+      {
+        $inc: { experience: squadPoints, squadPoints, "members.$.squadPoints": squadPoints },
+        $set: { updatedAt: settledAt },
+      },
+      { session },
+    );
+    if (squadUpdate.modifiedCount !== 1) {
+      throw new Error(`Concurrent squad-point settlement rejected player ${playerId}.`);
+    }
+  }
   return {
     playerId,
     won,
-    squadName: player.player.squadName,
+    squadName,
     squadPoints,
     reward: {
       baseWarBucks,
@@ -903,58 +967,6 @@ async function settlePlayerCore(
       levelExperience: leveled.levelExperience,
     },
   };
-}
-
-async function grantSecondaryProgress(grant: CoreGrant): Promise<void> {
-  const { playerId, won, squadName, squadPoints } = grant;
-  // Assignment progress is derived only after the match row has won the idempotent
-  // terminal transaction. A duplicate result therefore cannot advance objectives twice.
-  // Keep this secondary projection from failing an already-committed core transaction if its
-  // bounded optimistic-concurrency retries are exhausted; the warning is actionable and the next
-  // legitimate match can still continue the player's objectives.
-  try {
-    await recordPvpAssignmentProgress(playerId, won);
-  } catch (error) {
-    logger.warnWithEmoji("⚠️", "Could not advance assignment progress", "MATCH", {
-      playerId,
-      error: error instanceof Error ? error.message : String(error),
-    });
-  }
-
-  // Ranked-win and lifetime squad-point achievements are derived from this same settlement
-  // decision. They are intentionally not advanced from ChangeAchievementProgres (action
-  // 220), because that request contains a client-computed StatsManager value.
-  try {
-    await recordRankedPvpAchievements(playerId, won, squadPoints);
-  } catch (error) {
-    logger.warnWithEmoji("⚠️", "Could not advance achievement progress", "MATCH", {
-      playerId,
-      error: error instanceof Error ? error.message : String(error),
-    });
-  }
-
-  if (squadPoints > 0 && squadName) {
-    // Keep the squad aggregate and embedded member contribution aligned with the player's
-    // mirrored squadPoints field. Only winners that currently belong to a squad contribute.
-    try {
-      await squads().updateOne(
-        { name: squadName, "members.playerId": playerId },
-        {
-          $inc: { experience: squadPoints, squadPoints, "members.$.squadPoints": squadPoints },
-          $set: { updatedAt: new Date() },
-        },
-      );
-    } catch (error) {
-      // The player's authoritative points already committed with the core match. Do not turn
-      // a squad projection outage into a failed GameEnded response that invites a pointless
-      // settlement retry; log the mismatch for an operations reconciliation job instead.
-      logger.warnWithEmoji("âš ï¸", "Could not project squad points", "MATCH", {
-        playerId,
-        squadName,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-  }
 }
 
 export async function getMatch(matchId: string): Promise<MatchDoc | null> {
@@ -1324,8 +1336,9 @@ export interface SettlementResult {
 /**
  * Settle a finished match. Idempotent: a second call for an already-finished match is a
  * no-op. Core rewards, reported War Card consumption, supported Squad Event progress, and the
- * terminal match row commit in one transaction. Non-critical daily-assignment and achievement
- * projections run only after that commit and cannot cause the client to retry core rewards.
+ * terminal match row commit in one transaction. Daily assignments, achievements, and the squad
+ * aggregate/member contribution are part of that same transaction because they are durable
+ * gameplay state, not disposable projections.
  */
 export async function settleResult(matchId: string, winnerId: string, reportedById?: string): Promise<SettlementResult> {
   // Live-event configuration is resolved before opening the MongoDB transaction. A malformed
@@ -1456,7 +1469,6 @@ export async function settleResult(matchId: string, winnerId: string, reportedBy
 
   if (transaction.unknown) logger.match.error("Result for unknown match", { matchId });
   if (!transaction.result.rewarded) return transaction.result;
-  await Promise.all(transaction.grants.map(grantSecondaryProgress));
   logger.match.event("Match settled", { matchId, winnerId });
   return transaction.result;
 }
