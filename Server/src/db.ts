@@ -483,6 +483,34 @@ export interface SquadDocument extends SquadDTO {
 }
 
 /**
+ * Server-owned shared progress for one squad in one explicitly configured event.
+ *
+ * This lives outside SquadDocument so ordinary roster/settings updates cannot accidentally
+ * overwrite live-event progress. The unique squadId/eventId index makes action 113 idempotent
+ * across retries and across multiple backend processes.
+ */
+export interface SquadEventProgressDocument {
+  squadId: string;
+  eventId: string;
+  /** SHA-256 of the normalized immutable season definition used to create this row. */
+  configHash: string;
+  activeTier: number;
+  levelProgress: number;
+  tiers: Array<{
+    reward: number;
+    assignments: Array<{
+      id: number;
+      value: number;
+      target: number;
+      param?: string;
+    }>;
+  }>;
+  revision: number;
+  joinedAt: Date;
+  updatedAt: Date;
+}
+
+/**
  * Server-only authentication record for a linked platform account.
  *
  * Provider credentials are intentionally kept outside DatabasePlayer because that player
@@ -517,6 +545,7 @@ const client = new MongoClient(config.mongoUrl, { maxPoolSize: config.mongoPoolS
 let db: Db | null = null;
 let playersCollection: Collection<PlayerDocument> | null = null;
 let squadsCollection: Collection<SquadDocument> | null = null;
+let squadEventProgressCollection: Collection<SquadEventProgressDocument> | null = null;
 let matchesCollection: Collection<Document> | null = null;
 let messagesCollection: Collection<Document> | null = null;
 let identitiesCollection: Collection<IdentityDocument> | null = null;
@@ -531,6 +560,7 @@ export async function connectMongo(): Promise<void> {
 
   playersCollection = db.collection<PlayerDocument>("players");
   squadsCollection = db.collection<SquadDocument>("squads");
+  squadEventProgressCollection = db.collection<SquadEventProgressDocument>("squadEventProgress");
   matchesCollection = db.collection("matches");
   messagesCollection = db.collection("messages");
   identitiesCollection = db.collection<IdentityDocument>("identities");
@@ -555,6 +585,11 @@ export async function connectMongo(): Promise<void> {
   await squadsCollection.createIndex({ name: 1 }, { unique: true });
   await squadsCollection.createIndex({ experience: -1 });
   await squadsCollection.createIndex({ squadPoints: -1 });
+
+  // A squad joins a season once. Concurrent JoinSquadEvent retries all resolve to this one
+  // shared row rather than creating separate member-owned progress or duplicate rewards.
+  await squadEventProgressCollection.createIndex({ squadId: 1, eventId: 1 }, { unique: true });
+  await squadEventProgressCollection.createIndex({ eventId: 1, updatedAt: -1 });
 
   await matchesCollection.createIndex({ matchId: 1 }, { unique: true });
   await matchesCollection.createIndex({ "players.playerId": 1, createdAt: -1 });
@@ -608,6 +643,7 @@ export async function disconnectMongo(): Promise<void> {
   db = null;
   playersCollection = null;
   squadsCollection = null;
+  squadEventProgressCollection = null;
   matchesCollection = null;
   messagesCollection = null;
   identitiesCollection = null;
@@ -653,6 +689,10 @@ export function players(): Collection<PlayerDocument> {
 
 export function squads(): Collection<SquadDocument> {
   return requireCollection("squads", squadsCollection);
+}
+
+export function squadEventProgress(): Collection<SquadEventProgressDocument> {
+  return requireCollection("squadEventProgress", squadEventProgressCollection);
 }
 
 export function matches(): Collection<Document> {

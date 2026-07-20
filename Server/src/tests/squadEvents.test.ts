@@ -1,0 +1,143 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { ApiErrorCode } from "../apiErrors";
+import { AccountType } from "../constants";
+import type { PlayerDocument, SquadEventProgressDocument } from "../db";
+import { newPlayer } from "../dtos";
+import {
+  buildSquadEventDefinition,
+  buildSquadEventProgress,
+  joinSquadEvent,
+  parseSquadEventConfig,
+  selectActiveSquadEvent,
+  squadEventConfigHash,
+} from "../services/squadEventService";
+
+const SEASON = {
+  id: "season-2026-07",
+  startTime: 1_774_000_000,
+  endTime: 1_775_000_000,
+  tiers: [
+    {
+      reward: 100,
+      assignments: [
+        { id: 7, target: 12 },
+        { id: 9, target: 3, param: "2.5" },
+      ],
+    },
+    {
+      reward: 200,
+      assignments: [
+        { id: 8, target: 20 },
+        { id: 10, target: 5 },
+      ],
+    },
+  ],
+};
+
+test("Squad Event configuration is strict and selects a half-open active window", () => {
+  const parsed = parseSquadEventConfig({ seasons: [SEASON] });
+  assert.equal(selectActiveSquadEvent(parsed, SEASON.startTime)?.id, SEASON.id);
+  assert.equal(selectActiveSquadEvent(parsed, SEASON.endTime - 1)?.id, SEASON.id);
+  assert.equal(selectActiveSquadEvent(parsed, SEASON.endTime), null);
+  assert.notEqual(
+    squadEventConfigHash(parsed.seasons[0]),
+    squadEventConfigHash({
+      ...parsed.seasons[0],
+      tiers: [{ ...parsed.seasons[0].tiers[0], reward: 101 }, parsed.seasons[0].tiers[1]],
+    }),
+  );
+  assert.throws(() => parseSquadEventConfig({ seasons: [{ ...SEASON, guessedField: true }] }), /unknown field/);
+});
+
+test("Squad Event configuration rejects ambiguous schedules and incompatible tiers", () => {
+  assert.throws(
+    () => parseSquadEventConfig({ seasons: [SEASON, { ...SEASON, id: "overlap", startTime: SEASON.startTime + 1 }] }),
+    /overlap/,
+  );
+  assert.throws(
+    () => parseSquadEventConfig({
+      seasons: [{
+        ...SEASON,
+        tiers: [SEASON.tiers[0], { ...SEASON.tiers[1], assignments: [SEASON.tiers[1].assignments[0]] }],
+      }],
+    }),
+    /same assignment count/,
+  );
+  assert.throws(
+    () => parseSquadEventConfig({
+      seasons: [{ ...SEASON, tiers: [{ ...SEASON.tiers[0], reward: -1 }] }],
+    }),
+    /reward must be an integer/,
+  );
+});
+
+test("EventDefinition uses the exact flattened stock-client field names", () => {
+  assert.deepEqual(buildSquadEventDefinition(SEASON), {
+    eventStart: SEASON.startTime,
+    eventEnd: SEASON.endTime,
+    tierCount: 2,
+    assignmentCount: 2,
+    T0Reward: 100,
+    T0A0Id: 7,
+    T0A1Id: 9,
+    T1Reward: 200,
+    T1A0Id: 8,
+    T1A1Id: 10,
+  });
+});
+
+test("SquadEventProgress uses exact DynamoDB S/N wrappers and zero-based tier keys", () => {
+  const now = new Date("2026-07-20T00:00:00Z");
+  const progress: SquadEventProgressDocument = {
+    squadId: "Alpha",
+    eventId: SEASON.id,
+    configHash: squadEventConfigHash(SEASON),
+    activeTier: 0,
+    levelProgress: 0.25,
+    tiers: [{
+      reward: 100,
+      assignments: [
+        { id: 7, value: 4.5, target: 12 },
+        { id: 9, value: 1, target: 3, param: "2.5" },
+      ],
+    }],
+    revision: 3,
+    joinedAt: now,
+    updatedAt: now,
+  };
+  assert.deepEqual(buildSquadEventProgress(progress), {
+    SquadId: { S: "Alpha" },
+    EventId: { S: SEASON.id },
+    ActiveTier: { N: "0" },
+    LevelProgress: { N: "0.25" },
+    T0Reward: { N: "100" },
+    T0A0: { N: "4.5" },
+    T0A0Target: { N: "12" },
+    T0A1: { N: "1" },
+    T0A1Target: { N: "3" },
+    T0A1Param: { N: "2.5" },
+  });
+});
+
+test("JoinSquadEvent fails with the recovered no-active-event code before storage access", async () => {
+  const player = newPlayer("event-player", "EventPlayer", AccountType.Guest);
+  const document: PlayerDocument = {
+    id: player.id,
+    accountName: player.accountName,
+    accountType: player.accountType,
+    leagueTier: player.leagueTier,
+    armyPower: player.armyPower,
+    experience: player.experience,
+    squadPoints: player.squadPoints,
+    squadName: player.squadName,
+    player,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+  await assert.rejects(
+    () => joinSquadEvent(document),
+    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.NoActiveEvent,
+  );
+  assert.equal(ApiErrorCode.NoActiveEvent, 11302);
+});

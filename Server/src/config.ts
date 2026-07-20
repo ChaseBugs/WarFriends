@@ -45,6 +45,11 @@ export const config = {
   // reconstruction default, while thresholds and rewards below come from MainScene itself.
   starterAssignmentDurationSeconds: Number(process.env.STARTER_ASSIGNMENT_DURATION_SECONDS ?? 604_800),
 
+  // Squad events were scheduled by retired live-ops data that is not present in either
+  // recovered APK. An empty path keeps action 113 deliberately disabled. Deployments may
+  // opt in with a reviewed JSON file whose strict schema is documented in config/README.md.
+  squadEventConfigPath: (process.env.SQUAD_EVENT_CONFIG_PATH ?? "").trim(),
+
   // War Arena's response contracts and twelve-battle ceiling are present in the recovered
   // client. Prices and guaranteed scraps came from the retired remote arena document and
   // are not stored in either APK, so they are explicit deploy-time reconstruction policy.

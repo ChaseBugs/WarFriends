@@ -90,6 +90,45 @@ present in either recovered APK, `SquadWarsId` is deliberately prefixed `reconst
 not be mistaken for recovered live-ops data. Joining seasons, contributions, and reward claims
 remain separate state-changing work.
 
+## Squad Event participation
+
+Squad Event participation now implements the recovered action 113 contract without inventing the
+retired live-ops schedule. The stock client sends no action-specific fields when joining. The
+backend therefore ignores all client attempts to choose a squad or event: it derives the squad
+from the authenticated player, confirms that player is in the persistent roster, and selects the
+single active event from the reviewed server configuration. With no configured active event it
+returns exact recovered error `IJEAJGCCHEF.NoActiveEvent` (`11302`).
+
+The operator schedule is enabled only through `SQUAD_EVENT_CONFIG_PATH`. Its strict parser rejects
+unknown fields, invalid Unix times, duplicate IDs, overlapping seasons, empty/excessive tier
+arrays, duplicate assignment IDs, and different assignment counts between tiers. Equal counts are
+required because `PFPAMNODNPF.MAINIENLLIL` reads one global `assignmentCount`. An empty checked-in
+example keeps the feature disabled by default; the APK does not contain production assignment,
+target, or reward values.
+
+Joining atomically upserts one document under unique `(squadId, eventId)`. Every squad member and
+every retry receives the same shared row. Event state is stored in its own collection so ordinary
+roster or emblem updates cannot overwrite it. Initial tier and assignment progress is zero; no
+currency or inventory reward is granted by joining. A normalized configuration hash binds that
+row to its original season definition; reusing an event ID with changed targets or rewards fails
+closed instead of mixing an old progress row with a new client-visible definition.
+
+The wire response follows both recovered parsers exactly:
+
+- `EventDefinition` is plain JSON with `eventStart`, `eventEnd`, `tierCount`,
+  `assignmentCount`, `T{i}Reward`, and `T{i}A{j}Id`;
+- `SquadEventProgress` uses DynamoDB attributes: string wrappers for `SquadId` and `EventId`,
+  numeric wrappers for `ActiveTier`, `LevelProgress`, `T{i}Reward`, `T{i}A{j}` current value,
+  `T{i}A{j}Target`, and optional numeric `T{i}A{j}Param`.
+
+`GetSquadDetails` and `GetFullSquadInfo` expose the active definition and, after the squad joins,
+its progress. This is intentionally only the participation foundation. The old client sends
+`SquadEventUpdate` floats from `GameEnded`, but modified clients can forge them; the backend does
+not accept those values as authoritative. Contributions, tier advancement, and claims remain
+closed until assignment IDs can be mapped to server-confirmed match facts and reviewed reward
+definitions. Actions 222/223 belong to the separate Event Assignment feature and are not treated
+as Squad Event claims.
+
 ## Squad creation economy
 
 Squad creation is a paid, server-authoritative operation. The recovered
@@ -164,7 +203,7 @@ client protocol task.
 
 ## Missing squad systems
 
-- squad events, divisions, milestones, and wars;
+- authoritative Squad Event contributions/claims, divisions, milestones, and wars;
 - chat delivery and moderation.
 
 All currently implemented multi-document membership changes are transactional. An operational
@@ -179,6 +218,7 @@ Unrecovered actions remain rejected rather than mutating guessed card or event s
 - `Server/src/services/squadWireService.ts`
 - `Server/src/services/squadSocialService.ts`
 - `Server/src/services/squadCardPoolService.ts`
+- `Server/src/services/squadEventService.ts`
 - `Server/src/handlers/cards.ts`
 - `Server/src/handlers/squad.ts`
 - `Server/src/services/socialService.ts`

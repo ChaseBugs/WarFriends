@@ -25,6 +25,11 @@ import { buildDatabaseSquad, buildSquadWarsDivision } from "../services/squadWir
 import { buildDatabasePlayer, progressionForPlayer } from "../services/playerStateService";
 import { findById } from "../services/playerService";
 import { informSquadLeaderAboutEvent, saveSquadChatCursor } from "../services/squadSocialService";
+import {
+  buildSquadEventProgress,
+  getSquadEventWireFields,
+  joinSquadEvent,
+} from "../services/squadEventService";
 
 // Squad system — BACKEND.md §2.5. Every handler is authenticated; rank checks live in the
 // service layer.
@@ -77,6 +82,11 @@ function emblem(req: Record<string, unknown>): Record<string, unknown> | undefin
 }
 
 export const squadHandlers: Record<number, HandlerEntry> = {
+  [DbAction.JoinSquadEvent]: authed(async ({ player }) => {
+    const progress = await joinSquadEvent(player!);
+    return ok(DbAction.JoinSquadEvent, { SquadEventProgress: buildSquadEventProgress(progress) });
+  }),
+
   [DbAction.SaveLastSeenSquadChatTimeStamp]: authed(async ({ player, req }) => {
     // The stock 1.6.0 client normally submits the cursor as RequestBuffer.data. This direct
     // form remains useful for repaired clients and diagnostics, but accepts only explicit
@@ -271,12 +281,18 @@ export const squadHandlers: Record<number, HandlerEntry> = {
 
   [DbAction.GetSquadDetails]: authed(async ({ player, req }) => {
     const squad = await getByName(squadName(req) || player!.player.squadName);
-    return ok(DbAction.GetSquadDetails, { Squad: squad ? buildDatabaseSquad(squad) : null });
+    return ok(DbAction.GetSquadDetails, {
+      Squad: squad ? buildDatabaseSquad(squad) : null,
+      ...(squad ? await getSquadEventWireFields(squad.name) : {}),
+    });
   }),
 
   [DbAction.GetFullSquadInfo]: authed(async ({ player, req }) => {
     const squad = await getByName(squadName(req) || player!.player.squadName);
-    return ok(DbAction.GetFullSquadInfo, { Squad: squad ? buildDatabaseSquad(squad) : null });
+    return ok(DbAction.GetFullSquadInfo, {
+      Squad: squad ? buildDatabaseSquad(squad) : null,
+      ...(squad ? await getSquadEventWireFields(squad.name) : {}),
+    });
   }),
 
   [DbAction.GetAllSquadMembers]: authed(async ({ player, req }) => {

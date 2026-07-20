@@ -20,6 +20,11 @@ npm run dev               # ts-node-dev, watch mode
 # apply only unambiguous mirror/card repairs: npm run repair:squads
 ```
 
+Squad Events are disabled by default because the retired production live-ops schedule was not
+recovered. Set `SQUAD_EVENT_CONFIG_PATH` only to an operator-reviewed file following
+[`config/README.md`](config/README.md); an empty value makes action 113 return recovered error
+`11302` without creating progress or granting rewards.
+
 Requires MongoDB (`:27017`) and, optionally, Redis (`:6379`). Set `REDIS_ENABLED=false` to
 run Mongo-only. Cross-player squad-card withdrawal and confirmed PvP core settlement use
 multi-document transactions, so enable a single-node replica set for local development (or use a

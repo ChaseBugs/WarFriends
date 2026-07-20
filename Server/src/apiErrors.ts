@@ -28,6 +28,8 @@ export const ApiErrorCode = {
   PlayerAlreadyInSquadCantJoin: 13201,
   PlayerAlreadyInSquad: 13301,
   SquadJoinRequestNotExists: 13302,
+  /** IJEAJGCCHEF.NoActiveEvent; action 113 uses this when no configured season is active. */
+  NoActiveEvent: 11302,
   SquadFull: 62,
   NotSquadMember: 63,
   InsufficientRank: 64,
