@@ -210,7 +210,13 @@ Working end-to-end (verified live):
   `BufferId`, performs the recipient-filtered inbox update, and clears the entry afterward, so
   a process interruption is recoverable without allowing one player to hide another's message.
 - **Moderation reports**: authenticated player/cheater reports are validated, rate-limited,
-  deduplicated for safe retries, and stored with review status and evidence metadata.
+  deduplicated for safe retries, and stored with review status and evidence metadata. The submitted
+  Army Power/rank/time fields remain explicitly untrusted claims. When both accounts occur in a
+  recent replacement-backend ranked match, the report also captures the exact server match ID,
+  participant snapshots, state, terminal winner/cancellation, authenticated result claims, and
+  bounded relay/used-card observations. The snapshot keeps `combatValidated=false` because the
+  relay still cannot prove damage, targets, timing, or card effects; social reports and legacy
+  Photon matches remain valid reports with no fabricated match correlation.
 - **Public-text moderation**: account/rename names, Squad names/descriptions, and direct messages
   share Unicode-normalized multilingual matching with punctuation/leetspeak resistance. Add
   deployment-specific comma-separated terms with `PROFANITY_EXTRA_TERMS`; report evidence is

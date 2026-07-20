@@ -1,10 +1,12 @@
 import { randomUUID } from "crypto";
-import { reports } from "../db";
+import { matches, reports } from "../db";
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import { findById } from "./playerService";
+import type { MatchDoc, MatchPlayer } from "./matchService";
 
 const REPORTS_PER_HOUR = 5;
 const DUPLICATE_WINDOW_MS = 10 * 60 * 1000;
+const MATCH_EVIDENCE_LOOKBACK_MS = 6 * 60 * 60 * 1000;
 
 export interface PlayerReportInput {
   reportedPlayerId: string;
@@ -18,7 +20,28 @@ export interface PlayerReportDocument extends PlayerReportInput {
   reporterPlayerId: string;
   kind: "player" | "cheat";
   status: "open" | "reviewing" | "resolved" | "dismissed";
+  /** Optional immutable server correlation; client `evidence` remains an untrusted claim. */
+  matchEvidence?: AuthoritativeMatchEvidence;
   createdAt: Date;
+}
+
+export interface AuthoritativeMatchEvidence {
+  source: "ranked-match";
+  matchId: string;
+  state: MatchDoc["state"];
+  createdAt: Date;
+  endedAt?: Date;
+  reporter: MatchPlayer;
+  reportedPlayer: MatchPlayer;
+  /** Present only after the match service has committed a terminal winner. */
+  winnerId?: string;
+  cancelReason?: string;
+  /** These are authenticated reports, not authoritative combat simulation. */
+  resultClaims: Record<string, string>;
+  /** Accepted relay observations; card effects, damage, and targets are still unverified. */
+  relayedCardPlays: Record<string, string[]>;
+  usedCardClaims: Record<string, string[]>;
+  combatValidated: false;
 }
 
 function boundedString(value: unknown, maxLength: number): string {
@@ -46,6 +69,77 @@ export function normalizeReportInput(req: Record<string, unknown>, requiresMessa
     if (typeof value === "string" || typeof value === "number") evidence[key] = String(value).slice(0, 64);
   }
   return { reportedPlayerId, reportType, message, evidence };
+}
+
+function boundedCardIds(values: unknown): string[] {
+  if (!Array.isArray(values)) return [];
+  return values
+    .filter((value): value is string => typeof value === "string")
+    .slice(0, 16)
+    .map((value) => value.slice(0, 128));
+}
+
+/**
+ * Project one exact two-participant match into a self-describing moderation snapshot.
+ *
+ * Client-supplied Army Power, rank, and match time are useful statements but are never proof.
+ * This projection stores the immutable matchmaking snapshots, terminal state/winner, and each
+ * authenticated participant's durable reports under explicit `Claims` names. Relay card events
+ * are stronger observations because the hub accepted them in sequence, but `combatValidated`
+ * remains false until the backend can validate targets, damage, timing, and effects.
+ */
+export function buildAuthoritativeMatchEvidence(
+  match: MatchDoc,
+  reporterPlayerId: string,
+  reportedPlayerId: string,
+): AuthoritativeMatchEvidence | null {
+  if (!reporterPlayerId || !reportedPlayerId || reporterPlayerId === reportedPlayerId) return null;
+  const reporter = match.players.find((player) => player.playerId === reporterPlayerId);
+  const reportedPlayer = match.players.find((player) => player.playerId === reportedPlayerId);
+  if (!reporter || !reportedPlayer || match.players.length !== 2) return null;
+
+  const participantIds = [reporterPlayerId, reportedPlayerId];
+  const resultClaims: Record<string, string> = {};
+  const relayedCardPlays: Record<string, string[]> = {};
+  const usedCardClaims: Record<string, string[]> = {};
+  for (const playerId of participantIds) {
+    const result = match.resultReports?.[playerId];
+    if (typeof result === "string" && result.length <= 128) resultClaims[playerId] = result;
+    relayedCardPlays[playerId] = boundedCardIds(match.relayedCardPlays?.[playerId]);
+    usedCardClaims[playerId] = boundedCardIds(match.usedCardsReports?.[playerId]);
+  }
+
+  return {
+    source: "ranked-match",
+    matchId: match.matchId,
+    state: match.state,
+    createdAt: match.createdAt,
+    ...(match.endedAt ? { endedAt: match.endedAt } : {}),
+    reporter: { ...reporter },
+    reportedPlayer: { ...reportedPlayer },
+    ...(match.winnerId ? { winnerId: match.winnerId } : {}),
+    ...(match.cancelReason ? { cancelReason: match.cancelReason.slice(0, 64) } : {}),
+    resultClaims,
+    relayedCardPlays,
+    usedCardClaims,
+    combatValidated: false,
+  };
+}
+
+/** Find the newest server match that contains both authenticated report parties. */
+async function recentAuthoritativeMatchEvidence(
+  reporterPlayerId: string,
+  reportedPlayerId: string,
+  now: Date,
+): Promise<AuthoritativeMatchEvidence | null> {
+  const match = await matches().findOne(
+    {
+      "players.playerId": { $all: [reporterPlayerId, reportedPlayerId] },
+      createdAt: { $gte: new Date(now.getTime() - MATCH_EVIDENCE_LOOKBACK_MS) },
+    },
+    { sort: { createdAt: -1 } },
+  ) as unknown as MatchDoc | null;
+  return match ? buildAuthoritativeMatchEvidence(match, reporterPlayerId, reportedPlayerId) : null;
 }
 
 /**
@@ -81,13 +175,23 @@ export async function submitPlayerReport(
     throw new ApiError(ApiErrorCode.UnknownAction, "Report rate limit reached. Try again later.");
   }
 
+  const createdAt = new Date();
+  // Correlation is optional by design. SendPlayerReport is also available from social/profile
+  // screens, and legacy Photon matches may not have a replacement-backend match row. Absence is
+  // recorded as absence; it must not reject a valid moderation complaint or fabricate evidence.
+  const matchEvidence = await recentAuthoritativeMatchEvidence(
+    reporterPlayerId,
+    input.reportedPlayerId,
+    createdAt,
+  );
   const doc: PlayerReportDocument = {
     reportId: randomUUID(),
     reporterPlayerId,
     kind,
     ...input,
     status: "open",
-    createdAt: new Date(),
+    ...(matchEvidence ? { matchEvidence } : {}),
+    createdAt,
   };
   await reports().insertOne(doc);
   return doc;
