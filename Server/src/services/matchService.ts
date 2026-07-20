@@ -287,6 +287,40 @@ export function pvpLeagueReward(
   return { baseWarBucks, warBucks, squadPoints: source.rewardSquadPoints };
 }
 
+export interface PvpMedalBalances {
+  delta: number;
+  skill: number;
+  medalsBalance: number;
+}
+
+/**
+ * Apply the replacement backend's reviewed medal policy to both client-visible mirrors.
+ *
+ * DatabasePlayer identifies `Skill` as global medals and `MedalsBalance` as weekly/league
+ * medals. The original service's base medal document is absent, so +25/-12 remains explicit
+ * offline policy. Previously settlement changed only MedalsBalance while returning an unchanged
+ * Skill, which made the global ladder permanently static. Both values now use the same proven
+ * result and zero floor. League WINFACTOR/LOSEFACTOR values remain unapplied until the missing
+ * original formula establishes which medal mirror and rounding rule they controlled.
+ */
+export function pvpMedalBalances(
+  currentSkill: number,
+  currentLeagueMedals: number,
+  won: boolean,
+): PvpMedalBalances {
+  if (!Number.isSafeInteger(currentSkill) || currentSkill < 0
+    || !Number.isSafeInteger(currentLeagueMedals) || currentLeagueMedals < 0) {
+    throw new Error("PvP medal balances are invalid.");
+  }
+  const delta = won ? REWARDS.winMedals : REWARDS.loseMedals;
+  const skill = Math.max(0, currentSkill + delta);
+  const medalsBalance = Math.max(0, currentLeagueMedals + delta);
+  if (!Number.isSafeInteger(skill) || !Number.isSafeInteger(medalsBalance)) {
+    throw new Error("PvP medal balance overflowed.");
+  }
+  return { delta, skill, medalsBalance };
+}
+
 /**
  * Derive the base client component and the authoritative amount for one PvP result.
  *
@@ -435,6 +469,17 @@ export interface MatchPlayerReward {
   leagueWarBucks: number;
   /** Exact source tier squad-point grant returned by the outer GameEnded field. */
   squadPoints: number;
+  /** Immutable post-match global medal value returned through outer `Skill`. */
+  skill: number;
+  /** Immutable post-match weekly/league medal value. */
+  medalsBalance: number;
+  /** Exact placement counter and beginner league returned with this result. */
+  placementMatchesRequired: number;
+  beginnersLeague: number;
+  /** Present only when this confirmed match consumed placement and entered a managed league. */
+  enteredLeague?: string;
+  enteredNormalLeague?: boolean;
+  leagueEvaluation?: number;
   /** Unmultiplied Xp.BattleRewards value consumed by the stock client reward parser. */
   baseExperience: number;
   /** Actual XP committed to the player after the settlement-time VIP multiplier. */
@@ -497,7 +542,7 @@ async function settlePlayerCore(
     player.player.beginnersLeague,
     player.player.leagueTier,
   );
-  const medalDelta = won ? REWARDS.winMedals : REWARDS.loseMedals;
+  const medals = pvpMedalBalances(player.player.skill, player.player.medalsBalance, won);
   // A player outside a squad still receives the personal reward receipt as zero. This keeps
   // lifetime squad achievements and squad aggregates tied to real membership at settlement.
   const squadPoints = player.player.squadName ? leagueReward.squadPoints : 0;
@@ -548,6 +593,7 @@ async function settlePlayerCore(
       "player.remainingMatches": leagueAdvance.remainingMatches,
     }
     : {};
+  const placementMatchesRequired = leagueAdvance?.remainingMatches ?? player.player.remainingMatches;
 
   const update = await players().updateOne(
     { id: playerId, ...progressionRevisionFilter(player) },
@@ -559,9 +605,10 @@ async function settlePlayerCore(
           squadPoints: { $add: [{ $ifNull: ["$squadPoints", 0] }, squadPoints] },
           "player.experience": { $add: [{ $ifNull: ["$player.experience", 0] }, experience] },
           "player.squadPoints": { $add: [{ $ifNull: ["$player.squadPoints", 0] }, squadPoints] },
-          "player.medalsBalance": {
-            $max: [0, { $add: [{ $ifNull: ["$player.medalsBalance", 0] }, medalDelta] }],
-          },
+          // Skill and MedalsBalance are global and weekly medal mirrors in DatabasePlayer.
+          // Use literal prevalidated values so the immutable receipt exactly matches this write.
+          "player.skill": medals.skill,
+          "player.medalsBalance": medals.medalsBalance,
           "player.level": leveled.levelTo,
           "player.armyPower": nextArmyPower,
           armyPower: nextArmyPower,
@@ -592,6 +639,17 @@ async function settlePlayerCore(
       baseLeagueWarBucks: leagueReward.baseWarBucks,
       leagueWarBucks: leagueReward.warBucks,
       squadPoints,
+      skill: medals.skill,
+      medalsBalance: medals.medalsBalance,
+      placementMatchesRequired,
+      beginnersLeague: player.player.beginnersLeague,
+      ...(leagueAdvance?.enteredLeague
+        ? {
+          enteredLeague: leagueAdvance.leagueId,
+          enteredNormalLeague: true,
+          leagueEvaluation: leagueAdvance.endsAt,
+        }
+        : {}),
       baseExperience,
       experience,
       baseGold,

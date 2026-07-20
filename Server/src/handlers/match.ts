@@ -185,12 +185,14 @@ export const matchHandlers: Record<number, HandlerEntry> = {
     const rentalFields = progression && id && resultAvailable
       ? await rentalFieldsAfterBattle(player!.id, id, progression)
       : {};
-    const enteredLeague = Boolean(
-      resultAvailable
+    // New receipts preserve this transition explicitly. The comparison remains only as a
+    // compatibility path for matches settled before immutable league response fields existed.
+    const enteredLeagueId = rewardReceipt?.enteredLeague ?? (resultAvailable
       && updated
       && updated.player.leagueId !== player!.player.leagueId
-      && updated.player.leagueId.endsWith("-local"),
-    );
+      && updated.player.leagueId.endsWith("-local")
+      ? updated.player.leagueId
+      : undefined);
     let squadEventFields: Record<string, unknown> = {};
     if (resultAvailable && updated?.player.squadName) {
       try {
@@ -251,22 +253,32 @@ export const matchHandlers: Record<number, HandlerEntry> = {
         rewardReceipt?.levelTo ?? updated?.player.level ?? player!.player.level,
         rewardReceipt?.levelExperience ?? progression?.levelExperience ?? 0,
       ),
-      Skill: updated?.player.skill ?? player!.player.skill,
-      MedalsBalance: updated?.player.medalsBalance ?? player!.player.medalsBalance,
+      // Prefer receipt snapshots. Reading the live player here made an old GameEnded retry
+      // report medals from a later match and could animate an impossible result delta.
+      Skill: rewardReceipt?.skill ?? updated?.player.skill ?? player!.player.skill,
+      MedalsBalance: rewardReceipt?.medalsBalance
+        ?? updated?.player.medalsBalance
+        ?? player!.player.medalsBalance,
       // OGLEHLIPEFM copies this lower-case outer field into IIGFODGJBFA and immediately
       // advances the local lifetime squad-points statistic. Use the immutable receipt so a
       // retry shows the original delta and a pending/conflicting report never invents one.
       ...(resultAvailable && rewardReceipt ? { squadPoints: rewardReceipt.squadPoints ?? 0 } : {}),
-      PlacementMatchesRequired: updated?.player.remainingMatches ?? player!.player.remainingMatches,
-      BeginnersLeague: updated?.player.beginnersLeague ?? player!.player.beginnersLeague,
+      PlacementMatchesRequired: rewardReceipt?.placementMatchesRequired
+        ?? updated?.player.remainingMatches
+        ?? player!.player.remainingMatches,
+      BeginnersLeague: rewardReceipt?.beginnersLeague
+        ?? updated?.player.beginnersLeague
+        ?? player!.player.beginnersLeague,
       // DMGJCGJDDID treats EnteredLeague as the signal to replace the local placement ID.
       // The value is never taken from the result request; it is the managed ID committed by
       // the same confirmed match transaction that consumed the final placement match.
-      ...(enteredLeague && updated
+      ...(enteredLeagueId
         ? {
-          EnteredLeague: updated.player.leagueId,
-          EnteredNormalLeague: true,
-          ...playerLeagueBootFields(updated.player.leagueId, unixNow()),
+          EnteredLeague: enteredLeagueId,
+          EnteredNormalLeague: rewardReceipt?.enteredNormalLeague ?? true,
+          ...(rewardReceipt?.leagueEvaluation !== undefined
+            ? { LeagueEvaluation: rewardReceipt.leagueEvaluation }
+            : playerLeagueBootFields(enteredLeagueId, unixNow())),
         }
         : {}),
       ...squadEventFields,

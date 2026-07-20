@@ -132,6 +132,20 @@ come from the authenticated player's settlement-time server state. The table's `
 `LOSEFACTOR` rows are retained for future medal-formula recovery but are not guessed into the
 current fixed global/league medal policy.
 
+## Medal mirrors and replay snapshots
+
+`DatabasePlayer` and the stock end parser distinguish global medals (`Skill`) from the current
+weekly/division balance (`MedalsBalance`). The retired base medal document is not in either APK, so
+the replacement server retains its documented +25 win / -12 loss policy with a zero floor. Both
+mirrors now change atomically from the same confirmed result; previously only `MedalsBalance`
+changed, leaving global matchmaking/profile medals permanently frozen.
+
+The exact post-match `Skill`, `MedalsBalance`, placement counter, beginner-league value, and any
+normal-league entry transition are stored in the terminal receipt. A delayed `GameEnded` retry
+therefore returns the values that belonged to that match rather than reading state changed by later
+battles. The recovered per-tier `WINFACTOR`/`LOSEFACTOR` values remain recorded but intentionally
+unused until the missing original base formula and rounding order can be proven.
+
 ## Timed win-streak rewards
 
 Ranked wins now advance a private server-owned streak and return the recovered outer `WinCount`
@@ -163,7 +177,7 @@ then included in a full authoritative Army Power recomputation.
 Level progress, Gold, public level, Army Power, card consumption, periodic VIP visual parts,
 duplicate WarBucks, match rewards, and the terminal match state share the same MongoDB transaction.
 The match stores an immutable per-player receipt containing base/streak/league WarBucks, streak
-state, the exact squad-point delta, XP, Gold, old/new level, remaining
+state, the exact squad-point delta, both medal mirrors, placement transition, XP, Gold, old/new level, remaining
 level XP, the post-match VIP lootbox countdown, and the exact optional `GameReward.NewVisuals`
 dictionary string. A finished `GameEnded` retry can therefore reproduce the original
 `GameReward.GameGold`, conditional `Level`, `MatchesToNextLootboxes`, and suitcase pair without
