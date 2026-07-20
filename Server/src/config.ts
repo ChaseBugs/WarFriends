@@ -38,6 +38,13 @@ export const config = {
   websocketRateLimitMaxViolations: Number(process.env.WEBSOCKET_RATE_LIMIT_MAX_VIOLATIONS ?? 3),
   playerLeagueSchedulerIntervalSeconds: Number(process.env.PLAYER_LEAGUE_SCHEDULER_INTERVAL_SECONDS ?? 60),
 
+  // Real-money delivery is fail-closed. When enabled, Google Application Default Credentials
+  // must identify a Play Console service account that can read purchases for this exact app.
+  googlePlayPurchasesEnabled: (process.env.GOOGLE_PLAY_PURCHASES_ENABLED ?? "false").toLowerCase() === "true",
+  googlePlayPackageName: (process.env.GOOGLE_PLAY_PACKAGE_NAME ?? "com.chillingo.warfriends.android.gplay").trim(),
+  // Keep this stable across AUTH_SECRET/session-key rotation or migrate the receipt ledger first.
+  purchaseTokenHashSecret: process.env.PURCHASE_TOKEN_HASH_SECRET ?? process.env.AUTH_SECRET ?? "change-me-in-production",
+
   // Recovered from MainScene's Constants rows. Requests repeat these values for compatibility,
   // but economy logic always uses the server copy so a modified client cannot accelerate energy.
   dogTagRefillSeconds: Number(process.env.DOG_TAG_REFILL_SECONDS ?? 900),

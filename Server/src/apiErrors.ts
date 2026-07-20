@@ -46,6 +46,10 @@ export const ApiErrorCode = {
   UnknownAction: 90,
   /** IJEAJGCCHEF.GameCenterAlreadyCreated; the stock client opens UserExistsDialog. */
   GameCenterAlreadyCreated: 15400,
+  /** IJEAJGCCHEF.NoSuchPackExists; used when no server-owned paid SKU exists. */
+  NoSuchPackExists: 13001,
+  /** IJEAJGCCHEF.InvalidInapp; the stock client closes loading and shows its purchase error. */
+  InvalidInapp: 13002,
   DailyRewardWrongIndex: 1000001,
   DailyRewardAlreadyClaimed: 1000002,
 } as const;

@@ -104,6 +104,9 @@ async function start(): Promise<void> {
   if (process.env.NODE_ENV === "production" && config.adminSecret.length < 32) {
     throw new Error("ADMIN_SECRET must contain at least 32 characters in production.");
   }
+  if (config.googlePlayPurchasesEnabled && config.purchaseTokenHashSecret.length < 32) {
+    throw new Error("PURCHASE_TOKEN_HASH_SECRET must contain at least 32 characters when purchases are enabled.");
+  }
   await connectMongo();
   logger.db.connect("MongoDB connected", { provider: "mongodb", database: config.mongoDbName });
   // Migrations run before any repair or listener opens. A node with unknown/drifted history stays

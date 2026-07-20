@@ -36,6 +36,14 @@ multi-document transactions, so enable a single-node replica set for local devel
 replicated/sharded managed deployment) and include `replicaSet` in `MONGO_URL`. Health check:
 `GET /health`.
 
+Google Play purchases are fail-closed by default. To enable verified Android currency and
+`subscription1` delivery, grant a service account Play Console purchase-read access, set
+`GOOGLE_APPLICATION_CREDENTIALS` to its JSON file outside this repository, and set
+`GOOGLE_PLAY_PURCHASES_ENABLED=true`. `GOOGLE_PLAY_PACKAGE_NAME` must remain the exact deployed
+application ID. Set a separate random `PURCHASE_TOKEN_HASH_SECRET` of at least 32 characters and
+keep it stable across session-secret rotations; changing it requires a purchase-ledger migration.
+The server never accepts `GoldBase`, `WarbucksBase`, a price, or an amount as purchase authority.
+
 Operational metrics are available at authenticated `GET /metrics` in Prometheus text format. Send
 `Authorization: Bearer <ADMIN_SECRET>`; an empty secret disables the endpoint, and production
 requires a separate secret of at least 32 characters. Labels are fixed and
@@ -85,7 +93,7 @@ src/
 
 ## Status
 
-Working end-to-end (verified live):
+Implemented backend paths (deployment-gated checks are called out explicitly):
 
 - **Accounts / player**: `CreateAccount`, `CreateFullAccount`, `LoginToCustomAccount`,
   `GetPlayerData`/`GetPlayerInfo`, and player settings (name/country/status/device token).
@@ -346,6 +354,16 @@ Working end-to-end (verified live):
   parts, preserves duplicate `_#n-VIP` wire entries, and restores its countdown through
   `PlayerAnalyticsData`. Nonzero VIP discounts stay rejected until retired Fusebox offer
   definitions are recovered into a server allowlist.
+- **Verified Google Play currency and subscription delivery**: Android action `142` validates the
+  recovered `ProductId`/`PurchaseToken`/`PackageName`/`OrderId` proof through Google Play Developer
+  API `products.get` or `subscriptionsv2.get`. A global HMAC-keyed token ledger and the progression
+  grant commit in one MongoDB transaction, so one store token cannot fund two accounts and a lost
+  response retry cannot grant twice. The server owns the recovered 4.9.5 `afgold1`-`afgold6`,
+  `bgold1`-`bgold6`, `warbucks1`-`warbucks6`, and `bwarbucks1`-`bwarbucks6` amounts; completed
+  single-quantity purchases are accepted even after client-side consumption. `subscription1`
+  accepts only active, grace-period, or canceled-but-unexpired Play state, advances its verified
+  expiry monotonically, and restores the exact `PlayerData.Subscription` object at boot. The
+  implementation is contract-tested; a live store verification requires deployment credentials.
 - **War Card inventory and card packs**: exact `CardManagerData` is persisted and returned at boot.
   `scripts/Extract-CardCatalog.mjs` reproduces 58 playable cards, 25 unresolved definitions, and
   four source-priced packs from MainScene. Buffered `BuyCardPack` validates unlock level, pack,
@@ -360,8 +378,8 @@ Working end-to-end (verified live):
   60-minute Silver-to-Gold receipt. `ClaimCraftedCard` enforces server time, selects one playable
   next-rarity result with cryptographic randomness, grants once, and clears the receipt. Recovered
   17401/17601/17701 recovery bodies restore client state, and a claimed Gold craft proves starter
-  assignment ID_8. Subscription-only `CraftAndClaimCard` remains rejected until platform
-  subscriptions are authoritative.
+  assignment ID_8. Platform subscription authority is now available, but subscription-only
+  `CraftAndClaimCard` remains rejected until its purchase action is wired to that entitlement.
 - **Squad War Card pool**: `DepositCards` validates the nested
   `AddedCards`/`RemovedCards` dictionaries, ownership, and the recovered 3-10 slot squad-level
   capacity before atomically exchanging inventory and `depositedCardsDic`. `WithdrawCard` verifies

@@ -78,6 +78,8 @@ export interface PlayerProgressionState {
    * inventory are one optimistic transaction. The response adapter retains a legacy fallback.
    */
   vipExpiration?: number;
+  /** SubscriptionManager.Subscription plus the timer boundary consumed by DogTagManager. */
+  subscription?: PlayerSubscriptionState;
   /** True only after the authenticated account completes action 120 once. */
   tutorialFinished?: boolean;
   /** Server-issued tutorial battle receipt consumed by TutorialEnded. */
@@ -278,6 +280,13 @@ export interface PlayerProgressionState {
   rental?: RentalOfferState;
   /** Bounded replay cache for the stock client's batched RequestBuffer transport. */
   processedRequestBuffers?: ProcessedRequestBuffer[];
+}
+
+export interface PlayerSubscriptionState {
+  type: "subscription1";
+  expireTime: number;
+  subscribeSince: number;
+  dogTagTimerLock: number;
 }
 
 export interface PvpWinStreakState {
@@ -860,6 +869,28 @@ let reportDeduplicationsCollection: Collection<ReportDeduplicationDocument> | nu
 let friendlyBattlesCollection: Collection<FriendlyBattleDocument> | null = null;
 let gameCatalogEntriesCollection: Collection<GameCatalogEntryDocument> | null = null;
 let gameCatalogReleasesCollection: Collection<GameCatalogReleaseDocument> | null = null;
+
+/**
+ * Global exactly-once ledger for a verified store token.
+ *
+ * `_id` is an HMAC of the opaque purchase token, never the token itself. A token belongs to
+ * one player and product for its lifetime; keeping that ownership outside the player document
+ * prevents the same paid receipt from being submitted to two accounts concurrently.
+ */
+export interface PurchaseReceiptDocument extends Document {
+  _id: string;
+  platform: "google-play";
+  playerId: string;
+  productId: string;
+  storeProductId: string;
+  orderId: string;
+  kind: "currency" | "subscription";
+  purchasedAt: Date;
+  verifiedAt: Date;
+  response: Record<string, string | number | boolean>;
+}
+
+let purchaseReceiptsCollection: Collection<PurchaseReceiptDocument> | null = null;
 export interface ScheduledJobLeaseDocument extends Document {
   _id: string;
   ownerId: string;
@@ -887,6 +918,7 @@ export async function connectMongo(): Promise<void> {
   friendlyBattlesCollection = db.collection<FriendlyBattleDocument>("friendlyBattles");
   gameCatalogEntriesCollection = db.collection<GameCatalogEntryDocument>("gameCatalogEntries");
   gameCatalogReleasesCollection = db.collection<GameCatalogReleaseDocument>("gameCatalogReleases");
+  purchaseReceiptsCollection = db.collection<PurchaseReceiptDocument>("purchaseReceipts");
   scheduledJobLeasesCollection = db.collection<ScheduledJobLeaseDocument>("scheduledJobLeases");
 
   await playersCollection.createIndex({ id: 1 }, { unique: true });
@@ -901,6 +933,11 @@ export async function connectMongo(): Promise<void> {
   await playersCollection.createIndex({ leagueTier: 1, armyPower: 1 });
   // Leaderboards.
   await playersCollection.createIndex({ experience: -1 });
+
+  // MongoDB already gives `_id` a unique index. These secondary indexes support account
+  // support/refund audits without ever storing or logging the raw Play purchase token.
+  await purchaseReceiptsCollection.createIndex({ playerId: 1, purchasedAt: -1 });
+  await purchaseReceiptsCollection.createIndex({ orderId: 1 }, { unique: true, sparse: true });
 
   await squadsCollection.createIndex({ name: 1 }, { unique: true });
   await squadsCollection.createIndex({ experience: -1 });
@@ -1008,6 +1045,7 @@ export async function disconnectMongo(): Promise<void> {
   friendlyBattlesCollection = null;
   gameCatalogEntriesCollection = null;
   gameCatalogReleasesCollection = null;
+  purchaseReceiptsCollection = null;
   scheduledJobLeasesCollection = null;
 }
 
@@ -1059,6 +1097,10 @@ export function squadChatMessages(): Collection<SquadChatMessageDocument> {
 
 export function matches(): Collection<Document> {
   return requireCollection("matches", matchesCollection);
+}
+
+export function purchaseReceipts(): Collection<PurchaseReceiptDocument> {
+  return requireCollection("purchaseReceipts", purchaseReceiptsCollection);
 }
 
 export function scheduledJobLeases(): Collection<ScheduledJobLeaseDocument> {

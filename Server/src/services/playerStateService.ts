@@ -248,6 +248,10 @@ export function buildPlayerData(player: PlayerDocument, now = unixNow()): Player
   addSerializedObject(data, "DecalManagerData", state.visualInventory);
   addSerializedObject(data, "CardManagerData", state.cardInventory);
   addSerializedObject(data, "CraftData", state.cardCrafting);
+  // SubscriptionManager inherits DatabaseSerializedObjectGeneric<Subscription>. The stock
+  // loader also reads dogTagTimerLock from the same JSON object even though the recovered
+  // nested C# model does not declare it, so retain all four server-owned fields here.
+  addSerializedObject(data, "Subscription", state.subscription);
   addSerializedObject(data, "StatisticsData", dto.statisticsData);
   // WinStreakManager derives from DatabaseSerializedObjectGeneric<WinStreak>. Restore the
   // server-owned streak on every boot; otherwise LoadEmpty silently resets the lobby timer
