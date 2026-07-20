@@ -1,4 +1,5 @@
 import { ApiError } from "../apiErrors";
+import { League } from "../constants";
 import type {
   AchievementGroupState,
   AchievementState,
@@ -45,9 +46,10 @@ export interface AchievementTierDefinition {
  * groups 0/1 are purchased units/weapons, 8 is confirmed War Cards played, 9/10 are
  * soldier/mechanical normal upgrades, 11 is weapon upgrades, and 15 is paid permanent visuals.
  * Group 2 is ranked PvP wins, 3/4 are accepted Arena wins/flawless runs, 5 is completed solo
- * missions, 12 is completed assignments, 14 is lifetime squad points, and 16 is claimed daily
- * rewards. Combat-detail-only rows remain intentionally disabled until their event facts are
- * authoritative; a client-reported achievement value is never enough to enable one.
+ * missions, 12 is completed assignments, 13 is the highest server-owned player league reached,
+ * 14 is lifetime squad points, and 16 is claimed daily rewards. Combat-detail-only rows remain
+ * intentionally disabled until their event facts are authoritative; a client-reported
+ * achievement value is never enough to enable one.
  */
 export const ACHIEVEMENT_DEFINITIONS: Readonly<Record<number, readonly AchievementTierDefinition[]>> = {
   0: [
@@ -104,6 +106,11 @@ export const ACHIEVEMENT_DEFINITIONS: Readonly<Record<number, readonly Achieveme
     { target: 3, gold: 1, warBucks: 0, scraps: 0, tickets: 0 },
     { target: 20, gold: 5, warBucks: 0, scraps: 0, tickets: 0 },
     { target: 100, gold: 30, warBucks: 0, scraps: 0, tickets: 0 },
+  ],
+  13: [
+    { target: League.Silver2, gold: 5, warBucks: 0, scraps: 0, tickets: 0 },
+    { target: League.Gold1, gold: 10, warBucks: 0, scraps: 0, tickets: 0 },
+    { target: League.Master3, gold: 20, warBucks: 0, scraps: 0, tickets: 0 },
   ],
   14: [
     { target: 15, gold: 1, warBucks: 0, scraps: 0, tickets: 0 },
@@ -252,6 +259,32 @@ export function advanceAchievementState(
   const group = achievements.data.find((candidate) => candidate.id === groupId)!;
   const finalTarget = definitions[definitions.length - 1].target;
   group.value = Math.min(finalTarget, group.value + amount);
+  return {
+    state: { ...state, revision: state.revision + 1, achievements },
+    achievements,
+  };
+}
+
+/**
+ * Synchronize AchievementGetToLeague with the league enum stored in DatabasePlayer.
+ *
+ * The recovered class does not read a client StatsManager counter: GOPJOOHKCNB returns
+ * `GameLoginManager.currentPlayer.leagueTier` directly. The backend owns that field and changes
+ * it only in confirmed placement or transactional season settlement, so it is safe to project
+ * here. Achievement progress remains monotonic when a later season demotes the player; otherwise
+ * an already-earned tier could become unclaimable merely because the current league went down.
+ */
+export function synchronizeLeagueAchievementState(
+  state: PlayerProgressionState,
+  leagueTier: number,
+): AchievementMutationResult {
+  if (!Number.isInteger(leagueTier) || leagueTier < League.NoLeague || leagueTier > League.Champion) {
+    throw new ApiError(ACHIEVEMENT_REWARD_NOT_FOUND, "Player league tier is invalid.");
+  }
+  const achievements = achievementStateFor(state);
+  const group = achievements.data.find((candidate) => candidate.id === 13)!;
+  const finalTarget = ACHIEVEMENT_DEFINITIONS[13][ACHIEVEMENT_DEFINITIONS[13].length - 1].target;
+  group.value = Math.max(group.value, Math.min(finalTarget, leagueTier));
   return {
     state: { ...state, revision: state.revision + 1, achievements },
     achievements,

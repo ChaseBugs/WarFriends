@@ -13,6 +13,7 @@ import {
   acknowledgeAchievementOffsetState,
   advanceAchievementState,
   claimAchievementState,
+  synchronizeLeagueAchievementState,
   validateAchievementProgressState,
 } from "./achievementService";
 import {
@@ -429,6 +430,7 @@ export function processAssignmentBufferState(
   requests: readonly BufferedRequestInput[],
   playerLevel = 1,
   playerVipExpiration = 0,
+  playerLeagueTier?: number,
 ): AssignmentBufferResult {
   // VIP is part of the same progression revision as buffered visual purchases. The optional
   // argument exists only for legacy documents whose entitlement still lives in the profile.
@@ -448,7 +450,13 @@ export function processAssignmentBufferState(
     };
   }
 
-  let working = state;
+  // AchievementGetToLeague reads DatabasePlayer.leagueTier in the recovered client. Supply the
+  // authenticated document's server-owned value at this transaction boundary so actions 218-220
+  // can validate/claim group 13 even for accounts promoted before the achievement was recovered.
+  // A stored BufferId replay returns above without re-running this migration or any subrequest.
+  let working = playerLeagueTier === undefined
+    ? state
+    : synchronizeLeagueAchievementState(state, playerLeagueTier).state;
   const responses: Record<string, unknown>[] = [];
   for (const request of requests) {
     // `working` is advanced only by successful subrequests. A rejected item contributes an
@@ -964,7 +972,16 @@ export function processAssignmentBuffer(
   requests: readonly BufferedRequestInput[],
   playerLevel = 1,
   playerVipExpiration = 0,
+  playerLeagueTier?: number,
 ): Promise<AssignmentBufferResult> {
   return mutateProgression(playerId, (state, now) =>
-    processAssignmentBufferState(state, now, bufferId, requests, playerLevel, playerVipExpiration));
+    processAssignmentBufferState(
+      state,
+      now,
+      bufferId,
+      requests,
+      playerLevel,
+      playerVipExpiration,
+      playerLeagueTier,
+    ));
 }

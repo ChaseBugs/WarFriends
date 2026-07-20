@@ -12,7 +12,10 @@ import { findById, updatePlayerFields } from "./playerService";
 import { PlayerStatus } from "../constants";
 import logger from "../utils/logger";
 import { recordPvpAssignmentProgress } from "./assignmentService";
-import { recordRankedPvpAchievements } from "./achievementService";
+import {
+  recordRankedPvpAchievements,
+  synchronizeLeagueAchievementState,
+} from "./achievementService";
 import { consumePvpUsedCardsState } from "./cardInventoryService";
 import { progressionForPlayer } from "./playerStateService";
 import { applyLevelExperienceState } from "./levelProgressionService";
@@ -567,7 +570,7 @@ async function settlePlayerCore(
   // applyLevelExperienceState grants the source row's base Gold. Add only the VIP delta here
   // so the level transition remains reusable and the progression wallet equals the amount
   // IIGFODGJBFA adds after applying its VipGoldMultiplier to GameGold.
-  const canonical = canonicalProgression({
+  let canonical = canonicalProgression({
     ...vipLootboxes.state,
     gold: vipLootboxes.state.gold + vipLevelGoldBonus,
     warBucks: vipLootboxes.state.warBucks + totalPvpWarBucks,
@@ -591,6 +594,14 @@ async function settlePlayerCore(
     settlementUnix,
   );
   const leagueAdvance = beginnerAdvance ?? normalLeagueAdvance;
+  // The league achievement reads DatabasePlayer.leagueTier, so persist its monotonic projection
+  // in the same confirmed-PvP transaction that consumes placement/beginner progression. This
+  // prevents a lost response or duplicate result report from creating a separate achievement
+  // event, and also migrates accounts whose existing league predates group 13 support.
+  canonical = synchronizeLeagueAchievementState(
+    canonical,
+    leagueAdvance?.leagueTier ?? player.player.leagueTier,
+  ).state;
   const leagueFields: Record<string, unknown> = leagueAdvance
     ? {
       leagueTier: leagueAdvance.leagueTier,

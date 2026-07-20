@@ -84,6 +84,11 @@ normal `boughtIndex`, visual counting excludes power bands, and temporary rental
 Recomputing these monotonic values from inventory also migrates older accounts without trusting
 the client's action-220 progress or offset.
 
+Group 13 is also source-backed: `AchievementGetToLeague` reads `DatabasePlayer.leagueTier`, which
+the backend owns. Silver II, Gold I, and Master III unlock 5, 10, and 20 Gold respectively. League
+placement and season settlement persist this monotonic highest-tier value atomically with the
+profile transition; action 220 can only confirm a value at or below that server state.
+
 Arena combat details are still client-reported: these achievements are authoritative for the
 server's accepted receipt lifecycle, not proof that the client simulated combat honestly.
 Deployment and per-match combat-feat groups remain inactive until their event facts are

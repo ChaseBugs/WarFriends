@@ -173,6 +173,19 @@ those two choices are documented reconstruction policy. The transition and its r
 in the same transaction as the match reward, so retries cannot advance twice or show later league
 state.
 
+## League achievement progression
+
+The recovered `AchievementGetToLeague` class reads the numeric
+`GameLoginManager.currentPlayer.leagueTier` directly. Group 13 therefore uses the server-owned
+`DatabasePlayer` tier rather than a client-reported StatsManager counter. Reaching Silver II (tier
+5), Gold I (9), and Master III (13) unlocks exact MainScene rewards of 5, 10, and 20 Gold.
+
+Confirmed placement/beginner transitions and transactional season settlement update the league
+and achievement in the same player write. The achievement retains the highest reached tier when a
+later season demotes the player, so an earned reward cannot become locked again. RequestBuffer
+actions 218-220 receive the authenticated profile tier only as a server assertion: a modified
+client cannot report Gold I while its stored profile remains Silver II.
+
 ## Timed win-streak rewards
 
 Ranked wins now advance a private server-owned streak and return the recovered outer `WinCount`

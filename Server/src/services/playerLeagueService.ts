@@ -6,6 +6,8 @@ import {
   withMongoTransaction,
   type PlayerDocument,
 } from "../db";
+import { synchronizeLeagueAchievementState } from "./achievementService";
+import { progressionForPlayer } from "./playerStateService";
 import type { MessageDoc } from "./socialService";
 import {
   managedPlayerLeagueId,
@@ -159,7 +161,15 @@ export async function finishExpiredPlayerLeague(
       const member = members[index]!;
       const position = index + 1;
       const decision = playerLeagueSettlementDecision(managed.tier, position, members.length);
+      // Promotion/relegation and AchievementGetToLeague must observe one atomic season result.
+      // Keep the achievement's lifetime maximum on demotion, while allowing an earned promotion
+      // to unlock the exact MainScene tier before the type-23 inbox message reaches the client.
+      const progression = synchronizeLeagueAchievementState(
+        progressionForPlayer(member),
+        decision.nextTier,
+      ).state;
       const set: Record<string, unknown> = {
+        progression,
         leagueTier: decision.nextTier,
         "player.leagueTier": decision.nextTier,
         "player.leagueId": placementLeagueId(decision.nextTier),

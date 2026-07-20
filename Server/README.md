@@ -117,7 +117,9 @@ Working end-to-end (verified live):
   MongoDB-authoritative with opportunistic Redis warming. `GetPlayerLeaguesDivision` now
   materializes a stable UTC season, ranks the exact division by weekly medals, and returns
   `LeagueEvaluation`; confirmed PvP consumes placement; `FinishPlayerLeague` atomically
-  promotes/relegates all members and queues the recovered type-23 result/reward messages.
+  promotes/relegates all members and queues the recovered type-23 result/reward messages. The same
+  transitions persist exact group-13 league achievement progress (Silver II/Gold I/Master III for
+  5/10/20 Gold) from the server-owned profile tier.
 - **Social / messaging**: `SearchPlayers` (name prefix), `GetAllPlayers`, exact Facebook-friend and
   authoritative squad-mate resolution through `GetFriendsInfo`, challenge and normal
   `MessageSent`, `GetAllMessages`, `ReadMessage`, `IgnoreMessage`, and `AcceptChallenge`
@@ -330,7 +332,9 @@ Working end-to-end (verified live):
   are re-derived from authoritative progression snapshots using the client's StatsManager rules.
   Accepted Arena wins and maximum-win runs without an accepted loss advance exact MainScene groups
   3 and 4 inside the Arena receipt transition, so retries cannot duplicate their Ticket/Scraps
-  progress. Exact serialized MainScene tier rewards are granted atomically and replay-safely.
+  progress. Group 13 mirrors the authenticated profile's highest reached league tier and rejects a
+  larger action-220 client value. Exact serialized MainScene tier rewards are granted atomically
+  and replay-safely.
 - **Squad social state**: action `193` persists the monotonic Photon Chat unread cursor through
   the stock request buffer and restores it as `PlayerAnalyticsData`; squad-event notices are
   membership-validated, founder-targeted, durable, and duplicate-suppressed.

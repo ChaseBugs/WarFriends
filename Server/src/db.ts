@@ -181,7 +181,8 @@ export interface PlayerProgressionState {
    * The recovered client evaluates achievements locally and queues actions 218-220, but
    * locally evaluated values cannot be trusted for rewards. The server therefore stores the
    * same serialized shape while advancing supported counters only from server-confirmed
-   * events such as match settlement, assignment claims, and daily-reward claims.
+   * events such as match settlement, assignment claims, daily-reward claims, and the
+   * DatabasePlayer league tier committed by placement/season settlement.
    */
   achievements?: AchievementState;
   /**

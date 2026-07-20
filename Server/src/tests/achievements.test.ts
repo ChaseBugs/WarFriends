@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { DbAction } from "../dbActions";
+import { League } from "../constants";
 import {
   ACHIEVEMENT_DEFINITIONS,
   ACHIEVEMENT_ALREADY_CLAIMED,
@@ -10,6 +11,7 @@ import {
   advanceAchievementState,
   claimAchievementState,
   serializeAchievementsData,
+  synchronizeLeagueAchievementState,
   validateAchievementProgressState,
 } from "../services/achievementService";
 import { processAssignmentBufferState } from "../services/assignmentService";
@@ -145,6 +147,52 @@ test("Arena achievement definitions preserve exact Ticket and Scraps rewards", (
       [[1, 50, 0], [3, 150, 0], [10, 250, 0]],
     ],
   );
+});
+
+test("league achievement uses exact tiers and preserves the highest server-owned league", () => {
+  assert.deepEqual(
+    ACHIEVEMENT_DEFINITIONS[13].map((tier) => [tier.target, tier.gold]),
+    [[League.Silver2, 5], [League.Gold1, 10], [League.Master3, 20]],
+  );
+
+  const promoted = synchronizeLeagueAchievementState(createInitialProgression(NOW), League.Gold1);
+  assert.equal(promoted.achievements.data.find((group) => group.id === 13)?.value, League.Gold1);
+  const demoted = synchronizeLeagueAchievementState(promoted.state, League.Silver3);
+  assert.equal(demoted.achievements.data.find((group) => group.id === 13)?.value, League.Gold1);
+});
+
+test("league achievement buffer claims only the authenticated profile tier", () => {
+  const requests = [
+    { action: DbAction.ChangeAchievementProgres, data: JSON.stringify({ Id: 13, Progress: League.Silver2 }) },
+    { action: DbAction.ClaimAchievement, data: JSON.stringify({ Id: 13, ProgressId: 0 }) },
+  ];
+  const result = processAssignmentBufferState(
+    createInitialProgression(NOW),
+    NOW,
+    "league-achievement-buffer",
+    requests,
+    1,
+    0,
+    League.Silver2,
+  );
+  assert.equal(result.state.gold, 5);
+  assert.equal(result.state.achievements?.data.find((group) => group.id === 13)?.value, League.Silver2);
+
+  const forged = processAssignmentBufferState(
+    createInitialProgression(NOW),
+    NOW,
+    "forged-league-achievement-buffer",
+    [{
+      action: DbAction.ChangeAchievementProgres,
+      data: JSON.stringify({ Id: 13, Progress: League.Gold1 }),
+    }],
+    1,
+    0,
+    League.Silver2,
+  );
+  assert.deepEqual(JSON.parse(forged.requestsResults), [
+    { ActionId: DbAction.ChangeAchievementProgres, Result: ACHIEVEMENT_REWARD_NOT_FOUND },
+  ]);
 });
 
 test("achievement claims enforce tier order and credit scene-defined rewards once", () => {
