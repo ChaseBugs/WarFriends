@@ -42,6 +42,10 @@ Google Play purchases are fail-closed by default. To enable verified Android cur
 `GOOGLE_PLAY_PURCHASES_ENABLED=true`. `GOOGLE_PLAY_PACKAGE_NAME` must remain the exact deployed
 application ID. Set a separate random `PURCHASE_TOKEN_HASH_SECRET` of at least 32 characters and
 keep it stable across session-secret rotations; changing it requires a purchase-ledger migration.
+Set an independent `PURCHASE_TOKEN_ENCRYPTION_SECRET` of at least 32 characters and keep it stable:
+subscription tokens are AES-256-GCM encrypted with this key so the scheduler can query later Play
+state without storing replayable plaintext. Revalidation defaults to purchase enablement and polls
+due rows every five minutes; cadence and batch controls are documented in `.env.example`.
 The server never accepts `GoldBase`, `WarbucksBase`, a price, or an amount as purchase authority.
 
 Operational metrics are available at authenticated `GET /metrics` in Prometheus text format. Send
@@ -364,8 +368,14 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   `bgold1`-`bgold6`, `warbucks1`-`warbucks6`, and `bwarbucks1`-`bwarbucks6` amounts; completed
   single-quantity purchases are accepted even after client-side consumption. `subscription1`
   accepts only active, grace-period, or canceled-but-unexpired Play state, advances its verified
-  expiry monotonically, and restores the exact `PlayerData.Subscription` object at boot. The
-  implementation is contract-tested; a live store verification requires deployment credentials.
+  expiry monotonically, and restores the exact `PlayerData.Subscription` object at boot. A
+  cross-node Mongo-leased scheduler decrypts only due subscription tokens, rechecks
+  `subscriptionsv2.get`, advances renewals, and immediately ends benefits for successfully
+  observed paused/on-hold states. Expired receipts become terminal. Transport, credential,
+  malformed-response, and unknown-future-state failures use durable exponential retry and never
+  shorten paid access. Receipt authority prevents an older token from revoking a newer replacement
+  subscription. The implementation is contract-tested; a live store verification requires
+  deployment credentials.
 - **War Card inventory and card packs**: exact `CardManagerData` is persisted and returned at boot.
   `scripts/Extract-CardCatalog.mjs` reproduces 58 playable cards, 25 unresolved definitions, and
   four source-priced packs from MainScene. Buffered `BuyCardPack` validates unlock level, pack,

@@ -7,11 +7,14 @@ import {
   GooglePlayVerificationError,
   parseGoogleProductPurchase,
   parseGoogleSubscriptionPurchase,
+  parseGoogleSubscriptionStatus,
   type GooglePlayVerificationInput,
 } from "../services/googlePlayPurchaseVerifier";
 import { googlePlayStoreProductId, inAppEntitlement } from "../services/inAppCatalogService";
 import { applyPurchaseEntitlementState, parseGooglePlayPurchaseInput } from "../services/purchaseService";
 import { buildPlayerData, createInitialProgression } from "../services/playerStateService";
+import { applySubscriptionRevalidationState } from "../services/googlePlaySubscriptionRevalidationService";
+import { decryptPurchaseToken, encryptPurchaseToken } from "../services/purchaseTokenCryptoService";
 
 const PACKAGE = "com.chillingo.warfriends.android.gplay";
 const NOW = 1_800_000_000;
@@ -112,6 +115,92 @@ test("subscription verification accepts canceled-but-unexpired entitlement and r
     }, input, NOW),
     GooglePlayVerificationError,
   );
+});
+
+test("subscription status distinguishes authoritative non-entitlement from retryable unknown states", () => {
+  const input = verificationInput("subscription1");
+  const onHold = parseGoogleSubscriptionStatus({
+    startTime: "2026-12-01T00:00:00Z",
+    subscriptionState: "SUBSCRIPTION_STATE_ON_HOLD",
+    lineItems: [{
+      productId: `${PACKAGE}.subscription1`,
+      expiryTime: "2027-02-01T00:00:00Z",
+      latestSuccessfulOrderId: input.orderId,
+    }],
+  }, input, NOW);
+  assert.equal(onHold.entitled, false);
+  assert.ok((onHold.expiresAt ?? 0) > NOW);
+
+  assert.throws(
+    () => parseGoogleSubscriptionStatus({
+      subscriptionState: "SUBSCRIPTION_STATE_FUTURE_UNKNOWN",
+      lineItems: [],
+    }, input, NOW),
+    (error: unknown) => error instanceof GooglePlayVerificationError && error.transient,
+  );
+});
+
+test("subscription revalidation renews current authority and revokes a held entitlement immediately", () => {
+  const receiptId = "receipt-current";
+  const initial = {
+    ...createInitialProgression(NOW),
+    subscription: {
+      type: "subscription1" as const,
+      expireTime: NOW + 1_000,
+      subscribeSince: NOW - 10_000,
+      dogTagTimerLock: NOW - 500,
+    },
+    subscriptionAuthorityReceiptId: receiptId,
+  };
+  const renewed = applySubscriptionRevalidationState(initial, receiptId, {
+    subscriptionState: "SUBSCRIPTION_STATE_ACTIVE",
+    entitled: true,
+    storeProductId: `${PACKAGE}.subscription1`,
+    expiresAt: NOW + 2_000,
+  }, NOW);
+  assert.equal(renewed.changed, true);
+  assert.equal(renewed.state.subscription?.expireTime, NOW + 2_000);
+  assert.equal(renewed.state.subscription?.subscribeSince, NOW - 10_000);
+  assert.equal(renewed.state.subscription?.dogTagTimerLock, NOW - 500);
+
+  const held = applySubscriptionRevalidationState(renewed.state, receiptId, {
+    subscriptionState: "SUBSCRIPTION_STATE_ON_HOLD",
+    entitled: false,
+    storeProductId: `${PACKAGE}.subscription1`,
+    expiresAt: NOW + 2_000,
+  }, NOW + 10);
+  assert.equal(held.changed, true);
+  assert.equal(held.state.subscription?.expireTime, NOW + 10);
+});
+
+test("stale subscription receipt cannot shorten a newer token's entitlement", () => {
+  const state = {
+    ...createInitialProgression(NOW),
+    subscription: {
+      type: "subscription1" as const,
+      expireTime: NOW + 5_000,
+      subscribeSince: NOW - 100,
+      dogTagTimerLock: NOW,
+    },
+    subscriptionAuthorityReceiptId: "receipt-new",
+  };
+  const stale = applySubscriptionRevalidationState(state, "receipt-old", {
+    subscriptionState: "SUBSCRIPTION_STATE_EXPIRED",
+    entitled: false,
+    storeProductId: `${PACKAGE}.subscription1`,
+    expiresAt: NOW - 1,
+  }, NOW);
+  assert.equal(stale.changed, false);
+  assert.equal(stale.state, state);
+});
+
+test("subscription purchase tokens are authenticated, receipt-bound ciphertext", () => {
+  const secret = "test-only-high-entropy-secret-with-more-than-32-characters";
+  const encrypted = encryptPurchaseToken("opaque-google-play-token", "receipt-a", secret);
+  assert.notEqual(encrypted.ciphertext, "opaque-google-play-token");
+  assert.equal(decryptPurchaseToken(encrypted, "receipt-a", secret), "opaque-google-play-token");
+  assert.throws(() => decryptPurchaseToken(encrypted, "receipt-b", secret));
+  assert.throws(() => decryptPurchaseToken(encrypted, "receipt-a", `${secret}-wrong`));
 });
 
 test("verified currency and subscription transitions expose exact stock response fields", () => {

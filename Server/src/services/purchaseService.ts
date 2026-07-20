@@ -18,6 +18,7 @@ import {
   type VerifiedGooglePlayPurchase,
 } from "./googlePlayPurchaseVerifier";
 import { progressionForPlayer, unixNow } from "./playerStateService";
+import { encryptPurchaseToken } from "./purchaseTokenCryptoService";
 
 const defaultVerifier = new GooglePlayDeveloperApiVerifier();
 
@@ -75,6 +76,7 @@ export function applyPurchaseEntitlementState(
   entitlement: InAppEntitlement,
   purchase: VerifiedGooglePlayPurchase,
   now: number,
+  authorityReceiptId?: string,
 ): PurchaseDeliveryTransition {
   if (purchase.productId !== entitlement.productId || purchase.kind !== entitlement.kind) {
     throw new ApiError(ApiErrorCode.InvalidInapp, "Verified purchase does not match its entitlement.");
@@ -102,9 +104,19 @@ export function applyPurchaseEntitlementState(
   if (expiresAt <= now) throw new ApiError(ApiErrorCode.InvalidInapp, "Verified subscription is expired.");
   const current = state.subscription;
   if (current && current.expireTime >= expiresAt) {
+    // A replacement/re-signup token can represent the same current expiry. Bind only an equal
+    // entitlement to the latest successfully verified token; a shorter stale token must never
+    // take authority away from a newer subscription.
+    const shouldBindAuthority = Boolean(
+      authorityReceiptId
+      && current.expireTime === expiresAt
+      && state.subscriptionAuthorityReceiptId !== authorityReceiptId,
+    );
     return {
-      state,
-      changed: false,
+      state: shouldBindAuthority
+        ? { ...state, revision: state.revision + 1, subscriptionAuthorityReceiptId: authorityReceiptId }
+        : state,
+      changed: shouldBindAuthority,
       response: {
         Id: entitlement.productId,
         SubscriptionBought: false,
@@ -123,7 +135,12 @@ export function applyPurchaseEntitlementState(
     dogTagTimerLock: current?.dogTagTimerLock ?? now,
   };
   return {
-    state: { ...state, revision: state.revision + 1, subscription },
+    state: {
+      ...state,
+      revision: state.revision + 1,
+      subscription,
+      ...(authorityReceiptId ? { subscriptionAuthorityReceiptId: authorityReceiptId } : {}),
+    },
     changed: true,
     response: {
       Id: entitlement.productId,
@@ -218,6 +235,7 @@ export async function deliverGooglePlayPurchase(
         entitlement,
         verified,
         now,
+        receiptId,
       );
       await persistTransition(player, transition, session);
 
@@ -232,6 +250,23 @@ export async function deliverGooglePlayPurchase(
         purchasedAt: new Date(verified.purchasedAt * 1_000),
         verifiedAt: new Date(now * 1_000),
         response: transition.response,
+        ...(entitlement.kind === "subscription" ? {
+          // Currency tokens are immutable after delivery and therefore need no reversible copy.
+          // Subscription tokens are encrypted because Google expects the same bearer token for
+          // renewal, hold, cancellation, and expiry checks throughout the entitlement lifecycle.
+          encryptedPurchaseToken: encryptPurchaseToken(
+            input.purchaseToken,
+            receiptId,
+            config.purchaseTokenEncryptionSecret,
+          ),
+          subscriptionState: verified.subscriptionState ?? "SUBSCRIPTION_STATE_ACTIVE",
+          subscriptionExpiresAt: new Date((verified.expiresAt ?? now) * 1_000),
+          revalidateAfter: new Date(Math.min(
+            verified.expiresAt ?? now,
+            now + Math.max(300, Math.floor(config.googlePlaySubscriptionRevalidationCadenceSeconds)),
+          ) * 1_000),
+          revalidationFailures: 0,
+        } : {}),
       };
       if (existing) {
         const replacement = await purchaseReceipts().replaceOne({ _id: receiptId, playerId }, receipt, { session });

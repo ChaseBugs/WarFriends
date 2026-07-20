@@ -21,6 +21,7 @@ import { serverMetrics } from "./services/metricsService";
 import { requireAdmin } from "./services/adminAuthService";
 import { runWithRequestContext } from "./services/requestContextService";
 import { startPlayerLeagueSettlementScheduler } from "./services/playerLeagueSchedulerService";
+import { startGooglePlaySubscriptionRevalidationScheduler } from "./services/googlePlaySubscriptionRevalidationService";
 
 const app = express();
 
@@ -93,6 +94,7 @@ const httpServer = createServer(app);
 let pvpCoordinatorHeartbeat: PvpCoordinatorHeartbeat | null = null;
 let pvpOrphanRecoveryTimer: NodeJS.Timeout | null = null;
 let playerLeagueSchedulerTimer: NodeJS.Timeout | null = null;
+let googlePlaySubscriptionSchedulerTimer: NodeJS.Timeout | null = null;
 // Let Unity's BestHTTP reuse keep-alive sockets; headersTimeout must exceed keepAliveTimeout.
 httpServer.keepAliveTimeout = 65_000;
 httpServer.headersTimeout = 66_000;
@@ -106,6 +108,12 @@ async function start(): Promise<void> {
   }
   if (config.googlePlayPurchasesEnabled && config.purchaseTokenHashSecret.length < 32) {
     throw new Error("PURCHASE_TOKEN_HASH_SECRET must contain at least 32 characters when purchases are enabled.");
+  }
+  if (config.googlePlayPurchasesEnabled && config.purchaseTokenEncryptionSecret.length < 32) {
+    throw new Error("PURCHASE_TOKEN_ENCRYPTION_SECRET must contain at least 32 characters when purchases are enabled.");
+  }
+  if (config.googlePlaySubscriptionRevalidationEnabled && !config.googlePlayPurchasesEnabled) {
+    throw new Error("Google Play subscription revalidation requires GOOGLE_PLAY_PURCHASES_ENABLED=true.");
   }
   await connectMongo();
   logger.db.connect("MongoDB connected", { provider: "mongodb", database: config.mongoDbName });
@@ -130,6 +138,7 @@ async function start(): Promise<void> {
   }
   await createGameHub(httpServer);
   playerLeagueSchedulerTimer = startPlayerLeagueSettlementScheduler();
+  googlePlaySubscriptionSchedulerTimer = startGooglePlaySubscriptionRevalidationScheduler();
 
   httpServer.listen(config.port, () => {
     logger.server.start(config.port, process.env.NODE_ENV ?? "development");
@@ -143,6 +152,7 @@ async function shutdown(signal: string): Promise<void> {
   httpServer.close();
   if (pvpOrphanRecoveryTimer) clearInterval(pvpOrphanRecoveryTimer);
   if (playerLeagueSchedulerTimer) clearInterval(playerLeagueSchedulerTimer);
+  if (googlePlaySubscriptionSchedulerTimer) clearInterval(googlePlaySubscriptionSchedulerTimer);
   await pvpCoordinatorHeartbeat?.stop();
   await disconnectRedis();
   await disconnectMongo();

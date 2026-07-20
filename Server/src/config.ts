@@ -44,6 +44,20 @@ export const config = {
   googlePlayPackageName: (process.env.GOOGLE_PLAY_PACKAGE_NAME ?? "com.chillingo.warfriends.android.gplay").trim(),
   // Keep this stable across AUTH_SECRET/session-key rotation or migrate the receipt ledger first.
   purchaseTokenHashSecret: process.env.PURCHASE_TOKEN_HASH_SECRET ?? process.env.AUTH_SECRET ?? "change-me-in-production",
+  // Subscription tokens must remain available for later Play status checks, but storing a raw
+  // bearer token would turn a database read into a replayable purchase credential. A separate,
+  // stable secret encrypts only subscription tokens with authenticated AES-GCM at rest.
+  purchaseTokenEncryptionSecret: process.env.PURCHASE_TOKEN_ENCRYPTION_SECRET ?? "",
+  googlePlaySubscriptionRevalidationEnabled:
+    (process.env.GOOGLE_PLAY_SUBSCRIPTION_REVALIDATION_ENABLED
+      ?? process.env.GOOGLE_PLAY_PURCHASES_ENABLED
+      ?? "false").toLowerCase() === "true",
+  googlePlaySubscriptionSchedulerIntervalSeconds:
+    Number(process.env.GOOGLE_PLAY_SUBSCRIPTION_SCHEDULER_INTERVAL_SECONDS ?? 300),
+  googlePlaySubscriptionRevalidationCadenceSeconds:
+    Number(process.env.GOOGLE_PLAY_SUBSCRIPTION_REVALIDATION_CADENCE_SECONDS ?? 21_600),
+  googlePlaySubscriptionRevalidationBatchSize:
+    Number(process.env.GOOGLE_PLAY_SUBSCRIPTION_REVALIDATION_BATCH_SIZE ?? 100),
 
   // Recovered from MainScene's Constants rows. Requests repeat these values for compatibility,
   // but economy logic always uses the server copy so a modified client cannot accelerate energy.

@@ -19,6 +19,7 @@ export interface VerifiedGooglePlayPurchase {
   orderId: string;
   purchasedAt: number;
   expiresAt?: number;
+  subscriptionState?: string;
 }
 
 export interface GoogleProductPurchaseResponse {
@@ -41,6 +42,22 @@ export interface GoogleSubscriptionPurchaseV2Response {
     expiryTime?: string;
     latestSuccessfulOrderId?: string;
   }>;
+}
+
+export interface GooglePlaySubscriptionStatusInput {
+  packageName: string;
+  productId: string;
+  purchaseToken: string;
+}
+
+/** Parsed successful subscriptionsv2 response used by both purchase and background paths. */
+export interface GooglePlaySubscriptionStatus {
+  subscriptionState: string;
+  entitled: boolean;
+  storeProductId: string;
+  orderId?: string;
+  purchasedAt?: number;
+  expiresAt?: number;
 }
 
 export class GooglePlayVerificationError extends Error {
@@ -108,32 +125,80 @@ export function parseGoogleSubscriptionPurchase(
   input: GooglePlayVerificationInput,
   now: number,
 ): VerifiedGooglePlayPurchase {
+  const status = parseGoogleSubscriptionStatus(response, input, now);
+  if (!status.entitled) {
+    throw new GooglePlayVerificationError("Google Play subscription is not entitled.");
+  }
+  if (status.purchasedAt === undefined) {
+    throw new GooglePlayVerificationError("Google Play subscription start time is invalid.");
+  }
+  return {
+    kind: "subscription",
+    productId: input.productId,
+    storeProductId: status.storeProductId,
+    // BillingClient may retain the initial subscription order while V2 exposes the newest
+    // renewal order. The verified token/product/expiry are authoritative; store Google's latest
+    // order for uniqueness instead of rejecting a legitimate renewal on that expected mismatch.
+    orderId: serverOrderId(status.orderId),
+    purchasedAt: status.purchasedAt,
+    expiresAt: status.expiresAt,
+    subscriptionState: status.subscriptionState,
+  };
+}
+
+/**
+ * Parse a successful status response without conflating non-entitlement with transport failure.
+ *
+ * Background reconciliation may shorten entitlement only after Google returned a structurally
+ * valid resource. HTTP/authentication failures never reach this function and are retryable, so a
+ * credential outage cannot revoke every subscriber. Canceled remains entitled through expiry,
+ * matching Play's documented access rule; paused and on-hold stop benefits immediately.
+ */
+export function parseGoogleSubscriptionStatus(
+  response: GoogleSubscriptionPurchaseV2Response,
+  input: Pick<GooglePlayVerificationInput, "packageName" | "productId">,
+  now: number,
+): GooglePlaySubscriptionStatus {
+  const knownStates = new Set([
+    "SUBSCRIPTION_STATE_UNSPECIFIED",
+    "SUBSCRIPTION_STATE_PENDING",
+    "SUBSCRIPTION_STATE_ACTIVE",
+    "SUBSCRIPTION_STATE_PAUSED",
+    "SUBSCRIPTION_STATE_IN_GRACE_PERIOD",
+    "SUBSCRIPTION_STATE_ON_HOLD",
+    "SUBSCRIPTION_STATE_CANCELED",
+    "SUBSCRIPTION_STATE_EXPIRED",
+    "SUBSCRIPTION_STATE_PENDING_PURCHASE_CANCELED",
+  ]);
   const entitledStates = new Set([
     "SUBSCRIPTION_STATE_ACTIVE",
     "SUBSCRIPTION_STATE_IN_GRACE_PERIOD",
     "SUBSCRIPTION_STATE_CANCELED",
   ]);
-  if (!response.subscriptionState || !entitledStates.has(response.subscriptionState)) {
-    throw new GooglePlayVerificationError("Google Play subscription is not entitled.");
+  if (!response.subscriptionState) {
+    throw new GooglePlayVerificationError("Google Play subscription state is invalid.");
+  }
+  // New API states require an explicit entitlement decision. Failing the check is safer than
+  // interpreting an unknown future state as revoked and shortening paid access accidentally.
+  if (!knownStates.has(response.subscriptionState)) {
+    throw new GooglePlayVerificationError("Google Play returned an unknown subscription state.", true);
   }
   const storeProductId = googlePlayStoreProductId(input.packageName, input.productId);
   const matching = (response.lineItems ?? []).filter((item) => item.productId === storeProductId);
-  if (matching.length === 0) throw new GooglePlayVerificationError("Google Play subscription product does not match.");
-  const latest = matching.reduce((best, item) => {
+  const latest = matching.reduce<{ item?: NonNullable<GoogleSubscriptionPurchaseV2Response["lineItems"]>[number]; expiry: number }>((best, item) => {
     const expiry = unixSeconds(item.expiryTime, "subscription expiry");
     return expiry > best.expiry ? { item, expiry } : best;
-  }, { item: matching[0]!, expiry: 0 });
-  if (latest.expiry <= now) throw new GooglePlayVerificationError("Google Play subscription is expired.");
+  }, { expiry: 0 });
+  const purchasedAt = response.startTime === undefined
+    ? undefined
+    : unixSeconds(response.startTime, "subscription start time");
   return {
-    kind: "subscription",
-    productId: input.productId,
+    subscriptionState: response.subscriptionState,
+    entitled: entitledStates.has(response.subscriptionState) && latest.expiry > now,
     storeProductId,
-    // BillingClient may retain the initial subscription order while V2 exposes the newest
-    // renewal order. The verified token/product/expiry are authoritative; store Google's latest
-    // order for uniqueness instead of rejecting a legitimate renewal on that expected mismatch.
-    orderId: serverOrderId(latest.item.latestSuccessfulOrderId),
-    purchasedAt: unixSeconds(response.startTime, "subscription start time"),
-    expiresAt: latest.expiry,
+    orderId: latest.item?.latestSuccessfulOrderId,
+    purchasedAt,
+    expiresAt: latest.expiry > 0 ? latest.expiry : undefined,
   };
 }
 
@@ -141,11 +206,56 @@ export interface GooglePlayPurchaseVerifier {
   verify(input: GooglePlayVerificationInput, now: number): Promise<VerifiedGooglePlayPurchase>;
 }
 
+export interface GooglePlaySubscriptionStatusVerifier {
+  getSubscriptionStatus(
+    input: GooglePlaySubscriptionStatusInput,
+    now: number,
+  ): Promise<GooglePlaySubscriptionStatus>;
+}
+
 /** Production verifier backed by Google Application Default Credentials. */
-export class GooglePlayDeveloperApiVerifier implements GooglePlayPurchaseVerifier {
+export class GooglePlayDeveloperApiVerifier implements GooglePlayPurchaseVerifier, GooglePlaySubscriptionStatusVerifier {
   private readonly auth = new GoogleAuth({ scopes: [androidPublisherScope] });
 
+  async getSubscriptionStatus(
+    input: GooglePlaySubscriptionStatusInput,
+    now: number,
+  ): Promise<GooglePlaySubscriptionStatus> {
+    const packageName = encodeURIComponent(input.packageName);
+    const token = encodeURIComponent(input.purchaseToken);
+    try {
+      const client = await this.auth.getClient();
+      const response = await client.request<GoogleSubscriptionPurchaseV2Response>({
+        method: "GET",
+        url: `${publisherRoot}/${packageName}/purchases/subscriptionsv2/tokens/${token}`,
+      });
+      return parseGoogleSubscriptionStatus(response.data, input, now);
+    } catch (error) {
+      if (error instanceof GooglePlayVerificationError) throw error;
+      // A status endpoint error proves nothing about entitlement. Even 4xx responses can be a
+      // deployment package/permission mistake, so every transport/auth error is retried and can
+      // never shorten a player's current subscription.
+      throw new GooglePlayVerificationError("Google Play subscription status check failed.", true);
+    }
+  }
+
   async verify(input: GooglePlayVerificationInput, now: number): Promise<VerifiedGooglePlayPurchase> {
+    if (input.entitlement.kind === "subscription") {
+      const status = await this.getSubscriptionStatus(input, now);
+      if (!status.entitled) throw new GooglePlayVerificationError("Google Play subscription is not entitled.");
+      if (status.purchasedAt === undefined) {
+        throw new GooglePlayVerificationError("Google Play subscription start time is invalid.");
+      }
+      return {
+        kind: "subscription",
+        productId: input.productId,
+        storeProductId: status.storeProductId,
+        orderId: serverOrderId(status.orderId),
+        purchasedAt: status.purchasedAt,
+        expiresAt: status.expiresAt,
+        subscriptionState: status.subscriptionState,
+      };
+    }
     const packageName = encodeURIComponent(input.packageName);
     const token = encodeURIComponent(input.purchaseToken);
     try {
@@ -153,13 +263,6 @@ export class GooglePlayDeveloperApiVerifier implements GooglePlayPurchaseVerifie
       // block so missing/revoked deployment credentials become a classified transient failure
       // instead of escaping as an unrelated generic backend error.
       const client = await this.auth.getClient();
-      if (input.entitlement.kind === "subscription") {
-        const response = await client.request<GoogleSubscriptionPurchaseV2Response>({
-          method: "GET",
-          url: `${publisherRoot}/${packageName}/purchases/subscriptionsv2/tokens/${token}`,
-        });
-        return parseGoogleSubscriptionPurchase(response.data, input, now);
-      }
       const storeProductId = encodeURIComponent(googlePlayStoreProductId(input.packageName, input.productId));
       const response = await client.request<GoogleProductPurchaseResponse>({
         method: "GET",

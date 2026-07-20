@@ -80,6 +80,13 @@ export interface PlayerProgressionState {
   vipExpiration?: number;
   /** SubscriptionManager.Subscription plus the timer boundary consumed by DogTagManager. */
   subscription?: PlayerSubscriptionState;
+  /**
+   * HMAC receipt key that currently owns the subscription projection above.
+   *
+   * This value is private and is never included in PlayerData. It prevents an older canceled
+   * token from revoking a newer replacement subscription when background checks run out of order.
+   */
+  subscriptionAuthorityReceiptId?: string;
   /** True only after the authenticated account completes action 120 once. */
   tutorialFinished?: boolean;
   /** Server-issued tutorial battle receipt consumed by TutorialEnded. */
@@ -888,6 +895,21 @@ export interface PurchaseReceiptDocument extends Document {
   purchasedAt: Date;
   verifiedAt: Date;
   response: Record<string, string | number | boolean>;
+  /** Authenticated ciphertext required only for later subscription status checks. */
+  encryptedPurchaseToken?: {
+    version: 1;
+    iv: string;
+    authTag: string;
+    ciphertext: string;
+  };
+  /** Last successfully observed subscriptionsv2 state and expiry. */
+  subscriptionState?: string;
+  subscriptionExpiresAt?: Date;
+  /** Durable retry cursor shared by every backend node. */
+  revalidateAfter?: Date;
+  lastRevalidatedAt?: Date;
+  revalidationFailures?: number;
+  revokedAt?: Date;
 }
 
 let purchaseReceiptsCollection: Collection<PurchaseReceiptDocument> | null = null;
@@ -1010,6 +1032,14 @@ export async function connectMongo(): Promise<void> {
   );
   // One pointer per client version identifies the only complete revision visible to readers.
   await gameCatalogReleasesCollection.createIndex({ clientVersion: 1 }, { unique: true });
+
+  // Only subscription rows carry a revalidation cursor. The partial index keeps the background
+  // sweep bounded without adding index entries for immutable one-time currency receipts.
+  await purchaseReceiptsCollection.createIndex(
+    { revalidateAfter: 1, _id: 1 },
+    { partialFilterExpression: { kind: "subscription", revalidateAfter: { $exists: true } } },
+  );
+  await purchaseReceiptsCollection.createIndex({ orderId: 1 }, { unique: true, sparse: true });
 
   // Publish checked-in client data during boot. syncGameCatalog writes every immutable entry
   // before moving the release pointer, so a process failure cannot expose half a catalog.
