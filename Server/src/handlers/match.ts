@@ -27,6 +27,11 @@ import {
   settleWarcardsTutorial,
   startWarcardsTutorial,
 } from "../services/warcardsTutorialService";
+import {
+  findFriendlyBattle,
+  settleFriendlyBattle,
+  startFriendlyBattle,
+} from "../services/friendlyBattleService";
 
 // PvP match lifecycle reported to the meta server. Live event traffic runs over /hub, while
 // these actions preserve compatibility with the recovered client's Photon-era REST calls.
@@ -90,11 +95,23 @@ async function rentalFieldsAfterBattle(
 }
 
 export const matchHandlers: Record<number, HandlerEntry> = {
-  // These reports are lifecycle telemetry only. Match ownership is established when the
-  // matchmaking service creates the persistent match row; a start report cannot create or
-  // join an arbitrary match by itself.
+  // Ranked reports are lifecycle telemetry only: matchmaking establishes their persistent
+  // match ownership, so a start report cannot create or join an arbitrary rewarded match.
+  // IsMatchMaking=0 is different only in that it creates a separate zero-reward friendly
+  // receipt; that collection has no path into ranked settlement or progression mutations.
   [DbAction.GameStartedMaster]: authed(async ({ player, req }) => {
     if (!enabled(req.IsWarArenaBattle)) {
+      if (req.IsMatchMaking !== undefined && !enabled(req.IsMatchMaking)) {
+        // Direct challenges are already connected through the Photon room embedded in the
+        // accepted inbox message. Action 64 supplies the room's battleID but no opponent/message
+        // identifier, so create only this authenticated participant's no-reward lifecycle proof.
+        const result = await startFriendlyBattle(
+          player!.id,
+          matchId(req),
+          DbAction.GameStartedMaster,
+        );
+        return ok(DbAction.GameStartedMaster, { Time: unixNow(), Replayed: result.replayed });
+      }
       // StartTutorialMatch deliberately enters the normal offline deathmatch controller. Its
       // LoadingStarted callback therefore looks like an ordinary bot action 64: matchmaking is
       // enabled and BotId is present, but there is no dedicated tutorial flag until GameEnded.
@@ -114,7 +131,17 @@ export const matchHandlers: Record<number, HandlerEntry> = {
     return ok(DbAction.GameStartedMaster, { ...result.response, Time: unixNow(), Replayed: result.replayed });
   }),
   [DbAction.GameStartedClient]: authed(async ({ player, req }) => {
-    if (!enabled(req.IsWarArenaBattle)) return ok(DbAction.GameStartedClient, { Time: unixNow() });
+    if (!enabled(req.IsWarArenaBattle)) {
+      if (req.IsMatchMaking !== undefined && !enabled(req.IsMatchMaking)) {
+        const result = await startFriendlyBattle(
+          player!.id,
+          matchId(req),
+          DbAction.GameStartedClient,
+        );
+        return ok(DbAction.GameStartedClient, { Time: unixNow(), Replayed: result.replayed });
+      }
+      return ok(DbAction.GameStartedClient, { Time: unixNow() });
+    }
     const result = await startWarArenaBattle(player!.id, matchId(req));
     return ok(DbAction.GameStartedClient, { ...result.response, Time: unixNow(), Replayed: result.replayed });
   }),
@@ -184,6 +211,41 @@ export const matchHandlers: Record<number, HandlerEntry> = {
         LevelExperience: result.state.levelExperience,
         // Time is included for parity with the other lifecycle responses and lets repaired
         // clients correct clock drift. The stock mission parser safely ignores it.
+        Time: unixNow(),
+        Replayed: result.replayed,
+      });
+    }
+
+    const friendlyReceipt = id ? await findFriendlyBattle(player!.id, id) : null;
+    if (friendlyReceipt) {
+      // GameEnded does not repeat IsMatchMaking, so the participant/battle receipt is the only
+      // durable discriminator between a direct challenge and ranked PvP. Branch before match
+      // lookup and UsedCards parsing: challenges may display local combat/assignment animation,
+      // but recovered EndScreen code suppresses ranked result/reward panels and no challenge
+      // event is authoritative enough to spend cards or advance backend objectives.
+      const result = await settleFriendlyBattle(
+        player!.id,
+        id,
+        integer(req.EndReason, "EndReason"),
+      );
+      const progression = progressionForPlayer(player!);
+      return ok(DbAction.GameEnded, {
+        Settled: true,
+        ResultStatus: "friendly-finished",
+        FriendlyBattle: true,
+        // The stock result parser dereferences GameReward whenever Skill is present. A complete
+        // zero-valued object reports successful lifecycle completion without minting anything.
+        GameReward: pvpGameReward(true),
+        ...pvpLevelFields(
+          player!.player.level,
+          player!.player.level,
+          progression.levelExperience,
+        ),
+        Skill: player!.player.skill,
+        MedalsBalance: player!.player.medalsBalance,
+        PlacementMatchesRequired: player!.player.remainingMatches,
+        BeginnersLeague: player!.player.beginnersLeague,
+        MatchesToNextLootboxes: progression.matchesToNextLootboxes ?? VIP_LOOTBOX_MATCH_INTERVAL,
         Time: unixNow(),
         Replayed: result.replayed,
       });

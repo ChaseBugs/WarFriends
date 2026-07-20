@@ -804,6 +804,30 @@ export interface AuthRateLimitDocument {
   expiresAt: Date;
 }
 
+/**
+ * Server-only lifecycle receipt for one participant in a direct PvP challenge.
+ *
+ * The recovered Photon client creates the room before it sends the inbox challenge. The room
+ * owns `battleID`, and each participant later submits action 64/65 with `IsMatchMaking=0`.
+ * There is no message ID or room name in those start requests, so this receipt is deliberately
+ * keyed by the only stable tuple available on both the start and GameEnded calls: authenticated
+ * player ID plus battle ID. Friendly battles never enter the ranked `matches` collection and
+ * therefore can never reach its reward, league, medal, War Card, or squad-event settlement.
+ */
+export interface FriendlyBattleDocument {
+  playerId: string;
+  battleId: string;
+  /** 64 for the Photon master, 65 for the Photon client. */
+  startAction: 64 | 65;
+  state: "active" | "finished";
+  startedAt: Date;
+  settledAt?: Date;
+  /** Exact recovered PvP EndReason accepted by the no-reward settlement. */
+  endReason?: 1 | 2 | 3 | 5 | 8;
+  /** Storage cleanup only; application-level state checks never depend on TTL timing. */
+  expiresAt: Date;
+}
+
 const client = new MongoClient(config.mongoUrl, { maxPoolSize: config.mongoPoolSize });
 
 let db: Db | null = null;
@@ -816,6 +840,7 @@ let messagesCollection: Collection<Document> | null = null;
 let identitiesCollection: Collection<IdentityDocument> | null = null;
 let reportsCollection: Collection<Document> | null = null;
 let authRateLimitsCollection: Collection<AuthRateLimitDocument> | null = null;
+let friendlyBattlesCollection: Collection<FriendlyBattleDocument> | null = null;
 let gameCatalogEntriesCollection: Collection<GameCatalogEntryDocument> | null = null;
 let gameCatalogReleasesCollection: Collection<GameCatalogReleaseDocument> | null = null;
 
@@ -832,6 +857,7 @@ export async function connectMongo(): Promise<void> {
   identitiesCollection = db.collection<IdentityDocument>("identities");
   reportsCollection = db.collection("playerReports");
   authRateLimitsCollection = db.collection<AuthRateLimitDocument>("authRateLimits");
+  friendlyBattlesCollection = db.collection<FriendlyBattleDocument>("friendlyBattles");
   gameCatalogEntriesCollection = db.collection<GameCatalogEntryDocument>("gameCatalogEntries");
   gameCatalogReleasesCollection = db.collection<GameCatalogReleaseDocument>("gameCatalogReleases");
 
@@ -896,6 +922,11 @@ export async function connectMongo(): Promise<void> {
   // a second account directory. MongoDB removes inactive windows after their safety margin.
   await authRateLimitsCollection.createIndex({ key: 1 }, { unique: true });
   await authRateLimitsCollection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+
+  // A reconnect or lost HTTP response may repeat the same challenge start. The compound unique
+  // key turns every process into the same idempotent writer, while TTL bounds telemetry storage.
+  await friendlyBattlesCollection.createIndex({ playerId: 1, battleId: 1 }, { unique: true });
+  await friendlyBattlesCollection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
   // Catalog entries are immutable per content revision. The four-part unique key makes a
   // repeated startup idempotent while still retaining prior recovered releases for audit and
@@ -995,6 +1026,10 @@ export function reports(): Collection<Document> {
 
 export function authRateLimits(): Collection<AuthRateLimitDocument> {
   return requireCollection("authRateLimits", authRateLimitsCollection);
+}
+
+export function friendlyBattles(): Collection<FriendlyBattleDocument> {
+  return requireCollection("friendlyBattles", friendlyBattlesCollection);
 }
 
 export function gameCatalogEntries(): Collection<GameCatalogEntryDocument> {
