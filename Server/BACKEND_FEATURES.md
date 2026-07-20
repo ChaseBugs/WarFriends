@@ -105,6 +105,15 @@ re-read from the squad roster in that transaction instead of trusting the profil
 removes the former best-effort post-commit window in which a crash could permanently lose progress;
 finished-match retries return the immutable receipt without applying any counter again.
 
+### Current economy-safety increment
+
+Starter and daily assignments, assignment mega rewards, achievements, reward-bearing inbox
+messages, Elite-parts conversion, and War Arena Scraps now share one checked reward-addition path.
+The check accepts authoritative chargeback debt in an existing wallet, rejects negative or
+non-integer rewards, and rejects any sum outside JavaScript's safe-integer range. Each caller
+calculates the final balance before consuming its claim marker or terminal receipt, so invalid
+persisted data or an operator-configured overflow fails closed without losing the reward on retry.
+
 ## Implementation order
 
 1. Extend server-owned economy transactions to remaining combat-proven card consumption/rewards, Black Market selection/feature-weight/discount fidelity, and special/VIP offers; connect action 156 to provider-signed ad completion when a replacement ad SDK is selected.
@@ -118,6 +127,8 @@ finished-match retries return the immutable receipt without applying any counter
 
 - Never acknowledge an unimplemented gameplay mutation as successful.
 - Every currency, item, reward, and claim mutation must be atomic and idempotent.
+- Calculate server-authored rewards with checked safe-integer arithmetic before consuming the
+  corresponding claim marker or receipt; chargeback debt is valid existing state, not reward input.
 - The server must validate ownership, rank, match participation, price, capacity, and expiry.
 - Client-provided serialized blobs may be round-tripped but must not be trusted for rewards.
 - Add tests for contract field names, authorization failures, duplicate requests, and concurrency.

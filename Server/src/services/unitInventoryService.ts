@@ -26,6 +26,7 @@ import {
   weaponUpgradeInstantPrice,
 } from "./itemInventoryService";
 import { subscriptionUpgradeDeliverySeconds } from "./subscriptionBenefitService";
+import { checkedRewardBalance } from "./rewardMathService";
 
 /** IJEAJGCCHEF.CantEquipUnit, consumed by UpdateEquippedUnits rollback logic. */
 export const UNIT_CANT_EQUIP = 11406;
@@ -1147,11 +1148,12 @@ export function convertUnitPartsToScrapsState(
     );
   }
 
+  const scraps = checkedRewardBalance(state.scraps, authoritativeReward, "Elite-parts conversion Scraps");
   unit.parts = 0;
   const next: PlayerProgressionState = {
     ...state,
     revision: state.revision + 1,
-    scraps: state.scraps + authoritativeReward,
+    scraps,
     itemInventory,
   };
   return { state: next, itemInventory, unit, definition };

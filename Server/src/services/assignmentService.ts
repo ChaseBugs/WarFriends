@@ -8,6 +8,7 @@ import type {
   ProcessedRequestBuffer,
 } from "../db";
 import { mutateProgression } from "./progressionMutationService";
+import { checkedRewardBalance } from "./rewardMathService";
 import { advanceSquadChatCursorState } from "./squadSocialService";
 import {
   acknowledgeAchievementOffsetState,
@@ -287,13 +288,14 @@ export function claimAssignmentState(
     throw new ApiError(ASSIGNMENT_INCORRECT_REWARD, "Assignment reward does not match server balancing.");
   }
 
+  const gold = checkedRewardBalance(state.gold, template.gold, "Daily assignment Gold");
   assignment.claimed = true;
   assignments.completed += 1;
   assignments.megaReward += template.megaPoints;
   const rewardedState: PlayerProgressionState = {
     ...state,
     revision: state.revision + 1,
-    gold: state.gold + template.gold,
+    gold,
     assignments,
   };
   // Achievement group 12 reads StatsManager.assignmentsCompleted in the client. Counting
@@ -339,12 +341,13 @@ export function claimAssignmentMegaRewardState(
     throw new ApiError(ApiErrorCode.UnknownAction, "Assignment mega reward is not ready.");
   }
   const goldAdded = Math.max(0, Math.floor(config.assignmentMegaRewardGold));
+  const gold = checkedRewardBalance(state.gold, goldAdded, "Assignment mega-reward Gold");
   assignments.megaReward -= MEGA_REWARD_POINTS;
   return {
     state: {
       ...state,
       revision: state.revision + 1,
-      gold: state.gold + goldAdded,
+      gold,
       assignments,
     },
     assignments,

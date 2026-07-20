@@ -3,6 +3,7 @@ import type { PlayerProgressionState, WarArenaState } from "../db";
 import { advanceAchievementState } from "./achievementService";
 import { mutateProgression } from "./progressionMutationService";
 import { advanceRentalAfterBattleState } from "./rentalService";
+import { checkedRewardBalance } from "./rewardMathService";
 import {
   arenaPolicy,
   currentArenaId,
@@ -358,7 +359,8 @@ export function settleWarArenaBattleState(
     arena.runRewardClaimed = true;
     response.Scraps = awardedScraps;
   }
-  let next = withArena({ ...state, scraps: state.scraps + awardedScraps }, arena);
+  const scrapsAfterBattle = checkedRewardBalance(state.scraps, awardedScraps, "War Arena battle Scraps");
+  let next = withArena({ ...state, scraps: scrapsAfterBattle }, arena);
   if (won) {
     // AchievementWinArenaBattles reads the accepted Arena win count. Advancing inside this
     // receipt-consuming transition guarantees that a stored settlement replay cannot count the
@@ -499,10 +501,11 @@ export function claimWarArenaScrapsState(
     GameReward: { Gold: 0, IsVip: false },
   };
   arena.lastRunRewardResponse = cloneResponse(response);
+  const nextScraps = checkedRewardBalance(state.scraps, scraps, "War Arena run Scraps");
   return {
     // Claim state must persist even when an operator configures a zero-value fallback; otherwise
     // the same finished run remains perpetually claimable.
-    state: withArena({ ...state, scraps: state.scraps + scraps }, arena),
+    state: withArena({ ...state, scraps: nextScraps }, arena),
     arena,
     response,
     replayed: false,
@@ -529,10 +532,13 @@ export function endWarArenaState(
   }
   const response: Record<string, unknown> = { NewArena: warArenaConfiguration(now) };
   if (scraps > 0) response.Scraps = scraps;
+  const nextScraps = settledExpiredRun
+    ? checkedRewardBalance(state.scraps, scraps, "Expired War Arena Scraps")
+    : state.scraps;
   return {
     // Settlement and reward amount are separate facts. A zero-value operator policy must still
     // persist runRewardClaimed, whereas a genuine replay must preserve state identity.
-    state: settledExpiredRun ? withArena({ ...state, scraps: state.scraps + scraps }, arena) : state,
+    state: settledExpiredRun ? withArena({ ...state, scraps: nextScraps }, arena) : state,
     arena,
     response,
     replayed: !settledExpiredRun,

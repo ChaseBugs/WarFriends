@@ -8,6 +8,7 @@ import type {
 import { findById } from "./playerService";
 import { mutateProgression } from "./progressionMutationService";
 import { createInitialItemInventory } from "./itemInventoryService";
+import { checkedRewardBalance } from "./rewardMathService";
 
 /** Exact IJEAJGCCHEF values handled by the recovered RequestBuffer response parser. */
 export const STARTER_ASSIGNMENTS_INCORRECT = 18501;
@@ -226,13 +227,15 @@ export function claimStarterAssignmentState(
     throw new ApiError(STARTER_ASSIGNMENTS_INCORRECT, "Starter assignment rewards must be claimed in order.");
   }
 
+  const gold = checkedRewardBalance(state.gold, definition.gold, "Starter assignment Gold");
+  const warBucks = checkedRewardBalance(state.warBucks, definition.warBucks, "Starter assignment WarBucks");
   record.claimed = true;
   return {
     state: {
       ...state,
       revision: state.revision + 1,
-      gold: state.gold + definition.gold,
-      warBucks: state.warBucks + definition.warBucks,
+      gold,
+      warBucks,
       starterAssignments,
     },
     starterAssignments,

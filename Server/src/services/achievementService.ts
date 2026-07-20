@@ -7,6 +7,7 @@ import type {
 } from "../db";
 import { itemInventoryStateFor, weaponDefinitionFor } from "./itemInventoryService";
 import { mutateProgression } from "./progressionMutationService";
+import { checkedRewardBalance } from "./rewardMathService";
 import { UNIT_CATALOG } from "./unitInventoryService";
 import { VISUAL_CATALOG, visualInventoryStateFor } from "./visualInventoryService";
 
@@ -492,15 +493,19 @@ export function claimAchievementState(
     throw new ApiError(ACHIEVEMENT_REWARD_NOT_FOUND, "Achievement tier is not completed.");
   }
 
+  const gold = checkedRewardBalance(state.gold, definition.gold, "Achievement Gold");
+  const warBucks = checkedRewardBalance(state.warBucks, definition.warBucks, "Achievement WarBucks");
+  const scraps = checkedRewardBalance(state.scraps, definition.scraps, "Achievement Scraps");
+  const tickets = checkedRewardBalance(state.tickets, definition.tickets, "Achievement Tickets");
   group.progress[progressId].claimed = true;
   return {
     state: {
       ...state,
       revision: state.revision + 1,
-      gold: state.gold + definition.gold,
-      warBucks: state.warBucks + definition.warBucks,
-      scraps: state.scraps + definition.scraps,
-      tickets: state.tickets + definition.tickets,
+      gold,
+      warBucks,
+      scraps,
+      tickets,
       achievements,
     },
     achievements,

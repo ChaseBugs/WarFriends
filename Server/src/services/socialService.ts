@@ -11,6 +11,7 @@ import { ApiError, ApiErrorCode } from "../apiErrors";
 import { buildDatabasePlayer, progressionForPlayer } from "./playerStateService";
 import { config } from "../config";
 import { requireModeratedText } from "./textModerationService";
+import { checkedRewardBalance } from "./rewardMathService";
 
 // Player discovery + messaging (BACKEND.md §2.3 "Social / messaging / hit list"). Search
 // and directory reads project players to the client's summary shape; messages are stored
@@ -387,10 +388,11 @@ export async function claimMessageReward(playerId: string, messageId: string): P
     const player = await players().findOne({ id: playerId }, { session });
     if (!player) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
     const progression = progressionForPlayer(player);
+    const gold = checkedRewardBalance(progression.gold, reward.Gold, "Inbox Gold");
     const nextProgression = canonicalProgression({
       ...progression,
       revision: progression.revision + 1,
-      gold: progression.gold + reward.Gold,
+      gold,
     });
     const response = reward;
 
