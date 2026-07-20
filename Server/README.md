@@ -104,6 +104,11 @@ Working end-to-end (verified live):
   memory-bounded token bucket keyed by an HMAC-hidden client address. Reverse-proxy addresses are
   trusted only when `TRUST_PROXY_HOPS` is explicitly configured; rejected bursts receive HTTP 429
   and `Retry-After` without reaching request parsing or game handlers.
+- **Photon-region profile compatibility**: action `140` validates and atomically persists the
+  recovered ten-region latency dictionary plus `None`/`Cellural`/`Wifi` connection type.
+  Public `DatabasePlayer` snapshots restore the exact `Regions: { S: "..." }` contract used by
+  stock challenge/PvP code to choose the lowest combined-latency region. These client-measured
+  values remain routing hints and never authorize a match result or gameplay reward.
 - **Squads (core membership)**: create / unique-name check / public or requested join /
   invite / accept / decline / promote / demote / kick / leadership transfer / guarded
   leave, plus details and full member snapshots. Client ranks exactly mirror

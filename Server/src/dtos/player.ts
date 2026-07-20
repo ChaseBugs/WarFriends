@@ -54,6 +54,11 @@ export interface DatabasePlayerDTO {
   visualTimestamp: number;
   influencerLink: string;
   influencerAlias: string;
+  /**
+   * Last bounded Photon-region latency sample submitted through action 140.
+   * Optional because player documents created before region recovery do not contain it.
+   */
+  bestRegions?: Record<string, number>;
   connectionType: number;
 
   deviceToken: string;
@@ -101,6 +106,7 @@ export function newPlayer(id: string, accountName: string, accountType: AccountT
     visualTimestamp: 0,
     influencerLink: "",
     influencerAlias: "",
+    bestRegions: {},
     connectionType: 0,
     deviceToken: "",
     sendLogsValue: 0,

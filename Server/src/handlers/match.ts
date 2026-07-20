@@ -21,6 +21,8 @@ import logger from "../utils/logger";
 import { playerLeagueBootFields } from "../services/playerLeagueContract";
 import { advanceRentalAfterBattle } from "../services/rentalService";
 import { VIP_LOOTBOX_MATCH_INTERVAL } from "../services/vipLootboxService";
+import { parseInternetConnection, parseRegionPings } from "../services/regionPingService";
+import { updatePlayerFields } from "../services/playerService";
 
 // PvP match lifecycle reported to the meta server. Live event traffic runs over /hub, while
 // these actions preserve compatibility with the recovered client's Photon-era REST calls.
@@ -287,9 +289,18 @@ export const matchHandlers: Record<number, HandlerEntry> = {
     });
   }),
 
-  // Region latency persistence remains a follow-up; acknowledging this read-like hint does
-  // not change match ownership or rewards.
-  [DbAction.UpdateRegionPings]: authed(() => ok(DbAction.UpdateRegionPings)),
+  [DbAction.UpdateRegionPings]: authed(async ({ player, req }) => {
+    const bestRegions = parseRegionPings(req.Regions);
+    const connectionType = parseInternetConnection(req.Connection);
+    // Both values describe one network sample and must become visible together. The generic
+    // partial-profile writer emits one MongoDB update and cannot overwrite progression or a
+    // concurrent squad/match field. These client measurements remain routing hints only.
+    await updatePlayerFields(player!.id, { bestRegions, connectionType });
+    player!.player.bestRegions = bestRegions;
+    player!.player.connectionType = connectionType;
+    // BGHANIMKJBP is intentionally empty; the stock callback only needs a successful Result.
+    return ok(DbAction.UpdateRegionPings);
+  }),
 
   // The replacement WebSocket relay does not have Photon room-capacity failures. The action
   // remains an explicit compatibility acknowledgement so it is not mistaken for settlement.

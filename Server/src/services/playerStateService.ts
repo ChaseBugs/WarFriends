@@ -182,6 +182,13 @@ export function buildDatabasePlayer(document: PlayerDocument): Record<string, un
   if (dto.facebookId !== -1) wire.FacebookId = { S: String(dto.facebookId) };
   if (dto.gameCenterId) wire.GameCenterId = { S: dto.gameCenterId };
   if (dto.googlePlayId) wire.GooglePlayId = { S: dto.googlePlayId };
+  if (dto.bestRegions && Object.keys(dto.bestRegions).length > 0) {
+    // DatabasePlayer.CreateFromDatabase reads this exact Dynamo-style string and deserializes
+    // it into Dictionary<CloudRegionCode,int>. Challenge setup then chooses the region with
+    // the lowest combined local/opponent ping. Connection type is local-only in the stock
+    // parser, so it is persisted for diagnostics but deliberately not invented on this wire.
+    wire.Regions = stringAttribute(dto.bestRegions);
+  }
   if (itemInventory) {
     // Public player snapshots use the same server-owned objects as private PlayerData. This
     // keeps profile/challenge views synchronized without duplicating mutable inventory in
