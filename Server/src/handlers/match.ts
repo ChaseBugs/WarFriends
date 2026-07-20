@@ -224,7 +224,19 @@ export const matchHandlers: Record<number, HandlerEntry> = {
         rewardReceipt?.isVip ?? false,
         rewardReceipt?.newVisuals,
         rewardReceipt?.baseWarBucks ?? rewardReceipt?.warBucks ?? 0,
+        rewardReceipt?.baseWinStreakWarBucks ?? rewardReceipt?.winStreakWarBucks ?? 0,
       ),
+      // DMGJCGJDDID restores WinStreakManager only when WinCount is present. Return the
+      // immutable pair for both wins and losses (zero clears a lost streak); never emit it
+      // for a pending/conflicting report whose progression has not been committed.
+      ...(resultAvailable && rewardReceipt
+        ? {
+          // Legacy finished matches predate streak receipts. Zero is the safe migration:
+          // it preserves idempotency and asks the stock client to clear, never invent, state.
+          WinCount: rewardReceipt.winCount ?? 0,
+          TimeStamp: rewardReceipt.winStreakTimestamp ?? 0,
+        }
+        : {}),
       // OGLEHLIPEFM stores this outer field directly in PlayerAnalyticsData. Prefer the
       // immutable settlement receipt so a delayed retry returns the exact countdown that
       // accompanied its lootboxes even if later matches have already advanced live state.

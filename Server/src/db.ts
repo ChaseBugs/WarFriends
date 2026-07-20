@@ -148,6 +148,14 @@ export interface PlayerProgressionState {
    * while the matching inventory cards and PvP rewards commit together.
    */
   warCardsPlayed?: number;
+  /**
+   * Server-owned timed ranked-PvP win streak.
+   *
+   * Unity persists the public equivalent as a serialized `WinStreak` object with
+   * `WinCount` and `TimeStamp`. Lower-case names here keep private authority distinct from
+   * that wire model and prevent the client from choosing its own reward tier.
+   */
+  pvpWinStreak?: PvpWinStreakState;
   /** Private proof used by StarterAssignmentCraftCard; never serialized inside CraftData. */
   goldCardsCrafted?: number;
   /**
@@ -206,6 +214,11 @@ export interface PlayerProgressionState {
   rental?: RentalOfferState;
   /** Bounded replay cache for the stock client's batched RequestBuffer transport. */
   processedRequestBuffers?: ProcessedRequestBuffer[];
+}
+
+export interface PvpWinStreakState {
+  winCount: number;
+  timestamp: number;
 }
 
 /** BlackMarketManager.OfferedWeapon from the recovered 1.6.0 client. */

@@ -79,7 +79,7 @@ therefore includes the minimum exact object:
   "Warbucks": {
     "BattleRewards": 800,
     "ExtraRewards": 0,
-    "Winstreak": 0,
+    "Winstreak": 400,
     "League": 0,
     "offerMult": 1
   },
@@ -115,6 +115,22 @@ mint arbitrary currency. Active VIP settlement persists 1.5 times the base using
 positive float-to-int truncation, while the response sends the base plus `IsVip=true` so the
 client applies that decoded multiplier exactly once.
 
+## Timed win-streak rewards
+
+Ranked wins now advance a private server-owned streak and return the recovered outer `WinCount`
+and `TimeStamp` fields consumed by `DMGJCGJDDID`. `GetPlayerData` also restores the same values
+through the serialized nested type key `WinStreak`, so reconnecting no longer erases the lobby
+counter. The decoded `WinstreakInterval` is 200 seconds: the next confirmed win continues only
+while `previous TimeStamp + 200 > settlement time`; equality is expired. A loss clears the state.
+
+The verified MainScene `WinstreakReward1..9` WarBucks values are 400, 700, 1000, 1400, 1800,
+2200, 2600, 3000, and 3600. They are stored in `GameReward.Warbucks.Winstreak` separately from
+the base win/loss grant because the client applies and truncates the VIP 1.5x multiplier separately
+for each component. The nominal tenth scene row decodes to `1.5`, identical to the VIP multiplier
+and not a credible currency value. Until an archived live reward document is recovered, the server
+explicitly caps both streak count and reward at the ninth verified tier rather than inventing a
+tenth payout.
+
 `LevelExperience` is returned on every outcome because the parser reads it unconditionally.
 `Level` is different: its presence is a transition marker, and the client sets
 `LevelManager.isLevelUp = true` whenever the key exists. The server therefore emits `Level` only
@@ -129,7 +145,8 @@ then included in a full authoritative Army Power recomputation.
 
 Level progress, Gold, public level, Army Power, card consumption, periodic VIP visual parts,
 duplicate WarBucks, match rewards, and the terminal match state share the same MongoDB transaction.
-The match stores an immutable per-player receipt containing WarBucks, XP, Gold, old/new level, remaining
+The match stores an immutable per-player receipt containing base/streak WarBucks, streak state,
+XP, Gold, old/new level, remaining
 level XP, the post-match VIP lootbox countdown, and the exact optional `GameReward.NewVisuals`
 dictionary string. A finished `GameEnded` retry can therefore reproduce the original
 `GameReward.GameGold`, conditional `Level`, `MatchesToNextLootboxes`, and suitcase pair without

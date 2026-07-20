@@ -230,6 +230,13 @@ export function buildPlayerData(player: PlayerDocument): PlayerDataMap {
   addSerializedObject(data, "CardManagerData", state.cardInventory);
   addSerializedObject(data, "CraftData", state.cardCrafting);
   addSerializedObject(data, "StatisticsData", dto.statisticsData);
+  // WinStreakManager derives from DatabaseSerializedObjectGeneric<WinStreak>. Restore the
+  // server-owned streak on every boot; otherwise LoadEmpty silently resets the lobby timer
+  // after reconnect even though subsequent settlement still sees the durable streak.
+  addSerializedObject(data, "WinStreak", {
+    WinCount: state.pvpWinStreak?.winCount ?? 0,
+    TimeStamp: state.pvpWinStreak?.timestamp ?? 0,
+  });
   if (state.blackMarket) {
     // BlackMarketManager inherits DatabaseSerializedObjectGeneric<BlackMarketOfferData>, so
     // the boot lookup key is the nested type name. Action 217 uses the historic response key

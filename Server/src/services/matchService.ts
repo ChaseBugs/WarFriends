@@ -1,6 +1,13 @@
 import { randomUUID } from "crypto";
 import type { ClientSession } from "mongodb";
-import { matches, players, squads, withMongoTransaction, type PlayerProgressionState } from "../db";
+import {
+  matches,
+  players,
+  squads,
+  withMongoTransaction,
+  type PlayerProgressionState,
+  type PvpWinStreakState,
+} from "../db";
 import { findById, updatePlayerFields } from "./playerService";
 import { PlayerStatus } from "../constants";
 import logger from "../utils/logger";
@@ -132,6 +139,81 @@ export const VIP_LEVEL_GOLD_MULTIPLIER = 2;
 /** `VipWarbucksMultiplier` decoded from the 4.9.5 MainScene Constants component. */
 export const VIP_BATTLE_WARBUCKS_MULTIPLIER = 1.5;
 
+/** `WinstreakInterval` decoded from the 4.9.5 MainScene Constants component. */
+export const PVP_WIN_STREAK_INTERVAL_SECONDS = 200;
+
+/**
+ * Source-decoded WarBucks tiers for consecutive ranked wins.
+ *
+ * MainScene contains exact currency values for WinstreakReward1..9. Its nominal tenth row
+ * decodes to 1.5 (the same value as VipWarbucksMultiplier), which is not a plausible currency
+ * grant and indicates retired/live-data drift in this recovered scene. The offline backend
+ * therefore caps both count and payout at the ninth verified tier instead of inventing a
+ * tenth amount or paying one WarBuck. Replace this explicit cap only if the archived live
+ * reward document is recovered.
+ */
+export const PVP_WIN_STREAK_WARBUCKS = Object.freeze([
+  400,
+  700,
+  1_000,
+  1_400,
+  1_800,
+  2_200,
+  2_600,
+  3_000,
+  3_600,
+] as const);
+
+export interface PvpWinStreakTransition {
+  state: PvpWinStreakState;
+  baseWarBucks: number;
+  warBucks: number;
+}
+
+/**
+ * Advance the timed streak from a server-confirmed result and derive its immutable payout.
+ *
+ * The previous streak is active only while `timestamp + 200 > settledAt`, matching the
+ * recovered WinStreak.deadline strict comparison. Future/corrupt timestamps are not allowed
+ * to preserve a streak forever. A loss clears both fields. A win after expiry starts again at
+ * tier one; an in-window win advances up to the last verified tier. VIP multiplication is
+ * calculated on this component separately because IIGFODGJBFA truncates BattleRewards and
+ * Winstreak independently before summing them.
+ */
+export function advancePvpWinStreak(
+  current: PvpWinStreakState | undefined,
+  won: boolean,
+  isVip: boolean,
+  settledAtUnix: number,
+): PvpWinStreakTransition {
+  if (!Number.isSafeInteger(settledAtUnix) || settledAtUnix < 0) {
+    throw new Error("PvP win-streak settlement time is invalid.");
+  }
+  if (!won) return { state: { winCount: 0, timestamp: 0 }, baseWarBucks: 0, warBucks: 0 };
+
+  const previousCount = Number.isSafeInteger(current?.winCount) && current!.winCount > 0
+    ? Math.min(current!.winCount, PVP_WIN_STREAK_WARBUCKS.length)
+    : 0;
+  const previousTimestamp = Number.isSafeInteger(current?.timestamp) && current!.timestamp >= 0
+    ? current!.timestamp
+    : 0;
+  const continues = previousCount > 0
+    && previousTimestamp <= settledAtUnix
+    && previousTimestamp + PVP_WIN_STREAK_INTERVAL_SECONDS > settledAtUnix;
+  const winCount = continues
+    ? Math.min(previousCount + 1, PVP_WIN_STREAK_WARBUCKS.length)
+    : 1;
+  const baseWarBucks = PVP_WIN_STREAK_WARBUCKS[winCount - 1];
+  const warBucks = isVip
+    ? Math.trunc(baseWarBucks * VIP_BATTLE_WARBUCKS_MULTIPLIER)
+    : baseWarBucks;
+  return {
+    state: { winCount, timestamp: settledAtUnix },
+    baseWarBucks,
+    warBucks,
+  };
+}
+
 function configuredNonNegativeInteger(value: number, fallback: number): number {
   // Environment configuration is an operator-controlled economy input, but it still must
   // not introduce NaN, fractions, negative grants, or integers Mongo/JavaScript cannot
@@ -214,6 +296,7 @@ export function pvpGameReward(
   isVip = false,
   newVisuals?: string,
   battleWarBucks = 0,
+  winStreakWarBucks = 0,
 ): Record<string, unknown> {
   return {
     Warbucks: {
@@ -222,7 +305,7 @@ export function pvpGameReward(
       // parser to apply its local 1.5x constant exactly once for display and wallet parity.
       BattleRewards: resultAvailable ? battleWarBucks : 0,
       ExtraRewards: 0,
-      Winstreak: 0,
+      Winstreak: resultAvailable ? winStreakWarBucks : 0,
       League: 0,
       offerMult: 1,
     },
@@ -296,6 +379,13 @@ export interface MatchPlayerReward {
   baseWarBucks: number;
   /** Actual normal battle WarBucks committed after the settlement-time VIP multiplier. */
   warBucks: number;
+  /** Unmultiplied Warbucks.Winstreak component selected from the verified scene tier. */
+  baseWinStreakWarBucks: number;
+  /** Actual win-streak component committed after its independent VIP multiplication. */
+  winStreakWarBucks: number;
+  /** Immutable outer GameEnded fields used to restore WinStreakManager on response/retry. */
+  winCount: number;
+  winStreakTimestamp: number;
   /** Unmultiplied Xp.BattleRewards value consumed by the stock client reward parser. */
   baseExperience: number;
   /** Actual XP committed to the player after the settlement-time VIP multiplier. */
@@ -351,6 +441,7 @@ async function settlePlayerCore(
   const isVip = Math.floor(initialState.vipExpiration ?? 0) > settlementUnix;
   const { baseExperience, experience } = pvpExperienceAmounts(won, isVip);
   const { baseWarBucks, warBucks } = pvpWarBucksAmounts(won, isVip);
+  const winStreak = advancePvpWinStreak(initialState.pvpWinStreak, won, isVip, settlementUnix);
   const medalDelta = won ? REWARDS.winMedals : REWARDS.loseMedals;
   const squadPoints = won && player.player.squadName ? REWARDS.winSquadPoints : 0;
   const consumed = consumePvpUsedCardsState(initialState, usedCards);
@@ -365,7 +456,9 @@ async function settlePlayerCore(
   if (vipLootboxes.state.gold > Number.MAX_SAFE_INTEGER - vipLevelGoldBonus) {
     throw new Error("PvP VIP level Gold balance overflowed.");
   }
-  if (vipLootboxes.state.warBucks > Number.MAX_SAFE_INTEGER - warBucks) {
+  const totalPvpWarBucks = warBucks + winStreak.warBucks;
+  if (!Number.isSafeInteger(totalPvpWarBucks)
+    || vipLootboxes.state.warBucks > Number.MAX_SAFE_INTEGER - totalPvpWarBucks) {
     throw new Error("PvP WarBucks balance overflowed.");
   }
   // applyLevelExperienceState grants the source row's base Gold. Add only the VIP delta here
@@ -374,7 +467,8 @@ async function settlePlayerCore(
   const canonical = canonicalProgression({
     ...vipLootboxes.state,
     gold: vipLootboxes.state.gold + vipLevelGoldBonus,
-    warBucks: vipLootboxes.state.warBucks + warBucks,
+    warBucks: vipLootboxes.state.warBucks + totalPvpWarBucks,
+    pvpWinStreak: winStreak.state,
   });
   const levelChanged = leveled.levelTo !== leveled.levelFrom;
   const nextArmyPower = levelChanged
@@ -434,6 +528,10 @@ async function settlePlayerCore(
     reward: {
       baseWarBucks,
       warBucks,
+      baseWinStreakWarBucks: winStreak.baseWarBucks,
+      winStreakWarBucks: winStreak.warBucks,
+      winCount: winStreak.state.winCount,
+      winStreakTimestamp: winStreak.state.timestamp,
       baseExperience,
       experience,
       baseGold,

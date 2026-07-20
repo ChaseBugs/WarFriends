@@ -371,5 +371,8 @@ allowlist of analytics/impression actions is safely ignored.
   client-echoed reward values are never trusted. VIP's 1.5x WarBucks multiplier is source-decoded.
 - **REST result consensus** — `MATCH_RESULT_CONSENSUS_WAIT_MS` bounds the read-only wait that lets
   the first stock `GameEnded` request receive the receipt committed by the second agreeing report.
+- **Win-streak fidelity** — the 200-second interval and nine valid WarBucks tiers are decoded from
+  MainScene and persisted authoritatively. The corrupted/unusable tenth value is capped at tier nine
+  until archived live balancing is available.
 - **Client integration** — form request routing is implemented, but exact response keys for
   every action and the Photon→WebSocket client repoint remain `⚠ RE-NEEDED`.
