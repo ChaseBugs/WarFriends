@@ -139,6 +139,8 @@ Arena run appear finished, make an achievement tier appear complete, or unlock a
 - The server must validate ownership, rank, match participation, price, capacity, and expiry.
 - Paid VIP and subscription timestamps must pass their shared nonnegative-safe-integer validators
   before boot projection, benefit comparison, purchase renewal, reversal, or provider reconciliation.
+- Player League `MedalsBalance` and `Skill` values must be nonnegative safe integers before a
+  division is returned or settled; validate the complete member set before the first reward write.
   Subscription authority must also remain an ordered start/lock/expiry interval; future or inverted
   provider timelines fail closed instead of activating early or producing contradictory benefits.
 - Rental state must pass one shared lifecycle validator before boot, equip, Army Power, acceptance,

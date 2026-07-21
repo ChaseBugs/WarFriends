@@ -347,6 +347,28 @@ export function playerLeagueSettlementDecision(
   return { nextTier: tier, rewardGold, notEnoughPlayers: false, result: "stay" };
 }
 
+/**
+ * Reject damaged competition mirrors before they can influence a leaderboard or season reward.
+ *
+ * Ranked PvP already writes both fields with checked arithmetic, but imported/legacy MongoDB
+ * documents can bypass that transition. MongoDB sorts the stored values before application code
+ * sees them, so an `Infinity` medal total would otherwise receive position one and could publish a
+ * top-tier Gold message. Settlement validates every member before performing its first write; the
+ * public leaderboard uses the same boundary so it never presents corrupted ranking authority.
+ */
+export function validatePlayerLeagueCompetitionScore(
+  medalsBalance: number,
+  skill: number,
+  playerId: string,
+): void {
+  if (!Number.isSafeInteger(medalsBalance) || medalsBalance < 0) {
+    throw new Error(`Player league medals are invalid for ${playerId}.`);
+  }
+  if (!Number.isSafeInteger(skill) || skill < 0) {
+    throw new Error(`Player league skill is invalid for ${playerId}.`);
+  }
+}
+
 /** Optional fields consumed by GetPlayerData's league timer and processing UI. */
 export function playerLeagueBootFields(leagueId: string, now: number): Record<string, number | boolean> {
   const managed = parseManagedPlayerLeagueId(leagueId);

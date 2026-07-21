@@ -16,6 +16,7 @@ import {
   playerLeagueDivisionIndexForOrdinal,
   PLAYER_LEAGUE_PLACEMENT_MATCHES,
   playerLeagueSettlementDecision,
+  validatePlayerLeagueCompetitionScore,
 } from "./playerLeagueContract";
 
 export interface PlayerLeagueFinishResult {
@@ -138,7 +139,15 @@ export async function playersInPlayerLeague(
   // temporarily oversized reconstructed division is still resolved as one population; it
   // must never be split into several differently ranked claims merely by repeated action 198.
   if (limit > 0) cursor.limit(Math.min(100, Math.floor(limit)));
-  return cursor.toArray();
+  const members = await cursor.toArray();
+  for (const member of members) {
+    validatePlayerLeagueCompetitionScore(
+      member.player.medalsBalance,
+      member.player.skill,
+      member.id,
+    );
+  }
+  return members;
 }
 
 function finishedMessage(

@@ -16,6 +16,7 @@ import {
   PLAYER_LEAGUE_RULES,
   playerLeagueBootFields,
   playerLeagueSettlementDecision,
+  validatePlayerLeagueCompetitionScore,
 } from "../services/playerLeagueContract";
 import {
   claimableMessageReward,
@@ -204,6 +205,27 @@ test("Champion uses recovered first, second, and remaining top-ten-percent rewar
   assert.equal(playerLeagueSettlementDecision(League.Champion, 10, 100).rewardGold, 150);
   assert.equal(playerLeagueSettlementDecision(League.Champion, 11, 100).rewardGold, 0);
   assert.equal(playerLeagueSettlementDecision(League.Champion, 91, 100).result, "demote");
+});
+
+test("player-league ranking rejects corrupt persisted competition scores", () => {
+  assert.doesNotThrow(() => validatePlayerLeagueCompetitionScore(0, 0, "valid-player"));
+  assert.doesNotThrow(() => validatePlayerLeagueCompetitionScore(
+    Number.MAX_SAFE_INTEGER,
+    Number.MAX_SAFE_INTEGER,
+    "bounded-player",
+  ));
+  for (const medals of [Number.NaN, Number.POSITIVE_INFINITY, -1, 1.5]) {
+    assert.throws(
+      () => validatePlayerLeagueCompetitionScore(medals, 10, "bad-medals"),
+      /Player league medals are invalid/,
+    );
+  }
+  for (const skill of [Number.NaN, Number.POSITIVE_INFINITY, -1, 1.5]) {
+    assert.throws(
+      () => validatePlayerLeagueCompetitionScore(10, skill, "bad-skill"),
+      /Player league skill is invalid/,
+    );
+  }
 });
 
 test("PlayerLeagueFinished inbox messages use MMKFEEGDFKN's typed attribute contract", () => {

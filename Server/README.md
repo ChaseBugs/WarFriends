@@ -372,6 +372,8 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   5/10/20 Gold) from the server-owned profile tier. A background sweep discovers expired managed
   divisions and reuses that transaction under one crash-expiring MongoDB lease, so inactive clients
   do not block settlement and multiple nodes do not intentionally run the same scheduler job.
+  Every returned or settled member's weekly medals and global skill mirror must be nonnegative safe
+  integers; one corrupt score aborts settlement before any rank, transition, or reward is published.
 - **Social / messaging**: `SearchPlayers` (name prefix), `GetAllPlayers`, exact Facebook-friend and
   authoritative squad-mate resolution through `GetFriendsInfo`, challenge and normal
   `MessageSent`, `GetAllMessages`, `ReadMessage`, `IgnoreMessage`, and `AcceptChallenge`
