@@ -21,6 +21,7 @@ import {
   createInitialCardCrafting,
   createInitialCardInventory,
   craftAndClaimSubscribedCardState,
+  parseCardPackPurchaseData,
   parsePvpUsedCards,
   purchaseCardPackState,
   startCardCraftingState,
@@ -795,6 +796,35 @@ test("card packs fail closed for locked level, invalid roll, unresolved cards, d
     () => purchaseCardPackState({ ...state, gold: 0 }, 5, validPayload),
     (error: unknown) => (error as { code?: number }).code === CARD_PACK_NOT_ENOUGH_FUNDS,
   );
+});
+
+test("card-pack buffered integers distinguish omitted legacy fields from malformed values", () => {
+  assert.deepEqual(
+    parseCardPackPurchaseData(JSON.stringify({ cards: ["AMMOCRATE"], cardPack: "THREE_CARDS" })),
+    { cards: ["AMMOCRATE"], cardPack: "THREE_CARDS", discount: 0, startTime: 0 },
+  );
+  assert.deepEqual(
+    parseCardPackPurchaseData(JSON.stringify({
+      cards: ["AMMOCRATE"],
+      cardPack: "BRONZE_PACK",
+      discount: 0,
+      StartTime: NOW,
+    })),
+    { cards: ["AMMOCRATE"], cardPack: "BRONZE_PACK", discount: 0, startTime: NOW },
+  );
+
+  for (const value of [null, false, true, [], [0], "", "0", -1, 0.5, 2_147_483_648]) {
+    for (const field of ["discount", "StartTime"] as const) {
+      assert.throws(
+        () => parseCardPackPurchaseData(JSON.stringify({
+          cards: ["AMMOCRATE"],
+          cardPack: "BRONZE_PACK",
+          [field]: value,
+        })),
+        /exact nonnegative C# integer/,
+      );
+    }
+  }
 });
 
 test("buffered card-pack purchase is atomic, returns rollback data, and replays exactly once", () => {

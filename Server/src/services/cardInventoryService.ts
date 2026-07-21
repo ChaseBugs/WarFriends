@@ -455,10 +455,18 @@ function objectJson(value: string): Record<string, unknown> {
   return parsed as Record<string, unknown>;
 }
 
-function integer(value: unknown, field: string): number {
-  const parsed = Number(value);
-  if (!Number.isInteger(parsed)) throw new ApiError(ApiErrorCode.UnknownAction, `${field} must be an integer.`);
-  return parsed;
+function optionalCardPackInteger(value: unknown, field: string): number {
+  // BuyThreeCards omits both integer fields, while BuyCardPack writes C# ints into its Json.NET
+  // object. Only true absence selects the legacy zero fallback; a present value must remain an
+  // exact nonnegative JSON number so null, booleans, strings, and arrays cannot coerce to zero.
+  if (value === undefined) return 0;
+  if (typeof value !== "number"
+    || !Number.isSafeInteger(value)
+    || value < 0
+    || value > 2_147_483_647) {
+    throw new ApiError(ApiErrorCode.UnknownAction, `${field} must be an exact nonnegative C# integer.`);
+  }
+  return value;
 }
 
 function cardPackName(value: unknown): string {
@@ -481,8 +489,8 @@ export function parseCardPackPurchaseData(value: string): CardPackPurchasePayloa
   return {
     cards,
     cardPack: cardPackName(data.cardPack),
-    discount: integer(data.discount ?? 0, "discount"),
-    startTime: integer(data.StartTime ?? 0, "StartTime"),
+    discount: optionalCardPackInteger(data.discount, "discount"),
+    startTime: optionalCardPackInteger(data.StartTime, "StartTime"),
   };
 }
 

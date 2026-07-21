@@ -321,6 +321,12 @@ integer numbers matching their C# `int` declarations. Missing, null, Boolean, st
 fractional, non-finite, unsafe, and out-of-range values reject instead of manufacturing a card
 amount or loadout index; only exact numeric `-1` selects the no-secondary-weapon sentinel.
 
+Buffered card-pack purchases now retain both recovered payload variants. `BuyThreeCards` may omit
+`discount` and `StartTime` and derive the legacy zero values, while a standard `BuyCardPack` carries
+both as Json.NET numbers backed by C# `int`. Only true absence selects the fallback; explicit null,
+Boolean, string, array, fractional, negative, unsafe, or oversized values reject before pack
+eligibility, wallet debit, inventory grant, or replay publication.
+
 The shared persisted-progression read boundary and mutation-result boundary validate all five core
 numeric fields before price comparison, publication, or the boot adapter: Gold and WarBucks retain
 safe-integer chargeback debt, while Tickets, Scraps, and level experience must be nonnegative safe
