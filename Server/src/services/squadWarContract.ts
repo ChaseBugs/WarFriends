@@ -11,6 +11,7 @@ export const SQUAD_WAR_MIN_LEVEL = 1;
 export const SQUAD_WAR_MAX_LEVEL = 8;
 export const SQUAD_WAR_MAX_DIVISION_SIZE = 50;
 export const SQUAD_WAR_SMALL_DIVISION_LIMIT = 7;
+const MAX_CLIENT_UNIX_SECONDS = 2_147_483_647;
 
 /** Level 1..8 -> Gold awarded before the member-position fraction is applied. */
 const rewardsByLevel = [
@@ -148,12 +149,34 @@ export function rankSquadWarDivision(
  * ID contains no hyphen so a RoundId can retain the client's required `<level>-<token>` shape.
  */
 export function squadWarWindowAt(now: Date, durationSeconds = 7 * 24 * 60 * 60): SquadWarWindow {
-  const duration = Math.max(3_600, Math.floor(durationSeconds));
+  if (
+    !(now instanceof Date)
+    || !Number.isSafeInteger(now.getTime())
+    || now.getTime() < 0
+    || now.getTime() > MAX_CLIENT_UNIX_SECONDS * 1_000
+    || !Number.isSafeInteger(durationSeconds)
+    || durationSeconds < 3_600
+    || durationSeconds > MAX_CLIENT_UNIX_SECONDS
+  ) {
+    // The duration defines both the persistent season ID and every settlement deadline. Silently
+    // flooring/clamping operator policy would let different nodes derive different authority,
+    // while NaN previously produced a superficially shaped `swNaN` season with invalid dates.
+    throw new Error("Squad Wars calendar policy is invalid.");
+  }
+  const duration = durationSeconds;
   const mondayEpochSeconds = Date.UTC(2020, 0, 6) / 1_000;
   const nowSeconds = Math.floor(now.getTime() / 1_000);
   const startsAtSeconds = mondayEpochSeconds
     + Math.floor((nowSeconds - mondayEpochSeconds) / duration) * duration;
   const endsAtSeconds = startsAtSeconds + duration;
+  if (
+    !Number.isSafeInteger(startsAtSeconds)
+    || startsAtSeconds < 0
+    || !Number.isSafeInteger(endsAtSeconds)
+    || endsAtSeconds > MAX_CLIENT_UNIX_SECONDS
+  ) {
+    throw new Error("Squad Wars calendar policy is invalid.");
+  }
   return {
     seasonId: `sw${startsAtSeconds.toString(36)}`,
     startsAt: new Date(startsAtSeconds * 1_000),

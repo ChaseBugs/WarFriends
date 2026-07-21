@@ -440,6 +440,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   exact fields, an ID bound to its UTC start second, a safe window of at least one hour, creation
   inside that window, and an exact active or terminal timestamp shape. Future durable timestamps
   fail on live paths, and settled windows cannot reopen after a configuration-duration change.
+  Calendar derivation itself requires a valid nonnegative client-width Unix time and an exact
+  safe-integer duration of at least one hour whose resulting end remains client-representable;
+  invalid policy cannot be floored/clamped or produce an `swNaN` season.
   Every complete division row is likewise proved before creation, assignment/pointer repair,
   scoring, eligibility mutation, reads, placement, or settlement. Its exact round ID, season
   window, level/division, bounded unique squads and members, safe counters, revision and dates,

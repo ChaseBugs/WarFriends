@@ -129,6 +129,17 @@ test("Squad Wars reconstructed schedule emits client-parseable stable round IDs"
   assert.equal(squadWarRoundId(4, window, 3), squadWarRoundId(4, window, 3));
 });
 
+test("Squad Wars calendar rejects malformed time and duration policy before deriving IDs", () => {
+  const now = new Date("2026-07-21T12:34:56.000Z");
+  for (const duration of [Number.NaN, Number.POSITIVE_INFINITY, -1, 3_599, 3_600.5]) {
+    assert.throws(() => squadWarWindowAt(now, duration), /calendar policy is invalid/);
+  }
+  for (const invalidNow of [new Date(Number.NaN), new Date(-1), new Date((2_147_483_647 + 1) * 1_000)]) {
+    assert.throws(() => squadWarWindowAt(invalidNow), /calendar policy is invalid/);
+  }
+  assert.equal(squadWarWindowAt(now, 3_600).endsAt.getTime() - squadWarWindowAt(now, 3_600).startsAt.getTime(), 3_600_000);
+});
+
 test("durable Squad War season authority binds window identity, state, and timestamps", () => {
   const window = squadWarWindowAt(new Date("2026-07-21T12:34:56.000Z"));
   const createdAt = new Date(window.startsAt.getTime() + 1_000);

@@ -136,6 +136,10 @@ missing BSON dates and unknown statuses enter validation instead of remaining pe
 Both selected batches validate before the first settlement write; any non-settled round blocks its
 season from closing, allocation applies the same corrupt-or-expired guard, and final closure requires
 one exact compare-and-set winner.
+The reconstructed calendar now validates its inputs before deriving persistent identity: application
+time must be a nonnegative client-width Unix date, duration must be an exact safe integer of at least
+one hour, and the resulting window end must remain client-representable. Fractional, negative,
+non-finite, or overflowing policy cannot be silently normalized or create an `swNaN` season.
 
 Account-sanction rows now have complete durable authority before authentication, issue/revoke replay,
 admin publication, appeal intake, and accepted-appeal mutation. Exact known fields, normalized

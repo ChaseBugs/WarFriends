@@ -62,7 +62,9 @@ When enabled, `SQUAD_WARS_SEASON_DURATION_SECONDS` defaults to seven days and wi
 from Monday 00:00 UTC. This calendar is reconstruction-owned policy: the 1.6.0 client proves the
 wire contract and the 4.9.5 MainScene proves division/reward balancing, but neither APK contains
 the retired production calendar. Change the duration only before a clean deployment; existing
-season IDs and settled rows are terminal and are never rewritten or reopened.
+season IDs and settled rows are terminal and are never rewritten or reopened. The duration must be
+an exact safe integer of at least 3600 seconds and must keep every generated window inside the
+recovered signed-client Unix range; invalid values fail closed instead of being rounded or clamped.
 
 `SQUAD_WARS_SCHEDULER_INTERVAL_SECONDS` controls the maintenance polling interval. One backend node
 holds a MongoDB lease while it settles expired divisions, creates deterministic type-9 result
