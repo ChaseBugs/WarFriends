@@ -185,6 +185,13 @@ and score instead of letting one transient row abort matching for healthy player
 reload and transactional admission remain the final gameplay authority. Redis-disabled or
 unavailable deployments retain the same validated in-memory queue.
 
+All four multiplayer timeout settings now pass one executable policy boundary. Matchmaking, join,
+and disconnect-grace values must be positive exact seconds whose millisecond conversion fits the
+Node timer range; the queue value is captured once for both its local timeout payload and Redis's
+stale cutoff. Result consensus accepts only exact 0-through-15,000 milliseconds. Fractional,
+non-finite, negative, or oversized settings fail closed instead of being silently floored, clamped,
+substituted, or triggering Node's oversized-delay one-millisecond behavior.
+
 The no-Redis `RoomManager` now admits only an exact two-distinct-player allowlist reproduced on
 every join and enforces its player-to-room index. One authenticated identity cannot occupy two
 process-local rooms, a contradictory overlapping allowlist cannot revise an existing room, and

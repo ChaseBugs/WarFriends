@@ -74,6 +74,18 @@ transaction. Action 124 and Squad detail reads derive their round from authentic
 request fields cannot select another division or provide scores. During the short rollover window,
 `GetPlayerData` exposes the recovered presence-only `SquadWarsProcessing` flag.
 
+# Multiplayer timeout policy
+
+`MATCHMAKING_TIMEOUT`, `MATCH_JOIN_TIMEOUT_SECONDS`, and
+`MATCH_DISCONNECT_GRACE_SECONDS` must be exact positive integer seconds. Their millisecond delay
+must fit Node's 2,147,483,647-millisecond timer range; oversized Node timers fire after roughly one
+millisecond and therefore cannot be accepted as long waits. The matchmaking value owns both the
+local queue timer and Redis stale-queue cleanup so those lifecycle boundaries cannot drift.
+
+`MATCH_RESULT_CONSENSUS_WAIT_MS` must be an exact integer from 0 through 15,000 milliseconds. Zero
+disables the bounded first-reporter wait. Fractional, non-finite, negative, and oversized values
+fail closed rather than being floored, clamped, or replaced with an undocumented fallback.
+
 # Limited-time Event Assignment configuration
 
 `EVENT_ASSIGNMENT_CONFIG_PATH` controls the separate `EventAssignmentManager` daily calendar used

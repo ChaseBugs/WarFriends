@@ -78,6 +78,11 @@ import {
   webSocketRateLimitKey,
   webSocketViolationLimit,
 } from "./services/webSocketRateLimitService";
+import {
+  matchmakingTimeoutSeconds,
+  matchDisconnectGraceSeconds,
+  matchJoinTimeoutSeconds,
+} from "./services/multiplayerTimeoutPolicyService";
 
 /**
  * WebSocket coordinator for reconstructed PvP and Squad Chat transport.
@@ -149,7 +154,8 @@ function clearMatchmakingTimer(playerId: string): void {
 
 function scheduleMatchmakingTimeout(playerId: string): void {
   clearMatchmakingTimer(playerId);
-  const delayMs = Math.max(1, config.matchmakingTimeout) * 1000;
+  const timeoutSeconds = matchmakingTimeoutSeconds();
+  const delayMs = timeoutSeconds * 1_000;
   const timer = setTimeout(() => {
     matchmakingTimers.delete(playerId);
     // remove returns false when the player was paired just before this callback. In that
@@ -158,7 +164,7 @@ function scheduleMatchmakingTimeout(playerId: string): void {
       if (!removed) return;
       sendToPlayer(playerId, {
         Type: "MatchSearchTimedOut",
-        Payload: { TimeoutSeconds: Math.max(1, config.matchmakingTimeout) },
+        Payload: { TimeoutSeconds: timeoutSeconds },
       });
     }).catch((error: unknown) => {
       logger.match.error("Matchmaking timeout cleanup failed", {
@@ -207,7 +213,7 @@ function clearMatchJoinTimer(matchId: string): void {
  */
 function scheduleMatchJoinTimeout(matchId: string, playerIds: readonly string[]): void {
   clearMatchJoinTimer(matchId);
-  const timeoutSeconds = Math.max(1, config.matchJoinTimeoutSeconds);
+  const timeoutSeconds = matchJoinTimeoutSeconds();
   const timer = setTimeout(() => {
     matchJoinTimers.delete(matchId);
     void (async () => {
@@ -247,7 +253,7 @@ function scheduleDisconnectResolution(eviction: {
   wasActive: boolean;
 }, expectedDisconnectedAt?: Date): void {
   clearDisconnectTimer(eviction.matchId, eviction.playerId);
-  const delayMs = Math.max(1, config.matchDisconnectGraceSeconds) * 1000;
+  const delayMs = matchDisconnectGraceSeconds() * 1_000;
   const timer = setTimeout(() => {
     disconnectTimers.delete(disconnectKey(eviction.matchId, eviction.playerId));
     void (async () => {
@@ -540,7 +546,7 @@ function scheduleDistributedDisconnectResolution(
         error: error instanceof Error ? error.message : String(error),
       });
     });
-  }, Math.max(1, config.matchDisconnectGraceSeconds) * 1000);
+  }, matchDisconnectGraceSeconds() * 1_000);
   timer.unref();
   disconnectTimers.set(disconnectKey(matchId, playerId), timer);
 }

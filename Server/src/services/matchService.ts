@@ -69,6 +69,7 @@ import { allocatePlayerLeagueDivision } from "./playerLeagueService";
 import { validatedMatchDocument } from "./matchAuthorityService";
 import { validatedPlayerLastAction } from "./playerPublicScalarAuthorityService";
 import { validatedPlayerPresenceTransitions } from "./playerPresenceService";
+import { matchResultConsensusTimeoutMilliseconds } from "./multiplayerTimeoutPolicyService";
 
 export { validatedMatchDocument } from "./matchAuthorityService";
 
@@ -1687,9 +1688,7 @@ export async function waitForMatchResolution(
   matchId: string,
   timeoutMilliseconds = config.matchResultConsensusWaitMilliseconds,
 ): Promise<MatchReportResult> {
-  const boundedTimeout = Number.isFinite(timeoutMilliseconds)
-    ? Math.max(0, Math.min(15_000, Math.floor(timeoutMilliseconds)))
-    : 5_000;
+  const boundedTimeout = matchResultConsensusTimeoutMilliseconds(timeoutMilliseconds);
   const deadline = Date.now() + boundedTimeout;
   do {
     const match = await getMatch(matchId);

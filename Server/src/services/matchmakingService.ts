@@ -1,7 +1,7 @@
 import logger from "../utils/logger";
 import { League, RedisKeys } from "../constants";
 import { isRedisAvailable, redisEval } from "../redis";
-import { config } from "../config";
+import { matchmakingTimeoutSeconds } from "./multiplayerTimeoutPolicyService";
 
 // Matchmaking — pairs two waiting players for a PvP match (BACKEND.md §3). Pairing favours
 // the closest opponent by army power within a widening league window, matching the client's
@@ -276,7 +276,7 @@ export async function enqueueForHub(entry: Omit<QueueEntry, "enqueuedAt">): Prom
       500,
       // Give the owning node's ordinary timer a full extra window to remove and notify its player
       // before another node treats the entry as abandoned after a crash or prolonged pause.
-      now - Math.max(1, config.matchmakingTimeout) * 2000,
+      now - matchmakingTimeoutSeconds() * 2_000,
     ],
   );
   if (result === undefined) throw new Error("Distributed matchmaking coordination is unavailable.");

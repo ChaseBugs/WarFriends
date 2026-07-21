@@ -508,6 +508,12 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   non-authoritative transport. A closing local socket is not counted as a successful delivery, and
   committed join-timeout or initial-delivery cancellation reaches remote participants through this
   same validated path.
+  Queue, post-pair join, and reconnect-grace seconds now share one exact timer policy across local
+  scheduling and Redis stale cleanup. Each must be a positive safe integer whose millisecond delay
+  fits Node's timer range, preventing oversized values from firing after roughly one millisecond.
+  The REST result-consensus wait is an exact 0-through-15,000 milliseconds; zero disables waiting,
+  while malformed values fail closed instead of being floored, clamped, or replaced by a hidden
+  five-second wait.
   Without Redis, the same code retains the verified process-local queue and direct delivery path.
   Its room registry accepts only an exact two-distinct-player allowlist reproduced by every join and
   enforces one room per authenticated player. Contradictory overlapping pairs and second-room joins
@@ -1601,8 +1607,9 @@ therefore update its executable disposition instead of silently falling through 
   policy. Normal WarBucks uses server-owned `PVP_WIN_WARBUCKS` / `PVP_LOSE_WARBUCKS` defaults
   because the retired Fusebox `BattleWarbucksRewards` document is not present in either APK;
   client-echoed reward values are never trusted. VIP's 1.5x WarBucks multiplier is source-decoded.
-- **REST result consensus** — `MATCH_RESULT_CONSENSUS_WAIT_MS` bounds the read-only wait that lets
-  the first stock `GameEnded` request receive the receipt committed by the second agreeing report.
+- **REST result consensus** — `MATCH_RESULT_CONSENSUS_WAIT_MS` is an exact integer from 0 through
+  15,000 and bounds the read-only wait that lets the first stock `GameEnded` request receive the
+  receipt committed by the second agreeing report. Zero returns the pending response immediately.
 - **Win-streak fidelity** — the 200-second interval and nine valid WarBucks tiers are decoded from
   MainScene and persisted authoritatively. The corrupted/unusable tenth value is capped at tier nine
   until archived live balancing is available. Shared progression read/publication first validates
