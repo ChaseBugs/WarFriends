@@ -1094,6 +1094,17 @@ test("experience leaderboard items use the FHIPGDADNFG field contract", () => {
   assert.deepEqual(wire.Experience, { N: "4321" });
   assert.deepEqual(wire.Position, { N: "4" });
   assert.equal(wire.Id, undefined);
+
+  const corruptExperience = contractPlayer();
+  corruptExperience.player.experience = Number.NaN;
+  assert.throws(
+    () => buildPlayerLeaderboardItem(corruptExperience, 1),
+    /DynamoDB numeric attribute authority is invalid/,
+  );
+  assert.throws(
+    () => buildPlayerLeaderboardItem(contractPlayer(), Number.POSITIVE_INFINITY),
+    /DynamoDB numeric attribute authority is invalid/,
+  );
 });
 
 test("boot state contains every field read unconditionally by GetPlayerData", () => {

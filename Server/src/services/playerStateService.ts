@@ -262,7 +262,7 @@ type StringAttribute = { S: string };
 export type PlayerDataAttribute = NumberAttribute | StringAttribute;
 export type PlayerDataMap = Record<string, PlayerDataAttribute>;
 
-function numberAttribute(value: number): NumberAttribute {
+export function numberAttribute(value: number): NumberAttribute {
   // The old Unity parser expects the DynamoDB wire representation, where even numbers are
   // JSON strings inside an `N` property. Returning a bare JSON number makes GetPlayerData
   // parse as zero or throw, depending on which KHJJFPPACBP overload is used.

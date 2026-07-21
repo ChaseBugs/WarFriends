@@ -2,7 +2,7 @@ import { players, squads, type PlayerDocument } from "../db";
 import { RedisKeys } from "../constants";
 import { config } from "../config";
 import { redisZRevRange, redisZAdd } from "../redis";
-import { progressionForPlayer } from "./playerStateService";
+import { numberAttribute, progressionForPlayer } from "./playerStateService";
 import { buildDatabaseSquad } from "./squadWireService";
 import { serializeWarArenaData } from "./warArenaContract";
 
@@ -18,10 +18,6 @@ function s(value: unknown): StringAttribute {
   return { S: String(value ?? "") };
 }
 
-function n(value: number): NumberAttribute {
-  return { N: String(Math.trunc(Number.isFinite(value) ? value : 0)) };
-}
-
 /** Build the exact item parsed by FHIPGDADNFG.MAINIENLLIL. */
 export function buildPlayerLeaderboardItem(doc: PlayerDocument, position: number): PlayerLeaderboardItem {
   const player = doc.player;
@@ -29,12 +25,12 @@ export function buildPlayerLeaderboardItem(doc: PlayerDocument, position: number
   const item: PlayerLeaderboardItem = {
     PlayerId: s(player.id),
     PlayerName: s(player.accountName),
-    Experience: n(player.experience),
-    Level: n(player.level),
-    LevelExperience: n(progression.levelExperience),
-    ArmyPower: n(player.armyPower),
-    Skill: n(player.skill),
-    Position: n(position),
+    Experience: numberAttribute(player.experience),
+    Level: numberAttribute(player.level),
+    LevelExperience: numberAttribute(progression.levelExperience),
+    ArmyPower: numberAttribute(player.armyPower),
+    Skill: numberAttribute(player.skill),
+    Position: numberAttribute(position),
     Country: s(player.country),
     DecalManagerData: s(JSON.stringify({
       slots: progression.visualInventory?.slots ?? player.playerVisuals,
@@ -43,7 +39,7 @@ export function buildPlayerLeaderboardItem(doc: PlayerDocument, position: number
   if (player.facebookId !== -1) item.FacebookId = s(player.facebookId);
   if (player.squadName) item.SquadId = s(player.squadName);
   if (player.leagueId) item.LeagueId = s(player.leagueId);
-  else item.BeginnersLeague = n(player.beginnersLeague);
+  else item.BeginnersLeague = numberAttribute(player.beginnersLeague);
   return item;
 }
 
