@@ -12,6 +12,7 @@ import {
 } from "../services/warArenaService";
 import { authed, type HandlerEntry } from "./types";
 import { validatedPlayerProfileMirrors } from "../services/playerProfileMirrorAuthorityService";
+import { MAX_WAR_ARENA_CLIENT_INT } from "../services/warArenaAuthorityService";
 
 /**
  * Parse the nonnegative integer text emitted by the recovered Arena callers' `ToString()` calls.
@@ -26,8 +27,8 @@ export function requestedArenaInteger(value: unknown, field: string, fallback?: 
     : typeof value === "string" && /^(?:0|[1-9]\d*)$/.test(value)
       ? Number(value)
       : Number.NaN;
-  if (!Number.isSafeInteger(parsed) || parsed < 0) {
-    throw new ApiError(ApiErrorCode.UnknownAction, `${field} must be a non-negative integer.`);
+  if (!Number.isSafeInteger(parsed) || parsed < 0 || parsed > MAX_WAR_ARENA_CLIENT_INT) {
+    throw new ApiError(ApiErrorCode.UnknownAction, `${field} must be a non-negative C# int.`);
   }
   return parsed;
 }

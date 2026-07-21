@@ -257,6 +257,11 @@ normalization, moderation, membership, quota, and replay authority to the shared
 `BeforeCursor`; explicit malformed cursor presence, aliases, and extra keys fail instead of silently
 selecting the latest page.
 
+War Arena price assertions now retain the recovered nonnegative C# signed-`int` boundary both in
+the HTTP parser and inside reusable entry/heart mutation services. Fractions are no longer floored,
+oversized safe JavaScript integers are rejected, and `NaN`/`Infinity` can no longer become zero and
+silently select a valid free, Ticket, or Gold branch for a replacement/direct caller.
+
 The TypeScript build now removes only generated `Server/dist` output before emission. Renamed or
 deleted source modules/tests cannot survive as stale runtime code or duplicate test inputs, so
 `npm test` counts and executes only the current source tree rather than historical compiler output.

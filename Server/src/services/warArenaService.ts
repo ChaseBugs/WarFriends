@@ -11,7 +11,10 @@ import {
   warArenaConfiguration,
 } from "./warArenaContract";
 import type { ArenaPolicy } from "./warArenaContract";
-import { validatedWarArenaState } from "./warArenaAuthorityService";
+import {
+  MAX_WAR_ARENA_CLIENT_INT,
+  validatedWarArenaState,
+} from "./warArenaAuthorityService";
 
 /**
  * War Arena run state, entry costs, lives, and replay-safe rewards.
@@ -82,8 +85,20 @@ export interface ArenaSettlementInput {
   endReason: number;
 }
 
-function nonNegative(value: number, fallback: number): number {
-  return Number.isFinite(value) ? Math.max(0, Math.floor(value)) : fallback;
+/**
+ * Revalidate numeric price assertions at the reusable mutation boundary.
+ *
+ * HTTP handlers already parse the stock client's decimal text, but replacement transports and
+ * tests may call these state transitions directly. Flooring a fraction or replacing NaN/Infinity
+ * with zero could select a valid free/Ticket branch that the caller never actually asserted. Keep
+ * the recovered nonnegative C# `int` width intact at both layers instead of trusting TypeScript's
+ * erased `number` annotation.
+ */
+function exactArenaPriceAssertion(value: number, field: string): number {
+  if (!Number.isSafeInteger(value) || value < 0 || value > MAX_WAR_ARENA_CLIENT_INT) {
+    throw new ApiError(ApiErrorCode.UnknownAction, `${field} must be a non-negative C# int.`);
+  }
+  return value;
 }
 
 /** Increment a persisted Arena lifetime counter without crossing JavaScript's exact range. */
@@ -209,7 +224,7 @@ export function enterWarArenaState(
   }
 
   const firstEntry = !arena.played;
-  const usedGold = nonNegative(input.usedGold, 0);
+  const usedGold = exactArenaPriceAssertion(input.usedGold, "UsedGold");
   let chargedTickets = 0;
   let chargedGold = 0;
   if (!firstEntry && usedGold > 0) {
@@ -414,8 +429,12 @@ export function buyWarArenaHeartState(
     throw new ApiError(ApiErrorCode.UnknownAction, "An extra Arena life cannot be bought now.");
   }
 
-  const usedGold = input.usedGold === undefined ? undefined : nonNegative(input.usedGold, 0);
-  const hearthPrice = input.hearthPrice === undefined ? undefined : nonNegative(input.hearthPrice, 0);
+  const usedGold = input.usedGold === undefined
+    ? undefined
+    : exactArenaPriceAssertion(input.usedGold, "UsedGolds");
+  const hearthPrice = input.hearthPrice === undefined
+    ? undefined
+    : exactArenaPriceAssertion(input.hearthPrice, "hearthPrice");
   let ticketsSpent = 0;
   let goldSpent = 0;
   if (usedGold !== undefined) {

@@ -63,14 +63,43 @@ test("War Arena request fields require recovered integer and Boolean transports"
   assert.equal(requestedHeartDialogShown("True"), true);
   assert.equal(requestedHeartDialogShown("False"), false);
 
-  for (const value of [null, false, true, [], [1], "", " 1", "1 ", "+1", "01", "1.0", "1e0", -1]) {
+  for (const value of [
+    null, false, true, [], [1], "", " 1", "1 ", "+1", "01", "1.0", "1e0", -1,
+    MAX_WAR_ARENA_CLIENT_INT + 1,
+  ]) {
     assert.throws(
       () => requestedArenaInteger(value, "UsedGold", 0),
-      /must be a non-negative integer/,
+      /must be a non-negative C# int/,
     );
   }
   for (const value of [undefined, null, 0, 1, "0", "1", "true", "false", [], [true]]) {
     assert.throws(() => requestedHeartDialogShown(value), /must be a Boolean/);
+  }
+});
+
+test("War Arena mutations reject numeric coercion even when called below the HTTP parser", () => {
+  const initial = createInitialProgression(NOW);
+  for (const value of [NaN, Infinity, -1, 0.5, MAX_WAR_ARENA_CLIENT_INT + 1]) {
+    assert.throws(
+      () => enterWarArenaState(initial, NOW, { usedGold: value, opponents: [] }),
+      /UsedGold must be a non-negative C# int/,
+    );
+  }
+
+  const entered = enterWarArenaState(initial, NOW, { usedGold: 0, opponents: [] });
+  const exhausted = {
+    ...entered.state,
+    warArena: { ...entered.arena, lives: 0 },
+  };
+  for (const value of [NaN, Infinity, -1, 0.5, MAX_WAR_ARENA_CLIENT_INT + 1]) {
+    assert.throws(
+      () => buyWarArenaHeartState(exhausted, NOW + 1, { hearthPrice: value }),
+      /hearthPrice must be a non-negative C# int/,
+    );
+    assert.throws(
+      () => buyWarArenaHeartState(exhausted, NOW + 1, { usedGold: value }),
+      /UsedGolds must be a non-negative C# int/,
+    );
   }
 });
 

@@ -821,6 +821,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   `IsWarArena` markers use the same parser when present. Numeric, differently-cased, padded, null,
   or container aliases are rejected before branch selection, rather than becoming false and
   falling into friendly or ranked settlement.
+  Entry `UsedGold` and heart `UsedGolds`/`hearthPrice` assertions are revalidated inside the shared
+  mutation service as nonnegative C# signed integers. This protects replacement/direct callers as
+  well as HTTP traffic: fractions are never floored, oversized JavaScript integers fail, and
+  `NaN`/`Infinity` cannot become zero and select a valid free, Ticket, or Gold path.
 - **Squad Chat (WebSocket `/hub`)**: after `Identify`, a replacement client sends
   `SubscribeSquadChat` to receive `SquadChatSubscribed { SquadId, Messages }`, using the exact
   recovered three-message history default. When `NextBeforeCursor` is non-null,
