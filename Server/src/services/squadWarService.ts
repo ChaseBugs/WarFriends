@@ -20,6 +20,7 @@ import { progressionForPlayer } from "./playerStateService";
 import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
 import { completeFirstSquadWarAchievementState } from "./achievementService";
 import type { MessageDoc } from "./socialService";
+import { validatedInboxRewardMessage } from "./inboxRewardAuthorityService";
 import {
   rankSquadWarDivision,
   SQUAD_WAR_MAX_DIVISION_SIZE,
@@ -688,6 +689,7 @@ export async function settleSquadWarRound(roundId: string, now = new Date()): Pr
           accepted: false,
           createdAt: now,
         };
+        validatedInboxRewardMessage(message);
         const result = await messages().updateOne(
           { idempotencyKey: message.idempotencyKey },
           { $setOnInsert: message },

@@ -14,6 +14,7 @@ import {
 import { PLAYER_LEVELS, playerLevelDefinition } from "./levelProgressionService";
 import type { MessageDoc } from "./socialService";
 import { decimalNumberAttribute } from "./dynamoNumberAttributeService";
+import { validatedInboxRewardMessage } from "./inboxRewardAuthorityService";
 
 const MAX_UNIX_SECONDS = 2_147_483_647;
 const MAX_SEASONS = 128;
@@ -480,6 +481,7 @@ export async function recordConfirmedPvpSquadEventProgress(
         next.completedTier.reward,
         now,
       );
+      validatedInboxRewardMessage(message);
       await messages().updateOne(
         { idempotencyKey: message.idempotencyKey },
         { $setOnInsert: message },

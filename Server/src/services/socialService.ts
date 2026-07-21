@@ -20,6 +20,7 @@ import { validatedCoreProgressionBalances } from "./coreProgressionAuthorityServ
 import { progressionRevisionForRead } from "./progressionRevisionAuthorityService";
 import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
 import { validatedPlayerAccountEnvelope } from "./playerProfileMirrorAuthorityService";
+import { validatedInboxRewardMessage } from "./inboxRewardAuthorityService";
 
 // Player discovery + messaging (BACKEND.md §2.3 "Social / messaging / hit list"). Search
 // and directory reads project players to the client's summary shape; messages are stored
@@ -415,17 +416,13 @@ export async function claimMessageReward(playerId: string, messageId: string): P
   return withMongoTransaction(async (session) => {
     const message = await messages().findOne({ messageId, toPlayerId: playerId }, { session }) as unknown as MessageDoc | null;
     if (!message) throw new ApiError(ApiErrorCode.UnknownAction, "Reward message was not found.");
-    if (message.rewardClaimed && message.claimResponse) {
-      return { ...message.claimResponse, replayed: true };
-    }
-
-    // Only recovered message types with an explicit server-authored reward are claimable.
-    // Supporting arbitrary Title/Text messages here would turn the generic inbox into an
-    // economy endpoint. SquadWarEnd, PlayerLeagueFinished, and SquadEventTierReward carry Gold only.
-    const reward = claimableMessageReward(message);
+    // The payload and its terminal response form one durable economy receipt. Validate them before
+    // replay so a damaged claim marker cannot return a forged delta merely because it is terminal.
+    const reward = validatedInboxRewardMessage(message);
     if (!reward) {
       throw new ApiError(ApiErrorCode.UnknownAction, "Message has no claimable reward.");
     }
+    if (message.rewardClaimed) return { ...reward, replayed: true };
 
     const player = await players().findOne({ id: playerId }, { session });
     if (!player) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
@@ -517,6 +514,10 @@ function messageNumberAttribute(
  * produces syntactically valid JSON that the client cannot deserialize.
  */
 export function toClientMessage(doc: MessageDoc): Record<string, DynamoValue> {
+  // Reward messages are durable economy authority, not merely presentation rows. Check their full
+  // envelope before the generic numeric adapter can publish a believable but internally damaged
+  // placement, reward, or replay receipt to the stock client.
+  validatedInboxRewardMessage(doc);
   const wire: Record<string, DynamoValue> = {
     MessageId: { S: doc.messageId },
     // HHFHFANGCEJ's local-message constructor assigns currentPlayer.id here, proving that

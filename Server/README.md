@@ -463,6 +463,12 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   validates the wallet and monotonic revision, then a progression-revision-filtered player update
   commits in the same retry-safe transaction as the terminal message marker. A lost-response retry
   returns the stored immutable delta without performing a second wallet write.
+  Those three reward-message families are validated as complete durable snapshots before producer
+  insertion, inbox publication, claim, or replay: exact type-specific payloads, bounded identities
+  and text, safe creation time, non-challenge lifecycle, and bounded embedded JSON arrays are
+  required. A terminal marker must contain the exact payload-derived Gold response and be both read
+  and ignored. Canonical safe-integer strings remain the explicit legacy DynamoDB-number migration,
+  and only an absent older idempotency key is optional; malformed or extra authority fails closed.
 - **Moderation reports and sanctions**: authenticated player/cheater reports are validated, rate-limited,
   deduplicated for safe retries, and stored with review status and evidence metadata. The
   configurable five-per-hour default is reserved by one atomic MongoDB counter per reporter, so

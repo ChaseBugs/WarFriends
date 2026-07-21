@@ -14,6 +14,7 @@ import {
   validatedPlayerProfileLookup,
 } from "./playerProfileMirrorAuthorityService";
 import type { MessageDoc } from "./socialService";
+import { validatedInboxRewardMessage } from "./inboxRewardAuthorityService";
 import {
   managedPlayerLeagueId,
   parseManagedPlayerLeagueId,
@@ -259,7 +260,7 @@ export async function finishExpiredPlayerLeague(
       if (update.modifiedCount !== 1) {
         throw new Error(`Concurrent player-league settlement rejected member ${member.id}.`);
       }
-      notifications.push(finishedMessage(
+      const notification = finishedMessage(
         member,
         formerLeagueId,
         managed.tier,
@@ -268,7 +269,11 @@ export async function finishExpiredPlayerLeague(
         decision.rewardGold,
         decision.notEnoughPlayers,
         createdAt,
-      ));
+      );
+      // Validate the exact message before the surrounding transaction publishes either the
+      // league transition or its claimable result receipt.
+      validatedInboxRewardMessage(notification);
+      notifications.push(notification);
     }
 
     await messages().insertMany(notifications, { session, ordered: true });
