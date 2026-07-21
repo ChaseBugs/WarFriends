@@ -23,6 +23,18 @@ export interface PlayerReportDocument extends PlayerReportInput {
   status: "open" | "reviewing" | "resolved" | "dismissed";
   /** Optional immutable server correlation; client `evidence` remains an untrusted claim. */
   matchEvidence?: AuthoritativeMatchEvidence;
+  /** Append-only operator decisions; report status is the projection of the final entry. */
+  reviewHistory?: PlayerReportReviewEntry[];
+  createdAt: Date;
+  updatedAt?: Date;
+}
+
+export interface PlayerReportReviewEntry {
+  operationId: string;
+  fromStatus: PlayerReportDocument["status"];
+  toStatus: PlayerReportDocument["status"];
+  actor: string;
+  note: string;
   createdAt: Date;
 }
 

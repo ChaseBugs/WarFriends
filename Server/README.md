@@ -76,6 +76,16 @@ already-identified WebSocket rechecks it before reading or mutating live game st
 `3003`, `accountId`, and `accountName`; temporary bans additionally receive remaining `seconds`, while
 private operator identity and reason never leave the admin API.
 
+The same `/admin/moderation` boundary exposes the report-review queue. `GET /reports` accepts
+optional `status`, `kind`, `reportedPlayerId`, and `reporterPlayerId` filters plus a 1-100 `limit`
+and opaque `cursor`; `GET /reports/:reportId` returns one complete review record; and
+`POST /reports/:reportId/review` moves an `open` report to `reviewing`, `resolved`, or `dismissed`,
+or moves `reviewing` to either terminal state. Review mutations require `X-Admin-Actor`, an
+`Idempotency-Key`, and an `expectedStatus`; terminal decisions also require a bounded `note`.
+Status and the append-only audit entry commit in one MongoDB update. Concurrent moderators cannot
+both act on the same stale status, a retry cannot change its decision, and terminal reports cannot
+be reopened. Newest-first pages use `createdAt` plus `reportId` as a stable cursor tie-breaker.
+
 ## How the client talks to it
 
 The client (`BeanstalkServerManager`) sends form fields to a URL ending in the numeric
@@ -307,6 +317,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   revoke operations are idempotent, one active-ban index is race-safe across processes, expired bans
   stop blocking immediately, and enforcement returns the recovered client dialog contract from the
   shared authentication boundary.
+  The authenticated admin queue supports stable filtered pagination, exact report inspection, and
+  optimistic `open -> reviewing -> resolved/dismissed` decisions. Each transition appends actor,
+  note, previous/next status, operation ID, and timestamp atomically; terminal states are immutable,
+  stale snapshots conflict, and identical retries return the committed review without a second entry.
   Army Power/rank/time fields remain explicitly untrusted claims. When both accounts occur in a
   recent replacement-backend ranked match, the report also captures the exact server match ID,
   participant snapshots, state, terminal winner/cancellation, authenticated result claims, and

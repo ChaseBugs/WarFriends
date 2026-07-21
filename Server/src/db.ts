@@ -1198,6 +1198,14 @@ export async function connectMongo(): Promise<void> {
   await reportsCollection.createIndex({ reportedPlayerId: 1, status: 1, createdAt: -1 });
   await reportsCollection.createIndex({ reporterPlayerId: 1, createdAt: -1 });
   await reportsCollection.createIndex({ reportId: 1 }, { unique: true, sparse: true });
+  // Review queues use stable createdAt/reportId ordering. Operation IDs live inside the same
+  // report mutation as status/history, so this sparse multikey index prevents one admin retry key
+  // from being applied to two different reports without requiring a cross-collection transaction.
+  await reportsCollection.createIndex({ status: 1, createdAt: -1, reportId: -1 });
+  await reportsCollection.createIndex(
+    { "reviewHistory.operationId": 1 },
+    { unique: true, sparse: true },
+  );
 
   // One atomic counter covers every process for a presented login identity. The key is an
   // HMAC rather than a raw player/provider identifier so expired throttle rows do not become
