@@ -790,6 +790,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   serialization of the rejected object or aborts unrelated RequestBuffer results.
   Buffered claims are ordered, atomic, reward-validated, and replay safe.
   Unit deployment remains disabled until that event source exists.
+- **Daily assignment cycle integrity**: `AssignmentData` keeps its private `dayKey`, `issued`, and
+  `tomorrow` values as one server-authored UTC tuple. Rollover, PvP progress, skips, claims, mega
+  claims, and serialization validate both timestamps as bounded safe Unix seconds and require the
+  day key plus next-midnight reset to derive exactly from issuance. A malformed or infinite reset
+  therefore fails closed instead of keeping one objective set and its claim surface active forever.
 - **VIP entitlement integrity**: every paid-VIP consumer uses one validated nonnegative,
   safe-integer Unix deadline. PvP/mission multipliers, virtual dog-tag capacity, daily cards,
   VIP-only visuals, pack extension, purchase renewal, voided-purchase reversal, and boot migration

@@ -8,6 +8,7 @@ import {
   ensureAssignmentsState,
   processAssignmentBufferState,
   recordPvpAssignmentProgressState,
+  serializeAssignmentData,
 } from "../services/assignmentService";
 import { createInitialProgression } from "../services/playerStateService";
 
@@ -140,5 +141,32 @@ test("mega claims and UTC rollover reject a non-integer carried mega cursor", ()
   assert.throws(
     () => assignmentStateFor(corrupt, assignments.tomorrow + 1),
     /mega reward is invalid/,
+  );
+});
+
+test("daily assignment UTC cycles reject permanent or internally inconsistent reset authority", () => {
+  const initial = createInitialProgression(NOW);
+  const assignments = assignmentStateFor(initial, NOW);
+  const corruptReset = {
+    ...initial,
+    assignments: { ...assignments, tomorrow: Number.POSITIVE_INFINITY },
+  };
+
+  // A raw `tomorrow > now` check would keep this day's objectives active forever. The same
+  // boundary protects gameplay transitions and direct response serialization.
+  assert.throws(
+    () => assignmentStateFor(corruptReset, NOW + 60),
+    /Stored assignment reset time is invalid/,
+  );
+  assert.throws(
+    () => serializeAssignmentData(corruptReset.assignments),
+    /Stored assignment reset time is invalid/,
+  );
+  assert.throws(
+    () => assignmentStateFor({
+      ...initial,
+      assignments: { ...assignments, dayKey: "2026-07-18" },
+    }, NOW + 60),
+    /Stored assignment UTC cycle is inconsistent/,
   );
 });

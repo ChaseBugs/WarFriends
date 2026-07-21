@@ -110,6 +110,15 @@ const ASSIGNMENT_INCORRECT_REWARD = 11203;
 const MEGA_REWARD_POINTS = 50;
 const MAX_BUFFER_REPLAYS = 20;
 const MAX_PENDING_MESSAGE_IGNORES = 100;
+const MAX_DATE_UNIX_SECONDS = 8_640_000_000_000;
+
+/** Validate a daily-assignment clock value before it controls rollover or serialization. */
+function assignmentUnixSeconds(value: number, label: string): number {
+  if (!Number.isSafeInteger(value) || value < 0 || value > MAX_DATE_UNIX_SECONDS) {
+    throw new ApiError(ApiErrorCode.InternalServerError, `${label} is invalid.`);
+  }
+  return value;
+}
 
 /**
  * Validate a persisted assignment counter before it can influence claim eligibility.
@@ -188,6 +197,24 @@ function nextUtcMidnight(now: number): number {
   return Math.floor(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + 1) / 1_000);
 }
 
+/**
+ * Verify the server-authored UTC cycle tuple as one ordered authority boundary.
+ *
+ * `Infinity` in `tomorrow` makes `tomorrow > now` true forever, silently freezing one day's
+ * objectives and mega progression. Checking both timestamps and re-deriving the day/reset pair
+ * from `issued` also rejects partial imports that combine individually valid values from two days.
+ */
+function validatedAssignmentCycleTimeline(assignments: AssignmentState): AssignmentState {
+  const issued = assignmentUnixSeconds(assignments.issued, "Stored assignment issue time");
+  const tomorrow = assignmentUnixSeconds(assignments.tomorrow, "Stored assignment reset time");
+  const expectedDayKey = utcDayKey(issued);
+  const expectedTomorrow = nextUtcMidnight(issued);
+  if (assignments.dayKey !== expectedDayKey || tomorrow !== expectedTomorrow) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Stored assignment UTC cycle is inconsistent.");
+  }
+  return assignments;
+}
+
 function newAssignment(template: AssignmentTemplate): AssignmentRecordState {
   return {
     id: template.id,
@@ -208,10 +235,11 @@ function newAssignment(template: AssignmentTemplate): AssignmentRecordState {
  * behavior inside their optimistic-concurrency transaction.
  */
 export function assignmentStateFor(state: PlayerProgressionState, now: number): AssignmentState {
-  const key = utcDayKey(now);
-  const existing = state.assignments;
+  const currentTime = assignmentUnixSeconds(now, "Assignment request time");
+  const key = utcDayKey(currentTime);
+  const existing = state.assignments ? validatedAssignmentCycleTimeline(state.assignments) : undefined;
   const megaReward = assignmentCounter(existing?.megaReward ?? 0, "Stored assignment mega reward");
-  if (existing?.dayKey === key && existing.tomorrow > now) {
+  if (existing?.dayKey === key && existing.tomorrow > currentTime) {
     const completed = assignmentCounter(existing.completed, "Stored daily assignment completion count");
     if (completed > existing.assignments.length) {
       throw new ApiError(ApiErrorCode.InternalServerError, "Stored daily assignment completion count is impossible.");
@@ -225,9 +253,9 @@ export function assignmentStateFor(state: PlayerProgressionState, now: number): 
   }
   return {
     assignments: ASSIGNMENT_TEMPLATES.map(newAssignment),
-    tomorrow: nextUtcMidnight(now),
+    tomorrow: nextUtcMidnight(currentTime),
     completed: 0,
-    issued: Math.floor(now),
+    issued: currentTime,
     megaReward,
     skipUsed: false,
     dayKey: key,
@@ -236,6 +264,7 @@ export function assignmentStateFor(state: PlayerProgressionState, now: number): 
 
 /** Omit server-only reset metadata and preserve the exact AssignmentData JSON property names. */
 export function assignmentWireData(assignments: AssignmentState): Record<string, unknown> {
+  validatedAssignmentCycleTimeline(assignments);
   return {
     assignments: assignments.assignments,
     tomorrow: assignments.tomorrow,

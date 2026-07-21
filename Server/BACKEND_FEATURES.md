@@ -157,6 +157,9 @@ Arena run appear finished, make an achievement tier appear complete, or unlock a
   non-finite deadlines fail closed instead of creating permanently claimable onboarding rewards.
   Buffered rejection returns an expired empty client view without rewriting or reserializing the
   corrupt durable evidence, so the recovered per-action error remains transport-safe.
+- Daily assignment cycle authority must validate its bounded safe `issued` and `tomorrow` Unix
+  seconds plus the exact UTC `dayKey`/next-midnight relationship before rollover, mutation, or
+  serialization; corrupt or non-finite reset values fail closed instead of freezing one day forever.
 - Client-provided serialized blobs may be round-tripped but must not be trusted for rewards.
 - Add tests for contract field names, authorization failures, duplicate requests, and concurrency.
 - Update this tracker in the same commit whenever a feature status changes.
