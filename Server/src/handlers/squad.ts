@@ -36,7 +36,11 @@ import {
   getSquadWarDivision,
 } from "../services/squadWarService";
 import { rankSquadWarDivision } from "../services/squadWarContract";
-import { exactSquadInteger, requestedSquadJoinPolicy } from "./squadAdmissionParsing";
+import {
+  exactSquadInteger,
+  requestedDirectSquadChatTimestamp,
+  requestedSquadJoinPolicy,
+} from "./squadAdmissionParsing";
 
 // Squad system — BACKEND.md §2.5. Every handler is authenticated; rank checks live in the
 // service layer.
@@ -90,15 +94,9 @@ export const squadHandlers: Record<number, HandlerEntry> = {
   [DbAction.SaveLastSeenSquadChatTimeStamp]: authed(async ({ player, req }) => {
     // The stock 1.6.0 client normally submits the cursor as RequestBuffer.data. This direct
     // form remains useful for repaired clients and diagnostics, but accepts only explicit
-    // timestamp aliases and never derives a value from the server receive time.
-    // Do not use the generic squad integer helper here: it floors decimals, which would turn a
-    // malformed cursor into different valid authority before the shared action-193 validator sees it.
-    const rawTimestamp = req.LastSeenSquadChatTimeStamp ?? req.Timestamp ?? req.TimeStamp;
-    const timestamp = rawTimestamp === undefined
-      || rawTimestamp === null
-      || (typeof rawTimestamp === "string" && rawTimestamp.trim() === "")
-      ? Number.NaN
-      : Number(rawTimestamp);
+    // timestamp alias. Its exact C# transport boundary runs before the shared nonnegative,
+    // future-skew, and monotonic checks, and no server receive-time fallback is invented.
+    const timestamp = requestedDirectSquadChatTimestamp(req);
     const result = await saveSquadChatCursor(player!.id, timestamp);
     return ok(DbAction.SaveLastSeenSquadChatTimeStamp, {
       LastSeenSquadChatTimeStamp: result.timestamp,

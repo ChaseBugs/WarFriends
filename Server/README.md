@@ -1468,7 +1468,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   `data` must be the canonical nonnegative signed C# `int` decimal emitted by the recovered
   `PlayerAnalytics` setter; empty, padded, signed, leading-zero, fractional, exponent, or oversized
   text produces only that request item's `UnknownAction` result without mutating the buffer's
-  working state. Both incoming and
+  working state. A repaired-client direct call must provide exactly one recognized timestamp alias
+  as an exact C# Int32 form value or JSON integer; conflicting aliases, nulls, Booleans, arrays,
+  fractions, and exponent text fail before cursor comparison. Both incoming and
   stored cursors must be nonnegative signed-client integers inside the bounded server-time skew
   window before shared persisted reads/publication, comparison, mutation, or boot; both snapshots
   in one publication use the same captured server time. Malformed/future durable state therefore

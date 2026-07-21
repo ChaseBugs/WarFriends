@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { ApiErrorCode } from "../apiErrors";
-import { exactSquadInteger, requestedSquadJoinPolicy } from "../handlers/squadAdmissionParsing";
+import {
+  exactSquadInteger,
+  requestedDirectSquadChatTimestamp,
+  requestedSquadJoinPolicy,
+} from "../handlers/squadAdmissionParsing";
 import {
   SQUAD_CREATE_BASE_WARBUCKS_COST,
   SQUAD_CREATE_NOT_ENOUGH_WARBUCKS,
@@ -67,6 +71,31 @@ test("squad admission settings reject coercion and preserve exact recovered inte
   }
   for (const value of [null, "", "yes", "true", "false", " true ", "TRUE", 0, 1, 2, {}, []]) {
     assert.throws(() => requestedSquadJoinPolicy({ IsPublic: value }), /exact stock 0\/1 flag/);
+  }
+});
+
+test("direct squad-chat cursor accepts exactly one canonical C# integer alias", () => {
+  assert.equal(requestedDirectSquadChatTimestamp({ LastSeenSquadChatTimeStamp: "0" }), 0);
+  assert.equal(requestedDirectSquadChatTimestamp({ Timestamp: 2_147_483_647 }), 2_147_483_647);
+  assert.equal(requestedDirectSquadChatTimestamp({ TimeStamp: "123" }), 123);
+
+  for (const request of [
+    {},
+    { Timestamp: null },
+    { Timestamp: false },
+    { Timestamp: [] },
+    { Timestamp: "" },
+    { Timestamp: " 1" },
+    { Timestamp: "+1" },
+    { Timestamp: "01" },
+    { Timestamp: "1.0" },
+    { Timestamp: "1e0" },
+    { Timestamp: 1.5 },
+    { Timestamp: 2_147_483_648 },
+    { Timestamp: "1", TimeStamp: "1" },
+    { LastSeenSquadChatTimeStamp: "1", Timestamp: "2" },
+  ]) {
+    assert.throws(() => requestedDirectSquadChatTimestamp(request), /(field is invalid|exact integer)/);
   }
 });
 

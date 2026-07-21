@@ -41,3 +41,25 @@ export function requestedSquadJoinPolicy(req: Record<string, unknown>): number |
   // only after the transport itself has been validated.
   return exactBinaryBoolean(req.IsPublic, "IsPublic") ? 0 : 1;
 }
+
+const SQUAD_CHAT_TIMESTAMP_FIELDS = [
+  "LastSeenSquadChatTimeStamp",
+  "Timestamp",
+  "TimeStamp",
+] as const;
+
+/**
+ * Parse the repaired-client direct action-193 form without alias precedence or JS coercion.
+ *
+ * The stock client queues a decimal string in RequestBuffer, but historical diagnostic clients
+ * have used three direct field names. Exactly one alias may describe the cursor. Requiring the
+ * shared C# Int32 transport before the time-aware service check prevents `false`, `[]`, fractions,
+ * or two conflicting aliases from becoming a different valid read cursor.
+ */
+export function requestedDirectSquadChatTimestamp(req: Record<string, unknown>): number {
+  const supplied = SQUAD_CHAT_TIMESTAMP_FIELDS.filter((field) => req[field] !== undefined);
+  if (supplied.length !== 1) {
+    throw new ApiError(ApiErrorCode.UnknownAction, "Squad chat timestamp field is invalid.");
+  }
+  return exactSquadInteger(req[supplied[0]], supplied[0]);
+}
