@@ -106,6 +106,15 @@ local queue timer and Redis stale-queue cleanup so those lifecycle boundaries ca
 disables the bounded first-reporter wait. Fractional, non-finite, negative, and oversized values
 fail closed rather than being floored, clamped, or replaced with an undocumented fallback.
 
+# Challenge lifetime policy
+
+`CHALLENGE_TTL_SECONDS` must be an exact safe integer from 60 through 604,800 seconds. It becomes
+the durable `expiresAt` interval for each newly created challenge inbox row. Fractional, non-finite,
+negative, and out-of-range values fail closed instead of being floored, clamped, or replaced with a
+hidden 24-hour lifetime. Existing challenge rows remain valid against their own bounded one-minute-
+to-seven-day interval because those rows do not retain the deployment policy version that created
+them.
+
 # Limited-time Event Assignment configuration
 
 `EVENT_ASSIGNMENT_CONFIG_PATH` controls the separate `EventAssignmentManager` daily calendar used

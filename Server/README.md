@@ -715,8 +715,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   payload and optional mission fields, bounded identities/text and parseable opponent snapshot, a
   sender-and-created-Unix-second-derived ID, and consistent accepted/read/timestamp state with no
   economy fields. The stored TTL must be ordered between one minute and seven days; the deployment
-  setting is clamped to that range, and one captured application time rejects future or expired
-  invitations independently of MongoDB TTL cleanup.
+  setting must be an exact safe integer from 60 through 604,800 seconds. Fractional, non-finite,
+  negative, and out-of-range settings fail closed rather than being floored, clamped, or replaced
+  with 24 hours. Historical rows retain their own bounded lifetime because they do not store a
+  policy version. One captured application time rejects future or expired invitations independently
+  of MongoDB TTL cleanup.
   Action `2` now parses the exact form contract emitted by `BeanstalkServerManager.Challenge` before
   service admission. Required fields cannot disappear into defaults, optional mission fields are
   accepted only when actually present, and nulls, booleans, arrays, blanks, fractional/exponent

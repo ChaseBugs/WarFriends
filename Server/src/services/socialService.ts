@@ -13,7 +13,6 @@ import {
   progressionForPlayer,
 } from "./playerStateService";
 import { integerNumberAttribute as numberAttribute } from "./dynamoNumberAttributeService";
-import { config } from "../config";
 import { requireModeratedText } from "./textModerationService";
 import { checkedRewardBalance } from "./rewardMathService";
 import { validatedCoreProgressionBalances } from "./coreProgressionAuthorityService";
@@ -21,11 +20,8 @@ import { progressionRevisionForRead } from "./progressionRevisionAuthorityServic
 import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
 import { validatedPlayerAccountEnvelope } from "./playerProfileMirrorAuthorityService";
 import { validatedInboxRewardMessage } from "./inboxRewardAuthorityService";
-import {
-  MAX_CHALLENGE_TTL_MS,
-  MIN_CHALLENGE_TTL_MS,
-  validatedChallengeMessage,
-} from "./challengeMessageAuthorityService";
+import { validatedChallengeMessage } from "./challengeMessageAuthorityService";
+import { challengeTtlSeconds } from "./challengePolicyService";
 import { validatedInboxMessageDocument } from "./inboxMessageAuthorityService";
 import { reserveOutgoingMessageSlot } from "./outgoingMessageRateLimitService";
 
@@ -132,13 +128,6 @@ export function buildSquadKickMessage(
     createdAt,
   };
   return validatedInboxMessageDocument(message, createdAt);
-}
-
-function challengeTtlMilliseconds(): number {
-  const configured = Number.isFinite(config.challengeTtlSeconds)
-    ? Math.floor(config.challengeTtlSeconds) * 1_000
-    : 24 * 60 * 60 * 1_000;
-  return Math.min(MAX_CHALLENGE_TTL_MS, Math.max(MIN_CHALLENGE_TTL_MS, configured));
 }
 
 /** Pure expiry predicate shared by database paths and contract tests. */
@@ -272,7 +261,7 @@ export async function sendChallenge(from: PlayerDocument, input: ChallengeMessag
     ignored: false,
     accepted: false,
     createdAt,
-    expiresAt: new Date(createdAt.getTime() + challengeTtlMilliseconds()),
+    expiresAt: new Date(createdAt.getTime() + (challengeTtlSeconds() * 1_000)),
   };
   try {
     validatedChallengeMessage(doc, createdAt);
