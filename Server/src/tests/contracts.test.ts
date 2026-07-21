@@ -35,7 +35,10 @@ import {
 } from "../services/progressionRevisionAuthorityService";
 import { validatedProgressionSuccessor } from "../services/progressionPublicationAuthorityService";
 import { validatedProgressionSchemaVersion } from "../services/progressionSchemaAuthorityService";
-import { validatedPlayerProfileLookup } from "../services/playerProfileMirrorAuthorityService";
+import {
+  validatedPlayerCredentialProjection,
+  validatedPlayerProfileLookup,
+} from "../services/playerProfileMirrorAuthorityService";
 
 function contractPlayer(): PlayerDocument {
   const player = newPlayer("player-contract", "ContractPlayer", AccountType.Facebook);
@@ -429,14 +432,24 @@ test("indexed player profile mirrors must match before client-visible projection
   weakSession.authToken = "guessable";
   assert.throws(
     () => validatedPlayerProfileLookup(weakSession),
-    /Stored player account envelope is invalid/,
+    /Stored player credential projection is invalid/,
   );
 
   const malformedPassword = contractPlayer();
   malformedPassword.authTokenHash = "scrypt$v1$16384$8$1$bad$bad";
   assert.throws(
     () => validatedPlayerProfileLookup(malformedPassword),
-    /Stored player account envelope is invalid/,
+    /Stored player credential projection is invalid/,
+  );
+
+  assert.equal(validatedPlayerCredentialProjection({ authToken: "b".repeat(64) }).authToken?.length, 64);
+  assert.throws(
+    () => validatedPlayerCredentialProjection({ authToken: "concurrent-winner" }),
+    /Stored player credential projection is invalid/,
+  );
+  assert.throws(
+    () => validatedPlayerCredentialProjection({ authTokenHash: "scrypt$v1$16384$8$1$bad$bad" }),
+    /Stored player credential projection is invalid/,
   );
 
   const reversedAuditDates = contractPlayer();

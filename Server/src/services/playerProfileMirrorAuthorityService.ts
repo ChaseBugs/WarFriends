@@ -67,6 +67,22 @@ function validCustomCredentialHash(value: unknown): boolean {
     && /^[0-9a-f]{64}$/u.test(parts[6] ?? "");
 }
 
+type PlayerCredentialProjection = Pick<PlayerDocument, "authToken" | "authTokenHash">;
+
+/**
+ * Validate the private credential subset returned by authentication compare-and-set operations.
+ *
+ * Those reads intentionally project no public profile fields, so they cannot call the complete
+ * account-envelope validator. Keeping the exact token and password-digest shapes in this shared
+ * adapter prevents the narrow race-resolution path from becoming a weaker credential boundary.
+ */
+export function validatedPlayerCredentialProjection<T extends PlayerCredentialProjection>(player: T): T {
+  const valid = (player.authToken === undefined || /^[0-9a-f]{64}$/u.test(player.authToken))
+    && (player.authTokenHash === undefined || validCustomCredentialHash(player.authTokenHash));
+  if (!valid) throw new Error("Stored player credential projection is invalid.");
+  return player;
+}
+
 /**
  * Validate private player-account fields consumed before a request reaches gameplay logic.
  *
@@ -78,13 +94,12 @@ function validCustomCredentialHash(value: unknown): boolean {
  */
 export function validatedPlayerAccountEnvelope(player: PlayerDocument): PlayerDocument {
   validatedPlayerProfileMirrors(player);
+  validatedPlayerCredentialProjection(player);
   const createdAt = player.createdAt instanceof Date ? player.createdAt.getTime() : Number.NaN;
   const updatedAt = player.updatedAt instanceof Date ? player.updatedAt.getTime() : Number.NaN;
   const valid = typeof player.id === "string"
     && player.id.length > 0
     && player.id.length <= 256
-    && (player.authToken === undefined || /^[0-9a-f]{64}$/u.test(player.authToken))
-    && (player.authTokenHash === undefined || validCustomCredentialHash(player.authTokenHash))
     && (player.normalizedAccountName === undefined
       || player.normalizedAccountName === player.accountName.toLocaleLowerCase("en-US"))
     && typeof player.player.deviceToken === "string"

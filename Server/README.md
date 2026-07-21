@@ -220,7 +220,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   index keys must be absent. Shared full-document lookup/insert additionally validates the private
   account envelope: exact session HMAC, supported legacy/scrypt password digest, bounded identity
   and device fields, canonical optional normalized name, and ordered finite audit dates. A missing
-  legacy session is allowed only so a separately proven password/provider login can rotate it.
+  legacy session is allowed only so a separately proven password/provider login can rotate it. The
+  same credential-shape proof guards the intentionally narrow projection returned after a session
+  compare-and-set and its concurrent-winner reload, so that race path cannot return a malformed
+  stored token merely because it did not fetch the complete profile.
   Full-profile saves set/unset those roots atomically, so
   MongoDB cannot order, select, or authenticate by a value different from the one Unity displays.
   Human passwords use versioned salted scrypt with automatic legacy-HMAC migration; provider

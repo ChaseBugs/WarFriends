@@ -4,6 +4,7 @@ import type { DatabasePlayerDTO } from "../dtos";
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import {
   validatedPlayerAccountEnvelope,
+  validatedPlayerCredentialProjection,
   validatedPlayerProfileLookup,
 } from "./playerProfileMirrorAuthorityService";
 
@@ -115,13 +116,17 @@ export async function compareAndRotateSessionToken(
     { $set: { authToken: candidateToken, updatedAt: new Date() } },
     { returnDocument: "after", projection: { authToken: 1 } },
   );
-  if (updated?.authToken) return updated.authToken;
+  if (updated) {
+    validatedPlayerCredentialProjection(updated);
+    if (updated.authToken) return updated.authToken;
+  }
 
   // A failed compare normally means another successful login rotated first. Return its token
   // only when the caller's durable credential still proves account ownership. A session-only
   // login must not inherit a token created by a concurrent password change, and a password login
   // must not inherit one after its verified hash was replaced.
   const current = await players().findOne({ id }, { projection: { authToken: 1, authTokenHash: 1 } });
+  if (current) validatedPlayerCredentialProjection(current);
   if (
     !current?.authToken
     || !options.allowConcurrentWinner

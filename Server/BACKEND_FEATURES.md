@@ -142,6 +142,9 @@ Direct delivery, subscription revalidation, voided-purchase reversal, and post-d
 also validate the complete private player account and duplicated profile envelope. Existing damaged
 players abort the surrounding transaction before grants, reversals, or terminal receipt markers;
 only a genuine missing-player result follows an operation's explicit reconciliation behavior.
+Authentication's intentionally narrow session compare-and-set projection reuses the exact session
+HMAC and supported password-digest validator on both its successful result and concurrent-winner
+reload; a malformed durable credential cannot escape through a projection that omits the profile.
 Action `221` validates its entire narrow lost-response receipt before replay, read, or publication:
 only the twelve recovered A/B IDs and matching Gold prices are accepted, the historical grant and
 timestamp must be safe, and its receipt revision cannot exceed current progression. Corruption is
