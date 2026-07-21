@@ -20,6 +20,7 @@ import {
 } from "./googlePlayPurchaseVerifier";
 import { createInitialItemInventory, itemInventoryStateFor } from "./itemInventoryService";
 import { progressionForPlayer, unixNow } from "./playerStateService";
+import { validatedPlayerAccountEnvelope } from "./playerProfileMirrorAuthorityService";
 import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
 import { withScheduledJobLease } from "./scheduledJobLeaseService";
 import { cardInventoryStateFor } from "./cardInventoryService";
@@ -185,6 +186,10 @@ async function reconcileVoidedPurchase(event: GooglePlayVoidedPurchase, now: num
     if (!grant) return "unmatched";
     const player = await players().findOne({ id: receipt.playerId }, { session });
     if (player) {
+      // Preserve the existing missing-player receipt behavior, but fail closed when the account is
+      // present and corrupt. Validation must precede inventory reads and the final revoked marker so
+      // the whole reversal remains retryable after authoritative player repair.
+      validatedPlayerAccountEnvelope(player);
       const allPackReceipts = await purchaseReceipts().find(
         { playerId: receipt.playerId, kind: "pack" },
         { session },

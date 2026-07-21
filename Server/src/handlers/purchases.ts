@@ -3,6 +3,7 @@ import { ApiError, ApiErrorCode } from "../apiErrors";
 import { players } from "../db";
 import { ok } from "../dtos";
 import { buildPlayerData, unixNow } from "../services/playerStateService";
+import { validatedPlayerAccountEnvelope } from "../services/playerProfileMirrorAuthorityService";
 import {
   deliverGooglePlayPackPurchase,
   deliverGooglePlayPurchase,
@@ -99,6 +100,9 @@ function validateRefundPackNotice(value: unknown): void {
 async function currentPlayerData(playerId: string, now: number): Promise<Record<string, unknown>> {
   const current = await players().findOne({ id: playerId });
   if (!current) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found after purchase delivery.");
+  // The response is a fresh boot-style projection, so do not serialize a full document that changed
+  // or became damaged after the delivery transaction committed.
+  validatedPlayerAccountEnvelope(current);
   return buildPlayerData(current, now);
 }
 

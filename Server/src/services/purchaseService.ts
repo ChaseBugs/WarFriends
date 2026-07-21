@@ -19,6 +19,7 @@ import {
   type VerifiedGooglePlayPurchase,
 } from "./googlePlayPurchaseVerifier";
 import { progressionForPlayer, unixNow } from "./playerStateService";
+import { validatedPlayerAccountEnvelope } from "./playerProfileMirrorAuthorityService";
 import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
 import { encryptPurchaseToken } from "./purchaseTokenCryptoService";
 import { applyPackEntitlementState } from "./packPurchaseService";
@@ -289,6 +290,10 @@ export async function deliverGooglePlayPurchase(
 
       const player = await players().findOne({ id: playerId }, { session });
       if (!player) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
+      // Store verification proves the purchase, not the integrity of the durable account that will
+      // receive it. Validate the complete private/profile envelope before the first grant write so
+      // a damaged account cannot consume an otherwise valid token or publish a receipt marker.
+      validatedPlayerAccountEnvelope(player);
       const transition = applyPurchaseEntitlementState(
         progressionForPlayer(player),
         entitlement,

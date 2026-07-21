@@ -138,6 +138,10 @@ when expiry is zero, and never later than a nonzero expiry.
 Any present subscription revalidation owner must be the exact 64-character lowercase hexadecimal
 HMAC-SHA256 purchase-receipt key. Absence remains valid for legacy subscription rows; arbitrary or
 malformed durable IDs fail before stale-event comparison or publication.
+Direct delivery, subscription revalidation, voided-purchase reversal, and post-delivery boot reloads
+also validate the complete private player account and duplicated profile envelope. Existing damaged
+players abort the surrounding transaction before grants, reversals, or terminal receipt markers;
+only a genuine missing-player result follows an operation's explicit reconciliation behavior.
 Action `221` validates its entire narrow lost-response receipt before replay, read, or publication:
 only the twelve recovered A/B IDs and matching Gold prices are accepted, the historical grant and
 timestamp must be safe, and its receipt revision cannot exceed current progression. Corruption is

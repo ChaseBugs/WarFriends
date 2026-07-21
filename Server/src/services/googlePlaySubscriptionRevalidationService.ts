@@ -15,6 +15,7 @@ import {
   type GooglePlaySubscriptionStatusVerifier,
 } from "./googlePlayPurchaseVerifier";
 import { progressionForPlayer, unixNow } from "./playerStateService";
+import { validatedPlayerAccountEnvelope } from "./playerProfileMirrorAuthorityService";
 import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
 import { decryptPurchaseToken } from "./purchaseTokenCryptoService";
 import { withScheduledJobLease } from "./scheduledJobLeaseService";
@@ -144,6 +145,10 @@ async function commitSuccessfulStatus(
       return false;
     }
 
+    // A missing account has the explicit terminal behavior above, but a present damaged account is
+    // not equivalent to deletion. Throw inside the transaction before changing subscription state
+    // or its receipt so an operator can repair authority without losing the provider event.
+    validatedPlayerAccountEnvelope(player);
     const currentProgression = progressionForPlayer(player);
     const transition = applySubscriptionRevalidationState(
       currentProgression,

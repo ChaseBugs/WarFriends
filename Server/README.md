@@ -682,6 +682,13 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   commit atomically; action `189` verifies every restored token and returns complete `PlayerData`.
   Unsupported special-weapon or incompletely serialized offer packs remain fail-closed.
 
+  Every full player-document reload in direct delivery, background subscription revalidation,
+  voided-purchase reversal, and the final boot-style response validates the same private account and
+  duplicated profile envelope used by authentication. A genuinely deleted player retains the
+  reconciliation path described by that operation; a present damaged row instead aborts its MongoDB
+  transaction before any entitlement, reversal, or terminal receipt marker is written, preserving
+  the provider event for retry after repair.
+
   A second Mongo-leased scheduler queries Google Play Voided Purchases for one-time products with
   a durable successful-window cursor, ten-minute overlap, complete token pagination, and Google's
   30-day first-run boundary. It matches the HMAC token plus exact order ID, reverses each receipt
