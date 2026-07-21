@@ -100,6 +100,15 @@ response also includes a generated `X-Request-ID`; request/response/error bounda
 same ID while logging only the query-free request path. Async-local context automatically adds that
 ID to downstream authentication, database, economy, and gameplay logger helpers across awaited work.
 
+Production MongoDB backups can use `npm run backup:mongodb:offhost`. The command creates plaintext
+only in a unique OS temporary directory, validates the existing dump manifest, and sends an
+AES-256-GCM archive plus authenticated metadata to a configured mounted remote volume or UNC share.
+It refuses overwrite and prunes only old, same-database archive/manifest pairs after path, size, and
+SHA-256 verification; damaged or unrelated files remain untouched. Encrypted restore requires the
+matching historical key, explicit database-replacement confirmation, successful GCM authentication,
+and the existing independent plaintext manifest check. `OPERATIONS.md` contains scheduling, key
+retention, restore-drill, and alerting guidance.
+
 Account sanctions use the same independent admin Bearer credential under
 `/admin/moderation`. `POST /sanctions` issues a permanent ban when `durationSeconds` is omitted or a
 bounded temporary ban when it is present; `POST /sanctions/:sanctionId/revoke` revokes an active ban;

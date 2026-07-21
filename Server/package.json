@@ -25,6 +25,8 @@
     "audit:squads": "npm run build && node --env-file=.env dist/scripts/auditSquadIntegrity.js",
     "repair:squads": "npm run build && node --env-file=.env dist/scripts/auditSquadIntegrity.js --repair",
     "backup:mongodb": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/Backup-Mongo.ps1",
+    "backup:mongodb:offhost": "npm run build && powershell -NoProfile -ExecutionPolicy Bypass -File scripts/Backup-MongoOffHost.ps1",
+    "restore:mongodb:offhost": "npm run build && powershell -NoProfile -ExecutionPolicy Bypass -File scripts/Restore-MongoOffHost.ps1",
     "test": "npm run build && node --test \"dist/tests/*.test.js\""
   },
   "dependencies": {

@@ -17,8 +17,37 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\Backup-Mongo.ps1
 
 The script uses `MONGO_URL` and `MONGO_DB_NAME`, writes a compressed archive under ignored
 `backups/`, refuses to overwrite an existing archive, and writes a JSON manifest containing the
-database name, byte length, UTC creation time, and SHA-256 hash. Copy both files to independently
-managed encrypted storage and test restoration regularly.
+database name, byte length, UTC creation time, and SHA-256 hash. This local form is useful for a
+manual same-host maintenance snapshot; production retention should use the encrypted workflow.
+
+## Encrypted off-host backup and retention
+
+Point `BACKUP_OFFHOST_DIRECTORY` at a mounted remote volume or UNC share. Generate a raw 256-bit key
+once and store it in the deployment secret manager, not in `.env` committed to Git:
+
+```powershell
+[Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
+```
+
+Set that value as `BACKUP_ENCRYPTION_KEY`, choose `BACKUP_RETENTION_DAYS` from 7 through 3650, then
+run from `Server`:
+
+```powershell
+npm run backup:mongodb:offhost
+```
+
+The workflow creates the `mongodump` archive in a unique OS temporary directory, verifies its
+format-1 manifest, and writes only AES-256-GCM ciphertext plus a format-2 manifest to the off-host
+target. Database identity, creation time, original name, byte count, and plaintext SHA-256 are GCM
+authenticated. The temporary plaintext directory is removed after success or failure. Existing
+destinations are never overwritten. Retention runs only after a new encrypted archive is durable
+and removes only old, same-database `.wfbk`/manifest pairs whose confined path, size, and encrypted
+SHA-256 validate; damaged, malformed, unknown, and orphaned files are preserved for review.
+
+Schedule this command with the deployment scheduler or Windows Task Scheduler under an account that
+can read the database secret and backup key and can write only the intended remote directory. Alert
+on a nonzero exit and on the age of the newest manifest. Keep every historical encryption key until
+all archives produced by it have expired, and perform a restore drill after key or tooling changes.
 
 ## MongoDB restore
 
@@ -35,6 +64,19 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\Restore-Mongo.ps1 `
 The confirmation switch is mandatory because this replaces target collections. After restoration,
 start one backend node first, confirm migrations and `/health`, authenticate `/metrics`, then open
 traffic and add the remaining nodes.
+
+For an encrypted off-host archive, set the matching historical `BACKUP_ENCRYPTION_KEY` and run:
+
+```powershell
+npm run restore:mongodb:offhost -- `
+  -EncryptedArchivePath \\backup-host\warfriends\warfriends-YYYYMMDDTHHMMSSZ.archive.gz.wfbk `
+  -ConfirmDatabaseReplacement
+```
+
+The wrapper verifies ciphertext size/SHA, authenticates the GCM tag and bound database metadata,
+decrypts into a unique temporary directory, and then invokes the existing restore script. That
+script independently verifies the plaintext database, byte count, and SHA-256 before its guarded
+`mongorestore --drop`. Plaintext is removed from temporary storage in a `finally` block.
 
 ## Rolling deployment
 
