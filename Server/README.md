@@ -667,7 +667,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   assignment ID_8. Subscription-only action `2000` now validates the server-owned Play expiry,
   consumes the same three-card recipe, grants a server-selected result, and leaves no timed receipt,
   all in one progression revision. Inactive subscribers receive the recovery body that restores the
-  stock client's optimistic card removals.
+  stock client's optimistic card removals. The complete durable receipt is validated at shared read,
+  action, serialization, and publication boundaries: empty state must be the exact zero tuple, while
+  active state must contain exactly three implemented same-rarity Bronze/Silver IDs and the exact
+  source duration. Its signed-client timestamps cannot overflow Unity's recovered C# `int`; malformed
+  or partial state fails closed instead of being cleared and reopening a three-card exchange.
 - **Squad War Card pool**: `DepositCards` validates the nested
   `AddedCards`/`RemovedCards` dictionaries, ownership, and the recovered 3-10 slot squad-level
   capacity before atomically exchanging inventory and `depositedCardsDic`. `WithdrawCard` verifies

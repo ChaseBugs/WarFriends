@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import generatedCardCatalog from "../data/cardCatalog.generated.json";
 import { AccountType } from "../constants";
-import type { PlayerDocument } from "../db";
+import type { CardCraftingState, PlayerDocument } from "../db";
 import { DbAction } from "../dbActions";
 import { newPlayer } from "../dtos";
 import { processAssignmentBufferState } from "../services/assignmentService";
@@ -33,6 +33,7 @@ import {
   withdrawSquadCardState,
 } from "../services/squadCardPoolService";
 import { buildPlayerData, createInitialProgression } from "../services/playerStateService";
+import { validatedProgressionSuccessor } from "../services/progressionPublicationAuthorityService";
 
 const NOW = 1_700_000_000;
 
@@ -207,6 +208,55 @@ test("timed Bronze and Silver recipes consume three cards and grant one server-s
   const goldDefinition = generatedCardCatalog.cards.find((card) => card.name === goldResult.cardId);
   assert.equal(goldDefinition?.rarity, 3);
   assert.equal(goldResult.state.goldCardsCrafted, 1);
+});
+
+test("card-crafting authority rejects malformed durable receipts before boot, action, or publication", () => {
+  const malformed: unknown[] = [
+    { cards: [], start: NOW, end: 0 },
+    { cards: ["AMMOCRATE", "AMMOCRATE", "AMMOCRATE"], start: NOW, end: NOW + 1 },
+    { cards: ["AMMOCRATE", "AMMOBOX", "AMMOCRATE"], start: NOW, end: NOW + 30 * 60 },
+    { cards: ["AMMOCRATE", "AMMOCRATE", "MISSING"], start: NOW, end: NOW + 30 * 60 },
+    { cards: ["AMMOCRATE", "AMMOCRATE", "AMMOCRATE"], start: NOW, end: 2_147_483_648 },
+    { cards: [], start: 0, end: 0, claimed: true },
+  ];
+  for (const cardCrafting of malformed) {
+    const document = playerDocument();
+    document.progression!.cardCrafting = cardCrafting as CardCraftingState;
+    assert.throws(() => buildPlayerData(document), /card-crafting|Card-crafting/);
+  }
+
+  const active = createInitialProgression(NOW);
+  active.cardInventory = {
+    ...createInitialCardInventory(),
+    cardData: { AMMOCRATE: { amount: 3 } },
+  };
+  active.cardCrafting = malformed[1] as CardCraftingState;
+  assert.throws(
+    () => startCardCraftingState(active, NOW, ["AMMOCRATE", "AMMOCRATE", "AMMOCRATE"]),
+    /card-crafting|Card-crafting/,
+  );
+  assert.throws(() => claimCraftedCardState(active, NOW + 30 * 60), /card-crafting|Card-crafting/);
+
+  const clean = createInitialProgression(NOW);
+  const corruptSuccessor = {
+    ...clean,
+    revision: clean.revision + 1,
+    cardCrafting: malformed[2] as CardCraftingState,
+  };
+  assert.throws(
+    () => validatedProgressionSuccessor(clean, corruptSuccessor),
+    /card-crafting|Card-crafting/,
+  );
+  assert.throws(
+    () => startCardCraftingState({
+      ...clean,
+      cardInventory: {
+        ...createInitialCardInventory(),
+        cardData: { AMMOCRATE: { amount: 3 } },
+      },
+    }, 2_147_483_647, ["AMMOCRATE", "AMMOCRATE", "AMMOCRATE"]),
+    /Card-crafting time is invalid/,
+  );
 });
 
 test("Gold-card crafting rejects a corrupt or overflowing starter-assignment proof", () => {

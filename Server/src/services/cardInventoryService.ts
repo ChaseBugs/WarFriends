@@ -3,6 +3,11 @@ import { hasActiveSubscription } from "./subscriptionBenefitService";
 import generatedCardCatalog from "../data/cardCatalog.generated.json";
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import type { CardCraftingState, CardInventoryState, PlayerProgressionState } from "../db";
+import {
+  cardCraftingAuthorityFor,
+  validatedCardCraftingState,
+  validatedCardCraftingTime,
+} from "./cardCraftingAuthorityService";
 
 export const CARD_PACK_NOT_FOUND = 112;
 export const CARD_PACK_NOT_ENOUGH_FUNDS = 100;
@@ -138,8 +143,7 @@ export function cardInventoryStateFor(state: PlayerProgressionState): CardInvent
 }
 
 export function cardCraftingStateFor(state: PlayerProgressionState): CardCraftingState {
-  const value = state.cardCrafting ?? createInitialCardCrafting();
-  return { cards: [...value.cards], start: value.start, end: value.end };
+  return cardCraftingAuthorityFor(state.cardCrafting);
 }
 
 /**
@@ -296,6 +300,7 @@ export function startCardCraftingState(
   now: number,
   cards: readonly string[],
 ): CardCraftingMutationResult {
+  const startedAt = validatedCardCraftingTime(now);
   const existing = cardCraftingStateFor(state);
   if (existing.cards.length > 0 && existing.start < existing.end) {
     throw new ApiError(ALREADY_CRAFTING, "Player is already crafting a card.");
@@ -309,9 +314,10 @@ export function startCardCraftingState(
     : CARD_CRAFTING_RULES.silverToGoldMinutes;
   const cardCrafting: CardCraftingState = {
     cards: [...cards],
-    start: now,
-    end: now + minutes * 60,
+    start: startedAt,
+    end: validatedCardCraftingTime(startedAt + minutes * 60),
   };
+  validatedCardCraftingState(cardCrafting);
   const next: PlayerProgressionState = {
     ...state,
     revision: state.revision + 1,
@@ -364,8 +370,9 @@ export function claimCraftedCardState(
   now: number,
   choose: (upperBound: number) => number = (upperBound) => randomInt(upperBound),
 ): CardCraftingMutationResult {
+  const comparisonTime = validatedCardCraftingTime(now);
   const crafting = cardCraftingStateFor(state);
-  if (crafting.cards.length !== CARD_CRAFTING_RULES.inputCount || crafting.start >= crafting.end || now < crafting.end) {
+  if (crafting.cards.length === 0 || comparisonTime < crafting.end) {
     throw new ApiError(CRAFTED_CARD_NOT_READY, "Crafted card is not ready.");
   }
   const inputRarity = recipeRarity(crafting.cards);
@@ -407,7 +414,8 @@ export function craftAndClaimSubscribedCardState(
   cards: readonly string[],
   choose: (upperBound: number) => number = (upperBound) => randomInt(upperBound),
 ): CardCraftingMutationResult {
-  if (!hasActiveSubscription(state, now)) {
+  const comparisonTime = validatedCardCraftingTime(now);
+  if (!hasActiveSubscription(state, comparisonTime)) {
     throw new ApiError(CARD_NOT_FOUND, "An active subscription is required for instant crafting.");
   }
   const existing = cardCraftingStateFor(state);
@@ -439,7 +447,7 @@ export function craftAndClaimSubscribedCardState(
 }
 
 export function serializeCardCrafting(value: CardCraftingState): string {
-  return JSON.stringify(value);
+  return JSON.stringify(validatedCardCraftingState(value));
 }
 
 function objectJson(value: string): Record<string, unknown> {

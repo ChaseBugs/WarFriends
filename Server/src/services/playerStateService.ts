@@ -42,6 +42,7 @@ import { validatedRequestBufferAuthority } from "./requestBufferAuthorityService
 import { validatedWarBucksConversionReceipt } from "./warBucksConversionAuthorityService";
 import { validatedVipDailyCardState } from "./vipDailyCardAuthorityService";
 import { validatedCardLifecycleCounters } from "./cardLifecycleCounterAuthorityService";
+import { cardCraftingAuthorityFor } from "./cardCraftingAuthorityService";
 
 /** Unix seconds are used throughout the recovered Beanstalk protocol. */
 export function unixNow(): number {
@@ -106,6 +107,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
   validatedWarBucksConversionReceipt(state.warBucksConversion, progressionRevisionForRead(state.revision));
   validatedVipDailyCardState(state.vipDailyCards);
   validatedCardLifecycleCounters(state);
+  const cardCrafting = cardCraftingAuthorityFor(state.cardCrafting);
   // This is the shared persisted-progression read boundary, not only a boot serializer. Validate
   // wallet/rank balances here so cross-player transactions and ordinary economy actions cannot
   // let NaN/Infinity bypass a `< price` check before reaching a narrower service validator.
@@ -138,7 +140,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
       itemInventory: state.itemInventory ?? createInitialItemInventory(),
       visualInventory: state.visualInventory ?? createInitialVisualInventory(),
       cardInventory: state.cardInventory ?? createInitialCardInventory(),
-      cardCrafting: state.cardCrafting ?? createInitialCardCrafting(),
+      cardCrafting,
     };
   }
 
@@ -169,7 +171,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
     itemInventory: state.itemInventory ?? createInitialItemInventory(),
     visualInventory: state.visualInventory ?? createInitialVisualInventory(),
     cardInventory: state.cardInventory ?? createInitialCardInventory(),
-    cardCrafting: state.cardCrafting ?? createInitialCardCrafting(),
+    cardCrafting,
   };
 }
 
