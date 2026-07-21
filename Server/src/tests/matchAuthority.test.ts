@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  completeBothPlayersDisconnectedAuthority,
+  matchesBothPlayersDisconnectedAuthority,
   matchesDisconnectForfeitAuthority,
   terminalMatchReportResult,
   type MatchDoc,
@@ -145,6 +147,22 @@ test("disconnect forfeit authority binds the exact loser marker", () => {
     disconnectedPlayerId: "player-b",
     disconnectedAt,
   }), false);
+});
+
+test("both-offline cancellation requires both exact durable disconnect markers", () => {
+  const playerA = new Date("2026-07-21T10:01:00.000Z");
+  const playerB = new Date("2026-07-21T10:01:01.000Z");
+  const disconnected = activeMatch({ disconnectedAt: { "player-a": playerA, "player-b": playerB } });
+  const authority = completeBothPlayersDisconnectedAuthority(disconnected);
+  assert.ok(authority);
+  assert.equal(matchesBothPlayersDisconnectedAuthority(disconnected, authority), true);
+  assert.equal(completeBothPlayersDisconnectedAuthority(activeMatch({
+    disconnectedAt: { "player-a": playerA },
+  })), null);
+  assert.equal(matchesBothPlayersDisconnectedAuthority(activeMatch({
+    disconnectedAt: { "player-a": playerA, "player-b": new Date(playerB.getTime() + 1) },
+  }), authority), false);
+  assert.equal(matchesBothPlayersDisconnectedAuthority(activeMatch(), authority), false);
 });
 
 test("ranked-match authority rejects unsafe dynamic identities and contradictory lifecycle state", () => {

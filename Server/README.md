@@ -525,6 +525,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   The grace callback also binds the loser's exact disconnect timestamp inside the MongoDB reward
   transaction; a reconnect or replacement marker makes the stale callback a no-op without client
   notification or timer cleanup.
+  The no-Redis active-room close path persists the same markers. Both transport modes require one
+  exact marker per assigned participant and recheck the complete timestamp snapshot inside the
+  cancellation transaction before a both-offline result can release presence; missing or changed
+  authority waits another grace window.
   Cancellation likewise commits the terminal match and both presence releases together. On a
   single-node restart, active/settling matches are cancelled and all residual `InGame` profiles
   are repaired in the same transaction, including legacy partial cancellations. Before those

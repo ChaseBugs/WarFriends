@@ -147,6 +147,10 @@ unknown and cannot manufacture a forfeit reward. Reconnect clearing compare-unse
 disconnect timestamp it observed, and a forfeit repeats that same loser-marker proof inside the
 terminal reward transaction. A reconnect or later disconnect therefore invalidates an older grace
 callback before any reward, progression, card, rental, league, event, or terminal write.
+Process-local active-room closes now persist the same participant markers. Both local and
+distributed both-offline cancellation require the complete exact two-player timestamp snapshot
+again inside the MongoDB cancellation transaction; a missing, cleared, or replaced peer marker
+waits another grace window instead of turning a stale transport observation into cancellation.
 
 Each new match also stores its backend coordinator UUID. Redis carries a renewable crash-expiring
 heartbeat for that UUID, and startup plus periodic orphan recovery cancels only matches whose owner

@@ -184,14 +184,70 @@ export function normalizeMatchCancelReason(reason: string): string {
   return normalized;
 }
 
+export interface BothPlayersDisconnectedAuthority {
+  /** Exact two-player disconnect snapshot captured after transport liveness says both are gone. */
+  disconnectedAt: Record<string, Date>;
+}
+
+/** Return cancellation authority only when every assigned player has one durable marker. */
+export function completeBothPlayersDisconnectedAuthority(
+  match: MatchDoc,
+): BothPlayersDisconnectedAuthority | null {
+  if (match.state !== "active") return null;
+  const playerIds = match.players.map((participant) => participant.playerId);
+  const disconnectedAt = match.disconnectedAt ?? {};
+  const keys = Object.keys(disconnectedAt);
+  if (keys.length !== playerIds.length
+    || keys.some((playerId) => !playerIds.includes(playerId))
+    || playerIds.some((playerId) => !(disconnectedAt[playerId] instanceof Date))) return null;
+  return { disconnectedAt: Object.fromEntries(playerIds.map((playerId) => [playerId, disconnectedAt[playerId]])) };
+}
+
+/**
+ * Compare a complete two-player disconnect snapshot inside the cancellation transaction.
+ *
+ * Socket/Redis liveness cannot share MongoDB atomicity. A reconnect clears its marker, and a later
+ * disconnect replaces it. Exact timestamp equality therefore fences both cases before presence is
+ * released or the durable match is cancelled.
+ */
+export function matchesBothPlayersDisconnectedAuthority(
+  match: MatchDoc,
+  authority: BothPlayersDisconnectedAuthority,
+): boolean {
+  const expectedIds = match.players.map((participant) => participant.playerId);
+  const authorityIds = Object.keys(authority.disconnectedAt);
+  const currentIds = Object.keys(match.disconnectedAt ?? {});
+  return match.state === "active"
+    && authorityIds.length === expectedIds.length
+    && currentIds.length === expectedIds.length
+    && expectedIds.every((playerId) => {
+      const expected = authority.disconnectedAt[playerId];
+      const current = match.disconnectedAt?.[playerId];
+      return expected instanceof Date
+        && Number.isFinite(expected.getTime())
+        && current instanceof Date
+        && current.getTime() === expected.getTime();
+    });
+}
+
 /**
  * Cancel an unresolved match without granting rewards and release both players back to
  * Online. The match transition and every participant presence repair are atomic, so a crash
  * cannot leave a cancelled match whose accounts remain blocked as InGame. Competing disconnect
  * timers still cannot cancel a match already claimed for normal result settlement.
  */
-export async function cancelMatch(matchId: string, reason: string): Promise<boolean> {
+export async function cancelMatch(
+  matchId: string,
+  reason: string,
+  bothPlayersDisconnectedAuthority?: BothPlayersDisconnectedAuthority,
+): Promise<boolean> {
   const cancelReason = normalizeMatchCancelReason(reason);
+  // This terminal reason carries a stronger proof contract than operator/startup timeouts. Keep
+  // the reason and its complete two-marker authority inseparable so a future call site cannot
+  // accidentally restore the former unconditional both-offline cancellation path.
+  if ((cancelReason === "both_players_disconnected") !== Boolean(bothPlayersDisconnectedAuthority)) {
+    return false;
+  }
   const transitionAt = new Date();
   const transitionUnix = validatedPlayerLastAction(Math.floor(transitionAt.getTime() / 1_000));
   // A late join-timeout callback must never cancel a distributed room whose second participant
@@ -206,6 +262,8 @@ export async function cancelMatch(matchId: string, reason: string): Promise<bool
     ) as unknown as MatchDoc | null;
     if (!match) return false;
     validatedMatchDocument(match, transitionAt);
+    if (bothPlayersDisconnectedAuthority
+      && !matchesBothPlayersDisconnectedAuthority(match, bothPlayersDisconnectedAuthority)) return false;
     validatedMatchDocument({
       ...match,
       state: "cancelled",
@@ -1260,11 +1318,18 @@ export async function markMatchParticipantDisconnected(matchId: string, playerId
   return updated ? validatedMatchDocument(updated as unknown as MatchDoc, disconnectedAt) : null;
 }
 
-export async function clearMatchParticipantDisconnected(matchId: string, playerId: string): Promise<boolean> {
+export async function clearMatchParticipantDisconnected(
+  matchId: string,
+  playerId: string,
+  expectedDisconnectedAt?: Date,
+): Promise<boolean> {
   const path = `disconnectedAt.${playerId}`;
   const current = await getMatch(matchId);
   const observedDisconnectedAt = current?.disconnectedAt?.[playerId];
   if (!current || !(observedDisconnectedAt instanceof Date)) return false;
+  if (expectedDisconnectedAt
+    && (!(expectedDisconnectedAt instanceof Date)
+      || observedDisconnectedAt.getTime() !== expectedDisconnectedAt.getTime())) return false;
   const disconnectedAt = { ...current.disconnectedAt };
   delete disconnectedAt[playerId];
   validatedMatchDocument({

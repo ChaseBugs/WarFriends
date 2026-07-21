@@ -11,6 +11,7 @@ import { enqueueForHub, removeForHub as leaveQueue, restoreWaitingForHub } from 
 import {
   cancelMatch,
   clearMatchParticipantDisconnected,
+  completeBothPlayersDisconnectedAuthority,
   createMatch,
   findStartedMatchForPlayer,
   getMatch,
@@ -240,7 +241,7 @@ function scheduleDisconnectResolution(eviction: {
   playerId: string;
   opponentId?: string;
   wasActive: boolean;
-}): void {
+}, expectedDisconnectedAt?: Date): void {
   clearDisconnectTimer(eviction.matchId, eviction.playerId);
   const delayMs = Math.max(1, config.matchDisconnectGraceSeconds) * 1000;
   const timer = setTimeout(() => {
@@ -248,6 +249,16 @@ function scheduleDisconnectResolution(eviction: {
     void (async () => {
       const room = roomManager.getRoom(eviction.matchId);
       if (!room || roomManager.isParticipant(eviction.matchId, eviction.playerId)) return;
+
+      if (eviction.wasActive) {
+        const durable = await getMatch(eviction.matchId);
+        const marker = durable?.disconnectedAt?.[eviction.playerId];
+        if (!durable
+          || durable.state !== "active"
+          || !(expectedDisconnectedAt instanceof Date)
+          || !(marker instanceof Date)
+          || marker.getTime() !== expectedDisconnectedAt.getTime()) return;
+      }
 
       const opponentConnected = eviction.opponentId
         ? roomManager.isParticipant(eviction.matchId, eviction.opponentId)
@@ -257,7 +268,12 @@ function scheduleDisconnectResolution(eviction: {
         // Only a match that had actually started can be won by disconnect. The connected
         // opponent is both reporter and winner, satisfying match participation checks while
         // the atomic settlement claim prevents a late result from paying rewards twice.
-        const settlement = await settleResult(eviction.matchId, eviction.opponentId, eviction.opponentId);
+        const settlement = await settleResult(
+          eviction.matchId,
+          eviction.opponentId,
+          eviction.opponentId,
+          { disconnectedPlayerId: eviction.playerId, disconnectedAt: expectedDisconnectedAt! },
+        );
         // rewarded=false means another terminal transition won while this timer was awaiting the
         // transaction. That winning path owns its notification; do not relabel it as a forfeit.
         if (settlement.rewarded) {
@@ -269,7 +285,23 @@ function scheduleDisconnectResolution(eviction: {
       } else {
         // If the room never started or both players disappeared, nobody receives rewards.
         // Both DatabasePlayer status values are restored by cancelMatch.
-        await cancelMatch(eviction.matchId, eviction.wasActive ? "both_players_disconnected" : "join_timeout");
+        if (eviction.wasActive) {
+          const durable = await getMatch(eviction.matchId);
+          const authority = durable ? completeBothPlayersDisconnectedAuthority(durable) : null;
+          if (!authority) {
+            // The peer close may still be persisting its marker, or it may already have
+            // reconnected. Retry conservatively; the next callback first checks local presence.
+            scheduleDisconnectResolution(eviction, expectedDisconnectedAt);
+            return;
+          }
+          const cancelled = await cancelMatch(eviction.matchId, "both_players_disconnected", authority);
+          if (!cancelled) {
+            const current = await getMatch(eviction.matchId);
+            if (current?.state === "active") return;
+          }
+        } else {
+          await cancelMatch(eviction.matchId, "join_timeout");
+        }
       }
 
       clearMatchDisconnectTimers(eviction.matchId);
@@ -452,7 +484,15 @@ function scheduleDistributedDisconnectResolution(
           Payload: { MatchId: matchId, WinnerId: finished.winnerId, Reason: "OpponentForfeit" },
         };
       } else {
-        const cancelled = await cancelMatch(matchId, "both_players_disconnected");
+        const latest = await getMatch(matchId);
+        const authority = latest ? completeBothPlayersDisconnectedAuthority(latest) : null;
+        if (!authority) {
+          // A missing peer marker is not proof of offline authority; its close write may still be
+          // in flight, or it may have reconnected after the Redis read. Retry a full grace window.
+          scheduleDistributedDisconnectResolution(matchId, playerId, opponentId, expectedDisconnectedAt);
+          return;
+        }
+        const cancelled = await cancelMatch(matchId, "both_players_disconnected", authority);
         if (!cancelled) return;
         ended = { Type: "MatchEnded", Payload: { MatchId: matchId, Reason: "BothPlayersDisconnected" } };
       }
@@ -619,7 +659,28 @@ export async function createGameHub(httpServer: HttpServer): Promise<WebSocketSe
         });
       } else {
         const eviction = roomManager.evictClient(client.id);
-        if (eviction) scheduleDisconnectResolution(eviction);
+        if (eviction?.wasActive) {
+          void markMatchParticipantDisconnected(eviction.matchId, eviction.playerId).then(async (marked) => {
+            const disconnectedAt = marked?.disconnectedAt?.[eviction.playerId];
+            if (!(disconnectedAt instanceof Date)) return;
+            // Unlike the Redis path, a local reconnect can attach while this MongoDB write is in
+            // flight. Remove only this exact stale marker if the player is already back; the CAS
+            // clear cannot erase a still-later close marker from another socket generation.
+            if (roomManager.isParticipant(eviction.matchId, eviction.playerId)) {
+              await clearMatchParticipantDisconnected(eviction.matchId, eviction.playerId, disconnectedAt);
+              return;
+            }
+            scheduleDisconnectResolution(eviction, disconnectedAt);
+          }).catch((error: unknown) => {
+            logger.match.error("Local socket close could not persist disconnect authority", {
+              matchId: eviction.matchId,
+              playerId: eviction.playerId,
+              error: error instanceof Error ? error.message : String(error),
+            });
+          });
+        } else if (eviction) {
+          scheduleDisconnectResolution(eviction);
+        }
       }
       if (client.playerId) {
         void leaveQueue(client.playerId);
