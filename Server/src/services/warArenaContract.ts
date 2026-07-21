@@ -2,6 +2,8 @@ import { config } from "../config";
 import type { WarArenaState } from "../db";
 import { integerNumberAttribute } from "./dynamoNumberAttributeService";
 
+const MAX_CLIENT_INTEGER = 2_147_483_647;
+
 export interface ArenaPolicy {
   maxBattles: number;
   startingLives: number;
@@ -12,20 +14,26 @@ export interface ArenaPolicy {
   guaranteedScraps: number;
 }
 
-function nonNegative(value: number, fallback: number): number {
-  return Number.isFinite(value) ? Math.max(0, Math.floor(value)) : fallback;
+/** Require exact operator policy before it controls a client-visible price, cap, or reward. */
+function configuredInteger(value: number, field: string, minimum: number, maximum = MAX_CLIENT_INTEGER): number {
+  if (!Number.isSafeInteger(value) || value < minimum || value > maximum) {
+    throw new Error(`War Arena ${field} policy is invalid.`);
+  }
+  return value;
 }
 
 export function arenaPolicy(): ArenaPolicy {
   return {
-    // IKPLPPFFDNI clamps MaxBattles to a client-supported range of one through twelve.
-    maxBattles: Math.min(12, Math.max(1, nonNegative(config.arenaMaxBattles, 12))),
-    startingLives: Math.max(1, nonNegative(config.arenaLives, 3)),
-    entryTickets: nonNegative(config.arenaEntryTickets, 1),
-    entryGold: nonNegative(config.arenaEntryGold, 30),
-    heartTickets: nonNegative(config.arenaHeartTickets, 1),
-    heartGold: nonNegative(config.arenaHeartGold, 30),
-    guaranteedScraps: nonNegative(config.arenaGuaranteedScraps, 10),
+    // IKPLPPFFDNI supports MaxBattles only from one through twelve. Reject an out-of-range
+    // deployment rather than silently clamping it and storing lifecycle authority under a policy
+    // different from the operator's reviewed configuration.
+    maxBattles: configuredInteger(config.arenaMaxBattles, "maximum-battles", 1, 12),
+    startingLives: configuredInteger(config.arenaLives, "starting-lives", 1),
+    entryTickets: configuredInteger(config.arenaEntryTickets, "entry-Tickets", 0),
+    entryGold: configuredInteger(config.arenaEntryGold, "entry-Gold", 0),
+    heartTickets: configuredInteger(config.arenaHeartTickets, "heart-Tickets", 0),
+    heartGold: configuredInteger(config.arenaHeartGold, "heart-Gold", 0),
+    guaranteedScraps: configuredInteger(config.arenaGuaranteedScraps, "guaranteed-Scraps", 0),
   };
 }
 

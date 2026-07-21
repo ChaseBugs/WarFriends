@@ -397,7 +397,13 @@ export function claimAssignmentMegaRewardState(
   if (assignments.megaReward < MEGA_REWARD_POINTS) {
     throw new ApiError(ApiErrorCode.UnknownAction, "Assignment mega reward is not ready.");
   }
-  const goldAdded = Math.max(0, Math.floor(config.assignmentMegaRewardGold));
+  const goldAdded = config.assignmentMegaRewardGold;
+  if (!Number.isSafeInteger(goldAdded) || goldAdded < 0) {
+    // This fallback is deployment-owned reward authority. Rounding a fractional value or
+    // clamping a negative/non-finite value would publish a different economy policy than the
+    // operator configured, so reject it before consuming the 50-point claim cursor.
+    throw new ApiError(ApiErrorCode.InternalServerError, "Assignment mega-reward Gold policy is invalid.");
+  }
   const gold = checkedRewardBalance(state.gold, goldAdded, "Assignment mega-reward Gold");
   assignments.megaReward -= MEGA_REWARD_POINTS;
   return {

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { config } from "../config";
 import { DbAction } from "../dbActions";
 import { bufferedRequests, requestedAssignmentInteger } from "../handlers/assignments";
 import {
@@ -226,6 +227,27 @@ test("mega claims and UTC rollover reject a non-integer carried mega cursor", ()
     () => assignmentStateFor(corrupt, assignments.tomorrow + 1),
     /mega reward is invalid/,
   );
+});
+
+test("mega claim rejects malformed deployment Gold before consuming its cursor", () => {
+  const previous = config.assignmentMegaRewardGold;
+  try {
+    for (const reward of [Number.NaN, Number.POSITIVE_INFINITY, -1, 1.5]) {
+      config.assignmentMegaRewardGold = reward;
+      const initial = createInitialProgression(NOW);
+      const assignments = assignmentStateFor(initial, NOW);
+      assignments.megaReward = 50;
+      const eligible = { ...initial, assignments };
+      assert.throws(
+        () => claimAssignmentMegaRewardState(eligible, NOW + 60),
+        /Assignment mega-reward Gold policy is invalid/,
+      );
+      assert.equal(eligible.assignments.megaReward, 50);
+      assert.equal(eligible.gold, 0);
+    }
+  } finally {
+    config.assignmentMegaRewardGold = previous;
+  }
 });
 
 test("daily assignment UTC cycles reject permanent or internally inconsistent reset authority", () => {

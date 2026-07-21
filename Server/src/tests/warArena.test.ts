@@ -116,6 +116,37 @@ test("War Arena config and persisted wire use the recovered client field names",
   assert.deepEqual(wire.opponents, ["p2", "p3"]);
 });
 
+test("War Arena rejects malformed deployment policy instead of rounding or substituting it", () => {
+  const previous = {
+    arenaMaxBattles: config.arenaMaxBattles,
+    arenaLives: config.arenaLives,
+    arenaEntryTickets: config.arenaEntryTickets,
+    arenaEntryGold: config.arenaEntryGold,
+    arenaHeartTickets: config.arenaHeartTickets,
+    arenaHeartGold: config.arenaHeartGold,
+    arenaGuaranteedScraps: config.arenaGuaranteedScraps,
+  };
+  const invalid: Array<[keyof typeof previous, number]> = [
+    ["arenaMaxBattles", 0],
+    ["arenaMaxBattles", 13],
+    ["arenaLives", 0],
+    ["arenaEntryTickets", -1],
+    ["arenaEntryGold", 1.5],
+    ["arenaHeartTickets", Number.NaN],
+    ["arenaHeartGold", Number.POSITIVE_INFINITY],
+    ["arenaGuaranteedScraps", MAX_WAR_ARENA_CLIENT_INT + 1],
+  ];
+  try {
+    for (const [field, value] of invalid) {
+      Object.assign(config, previous, { [field]: value });
+      assert.throws(() => arenaPolicy(), /War Arena .* policy is invalid/);
+      assert.throws(() => warArenaConfiguration(NOW), /War Arena .* policy is invalid/);
+    }
+  } finally {
+    Object.assign(config, previous);
+  }
+});
+
 test("Arena reward gates reject corrupt counters and receipt timestamps", () => {
   const corruptCounter = createInitialProgression(NOW);
   corruptCounter.warArena = { ...initialWarArenaState(), wins: Number.NaN, lives: Number.NaN };

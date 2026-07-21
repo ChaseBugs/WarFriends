@@ -1338,7 +1338,8 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   agree; `completed` must equal claimed records; skip and mega counters must be typed and bounded;
   and issue/reset/day-key values must derive one UTC cycle. Corrupt records or counters fail closed
   instead of changing reward prices, bypassing comparisons, freezing rollover, or surviving an
-  unrelated full-progression replacement.
+  unrelated full-progression replacement. The deployment-owned mega Gold fallback must be an exact
+  nonnegative safe integer; malformed policy fails before the 50-point cursor or wallet changes.
 - **Reward arithmetic boundary**: server-authored nonnegative currency rewards use one shared
   safe-integer addition guard before publishing their claim or receipt markers. Assignment,
   achievement, inbox, one-time, tutorial, conversion, level-up, lootbox, core-PvP, Elite-part, and War Arena rewards
@@ -1515,6 +1516,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   `HeartDialogShown` accepts only exact C# `True`/`False` text or a JSON Boolean. JavaScript-coercible
   nulls, arrays, blanks, alternate number syntax, lowercase Boolean text, and numeric Boolean
   substitutes therefore cannot select entry, heart, or scraps behavior. Runs and prices are server-owned,
+  and every configured battle limit, life count, Ticket/Gold price, and guaranteed-Scraps fallback
+  must be an exact nonnegative C# `int` (with positive lives and one-to-twelve battles). Invalid
+  policy is rejected instead of being floored, clamped, or replaced by a hidden default.
   battle IDs are receipt-bound, and entry/start/result/heart/life/reward/end retries return their
   recovered response without a false revision increment or MongoDB replacement. Expired receipt
   cleanup remains durable because it unblocks a future battle. One complete lifecycle authority
