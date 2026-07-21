@@ -31,6 +31,7 @@ import { validatedCollectedRewards } from "./oneTimeRewardAuthorityService";
 import { validatedSquadChatCursor } from "./squadChatCursorAuthorityService";
 import { validatedFeatureIntroductions } from "./featureIntroductionAuthorityService";
 import { validatedTutorialLifecycle } from "./tutorialCompletionAuthorityService";
+import { validatedCoreProgressionBalances } from "./coreProgressionAuthorityService";
 
 /** Unix seconds are used throughout the recovered Beanstalk protocol. */
 export function unixNow(): number {
@@ -249,13 +250,14 @@ export function buildDatabasePlayer(document: PlayerDocument): Record<string, un
 export function buildPlayerData(player: PlayerDocument, now = unixNow()): PlayerDataMap {
   const state = progressionForPlayer(player);
   const dto = player.player;
+  const balances = validatedCoreProgressionBalances(state);
   const data: PlayerDataMap = {
-    Gold: numberAttribute(state.gold),
-    WarBucks: numberAttribute(state.warBucks),
-    Tickets: numberAttribute(state.tickets),
-    Scraps: numberAttribute(state.scraps),
+    Gold: numberAttribute(balances.gold),
+    WarBucks: numberAttribute(balances.warBucks),
+    Tickets: numberAttribute(balances.tickets),
+    Scraps: numberAttribute(balances.scraps),
     Level: numberAttribute(dto.level),
-    LevelExperience: numberAttribute(state.levelExperience),
+    LevelExperience: numberAttribute(balances.levelExperience),
     Experience: numberAttribute(dto.experience),
     ArmyPower: numberAttribute(dto.armyPower),
     DogTagSeconds: numberAttribute(state.dogTagSeconds),

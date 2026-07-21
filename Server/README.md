@@ -769,7 +769,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   safe-integer addition guard before publishing their claim or receipt markers. Assignment,
   achievement, inbox, one-time, tutorial, conversion, level-up, lootbox, core-PvP, Elite-part, and War Arena rewards
   therefore reject invalid or overflowing balances atomically while preserving legitimate negative
-  Gold or WarBucks chargeback debt.
+  Gold or WarBucks chargeback debt. Before boot, those two debt-capable wallets and the nonnegative
+  Tickets, Scraps, and level-experience fields must all be safe integers; invalid values fail closed
+  before the Dynamo-style adapter can silently project a non-finite value as zero.
 - **Squad Events (reviewed seasons only)**: action `113` joins the authenticated current roster to
   one immutable operator-configured season. Confirmed PvP wins/plays advance only recovered
   assignment IDs `7` and `8` as Unity-compatible binary32 fractions. Completing every assignment

@@ -244,6 +244,27 @@ test("player data uses the recovered DynamoDB attribute wire format", () => {
   );
 });
 
+test("player data rejects corrupt core balances while preserving chargeback debt", () => {
+  const debt = contractPlayer();
+  debt.progression!.gold = -25;
+  debt.progression!.warBucks = -500;
+  const wire = buildPlayerData(debt);
+  assert.deepEqual(wire.Gold, { N: "-25" });
+  assert.deepEqual(wire.WarBucks, { N: "-500" });
+
+  const corruptGold = contractPlayer();
+  corruptGold.progression!.gold = Number.NaN;
+  assert.throws(() => buildPlayerData(corruptGold), /Stored Gold balance is invalid/);
+
+  const corruptTickets = contractPlayer();
+  corruptTickets.progression!.tickets = -1;
+  assert.throws(() => buildPlayerData(corruptTickets), /Stored Tickets balance is invalid/);
+
+  const corruptExperience = contractPlayer();
+  corruptExperience.progression!.levelExperience = 1.5;
+  assert.throws(() => buildPlayerData(corruptExperience), /Stored level experience balance is invalid/);
+});
+
 test("dog-tag state uses accumulated seconds and recovered 900-second balancing", () => {
   const initial = createInitialProgression(1_000, 900, 5);
   assert.equal(initial.dogTagSeconds, 4_500);

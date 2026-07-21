@@ -42,6 +42,7 @@
 - Keep production MongoDB backups authenticated and encrypted before they leave temporary local storage. Retention may delete only an old, path-confined archive/manifest pair whose database, size, and SHA-256 all validate; malformed, damaged, unrelated, or orphaned files must remain for operator review.
 - Keep monitoring artifacts on the bounded metrics contract actually exported by `metricsService`. Alerts must require sustained signals and meaningful traffic where ratios are used; Redis alerts apply only to scrape targets explicitly labeled `redis_required=true`.
 - Preserve legitimate negative Gold or WarBucks chargeback debt, but reject non-safe-integer rewards and arithmetic overflow.
+- Validate core progression balances before `PlayerData` boot projection instead of relying on the Dynamo wire adapter's numeric fallback. Gold and WarBucks may be safe-integer chargeback debt; Tickets, Scraps, and level experience must be nonnegative safe integers, and malformed values must never be silently serialized as zero.
 - Fail closed when authoritative combat evidence, live-event configuration, or source-backed balancing is unavailable.
 - Add detailed English comments where recovered names are opaque or atomicity, replay, migration, or fallback decisions are not obvious.
 

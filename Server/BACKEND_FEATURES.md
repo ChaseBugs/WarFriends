@@ -107,6 +107,11 @@ finished-match retries return the immutable receipt without applying any counter
 
 ### Current economy-safety increment
 
+Boot-time `PlayerData` validates the five core numeric progression fields before the Dynamo-style
+adapter runs: Gold and WarBucks retain safe-integer chargeback debt, while Tickets, Scraps, and
+level experience must be nonnegative safe integers. Non-finite, fractional, or unsafe values fail
+closed instead of entering the adapter's legacy zero fallback or losing precision in Unity.
+
 Starter and daily assignments, assignment mega rewards, achievements, reward-bearing inbox
 messages, one-time/tutorial grants, Gold conversion, level rewards, normal/VIP lootbox duplicates,
 core PvP settlement, Elite-parts conversion, and War Arena Scraps now share one checked
