@@ -23,6 +23,7 @@ import {
   TUTORIAL_UNIT_NAME,
   updateEquippedUnitsState,
 } from "../services/unitInventoryService";
+import { validatedProgressionSuccessor } from "../services/progressionPublicationAuthorityService";
 
 function playerDocument(): PlayerDocument {
   const player = newPlayer("one-time-player", "OneTimePlayer", AccountType.Guest);
@@ -120,6 +121,15 @@ test("collected reward markers use exact key-presence authority and reject split
       revision: Number.MAX_SAFE_INTEGER,
     }, "FacebookLike"),
     /One-time reward progression revision is invalid/,
+  );
+  const clean = createInitialProgression(1_700_000_000);
+  assert.throws(
+    () => validatedProgressionSuccessor(clean, {
+      ...clean,
+      revision: clean.revision + 1,
+      collectedRewards: { FacebookLike: 0 },
+    }),
+    /Collected reward marker is invalid/,
   );
 });
 

@@ -197,8 +197,8 @@ Arena run appear finished, make an achievement tier appear complete, or unlock a
   rejected against request time at boot/settlement, while deterministic transaction publication
   avoids wall-clock-dependent retry results. Corruption fails closed instead of selecting the
   maximum reward or entering the recovered client's permanent-streak branch.
-- Paid-VIP lootbox countdowns must be exact 1-4 integers; only an absent legacy field defaults to
-  four. A selected visual's persisted parts may not exceed its catalog target before duplicate
+- Paid-VIP lootbox countdowns must be exact 1-4 integers before shared progression publication;
+  only an absent legacy field defaults to four. A selected visual's persisted parts may not exceed its catalog target before duplicate
   conversion, so damaged ownership cannot be normalized into WarBucks.
 - Instant Battle timer/lifetime/paid counters must fit the recovered client's nonnegative signed
   integers before readiness, settlement, or boot; future timers and paid five-battle groups beyond
@@ -210,7 +210,7 @@ Arena run appear finished, make an achievement tier appear complete, or unlock a
   boot. The next count, Gold wallet, and progression revision validate before the atomic rename so
   count 29 cannot publish count 30 and enter the client's signed shift/multiply overflow.
 - One-time `collectedRewards` markers must be a bounded dictionary whose present values are exactly
-  integer `1` before migration, grant/replay, or boot. Legacy IDs remain preserved, but malformed
+  integer `1` before migration, grant/replay, boot, or shared progression publication. Legacy IDs remain preserved, but malformed
   values cannot split the client's key-presence decision from backend eligibility.
 - A current daily-reward calendar must have a real UTC year/month/last-check date and ordered,
   month-bounded unlock/claim cursors before any check, claim, or wire projection.

@@ -568,8 +568,8 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   the source-defined four-battle countdown
   and two one-part suitcase rewards: parts, exact duplicate WarBucks, `NewVisuals`, and immutable
   retry receipts commit in the terminal match transaction. The persisted countdown is validated
-  as an exact 1-4 integer at migration, boot, and settlement; only an absent legacy field defaults
-  to four. Selected over-target visual parts fail before duplicate conversion instead of being
+  as an exact 1-4 integer at migration, boot, settlement, and every progression publication; only
+  an absent legacy field defaults to four. Selected over-target visual parts fail before duplicate conversion instead of being
   clamped into unproven ownership. The retired production weights are
   unavailable, so selection is explicitly reconstructed as uniform across the 73 normal-shop
   part rows; event/Arena/loyalty/assignment/value-pack grants, visual rentals, and unsupported
@@ -807,7 +807,7 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   Follow, and notification-permission DBKEYs; the separate Facebook-login reward requires a
   successful authenticated provider link. The server credits their exact decoded Gold values once,
   restores them through `PlayerAnalyticsData.collectedRewards`, and shares one bounded marker
-  validator across migration, grant/replay, and boot.
+  validator across migration, grant/replay, boot, and every progression publication.
   Legacy IDs are preserved, but every present value must be exact integer `1`, matching Unity's
   key-presence collection check so malformed markers cannot reopen an already hidden reward.
   The response omits the presence-sensitive `WasAdded` property on replay so the stock parser cannot

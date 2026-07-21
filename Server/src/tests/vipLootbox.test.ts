@@ -13,6 +13,7 @@ import {
   VIP_LOOTBOX_REWARDS_PER_CYCLE,
 } from "../services/vipLootboxService";
 import { VISUAL_CATALOG } from "../services/visualInventoryService";
+import { validatedProgressionSuccessor } from "../services/progressionPublicationAuthorityService";
 
 const NOW = 1_700_000_000;
 
@@ -152,6 +153,15 @@ test("countdown authority and duplicate wire suffixes match the recovered parser
       /Stored VIP lootbox countdown is invalid/,
     );
   }
+  const clean = createInitialProgression(NOW);
+  assert.throws(
+    () => validatedProgressionSuccessor(clean, {
+      ...clean,
+      revision: clean.revision + 1,
+      matchesToNextLootboxes: 0,
+    }),
+    /Stored VIP lootbox countdown is invalid/,
+  );
   assert.equal(serializeVipLootboxVisuals([]), undefined);
   assert.equal(
     serializeVipLootboxVisuals([
