@@ -14,6 +14,12 @@ export function validatedPlayerProfileMirrors(player: PlayerDocument): PlayerDoc
   const valid = player.id === dto.id
     && player.accountName === dto.accountName
     && player.accountType === dto.accountType
+    // Sparse provider indexes omit disconnected identities. Normalize absence to the exact
+    // sentinel/empty values consumed by DatabasePlayer rather than requiring empty root keys.
+    && (player.facebookId ?? "-1") === String(dto.facebookId)
+    && (player.googlePlayId ?? "") === dto.googlePlayId
+    && (player.gameCenterId ?? "") === dto.gameCenterId
+    && (player.deviceToken ?? "") === dto.deviceToken
     && Object.is(player.leagueTier, dto.leagueTier)
     && Object.is(player.armyPower, dto.armyPower)
     && Object.is(player.experience, dto.experience)

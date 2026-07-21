@@ -2,6 +2,7 @@ import type { ClientSession } from "mongodb";
 import { players, type PlayerDocument } from "../db";
 import type { DatabasePlayerDTO } from "../dtos";
 import { ApiError, ApiErrorCode } from "../apiErrors";
+import { validatedPlayerProfileMirrors } from "./playerProfileMirrorAuthorityService";
 
 // Data-access for the player document. The full client-facing snapshot lives in
 // document.player (DatabasePlayerDTO); a few dimensions are denormalized to the top level
@@ -26,6 +27,7 @@ export async function insertPlayer(
 ): Promise<PlayerDocument> {
   const now = new Date();
   const full: PlayerDocument = { ...doc, createdAt: now, updatedAt: now };
+  validatedPlayerProfileMirrors(full);
   await players().insertOne(full, session ? { session } : undefined);
   return full;
 }
@@ -123,19 +125,33 @@ export async function compareAndRotateSessionToken(
 
 /** Persist a mutated player snapshot, re-syncing the denormalized top-level fields. */
 export async function savePlayer(id: string, player: DatabasePlayerDTO): Promise<void> {
+  // Provider roots use sparse indexes, so disconnected sentinel values must be removed rather
+  // than written as shared empty keys. Publish the DTO and every duplicated root in one update.
+  const set: Record<string, unknown> = {
+    player,
+    accountName: player.accountName,
+    normalizedAccountName: player.accountName.toLocaleLowerCase("en-US"),
+    accountType: player.accountType,
+    deviceToken: player.deviceToken,
+    leagueTier: player.leagueTier,
+    armyPower: player.armyPower,
+    experience: player.experience,
+    squadPoints: player.squadPoints,
+    squadName: player.squadName,
+    updatedAt: new Date(),
+  };
+  const unset: Record<string, ""> = {};
+  if (player.facebookId === -1) unset.facebookId = "";
+  else set.facebookId = String(player.facebookId);
+  if (player.googlePlayId) set.googlePlayId = player.googlePlayId;
+  else unset.googlePlayId = "";
+  if (player.gameCenterId) set.gameCenterId = player.gameCenterId;
+  else unset.gameCenterId = "";
   await players().updateOne(
     { id },
     {
-      $set: {
-        player,
-        accountName: player.accountName,
-        leagueTier: player.leagueTier,
-        armyPower: player.armyPower,
-        experience: player.experience,
-        squadPoints: player.squadPoints,
-        squadName: player.squadName,
-        updatedAt: new Date(),
-      },
+      $set: set,
+      ...(Object.keys(unset).length ? { $unset: unset } : {}),
     },
   );
 }

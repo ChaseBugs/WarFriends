@@ -44,6 +44,7 @@ function contractPlayer(): PlayerDocument {
     accountName: player.accountName,
     authToken: "session-token",
     accountType: player.accountType,
+    facebookId: String(player.facebookId),
     leagueTier: player.leagueTier,
     armyPower: player.armyPower,
     experience: player.experience,
@@ -320,6 +321,13 @@ test("indexed player profile mirrors must match before client-visible projection
   );
   assert.throws(
     () => buildPlayerLeaderboardItem(corrupt, 1),
+    /Stored player profile mirrors are inconsistent/,
+  );
+
+  const corruptIdentity = contractPlayer();
+  corruptIdentity.googlePlayId = "root-only-provider-id";
+  assert.throws(
+    () => buildDatabasePlayer(corruptIdentity),
     /Stored player profile mirrors are inconsistent/,
   );
 });
