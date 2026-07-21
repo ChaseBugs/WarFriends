@@ -260,6 +260,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   same credential-shape proof guards the intentionally narrow projection returned after a session
   compare-and-set and its concurrent-winner reload, so that race path cannot return a malformed
   stored token merely because it did not fetch the complete profile.
+  The shared `DatabasePlayer` and leaderboard adapters also prove that complete envelope before
+  public projection. Search, friend, squad-roster, challenge, experience, and Arena views therefore
+  cannot advertise a damaged account merely because its public mirrors still look consistent.
   Full-profile saves set/unset those roots atomically, so
   MongoDB cannot order, select, or authenticate by a value different from the one Unity displays.
   Human passwords use versioned salted scrypt with automatic legacy-HMAC migration; provider

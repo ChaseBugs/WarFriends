@@ -54,6 +54,11 @@ Moderation-retention retry receipts now validate exact identity fields, safe non
 deletion counts, safe preview/creation chronology, and exact whole-day cutoffs within the global
 30-3650-day bounds before replay. Historical receipts remain valid across deploy-time policy changes.
 
+Public player publication now validates the complete durable account envelope at the shared
+`DatabasePlayer` and leaderboard adapters. Search, all-player, Facebook-friend, squad-roster,
+challenge, experience, and Arena leaderboard views therefore reject malformed credential or audit
+authority instead of publishing an apparently usable account from matching public mirrors alone.
+
 Account-sanction rows now have complete durable authority before authentication, issue/revoke replay,
 admin publication, appeal intake, and accepted-appeal mutation. Exact known fields, normalized
 identities, safe chronology, exact optional duration/expiry equality, and status-consistent

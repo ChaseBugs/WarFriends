@@ -436,6 +436,14 @@ test("indexed player profile mirrors must match before client-visible projection
     () => validatedPlayerProfileLookup(weakSession),
     /Stored player credential projection is invalid/,
   );
+  assert.throws(
+    () => buildDatabasePlayer(weakSession),
+    /Stored player credential projection is invalid/,
+  );
+  assert.throws(
+    () => buildPlayerLeaderboardItem(weakSession, 1),
+    /Stored player credential projection is invalid/,
+  );
 
   const malformedPassword = contractPlayer();
   malformedPassword.authTokenHash = "scrypt$v1$16384$8$1$bad$bad";
@@ -466,6 +474,14 @@ test("indexed player profile mirrors must match before client-visible projection
   reversedAuditDates.updatedAt = new Date(reversedAuditDates.createdAt.getTime() - 1);
   assert.throws(
     () => validatedPlayerProfileLookup(reversedAuditDates),
+    /Stored player account envelope is invalid/,
+  );
+  assert.throws(
+    () => buildDatabasePlayer(reversedAuditDates),
+    /Stored player account envelope is invalid/,
+  );
+  assert.throws(
+    () => buildPlayerLeaderboardItem(reversedAuditDates, 1),
     /Stored player account envelope is invalid/,
   );
 });

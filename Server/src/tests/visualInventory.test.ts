@@ -29,7 +29,7 @@ function playerDocument(): PlayerDocument {
   return {
     id: player.id,
     accountName: player.accountName,
-    authToken: "token",
+    authToken: "a".repeat(64),
     accountType: player.accountType,
     leagueTier: player.leagueTier,
     armyPower: player.armyPower,

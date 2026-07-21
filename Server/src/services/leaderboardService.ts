@@ -4,7 +4,10 @@ import { config } from "../config";
 import { redisZRevRange, redisZAdd } from "../redis";
 import { progressionForPlayer } from "./playerStateService";
 import { integerNumberAttribute as numberAttribute } from "./dynamoNumberAttributeService";
-import { validatedPlayerProfileMirrors } from "./playerProfileMirrorAuthorityService";
+import {
+  validatedPlayerAccountEnvelope,
+  validatedPlayerProfileMirrors,
+} from "./playerProfileMirrorAuthorityService";
 import { buildDatabaseSquad } from "./squadWireService";
 import { serializeWarArenaData } from "./warArenaContract";
 import { validatedSquadDocument } from "./squadAuthorityService";
@@ -23,7 +26,10 @@ function s(value: unknown): StringAttribute {
 
 /** Build the exact item parsed by FHIPGDADNFG.MAINIENLLIL. */
 export function buildPlayerLeaderboardItem(doc: PlayerDocument, position: number): PlayerLeaderboardItem {
-  validatedPlayerProfileMirrors(doc);
+  // Leaderboard rows are public account projections, not anonymous score fragments. Validate the
+  // complete account before publishing it so a damaged credential/audit envelope cannot remain a
+  // believable ranked opponent merely because its duplicated numeric mirrors still agree.
+  validatedPlayerAccountEnvelope(doc);
   const player = doc.player;
   const progression = progressionForPlayer(doc);
   const item: PlayerLeaderboardItem = {

@@ -62,7 +62,10 @@ import { validatedWarArenaState } from "./warArenaAuthorityService";
 import { validatedDailyMissionsState } from "./dailyMissionAuthorityService";
 import { validatedEventAssignmentState } from "./eventAssignmentAuthorityService";
 import { integerNumberAttribute as numberAttribute } from "./dynamoNumberAttributeService";
-import { validatedPlayerProfileMirrors } from "./playerProfileMirrorAuthorityService";
+import {
+  validatedPlayerAccountEnvelope,
+  validatedPlayerProfileMirrors,
+} from "./playerProfileMirrorAuthorityService";
 
 /** Unix seconds are used throughout the recovered Beanstalk protocol. */
 export function unixNow(): number {
@@ -284,7 +287,10 @@ function addSerializedObject(target: PlayerDataMap, typeName: string, value: unk
  * was the reason early responses produced a valid JSON object but an empty Unity player.
  */
 export function buildDatabasePlayer(document: PlayerDocument): Record<string, unknown> {
-  validatedPlayerProfileMirrors(document);
+  // Public projection is still publication of a real durable account. Proving only the duplicated
+  // DTO mirrors would let search, friends, squad rosters, or challenges advertise an account whose
+  // credential or audit envelope is corrupt and which cannot safely authenticate or mutate.
+  validatedPlayerAccountEnvelope(document);
   const dto = document.player;
   validatePlayerLeagueProgression(dto);
   validatePlayerLeagueCompetitionScore(dto.medalsBalance, dto.skill, document.id);
