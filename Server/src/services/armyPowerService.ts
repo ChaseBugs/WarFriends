@@ -8,6 +8,7 @@ import {
 } from "./itemInventoryService";
 import { progressionForPlayer, unixNow } from "./playerStateService";
 import { validatedPlayerAccountEnvelope } from "./playerProfileMirrorAuthorityService";
+import { playerLevelDefinition } from "./levelProgressionService";
 import { equippedUnitPower } from "./unitInventoryService";
 import { hasActiveRentalItem } from "./rentalEntitlementService";
 
@@ -66,16 +67,13 @@ function roundPositiveUnityFloat(value: number): number {
   return Math.floor(Math.fround(Math.fround(value) + Math.fround(0.5)));
 }
 
-/** Return the current level row's exact ARMYPOWER value, using LevelManager's clamp rule. */
+/** Return the exact recovered rank row's ARMYPOWER contribution. */
 export function rankPower(playerLevelIndex: number): number {
-  if (artifact.rankLevels.length === 0) {
-    throw new ApiError(ApiErrorCode.UnknownAction, "Rank Army Power catalog is empty.");
-  }
-  const index = Math.max(0, Math.min(
-    Math.trunc(Number.isFinite(playerLevelIndex) ? playerLevelIndex : 0),
-    artifact.rankLevels.length - 1,
-  ));
-  return artifact.rankLevels[index]!.armyPower;
+  // The recovered client clamps a presentation lookup after LevelManager has loaded a valid
+  // current row. The server cannot reuse that convenience at an authority boundary: normalizing
+  // NaN, a fraction, or an out-of-catalog stored level would publish a believable indexed Army
+  // Power for damaged profile state. Share the exact source-row validator used by progression.
+  return playerLevelDefinition(playerLevelIndex).armyPower;
 }
 
 /**

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { ApiError, ApiErrorCode } from "../apiErrors";
 import generatedArmyPowerCatalog from "../data/armyPowerCatalog.generated.json";
 import { AccountType } from "../constants";
 import type { PlayerDocument } from "../db";
@@ -74,8 +75,12 @@ test("starter weapon and rank power reproduce LevelManager float32 component rou
   assert.equal(equippedWeaponPower(document.progression!), 210);
   assert.equal(rankPower(0), 93);
   assert.equal(rankPower(1), 97);
-  assert.equal(rankPower(-100), 93);
-  assert.equal(rankPower(10_000), 1_060);
+  for (const playerLevel of [Number.NaN, Number.POSITIVE_INFINITY, -1, 1.5, 58]) {
+    assert.throws(
+      () => rankPower(playerLevel),
+      (error: unknown) => error instanceof ApiError && error.code === ApiErrorCode.InternalServerError,
+    );
+  }
   assert.deepEqual(calculateArmyPower(document), {
     unitPower: 0,
     weaponPower: 210,
@@ -90,6 +95,12 @@ test("starter weapon and rank power reproduce LevelManager float32 component rou
   assert.equal(armyPowerCacheIsCurrent(document, breakdown), true);
   document.player.armyPower += 1;
   assert.equal(armyPowerCacheIsCurrent(document, breakdown), false);
+
+  document.player.level = Number.NaN;
+  assert.throws(
+    () => calculateArmyPower(document),
+    (error: unknown) => error instanceof ApiError && error.code === ApiErrorCode.InternalServerError,
+  );
 });
 
 test("weapon power uses stored upgrade cursors and rejects unsupported feature authority", () => {

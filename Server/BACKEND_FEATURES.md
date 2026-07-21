@@ -669,6 +669,9 @@ rank failures remain contained in the corresponding RequestBuffer result without
 diagnostics. Heroic elite-part target selection also validates the exact row before bought-first or
 unlocked-pool selection, preventing direct callers from persisting reward authority beside a
 normalized corrupt rank.
+Rank Army Power derivation now consumes the same exact row instead of copying the client's
+post-load presentation clamp. A negative, fractional, non-finite, or oversized stored level cannot
+be normalized into the first/final rank contribution and published as a believable indexed total.
 One shared application-clock boundary now protects initial progression creation, persisted
 progression reads, successor publication, `PlayerData`, and the top-level player-state response.
 It requires a nonnegative safe Unix second inside JavaScript/BSON Date support and passes that same

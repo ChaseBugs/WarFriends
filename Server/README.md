@@ -1606,7 +1606,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   ArmyPower reproduces Unity float32 addition for normal, promoted-special, and bought-Elite rows
   and sums only equipped permanent units. Helper/unresolved rows and unproven offer discounts
   remain fail-closed. The authoritative ArmyPower service combines this unit component with the
-  recovered weapon DPS and player-rank components, then persists the complete total through a
+  recovered weapon DPS and player-rank components. Rank power requires the stored zero-based level
+  to select one exact 58-row source entry; the client-side post-load clamp is not reused to turn
+  non-finite, fractional, negative, or oversized durable state into a believable first/final rank
+  contribution. The service then persists the complete total through a
   progression-revision compare-and-swap. Run
   `npm run verify:unit-catalog` to compare both artifacts with MainScene and the recovered
   assemblies.
