@@ -25,6 +25,7 @@ import {
 import { videoAdRewardTimesForState } from "./videoAdRewardAuthorityService";
 import { validatedPvpWinStreak } from "./pvpWinStreakAuthorityService";
 import { validatedInstantBattleState } from "./instantBattleAuthorityService";
+import { validatedSquadCreationsCount } from "./squadCreationAuthorityService";
 
 /** Unix seconds are used throughout the recovered Beanstalk protocol. */
 export function unixNow(): number {
@@ -372,7 +373,7 @@ export function buildPlayerData(player: PlayerDocument, now = unixNow()): Player
   // boot boundary: PlayerAnalytics derives the next squad price from it after every restart.
   addSerializedObject(data, "PlayerAnalyticsData", {
     lastSeenSquadChatTimeStampDB: state.lastSeenSquadChatTimestamp ?? 0,
-    squadCreationsCount: state.squadCreationsCount ?? 0,
+    squadCreationsCount: validatedSquadCreationsCount(state.squadCreationsCount),
     // The stock UI checks this recovered dictionary before showing an already collected
     // one-time reward. Restoring the server-owned markers prevents a reconnect/reinstall from
     // presenting the button again even though a repeated action 161 would not pay twice.

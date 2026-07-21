@@ -75,6 +75,9 @@ test("GetPlayerData restores squad analytics through the recovered PlayerAnalyti
 
   assert.equal(analytics.lastSeenSquadChatTimeStampDB, NOW - 5);
   assert.equal(analytics.squadCreationsCount, 3);
+
+  player.progression!.squadCreationsCount = Number.POSITIVE_INFINITY;
+  assert.throws(() => buildPlayerData(player), /Stored squad creation count is invalid/);
 });
 
 test("squad event notification uses the message type and numeric suffix parsed by Unity", () => {

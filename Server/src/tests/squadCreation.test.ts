@@ -52,12 +52,34 @@ test("insufficient WarBucks uses the exact stock create recovery error", () => {
 });
 
 test("invalid creation counters cannot produce a free or overflowed price", () => {
+  for (const count of [
+    Number.NaN,
+    Number.POSITIVE_INFINITY,
+    -1,
+    1.5,
+    Math.floor(2_147_483_647 / SQUAD_CREATE_BASE_WARBUCKS_COST),
+    Number.MAX_SAFE_INTEGER,
+  ]) {
+    assert.throws(
+      () => squadCreationWarBucksPrice(count),
+      (error: unknown) => (error as { code?: number }).code === ApiErrorCode.InternalServerError,
+    );
+  }
+});
+
+test("squad creation validates wallet and revision before publishing the next count", () => {
+  for (const warBucks of [Number.NaN, Number.POSITIVE_INFINITY]) {
+    assert.throws(
+      () => applySquadCreationEconomyState({ ...createInitialProgression(NOW), warBucks }),
+      /Squad creation WarBucks balance is invalid/,
+    );
+  }
   assert.throws(
-    () => squadCreationWarBucksPrice(-1),
-    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.UnknownAction,
-  );
-  assert.throws(
-    () => squadCreationWarBucksPrice(Number.MAX_SAFE_INTEGER),
-    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.UnknownAction,
+    () => applySquadCreationEconomyState({
+      ...createInitialProgression(NOW),
+      warBucks: 100,
+      revision: Number.MAX_SAFE_INTEGER,
+    }),
+    /Squad creation progression revision is invalid/,
   );
 });

@@ -151,6 +151,9 @@ Arena run appear finished, make an achievement tier appear complete, or unlock a
 - Instant Battle timer/lifetime/paid counters must fit the recovered client's nonnegative signed
   integers before readiness, settlement, or boot; future timers and paid five-battle groups beyond
   the lifetime count fail closed instead of being clamped into a recharge or Gold-price state.
+- Squad-creation history must keep its linear `(count + 1) * 25` WarBucks price inside the
+  recovered client's signed integer before mutation or boot; wallet, revision, and the next count
+  are validated before the transactional squad/debit write.
 - A current daily-reward calendar must have a real UTC year/month/last-check date and ordered,
   month-bounded unlock/claim cursors before any check, claim, or wire projection.
   Subscription authority must also remain an ordered start/lock/expiry interval; future or inverted

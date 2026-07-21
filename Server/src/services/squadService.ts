@@ -17,6 +17,17 @@ import { buildSquadKickMessage } from "./socialService";
 import logger from "../utils/logger";
 import { requireModeratedText } from "./textModerationService";
 import { invalidateSquadWarRewardEligibility } from "./squadWarService";
+import {
+  SQUAD_CREATE_BASE_WARBUCKS_COST,
+  squadCreationWarBucksPrice,
+  validatedSquadCreationsCount,
+} from "./squadCreationAuthorityService";
+
+export {
+  SQUAD_CREATE_BASE_WARBUCKS_COST,
+  squadCreationWarBucksPrice,
+  validatedSquadCreationsCount,
+} from "./squadCreationAuthorityService";
 
 /**
  * Squad membership, admission, rank authority, and denormalized player mirrors.
@@ -105,14 +116,6 @@ export interface CreateSquadOptions {
 /** IJEAJGCCHEF.NotEnoughWarBucksForCreateSquad; its parser restores count and wallet. */
 export const SQUAD_CREATE_NOT_ENOUGH_WARBUCKS = 11403;
 
-/**
- * Exact 4.9.5 `WarBucksCreateSquadPrice` Constants value.
- *
- * MainScene stores the CodeStage ObscuredFloat as hidden bytes `e785cb41` with key 230887.
- * Reading the bytes as little-endian and XORing the key yields IEEE-754 value 25.
- */
-export const SQUAD_CREATE_BASE_WARBUCKS_COST = 25;
-
 export interface SquadCreationEconomyResult {
   state: PlayerProgressionState;
   squadCreationsCount: number;
@@ -123,21 +126,16 @@ export interface CreateSquadResult extends SquadCreationEconomyResult {
   squad: SquadDTO;
 }
 
-/** Reproduce PlayerAnalytics.createSquadWarBucksPrice from server-owned creation history. */
-export function squadCreationWarBucksPrice(squadCreationsCount: number): number {
-  if (!Number.isSafeInteger(squadCreationsCount) || squadCreationsCount < 0) {
-    throw new ApiError(ApiErrorCode.UnknownAction, "Squad creation count is invalid.");
-  }
-  const price = (squadCreationsCount + 1) * SQUAD_CREATE_BASE_WARBUCKS_COST;
-  if (!Number.isSafeInteger(price) || price <= 0) {
-    throw new ApiError(ApiErrorCode.UnknownAction, "Squad creation price is outside the safe range.");
-  }
-  return price;
-}
-
 /** Apply only the authoritative currency/count portion so it can be tested without MongoDB. */
 export function applySquadCreationEconomyState(state: PlayerProgressionState): SquadCreationEconomyResult {
-  const previousCount = state.squadCreationsCount ?? 0;
+  const previousCount = validatedSquadCreationsCount(state.squadCreationsCount);
+  const squadCreationsCount = validatedSquadCreationsCount(previousCount + 1);
+  if (!Number.isSafeInteger(state.revision) || state.revision < 0 || state.revision === Number.MAX_SAFE_INTEGER) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Squad creation progression revision is invalid.");
+  }
+  if (!Number.isSafeInteger(state.warBucks)) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Squad creation WarBucks balance is invalid.");
+  }
   const warBucksSpent = squadCreationWarBucksPrice(previousCount);
   if (state.warBucks < warBucksSpent) {
     throw new ApiError(SQUAD_CREATE_NOT_ENOUGH_WARBUCKS, "Not enough WarBucks to create a squad.");
@@ -147,9 +145,9 @@ export function applySquadCreationEconomyState(state: PlayerProgressionState): S
       ...state,
       revision: state.revision + 1,
       warBucks: state.warBucks - warBucksSpent,
-      squadCreationsCount: previousCount + 1,
+      squadCreationsCount,
     },
-    squadCreationsCount: previousCount + 1,
+    squadCreationsCount,
     warBucksSpent,
   };
 }

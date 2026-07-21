@@ -263,7 +263,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
 - **Squads (core membership)**: create / unique-name check / public or requested join /
   invite / accept / decline / promote / demote / kick / leadership transfer / guarded
   leave, plus details and full member snapshots. Client ranks exactly mirror
-  `Member`, `Veteran`, `Leader`, and `Coleader`. Kick persists the exact type-3 offline
+  `Member`, `Veteran`, `Leader`, and `Coleader`. Creation uses the exact decoded linear
+  `25 * (count + 1)` WarBucks price; a shared signed-client count/price validator runs at
+  mutation and boot, and wallet, revision, and the next count validate before the atomic
+  squad/debit write. Kick persists the exact type-3 offline
   notification in the membership transaction. The operational integrity audit reports duplicate
   rosters, broken founders/leaders, and missing accounts; repair mode changes only unambiguous
   player mirrors and safely returns orphaned normal card deposits.
