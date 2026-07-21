@@ -81,6 +81,44 @@ export interface DailyRewardCardsAdded {
   cards: string;
 }
 
+export interface DailyRewardGoldPolicy {
+  readonly ordinary: number;
+  readonly weekly: number;
+}
+
+/**
+ * Validate the offline Gold rows without changing operator-supplied authority.
+ *
+ * DailyRewardManager stores calendar `Count` and the claimed currency in C# `long`, while the
+ * JavaScript backend can preserve integers only through `Number.MAX_SAFE_INTEGER`. Weekly Gold
+ * must not be lower than the ordinary row. Resolving the pair during module initialization keeps
+ * every calendar projection and later claim in one process on the same reviewed policy.
+ */
+function exactDailyRewardGoldPolicy(policy: DailyRewardGoldPolicy): DailyRewardGoldPolicy {
+  if (
+    !Number.isSafeInteger(policy.ordinary)
+    || policy.ordinary < 0
+    || !Number.isSafeInteger(policy.weekly)
+    || policy.weekly < policy.ordinary
+  ) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Daily reward Gold policy is invalid.");
+  }
+  return { ordinary: policy.ordinary, weekly: policy.weekly };
+}
+
+const CONFIGURED_DAILY_REWARD_GOLD_POLICY = Object.freeze(exactDailyRewardGoldPolicy({
+  ordinary: config.dailyRewardGold,
+  weekly: config.dailyRewardWeeklyGold,
+}));
+
+export function dailyRewardGoldPolicy(
+  policy?: DailyRewardGoldPolicy,
+): DailyRewardGoldPolicy {
+  return policy === undefined
+    ? CONFIGURED_DAILY_REWARD_GOLD_POLICY
+    : exactDailyRewardGoldPolicy(policy);
+}
+
 function utcDate(now: number): Date {
   return new Date(Math.floor(now) * 1000);
 }
@@ -101,23 +139,19 @@ function secondsUntilNextUtcDay(date: Date): number {
 }
 
 /**
- * Return the configurable Gold fallback retained for compatibility and operator tuning.
+ * Return the startup-resolved Gold fallback retained for compatibility and operator tuning.
  *
- * These values become both client-visible calendar data and claim authority. Require the exact
- * safe-integer policy instead of rounding fractions or letting `NaN` serialize as JSON `null`.
+ * The day is a one-based calendar identity, not an arbitrary modulus input. Validating it here
+ * keeps direct callers from selecting ordinary/weekly policy with zero, fractions, or non-finite
+ * values even when they bypass `dailyRewardDefinitionForDay`.
  */
 export function dailyRewardGoldForDay(day: number): number {
-  const ordinary = config.dailyRewardGold;
-  const weekly = config.dailyRewardWeeklyGold;
-  if (
-    !Number.isSafeInteger(ordinary)
-    || ordinary < 0
-    || !Number.isSafeInteger(weekly)
-    || weekly < ordinary
-  ) {
-    throw new ApiError(ApiErrorCode.InternalServerError, "Daily reward Gold policy is invalid.");
+  if (!Number.isInteger(day) || day < 1 || day > 31) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Daily reward day is invalid.");
   }
-  return day % 7 === 0 ? weekly : ordinary;
+  return day % 7 === 0
+    ? CONFIGURED_DAILY_REWARD_GOLD_POLICY.weekly
+    : CONFIGURED_DAILY_REWARD_GOLD_POLICY.ordinary;
 }
 
 /**

@@ -106,6 +106,7 @@ import {
   claimDailyRewardState,
   dailyRewardDefinitionForDay,
   dailyRewardGoldForDay,
+  dailyRewardGoldPolicy,
   validatedDailyRewardState,
 } from "../services/dailyRewardService";
 import {
@@ -1077,24 +1078,27 @@ test("daily reward checks unlock at most one ordered claim per UTC login day", (
 });
 
 test("daily reward calendar rejects malformed deployment-owned Gold authority", () => {
-  const ordinary = config.dailyRewardGold;
-  const weekly = config.dailyRewardWeeklyGold;
-  try {
-    for (const [configuredOrdinary, configuredWeekly] of [
-      [Number.NaN, 10],
-      [5.5, 10],
-      [-1, 10],
-      [10, 9],
-      [5, Number.POSITIVE_INFINITY],
-    ]) {
-      config.dailyRewardGold = configuredOrdinary;
-      config.dailyRewardWeeklyGold = configuredWeekly;
-      assert.throws(() => dailyRewardGoldForDay(1), /Daily reward Gold policy is invalid/);
-      assert.throws(() => buildDailyRewardConfig(2026, 7), /Daily reward Gold policy is invalid/);
-    }
-  } finally {
-    config.dailyRewardGold = ordinary;
-    config.dailyRewardWeeklyGold = weekly;
+  assert.equal(Object.isFrozen(dailyRewardGoldPolicy()), true);
+  assert.deepEqual(dailyRewardGoldPolicy(), { ordinary: 5, weekly: 10 });
+  assert.deepEqual(dailyRewardGoldPolicy({ ordinary: 5, weekly: 10 }), {
+    ordinary: 5,
+    weekly: 10,
+  });
+  for (const [ordinary, weekly] of [
+    [Number.NaN, 10],
+    [5.5, 10],
+    [-1, 10],
+    [10, 9],
+    [5, Number.POSITIVE_INFINITY],
+    [5, Number.MAX_SAFE_INTEGER + 1],
+  ]) {
+    assert.throws(
+      () => dailyRewardGoldPolicy({ ordinary, weekly }),
+      /Daily reward Gold policy is invalid/,
+    );
+  }
+  for (const day of [Number.NaN, Number.POSITIVE_INFINITY, 0, -1, 1.5, 32]) {
+    assert.throws(() => dailyRewardGoldForDay(day), /Daily reward day is invalid/);
   }
 });
 

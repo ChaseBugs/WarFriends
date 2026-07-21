@@ -429,10 +429,11 @@ negative, fractional, unsafe, and non-finite counts instead of rounding them int
 malformed present fields are rejected rather than reinterpreted as legacy state or allowed through
 an unrelated replacement.
 
-The offline Daily Reward calendar also validates its deployment-owned ordinary and weekly Gold
-values before wire construction or claim. Both must be exact nonnegative safe integers and the
-weekly value cannot be lower than the ordinary value, so fractional settings are not silently
-rounded and `NaN`/infinity cannot enter a client response as JSON `null`.
+The offline Daily Reward calendar resolves its deployment-owned ordinary and weekly Gold as one
+immutable module-startup policy. Both must be exact nonnegative safe integers and the weekly value
+cannot be lower than the ordinary value, so malformed policy stops startup instead of failing only
+when a player requests a calendar. Direct policy selection additionally accepts only days 1-31;
+fractions, `NaN`, infinity, and out-of-calendar indexes cannot choose an ordinary or weekly row.
 The shared progression read/mutation boundary now treats only an absent legacy revision as zero.
 Present and produced revisions must be nonnegative safe integers, and every state-changing write
 must advance monotonically before its MongoDB compare-and-swap filter or replacement is built;

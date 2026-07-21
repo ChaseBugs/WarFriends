@@ -1355,9 +1355,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   exact parser payloads for Gold, WarBucks, Arena Tickets, loose Bronze/Silver/Gold cards,
   and Bronze/Silver/Gold packs. All three currency branches use the shared nonnegative safe-reward
   balance guard before advancing the claim cursor, so invalid amounts, damaged wallets, or overflow
-  leave the day retryable. The configurable ordinary and weekly Gold values must be exact
-  nonnegative safe integers, with the weekly value no lower than the ordinary value, before the
-  calendar can be serialized; malformed policy cannot become JSON `null` or a rounded reward.
+  leave the day retryable. The configurable ordinary and weekly Gold values resolve once during
+  module startup as an immutable pair of exact nonnegative safe integers, with the weekly value no
+  lower than the ordinary value; malformed policy stops startup rather than becoming JSON `null`,
+  a rounded reward, or a later calendar-only failure. Direct policy selection also requires an
+  exact day from 1 through 31 before ordinary-versus-weekly modulus logic.
   Wallets, inventory, achievement progress, the optional VIP pair,
   and the claim cursor commit atomically. The deterministic seven-position schedule and amounts
   are an explicit conservative replacement because the original remote live-ops sheet is absent.
