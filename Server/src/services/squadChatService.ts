@@ -1,7 +1,6 @@
 import { randomUUID } from "crypto";
 import type { Filter } from "mongodb";
 import { ApiError, ApiErrorCode } from "../apiErrors";
-import { config } from "../config";
 import {
   players,
   squadChatMessages,
@@ -13,6 +12,13 @@ import {
 import { requireModeratedText } from "./textModerationService";
 import { validatedPlayerProfileLookup } from "./playerProfileMirrorAuthorityService";
 import { validatedSquadDocument } from "./squadAuthorityService";
+import { reserveSquadChatMessageSlot } from "./outgoingMessageRateLimitService";
+import {
+  squadChatHistoryLimit,
+  squadChatMaximumLength,
+  squadChatMessagesPerMinute,
+  squadChatRetentionDays,
+} from "./squadChatPolicyService";
 
 export interface SquadChatSendInput {
   clientMessageId: string;
@@ -59,10 +65,6 @@ const SQUAD_CHAT_KEYS = new Set([
 ]);
 const MIN_RETENTION_MS = 86_400_000;
 const MAX_RETENTION_MS = 365 * 86_400_000;
-
-function positiveInteger(value: number, fallback: number): number {
-  return Number.isSafeInteger(value) && value > 0 ? value : fallback;
-}
 
 function boundedText(value: unknown, maximum: number): value is string {
   return typeof value === "string"
@@ -115,7 +117,7 @@ export function validatedSquadChatMessage(
  */
 export function normalizeSquadChatSend(
   value: SquadChatSendInput,
-  maximumLength = positiveInteger(config.squadChatMaxLength, 256),
+  maximumLength = squadChatMaximumLength(),
 ): SquadChatSendInput {
   const clientMessageId = typeof value?.clientMessageId === "string" ? value.clientMessageId.trim() : "";
   if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$/.test(clientMessageId)) {
@@ -238,19 +240,11 @@ function recoveredLeagueValue(player: PlayerDocument): number {
 }
 
 function retentionMilliseconds(): number {
-  const requested = positiveInteger(config.squadChatRetentionDays, 30) * 86_400_000;
-  return Math.min(MAX_RETENTION_MS, Math.max(MIN_RETENTION_MS, requested));
+  return squadChatRetentionDays() * 86_400_000;
 }
 
 async function enforceRateLimit(senderId: string, now: Date): Promise<void> {
-  const limit = positiveInteger(config.squadChatMessagesPerMinute, 10);
-  const count = await squadChatMessages().countDocuments({
-    senderId,
-    createdAt: { $gte: new Date(now.getTime() - 60_000) },
-  });
-  if (count >= limit) {
-    throw new ApiError(ApiErrorCode.UnknownAction, "Squad chat rate limit reached. Try again later.");
-  }
+  await reserveSquadChatMessageSlot(senderId, squadChatMessagesPerMinute(), now);
 }
 
 /** Return the recovered last-N channel history, oldest first for direct UI append order. */
@@ -260,7 +254,7 @@ export async function getSquadChatHistory(playerId: string, beforeCursor?: strin
   nextBeforeCursor: string | null;
 }> {
   const membership = await currentMembership(playerId);
-  const limit = positiveInteger(config.squadChatHistoryLimit, 3);
+  const limit = squadChatHistoryLimit();
   const now = new Date();
   const cursor = beforeCursor ? parseSquadChatHistoryCursor(beforeCursor) : null;
   if (beforeCursor && !cursor) {

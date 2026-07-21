@@ -31,6 +31,7 @@ test("outgoing-message keys are HMAC-hidden and domain stable", () => {
   assert.match(first, /^[0-9a-f]{64}$/u);
   assert.equal(outgoingMessageRateLimitKey("player-1"), first);
   assert.notEqual(outgoingMessageRateLimitKey("player-2"), first);
+  assert.notEqual(outgoingMessageRateLimitKey("player-1", "squad-chat"), first);
 });
 
 test("complete outgoing-message rate-limit authority is bounded and ordered", () => {

@@ -67,8 +67,11 @@ export function validatedOutgoingMessageRateLimit(
 }
 
 /** Keep the operational collection from becoming a plaintext secondary player directory. */
-export function outgoingMessageRateLimitKey(playerId: string): string {
-  return createHmac("sha256", config.authSecret).update(`inbox:${playerId}`).digest("hex");
+export function outgoingMessageRateLimitKey(
+  playerId: string,
+  scope: "inbox" | "squad-chat" = "inbox",
+): string {
+  return createHmac("sha256", config.authSecret).update(`${scope}:${playerId}`).digest("hex");
 }
 
 /**
@@ -79,12 +82,17 @@ export function outgoingMessageRateLimitKey(playerId: string): string {
  * separate insert. Identical challenge replay is resolved before this reservation, so a lost
  * response does not spend a second slot; rejected/new attempts remain counted as abuse pressure.
  */
-export async function reserveOutgoingMessageSlot(
+async function reservePlayerAuthoredMessageSlot(
   playerId: string,
-  now = new Date(),
-  collisionRetry = 0,
+  scope: "inbox" | "squad-chat",
+  maximum: number,
+  now: Date,
+  collisionRetry: number,
 ): Promise<void> {
-  const key = outgoingMessageRateLimitKey(playerId);
+  if (!outgoingMessageRateLimitAllows(1, maximum)) {
+    throw new Error("Player-authored message abuse-limit policy is invalid.");
+  }
+  const key = outgoingMessageRateLimitKey(playerId, scope);
   const cutoff = new Date(now.getTime() - WINDOW_MS);
   const collection = outgoingMessageRateLimits();
   // Validate a present row before the aggregation pipeline can fill missing fields. Without this
@@ -116,13 +124,54 @@ export async function reserveOutgoingMessageSlot(
     );
     if (!state) throw new Error("Outgoing-message rate-limit reservation was not persisted.");
     validatedOutgoingMessageRateLimit(state, now, key);
-    if (!outgoingMessageRateLimitAllows(state.attemptCount, outgoingMessageRateLimitMaximum())) {
-      throw new ApiError(ApiErrorCode.UnknownAction, "Message rate limit reached. Try again later.");
+    if (!outgoingMessageRateLimitAllows(state.attemptCount, maximum)) {
+      const label = scope === "squad-chat" ? "Squad chat" : "Message";
+      throw new ApiError(ApiErrorCode.UnknownAction, `${label} rate limit reached. Try again later.`);
     }
   } catch (error) {
     if ((error as { code?: number }).code === 11000 && collisionRetry < 2) {
-      return reserveOutgoingMessageSlot(playerId, now, collisionRetry + 1);
+      return reservePlayerAuthoredMessageSlot(
+        playerId,
+        scope,
+        maximum,
+        now,
+        collisionRetry + 1,
+      );
     }
     throw error;
   }
+}
+
+/** Reserve one direct/challenge inbox attempt under the deployment-owned inbox policy. */
+export async function reserveOutgoingMessageSlot(
+  playerId: string,
+  now = new Date(),
+  collisionRetry = 0,
+): Promise<void> {
+  return reservePlayerAuthoredMessageSlot(
+    playerId,
+    "inbox",
+    outgoingMessageRateLimitMaximum(),
+    now,
+    collisionRetry,
+  );
+}
+
+/**
+ * Reserve a Squad Chat attempt in the same atomic collection but a separate HMAC domain.
+ * This replaces the former count-then-insert race without combining chat and inbox quotas.
+ */
+export async function reserveSquadChatMessageSlot(
+  playerId: string,
+  maximum: number,
+  now = new Date(),
+  collisionRetry = 0,
+): Promise<void> {
+  return reservePlayerAuthoredMessageSlot(
+    playerId,
+    "squad-chat",
+    maximum,
+    now,
+    collisionRetry,
+  );
 }

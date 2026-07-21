@@ -124,6 +124,19 @@ non-finite, zero, negative, and oversized settings fail closed instead of being 
 or replaced with a hidden default. Durable counters saturate one step above their global maximum,
 so changing from one valid deployment limit to another does not invalidate an in-flight window.
 
+# Squad Chat policy
+
+The replacement `/hub` Squad Chat has four exact safe-integer controls. `SQUAD_CHAT_HISTORY_LIMIT`
+must be 1-100 messages (the recovered default is three), `SQUAD_CHAT_RETENTION_DAYS` must be 1-365
+whole days, `SQUAD_CHAT_MESSAGES_PER_MINUTE` must be 1-1,000 attempts, and
+`SQUAD_CHAT_MAX_LENGTH` must be 1-2,048 characters. Fractional, non-finite, zero, negative, and
+oversized settings fail closed instead of being defaulted or clamped.
+
+Chat rate reservations use the shared durable fixed-window authority under a separate HMAC key
+domain from direct/challenge inbox traffic. This keeps the quotas independent while making
+concurrent sends across backend nodes compete for one atomic counter. Retention remains encoded in
+each row, so historical messages validate their own one-to-365-day lifetime after policy changes.
+
 # Limited-time Event Assignment configuration
 
 `EVENT_ASSIGNMENT_CONFIG_PATH` controls the separate `EventAssignmentManager` daily calendar used

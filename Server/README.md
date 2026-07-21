@@ -665,15 +665,20 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   `SquadChatMessage` to connected, subscribed current roster members. Player/squad mirrors,
   roster membership, rank, sender name, level, league, and timestamp are all server-owned. A
   sender-scoped 64-character nonce makes reconnect retries idempotent, while moderation,
-  single-line validation, a persistent rolling rate limit, immediate expiry filtering, and a
-  MongoDB TTL index bound abuse and retention. Optional Redis pub/sub carries only the origin and
-  durable message UUID between hub nodes; receiving nodes reload content and the latest roster
-  from MongoDB, suppress duplicate notices, and continue single-node delivery when Redis is down.
+  single-line validation, an atomic persistent fixed-window rate limit, immediate expiry filtering,
+  and a MongoDB TTL index bound abuse and retention. The chat limit uses the same proven counter
+  authority as direct messages but a separate HMAC domain, so concurrent nodes cannot pass a
+  count-then-insert race and chat cannot consume the inbox quota. Optional Redis pub/sub carries
+  only the origin and durable message UUID between hub nodes; receiving nodes reload content and
+  the latest roster from MongoDB, suppress duplicate notices, and continue single-node delivery
+  when Redis is down.
   Every durable row is validated before insertion, sender-nonce replay, history/cursor publication,
   or cross-node fan-out. It must have exact known fields, a UUID message ID, the sender-bound
   idempotency key, bounded nonce/squad/sender/text, source-valid level/league/rank snapshots, and
   safe ordered dates with one-to-365-day retention. Reads use one captured application time to
-  reject future or expired rows, while deployment retention is clamped to the same interval.
+  reject future or expired rows. Deployment policy requires exact safe integers: history pages
+  1-100, retention 1-365 whole days, rate 1-1,000 attempts per minute, and message length 1-2,048.
+  Malformed values fail closed rather than being silently defaulted or clamped.
   This is a replacement protocol: the stock client still needs its Photon Chat adapter repointed
   to these typed messages.
 
