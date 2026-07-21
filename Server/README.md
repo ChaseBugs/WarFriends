@@ -749,6 +749,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   published, and both timed and subscription Gold-card crafts reject proof-counter overflow before
   clearing their receipt. Buffered claims are ordered, atomic, reward-validated, and replay safe.
   Unit deployment remains disabled until that event source exists.
+- **VIP entitlement integrity**: every paid-VIP consumer uses one validated nonnegative,
+  safe-integer Unix deadline. PvP/mission multipliers, virtual dog-tag capacity, daily cards,
+  VIP-only visuals, pack extension, purchase renewal, voided-purchase reversal, and boot migration
+  reject corrupt or overflowing deadlines instead of treating `Infinity` as permanent access.
 - **Achievements (authoritative subset)**: actions `218`-`220` use the recovered
   `AchievementsData`/RequestBuffer contract. Solo missions, ranked wins, assignment completion,
   squad points, and daily-reward claims advance only from accepted server settlements. Purchased

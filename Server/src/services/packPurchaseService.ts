@@ -4,6 +4,7 @@ import { cardInventoryStateFor } from "./cardInventoryService";
 import type { PackEntitlement } from "./inAppCatalogService";
 import { itemInventoryStateFor, WEAPON_CATALOG } from "./itemInventoryService";
 import { VISUAL_CATALOG, visualInventoryStateFor } from "./visualInventoryService";
+import { validatedVipExpiration } from "./vipEntitlementService";
 
 function checkedAmount(current: number, amount: number, field: string): number {
   const next = current + amount;
@@ -112,7 +113,7 @@ export function applyPackEntitlementState(
     }
   }
 
-  const currentVipExpiration = Math.max(0, Math.floor(state.vipExpiration ?? 0));
+  const currentVipExpiration = validatedVipExpiration(state.vipExpiration);
   const vipExpiration = entitlement.vipSeconds > 0
     ? checkedDeadline(Math.max(now, currentVipExpiration), entitlement.vipSeconds, "VIP")
     : currentVipExpiration;

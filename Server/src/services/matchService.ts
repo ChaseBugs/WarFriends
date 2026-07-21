@@ -41,6 +41,7 @@ import {
 } from "./squadEventService";
 import { applyVipBattleLootboxState } from "./vipLootboxService";
 import { checkedRewardBalance } from "./rewardMathService";
+import { isVipActiveAt } from "./vipEntitlementService";
 import {
   advanceRentalAfterBattleState,
   type RentalWireOffer,
@@ -798,7 +799,10 @@ async function settlePlayerCore(
   if (!player) throw new Error(`Match participant ${playerId} was not found.`);
   const initialState = progressionForPlayer(player);
   const settlementUnix = Math.floor(settledAt.getTime() / 1_000);
-  const isVip = Math.floor(initialState.vipExpiration ?? 0) > settlementUnix;
+  // A corrupt non-finite deadline must abort the complete terminal transaction. Treating
+  // Infinity as active would grant permanent paid battle multipliers and publish an immutable
+  // receipt that could no longer be repaired safely after settlement.
+  const isVip = isVipActiveAt(initialState.vipExpiration, settlementUnix);
   const { baseExperience, experience } = pvpExperienceAmounts(won, isVip);
   const { baseWarBucks, warBucks } = pvpWarBucksAmounts(won, isVip);
   const winStreak = advancePvpWinStreak(initialState.pvpWinStreak, won, isVip, settlementUnix);

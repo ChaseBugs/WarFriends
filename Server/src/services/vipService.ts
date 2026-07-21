@@ -3,6 +3,7 @@ import { ApiError, ApiErrorCode } from "../apiErrors";
 import type { PlayerProgressionState } from "../db";
 import { CARD_CATALOG, cardInventoryStateFor } from "./cardInventoryService";
 import { mutateProgression } from "./progressionMutationService";
+import { isVipActiveAt, validatedVipExpiration } from "./vipEntitlementService";
 
 /** IJEAJGCCHEF values handled by the stock BuyVip failure parser. */
 export const VIP_NOT_ENOUGH_GOLD = 11_401;
@@ -106,9 +107,9 @@ function applyDailyVipCards(
   now: number,
   choose: VipRandomIndex,
 ): VipDailyCardResult {
-  const expiration = Math.max(0, Math.floor(state.vipExpiration ?? 0));
+  const expiration = validatedVipExpiration(state.vipExpiration);
   const dayKey = utcDayKey(now);
-  if (expiration <= now || state.vipDailyCards?.lastGrantDay === dayKey) return { state };
+  if (!isVipActiveAt(expiration, now) || state.vipDailyCards?.lastGrantDay === dayKey) return { state };
 
   // The two cards are independent draws. A duplicate is valid and increments the same amount
   // twice, matching CardManager.AddCard being invoked once for each response field.
@@ -181,11 +182,14 @@ export function purchaseVipState(
     throw new ApiError(VIP_NOT_ENOUGH_GOLD, "Not enough Gold for this VIP product.");
   }
 
-  const currentExpiration = Math.max(0, Math.floor(state.vipExpiration ?? 0));
+  const currentExpiration = validatedVipExpiration(state.vipExpiration);
   // Renewals preserve every paid second: an active membership extends from its old deadline,
   // while an expired membership starts at the authoritative request time. vipStart is reset to
   // now so the membership dialog can display progress for the newly purchased interval.
   const vipExpiration = Math.max(now, currentExpiration) + product.seconds;
+  if (!Number.isSafeInteger(vipExpiration)) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "VIP expiration overflowed.");
+  }
   const extendedState: PlayerProgressionState = {
     ...state,
     gold: state.gold - cost,

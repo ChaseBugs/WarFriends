@@ -10,6 +10,7 @@ import {
   purchaseVipState,
 } from "../services/vipService";
 import { CARD_CATALOG } from "../services/cardInventoryService";
+import { isVipActiveAt, validatedVipExpiration } from "../services/vipEntitlementService";
 
 const NOW = 1_700_000_000;
 
@@ -113,5 +114,34 @@ test("VIP rejects invented discounts and insufficient Gold with stock error code
   assert.throws(
     () => purchaseVipState(createInitialProgression(NOW), NOW, "VIP_1", 0),
     (error: unknown) => (error as { code?: number }).code === VIP_NOT_ENOUGH_GOLD,
+  );
+});
+
+test("every VIP benefit rejects corrupt or overflowing entitlement deadlines", () => {
+  assert.equal(validatedVipExpiration(undefined), 0);
+  assert.equal(isVipActiveAt(NOW + 1, NOW), true);
+  assert.equal(isVipActiveAt(NOW, NOW), false);
+
+  for (const vipExpiration of [Number.NaN, Number.POSITIVE_INFINITY, -1, 1.5]) {
+    const corrupt = { ...createInitialProgression(NOW), gold: 10_000, vipExpiration };
+    assert.throws(() => validatedVipExpiration(vipExpiration), /Stored VIP expiration is invalid/);
+    assert.throws(
+      () => grantDailyVipCardsState(corrupt, NOW, () => 0),
+      /Stored VIP expiration is invalid/,
+    );
+    assert.throws(
+      () => purchaseVipState(corrupt, NOW, "VIP_1", 0, 0, () => 0),
+      /Stored VIP expiration is invalid/,
+    );
+  }
+
+  const overflow = {
+    ...createInitialProgression(NOW),
+    gold: 10_000,
+    vipExpiration: Number.MAX_SAFE_INTEGER,
+  };
+  assert.throws(
+    () => purchaseVipState(overflow, NOW, "VIP_4", 0, 0, () => 0),
+    /VIP expiration overflowed/,
   );
 });

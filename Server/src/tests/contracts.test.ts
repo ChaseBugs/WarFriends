@@ -247,6 +247,13 @@ test("dog-tag state uses accumulated seconds and recovered 900-second balancing"
   const regenerated = materializeDogTags(partiallyEmpty, 1_450);
   assert.equal(regenerated.dogTagSeconds, 2_250);
   assert.equal(currentDogTagCount(regenerated), 2);
+
+  // Dog-tag capacity is a paid-VIP benefit. A non-finite imported deadline must not act as a
+  // permanent membership merely because JavaScript considers Infinity greater than every time.
+  assert.throws(
+    () => currentDogTagCount({ ...initial, vipExpiration: Number.POSITIVE_INFINITY }),
+    /Stored VIP expiration is invalid/,
+  );
 });
 
 test("subscription refills dog tags every recovered 450 seconds between lock and expiry", () => {

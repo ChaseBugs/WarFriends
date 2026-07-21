@@ -27,6 +27,7 @@ import { mutateProgression } from "./progressionMutationService";
 import { progressionForPlayer, unixNow } from "./playerStateService";
 import { advanceRentalAfterBattleState } from "./rentalService";
 import { grantMissionElitePartsState, selectMissionElitePartUnit } from "./unitInventoryService";
+import { isVipActiveAt } from "./vipEntitlementService";
 
 /**
  * Persistent daily/heroic mission lifecycle reconstructed from the Unity client contract.
@@ -812,8 +813,7 @@ export function settleDailyMissionState(
   );
   const baseExperience = succeeded ? successfulExperience : 0;
   const baseWarBucks = succeeded ? successfulWarBucks : 0;
-  const isVip = Number.isFinite(state.vipExpiration)
-    && Math.floor(state.vipExpiration ?? 0) > now;
+  const isVip = isVipActiveAt(state.vipExpiration, now);
   const experienceGained = isVip
     ? checkedScaledInteger(baseExperience, VIP_BATTLE_EXPERIENCE_MULTIPLIER, "Mission VIP XP")
     : baseExperience;

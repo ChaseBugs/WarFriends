@@ -6,6 +6,7 @@ import { CARD_UNLOCK_LEVEL, createInitialCardCrafting, createInitialCardInventor
 import { warArenaConfiguration, warArenaWireData } from "./warArenaContract";
 import { playerLeagueBootFields } from "./playerLeagueContract";
 import { VIP_LOOTBOX_MATCH_INTERVAL } from "./vipLootboxService";
+import { validatedVipExpiration } from "./vipEntitlementService";
 
 /** Unix seconds are used throughout the recovered Beanstalk protocol. */
 export function unixNow(): number {
@@ -74,7 +75,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
     // inventory mutation persists it together with the currency transaction.
     return {
       ...state,
-      vipExpiration: state.vipExpiration ?? player.player.vipExpiration ?? 0,
+      vipExpiration: validatedVipExpiration(state.vipExpiration ?? player.player.vipExpiration),
       matchesToNextLootboxes: state.matchesToNextLootboxes ?? VIP_LOOTBOX_MATCH_INTERVAL,
       collectedRewards: state.collectedRewards ?? {},
       itemInventory: state.itemInventory ?? createInitialItemInventory(),
@@ -97,7 +98,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
     dogTagLastUpdate: state.dogTagLastUpdate || Math.floor(player.createdAt.getTime() / 1000),
     dogTagMax: cap * refillSeconds,
     dogTagRefillSeconds: refillSeconds,
-    vipExpiration: state.vipExpiration ?? player.player.vipExpiration ?? 0,
+    vipExpiration: validatedVipExpiration(state.vipExpiration ?? player.player.vipExpiration),
     matchesToNextLootboxes: state.matchesToNextLootboxes ?? VIP_LOOTBOX_MATCH_INTERVAL,
     collectedRewards: state.collectedRewards ?? {},
     itemInventory: state.itemInventory ?? createInitialItemInventory(),

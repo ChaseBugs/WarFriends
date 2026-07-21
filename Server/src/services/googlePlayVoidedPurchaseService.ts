@@ -23,6 +23,7 @@ import { progressionForPlayer, unixNow } from "./playerStateService";
 import { withScheduledJobLease } from "./scheduledJobLeaseService";
 import { cardInventoryStateFor } from "./cardInventoryService";
 import { createInitialVisualInventory, visualInventoryStateFor } from "./visualInventoryService";
+import { validatedVipExpiration } from "./vipEntitlementService";
 
 const jobId = "google-play-voided-products";
 const cursorId = "google-play-voided-products" as const;
@@ -155,7 +156,7 @@ export function applyVoidedOneTimePurchaseState(
     if (!stillGranted && introducedByPack) cardInventory.extraSlot = false;
   }
 
-  const currentVipExpiration = Math.max(0, Math.floor(state.vipExpiration ?? 0));
+  const currentVipExpiration = validatedVipExpiration(state.vipExpiration);
   const vipExpiration = Math.max(0, currentVipExpiration - grant.vipSeconds);
   return {
     ...state,

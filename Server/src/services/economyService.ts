@@ -4,6 +4,7 @@ import { mutateProgression } from "./progressionMutationService";
 import { config } from "../config";
 import { playerLevelDefinition } from "./levelProgressionService";
 import { checkedRewardBalance } from "./rewardMathService";
+import { isVipActiveAt } from "./vipEntitlementService";
 
 export interface DogTagMutationResult {
   state: PlayerProgressionState;
@@ -128,7 +129,7 @@ export const SUBSCRIPTION_DOG_TAG_REFILL_SECONDS = 450;
  * migration or background job.
  */
 export function vipDogTagBonusSeconds(state: PlayerProgressionState): number {
-  return Math.floor(state.vipExpiration ?? 0) > Math.floor(state.dogTagLastUpdate)
+  return isVipActiveAt(state.vipExpiration, Math.floor(state.dogTagLastUpdate))
     ? VIP_DOG_TAG_COUNT * Math.max(1, Math.floor(state.dogTagRefillSeconds))
     : 0;
 }

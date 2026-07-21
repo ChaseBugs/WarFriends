@@ -5,6 +5,7 @@ import type {
   SavedVisualState,
   VisualInventoryState,
 } from "../db";
+import { isVipActiveAt } from "./vipEntitlementService";
 
 // Exact IJEAJGCCHEF values handled by the recovered BuyDecal/EquipDecal response branches.
 export const VISUAL_NOT_ENOUGH_WARBUCKS = 100;
@@ -232,7 +233,7 @@ export function purchaseVisualState(
   if (playerLevelIndex < definition.unlockLevel - 1) {
     throw new ApiError(VISUAL_NOT_ENOUGH_LEVEL, "Player level is below the visual unlock level.");
   }
-  if (definition.vipOnly && vipExpiration <= now) {
+  if (definition.vipOnly && !isVipActiveAt(vipExpiration, now)) {
     throw new ApiError(VISUAL_ONLY_FOR_VIP, "Visual requires an active VIP entitlement.");
   }
 
