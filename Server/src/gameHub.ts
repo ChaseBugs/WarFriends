@@ -32,6 +32,8 @@ import {
   validatedJoinMatchPayload,
   validatedMatchEventPayload,
   validatedMatchResultPayload,
+  validatedSendSquadChatPayload,
+  validatedSquadChatHistoryPayload,
 } from "./services/gameHubRequestAuthorityService";
 import { resolveMatchReportStatus, roomManager } from "./gameRooms/roomManager";
 import type {
@@ -40,8 +42,6 @@ import type {
   JoinMatchPayload,
   MatchEventPayload,
   MatchResultPayload,
-  SendSquadChatPayload,
-  SquadChatHistoryPayload,
 } from "./gameRooms/types";
 import logger from "./utils/logger";
 import { PlayerStatus } from "./constants";
@@ -894,11 +894,11 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
 
     case "GetSquadChatHistory": {
       if (!client.playerId) return send(client, { Type: "AuthError", Payload: { Message: "Identify first." } });
-      const payload = envelope.Payload as SquadChatHistoryPayload | undefined;
       try {
+        const payload = validatedSquadChatHistoryPayload(envelope.Payload);
         const history = await getSquadChatHistory(
           client.playerId,
-          typeof payload?.BeforeCursor === "string" ? payload.BeforeCursor : undefined,
+          payload.BeforeCursor,
         );
         client.squadChatId = history.squadId;
         send(client, {
@@ -923,11 +923,11 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
 
     case "SendSquadChat": {
       if (!client.playerId) return send(client, { Type: "AuthError", Payload: { Message: "Identify first." } });
-      const payload = envelope.Payload as SendSquadChatPayload | undefined;
       try {
+        const payload = validatedSendSquadChatPayload(envelope.Payload);
         const result = await sendSquadChatMessage(client.playerId, {
-          clientMessageId: typeof payload?.ClientMessageId === "string" ? payload.ClientMessageId : "",
-          text: typeof payload?.Text === "string" ? payload.Text : "",
+          clientMessageId: payload.ClientMessageId,
+          text: payload.Text,
         });
         client.squadChatId = result.message.SquadId;
         // Checking the current roster returned by the persistence service closes the privacy

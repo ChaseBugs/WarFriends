@@ -821,6 +821,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   `GetSquadChatHistory { BeforeCursor }` returns the next older page without changing the bounded
   server page size; the opaque versioned cursor combines exact milliseconds and message UUID so
   equal-time rows are not skipped. It sends text with `SendSquadChat { ClientMessageId, Text }`;
+  both wrappers reject aliases and extra fields before persistence. History accepts only a truly
+  absent payload, an exact empty object, or a string cursor, so explicit malformed cursor presence
+  cannot silently request the latest page. Send requires both fields to be strings before the
+  shared service applies nonce, text, moderation, membership, quota, and replay rules;
   the server returns `SquadChatMessageAccepted` and delivers a persisted
   `SquadChatMessage` to connected, subscribed current roster members. Player/squad mirrors,
   roster membership, rank, sender name, level, league, and timestamp are all server-owned. A

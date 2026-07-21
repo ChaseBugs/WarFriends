@@ -4,12 +4,16 @@ import type {
   JoinMatchPayload,
   MatchEventPayload,
   MatchResultPayload,
+  SendSquadChatPayload,
+  SquadChatHistoryPayload,
 } from "../gameRooms/types";
 
 const IDENTIFY_KEYS = new Set(["PlayerId", "Token"]);
 const JOIN_MATCH_KEYS = new Set(["MatchId"]);
 const MATCH_EVENT_KEYS = new Set(["MatchId", "Event", "Data"]);
 const MATCH_RESULT_KEYS = new Set(["MatchId", "WinnerId", "UsedCards", "Stats"]);
+const SEND_SQUAD_CHAT_KEYS = new Set(["ClientMessageId", "Text"]);
+const SQUAD_CHAT_HISTORY_KEYS = new Set(["BeforeCursor"]);
 
 function plainRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -94,4 +98,44 @@ export function validatedMatchResultPayload(value: unknown): MatchResultPayload 
     throw new ApiError(ApiErrorCode.UnknownAction, "MatchResult payload is invalid.");
   }
   return value as unknown as MatchResultPayload;
+}
+
+/**
+ * Preserve the exact distinction between an omitted history cursor and a malformed cursor.
+ *
+ * A truly absent payload, or an exact empty object, requests the latest recovered-size page. When
+ * BeforeCursor is present it must remain a string for the Squad Chat service to verify as an opaque
+ * cursor. Explicit null, undefined, numeric values, aliases, and extra fields must not be erased
+ * into the no-cursor path because that would turn an invalid older-page request into a valid read.
+ */
+export function validatedSquadChatHistoryPayload(value: unknown): SquadChatHistoryPayload {
+  if (value === undefined) return {};
+  if (!plainRecord(value) || !hasOnlyKnownKeys(value, SQUAD_CHAT_HISTORY_KEYS)) {
+    throw new ApiError(ApiErrorCode.UnknownAction, "GetSquadChatHistory payload is invalid.");
+  }
+  if (Object.prototype.hasOwnProperty.call(value, "BeforeCursor")
+    && typeof value.BeforeCursor !== "string") {
+    throw new ApiError(ApiErrorCode.UnknownAction, "GetSquadChatHistory payload is invalid.");
+  }
+  return value as unknown as SquadChatHistoryPayload;
+}
+
+/**
+ * Validate the two client-authored Squad Chat fields before the request reaches persistence.
+ *
+ * This wrapper proves only the recovered transport shape. The Squad Chat service remains the
+ * authority for nonce grammar, text normalization, length, moderation, membership, rate limits,
+ * and retry identity. Keeping those semantic checks in one place prevents WebSocket admission and
+ * direct service callers from drifting while still rejecting casts, aliases, and missing fields.
+ */
+export function validatedSendSquadChatPayload(value: unknown): SendSquadChatPayload {
+  if (!plainRecord(value)
+    || !Object.prototype.hasOwnProperty.call(value, "ClientMessageId")
+    || !Object.prototype.hasOwnProperty.call(value, "Text")
+    || !hasOnlyKnownKeys(value, SEND_SQUAD_CHAT_KEYS)
+    || typeof value.ClientMessageId !== "string"
+    || typeof value.Text !== "string") {
+    throw new ApiError(ApiErrorCode.UnknownAction, "SendSquadChat payload is invalid.");
+  }
+  return value as unknown as SendSquadChatPayload;
 }

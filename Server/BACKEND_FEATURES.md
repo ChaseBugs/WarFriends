@@ -245,6 +245,13 @@ Missing fields, whitespace/control characters, alternate-case identity aliases, 
 and extra keys fail before credential lookup; authentication still provides the cryptographic proof
 and the successful socket identity remains immutable across its connection lifetime.
 
+Replacement WebSocket Squad Chat now has the same executable wrapper boundary before persistence.
+`SendSquadChat` requires exactly string `ClientMessageId` and `Text`, then delegates nonce grammar,
+normalization, moderation, membership, quota, and replay authority to the shared chat service.
+`GetSquadChatHistory` accepts only a truly absent payload, an exact empty object, or one string
+`BeforeCursor`; explicit malformed cursor presence, aliases, and extra keys fail instead of silently
+selecting the latest page.
+
 The TypeScript build now removes only generated `Server/dist` output before emission. Renamed or
 deleted source modules/tests cannot survive as stale runtime code or duplicate test inputs, so
 `npm test` counts and executes only the current source tree rather than historical compiler output.

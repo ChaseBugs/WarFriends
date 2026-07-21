@@ -5,6 +5,8 @@ import {
   validatedJoinMatchPayload,
   validatedMatchEventPayload,
   validatedMatchResultPayload,
+  validatedSendSquadChatPayload,
+  validatedSquadChatHistoryPayload,
 } from "../services/gameHubRequestAuthorityService";
 
 test("WebSocket Identify accepts only one exact bounded credential pair", () => {
@@ -89,5 +91,45 @@ test("WebSocket MatchResult accepts only its exact bounded identity wrapper", ()
     { MatchId: "match-1", WinnerId: "player-a", Extra: true },
   ]) {
     assert.throws(() => validatedMatchResultPayload(value), /MatchResult payload is invalid/u);
+  }
+});
+
+test("WebSocket Squad Chat history distinguishes an absent cursor from malformed presence", () => {
+  assert.deepEqual(validatedSquadChatHistoryPayload(undefined), {});
+  const latest = {};
+  assert.equal(validatedSquadChatHistoryPayload(latest), latest);
+  const older = { BeforeCursor: "v1:opaque-cursor" };
+  assert.equal(validatedSquadChatHistoryPayload(older), older);
+
+  for (const value of [
+    null,
+    [],
+    { BeforeCursor: undefined },
+    { BeforeCursor: null },
+    { BeforeCursor: 1 },
+    { beforeCursor: "v1:opaque-cursor" },
+    { BeforeCursor: "v1:opaque-cursor", Extra: true },
+  ]) {
+    assert.throws(() => validatedSquadChatHistoryPayload(value), /GetSquadChatHistory payload is invalid/u);
+  }
+});
+
+test("WebSocket SendSquadChat accepts only its exact string wrapper", () => {
+  const valid = { ClientMessageId: "message-1", Text: "Squad ready" };
+  assert.equal(validatedSendSquadChatPayload(valid), valid);
+
+  for (const value of [
+    undefined,
+    null,
+    [],
+    {},
+    { ClientMessageId: "message-1" },
+    { Text: "Squad ready" },
+    { ClientMessageId: 1, Text: "Squad ready" },
+    { ClientMessageId: "message-1", Text: null },
+    { clientMessageId: "message-1", Text: "Squad ready" },
+    { ClientMessageId: "message-1", Text: "Squad ready", SenderId: "player-b" },
+  ]) {
+    assert.throws(() => validatedSendSquadChatPayload(value), /SendSquadChat payload is invalid/u);
   }
 });
