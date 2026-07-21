@@ -11,6 +11,11 @@ test("rooms reject nonparticipants and only relay active participant traffic", (
   assert.ok(manager.join("m1", "p1", "c1", ["p1", "p2"]));
   assert.equal(manager.relay("m1", "p1", { Type: "early" }), false);
   assert.ok(manager.join("m1", "p2", "c2", ["p1", "p2"]));
+  assert.deepEqual(
+    sent,
+    [],
+    "room activation must not emit MatchStart before the hub sends MatchJoined",
+  );
 
   sent.length = 0;
   assert.equal(manager.relay("m1", "attacker", { Type: "forged" }), false);

@@ -102,7 +102,9 @@ must be currently present before any generic or CardPlayed relay reports success
 local path now preflights those constraints without mutation, commits the same durable
 `joinedPlayerIds`/one-time `roomStartedAt` transition as distributed admission, and only then
 attaches/activates the socket room. An unexpected post-write local conflict cancels the match and
-releases both profiles instead of leaving a durable started ghost room.
+releases both profiles instead of leaving a durable started ghost room. The activating local
+handler now acknowledges `MatchJoined` before broadcasting `MatchStart`, matching distributed
+ordering instead of starting gameplay from inside the room-registry mutation.
 
 `MatchFound` can cross backend nodes through a size/type-bounded pub/sub instruction. The receiving
 node never trusts that instruction as match authority: it reloads MongoDB and proves that the local

@@ -135,7 +135,9 @@ export class RoomManager {
     if (room.participants.size === room.allowedPlayerIds.size && room.state === "waiting") {
       room.state = "active";
       logger.match.event("Match room active", { matchId });
-      this.broadcast(matchId, { Type: "MatchStart", Payload: { MatchId: matchId } });
+      // The hub sends MatchJoined to the activating socket before broadcasting MatchStart. Doing
+      // transport output inside this registry mutation used to reverse that protocol order only
+      // in no-Redis mode and could start gameplay before the join acknowledgement was processed.
     }
     return room;
   }

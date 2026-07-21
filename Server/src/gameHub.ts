@@ -1068,6 +1068,11 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
         Type: "MatchJoined",
         Payload: { MatchId: p.MatchId, State: room.state, Participants: joined.joinedCount },
       });
+      if (joined.activatedByCaller) {
+        // Keep the same ordering as distributed rooms: the socket that completed durable
+        // admission receives MatchJoined first, then both assigned sockets receive MatchStart.
+        roomManager.broadcast(p.MatchId, { Type: "MatchStart", Payload: { MatchId: p.MatchId } });
+      }
       return;
     }
 

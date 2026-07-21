@@ -484,7 +484,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   Local admission preflights that registry without mutation, persists the authenticated participant
   through the same `joinedPlayerIds` and one-time `roomStartedAt` transition used across nodes, and
   only then attaches the socket. A contradictory post-write local interleaving cancels and releases
-  the pair rather than preserving a durable started room with no matching transient authority.
+  the pair rather than preserving a durable started room with no matching transient authority. The
+  activating handler sends `MatchJoined` before local `MatchStart` fan-out, matching the distributed
+  transport and preventing gameplay from starting ahead of its own admission acknowledgement.
   Match rows record their coordinator node, whose renewable Redis heartbeat separates crashed-room
   orphans from live peer-owned matches. When Redis coordination is selected, startup must commit
   that node's first heartbeat before it may create any durable match naming the owner. Startup and
