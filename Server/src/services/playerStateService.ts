@@ -16,6 +16,7 @@ import {
 import { validatedVipTimeline } from "./vipEntitlementService";
 import {
   validatedSubscription,
+  validatedSubscriptionAt,
   validatedSubscriptionAuthorityReceiptId,
 } from "./subscriptionBenefitService";
 import { validatedRentalState } from "./rentalEntitlementService";
@@ -296,6 +297,7 @@ export function buildPlayerData(player: PlayerDocument, now = unixNow()): Player
   const dto = player.player;
   const balances = validatedCoreProgressionBalances(state);
   const dogTags = validatedDogTagAuthority(state, Math.floor(now));
+  const subscription = validatedSubscriptionAt(state.subscription, Math.floor(now));
   const data: PlayerDataMap = {
     Gold: numberAttribute(balances.gold),
     WarBucks: numberAttribute(balances.warBucks),
@@ -328,7 +330,7 @@ export function buildPlayerData(player: PlayerDocument, now = unixNow()): Player
   // SubscriptionManager inherits DatabaseSerializedObjectGeneric<Subscription>. The stock
   // loader also reads dogTagTimerLock from the same JSON object even though the recovered
   // nested C# model does not declare it, so retain all four server-owned fields here.
-  addSerializedObject(data, "Subscription", state.subscription);
+  addSerializedObject(data, "Subscription", subscription);
   if (state.videoAdRewards) {
     // Unlike the manager-backed objects above, EventTrackingManager reads this exact lower-case
     // PlayerData key and manually deserializes its Dynamo `S` value. Expose only the four public

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { AccountType } from "../constants";
-import type { PlayerDocument } from "../db";
+import type { PlayerDocument, PlayerSubscriptionState } from "../db";
 import { DbAction } from "../dbActions";
 import { newPlayer } from "../dtos";
 import { DIRECT_PURCHASE_KINDS, purchaseHandlers } from "../handlers/purchases";
@@ -17,7 +17,11 @@ import { applyPurchaseEntitlementState, parseGooglePlayPurchaseInput } from "../
 import { buildPlayerData, createInitialProgression } from "../services/playerStateService";
 import { applySubscriptionRevalidationState } from "../services/googlePlaySubscriptionRevalidationService";
 import { decryptPurchaseToken, encryptPurchaseToken } from "../services/purchaseTokenCryptoService";
-import { validatedSubscriptionAuthorityReceiptId } from "../services/subscriptionBenefitService";
+import {
+  hasActiveSubscription,
+  validatedSubscriptionAuthorityReceiptId,
+} from "../services/subscriptionBenefitService";
+import { validatedProgressionSuccessor } from "../services/progressionPublicationAuthorityService";
 
 const PACKAGE = "com.chillingo.warfriends.android.gplay";
 const NOW = 1_800_000_000;
@@ -239,6 +243,27 @@ test("subscription lifecycle rejects corrupt stored and observed deadlines", () 
   );
 
   const clean = createInitialProgression(NOW);
+  const future = {
+    ...clean,
+    subscription: {
+      type: "subscription1" as const,
+      subscribeSince: NOW + 100,
+      dogTagTimerLock: NOW + 100,
+      expireTime: NOW + 1_000,
+    },
+  };
+  assert.equal(hasActiveSubscription(future, NOW), false);
+  assert.throws(
+    () => validatedProgressionSuccessor(clean, {
+      ...future,
+      revision: clean.revision + 1,
+      subscription: {
+        ...future.subscription,
+        unexpected: true,
+      } as unknown as PlayerSubscriptionState,
+    }),
+    /Subscription type is invalid/,
+  );
   assert.throws(
     () => applyPurchaseEntitlementState(clean, entitlement, {
       kind: "subscription",
@@ -393,5 +418,19 @@ test("subscription persists through the exact PlayerData serialized-object key",
       },
     }, NOW),
     /Subscription start is invalid/,
+  );
+  assert.throws(
+    () => buildPlayerData({
+      ...document,
+      progression: {
+        ...progression,
+        subscription: {
+          ...progression.subscription,
+          subscribeSince: NOW + 10,
+          dogTagTimerLock: NOW + 10,
+        },
+      },
+    }, NOW),
+    /Subscription start is in the future/,
   );
 });

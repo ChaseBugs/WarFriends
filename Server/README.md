@@ -898,8 +898,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   and dog-tag timer-lock timestamps. Boot projection, Google Play delivery/revalidation, upgrade
   timing, instant card crafting, and accelerated dog-tag regeneration reject non-integer,
   non-finite, negative, or non-`Date`-representable authority instead of granting permanent access.
-  The same boundary enforces `subscribeSince <= dogTagTimerLock <= expireTime`; future starts and
-  provider expiries that invert this interval fail closed rather than activating or corrupting it.
+  Shared read/publication requires the exact four-field shape and enforces
+  `subscribeSince <= dogTagTimerLock <= expireTime`. Benefit activity now requires
+  `subscribeSince <= now < expireTime`, and boot rejects a future start before serializing the
+  expiry-driven stock-client model. Future starts and provider expiries that invert this interval
+  therefore fail closed rather than activating or corrupting it.
 - **Achievements (authoritative subset)**: actions `218`-`220` use the recovered
   `AchievementsData`/RequestBuffer contract. Solo missions, ranked wins, assignment completion,
   squad points, and daily-reward claims advance only from accepted server settlements. Purchased

@@ -6,7 +6,10 @@ import {
 } from "./progressionRevisionAuthorityService";
 import { validatedProgressionSchemaVersion } from "./progressionSchemaAuthorityService";
 import { validatedVipTimeline } from "./vipEntitlementService";
-import { validatedSubscriptionAuthorityReceiptId } from "./subscriptionBenefitService";
+import {
+  validatedSubscription,
+  validatedSubscriptionAuthorityReceiptId,
+} from "./subscriptionBenefitService";
 import { validatedRequestBufferAuthority } from "./requestBufferAuthorityService";
 import { validatedWarBucksConversionReceipt } from "./warBucksConversionAuthorityService";
 import { validatedVipDailyCardState } from "./vipDailyCardAuthorityService";
@@ -33,6 +36,8 @@ export function validatedProgressionSuccessor(
   validatedVipTimeline(next.vipStart, next.vipExpiration);
   validatedSubscriptionAuthorityReceiptId(current.subscriptionAuthorityReceiptId);
   validatedSubscriptionAuthorityReceiptId(next.subscriptionAuthorityReceiptId);
+  validatedSubscription(current.subscription);
+  validatedSubscription(next.subscription);
   validatedRequestBufferAuthority(current);
   validatedRequestBufferAuthority(next);
   validatedWarBucksConversionReceipt(current.warBucksConversion, current.revision);

@@ -45,7 +45,18 @@ export function validatedSubscription(
   value: PlayerSubscriptionState | undefined,
 ): PlayerSubscriptionState | undefined {
   if (value === undefined) return undefined;
-  if (value.type !== "subscription1") {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Subscription authority is invalid.");
+  }
+  const keys = Object.keys(value).sort();
+  if (
+    keys.length !== 4
+    || keys[0] !== "dogTagTimerLock"
+    || keys[1] !== "expireTime"
+    || keys[2] !== "subscribeSince"
+    || keys[3] !== "type"
+    || value.type !== "subscription1"
+  ) {
     throw new ApiError(ApiErrorCode.InternalServerError, "Subscription type is invalid.");
   }
   const subscription = {
@@ -67,11 +78,32 @@ export function validatedSubscription(
   return subscription;
 }
 
+/**
+ * Validate subscription authority at a client-facing time boundary.
+ *
+ * Publication uses the deterministic interval validator above. Boot additionally rejects a future
+ * start because SubscriptionManager's recovered activity predicate primarily observes expiry; if
+ * the server serialized a not-yet-started interval, the stock client could expose benefits early.
+ */
+export function validatedSubscriptionAt(
+  value: PlayerSubscriptionState | undefined,
+  now: number,
+): PlayerSubscriptionState | undefined {
+  const subscription = validatedSubscription(value);
+  const currentTime = validatedSubscriptionUnixSeconds(now, "Subscription comparison time");
+  if (subscription && subscription.subscribeSince > currentTime) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Subscription start is in the future.");
+  }
+  return subscription;
+}
+
 /** Match SubscriptionManager.isSubscribed's strict expiry comparison using validated server time. */
 export function hasActiveSubscription(state: PlayerProgressionState, now: number): boolean {
   const subscription = validatedSubscription(state.subscription);
   const currentTime = validatedSubscriptionUnixSeconds(now, "Subscription comparison time");
-  return subscription !== undefined && subscription.expireTime > currentTime;
+  return subscription !== undefined
+    && subscription.subscribeSince <= currentTime
+    && subscription.expireTime > currentTime;
 }
 
 /**
