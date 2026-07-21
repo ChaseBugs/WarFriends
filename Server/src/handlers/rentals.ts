@@ -10,12 +10,7 @@ import { findById } from "../services/playerService";
 import { unitRecoveryFields } from "../services/unitInventoryService";
 import { weaponRecoveryFields } from "../services/itemInventoryService";
 import { authed, type HandlerEntry } from "./types";
-
-function boolean(value: unknown): boolean | undefined {
-  if (value === true || value === 1 || value === "1" || value === "True" || value === "true") return true;
-  if (value === false || value === 0 || value === "0" || value === "False" || value === "false") return false;
-  return undefined;
-}
+import { exactCsharpBoolean } from "./requestBooleanParsing";
 
 /**
  * Action 138 is an aggregate endpoint despite carrying only one Boolean request field.
@@ -27,10 +22,7 @@ function boolean(value: unknown): boolean | undefined {
  */
 export const rentalHandlers: Record<number, HandlerEntry> = {
   [DbAction.AcceptRentalOffer]: authed(async ({ player, req }) => {
-    const buyDiscounted = boolean(req.buyRentalDiscounted);
-    if (buyDiscounted === undefined) {
-      throw new ApiError(ApiErrorCode.UnknownAction, "buyRentalDiscounted must be a Boolean.");
-    }
+    const buyDiscounted = exactCsharpBoolean(req.buyRentalDiscounted, "buyRentalDiscounted");
 
     try {
       const result = await acceptRentalOffer(player!.id, buyDiscounted);

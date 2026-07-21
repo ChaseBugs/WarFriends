@@ -628,6 +628,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   deliberately unranked: it cannot grant currency, XP, medals, league/assignment/achievement/event
   progress, consume War Cards, advance VIP/rentals, or enter two-party match consensus. This makes
   offline gameplay complete cleanly without presenting a forged local win as backend authority.
+  Actions `64`/`65` require both recovered lifecycle flags as exact `"0"`/`"1"` form text;
+  replacement JSON clients may send actual Booleans. Optional action-62 `TutorialWarcards` and
+  `IsWarArena` markers use the same parser when present. Numeric, differently-cased, padded, null,
+  or container aliases are rejected before branch selection, rather than becoming false and
+  falling into friendly or ranked settlement.
 - **Squad Chat (WebSocket `/hub`)**: after `Identify`, a replacement client sends
   `SubscribeSquadChat` to receive `SquadChatSubscribed { SquadId, Messages }`, using the exact
   recovered three-message history default. When `NextBeforeCursor` is non-null,
@@ -1209,7 +1214,8 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   The 4.9.5 MainScene values decode to a
   20-25% sale, a 12-hour free trial, a 24-hour offer, and 0/2/7 visual/weapon/unit weights;
   visual rentals are therefore deliberately not generated. Action `138` accepts only the
-  recovered `buyRentalDiscounted` Boolean and returns the nested `RequestsResults` string
+  recovered C# `"True"`/`"False"` `buyRentalDiscounted` form value or an actual JSON Boolean and
+  returns the nested `RequestsResults` string
   consumed by the old aggregate parser. A free trial materializes one borrowed item, permits
   normal equip and Army Power only while its server deadline is live, then PvP, mission, or
   Arena `GameEnded` removes the borrowed authority, restores a replaced weapon slot, and emits
@@ -1221,6 +1227,8 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   must be valid, while trial/sale expiries must remain inside the replacement-offer boundary.
   `NaN`, `Infinity`, unsupported visual authority, and contradictory imported intervals fail closed
   instead of turning a borrowed weapon or unit into permanent access.
+  Numeric, lower-case, padded, null, array, and object Boolean aliases also fail before the service
+  can choose between the free-trial and permanent-purchase inventory transitions.
   Permanent redemption recomputes the price from the stored
   catalog row and discount, atomically debits the authoritative wallet, and is idempotent on
   transport retry. Repeated trial acceptance or permanent redemption returns the existing

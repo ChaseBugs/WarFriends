@@ -35,6 +35,7 @@ import {
   startFriendlyBattle,
 } from "../services/friendlyBattleService";
 import { exactMatchInteger } from "./matchRequestParsing";
+import { exactBinaryBoolean } from "./requestBooleanParsing";
 
 // PvP match lifecycle reported to the meta server. Live event traffic runs over /hub, while
 // these actions preserve compatibility with the recovered client's Photon-era REST calls.
@@ -52,10 +53,6 @@ function missionMode(value: unknown): DailyMissionMode {
   // reward-bearing mode and weaken the start-action/mode ownership check.
   if (value === "Daily" || value === "Coop" || value === "CoopClient" || value === "Heroic") return value;
   throw new ApiError(ApiErrorCode.UnknownAction, "MissionType is invalid.");
-}
-
-function enabled(value: unknown): boolean {
-  return value === true || value === 1 || value === "1" || value === "True" || value === "true";
 }
 
 /**
@@ -95,8 +92,10 @@ export const matchHandlers: Record<number, HandlerEntry> = {
   // IsMatchMaking=0 is different only in that it creates a separate zero-reward friendly
   // receipt; that collection has no path into ranked settlement or progression mutations.
   [DbAction.GameStartedMaster]: authed(async ({ player, req }) => {
-    if (!enabled(req.IsWarArenaBattle)) {
-      if (req.IsMatchMaking !== undefined && !enabled(req.IsMatchMaking)) {
+    const isWarArenaBattle = exactBinaryBoolean(req.IsWarArenaBattle, "IsWarArenaBattle")!;
+    const isMatchMaking = exactBinaryBoolean(req.IsMatchMaking, "IsMatchMaking")!;
+    if (!isWarArenaBattle) {
+      if (!isMatchMaking) {
         // Direct challenges are already connected through the Photon room embedded in the
         // accepted inbox message. Action 64 supplies the room's battleID but no opponent/message
         // identifier, so create only this authenticated participant's no-reward lifecycle proof.
@@ -113,7 +112,7 @@ export const matchHandlers: Record<number, HandlerEntry> = {
       // Server-owned cardTutState is therefore the only safe discriminator. Other bot starts
       // receive a separate zero-reward lifecycle receipt; their client-simulated combat can never
       // enter ranked settlement or become economy/progression authority.
-      if (enabled(req.IsMatchMaking) && req.BotId !== undefined) {
+      if (isMatchMaking && req.BotId !== undefined) {
         const progression = progressionForPlayer(player!);
         if (shouldStartWarcardsTutorial(progression, player!.player.level)) {
           const result = await startWarcardsTutorial(player!.id, player!.player.level, matchId(req));
@@ -148,8 +147,10 @@ export const matchHandlers: Record<number, HandlerEntry> = {
     return ok(DbAction.GameStartedMaster, { ...result.response, Time: unixNow(), Replayed: result.replayed });
   }),
   [DbAction.GameStartedClient]: authed(async ({ player, req }) => {
-    if (!enabled(req.IsWarArenaBattle)) {
-      if (req.IsMatchMaking !== undefined && !enabled(req.IsMatchMaking)) {
+    const isWarArenaBattle = exactBinaryBoolean(req.IsWarArenaBattle, "IsWarArenaBattle")!;
+    const isMatchMaking = exactBinaryBoolean(req.IsMatchMaking, "IsMatchMaking")!;
+    if (!isWarArenaBattle) {
+      if (!isMatchMaking) {
         const result = await startFriendlyBattle(
           player!.id,
           matchId(req),
@@ -165,7 +166,9 @@ export const matchHandlers: Record<number, HandlerEntry> = {
 
   [DbAction.GameEnded]: authed(async ({ player, req }) => {
     const id = matchId(req);
-    if (enabled(req.TutorialWarcards)) {
+    const tutorialWarcards = exactBinaryBoolean(req.TutorialWarcards, "TutorialWarcards", false) ?? false;
+    const isWarArena = exactBinaryBoolean(req.IsWarArena, "IsWarArena", false) ?? false;
+    if (tutorialWarcards) {
       // This flag and ObtainedCards are both client-controlled. The service ignores the latter,
       // requires the earlier action-64 BattleId receipt, and grants the fixed MainScene list at
       // most once. Branch before PvP lookup because this tutorial is an offline bot match and
@@ -190,7 +193,7 @@ export const matchHandlers: Record<number, HandlerEntry> = {
         Replayed: result.replayed,
       });
     }
-    if (enabled(req.IsWarArena)) {
+    if (isWarArena) {
       // BeanstalkServerManager adds IsWarArena to action 62. Branch before normal PvP: an
       // Arena BattleId belongs to the player's persistent run receipt, not the two-party
       // match-consensus collection. The service still requires the action-64/65 start proof.
