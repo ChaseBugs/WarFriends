@@ -42,8 +42,8 @@ export {
 const MAX_CONCURRENCY_RETRIES = 4;
 
 export interface InstantBattleRewardPolicy {
-  experiencePerBattle: number;
-  warBucksPerBattle: number;
+  readonly experiencePerBattle: number;
+  readonly warBucksPerBattle: number;
 }
 
 export interface InstantBattleTransition {
@@ -60,6 +60,13 @@ export interface InstantBattleSettlement extends InstantBattleTransition {
 
 function checkedNonNegativeInteger(value: number, name: string): number {
   if (!Number.isSafeInteger(value) || value < 0) {
+    throw new ApiError(ApiErrorCode.InternalServerError, `${name} is invalid.`);
+  }
+  return value;
+}
+
+function checkedInteger(value: number, name: string): number {
+  if (!Number.isSafeInteger(value)) {
     throw new ApiError(ApiErrorCode.InternalServerError, `${name} is invalid.`);
   }
   return value;
@@ -131,17 +138,46 @@ function paidBattleRejection(
   });
 }
 
-function rewardPolicyFromConfig(): InstantBattleRewardPolicy {
-  return {
-    experiencePerBattle: checkedNonNegativeInteger(
-      config.instantBattleExperiencePerBattle,
-      "Instant Battle XP policy",
-    ),
-    warBucksPerBattle: checkedNonNegativeInteger(
-      config.instantBattleWarBucksPerBattle,
-      "Instant Battle WarBucks policy",
-    ),
+const MAXIMUM_INSTANT_BATTLE_REWARD_PER_BATTLE = Math.floor(
+  2_147_483_647 / INSTANT_BATTLE_MAX_CHARGES,
+);
+
+/**
+ * Validate the reconstructed Skirmish rewards as one exact deployment policy.
+ *
+ * OGLEHLIPEFM parses both `ExperienceGained` and `WarBucks` through C# `int`. Action 199 can
+ * settle all five recovered charges in one response, so each per-battle value must leave the
+ * five-battle product representable. Resolving this once at module startup prevents a malformed
+ * node from accepting traffic and failing only after a player has reached the reward boundary.
+ */
+function exactInstantBattleRewardPolicy(
+  policy: InstantBattleRewardPolicy,
+): InstantBattleRewardPolicy {
+  const exactReward = (value: number, name: string): number => {
+    if (!Number.isSafeInteger(value)
+      || value < 0
+      || value > MAXIMUM_INSTANT_BATTLE_REWARD_PER_BATTLE) {
+      throw new Error(`${name} is invalid.`);
+    }
+    return value;
   };
+  return {
+    experiencePerBattle: exactReward(policy.experiencePerBattle, "Instant Battle XP policy"),
+    warBucksPerBattle: exactReward(policy.warBucksPerBattle, "Instant Battle WarBucks policy"),
+  };
+}
+
+const CONFIGURED_INSTANT_BATTLE_REWARD_POLICY = Object.freeze(exactInstantBattleRewardPolicy({
+  experiencePerBattle: config.instantBattleExperiencePerBattle,
+  warBucksPerBattle: config.instantBattleWarBucksPerBattle,
+}));
+
+export function instantBattleRewardPolicy(
+  policy?: InstantBattleRewardPolicy,
+): InstantBattleRewardPolicy {
+  return policy === undefined
+    ? CONFIGURED_INSTANT_BATTLE_REWARD_POLICY
+    : exactInstantBattleRewardPolicy(policy);
 }
 
 /**
@@ -160,12 +196,13 @@ export function playInstantBattleState(
   paidCost: number | undefined,
   policy: InstantBattleRewardPolicy,
 ): InstantBattleTransition {
+  const exactPolicy = exactInstantBattleRewardPolicy(policy);
   checkedNonNegativeInteger(now, "Instant Battle request time");
   checkedNonNegativeInteger(state.revision, "Progression revision");
-  checkedNonNegativeInteger(state.gold, "Gold balance");
-  checkedNonNegativeInteger(state.warBucks, "WarBucks balance");
-  checkedNonNegativeInteger(policy.experiencePerBattle, "Instant Battle XP policy");
-  checkedNonNegativeInteger(policy.warBucksPerBattle, "Instant Battle WarBucks policy");
+  // Verified chargebacks may leave either wallet negative. Free Skirmishes and their rewards must
+  // preserve/pay down that debt; only malformed non-integer balances are corrupt authority.
+  checkedInteger(state.gold, "Gold balance");
+  checkedInteger(state.warBucks, "WarBucks balance");
 
   const levelDefinition = playerLevelDefinition(playerLevel);
   if (levelDefinition.displayLevel < INSTANT_BATTLE_UNLOCK_DISPLAY_LEVEL) {
@@ -226,12 +263,12 @@ export function playInstantBattleState(
 
   const experienceGained = checkedProduct(
     battleCount,
-    policy.experiencePerBattle,
+    exactPolicy.experiencePerBattle,
     "Instant Battle XP reward",
   );
   const warBucks = checkedProduct(
     battleCount,
-    policy.warBucksPerBattle,
+    exactPolicy.warBucksPerBattle,
     "Instant Battle WarBucks reward",
   );
   const goldAfterPayment = state.gold - normalizedPaidCost;
@@ -309,7 +346,6 @@ export async function playInstantBattle(
   playerId: string,
   paidCost?: number,
 ): Promise<InstantBattleSettlement> {
-  const policy = rewardPolicyFromConfig();
   for (let attempt = 0; attempt < MAX_CONCURRENCY_RETRIES; attempt += 1) {
     const player = await players().findOne({ id: playerId });
     if (!player) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
@@ -317,7 +353,13 @@ export async function playInstantBattle(
     // damaged existing account must not be normalized by an otherwise valid Instant Battle write.
     validatedPlayerAccountEnvelope(player);
     const state = progressionForPlayer(player);
-    const transition = playInstantBattleState(state, player.player.level, unixNow(), paidCost, policy);
+    const transition = playInstantBattleState(
+      state,
+      player.player.level,
+      unixNow(),
+      paidCost,
+      CONFIGURED_INSTANT_BATTLE_REWARD_POLICY,
+    );
 
     if (transition.replayed) {
       return {

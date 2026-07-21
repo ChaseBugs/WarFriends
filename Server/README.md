@@ -954,8 +954,12 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   hybrid MainScene's shifted five constants are
   realigned to the old script's field order so its visible five-charge/35-Gold UI agrees with the
   backend. The retired reward table is unavailable; `INSTANT_BATTLE_XP_PER_BATTLE` (20) and
-  `INSTANT_BATTLE_WARBUCKS_PER_BATTLE` (600) are explicit offline policy, while rare Gold/card/
-  extra-WarBucks rewards remain disabled rather than fabricated.
+  `INSTANT_BATTLE_WARBUCKS_PER_BATTLE` (600) are explicit offline policy. They resolve once at
+  module startup as immutable exact nonnegative integers no greater than 429,496,729 per battle,
+  keeping the full five-charge XP and WarBucks response inside the recovered C# signed-`int`
+  fields; malformed policy stops startup. A free batch preserves Gold chargeback debt and pays
+  WarBucks rewards into WarBucks debt. Rare Gold/card/extra-WarBucks rewards remain disabled rather
+  than fabricated.
 - **Versioned client-data material database**: MongoDB collections `gameCatalogEntries` and
   `gameCatalogReleases` persist the recovered 4.9.5 weapon, soldier/unit, rank, power, player
   visual, War Card, and card-pack data as 531 queryable records. The 165 concrete weapon

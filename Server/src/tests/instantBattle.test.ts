@@ -9,6 +9,7 @@ import {
   INSTANT_BATTLE_RELOAD_SECONDS,
   INSTANT_BATTLE_UNLOCK_DISPLAY_LEVEL,
   instantBattleGoldCost,
+  instantBattleRewardPolicy,
   instantBattlesReady,
   instantBattleStateFor,
   instantBattleWireResponse,
@@ -54,6 +55,32 @@ test("Instant Battle source contract uses rank 9, five charges, 48 minutes, and 
   assert.deepEqual([0, 1, 2, 3, 20].map(instantBattleGoldCost), [35, 70, 140, 140, 140]);
 });
 
+test("Instant Battle deployment rewards are immutable and fit one full C# integer batch", () => {
+  assert.equal(Object.isFrozen(instantBattleRewardPolicy()), true);
+  assert.deepEqual(instantBattleRewardPolicy(POLICY), POLICY);
+  assert.deepEqual(
+    instantBattleRewardPolicy({
+      experiencePerBattle: 429_496_729,
+      warBucksPerBattle: 429_496_729,
+    }),
+    { experiencePerBattle: 429_496_729, warBucksPerBattle: 429_496_729 },
+  );
+
+  for (const policy of [
+    { experiencePerBattle: Number.NaN, warBucksPerBattle: 600 },
+    { experiencePerBattle: Infinity, warBucksPerBattle: 600 },
+    { experiencePerBattle: -1, warBucksPerBattle: 600 },
+    { experiencePerBattle: 20.5, warBucksPerBattle: 600 },
+    { experiencePerBattle: 429_496_730, warBucksPerBattle: 600 },
+    { experiencePerBattle: 20, warBucksPerBattle: Number.NaN },
+    { experiencePerBattle: 20, warBucksPerBattle: -1 },
+    { experiencePerBattle: 20, warBucksPerBattle: 600.5 },
+    { experiencePerBattle: 20, warBucksPerBattle: 429_496_730 },
+  ]) {
+    assert.throws(() => instantBattleRewardPolicy(policy), /Instant Battle .* policy is invalid/);
+  }
+});
+
 test("a free action consumes every ready charge and immediate transport replay is immutable", () => {
   const initial = unlockedState();
   const played = playInstantBattleState(initial, UNLOCKED_LEVEL_INDEX, NOW, undefined, POLICY);
@@ -78,6 +105,15 @@ test("a free action consumes every ready charge and immediate transport replay i
     () => playInstantBattleState(played.state, UNLOCKED_LEVEL_INDEX, NOW + 1, undefined, POLICY),
     (error: unknown) => error instanceof ApiError && error.code === ApiErrorCode.NoSkirmishAvailable,
   );
+});
+
+test("a free Instant Battle preserves Gold debt and pays down WarBucks chargeback debt", () => {
+  const debt = { ...unlockedState(), gold: -25, warBucks: -5_000 };
+  const played = playInstantBattleState(debt, UNLOCKED_LEVEL_INDEX, NOW, undefined, POLICY);
+
+  assert.equal(played.state.gold, -25);
+  assert.equal(played.state.warBucks, -2_000);
+  assert.equal(played.receipt.warBucks, 3_000);
 });
 
 test("a paid action requires zero ready charges, verifies its price, and buys a full batch", () => {

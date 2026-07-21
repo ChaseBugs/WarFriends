@@ -56,6 +56,12 @@ values must be exact nonnegative integers whose base grant and independently tru
 1,431,655,765. Malformed deployment policy stops startup instead of silently restoring 800/400,
 while the retired production Fusebox values remain an explicit unresolved fidelity gap.
 
+The reconstructed Instant Battle XP/WarBucks policy is also immutable module-startup authority.
+Each per-battle value must be an exact nonnegative integer no greater than 429,496,729, keeping a
+full recovered five-charge batch inside action 199's signed-`int` response fields. Invalid policy
+stops startup before traffic. Free Skirmish rewards preserve negative safe-integer Gold debt and
+pay down negative safe-integer WarBucks debt instead of treating audited chargebacks as corruption.
+
 Login throttle configuration is immutable startup authority: maximum attempts must be an exact
 safe integer from 2 through 100, the attempt window from 60 through 86,400 seconds, and lockout from
 60 through 604,800 seconds. Fractional, non-finite, or out-of-range policy stops startup instead of
