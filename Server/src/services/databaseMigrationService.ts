@@ -161,6 +161,20 @@ const migrations: readonly DatabaseMigration[] = [
       );
     },
   },
+  {
+    id: "20260722_010_stable_squad_skill_leaderboard_index",
+    checksum: "sha256:4cedefe437523fa92f72f2b1c6f194233848ce2d4ab4018493b9d85a0ae2e508",
+    description: "Index deterministic Squad skill leaderboard admission.",
+    up: async (db) => {
+      // The recovered action name mentions experience, but Unity ranks the selected page by the
+      // wire `Skill` value. The server maps Skill from squadPoints, so this compound index keeps
+      // admission and deterministic name ties aligned with the actual client-visible board.
+      await db.collection("squads").createIndex(
+        { squadPoints: -1, name: 1 },
+        { name: "squad_skill_stable" },
+      );
+    },
+  },
 ];
 
 const receiptCollectionName = "schemaMigrations";

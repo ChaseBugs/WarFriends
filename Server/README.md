@@ -484,6 +484,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   projection accepts only exact Boolean representations. Decimal form values are canonical and
   client-width-bound; padding, plus signs, leading zeros, alternate negative zero, fractions,
   exponents, and oversized values fail, while Boolean text is neither trimmed nor case-folded.
+  Action `101` retains its legacy `GetSquadsByExperience` name, but the recovered all-time screen
+  sorts and displays wire `Skill`, which this backend projects from authoritative `squadPoints`.
+  The global page is therefore admitted by `(squadPoints descending, squad name ascending)` through
+  a matching compound index; every full Squad snapshot, result cap, and returned order is checked
+  before serialization so lifetime experience cannot displace a higher competitive score.
   Malformed or blank input is rejected instead of floored, broadly coerced, silently ignored, or
   replaced by a default. Every core membership, settings, invitation, join-request, PvP Squad
   Point, and Squad War write advances `updatedAt` through one shared strictly monotonic helper,

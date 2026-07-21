@@ -7,6 +7,7 @@ import {
   type PlayerProgressionState,
   type SquadDocument,
 } from "../db";
+import type { Collection } from "mongodb";
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import { SquadRank } from "../constants";
 import { newSquad, type SquadDTO, type SquadMemberDTO } from "../dtos";
@@ -1116,10 +1117,41 @@ export async function updateSquad(actorId: string, name: string, values: UpdateS
   return squad;
 }
 
-export async function listByExperience(limit = 50): Promise<SquadDocument[]> {
-  const rows = await squads().find().sort({ experience: -1 }).limit(Math.min(Math.max(limit, 1), 100)).toArray();
+/**
+ * Select the global Squad leaderboard consumed by recovered action 101.
+ *
+ * The action name says `GetSquadsByExperience`, but `AllTimeContent.NCPEFJJFECF` re-sorts and
+ * displays the parsed `Skill` field. `buildDatabaseSquad` maps that field from server-owned
+ * `squadPoints`; preselecting a truncated page by `experience` could therefore omit the actual
+ * highest-scoring squad before Unity receives the rows. Freeze the same score key here and use
+ * the unique squad name as a stable tie-breaker. Every selected document is fully validated before
+ * its score, roster size, or public settings can become a believable leaderboard row.
+ */
+export async function listByExperience(
+  limit = 50,
+  collection?: Collection<SquadDocument>,
+): Promise<SquadDocument[]> {
+  if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100) {
+    throw new Error("Squad leaderboard limit is invalid.");
+  }
+  const rows = await (collection ?? squads())
+    .find()
+    .sort({ squadPoints: -1, name: 1 })
+    .limit(limit)
+    .toArray();
+  if (rows.length > limit) throw new Error("Squad leaderboard returned too many rows.");
   const now = new Date();
-  return rows.map((row) => validatedSquadDocument(row, now));
+  for (let index = 0; index < rows.length; index += 1) {
+    const row = validatedSquadDocument(rows[index]!, now);
+    if (index > 0) {
+      const previous = rows[index - 1]!;
+      if (previous.squadPoints < row.squadPoints
+        || (previous.squadPoints === row.squadPoints && previous.name >= row.name)) {
+        throw new Error("Selected Squad leaderboard rows are not in authoritative rank order.");
+      }
+    }
+  }
+  return rows;
 }
 
 export async function getSquadMemberPlayers(name: string) {

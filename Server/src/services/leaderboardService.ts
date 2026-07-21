@@ -1,5 +1,5 @@
 import type { Collection, Document } from "mongodb";
-import { players, squads, type PlayerDocument } from "../db";
+import { players, type PlayerDocument } from "../db";
 import { RedisKeys } from "../constants";
 import { redisReplaceSortedSet, redisZRevRange } from "../redis";
 import { progressionForPlayer } from "./playerStateService";
@@ -10,8 +10,8 @@ import {
 } from "./playerProfileMirrorAuthorityService";
 import { buildDatabaseSquad } from "./squadWireService";
 import { currentArenaId, serializeWarArenaData } from "./warArenaContract";
-import { validatedSquadDocument } from "./squadAuthorityService";
 import { leaderboardCachePolicy } from "./leaderboardCachePolicyService";
+import { listByExperience } from "./squadService";
 
 // MongoDB is authoritative; Redis is only an opportunistic rank cache. Wire conversion is
 // performed here because the experience leaderboard uses FHIPGDADNFG, which has different
@@ -227,10 +227,7 @@ export async function playerRank(
 }
 
 export async function topSquads(limit = 100): Promise<Record<string, unknown>[]> {
-  const docs = await squads().find().sort({ experience: -1 }).limit(limit).toArray();
-  const now = new Date();
-  docs.forEach((squad) => validatedSquadDocument(squad, now));
-  return docs.map(buildDatabaseSquad);
+  return (await listByExperience(limit)).map(buildDatabaseSquad);
 }
 
 /** Cached top-N ids from Redis if available; callers fall back to MongoDB on null. */
