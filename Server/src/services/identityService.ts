@@ -6,6 +6,7 @@ import { AccountType } from "../constants";
 import { identities, withMongoTransaction, type IdentityDocument, type PlayerDocument } from "../db";
 import { findById, updatePlayerFields } from "./playerService";
 import { authenticationCredentialSecrets } from "./authSecretService";
+import { validatedPlayerProfileMirrors } from "./playerProfileMirrorAuthorityService";
 
 export type IdentityProvider = IdentityDocument["provider"];
 
@@ -83,6 +84,59 @@ export async function findIdentity(
   return normalized
     ? identities().findOne({ provider, externalId: normalized }, session ? { session } : undefined)
     : null;
+}
+
+export interface ValidatedIdentityOwner {
+  identity: IdentityDocument;
+  player: PlayerDocument;
+}
+
+/**
+ * Prove that one authoritative provider row still names the provider id shown by its owner.
+ *
+ * Root/DTO mirror equality alone cannot establish this relationship because the credential lives
+ * in a separate collection. A stale row must never authenticate the account after an interrupted
+ * legacy link/unlink, and an orphan row must not make an open existence endpoint advertise an
+ * unusable account. Facebook's recovered disconnected sentinel is the string form of signed
+ * `long` value -1; Google Play and Game Center use an empty string.
+ */
+export function validatedIdentityOwner(
+  identity: IdentityDocument,
+  player: PlayerDocument,
+): ValidatedIdentityOwner {
+  validatedPlayerProfileMirrors(player);
+  const mirroredExternalId = identity.provider === "facebook"
+    ? String(player.player.facebookId)
+    : identity.provider === "googlePlay"
+      ? player.player.googlePlayId
+      : identity.provider === "gameCenter"
+        ? player.player.gameCenterId
+        : "";
+  const disconnected = identity.provider === "facebook"
+    ? mirroredExternalId === "-1"
+    : mirroredExternalId === "";
+  if (
+    identity.playerId !== player.id
+    || !identity.externalId
+    || disconnected
+    || identity.externalId !== mirroredExternalId
+  ) {
+    throw new Error("Stored platform identity owner mirror is inconsistent.");
+  }
+  return { identity, player };
+}
+
+/** Resolve a provider id only when both collections prove the same usable owner. */
+export async function findValidatedIdentityOwner(
+  provider: IdentityProvider,
+  externalId: string,
+  session?: ClientSession,
+): Promise<ValidatedIdentityOwner | null> {
+  const identity = await findIdentity(provider, externalId, session);
+  if (!identity) return null;
+  const player = await findById(identity.playerId, session);
+  if (!player) throw new Error("Stored platform identity owner is missing.");
+  return validatedIdentityOwner(identity, player);
 }
 
 /**
@@ -288,5 +342,21 @@ export async function authenticateIdentity(
       ).matches) return null;
     }
   }
-  return findById(identity.playerId);
+
+  // Re-read after verification even when no key upgrade was needed. An unlink/relink may transfer
+  // the external id between the first read and this point; a stale successful HMAC comparison must
+  // never authenticate the former owner. Re-verifying the final digest also rejects a concurrent
+  // credential rotation before its newly linked player can be returned.
+  const currentOwner = await findValidatedIdentityOwner(provider, externalId);
+  if (
+    !currentOwner
+    || currentOwner.identity.playerId !== identity.playerId
+    || !verifyIdentityCredentialHash(
+      currentOwner.identity.credentialHash,
+      provider,
+      externalId,
+      credential,
+    ).matches
+  ) return null;
+  return currentOwner.player;
 }

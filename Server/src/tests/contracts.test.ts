@@ -8,6 +8,7 @@ import { squadRankAuthority } from "../services/squadService";
 import {
   accountTypeAfterIdentityRemoval,
   providerForAccountType,
+  validatedIdentityOwner,
 } from "../services/identityService";
 import {
   buildExistingGameCenterPayload,
@@ -17,7 +18,7 @@ import {
 import { authHandlers } from "../handlers/auth";
 import { DbAction } from "../dbActions";
 import { ApiErrorCode, apiError } from "../apiErrors";
-import type { PlayerDocument } from "../db";
+import type { IdentityDocument, PlayerDocument } from "../db";
 import { newPlayer, newSquad, ok } from "../dtos";
 import {
   buildDatabasePlayer,
@@ -204,6 +205,32 @@ test("identity mutations require auth while pre-login existence checks remain op
   assert.equal(identityHandlers[DbAction.RemoveOrUpdateGC]?.requiresAuth, true);
   assert.equal(identityHandlers[DbAction.ExistFBAccount]?.requiresAuth, false);
   assert.equal(identityHandlers[DbAction.TutorialCheckGPGSAccount]?.requiresAuth, false);
+});
+
+test("platform identity authority must match the exact connected player mirror", () => {
+  const player = contractPlayer();
+  const identity: IdentityDocument = {
+    provider: "facebook",
+    externalId: "12345678901234567",
+    playerId: player.id,
+    credentialHash: "0".repeat(64),
+    displayName: "Contract Player",
+    createdAt: new Date("2023-11-14T22:13:20Z"),
+    updatedAt: new Date("2023-11-14T22:13:20Z"),
+  };
+  assert.equal(validatedIdentityOwner(identity, player).player.id, player.id);
+
+  assert.throws(
+    () => validatedIdentityOwner({ ...identity, externalId: "987654321" }, player),
+    /Stored platform identity owner mirror is inconsistent/,
+  );
+  const disconnected = contractPlayer();
+  delete disconnected.facebookId;
+  disconnected.player.facebookId = -1;
+  assert.throws(
+    () => validatedIdentityOwner({ ...identity, externalId: "-1" }, disconnected),
+    /Stored platform identity owner mirror is inconsistent/,
+  );
 });
 
 test("Game Center account creation matches the shared stock account parser", () => {

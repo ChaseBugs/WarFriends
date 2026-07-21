@@ -4,12 +4,11 @@ import type { PlayerDocument } from "../db";
 import { DbAction } from "../dbActions";
 import { ok } from "../dtos";
 import {
-  findIdentity,
+  findValidatedIdentityOwner,
   linkIdentity,
   unlinkIdentity,
   type IdentityProvider,
 } from "../services/identityService";
-import { findById } from "../services/playerService";
 import { buildDatabasePlayer, buildPlayerStateResponse } from "../services/playerStateService";
 import { createGameCenterAccount, type CreatedAccount } from "../services/authService";
 import { buildPlayerLeaderboardItem } from "../services/leaderboardService";
@@ -127,30 +126,30 @@ function unlinkAction(action: DbAction, provider: IdentityProvider): HandlerEntr
 function tutorialExistenceAction(action: DbAction, provider: IdentityProvider): HandlerEntry {
   return open(async ({ req }) => {
     const externalId = identityId(req, provider);
-    const identity = externalId ? await findIdentity(provider, externalId) : null;
+    const owner = externalId ? await findValidatedIdentityOwner(provider, externalId) : null;
     const idKey = provider === "facebook" ? "FacebookId" : provider === "googlePlay" ? "GooglePlayId" : "GameCenterId";
 
     // The tutorial callback does not read a generic Exists boolean. Decompiled client code
     // explicitly checks resultMessage == "OK", then reads the provider-specific id field.
     // Keep both aliases for diagnostics, but always satisfy that exact recovered contract.
     return ok(action, {
-      Exists: Boolean(identity),
-      resultMessage: identity ? "OK" : "NOT_FOUND",
-      ...(identity ? { [idKey]: externalId } : {}),
+      Exists: Boolean(owner),
+      resultMessage: owner ? "OK" : "NOT_FOUND",
+      ...(owner ? { [idKey]: externalId } : {}),
     });
   });
 }
 
 const facebookExistence: HandlerEntry = open(async ({ req }) => {
   const externalId = identityId(req, "facebook");
-  const identity = externalId ? await findIdentity("facebook", externalId) : null;
-  if (!identity) {
+  const owner = externalId ? await findValidatedIdentityOwner("facebook", externalId) : null;
+  if (!owner) {
     // IJEAJGCCHEF.Success is numeric 1. For ExistFBAccount this means that no previous
     // account exists and the client may offer to create/link a new one.
     return ok(DbAction.ExistFBAccount, { Code: 1, Exists: false, AccountExists: false });
   }
 
-  const player = await findById(identity.playerId);
+  const { identity, player } = owner;
   // The recovered callback branches on AccountAlreadyCreated (4), then consumes these
   // exact field names for UserExistsDialog. Echoing FacebookPassword is safe here because
   // it is the credential from this request; the stored HMAC is never reversible or exposed.
@@ -160,22 +159,22 @@ const facebookExistence: HandlerEntry = open(async ({ req }) => {
     AccountExists: true,
     PlayerId: identity.playerId,
     FacebookId: externalId,
-    FacebookName: identity.displayName || player?.player.accountName || "",
+    FacebookName: identity.displayName || player.player.accountName,
     FacebookPassword: identityCredential(req, "facebook"),
-    facebookLevel: player?.player.level ?? 1,
-    facebookMedals: player?.player.medalsBalance ?? 0,
+    facebookLevel: player.player.level,
+    facebookMedals: player.player.medalsBalance,
   });
 });
 
 const gameCenterExistence: HandlerEntry = open(async ({ req }) => {
   const externalId = identityId(req, "gameCenter");
-  const identity = externalId ? await findIdentity("gameCenter", externalId) : null;
+  const owner = externalId ? await findValidatedIdentityOwner("gameCenter", externalId) : null;
   // ExistGCAccount uses the same resultMessage contract as tutorial platform checks rather
   // than Facebook's numeric AccountAlreadyCreated branch.
   return ok(DbAction.ExistGCAccount, {
-    Exists: Boolean(identity),
-    resultMessage: identity ? "OK" : "NOT_FOUND",
-    ...(identity ? { GameCenterId: externalId, PlayerId: identity.playerId } : {}),
+    Exists: Boolean(owner),
+    resultMessage: owner ? "OK" : "NOT_FOUND",
+    ...(owner ? { GameCenterId: externalId, PlayerId: owner.player.id } : {}),
   });
 });
 
@@ -196,12 +195,11 @@ export const identityHandlers: Record<number, HandlerEntry> = {
       }
       // A duplicate may be observed either before this request or through the unique-index
       // race in the transaction. Read after the aborted transaction so the winner is visible.
-      const identity = await findIdentity("gameCenter", gameCenterId);
-      const existing = identity ? await findById(identity.playerId) : null;
-      if (!existing) throw error;
+      const owner = await findValidatedIdentityOwner("gameCenter", gameCenterId);
+      if (!owner) throw error;
       return ok(
         DbAction.CreateGcAccount,
-        buildExistingGameCenterPayload(existing, gameCenterId),
+        buildExistingGameCenterPayload(owner.player, gameCenterId),
       );
     }
   }),
