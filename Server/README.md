@@ -401,6 +401,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   recipient in the same transaction. Its single 5,000-WarBucks tier is replay-idempotent. The
   weekly Monday calendar is explicit reconstruction policy because neither recovered APK contains the
   retired production schedule; no client-supplied score, placement, reward, or squad ID is trusted.
+  Maintenance and new-window allocation deliberately query malformed/missing date and status shapes
+  in addition to normally expired rows. Complete round and season batches validate before the first
+  settlement write, every non-settled round blocks season closure, and the final closure must win one
+  exact compare-and-set; BSON comparison cannot hide damaged scheduling authority permanently.
 - **PvP (WebSocket `/hub`)**: identify → `FindMatch` (matchmaking pairs by army-power within
   a widening league window) → `MatchFound` → `JoinMatch` → `MatchStart` → in-match
   `MatchEvent` relay to the opponent → `MatchResult`. Room joins/events are restricted to

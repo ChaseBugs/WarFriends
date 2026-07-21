@@ -67,6 +67,12 @@ into the leased audit batch, whose complete receipts validate before the first p
 Retry, deleted-account retirement, and provider-result successors also validate before persistence.
 Terminal responses without a fresh expiry preserve the last verified entitlement boundary.
 
+Squad War maintenance now widens its round/season queries beyond ordinary due dates so malformed or
+missing BSON dates and unknown statuses enter validation instead of remaining permanently invisible.
+Both selected batches validate before the first settlement write; any non-settled round blocks its
+season from closing, allocation applies the same corrupt-or-expired guard, and final closure requires
+one exact compare-and-set winner.
+
 Account-sanction rows now have complete durable authority before authentication, issue/revoke replay,
 admin publication, appeal intake, and accepted-appeal mutation. Exact known fields, normalized
 identities, safe chronology, exact optional duration/expiry equality, and status-consistent

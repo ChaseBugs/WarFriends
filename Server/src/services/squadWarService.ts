@@ -290,11 +290,21 @@ export async function ensureActiveSquadWarSeason(now = new Date()): Promise<Squa
   // round and only then calls this allocator. A request that lands in that short processing gap
   // receives no active season and retries after maintenance instead of overwriting old pointers
   // before their promotion/demotion decisions commit.
-  const expiredUnsettled = await squadWarRounds().countDocuments(
-    { status: "active", endsAt: { $lte: now } },
-    { limit: 1 },
-  );
-  if (expiredUnsettled > 0) return null;
+  const expiredOrDamaged = await squadWarRounds().findOne({
+    $or: [
+      { status: "active", endsAt: { $lte: now } },
+      { status: "active", endsAt: { $not: { $type: "date" } } },
+      { status: { $nin: ["active", "settled"] } },
+    ],
+  });
+  if (expiredOrDamaged) {
+    // The old count query could not distinguish an expired valid round from malformed scheduling
+    // authority hidden by BSON date/status comparison. Prove the candidate before postponing the
+    // new window; corruption must raise an operator-visible failure instead of silently coexisting
+    // with a newly allocated season.
+    validatedSquadWarRound(expiredOrDamaged, undefined, now);
+    return null;
+  }
 
   try {
     return await withMongoTransaction(async (session) => {
@@ -972,8 +982,24 @@ export async function maintainSquadWars(
 ): Promise<{ rounds: number; messages: number }> {
   if (!config.squadWarsEnabled) return { rounds: 0, messages: 0 };
   await assertLeaseOwned();
-  const expired = await squadWarRounds().find({ status: "active", endsAt: { $lte: now } }).sort({ endsAt: 1 }).limit(100).toArray();
+  const expired = await squadWarRounds().find({
+    $or: [
+      { status: "active", endsAt: { $lte: now } },
+      { status: "active", endsAt: { $not: { $type: "date" } } },
+      { status: { $nin: ["active", "settled"] } },
+    ],
+  }).sort({ endsAt: 1 }).limit(100).toArray();
+  const endedSeasons = await squadWarSeasons().find({
+    $or: [
+      { status: "active", endsAt: { $lte: now } },
+      { status: "active", endsAt: { $not: { $type: "date" } } },
+      { status: { $nin: ["active", "settled"] } },
+    ],
+  }).sort({ endsAt: 1 }).limit(100).toArray();
+  // Validate both scheduler batches before the first settlement write. MongoDB comparisons do not
+  // make malformed dates/statuses benign; the widened queries deliberately surface them here.
   expired.forEach((round) => validatedSquadWarRound(round, undefined, now));
+  endedSeasons.forEach((season) => validatedSquadWarSeason(season, now));
   let rounds = 0;
   let messageCount = 0;
   for (const round of expired) {
@@ -985,20 +1011,23 @@ export async function maintainSquadWars(
   // Inspect ended season rows as well as seasons represented by the round batch. This closes an
   // empty season (created while there were no squads) and also completes a season whose last
   // active round was settled by another node between this sweep's initial query and this point.
-  const endedSeasons = await squadWarSeasons().find(
-    { status: "active", endsAt: { $lte: now } },
-  ).sort({ endsAt: 1 }).limit(100).toArray();
   for (const season of endedSeasons) {
     await assertLeaseOwned();
-    validatedSquadWarSeason(season, now);
-    const remaining = await squadWarRounds().countDocuments({ seasonId: season.seasonId, status: "active" }, { limit: 1 });
-    if (remaining === 0) {
+    const remaining = await squadWarRounds().findOne({
+      seasonId: season.seasonId,
+      status: { $ne: "settled" },
+    });
+    if (remaining) validatedSquadWarRound(remaining, season, now);
+    if (!remaining) {
       validatedSquadWarSeason({ ...season, status: "settled", settledAt: now }, now);
       await assertLeaseOwned();
-      await squadWarSeasons().updateOne(
+      const closed = await squadWarSeasons().updateOne(
         { seasonId: season.seasonId, status: "active" },
         { $set: { status: "settled", settledAt: now } },
       );
+      if (closed.modifiedCount !== 1) {
+        throw new Error(`Concurrent Squad Wars season closure rejected ${season.seasonId}.`);
+      }
     }
   }
   await assertLeaseOwned();
