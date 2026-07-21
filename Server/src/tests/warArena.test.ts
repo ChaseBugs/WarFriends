@@ -4,7 +4,11 @@ import { config } from "../config";
 import { claimAchievementState } from "../services/achievementService";
 import { DbAction } from "../dbActions";
 import type { PlayerProgressionState } from "../db";
-import { warArenaHandlers } from "../handlers/warArena";
+import {
+  requestedArenaInteger,
+  requestedHeartDialogShown,
+  warArenaHandlers,
+} from "../handlers/warArena";
 import { createInitialProgression } from "../services/playerStateService";
 import {
   arenaPolicy,
@@ -48,6 +52,28 @@ function withActiveRental(state: PlayerProgressionState): PlayerProgressionState
     },
   };
 }
+
+test("War Arena request fields require recovered integer and Boolean transports", () => {
+  assert.equal(requestedArenaInteger(undefined, "UsedGold", 0), 0);
+  assert.equal(requestedArenaInteger(0, "UsedGold"), 0);
+  assert.equal(requestedArenaInteger(30, "UsedGold"), 30);
+  assert.equal(requestedArenaInteger("0", "UsedGold"), 0);
+  assert.equal(requestedArenaInteger("30", "UsedGold"), 30);
+  assert.equal(requestedHeartDialogShown(true), true);
+  assert.equal(requestedHeartDialogShown(false), false);
+  assert.equal(requestedHeartDialogShown("True"), true);
+  assert.equal(requestedHeartDialogShown("False"), false);
+
+  for (const value of [null, false, true, [], [1], "", " 1", "1 ", "+1", "01", "1.0", "1e0", -1]) {
+    assert.throws(
+      () => requestedArenaInteger(value, "UsedGold", 0),
+      /must be a non-negative integer/,
+    );
+  }
+  for (const value of [undefined, null, 0, 1, "0", "1", "true", "false", [], [true]]) {
+    assert.throws(() => requestedHeartDialogShown(value), /must be a Boolean/);
+  }
+});
 
 test("War Arena config and persisted wire use the recovered client field names", () => {
   const configuration = warArenaConfiguration(NOW);

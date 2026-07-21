@@ -1437,7 +1437,12 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   credentials. Action `212` requires authentication, accepts only the active server-generated
   `ArenaId`, and retains a bounded two-year event-dialog acknowledgement history without exposing
   it in the public wire object. Replays do not increment progression revision or write MongoDB,
-  and acknowledging a dialog cannot enter an event or grant value. Runs and prices are server-owned,
+  and acknowledging a dialog cannot enter an event or grant value. The `UsedGold`, `UsedGolds`, and
+  `hearthPrice` assertions accept only canonical nonnegative integer decimals from the recovered
+  `ToString()` calls or the same safe JSON integers; only absent optional `UsedGold` selects zero.
+  `HeartDialogShown` accepts only exact C# `True`/`False` text or a JSON Boolean. JavaScript-coercible
+  nulls, arrays, blanks, alternate number syntax, lowercase Boolean text, and numeric Boolean
+  substitutes therefore cannot select entry, heart, or scraps behavior. Runs and prices are server-owned,
   battle IDs are receipt-bound, and entry/start/result/heart/life/reward/end retries return their
   recovered response without a false revision increment or MongoDB replacement. Expired receipt
   cleanup remains durable because it unblocks a future battle. One complete lifecycle authority

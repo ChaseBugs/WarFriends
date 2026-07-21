@@ -13,19 +13,30 @@ import {
 import { authed, type HandlerEntry } from "./types";
 import { validatedPlayerProfileMirrors } from "../services/playerProfileMirrorAuthorityService";
 
-function integer(value: unknown, field: string, fallback?: number): number {
-  if ((value === undefined || value === null || value === "") && fallback !== undefined) return fallback;
-  const parsed = Number(value);
-  if (!Number.isInteger(parsed) || parsed < 0) {
+/**
+ * Parse the nonnegative integer text emitted by the recovered Arena callers' `ToString()` calls.
+ * Replacement JSON clients may send the same integer as a number. `Number(value)` is deliberately
+ * avoided because null, booleans, singleton arrays, blanks, and exponent text can otherwise become
+ * a believable ticket or Gold assertion before the service compares it with server-owned policy.
+ */
+export function requestedArenaInteger(value: unknown, field: string, fallback?: number): number {
+  if (value === undefined && fallback !== undefined) return fallback;
+  const parsed = typeof value === "number"
+    ? value
+    : typeof value === "string" && /^(?:0|[1-9]\d*)$/.test(value)
+      ? Number(value)
+      : Number.NaN;
+  if (!Number.isSafeInteger(parsed) || parsed < 0) {
     throw new ApiError(ApiErrorCode.UnknownAction, `${field} must be a non-negative integer.`);
   }
   return parsed;
 }
 
-function booleanValue(value: unknown): boolean {
-  // System.Boolean.ToString() sends "True"/"False" for HeartDialogShown. Tooling may use
-  // normal JSON booleans or 1/0, so normalize only these explicit representations.
-  return value === true || value === 1 || value === "1" || value === "True" || value === "true";
+/** Parse the exact Boolean.ToString transport, plus the corresponding JSON Boolean type. */
+export function requestedHeartDialogShown(value: unknown): boolean {
+  if (value === true || value === "True") return true;
+  if (value === false || value === "False") return false;
+  throw new ApiError(ApiErrorCode.UnknownAction, "HeartDialogShown must be a Boolean.");
 }
 
 async function arenaOpponentIds(playerId: string, armyPower: number, limit = 12): Promise<string[]> {
@@ -51,7 +62,7 @@ export const warArenaHandlers: Record<number, HandlerEntry> = {
     const opponents = await arenaOpponentIds(player!.id, player!.armyPower);
     const result = await enterWarArena(player!.id, {
       // DIENNAGJJOM uses the singular UsedGold key when BuyTicketsDialog pays for entry.
-      usedGold: integer(req.UsedGold, "UsedGold", 0),
+      usedGold: requestedArenaInteger(req.UsedGold, "UsedGold", 0),
       opponents,
     });
     return ok(DbAction.EnterArena, { ...result.response, Replayed: result.replayed });
@@ -62,8 +73,8 @@ export const warArenaHandlers: Record<number, HandlerEntry> = {
     const result = await buyWarArenaHeart(player!.id, {
       // The stock direct-ticket request misspells "heart" as hearthPrice. The Gold fallback
       // uses the plural UsedGolds. These names are wire compatibility, not normalized API.
-      hearthPrice: hasGoldFallback ? undefined : integer(req.hearthPrice, "hearthPrice"),
-      usedGold: hasGoldFallback ? integer(req.UsedGolds, "UsedGolds") : undefined,
+      hearthPrice: hasGoldFallback ? undefined : requestedArenaInteger(req.hearthPrice, "hearthPrice"),
+      usedGold: hasGoldFallback ? requestedArenaInteger(req.UsedGolds, "UsedGolds") : undefined,
     });
     return ok(DbAction.BuyArenaHearth, { ...result.response, Replayed: result.replayed });
   }),
@@ -74,7 +85,7 @@ export const warArenaHandlers: Record<number, HandlerEntry> = {
   }),
 
   [DbAction.GetScrapsReward]: authed(async ({ player, req }) => {
-    const result = await claimWarArenaScraps(player!.id, booleanValue(req.HeartDialogShown));
+    const result = await claimWarArenaScraps(player!.id, requestedHeartDialogShown(req.HeartDialogShown));
     return ok(DbAction.GetScrapsReward, { ...result.response, Replayed: result.replayed });
   }),
 
