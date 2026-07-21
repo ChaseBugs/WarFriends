@@ -7,7 +7,11 @@ import {
 import { isSupportedAuthenticationScryptCost } from "./authSecretService";
 import { validatePlayerLeagueIdentity } from "./playerLeagueContract";
 import { isCanonicalStoredPlayerName } from "./playerNameContract";
-import { validatedNotificationSettings } from "./playerSettingsService";
+import {
+  validatedNotificationSettings,
+  validatedPlayerCountry,
+  validatedPlayerLocale,
+} from "./playerSettingsService";
 import {
   validatedPhotonRoutingSnapshot,
 } from "./regionPingService";
@@ -33,6 +37,11 @@ function validatePlayerPublicIdentityFields(player: PlayerDocument): void {
     // profile boundary is the earliest point that can prevent corrupt consent from reaching push
     // selection or being normalized by an unrelated settings update.
     validatedNotificationSettings(dto.notificationSettings);
+    // Country is public DatabasePlayer data and locale selects private boot/notification behavior.
+    // Prove their exact stored forms here instead of letting the next handler trim or uppercase a
+    // bypassed write and accidentally turn damaged durable metadata into believable authority.
+    validatedPlayerCountry(dto.country);
+    validatedPlayerLocale(dto.locale);
     // Action 140 validates new measurements, but legacy imports and bypassed writers can still
     // place malformed routing hints in MongoDB. Prove the entire stored snapshot here so an
     // unrelated heartbeat cannot overwrite connection metadata and hide pre-existing damage.

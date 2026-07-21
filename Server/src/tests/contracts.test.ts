@@ -80,6 +80,8 @@ import {
   parseNotificationSettings,
   settingsForPlayer,
   validatedNotificationSettings,
+  validatedPlayerCountry,
+  validatedPlayerLocale,
 } from "../services/playerSettingsService";
 import { normalizeReportInput } from "../services/reportService";
 import { reportHandlers } from "../handlers/reports";
@@ -1552,6 +1554,27 @@ test("profile normalization preserves localized names and validates locale/count
   assert.throws(() => normalizePlayerName("  "));
   assert.throws(() => normalizeLocale("../../etc"));
   assert.throws(() => normalizeCountry("USA"));
+
+  assert.equal(validatedPlayerLocale("zh-Hans-CN"), "zh-Hans-CN");
+  assert.equal(validatedPlayerCountry(""), "");
+  assert.equal(validatedPlayerCountry("US"), "US");
+  assert.throws(() => validatedPlayerLocale(" en"), /Stored player locale is invalid/);
+  assert.throws(() => validatedPlayerLocale("en-US-extra-part"), /Stored player locale is invalid/);
+  assert.throws(() => validatedPlayerCountry("us"), /Stored player country is invalid/);
+  assert.throws(() => validatedPlayerCountry("USA"), /Stored player country is invalid/);
+
+  const corruptLocale = contractPlayer();
+  corruptLocale.player.locale = "../../etc";
+  assert.throws(
+    () => validatedPlayerProfileLookup(corruptLocale),
+    /Stored player public identity is invalid/,
+  );
+  const corruptCountry = contractPlayer();
+  corruptCountry.player.country = "us";
+  assert.throws(
+    () => buildDatabasePlayer(corruptCountry),
+    /Stored player public identity is invalid/,
+  );
 });
 
 test("multilingual moderation rejects punctuation, leetspeak, and localized evasions", () => {

@@ -111,6 +111,37 @@ export function normalizeCountry(value: unknown): string {
   return country;
 }
 
+/**
+ * Validate the persisted language tag without silently normalizing durable state.
+ *
+ * Request writers already trim and apply the same bounded locale grammar. Revalidating the stored
+ * value at the shared profile boundary prevents malformed free text from reaching boot selection,
+ * notification routing, or later being made to look legitimate by an unrelated device update.
+ */
+export function validatedPlayerLocale(value: unknown): string {
+  if (typeof value !== "string"
+    || value !== value.trim()
+    || !/^[A-Za-z]{2,3}(?:-[A-Za-z]{2,8}){0,2}$/u.test(value)) {
+    throw new Error("Stored player locale is invalid.");
+  }
+  return value;
+}
+
+/**
+ * Validate the persisted public country code.
+ *
+ * Empty string is the exact new-account/unknown-country sentinel. Once selected, handlers store
+ * the upper-case two-letter form; lower-case or padded durable values indicate a bypassed writer
+ * and must not be normalized while publishing a public DatabasePlayer snapshot.
+ */
+export function validatedPlayerCountry(value: unknown): string {
+  if (value === "") return value;
+  if (typeof value !== "string" || !/^[A-Z]{2}$/u.test(value)) {
+    throw new Error("Stored player country is invalid.");
+  }
+  return value;
+}
+
 /** Resolve settings for legacy player rows created before notificationSettings was added. */
 export function settingsForPlayer(player: PlayerDocument): NotificationSettingsDTO {
   return validatedNotificationSettings(player.player.notificationSettings);

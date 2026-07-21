@@ -294,6 +294,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   `SettingsManager.Settings` fields. A wholly absent legacy value boots with LoadEmpty's five
   enabled categories and disabled maintenance default; partial, extra, or non-Boolean snapshots
   fail closed before an unrelated write can normalize them or boot can change effective consent.
+  Persisted country and locale receive the same shared-profile proof before authentication or
+  publication: country is either the exact empty new-account sentinel or an upper-case two-letter
+  code, and locale is a trimmed bounded language tag. Request handlers still normalize new input,
+  but durable lower-case/padded/free-text damage is rejected instead of silently rewritten by a
+  later country, language, or device-registration action.
   The same profile proof restricts `PlayerStatus` to Offline/Online/InGame and `SquadRank` to the
   five recovered values before authentication, publication, or mutation; a heartbeat must never
   overwrite an unknown stored status and conceal durable damage.
