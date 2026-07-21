@@ -23,6 +23,7 @@ import {
   validatedRentalUnixSeconds,
 } from "./rentalEntitlementService";
 import { validatedTutorialCompletion } from "./tutorialCompletionAuthorityService";
+import { playerLevelDefinition } from "./levelProgressionService";
 
 /** IJEAJGCCHEF.NoRentalFound, handled explicitly by action 138's nested parser. */
 export const RENTAL_NOT_FOUND = 13_602;
@@ -170,7 +171,7 @@ function selectRental(
   );
   if (weapons.length === 0 && units.length === 0) return undefined;
 
-  const seed = stableBytes(playerId, generation, Math.floor(playerLevel));
+  const seed = stableBytes(playerId, generation, playerLevel);
   const familyRoll = seed[0]! % (RENTAL_WEAPON_WEIGHT + RENTAL_UNIT_WEIGHT);
   const preferWeapon = familyRoll < RENTAL_WEAPON_WEIGHT;
   const family = preferWeapon
@@ -252,14 +253,18 @@ export function ensureRentalOfferState(
     working = clearBorrowedItem(state, current);
   }
 
-  if (Math.floor(playerLevel) < RENTAL_MIN_PLAYER_LEVEL_INDEX) {
+  // A live durable offer is replayed above without consulting a later profile rank. New issuance,
+  // however, uses level-gated candidate windows and therefore requires one exact recovered row;
+  // flooring NaN or a fraction could otherwise create a believable offer from the wrong pool.
+  const sourcePlayerLevel = playerLevelDefinition(playerLevel).index;
+  if (sourcePlayerLevel < RENTAL_MIN_PLAYER_LEVEL_INDEX) {
     if (!current) return { state };
     const { rental: _expired, ...withoutRental } = working;
     return { state: { ...withoutRental, revision: state.revision + 1 } };
   }
 
   const generation = previousGeneration + 1;
-  const selected = selectRental(working, playerId, playerLevel, generation);
+  const selected = selectRental(working, playerId, sourcePlayerLevel, generation);
   if (!selected) {
     if (!current) return { state };
     const { rental: _expired, ...withoutRental } = working;

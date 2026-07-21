@@ -656,6 +656,10 @@ reading an already-active durable set still does not depend on the caller's curr
 Card-pack unlock checks and mission-card `FROMMISSION` selection now require that same exact rank
 row. The row index controls the rank-6 unlock and its one-based display number controls the recovered
 mission threshold, preventing `NaN` or floored fractional levels from entering card economy.
+Rental generation now requires one exact recovered zero-based rank row before the level-4 gate,
+candidate window, and deterministic selection seed. Malformed levels cannot generate a lower-pool
+offer, while replaying an already-live durable offer intentionally remains independent of a later
+profile-level argument.
 One shared application-clock boundary now protects initial progression creation, persisted
 progression reads, successor publication, `PlayerData`, and the top-level player-state response.
 It requires a nonnegative safe Unix second inside JavaScript/BSON Date support and passes that same

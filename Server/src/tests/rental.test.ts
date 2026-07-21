@@ -28,6 +28,7 @@ import {
   hasActiveRentalItem,
   validatedRentalState,
 } from "../services/rentalEntitlementService";
+import { PLAYER_LEVELS } from "../services/levelProgressionService";
 
 const NOW = 1_900_000_000;
 const SLOT_MASKS = [263, 1064, 592, 128] as const;
@@ -65,6 +66,11 @@ test("GetPlayerData rental generation uses the recovered duration, discount, and
   assert.equal(replay.state, issued.state, "active boot offer must not advance revision");
   assert.equal(replay.rental?.id, issued.rental.id);
   assert.deepEqual(replay.bootOffer, issued.bootOffer);
+  assert.equal(
+    ensureRentalOfferState(issued.state, "rental-wire", Number.NaN, NOW + 60).state,
+    issued.state,
+    "an active durable offer replay must not depend on a later level argument",
+  );
 });
 
 test("rental generation requires durable tutorial completion even at an eligible level", () => {
@@ -90,6 +96,21 @@ test("ineligible account without a rental remains a no-write boot path", () => {
   const result = ensureRentalOfferState(initial, "low-level-rental", 0, NOW);
   assert.equal(result.state, initial);
   assert.equal(result.rental, undefined);
+});
+
+test("new rental issuance requires one exact recovered player-level row", () => {
+  for (const invalidLevel of [
+    Number.NaN,
+    Number.POSITIVE_INFINITY,
+    -1,
+    1.5,
+    PLAYER_LEVELS.length,
+  ]) {
+    assert.throws(
+      () => ensureRentalOfferState(fundedState(), "invalid-rental-level", invalidLevel, NOW),
+      /Player level index .* is invalid/,
+    );
+  }
 });
 
 test("weapon rental is borrowable for one trial, becomes a post-battle sale, and restores its slot", () => {

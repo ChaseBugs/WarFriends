@@ -1536,6 +1536,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   entitlements remain reconstruction gaps.
 - **Daily weapon and unit rentals**: GetPlayerData issues the exact outer `Rental` object only
   after durable tutorial completion and once the zero-based player level reaches display rank 4.
+  New issuance requires that level to identify one exact recovered rank row before the gate,
+  candidate window, and deterministic selection seed; malformed or fractional levels are not
+  floored into a lower offer pool. An already-live validated offer remains durable authority and
+  replays without depending on a later level argument.
   The 4.9.5 MainScene values decode to a
   20-25% sale, a 12-hour free trial, a 24-hour offer, and 0/2/7 visual/weapon/unit weights;
   visual rentals are therefore deliberately not generated. Action `138` accepts only the
