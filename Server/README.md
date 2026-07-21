@@ -676,9 +676,13 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   It validates the authenticated player's bounded HTTP/HTTPS URL, rejects executable, local-file,
   credential-bearing, malformed, and control-character input, and stores a deterministic
   per-player publication. Unique URL identity makes concurrent/lost-response retries harmless,
-  while a 20-per-day cap and one-year TTL bound this write-only compatibility collection. The
-  response echoes the exact `URL` consumed by `MHEHGPLIFHF.LLCLNJKBGGM`. No feed-read database
-  action exists in 1.6.0, so the backend does not invent an unreachable mobile browsing API.
+  while a 20-per-day cap and one-year TTL bound this write-only compatibility collection. Every
+  insert and idempotent replay validates the complete stored row: exact known fields, canonical
+  URL, matching SHA-256 URL hash, deterministic player-and-URL ID, bounded player identity,
+  immutable creation/update time, and an exact 365-day expiry. Application-time expiry rejects a
+  stale row even while MongoDB TTL deletion is delayed. The response echoes the exact `URL`
+  consumed by `MHEHGPLIFHF.LLCLNJKBGGM`. No feed-read database action exists in 1.6.0, so the
+  backend does not invent an unreachable mobile browsing API.
 - **VIP purchase and expiry authority**: action `114` validates `VIP_1` through `VIP_4` against
   the 4.9.5 MainScene table (49 Gold/12 hours, 249/3 days, 499/7 days, and 1799/30 days), debits
   Gold and extends the Unix entitlement in one revision-safe transaction, emits the exact

@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { createHash } from "node:crypto";
 import { ApiErrorCode } from "../apiErrors";
 import { DbAction } from "../dbActions";
 import { videoFeedHandlers } from "../handlers/videoFeed";
-import { normalizeVideoFeedUrl } from "../services/videoFeedService";
+import type { VideoFeedDocument } from "../db";
+import { normalizeVideoFeedUrl, validatedVideoFeedDocument } from "../services/videoFeedService";
 
 test("AddVideoFeed accepts the hosted HTTP URL forms used by the recovered upload callback", () => {
   assert.equal(
@@ -45,3 +47,28 @@ test("AddVideoFeed is an authenticated mutation with the recovered action number
   assert.equal(videoFeedHandlers[DbAction.AddVideoFeed]?.requiresAuth, true);
 });
 
+test("video-feed receipt authority binds URL hash, deterministic ID, and retention", () => {
+  const createdAt = new Date("2026-07-21T00:00:00.000Z");
+  const document: VideoFeedDocument = {
+    videoId: "vf-04f562932917a3d3fd86dd9b756a7d0e",
+    playerId: "player-1",
+    urlHash: "5a5b30ab663b6c30b863a9d0be4a126d74d96a348c613d61d460502cb9b44c38",
+    url: "https://cdn.example.com/replays/match-1.mp4",
+    createdAt,
+    updatedAt: createdAt,
+    expiresAt: new Date(createdAt.getTime() + (365 * 86_400_000)),
+  };
+  // Use the exported proof to ensure test constants follow the same deterministic receipt tuple.
+  assert.throws(() => validatedVideoFeedDocument(document), /Stored video-feed receipt is invalid/);
+  const digest = (value: string): string => createHash("sha256").update(value).digest("hex");
+  const valid = {
+    ...document,
+    urlHash: digest(document.url),
+    videoId: `vf-${digest(`${document.playerId}\u0000${document.url}`).slice(0, 32)}`,
+  };
+  assert.equal(validatedVideoFeedDocument(valid, new Date(createdAt.getTime() + 1)), valid);
+  assert.throws(
+    () => validatedVideoFeedDocument({ ...valid, expiresAt: new Date(createdAt.getTime() + 1) }),
+    /Stored video-feed receipt is invalid/,
+  );
+});
