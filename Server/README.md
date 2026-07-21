@@ -1399,8 +1399,12 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   agree; `completed` must equal claimed records; skip and mega counters must be typed and bounded;
   and issue/reset/day-key values must derive one UTC cycle. Corrupt records or counters fail closed
   instead of changing reward prices, bypassing comparisons, freezing rollover, or surviving an
-  unrelated full-progression replacement. The deployment-owned mega Gold fallback must be an exact
-  nonnegative safe integer; malformed policy fails before the 50-point cursor or wallet changes.
+  unrelated full-progression replacement. The deployment-owned currency-only mega Gold fallback is
+  resolved once during module startup as an immutable exact nonnegative safe integer. Malformed
+  policy therefore stops startup before players can earn or consume the 50-point cursor. A valid
+  claim computes the checked final wallet balance before subtracting that cursor. The default 25
+  Gold remains reconstruction policy while the retired production/non-currency reward table is an
+  explicit unresolved gap.
 - **Reward arithmetic boundary**: server-authored nonnegative currency rewards use one shared
   safe-integer addition guard before publishing their claim or receipt markers. Assignment,
   achievement, inbox, one-time, tutorial, conversion, level-up, lootbox, core-PvP, Elite-part, and War Arena rewards

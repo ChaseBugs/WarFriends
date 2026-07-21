@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { config } from "../config";
 import { DbAction } from "../dbActions";
 import { bufferedRequests, requestedAssignmentInteger } from "../handlers/assignments";
 import {
+  assignmentMegaRewardPolicy,
   assignmentStateFor,
   claimAssignmentState,
   claimAssignmentMegaRewardState,
@@ -230,23 +230,20 @@ test("mega claims and UTC rollover reject a non-integer carried mega cursor", ()
 });
 
 test("mega claim rejects malformed deployment Gold before consuming its cursor", () => {
-  const previous = config.assignmentMegaRewardGold;
-  try {
-    for (const reward of [Number.NaN, Number.POSITIVE_INFINITY, -1, 1.5]) {
-      config.assignmentMegaRewardGold = reward;
-      const initial = createInitialProgression(NOW);
-      const assignments = assignmentStateFor(initial, NOW);
-      assignments.megaReward = 50;
-      const eligible = { ...initial, assignments };
-      assert.throws(
-        () => claimAssignmentMegaRewardState(eligible, NOW + 60),
-        /Assignment mega-reward Gold policy is invalid/,
-      );
-      assert.equal(eligible.assignments.megaReward, 50);
-      assert.equal(eligible.gold, 0);
-    }
-  } finally {
-    config.assignmentMegaRewardGold = previous;
+  assert.equal(Object.isFrozen(assignmentMegaRewardPolicy()), true);
+  assert.deepEqual(assignmentMegaRewardPolicy(), { gold: 25 });
+  assert.deepEqual(assignmentMegaRewardPolicy({ gold: 0 }), { gold: 0 });
+  for (const gold of [
+    Number.NaN,
+    Number.POSITIVE_INFINITY,
+    -1,
+    1.5,
+    Number.MAX_SAFE_INTEGER + 1,
+  ]) {
+    assert.throws(
+      () => assignmentMegaRewardPolicy({ gold }),
+      /Assignment mega-reward Gold policy is invalid/,
+    );
   }
 });
 

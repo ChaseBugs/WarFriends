@@ -513,11 +513,15 @@ The check accepts authoritative chargeback debt in an existing wallet, rejects n
 non-integer rewards, and rejects any sum outside JavaScript's safe-integer range. Each caller
 calculates the final balance before consuming its claim marker or terminal receipt, so invalid
 persisted data or an operator-configured overflow fails closed without losing the reward on retry.
-Assignment mega Gold now validates its deployment policy as an exact nonnegative safe integer
-before consuming the 50-point cursor. War Arena validates the complete operator policy as exact
-client-width integers before config projection or lifecycle use: battle count is one through twelve,
-lives are positive, and Ticket/Gold prices plus guaranteed Scraps are nonnegative. Malformed policy
-is never rounded, clamped, or replaced by an implicit default.
+Assignment mega Gold now resolves its currency-only deployment fallback once during module startup
+as an immutable exact nonnegative safe integer. A malformed value stops startup before players can
+earn or consume the 50-point cursor; a valid claim computes the checked final wallet balance before
+subtracting that cursor. The default 25 Gold remains reconstruction policy because the retired
+production and non-currency mega-reward table has not been recovered. War Arena validates the
+complete operator policy as exact client-width integers before config projection or lifecycle use:
+battle count is one through twelve, lives are positive, and Ticket/Gold prices plus guaranteed
+Scraps are nonnegative. Malformed policy is never rounded, clamped, or replaced by an implicit
+default.
 Heroic Daily Mission and configured Event Assignment unit-part grants additionally use a checked
 signed-client-int successor before their enclosing receipt/claim transition. `SavedArmySlots.parts`
 is a recovered C# `int`; JavaScript-safe addition alone must never create an inventory snapshot that

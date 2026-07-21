@@ -129,6 +129,43 @@ const SUCCESS = 1; // IJEAJGCCHEF.Success
 const ASSIGNMENT_NOT_FOUND = 11201;
 const ASSIGNMENT_INCORRECT_REWARD = 11203;
 const MEGA_REWARD_POINTS = 50;
+
+export interface AssignmentMegaRewardPolicy {
+  readonly gold: number;
+}
+
+/**
+ * Validate the currency-only replacement for the retired assignment mega-reward table.
+ *
+ * OGLEHLIPEFM reads the generic mega-reward `Gold` field as C# `long`, but JavaScript cannot
+ * preserve every Int64 integer exactly. The safe-integer boundary is therefore authoritative.
+ * Resolving this once during module startup prevents a bad deployment from accepting ordinary
+ * assignment progress and failing only when a player tries to consume the 50-point cursor.
+ */
+function exactAssignmentMegaRewardPolicy(
+  policy: AssignmentMegaRewardPolicy,
+): AssignmentMegaRewardPolicy {
+  if (!Number.isSafeInteger(policy.gold) || policy.gold < 0) {
+    throw new ApiError(
+      ApiErrorCode.InternalServerError,
+      "Assignment mega-reward Gold policy is invalid.",
+    );
+  }
+  return { gold: policy.gold };
+}
+
+const CONFIGURED_ASSIGNMENT_MEGA_REWARD_POLICY = Object.freeze(exactAssignmentMegaRewardPolicy({
+  gold: config.assignmentMegaRewardGold,
+}));
+
+export function assignmentMegaRewardPolicy(
+  policy?: AssignmentMegaRewardPolicy,
+): AssignmentMegaRewardPolicy {
+  return policy === undefined
+    ? CONFIGURED_ASSIGNMENT_MEGA_REWARD_POLICY
+    : exactAssignmentMegaRewardPolicy(policy);
+}
+
 function addAssignmentCounter(value: number, increment: number, label: string): number {
   const current = assignmentCounter(value, label);
   if (!Number.isSafeInteger(increment) || increment < 0 || current > Number.MAX_SAFE_INTEGER - increment) {
@@ -397,13 +434,7 @@ export function claimAssignmentMegaRewardState(
   if (assignments.megaReward < MEGA_REWARD_POINTS) {
     throw new ApiError(ApiErrorCode.UnknownAction, "Assignment mega reward is not ready.");
   }
-  const goldAdded = config.assignmentMegaRewardGold;
-  if (!Number.isSafeInteger(goldAdded) || goldAdded < 0) {
-    // This fallback is deployment-owned reward authority. Rounding a fractional value or
-    // clamping a negative/non-finite value would publish a different economy policy than the
-    // operator configured, so reject it before consuming the 50-point claim cursor.
-    throw new ApiError(ApiErrorCode.InternalServerError, "Assignment mega-reward Gold policy is invalid.");
-  }
+  const goldAdded = CONFIGURED_ASSIGNMENT_MEGA_REWARD_POLICY.gold;
   const gold = checkedRewardBalance(state.gold, goldAdded, "Assignment mega-reward Gold");
   assignments.megaReward -= MEGA_REWARD_POINTS;
   return {
