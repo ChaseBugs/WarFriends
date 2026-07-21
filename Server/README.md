@@ -464,7 +464,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   connected, cancels when both are offline, and waits rather than guessing when Redis is unknown.
   Cancellation likewise commits the terminal match and both presence releases together. On a
   single-node restart, active/settling matches are cancelled and all residual `InGame` profiles
-  are repaired in the same transaction, including legacy partial cancellations.
+  are repaired in the same transaction, including legacy partial cancellations. Before those
+  writes, the server validates every complete current account and the projected presence snapshot.
+  Cancellation requires the exact two assigned IDs and checks that MongoDB matched both; restart
+  repair freezes its exact stale-player set and checks that every selected row was matched. Missing
+  or damaged accounts abort the transaction instead of being concealed by a partial bulk update.
   Replacement clients send an
   inventory-consuming activation as `MatchEvent { Event: "CardPlayed", Data: { Sequence,
   CardId } }`: the server validates the authenticated owner's complete candidate list, durably

@@ -116,6 +116,11 @@ and atomically writes `Status` with its signed-client-`int` Unix `LastAction`; r
 that exact pair and a 2700-second window in `DatabasePlayer.GetRealStatus`. New accounts start with
 a current heartbeat, and ranked admission, settlement, cancellation, and restart recovery update
 both fields in their owning transaction so backend status changes cannot immediately appear stale.
+Admission, cancellation, and restart repair now validate every complete stored account and its
+projected presence successor before the first write. Cancellation requires exactly both assigned
+IDs to exist and be released; restart repair freezes and validates the exact selected stale-player
+set, then verifies MongoDB matched all of them. A damaged or missing account therefore aborts the
+transaction instead of being normalized by a broad status update or hidden by partial success.
 
 Moderation duplicate suppression is also cross-process: one HMAC-keyed atomic winner stores the
 complete first report payload for ten minutes, and every racing process upserts that same report

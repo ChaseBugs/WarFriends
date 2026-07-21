@@ -64,6 +64,7 @@ import {
 import { allocatePlayerLeagueDivision } from "./playerLeagueService";
 import { validatedMatchDocument } from "./matchAuthorityService";
 import { validatedPlayerLastAction } from "./playerPublicScalarAuthorityService";
+import { validatedPlayerPresenceTransitions } from "./playerPresenceService";
 
 export { validatedMatchDocument } from "./matchAuthorityService";
 
@@ -207,15 +208,26 @@ export async function cancelMatch(matchId: string, reason: string): Promise<bool
       cancelReason,
       endedAt: transitionAt,
     }, transitionAt);
+    const playerIds = [...new Set(match.players.map((participant) => participant.playerId))];
+    const participantDocuments = await players().find(
+      { id: { $in: playerIds } },
+      { session },
+    ).toArray();
+    validatedPlayerPresenceTransitions(
+      participantDocuments,
+      playerIds,
+      PlayerStatus.Online,
+      transitionUnix,
+      transitionAt,
+    );
     const claim = await matches().updateOne(
       { matchId, state: "active", ...cancellationGuard },
       { $set: { state: "cancelled", cancelReason, endedAt: transitionAt } },
       { session },
     );
     if (claim.modifiedCount !== 1) return false;
-    const playerIds = [...new Set(match.players.map((participant) => participant.playerId))];
-    await players().updateMany(
-      { id: { $in: playerIds }, "player.status": PlayerStatus.InGame },
+    const presence = await players().updateMany(
+      { id: { $in: playerIds } },
       {
         $set: {
           "player.status": PlayerStatus.Online,
@@ -225,6 +237,9 @@ export async function cancelMatch(matchId: string, reason: string): Promise<bool
       },
       { session },
     );
+    if (presence.matchedCount !== playerIds.length) {
+      throw new Error("Ranked cancellation did not release every participant.");
+    }
     return true;
   });
   if (cancelled) logger.match.event("Match cancelled", { matchId, reason: cancelReason });
@@ -311,20 +326,35 @@ export async function recoverInterruptedMatches(
         ? match.players.map((participant: { playerId?: unknown }) => String(participant.playerId ?? "")).filter(Boolean)
         : []
     );
-    const presence = await players().updateMany(
-      {
-        "player.status": PlayerStatus.InGame,
-        ...(protectedPlayerIds.length > 0 ? { id: { $nin: protectedPlayerIds } } : {}),
-      },
-      {
-        $set: {
-          "player.status": PlayerStatus.Online,
-          "player.lastAction": transitionUnix,
-          updatedAt: transitionAt,
-        },
-      },
-      { session },
+    const repairFilter = {
+      "player.status": PlayerStatus.InGame,
+      ...(protectedPlayerIds.length > 0 ? { id: { $nin: protectedPlayerIds } } : {}),
+    };
+    const repairCandidates = await players().find(repairFilter, { session }).toArray();
+    const repairIds = repairCandidates.map((candidate) => candidate.id);
+    validatedPlayerPresenceTransitions(
+      repairCandidates,
+      repairIds,
+      PlayerStatus.Online,
+      transitionUnix,
+      transitionAt,
     );
+    const presence = repairIds.length === 0
+      ? { matchedCount: 0, modifiedCount: 0 }
+      : await players().updateMany(
+        { id: { $in: repairIds }, "player.status": PlayerStatus.InGame },
+        {
+          $set: {
+            "player.status": PlayerStatus.Online,
+            "player.lastAction": transitionUnix,
+            updatedAt: transitionAt,
+          },
+        },
+        { session },
+      );
+    if (presence.matchedCount !== repairIds.length) {
+      throw new Error("Ranked restart recovery did not release every selected player.");
+    }
     return { count: matchIds.length, repairedPlayers: presence.modifiedCount };
   });
   if (recovered.count > 0 || recovered.repairedPlayers > 0) {
@@ -653,6 +683,15 @@ export async function createMatch(a: MatchPlayer, b: MatchPlayer, coordinatorId?
     })) {
       throw new MatchAdmissionError("A match participant snapshot changed during pairing.");
     }
+    // Prove the complete successor accounts before inserting the room. Transaction rollback
+    // protects both profiles, but it cannot make an invalid projected public snapshot safe.
+    validatedPlayerPresenceTransitions(
+      participants,
+      playerIds,
+      PlayerStatus.InGame,
+      createdAtUnix,
+      createdAt,
+    );
 
     // Insert the durable room and reserve both profiles inside one snapshot transaction. A
     // concurrent pairing touches the same player rows, so MongoDB aborts/retries one transaction;
