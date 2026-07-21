@@ -1,4 +1,4 @@
-import { ApiError } from "../apiErrors";
+import { ApiError, ApiErrorCode } from "../apiErrors";
 import { League } from "../constants";
 import type {
   AchievementGroupState,
@@ -228,6 +228,19 @@ export interface AchievementMutationResult {
 }
 
 function cloneGroup(group: AchievementGroupState): AchievementGroupState {
+  // Claims use comparisons such as `value < target`; JavaScript makes every comparison with NaN
+  // false, which would turn a corrupt counter into an apparently completed tier. Validate the
+  // complete server-owned group before cloning so no read, acknowledgement, or claim can use that
+  // bypass. Unknown future group IDs remain preservable as long as their wire state is well formed.
+  if (!Number.isSafeInteger(group.id) || group.id < 0
+    || !Number.isSafeInteger(group.value) || group.value < 0
+    || !Number.isSafeInteger(group.offset)) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Stored achievement progress is invalid.");
+  }
+  if (!Array.isArray(group.progress)
+    || group.progress.some((tier) => typeof tier.claimed !== "boolean")) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Stored achievement claim state is invalid.");
+  }
   return {
     ...group,
     progress: group.progress.map((tier) => ({ ...tier })),
@@ -349,7 +362,7 @@ export function advanceAchievementState(
   if (NON_AUTHORITATIVE_ACHIEVEMENT_GROUPS.has(groupId)) {
     throw new ApiError(ACHIEVEMENT_REWARD_NOT_FOUND, "Achievement event is not authoritative.");
   }
-  if (!Number.isInteger(amount) || amount < 0) {
+  if (!Number.isSafeInteger(amount) || amount < 0) {
     throw new ApiError(ACHIEVEMENT_REWARD_NOT_FOUND, "Achievement progress increment is invalid.");
   }
 

@@ -326,6 +326,21 @@ test("achievement claims enforce tier order and credit scene-defined rewards onc
   );
 });
 
+test("achievement claims reject corrupt progress before a tier marker or reward is consumed", () => {
+  const initial = createInitialProgression(NOW);
+  const achievements = achievementStateFor(initial);
+  const missionGroup = achievements.data.find((group) => group.id === 2)!;
+  missionGroup.value = Number.NaN;
+  const corrupt = { ...initial, achievements };
+
+  assert.throws(
+    () => claimAchievementState(corrupt, 2, 0),
+    /Stored achievement progress is invalid/,
+  );
+  assert.equal(missionGroup.progress[0]!.claimed, false);
+  assert.equal(corrupt.gold, initial.gold);
+});
+
 test("achievement RequestBuffer replay cannot grant the same tier twice", () => {
   let state = createInitialProgression(NOW);
   state = advanceAchievementState(state, 2, 10).state;
