@@ -29,6 +29,7 @@ import {
   ensureActiveEventAssignment,
 } from "../services/eventAssignmentService";
 import { isSquadWarProcessing } from "../services/squadWarService";
+import { exactPlayerStatus, exactRenamePaymentFlag } from "./playerRequestParsing";
 
 // Player profile and settings handlers. GetPlayerData is the client's primary state fetch
 // after login. Mutations validate and persist only their own fields, which prevents a stale
@@ -80,14 +81,14 @@ export const playerHandlers: Record<number, HandlerEntry> = {
 
   [DbAction.SetPlayerStatus]: authed(async ({ player, req }) => {
     const reportedAt = unixNow();
-    const status = Number(req.PlayerStatus ?? req.Status ?? PlayerStatus.Online);
+    const status = exactPlayerStatus(req.PlayerStatus !== undefined ? req.PlayerStatus : req.Status);
     // HOCGNAKEHNB, the recovered action-29 callback, reads Time unconditionally whenever the
     // response is not an explicit offline envelope. Preserve that wire field even for a rejected
     // enum, but do not refresh durable LastAction for an invalid heartbeat.
-    if (!Object.values(PlayerStatus).includes(status)) {
+    if (status === undefined) {
       return ok(DbAction.SetPlayerStatus, { Status: player!.player.status, Time: reportedAt });
     }
-    const effective = await setPlayerPresence(player!.id, status as PlayerStatus, reportedAt);
+    const effective = await setPlayerPresence(player!.id, status, reportedAt);
     player!.player.status = effective.status;
     player!.player.lastAction = effective.lastAction;
     return ok(DbAction.SetPlayerStatus, { Status: effective.status, Time: effective.lastAction });
@@ -117,10 +118,7 @@ export const playerHandlers: Record<number, HandlerEntry> = {
 
   [DbAction.ChangePlayerName]: authed(async ({ player, req }) => {
     const name = normalizePlayerName(req.Name);
-    const payForRenameValue = Number(req.PayForRename);
-    if (payForRenameValue !== 0 && payForRenameValue !== 1) {
-      throw new ApiError(ApiErrorCode.UnknownAction, "PayForRename must be 0 or 1.");
-    }
+    const payForRenameValue = exactRenamePaymentFlag(req.PayForRename);
     try {
       const result = await renamePlayer(player!.id, name, payForRenameValue === 1);
       // HIKDINCJEPB deducts its locally displayed price only when this flag is one, then sets

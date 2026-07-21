@@ -77,6 +77,15 @@ test("invalid action-29 status remains callback-safe without refreshing durable 
   assert.equal(response.Status, PlayerStatus.Online);
   assert.equal(Number.isSafeInteger(Number(response.Time)), true);
   assert.equal(player.player.lastAction, NOW - 1);
+
+  for (const invalid of [undefined, null, true, false, [], ["1"], {}, "", " 1", "01", "1.0", "1e0"]) {
+    const malformed = await playerHandlers[DbAction.SetPlayerStatus].handler({
+      req: { DbAction: DbAction.SetPlayerStatus, PlayerStatus: invalid },
+      player,
+    });
+    assert.equal(malformed.Status, PlayerStatus.Online);
+    assert.equal(player.player.lastAction, NOW - 1);
+  }
 });
 
 test("ranked presence transitions validate the exact complete account set and successor", () => {

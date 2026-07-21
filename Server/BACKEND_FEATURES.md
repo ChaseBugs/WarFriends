@@ -77,6 +77,13 @@ zero-discount path and commit a Gold purchase. Both handler and service boundari
 product IDs to be own catalog properties, so inherited JavaScript object keys cannot masquerade as
 VIP or lootbox rows.
 
+Action-29 presence and action-139 rename-payment assertions now accept only the canonical recovered
+decimal integer forms. Missing, null, Boolean, array, blank, space-padded, leading-zero,
+fractional, exponent, unsafe, and out-of-range values cannot coerce into Offline/Online or a
+free/paid rename flag. Invalid presence transport retains the stock callback-safe `Time` response
+without changing durable `Status`/`LastAction`; invalid rename flags fail before profile or Gold
+mutation.
+
 Moderation-retention retry receipts now validate exact identity fields, safe nonnegative report/appeal
 deletion counts, safe preview/creation chronology, and exact whole-day cutoffs within the global
 30-3650-day bounds before replay. Historical receipts remain valid across deploy-time policy changes.

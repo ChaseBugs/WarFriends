@@ -587,7 +587,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   transition (admission, settlement, cancellation, and restart repair) also publish both fields in
   their existing transaction. This preserves `DatabasePlayer.GetRealStatus`'s recovered 2700-second
   freshness rule; an invalid status enum receives callback-safe time but cannot refresh durable
-  presence.
+  presence. The request status must be one canonical recovered decimal integer; missing/null,
+  Boolean, array, blank, space-padded, leading-zero, fractional, or exponent forms cannot become
+  Offline or Online through JavaScript coercion.
   One complete durable match validator now guards creation and every read, transition, projection,
   or replay used by room admission/start, disconnect and presence authority, card relay/delivery,
   result consensus, moderation correlation, restart recovery, cancellation, and settlement. It
@@ -796,7 +798,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   decoded 4-Gold doubling curve. The profile-owned count is restored through `PlayerAnalyticsData`
   and validated at shared account lookup before authentication, gameplay, unrelated profile writes,
   price, recovery, mutation, and boot; Gold, revision, and the next count validate before the atomic
-  profile/debit write, so count 29 cannot publish signed-overflowing count 30.
+  profile/debit write, so count 29 cannot publish signed-overflowing count 30. The mandatory
+  `PayForRename` field accepts only canonical integer `0` or `1`; truthy/falsy, array, blank,
+  leading-zero, fractional, exponent, missing, or null values fail before the name or wallet changes.
 - **Energy economy**: server-owned dog-tag seconds, passive regeneration, atomic
   `PayOneDogTag`, and gold-validated `RefillDogtags` using the recovered 900-second/5-tag
   balancing and refill-price formula. A verified subscription accelerates only the interval
