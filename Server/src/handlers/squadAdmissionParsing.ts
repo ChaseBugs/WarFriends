@@ -90,3 +90,34 @@ export function requestedSuggestedSquadSkill(value: unknown): number {
   if (skill < 0) throw new ApiError(ApiErrorCode.UnknownAction, "Skill is invalid.");
   return skill;
 }
+
+export interface DeclineSquadJoinRequestInput {
+  playerId: string;
+  squadId: string;
+}
+
+/**
+ * Decode action 181's misleading recovered field names exactly.
+ *
+ * AwaitingSquadMembersManager passes the applicant player ID as the first argument to
+ * BeanstalkServerManager.DFMLCJMDLHJ; that method serializes it under `MessageId`, while its second
+ * argument is the current squad name serialized under `Id`. Treating generic `Id` as the player
+ * target declines the squad name instead and leaves every real applicant pending.
+ */
+export function requestedDeclineSquadJoinRequest(
+  req: Record<string, unknown>,
+): DeclineSquadJoinRequestInput {
+  if (typeof req.MessageId !== "string"
+    || req.MessageId.length < 1
+    || req.MessageId.length > 256
+    || req.MessageId.trim() !== req.MessageId
+    || /\p{Cc}/u.test(req.MessageId)
+    || typeof req.Id !== "string"
+    || req.Id.length < 3
+    || req.Id.length > 24
+    || req.Id.trim().replace(/\s+/gu, " ") !== req.Id
+    || /\p{Cc}/u.test(req.Id)) {
+    throw new ApiError(ApiErrorCode.UnknownAction, "Squad join-request decline fields are invalid.");
+  }
+  return { playerId: req.MessageId, squadId: req.Id };
+}

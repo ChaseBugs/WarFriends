@@ -539,9 +539,17 @@ export async function acceptJoinRequest(actorId: string, targetId: string, name:
   return joinSquadTransaction(targetId, name, actorId);
 }
 
-export async function declineJoinRequest(actorId: string, targetId: string, name: string): Promise<SquadDTO> {
-  const squad = await getByName(name);
-  if (!squad) throw new ApiError(ApiErrorCode.SquadNoLongerExists, "Squad not found.");
+export interface DeclineSquadJoinRequestPlan {
+  squad: SquadDTO;
+  changed: boolean;
+}
+
+/** Validate current manager authority and remove at most the exact requested applicant. */
+export function planDeclineSquadJoinRequest(
+  squad: SquadDTO,
+  actorId: string,
+  targetId: string,
+): DeclineSquadJoinRequestPlan {
   try {
     requireManager(squad, actorId);
   } catch (error) {
@@ -550,9 +558,24 @@ export async function declineJoinRequest(actorId: string, targetId: string, name
     }
     throw error;
   }
-  squad.joinRequests = squad.joinRequests.filter((request) => request.playerId !== targetId);
-  await persist(squad);
-  return squad;
+  const joinRequests = squad.joinRequests.filter((request) => request.playerId !== targetId);
+  return {
+    squad: joinRequests.length === squad.joinRequests.length
+      ? squad
+      : { ...squad, joinRequests },
+    changed: joinRequests.length !== squad.joinRequests.length,
+  };
+}
+
+export async function declineJoinRequest(actorId: string, targetId: string, name: string): Promise<SquadDTO> {
+  const squad = await getByName(name);
+  if (!squad) throw new ApiError(ApiErrorCode.SquadNoLongerExists, "Squad not found.");
+  const plan = planDeclineSquadJoinRequest(squad, actorId, targetId);
+  // A lost-response retry is already complete. Do not advance updatedAt for an identical result;
+  // that false write could make an unrelated manager's fresh optimistic snapshot fail.
+  if (!plan.changed) return plan.squad;
+  await persist(plan.squad as SquadDocument);
+  return plan.squad;
 }
 
 export async function invitePlayer(actorId: string, targetId: string, name: string): Promise<SquadDTO> {

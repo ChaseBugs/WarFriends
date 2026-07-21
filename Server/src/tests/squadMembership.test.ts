@@ -8,6 +8,7 @@ import { createInitialProgression } from "../services/playerStateService";
 import { reclaimDepositedCardsForDepartureState } from "../services/squadCardPoolService";
 import {
   planLeadershipTransfer,
+  planDeclineSquadJoinRequest,
   planSquadJoin,
   planSquadKick,
   planSquadLeave,
@@ -171,6 +172,27 @@ test("manager approval validates current authority and the target request in one
   assert.throws(
     () => planSquadJoin(squadDocument(1), playerDocument("member"), "leader"),
     (error: unknown) => (error as { code?: number }).code === ApiErrorCode.SquadJoinRequestNotExists,
+  );
+});
+
+test("declining a join request removes only the recovered applicant and replays without a change", () => {
+  const squad = squadDocument(1);
+  squad.joinRequests.push(
+    { playerId: "first", name: "Player-first", createdAt: NOW },
+    { playerId: "second", name: "Player-second", createdAt: NOW },
+  );
+
+  const declined = planDeclineSquadJoinRequest(squad, "leader", "first");
+  assert.equal(declined.changed, true);
+  assert.deepEqual(declined.squad.joinRequests.map((request) => request.playerId), ["second"]);
+  assert.equal(squad.joinRequests.length, 2);
+
+  const replay = planDeclineSquadJoinRequest(declined.squad, "leader", "first");
+  assert.equal(replay.changed, false);
+  assert.equal(replay.squad, declined.squad);
+  assert.throws(
+    () => planDeclineSquadJoinRequest(squad, "outsider", "first"),
+    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.NotLeaderOfSquad,
   );
 });
 

@@ -43,6 +43,7 @@ import {
   exactSquadInteger,
   requestedGlobalSquadDirectory,
   requestedDirectSquadChatTimestamp,
+  requestedDeclineSquadJoinRequest,
   requestedSquadNamePrefix,
   requestedSuggestedSquadSkill,
   requestedSquadJoinPolicy,
@@ -204,7 +205,11 @@ export const squadHandlers: Record<number, HandlerEntry> = {
   }),
 
   [DbAction.DeclineSquadJoinRequest]: authed(async ({ player, req }) => {
-    const squad = await declineJoinRequest(player!.id, targetId(req), squadName(req) || player!.player.squadName);
+    const input = requestedDeclineSquadJoinRequest(req);
+    if (input.squadId !== player!.player.squadName) {
+      throw new ApiError(ApiErrorCode.NotLeaderOfSquad, "Decline request does not match the authenticated squad.");
+    }
+    const squad = await declineJoinRequest(player!.id, input.playerId, input.squadId);
     return ok(DbAction.DeclineSquadJoinRequest, { Squad: buildDatabaseSquad(squad) });
   }),
 

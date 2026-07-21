@@ -4,6 +4,7 @@ import { ApiErrorCode } from "../apiErrors";
 import {
   exactSquadInteger,
   requestedDirectSquadChatTimestamp,
+  requestedDeclineSquadJoinRequest,
   requestedGlobalSquadDirectory,
   requestedSquadNamePrefix,
   requestedSquadJoinPolicy,
@@ -92,6 +93,27 @@ test("Squad directory request fields preserve recovered prefix, scope, and Skill
   }
   for (const value of [-1, "-1", 1.5, "1.0", true]) {
     assert.throws(() => requestedSuggestedSquadSkill(value), /Skill/);
+  }
+});
+
+test("action 181 decodes applicant MessageId and squad Id without generic alias precedence", () => {
+  assert.deepEqual(
+    requestedDeclineSquadJoinRequest({ MessageId: "applicant-id", Id: "Alpha Squad" }),
+    { playerId: "applicant-id", squadId: "Alpha Squad" },
+  );
+  for (const request of [
+    {},
+    { MessageId: "applicant-id" },
+    { Id: "Alpha Squad" },
+    { MessageId: " applicant-id", Id: "Alpha Squad" },
+    { MessageId: "applicant-id", Id: " Alpha Squad" },
+    { MessageId: "applicant\nid", Id: "Alpha Squad" },
+    { MessageId: "applicant-id", Id: "ab" },
+  ]) {
+    assert.throws(
+      () => requestedDeclineSquadJoinRequest(request),
+      /decline fields are invalid/,
+    );
   }
 });
 

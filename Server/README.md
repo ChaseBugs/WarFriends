@@ -501,6 +501,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   2 rejects an uninvited request, and an already invited player is routed through the atomic join
   transaction so the invitation is consumed exactly once. Capacity always uses the validated
   stored `maxMembers`; no missing/falsey default can alter an admission decision.
+  Action `181` follows its recovered misleading form names exactly: `MessageId` is the applicant
+  player ID and `Id` is the manager's current Squad name. The handler binds that Squad assertion to
+  authenticated membership before removing only the named pending row. Replaying an already
+  completed decline returns the current Squad without advancing `updatedAt` or invalidating another
+  manager's otherwise fresh optimistic snapshot.
   Malformed or blank input is rejected instead of floored, broadly coerced, silently ignored, or
   replaced by a default. Every core membership, settings, invitation, join-request, PvP Squad
   Point, and Squad War write advances `updatedAt` through one shared strictly monotonic helper,
