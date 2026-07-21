@@ -9,6 +9,7 @@ import {
   buildEventAssignmentClientConfig,
   ensureActiveEventAssignment,
 } from "../services/eventAssignmentService";
+import { exactRequestedAccountType } from "../services/accountTypeRequestService";
 
 // Account and session actions form the boot handshake the client must complete before it
 // reaches the menu. Response fields here follow OGLEHLIPEFM's recovered parsers exactly.
@@ -19,15 +20,10 @@ function requestCredential(req: RequestEnvelope): string {
 }
 
 function requestedAccountType(req: RequestEnvelope, player: PlayerDocument): AccountType {
-  const value = Number(req.AccountType);
+  const value = exactRequestedAccountType(req.AccountType);
   // LoginToCustomAccount chooses which provider ID it stores by AccountType. Honor only
   // known enum values; malformed input falls back to the account's current linked mode.
-  return value === AccountType.Guest ||
-    value === AccountType.Facebook ||
-    value === AccountType.GameCenter ||
-    value === AccountType.GooglePlay
-    ? value
-    : player.player.accountType;
+  return value ?? player.player.accountType;
 }
 
 async function accountPayload(

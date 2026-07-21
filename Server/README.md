@@ -267,7 +267,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   MongoDB cannot order, select, or authenticate by a value different from the one Unity displays.
   Human passwords use versioned salted scrypt with automatic legacy-HMAC migration; provider
   credentials remain separate from the rotated internal
-  gameplay session token. Durable login guesses use an
+  gameplay session token. `LoginToCustomAccount.AccountType` is parsed once as only canonical
+  decimal Guest `0`, Facebook `2`, Game Center `3`, or Google Play `4`, and that same result drives
+  credential verification and response projection. Arrays, booleans, blanks, leading-zero,
+  fractional/exponent, missing, or unknown values cannot select a provider through coercion.
+  Durable login guesses use an
   atomic MongoDB throttle keyed by an HMAC of the presented identity; active gameplay sessions
   remain usable and provider credentials are never accepted by ordinary gameplay actions. The
   complete throttle row is proved after reservation and before collision replay: exact fields and
@@ -326,7 +330,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   Guest. Provider login and open existence checks require that row's player/external IDs to match
   the exact connected player mirror, reject orphan/disconnected rows, and re-read plus reverify the
   final credential after comparison so a concurrent unlink, relink, or rotation cannot authenticate
-  a stale owner. Facebook IDs retain the stock C# signed-`long` contract as canonical invariant
+  a stale owner. Provider selection consumes only the shared exact AccountType parser; malformed
+  input remains outside every provider index and credential-digest path. Facebook IDs retain the
+  stock C# signed-`long` contract as canonical invariant
   strings, including values above JavaScript's safe-integer range; malformed/out-of-range text and
   the reserved disconnected value `-1` cannot create or resolve an identity. Every shared identity
   lookup also validates the complete row: exact provider/external ID, bounded owner, canonical

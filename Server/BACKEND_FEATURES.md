@@ -84,6 +84,13 @@ free/paid rename flag. Invalid presence transport retains the stock callback-saf
 without changing durable `Status`/`LastAction`; invalid rename flags fail before profile or Gold
 mutation.
 
+`LoginToCustomAccount.AccountType` now has one exact canonical parser shared by dispatch-time
+credential-family selection and response projection. Only recovered Guest `0`, Facebook `2`, Game
+Center `3`, and Google Play `4` decimal values are accepted. Missing, null, Boolean, array, blank,
+signed or space-padded, leading-zero, fractional, exponent, unsafe, and unknown forms cannot coerce
+into a provider digest or index; an invalid value remains outside provider authentication instead
+of being normalized differently by the two boundaries.
+
 Moderation-retention retry receipts now validate exact identity fields, safe nonnegative report/appeal
 deletion counts, safe preview/creation chronology, and exact whole-day cutoffs within the global
 30-3650-day bounds before replay. Historical receipts remain valid across deploy-time policy changes.

@@ -34,6 +34,7 @@ import { videoFeedHandlers } from "./videoFeed";
 import { offerHandlers } from "./offers";
 import type { HandlerEntry } from "./types";
 import logger from "../utils/logger";
+import { exactRequestedAccountType } from "../services/accountTypeRequestService";
 
 const benignNoOpActions = new Set<number>([
   92, // client error report
@@ -117,12 +118,12 @@ export async function dispatch(req: RequestEnvelope): Promise<ResponseEnvelope> 
 
     // AccountType is only meaningful during platform login. Normal authenticated form
     // requests omit it and therefore use the guest/server token path.
-    const accountType = Number(req.AccountType);
+    const accountType = exactRequestedAccountType(req.AccountType);
     const player = entry.requiresAuth
       ? await authenticate(
         id,
         token,
-        action === DbAction.LoginToCustomAccount && Number.isInteger(accountType) ? accountType : undefined,
+        action === DbAction.LoginToCustomAccount ? accountType : undefined,
         action === DbAction.LoginToCustomAccount,
       )
       : id && token
