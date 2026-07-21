@@ -18,6 +18,7 @@ import { playerLevelDefinition } from "../services/levelProgressionService";
 import { createInitialProgression } from "../services/playerStateService";
 import { validatedDailyMissionsState } from "../services/dailyMissionAuthorityService";
 import { validatedProgressionSuccessor } from "../services/progressionPublicationAuthorityService";
+import { MAX_APPLICATION_UNIX_SECONDS } from "../services/applicationTimeAuthorityService";
 
 const NOW = Date.UTC(2026, 6, 19, 12, 0, 0) / 1_000;
 const POLICY = { experience: 30, warBucks: 800 } as const;
@@ -61,6 +62,42 @@ test("unchanged mission boot and start receipt replays do not write progression"
   );
   assert.equal(startReplay.replayed, true);
   assert.equal(startReplay.state, started.state);
+});
+
+test("daily mission cycle, start, and settlement reject malformed application time", () => {
+  const initial = createInitialProgression(NOW);
+  const settlement = {
+    battleId: "invalid-mission-clock",
+    missionIndex: 0,
+    missionType: "Daily" as const,
+    endReason: 10,
+  };
+  for (const invalidTime of [
+    Number.NaN,
+    Number.POSITIVE_INFINITY,
+    -1,
+    0.5,
+    MAX_APPLICATION_UNIX_SECONDS + 1,
+  ]) {
+    assert.throws(
+      () => dailyMissionsStateFor(initial, invalidTime, 1),
+      /Daily mission request time is invalid/,
+    );
+    assert.throws(
+      () => startDailyMissionState(
+        initial,
+        invalidTime,
+        1,
+        settlement.battleId,
+        DbAction.GameStartedCampaign,
+      ),
+      /Daily mission start time is invalid/,
+    );
+    assert.throws(
+      () => settleDailyMissionState(initial, invalidTime, 1, settlement),
+      /Daily mission settlement time is invalid/,
+    );
+  }
 });
 
 test("shared progression publication rejects forged Heroic order and duplicate mission receipts", () => {

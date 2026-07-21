@@ -638,6 +638,10 @@ fractions, `NaN`, infinity, and out-of-calendar indexes cannot choose an ordinar
 Daily Reward check, claim, and wire-countdown entry points now consume the shared Date-bounded
 application clock directly. A fractional, non-finite, negative, or oversized time cannot be floored
 into a valid UTC login day, claim calendar, or client countdown.
+Daily Missions cycle materialization, start, and settlement now use the same shared exact clock.
+Settlement carries that one value through receipt expiry, VIP evaluation, rank-up dog-tag refill,
+rental cleanup, and terminal receipt publication; malformed time cannot select a UTC mission set or
+split one transition across different normalized timestamps.
 One shared application-clock boundary now protects initial progression creation, persisted
 progression reads, successor publication, `PlayerData`, and the top-level player-state response.
 It requires a nonnegative safe Unix second inside JavaScript/BSON Date support and passes that same

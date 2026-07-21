@@ -31,6 +31,7 @@ import { advanceRentalAfterBattleState } from "./rentalService";
 import { grantMissionElitePartsState, selectMissionElitePartUnit } from "./unitInventoryService";
 import { isVipActiveAt } from "./vipEntitlementService";
 import { validatedDailyMissionsState } from "./dailyMissionAuthorityService";
+import { validatedApplicationUnixSeconds } from "./applicationTimeAuthorityService";
 
 /**
  * Persistent daily/heroic mission lifecycle reconstructed from the Unity client contract.
@@ -245,9 +246,9 @@ export function missionBattleRewardFor(
 }
 
 function dateAt(now: number): Date {
-  // Progression services use integer Unix seconds. Flooring here makes all rollover helpers
-  // agree when tests or callers provide a sub-second timestamp.
-  return new Date(Math.floor(now) * 1_000);
+  // Exported transitions validate once before reaching this calendar-only helper. Do not
+  // normalize here: a fractional application clock must fail before choosing a UTC cycle.
+  return new Date(now * 1_000);
 }
 
 function utcDayKey(now: number): string {
@@ -258,7 +259,10 @@ function nextUtcMidnight(now: number): number {
   // The server uses UTC rather than device-local midnight. This prevents timezone changes
   // or a modified device clock from issuing several mission sets during one server day.
   const date = dateAt(now);
-  return Math.floor(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + 1) / 1_000);
+  return validatedApplicationUnixSeconds(
+    Math.floor(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + 1) / 1_000),
+    "Daily mission reset time",
+  );
 }
 
 function cloneMission(record: DailyMissionRecordState): DailyMissionRecordState {
@@ -376,13 +380,16 @@ export function dailyMissionsStateFor(
   now: number,
   playerLevel: number,
 ): DailyMissionsState {
-  const key = utcDayKey(now);
+  const currentTime = validatedApplicationUnixSeconds(now, "Daily mission request time");
+  const key = utcDayKey(currentTime);
   const existing = state.dailyMissions;
-  if (existing?.dayKey === key && existing.tomorrow > now) {
+  if (existing?.dayKey === key && existing.tomorrow > currentTime) {
     // Reading mission state must not silently extend a receipt. Expired sessions are removed
     // against their original startedAt value, even when GetPlayerData is called repeatedly.
     const cloned = cloneDailyMissions(existing);
-    cloned.activeSessions = cloned.activeSessions.filter((session) => now - session.startedAt <= SESSION_LIFETIME_SECONDS);
+    cloned.activeSessions = cloned.activeSessions.filter(
+      (session) => currentTime - session.startedAt <= SESSION_LIFETIME_SECONDS,
+    );
     // Accounts issued by the earlier currency-only reconstruction stored an empty target.
     // Fill it once at the normal persistence boundary before any Heroic reward is claimable.
     if (!cloned.heroicUnitReward) {
@@ -405,7 +412,7 @@ export function dailyMissionsStateFor(
     heroicMissions: keepOpenHeroic ? previous!.heroicMissions : newHeroicMissionList(),
     heroicPoints: Math.min(HEROIC_POINTS_TO_UNLOCK, Math.max(0, previous?.heroicPoints ?? 0)),
     isHeroicOpened: previous?.isHeroicOpened ?? false,
-    tomorrow: nextUtcMidnight(now),
+    tomorrow: nextUtcMidnight(currentTime),
     dailyMissionRewardInd: selectDailyCompletionRewardIndex(playerLevel),
     // DailyMissionsManager exposes these stored zero-based values as `value + 1`.
     dailyMissionLevel: displayLevel - 1,
@@ -513,7 +520,8 @@ export function startDailyMissionState(
     throw new ApiError(ApiErrorCode.UnknownAction, "Mission start action is invalid.");
   }
 
-  const dailyMissions = dailyMissionsStateFor(state, now, playerLevel);
+  const currentTime = validatedApplicationUnixSeconds(now, "Daily mission start time");
+  const dailyMissions = dailyMissionsStateFor(state, currentTime, playerLevel);
   const previousSettlement = dailyMissions.recentSettlements.find((item) => item.battleId === battleId);
   if (previousSettlement) {
     return {
@@ -531,7 +539,7 @@ export function startDailyMissionState(
   if (!existing) {
     dailyMissions.activeSessions = [
       ...dailyMissions.activeSessions,
-      { battleId, startAction, startedAt: now, dayKey: dailyMissions.dayKey },
+      { battleId, startAction, startedAt: currentTime, dayKey: dailyMissions.dayKey },
     ].slice(-MAX_ACTIVE_SESSIONS);
   }
   return {
@@ -613,7 +621,8 @@ export function settleDailyMissionState(
     throw new ApiError(ApiErrorCode.UnknownAction, "Mission settlement fields are invalid.");
   }
 
-  const dailyMissions = dailyMissionsStateFor(state, now, playerLevel);
+  const currentTime = validatedApplicationUnixSeconds(now, "Daily mission settlement time");
+  const dailyMissions = dailyMissionsStateFor(state, currentTime, playerLevel);
   const replay = dailyMissions.recentSettlements.find((item) => item.battleId === input.battleId);
   if (replay) {
     if (
@@ -638,7 +647,9 @@ export function settleDailyMissionState(
   }
 
   const session = dailyMissions.activeSessions.find((item) => item.battleId === input.battleId);
-  if (!session || session.dayKey !== dailyMissions.dayKey || now - session.startedAt > SESSION_LIFETIME_SECONDS) {
+  if (!session
+    || session.dayKey !== dailyMissions.dayKey
+    || currentTime - session.startedAt > SESSION_LIFETIME_SECONDS) {
     throw new ApiError(ApiErrorCode.UnknownAction, "Mission was not started or its receipt expired.");
   }
   if (session.startAction !== expectedStartAction(input.missionType)) {
@@ -807,7 +818,7 @@ export function settleDailyMissionState(
   );
   const baseExperience = succeeded ? successfulExperience : 0;
   const baseWarBucks = succeeded ? successfulWarBucks : 0;
-  const isVip = isVipActiveAt(state.vipExpiration, now);
+  const isVip = isVipActiveAt(state.vipExpiration, currentTime);
   const experienceGained = isVip
     ? checkedScaledInteger(baseExperience, VIP_BATTLE_EXPERIENCE_MULTIPLIER, "Mission VIP XP")
     : baseExperience;
@@ -841,7 +852,7 @@ export function settleDailyMissionState(
     // Both mission and PvP result parsers refill energy when a rank marker is returned. The
     // durable state must receive the same refill or reconnecting would undo the client UI.
     ...(levelChanged
-      ? { dogTagSeconds: leveled.state.dogTagMax, dogTagLastUpdate: now }
+      ? { dogTagSeconds: leveled.state.dogTagMax, dogTagLastUpdate: currentTime }
       : {}),
     dailyMissions,
   };
@@ -857,7 +868,7 @@ export function settleDailyMissionState(
    * former handler-level follow-up could fail after XP/currency had committed; without another
    * client retry the borrowed item then survived more than its source-defined one battle.
    */
-  const rental = advanceRentalAfterBattleState(nextState, input.battleId, now);
+  const rental = advanceRentalAfterBattleState(nextState, input.battleId, currentTime);
   nextState = rental.state;
   if (rental.saleOffer) response.Rental = rental.saleOffer;
 
@@ -909,7 +920,7 @@ export function settleDailyMissionState(
       missionIndex: input.missionIndex,
       missionType: input.missionType,
       endReason: input.endReason,
-      settledAt: now,
+      settledAt: currentTime,
       response: cloneResponse(response),
     },
   ].slice(-MAX_RECENT_SETTLEMENTS);

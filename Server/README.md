@@ -1697,7 +1697,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   reward flags, level/reward/point bounds, derived UTC reset tuple, source-backed Heroic target,
   and bounded unique active/terminal receipts with valid modes, indexes, results, timestamps, and
   cached JSON. Expired cycles still validate because Heroic progress and replay history carry over;
-  malformed receipt history is never trimmed into new replay capacity. Mission XP and WarBucks now reproduce the
+  malformed receipt history is never trimmed into new replay capacity. Cycle materialization,
+  mission start, and settlement require one exact Date-bounded application time. Settlement reuses
+  it for receipt expiry, VIP benefits, rank-up dog-tag refill, rental cleanup, and the terminal
+  receipt, so fractions or malformed clocks cannot choose a UTC cycle or create mixed timestamps.
+  Mission XP and WarBucks now reproduce the
   recovered `MissionsConstants` exponential level formula, per-slot `MissionsSettings`
   modifiers, upward-to-50 rounding, zero co-op-master share, and half co-op-client share. The
   result applies the source 1.5x/1.5x/2x VIP XP/WarBucks/GameGold rules, crosses exact rank rows,
