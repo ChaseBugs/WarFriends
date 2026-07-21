@@ -55,6 +55,11 @@ them again in the authoritative service. Join policy is limited to recovered int
 required medals is a nonnegative C# signed `int`, and the legacy `IsPublic` projection accepts only
 exact Boolean representations. Fractional, blank, broadly coerced, oversized, or explicitly
 malformed inputs fail instead of being floored, silently ignored, or replaced by a default.
+Squad settings, invitation, and join-request replacements also bind the exact validated `updatedAt`
+snapshot that granted manager, roster, pending-capability, and admission authority, with a strictly
+advancing successor even for same-millisecond writes. A compare-and-set
+miss fails and requires a fresh read, so an older snapshot cannot overwrite a concurrent demotion,
+membership transition, or admission change through the former name-only persistence path.
 
 Moderation-retention retry receipts now validate exact identity fields, safe nonnegative report/appeal
 deletion counts, safe preview/creation chronology, and exact whole-day cutoffs within the global

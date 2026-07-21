@@ -106,17 +106,51 @@ export async function getByName(name: string): Promise<SquadDocument | null> {
   return squad ? validatedSquadDocument(squad) : null;
 }
 
+/**
+ * Bind a single-document squad write to the exact durable snapshot that authorized it.
+ * A name-only replacement lets an older manager snapshot overwrite a concurrent demotion,
+ * admission, or roster edit. The recovered document already owns an audited `updatedAt` field,
+ * so use it as an optimistic revision and make the caller re-read all authority after a race.
+ */
+export function squadSnapshotWriteFilter(
+  squad: Pick<SquadDocument, "name" | "updatedAt">,
+): { name: string; updatedAt: Date } {
+  if (!(squad.updatedAt instanceof Date) || !Number.isFinite(squad.updatedAt.getTime())) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Squad write snapshot has an invalid revision.");
+  }
+  return { name: squad.name, updatedAt: squad.updatedAt };
+}
+
+/** Advance the optimistic revision even when two mutations share one wall-clock millisecond. */
+export function nextSquadUpdatedAt(
+  squad: Pick<SquadDocument, "name" | "updatedAt">,
+  observedAt = new Date(),
+): Date {
+  const previous = squadSnapshotWriteFilter(squad).updatedAt.getTime();
+  if (!(observedAt instanceof Date) || !Number.isSafeInteger(observedAt.getTime()) || observedAt.getTime() < 0) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Squad write clock is invalid.");
+  }
+  const next = new Date(Math.max(observedAt.getTime(), previous + 1));
+  if (!Number.isSafeInteger(next.getTime())) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Squad write revision cannot advance safely.");
+  }
+  return next;
+}
+
 async function persist(squad: SquadDocument): Promise<void> {
   // Match by the immutable squad name and require an existing document. Silently upserting
   // here would allow a delayed mutation to recreate a squad after its last member left.
-  const now = new Date();
+  const filter = squadSnapshotWriteFilter(squad);
+  const now = nextSquadUpdatedAt(squad);
   const successor = validatedSquadDocument({ ...squad, updatedAt: now }, now);
   // MongoDB supplies `_id` even though the public DTO does not declare it. Never echo that field
   // through `$set`: it is immutable and would make otherwise valid settings/request edits fail.
   const { _id: _mongoId, ...writable } = successor as SquadDocument & { _id?: unknown };
-  const result = await squads().updateOne({ name: squad.name }, { $set: writable });
+  const result = await squads().updateOne(filter, { $set: writable });
   if (result.matchedCount !== 1) {
-    throw new ApiError(ApiErrorCode.SquadNoLongerExists, "Squad no longer exists.");
+    // Never retry this stale object automatically: manager rank, roster membership, pending
+    // capability, or admission limits may have changed in the winning write.
+    throw new ApiError(ApiErrorCode.InternalServerError, "Squad changed concurrently; retry from a fresh snapshot.");
   }
 }
 

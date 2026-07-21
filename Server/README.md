@@ -403,7 +403,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   required medals accepts only a nonnegative C# signed `int`, and the legacy `IsPublic`
   projection accepts only exact Boolean representations. Malformed, fractional, blank, or
   oversized input is rejected instead of floored, broadly coerced, silently ignored, or
-  replaced by a default. Kick persists the exact type-3 offline
+  replaced by a default. Single-document settings, invitation, and join-request writes also
+  compare the exact validated `updatedAt` snapshot that authorized them and strictly advance that
+  revision even within one wall-clock millisecond; a concurrent demotion,
+  roster edit, or admission change forces a fresh read instead of letting stale manager authority
+  overwrite the winning state. Kick persists the exact type-3 offline
   notification in the membership transaction. The operational integrity audit reports duplicate
   rosters, broken founders/leaders, and missing accounts; repair mode changes only unambiguous
   player mirrors and safely returns orphaned normal card deposits.

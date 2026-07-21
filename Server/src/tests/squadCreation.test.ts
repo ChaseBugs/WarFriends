@@ -6,6 +6,8 @@ import {
   SQUAD_CREATE_BASE_WARBUCKS_COST,
   SQUAD_CREATE_NOT_ENOUGH_WARBUCKS,
   applySquadCreationEconomyState,
+  nextSquadUpdatedAt,
+  squadSnapshotWriteFilter,
   squadCreationWarBucksPrice,
   validatedSquadJoinPolicy,
   validatedSquadRequiredMedals,
@@ -13,6 +15,30 @@ import {
 import { createInitialProgression } from "../services/playerStateService";
 
 const NOW = Date.UTC(2026, 6, 20, 12, 0, 0) / 1_000;
+
+test("single-document squad writes bind the exact authorizing revision", () => {
+  const updatedAt = new Date(NOW * 1_000);
+  assert.deepEqual(
+    squadSnapshotWriteFilter({ name: "Exact Revision", updatedAt }),
+    { name: "Exact Revision", updatedAt },
+  );
+  assert.equal(
+    nextSquadUpdatedAt({ name: "Exact Revision", updatedAt }, new Date(updatedAt)).getTime(),
+    updatedAt.getTime() + 1,
+  );
+  assert.equal(
+    nextSquadUpdatedAt({ name: "Exact Revision", updatedAt }, new Date(updatedAt.getTime() + 50)).getTime(),
+    updatedAt.getTime() + 50,
+  );
+  assert.throws(
+    () => squadSnapshotWriteFilter({ name: "Damaged", updatedAt: new Date(Number.NaN) }),
+    /invalid revision/,
+  );
+  assert.throws(
+    () => nextSquadUpdatedAt({ name: "Exact Revision", updatedAt }, new Date(Number.NaN)),
+    /clock is invalid/,
+  );
+});
 
 test("squad admission settings reject coercion and preserve exact recovered integers", () => {
   assert.equal(exactSquadInteger(" 2 ", "JoinPolicy"), 2);
