@@ -363,7 +363,7 @@ export function planSquadJoin(
   }
 
   if (!existingMember) {
-    if (squad.members.length >= (squad.maxMembers || 15)) {
+    if (squad.members.length >= squad.maxMembers) {
       throw new ApiError(ApiErrorCode.SquadIsFull, "Squad is full.");
     }
     // SquadRecord compares the parsed SkillRequirement to DatabasePlayer.skill. MedalsBalance is
@@ -482,16 +482,42 @@ export async function joinSquad(playerId: string, name: string): Promise<SquadDT
   return joinSquadTransaction(playerId, name);
 }
 
+export type SquadJoinRequestDisposition = "join" | "request" | "reject";
+
+/**
+ * Resolve the stock private-Squad button without collapsing request-required and invite-only.
+ *
+ * The wire projection exposes both non-open policies as `IsPublic=0`, so the stock UI can send
+ * JoinSquadRequest for either. Server state still owns the exact policy: open squads join directly,
+ * a durable invitation is consumed through the normal join transaction, policy 1 may enqueue a
+ * manager request, and policy 2 rejects an uninvited request instead of silently weakening its
+ * invite-only contract.
+ */
+export function squadJoinRequestDisposition(
+  squad: Pick<SquadDTO, "joinPolicy" | "invitedPlayerIds">,
+  playerId: string,
+): SquadJoinRequestDisposition {
+  if (squad.joinPolicy === 0) return "join";
+  if (squad.invitedPlayerIds.includes(playerId)) return "join";
+  if (squad.joinPolicy === 1) return "request";
+  if (squad.joinPolicy === 2) return "reject";
+  throw new ApiError(ApiErrorCode.InternalServerError, "Stored squad join policy is invalid.");
+}
+
 export async function requestToJoin(playerId: string, name: string): Promise<SquadDTO> {
   const squad = await getByName(name);
   if (!squad) throw new ApiError(ApiErrorCode.SquadNoLongerExists, "Squad not found.");
-  if (squad.joinPolicy === 0) return joinSquad(playerId, name);
+  const disposition = squadJoinRequestDisposition(squad, playerId);
+  if (disposition === "join") return joinSquad(playerId, name);
+  if (disposition === "reject") {
+    throw new ApiError(ApiErrorCode.SquadIsNotPublic, "This squad accepts invited players only.");
+  }
   const player = await findById(playerId);
   if (!player) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
   if (player.player.squadName) {
     throw new ApiError(ApiErrorCode.PlayerAlreadyInSquadCantJoin, "Player already belongs to a squad.");
   }
-  if (squad.members.length >= (squad.maxMembers || 15)) {
+  if (squad.members.length >= squad.maxMembers) {
     throw new ApiError(ApiErrorCode.SquadIsFull, "Squad is full.");
   }
   if (player.player.skill < (squad.requiredMedals || 0)) {

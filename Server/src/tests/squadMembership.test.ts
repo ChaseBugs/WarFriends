@@ -12,6 +12,7 @@ import {
   planSquadKick,
   planSquadLeave,
   planSquadRankChange,
+  squadJoinRequestDisposition,
 } from "../services/squadService";
 import {
   validatedSquadDocument,
@@ -135,6 +136,24 @@ test("private squad admission requires and consumes a stored invitation", () => 
   assert.throws(
     () => planSquadJoin(squadDocument(2), playerDocument("outsider")),
     (error: unknown) => (error as { code?: number }).code === ApiErrorCode.SquadIsNotPublic,
+  );
+});
+
+test("join-request action preserves request-required and invite-only policy", () => {
+  const open = squadDocument(0);
+  assert.equal(squadJoinRequestDisposition(open, "member"), "join");
+
+  const requestRequired = squadDocument(1);
+  assert.equal(squadJoinRequestDisposition(requestRequired, "member"), "request");
+
+  const inviteOnly = squadDocument(2);
+  assert.equal(squadJoinRequestDisposition(inviteOnly, "member"), "reject");
+  inviteOnly.invitedPlayerIds.push("member");
+  assert.equal(squadJoinRequestDisposition(inviteOnly, "member"), "join");
+
+  assert.throws(
+    () => squadJoinRequestDisposition({ joinPolicy: 3, invitedPlayerIds: [] }, "member"),
+    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.InternalServerError,
   );
 });
 

@@ -496,6 +496,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   weekly Player League `medalsBalance` is not interchangeable. Because neither recovered Squad
   documents nor requests identify one authoritative country for a multi-member Squad, both reads
   return `IsLocal=false`; the stock UI may use its global fallback and no locale is fabricated.
+  Although the stock projection collapses request-required and invite-only to `IsPublic=0`, the
+  server keeps their policy authority separate: policy 1 stores a bounded manager request, policy
+  2 rejects an uninvited request, and an already invited player is routed through the atomic join
+  transaction so the invitation is consumed exactly once. Capacity always uses the validated
+  stored `maxMembers`; no missing/falsey default can alter an admission decision.
   Malformed or blank input is rejected instead of floored, broadly coerced, silently ignored, or
   replaced by a default. Every core membership, settings, invitation, join-request, PvP Squad
   Point, and Squad War write advances `updatedAt` through one shared strictly monotonic helper,
