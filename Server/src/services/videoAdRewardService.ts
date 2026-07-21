@@ -8,55 +8,17 @@ import { grantMissionCardsState } from "./cardInventoryService";
 import { materializeDogTags } from "./economyService";
 import { grantLootboxPartsState } from "./lootboxPurchaseService";
 import { mutateProgression } from "./progressionMutationService";
+import {
+  VIDEO_AD_LIMITS,
+  VideoAdRewardKind,
+  videoAdRewardTimesForState,
+} from "./videoAdRewardAuthorityService";
 
-/** Exact MHNMOFPPKBN values sent in action 156's `Reward` field. */
-export enum VideoAdRewardKind {
-  RandomCard = 1,
-  Dogtag = 2,
-  GoldenSuitcase = 3,
-  LootBox = 4,
-}
-
-interface VideoAdLimit {
-  key: keyof VideoAdRewardTimesState;
-  count: number;
-  intervalSeconds: number;
-  minimumSpacingSeconds: number;
-}
-
-/**
- * Exact 4.9.5 MainScene Constants values after decoding ObscuredFloat's XOR storage.
- *
- * EventTrackingManager applies these as a rolling count/window, not as a UTC-day counter.
- * Only Golden Suitcase has a separate spacing row (`GoldenSuitcaseAdTimeBetweenMinutes=1`).
- * The server repeats the same policy because a modified client can bypass the local manager.
- */
-export const VIDEO_AD_LIMITS: Readonly<Record<VideoAdRewardKind, Readonly<VideoAdLimit>>> = Object.freeze({
-  [VideoAdRewardKind.RandomCard]: Object.freeze({
-    key: "warcards",
-    count: 24,
-    intervalSeconds: 5 * 60 * 60,
-    minimumSpacingSeconds: 0,
-  }),
-  [VideoAdRewardKind.Dogtag]: Object.freeze({
-    key: "dogtags",
-    count: 24,
-    intervalSeconds: 12 * 60 * 60,
-    minimumSpacingSeconds: 0,
-  }),
-  [VideoAdRewardKind.GoldenSuitcase]: Object.freeze({
-    key: "goldenSuitcase",
-    count: 24,
-    intervalSeconds: 15 * 60 * 60,
-    minimumSpacingSeconds: 60,
-  }),
-  [VideoAdRewardKind.LootBox]: Object.freeze({
-    key: "lootboxes",
-    count: 24,
-    intervalSeconds: 100 * 60 * 60,
-    minimumSpacingSeconds: 0,
-  }),
-});
+export {
+  VIDEO_AD_LIMITS,
+  VideoAdRewardKind,
+  validatedVideoAdRewardTimes,
+} from "./videoAdRewardAuthorityService";
 
 /**
  * Explicit offline Golden Suitcase replacement.
@@ -86,26 +48,11 @@ export interface VideoAdRewardTransition {
   replayed: boolean;
 }
 
-function emptyTimes(): VideoAdRewardTimesState {
-  return { warcards: [], dogtags: [], goldenSuitcase: [], lootboxes: [] };
-}
-
 function normalizedTimes(
   state: PlayerProgressionState,
   now: number,
 ): VideoAdRewardTimesState {
-  const source = state.videoAdRewards?.times ?? emptyTimes();
-  const result = emptyTimes();
-
-  for (const limit of Object.values(VIDEO_AD_LIMITS)) {
-    const cutoff = now - limit.intervalSeconds;
-    // A future timestamp indicates clock/database damage. Retaining it is intentionally
-    // fail-closed: dropping it would reopen a reward allowance after a server clock rollback.
-    result[limit.key] = (Array.isArray(source[limit.key]) ? source[limit.key] : [])
-      .filter((value) => Number.isSafeInteger(value) && value > 0 && value >= cutoff)
-      .sort((left, right) => left - right);
-  }
-  return result;
+  return videoAdRewardTimesForState(state, now);
 }
 
 function selectedIndex(pick: PickIndex, upperBound: number, context: string): number {

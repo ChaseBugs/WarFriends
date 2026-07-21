@@ -514,7 +514,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   duplicate-WarBucks conversion, returns the parser's `AddedCards`, `DogTagSeconds`,
   `DogTagLastUpdate`, `Gold`, `WarBucks`, `NewVisuals`, and `videoAdRewardTimes` fields, and restores
   all four ledgers at boot. XOR-decoded 4.9.5 limits are enforced server-side as 24 claims per
-  rolling 5/12/15/100-hour window, with the exact one-minute Golden Suitcase spacing. A narrow
+  rolling 5/12/15/100-hour window, with the exact one-minute Golden Suitcase spacing. A shared
+  validator rejects malformed/non-finite/oversized durable ledgers before grant or boot;
+  only valid timestamps provably older than their reward window are removed, while future entries
+  retain capacity after a clock rollback. A narrow
   same-revision five-second receipt prevents a lost HTTP response from granting twice. The
   production Golden Suitcase weights/ranges were remote and the bundled rows are internally
   invalid, so the documented offline table uniformly selects 1,000 WarBucks, 5 Gold, one visible

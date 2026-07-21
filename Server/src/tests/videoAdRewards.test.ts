@@ -9,6 +9,7 @@ import {
   grantVideoAdRewardState,
   OFFLINE_GOLDEN_SUITCASE_REWARDS,
   VIDEO_AD_LIMITS,
+  validatedVideoAdRewardTimes,
   VideoAdRewardKind,
 } from "../services/videoAdRewardService";
 
@@ -123,7 +124,7 @@ test("LootBox ad shares normal visual-part and duplicate conversion authority", 
   assert.deepEqual(result.state.videoAdRewards?.times.lootboxes, [NOW]);
 });
 
-test("rolling caps, Golden spacing, future timestamps, and expired timestamps fail closed", () => {
+test("rolling caps, Golden spacing, and future timestamps fail closed while expired timestamps leave", () => {
   const capped = state();
   capped.videoAdRewards = {
     times: {
@@ -176,6 +177,36 @@ test("rolling caps, Golden spacing, future timestamps, and expired timestamps fa
   );
 });
 
+test("persisted video-ad ledgers reject malformed authority instead of reopening capacity", () => {
+  const valid = { warcards: [NOW], dogtags: [], goldenSuitcase: [], lootboxes: [] };
+  assert.deepEqual(validatedVideoAdRewardTimes(valid, NOW), valid);
+
+  for (const timestamp of [Number.NaN, Number.POSITIVE_INFINITY, 0, -1, 1.5]) {
+    assert.throws(
+      () => validatedVideoAdRewardTimes({ ...valid, warcards: [timestamp] }, NOW),
+      /Video ad reward timestamp is invalid/,
+    );
+  }
+  assert.throws(
+    () => validatedVideoAdRewardTimes({ ...valid, dogtags: undefined } as never, NOW),
+    /Video ad reward ledger is invalid/,
+  );
+  assert.throws(
+    () => validatedVideoAdRewardTimes({
+      ...valid,
+      lootboxes: Array.from({ length: 25 }, (_, index) => NOW - index),
+    }, NOW),
+    /Video ad reward ledger is invalid/,
+  );
+
+  const poisoned = state();
+  poisoned.videoAdRewards = { times: { ...valid, warcards: [Number.POSITIVE_INFINITY] } };
+  assert.throws(
+    () => grantVideoAdRewardState(poisoned, NOW, 5, VideoAdRewardKind.RandomCard, picker(0)),
+    /Video ad reward timestamp is invalid/,
+  );
+});
+
 test("same-revision HTTP replay returns the immutable receipt without a second grant", () => {
   const first = grantVideoAdRewardState(state(), NOW, 5, VideoAdRewardKind.RandomCard, picker(0));
   const replay = grantVideoAdRewardState(first.state, NOW + 5, 5, VideoAdRewardKind.RandomCard, () => {
@@ -220,4 +251,40 @@ test("GetPlayerData restores only the public videoAdRewardTimes arrays", () => {
   const restored = JSON.parse((wire.videoAdRewardTimes as { S: string }).S);
   assert.deepEqual(restored, progression.videoAdRewards.times);
   assert.equal(JSON.stringify(restored).includes("lastReceipt"), false);
+});
+
+test("GetPlayerData validates and window-normalizes video-ad ledgers before boot projection", () => {
+  const dto = newPlayer("video-ad-window-player", "VideoAdWindowPlayer", AccountType.Guest);
+  const progression = state();
+  progression.videoAdRewards = {
+    times: {
+      warcards: [NOW + 1, NOW - VIDEO_AD_LIMITS[VideoAdRewardKind.RandomCard].intervalSeconds - 1, NOW],
+      dogtags: [],
+      goldenSuitcase: [],
+      lootboxes: [],
+    },
+  };
+  const player: PlayerDocument = {
+    id: dto.id,
+    accountName: dto.accountName,
+    authToken: "token",
+    accountType: dto.accountType,
+    leagueTier: dto.leagueTier,
+    armyPower: dto.armyPower,
+    experience: dto.experience,
+    squadPoints: dto.squadPoints,
+    squadName: dto.squadName,
+    player: dto,
+    progression,
+    createdAt: new Date(NOW * 1_000),
+    updatedAt: new Date(NOW * 1_000),
+  };
+
+  const restored = JSON.parse(
+    (buildPlayerData(player, NOW).videoAdRewardTimes as { S: string }).S,
+  );
+  assert.deepEqual(restored.warcards, [NOW, NOW + 1]);
+
+  progression.videoAdRewards.times.warcards = [Number.POSITIVE_INFINITY];
+  assert.throws(() => buildPlayerData(player, NOW), /Video ad reward timestamp is invalid/);
 });

@@ -19,6 +19,7 @@ import {
   createInitialStarterAssignmentState,
   validatedStarterAssignmentState,
 } from "./starterAssignmentAuthorityService";
+import { videoAdRewardTimesForState } from "./videoAdRewardAuthorityService";
 
 /** Unix seconds are used throughout the recovered Beanstalk protocol. */
 export function unixNow(): number {
@@ -274,7 +275,7 @@ export function buildPlayerData(player: PlayerDocument, now = unixNow()): Player
     // Unlike the manager-backed objects above, EventTrackingManager reads this exact lower-case
     // PlayerData key and manually deserializes its Dynamo `S` value. Expose only the four public
     // timestamp arrays; the same-revision replay receipt remains private backend authority.
-    data.videoAdRewardTimes = stringAttribute(state.videoAdRewards.times);
+    data.videoAdRewardTimes = stringAttribute(videoAdRewardTimesForState(state, Math.floor(now)));
   }
   addSerializedObject(data, "StatisticsData", dto.statisticsData);
   // WinStreakManager derives from DatabaseSerializedObjectGeneric<WinStreak>. Restore the
