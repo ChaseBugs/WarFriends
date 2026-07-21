@@ -285,6 +285,32 @@ test("dog-tag state uses accumulated seconds and recovered 900-second balancing"
   );
 });
 
+test("dog-tag authority rejects malformed tuples and preserves bounded VIP debt", () => {
+  const initial = createInitialProgression(1_000, 900, 5);
+  const debt = { ...initial, dogTagSeconds: -1_800 };
+  assert.equal(currentDogTagCount(debt), 0);
+
+  assert.throws(
+    () => materializeDogTags({ ...initial, dogTagSeconds: -1_801 }, 1_000),
+    /Stored dog-tag authority is invalid/,
+  );
+  assert.throws(
+    () => materializeDogTags({ ...initial, dogTagMax: 4_501 }, 1_000),
+    /Stored dog-tag authority is invalid/,
+  );
+  assert.throws(
+    () => materializeDogTags({ ...initial, dogTagLastUpdate: 1_001 }, 1_000),
+    /Stored dog-tag time authority is invalid/,
+  );
+
+  const futureBoot = contractPlayer();
+  futureBoot.progression!.dogTagLastUpdate = 1_700_000_001;
+  assert.throws(
+    () => buildPlayerData(futureBoot, 1_700_000_000),
+    /Stored dog-tag time authority is invalid/,
+  );
+});
+
 test("subscription refills dog tags every recovered 450 seconds between lock and expiry", () => {
   assert.equal(SUBSCRIPTION_DOG_TAG_REFILL_SECONDS, 450);
   const initial = {

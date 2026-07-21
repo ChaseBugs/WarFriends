@@ -32,6 +32,7 @@ import { validatedSquadChatCursor } from "./squadChatCursorAuthorityService";
 import { validatedFeatureIntroductions } from "./featureIntroductionAuthorityService";
 import { validatedTutorialLifecycle } from "./tutorialCompletionAuthorityService";
 import { validatedCoreProgressionBalances } from "./coreProgressionAuthorityService";
+import { validatedDogTagAuthority } from "./dogTagAuthorityService";
 
 /** Unix seconds are used throughout the recovered Beanstalk protocol. */
 export function unixNow(): number {
@@ -251,6 +252,7 @@ export function buildPlayerData(player: PlayerDocument, now = unixNow()): Player
   const state = progressionForPlayer(player);
   const dto = player.player;
   const balances = validatedCoreProgressionBalances(state);
+  const dogTags = validatedDogTagAuthority(state, Math.floor(now));
   const data: PlayerDataMap = {
     Gold: numberAttribute(balances.gold),
     WarBucks: numberAttribute(balances.warBucks),
@@ -260,9 +262,9 @@ export function buildPlayerData(player: PlayerDocument, now = unixNow()): Player
     LevelExperience: numberAttribute(balances.levelExperience),
     Experience: numberAttribute(dto.experience),
     ArmyPower: numberAttribute(dto.armyPower),
-    DogTagSeconds: numberAttribute(state.dogTagSeconds),
-    DogTagLastUpdate: numberAttribute(state.dogTagLastUpdate),
-    DogTagMax: numberAttribute(state.dogTagMax),
+    DogTagSeconds: numberAttribute(dogTags.dogTagSeconds),
+    DogTagLastUpdate: numberAttribute(dogTags.dogTagLastUpdate),
+    DogTagMax: numberAttribute(dogTags.dogTagMax),
     Vip: numberAttribute(state.vipExpiration ?? dto.vipExpiration),
     VipStart: numberAttribute(state.vipStart),
     SendLogs: numberAttribute(dto.sendLogsValue),

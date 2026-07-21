@@ -6,6 +6,7 @@ import { playerLevelDefinition } from "./levelProgressionService";
 import { checkedRewardBalance } from "./rewardMathService";
 import { isVipActiveAt } from "./vipEntitlementService";
 import { validatedSubscription } from "./subscriptionBenefitService";
+import { validatedDogTagAuthority } from "./dogTagAuthorityService";
 
 export interface DogTagMutationResult {
   state: PlayerProgressionState;
@@ -130,8 +131,9 @@ export const SUBSCRIPTION_DOG_TAG_REFILL_SECONDS = 450;
  * migration or background job.
  */
 export function vipDogTagBonusSeconds(state: PlayerProgressionState): number {
-  return isVipActiveAt(state.vipExpiration, Math.floor(state.dogTagLastUpdate))
-    ? VIP_DOG_TAG_COUNT * Math.max(1, Math.floor(state.dogTagRefillSeconds))
+  const dogTags = validatedDogTagAuthority(state);
+  return isVipActiveAt(state.vipExpiration, dogTags.dogTagLastUpdate)
+    ? VIP_DOG_TAG_COUNT * dogTags.dogTagRefillSeconds
     : 0;
 }
 
@@ -169,11 +171,12 @@ function subscriptionDogTagBonusSeconds(
  * moves to `now` only in the returned state; callers persist it inside an atomic mutation.
  */
 export function materializeDogTags(state: PlayerProgressionState, now: number): PlayerProgressionState {
-  const previousUpdate = Math.floor(state.dogTagLastUpdate);
-  const currentTime = Math.max(previousUpdate, Math.floor(now));
+  const dogTags = validatedDogTagAuthority(state, now);
+  const previousUpdate = dogTags.dogTagLastUpdate;
+  const currentTime = now;
   const elapsed = currentTime - previousUpdate;
   const subscriptionBonus = subscriptionDogTagBonusSeconds(state, previousUpdate, currentTime);
-  const refillSeconds = Math.max(1, Math.floor(state.dogTagRefillSeconds));
+  const refillSeconds = dogTags.dogTagRefillSeconds;
   // Spending the two virtual VIP tags can legitimately make the stored base credit negative.
   // The stock client then adds elapsed time to that debt, so clamping to zero here would grant
   // a consumed VIP tag again on every request. Bound the debt to the only source-backed bonus
@@ -182,28 +185,30 @@ export function materializeDogTags(state: PlayerProgressionState, now: number): 
   return {
     ...state,
     dogTagSeconds: Math.min(
-      state.dogTagMax,
-      Math.max(minimumBaseSeconds, state.dogTagSeconds + elapsed + subscriptionBonus),
+      dogTags.dogTagMax,
+      Math.max(minimumBaseSeconds, dogTags.dogTagSeconds + elapsed + subscriptionBonus),
     ),
     dogTagLastUpdate: currentTime,
   };
 }
 
 export function currentDogTagCount(state: PlayerProgressionState): number {
-  const refillSeconds = Math.max(1, Math.floor(state.dogTagRefillSeconds));
+  const dogTags = validatedDogTagAuthority(state);
+  const refillSeconds = dogTags.dogTagRefillSeconds;
   const vipBonus = vipDogTagBonusSeconds(state);
   const effectiveSeconds = Math.min(
-    state.dogTagMax + vipBonus,
-    Math.max(0, state.dogTagSeconds + vipBonus),
+    dogTags.dogTagMax + vipBonus,
+    Math.max(0, dogTags.dogTagSeconds + vipBonus),
   );
   return Math.floor(effectiveSeconds / refillSeconds);
 }
 
 /** Visible maximum; DogTagMax itself deliberately remains the normal five-tag base cap. */
 export function maximumDogTagCount(state: PlayerProgressionState): number {
+  const dogTags = validatedDogTagAuthority(state);
   return Math.floor(
-    (state.dogTagMax + vipDogTagBonusSeconds(state))
-      / Math.max(1, Math.floor(state.dogTagRefillSeconds)),
+    (dogTags.dogTagMax + vipDogTagBonusSeconds(state))
+      / dogTags.dogTagRefillSeconds,
   );
 }
 

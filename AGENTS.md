@@ -43,6 +43,7 @@
 - Keep monitoring artifacts on the bounded metrics contract actually exported by `metricsService`. Alerts must require sustained signals and meaningful traffic where ratios are used; Redis alerts apply only to scrape targets explicitly labeled `redis_required=true`.
 - Preserve legitimate negative Gold or WarBucks chargeback debt, but reject non-safe-integer rewards and arithmetic overflow.
 - Validate core progression balances before `PlayerData` boot projection instead of relying on the Dynamo wire adapter's numeric fallback. Gold and WarBucks may be safe-integer chargeback debt; Tickets, Scraps, and level experience must be nonnegative safe integers, and malformed values must never be silently serialized as zero.
+- Validate the complete dog-tag tuple before boot projection, regeneration, counting, spend, or refill. Refill seconds and the divisible base cap must be positive safe integers; the update cursor must be a non-future safe Unix second; base seconds must remain between the normal cap and the exact two-tag VIP debt floor; malformed time must never freeze regeneration through min/max behavior.
 - Fail closed when authoritative combat evidence, live-event configuration, or source-backed balancing is unavailable.
 - Add detailed English comments where recovered names are opaque or atomicity, replay, migration, or fallback decisions are not obvious.
 

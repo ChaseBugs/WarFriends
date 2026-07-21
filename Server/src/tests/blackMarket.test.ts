@@ -147,7 +147,9 @@ test("Black Market wire serializer exposes only the recovered client fields", ()
     createdAt: new Date(NOW * 1_000),
     updatedAt: new Date(NOW * 1_000),
   };
-  const boot = buildPlayerData(document).BlackMarketOfferData as { S: string };
+  // Keep the boot clock aligned with this deterministic future-dated fixture. The production
+  // boot path intentionally rejects any durable dog-tag cursor later than its request clock.
+  const boot = buildPlayerData(document, NOW).BlackMarketOfferData as { S: string };
   assert.deepEqual(JSON.parse(boot.S), wire);
 });
 

@@ -111,6 +111,9 @@ Boot-time `PlayerData` validates the five core numeric progression fields before
 adapter runs: Gold and WarBucks retain safe-integer chargeback debt, while Tickets, Scraps, and
 level experience must be nonnegative safe integers. Non-finite, fractional, or unsafe values fail
 closed instead of entering the adapter's legacy zero fallback or losing precision in Unity.
+The dog-tag tuple is likewise validated before boot and every time calculation: refill/cap values
+must describe whole positive tags, the update cursor cannot be future or non-finite, and stored
+seconds remain bounded by the normal cap and the recovered two-virtual-tag VIP debt floor.
 
 Starter and daily assignments, assignment mega rewards, achievements, reward-bearing inbox
 messages, one-time/tutorial grants, Gold conversion, level rewards, normal/VIP lootbox duplicates,

@@ -454,6 +454,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   balancing and refill-price formula. A verified subscription accelerates only the interval
   between its server-issued timer lock and expiry to the exact 450-second MainScene rate;
   reconnect after expiry materializes the historical split without granting post-expiry speed.
+  Before boot or time arithmetic, the refill/cap pair must describe whole positive tags, the
+  update cursor must be a non-future safe Unix second, and base credit must stay between the
+  normal cap and the source-backed two-tag VIP debt floor.
 - **Gold-to-WarBucks exchange**: action `221` validates `WarbucksId` against the deployment-owned
   MainScene A/B prefix, debits the exact 50/200/500/1000/3500/7000 Gold row, and multiplies the
   exact row units by the authenticated player's source `CONVERTGOLDTOWARBUCKS` rank value. The
