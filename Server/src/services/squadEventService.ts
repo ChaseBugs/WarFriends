@@ -20,6 +20,11 @@ const MAX_UNIX_SECONDS = 2_147_483_647;
 const MAX_SEASONS = 128;
 const MAX_TIERS = 32;
 const MAX_ASSIGNMENTS = 32;
+const PROGRESS_KEYS = new Set([
+  "_id", "squadId", "eventId", "configHash", "activeTier", "tiers", "revision", "joinedAt", "updatedAt",
+]);
+const PROGRESS_TIER_KEYS = new Set(["reward", "assignments"]);
+const PROGRESS_ASSIGNMENT_KEYS = new Set(["id", "value", "target", "param"]);
 
 /**
  * Assignment.BFLFNAENJMJ IDs whose facts the current backend proves at PvP settlement.
@@ -173,6 +178,7 @@ async function configuredSeasons(): Promise<SquadEventConfig> {
 }
 
 export function selectActiveSquadEvent(source: SquadEventConfig, nowSeconds: number): SquadEventSeasonConfig | null {
+  integer(nowSeconds, "Squad Event selection time", 0, MAX_UNIX_SECONDS);
   return source.seasons.find((season) => season.startTime <= nowSeconds && nowSeconds < season.endTime) ?? null;
 }
 
@@ -212,7 +218,13 @@ export function buildSquadEventDefinition(season: SquadEventSeasonConfig): Recor
 export function buildSquadEventProgress(
   progress: SquadEventProgressDocument,
   playerLevelProgress: number,
+  season?: SquadEventSeasonConfig,
+  now?: Date,
 ): Record<string, unknown> {
+  // JoinSquadEvent validates its newly read row immediately before this serializer. Other read
+  // paths pass the live season explicitly so a standalone database projection cannot bypass the
+  // immutable-config proof merely because it is being converted to the recovered wire shape.
+  if (season) validatedSquadEventProgress(progress, season, now);
   const result: Record<string, unknown> = {
     SquadId: { S: progress.squadId },
     EventId: { S: progress.eventId },
@@ -236,7 +248,7 @@ export function buildSquadEventProgress(
 }
 
 function initialProgress(squadId: string, season: SquadEventSeasonConfig, now: Date): SquadEventProgressDocument {
-  return {
+  return validatedSquadEventProgress({
     squadId,
     eventId: season.id,
     configHash: squadEventConfigHash(season),
@@ -248,40 +260,114 @@ function initialProgress(squadId: string, season: SquadEventSeasonConfig, now: D
     revision: 0,
     joinedAt: now,
     updatedAt: now,
-  };
+  }, season, now);
 }
 
-function assertProgressMatchesSeason(
+function safeDate(value: unknown): value is Date {
+  return value instanceof Date && Number.isSafeInteger(value.getTime()) && value.getTime() >= 0;
+}
+
+function hasOnlyKeys(value: Record<string, unknown>, keys: ReadonlySet<string>): boolean {
+  return Object.keys(value).every((key) => keys.has(key));
+}
+
+function canonicalProgressFraction(value: unknown): value is number {
+  return typeof value === "number"
+    && Number.isFinite(value)
+    && value >= 0
+    && value <= 1
+    && !Object.is(value, -0)
+    // Progress is produced with Math.fround after every confirmed battle. Keeping that binary32
+    // shape rejects arbitrary database decimals that could otherwise jump a reward gate.
+    && (value === 1 || Object.is(value, Math.fround(value)));
+}
+
+/**
+ * Validate one complete durable Squad Event projection against its immutable live definition.
+ *
+ * `activeTier` is a cursor, not a client-authored summary: every earlier tier must be complete,
+ * the active tier must remain incomplete, and every later tier must still be untouched. This
+ * prevents a damaged row from skipping reward messages or making a later match legitimize forged
+ * progress. Dates are also bound to the configured half-open event window; validating application
+ * time separately ensures a future row cannot become authoritative through server clock handling.
+ */
+export function validatedSquadEventProgress(
   progress: SquadEventProgressDocument,
   season: SquadEventSeasonConfig,
+  now?: Date,
 ): SquadEventProgressDocument {
+  const raw = progress as unknown as Record<string, unknown>;
+  if (!progress || typeof progress !== "object" || Array.isArray(progress)
+    || !hasOnlyKeys(raw, PROGRESS_KEYS)
+    || typeof progress.squadId !== "string"
+    || progress.squadId.length < 3
+    || progress.squadId.length > 24
+    || progress.squadId.trim() !== progress.squadId
+    || /[\u0000-\u001f\u007f]/u.test(progress.squadId)
+    || progress.eventId !== season.id) {
+    throw new ApiError(
+      ApiErrorCode.InternalServerError,
+      "Stored Squad Event progress identity is invalid.",
+    );
+  }
   if (progress.configHash !== squadEventConfigHash(season)) {
     throw new ApiError(
       ApiErrorCode.InternalServerError,
       "The active Squad Event definition changed after progress was created.",
     );
   }
-  const validShape = Number.isSafeInteger(progress.activeTier)
+  const startMs = season.startTime * 1_000;
+  const endMs = season.endTime * 1_000;
+  const validDates = safeDate(progress.joinedAt)
+    && safeDate(progress.updatedAt)
+    && progress.joinedAt.getTime() >= startMs
+    && progress.joinedAt.getTime() < endMs
+    && progress.updatedAt.getTime() >= progress.joinedAt.getTime()
+    && progress.updatedAt.getTime() < endMs
+    && (now === undefined || (safeDate(now) && progress.updatedAt.getTime() <= now.getTime()));
+  const validShape = validDates
+    && Number.isSafeInteger(progress.activeTier)
     && progress.activeTier >= 0
     // The recovered client explicitly treats ActiveTier == tier count as the completed terminal
     // state: it shows all tier rows complete and stops producing SquadEventUpdate values.
     && progress.activeTier <= season.tiers.length
     && Number.isSafeInteger(progress.revision)
     && progress.revision >= 0
+    && progress.revision < Number.MAX_SAFE_INTEGER
+    && progress.revision >= progress.activeTier
+    && Array.isArray(progress.tiers)
     && progress.tiers.length === season.tiers.length
     && progress.tiers.every((tier, tierIndex) => {
       const configuredTier = season.tiers[tierIndex];
-      return tier.reward === configuredTier.reward
+      const tierRaw = tier as unknown as Record<string, unknown>;
+      return !!tier
+        && typeof tier === "object"
+        && !Array.isArray(tier)
+        && hasOnlyKeys(tierRaw, PROGRESS_TIER_KEYS)
+        && tier.reward === configuredTier.reward
+        && Array.isArray(tier.assignments)
         && tier.assignments.length === configuredTier.assignments.length
         && tier.assignments.every((assignment, assignmentIndex) => {
           const configured = configuredTier.assignments[assignmentIndex];
-          return assignment.id === configured.id
+          const assignmentRaw = assignment as unknown as Record<string, unknown>;
+          return !!assignment
+            && typeof assignment === "object"
+            && !Array.isArray(assignment)
+            && hasOnlyKeys(assignmentRaw, PROGRESS_ASSIGNMENT_KEYS)
+            && assignment.id === configured.id
             && assignment.target === configured.target
             && assignment.param === configured.param
-            && Number.isFinite(assignment.value)
-            && assignment.value >= 0
-            && assignment.value <= 1;
+            && canonicalProgressFraction(assignment.value);
         });
+    })
+    && progress.tiers.every((tier, tierIndex) => {
+      const complete = tier.assignments.every((assignment) => assignment.value === 1);
+      const untouched = tier.assignments.every((assignment) => assignment.value === 0);
+      return tierIndex < progress.activeTier
+        ? complete
+        : tierIndex === progress.activeTier
+          ? !complete
+          : untouched;
     });
   if (!validShape) {
     throw new ApiError(
@@ -317,7 +403,7 @@ export async function joinSquadEventForSeason(
     { upsert: true, returnDocument: "after" },
   );
   if (!progress) throw new ApiError(ApiErrorCode.InternalServerError, "Squad Event progress was not persisted.");
-  return assertProgressMatchesSeason(progress, season);
+  return validatedSquadEventProgress(progress, season, now);
 }
 
 export async function joinSquadEvent(player: PlayerDocument, now = new Date()): Promise<SquadEventProgressDocument> {
@@ -349,7 +435,7 @@ export function applyConfirmedPvpSquadEventProgress(
   won: boolean,
   now = new Date(),
 ): SquadEventPvpProgressResult {
-  assertProgressMatchesSeason(current, season);
+  validatedSquadEventProgress(current, season, now);
   const tier = current.tiers[current.activeTier];
   if (!tier) return { progress: current, changed: false };
   let changed = false;
@@ -363,17 +449,18 @@ export function applyConfirmedPvpSquadEventProgress(
   });
   if (!changed) return { progress: current, changed: false };
   const completed = assignments.every((assignment) => assignment.value >= 1);
+  const progress = validatedSquadEventProgress({
+    ...current,
+    activeTier: completed ? current.activeTier + 1 : current.activeTier,
+    tiers: current.tiers.map((entry, index) => (index === current.activeTier
+      ? { ...entry, assignments }
+      : entry)),
+    revision: current.revision + 1,
+    updatedAt: now,
+  }, season, now);
   return {
     changed: true,
-    progress: {
-      ...current,
-      activeTier: completed ? current.activeTier + 1 : current.activeTier,
-      tiers: current.tiers.map((entry, index) => (index === current.activeTier
-        ? { ...entry, assignments }
-        : entry)),
-      revision: current.revision + 1,
-      updatedAt: now,
-    },
+    progress,
     ...(completed ? {
       completedTier: { tierIndex: current.activeTier, reward: tier.reward },
     } : {}),
@@ -505,8 +592,10 @@ export async function getSquadEventWireFields(
     EventDefinition: buildSquadEventDefinition(season),
     ...(progress ? {
       SquadEventProgress: buildSquadEventProgress(
-        assertProgressMatchesSeason(progress, season),
+        progress,
         squadEventPlayerLevelProgress(playerLevel),
+        season,
+        now,
       ),
     } : {}),
   };

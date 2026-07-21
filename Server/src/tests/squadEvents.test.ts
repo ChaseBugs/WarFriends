@@ -14,6 +14,7 @@ import {
   selectActiveSquadEvent,
   squadEventConfigHash,
   squadEventPlayerLevelProgress,
+  validatedSquadEventProgress,
 } from "../services/squadEventService";
 import { claimableMessageReward, toClientMessage } from "../services/socialService";
 
@@ -98,7 +99,7 @@ test("EventDefinition uses the exact flattened stock-client field names", () => 
 });
 
 test("SquadEventProgress uses exact DynamoDB S/N wrappers and zero-based tier keys", () => {
-  const now = new Date("2026-07-20T00:00:00Z");
+  const now = new Date((SEASON.startTime + 100) * 1_000);
   const progress: SquadEventProgressDocument = {
     squadId: "Alpha",
     eventId: SEASON.id,
@@ -107,41 +108,91 @@ test("SquadEventProgress uses exact DynamoDB S/N wrappers and zero-based tier ke
     tiers: [{
       reward: 100,
       assignments: [
-        { id: 7, value: 4.5, target: 12 },
-        { id: 8, value: 1, target: 3, param: "2.5" },
+        { id: 7, value: Math.fround(1 / 12), target: 12 },
+        { id: 8, value: Math.fround(1 / 3), target: 3, param: "2.5" },
+      ],
+    }, {
+      reward: 200,
+      assignments: [
+        { id: 7, value: 0, target: 20 },
+        { id: 8, value: 0, target: 5 },
       ],
     }],
-    revision: 3,
+    revision: 1,
     joinedAt: now,
     updatedAt: now,
   };
-  assert.deepEqual(buildSquadEventProgress(progress, 0.25), {
+  assert.deepEqual(buildSquadEventProgress(progress, 0.25, SEASON, now), {
     SquadId: { S: "Alpha" },
     EventId: { S: SEASON.id },
     ActiveTier: { N: "0" },
     LevelProgress: { N: "0.25" },
     T0Reward: { N: "100" },
-    T0A0: { N: "4.5" },
+    T0A0: { N: String(Math.fround(1 / 12)) },
     T0A0Target: { N: "12" },
-    T0A1: { N: "1" },
+    T0A1: { N: String(Math.fround(1 / 3)) },
     T0A1Target: { N: "3" },
     T0A1Param: { N: "2.5" },
+    T1Reward: { N: "200" },
+    T1A0: { N: "0" },
+    T1A0Target: { N: "20" },
+    T1A1: { N: "0" },
+    T1A1Target: { N: "5" },
   });
 
   const corruptProgress = structuredClone(progress);
   corruptProgress.tiers[0]!.assignments[0]!.value = Number.NaN;
   assert.throws(
-    () => buildSquadEventProgress(corruptProgress, 0.25),
-    /DynamoDB numeric attribute authority is invalid/,
+    () => buildSquadEventProgress(corruptProgress, 0.25, SEASON, now),
+    /does not match its immutable season definition/,
   );
   assert.throws(
-    () => buildSquadEventProgress(progress, Number.POSITIVE_INFINITY),
+    () => buildSquadEventProgress(progress, Number.POSITIVE_INFINITY, SEASON, now),
     /DynamoDB numeric attribute authority is invalid/,
   );
 });
 
+test("durable Squad Event authority rejects identity, time, and tier-order corruption", () => {
+  const joinedAt = new Date((SEASON.startTime + 100) * 1_000);
+  const progress: SquadEventProgressDocument = {
+    squadId: "Alpha",
+    eventId: SEASON.id,
+    configHash: squadEventConfigHash(SEASON),
+    activeTier: 1,
+    tiers: [{
+      reward: 100,
+      assignments: [{ id: 7, value: 1, target: 12 }, { id: 8, value: 1, target: 3, param: "2.5" }],
+    }, {
+      reward: 200,
+      assignments: [{ id: 7, value: 0, target: 20 }, { id: 8, value: 0, target: 5 }],
+    }],
+    revision: 1,
+    joinedAt,
+    updatedAt: joinedAt,
+  };
+  assert.equal(validatedSquadEventProgress(progress, SEASON, joinedAt), progress);
+  assert.throws(
+    () => validatedSquadEventProgress({ ...progress, eventId: "another-event" }, SEASON, joinedAt),
+    /identity is invalid/,
+  );
+  assert.throws(
+    () => validatedSquadEventProgress({ ...progress, updatedAt: new Date(SEASON.endTime * 1_000) }, SEASON),
+    /does not match its immutable season definition/,
+  );
+  const skipped = structuredClone(progress);
+  skipped.tiers[0].assignments[0].value = 0;
+  assert.throws(
+    () => validatedSquadEventProgress(skipped, SEASON, joinedAt),
+    /does not match its immutable season definition/,
+  );
+  assert.throws(
+    () => validatedSquadEventProgress({ ...progress, revision: Number.MAX_SAFE_INTEGER }, SEASON, joinedAt),
+    /does not match its immutable season definition/,
+  );
+});
+
 test("confirmed PvP facts advance only recovered win and play assignment fractions", () => {
-  const now = new Date("2026-07-20T01:00:00Z");
+  const now = new Date((SEASON.startTime + 200) * 1_000);
   const initial: SquadEventProgressDocument = {
     squadId: "Alpha",
     eventId: SEASON.id,
@@ -199,7 +250,7 @@ test("confirmed PvP facts advance only recovered win and play assignment fractio
 });
 
 test("completing a tier advances ActiveTier and creates the exact claimable type-11 Gold message", () => {
-  const now = new Date("2026-07-20T02:00:00Z");
+  const now = new Date((SEASON.startTime + 300) * 1_000);
   const season = {
     id: "one-tier",
     startTime: SEASON.startTime,

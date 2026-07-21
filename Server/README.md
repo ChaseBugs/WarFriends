@@ -957,9 +957,13 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   `Tier`/`SquadId`/`Reward` message for every current member. Action `91` then credits that
   server-authored Gold exactly once and replays the original delta after a lost response. Final
   completion uses `ActiveTier == tierCount`; client `SquadEventUpdate` and claimed active tier are
-  ignored. Empty schedules remain disabled, while an unreadable or invalid configured schedule,
-  a changed live definition, or damaged stored event progress rejects match settlement before
-  rewards rather than silently discarding a confirmed live-event contribution.
+  ignored. The complete shared row is validated before insertion, join replay, match mutation, and
+  active-event serialization: exact fields and event/config identity, bounded squad identity,
+  safe ordered dates inside the half-open season, non-exhausted revision, source-exact tier rows,
+  binary32 fractions, completed earlier tiers, one incomplete active tier, and untouched later
+  tiers. Empty schedules remain disabled, while an unreadable or invalid configured schedule, a
+  future or incoherent row, changed live definition, or damaged stored event progress rejects match
+  settlement before rewards rather than silently discarding a confirmed live-event contribution.
 - **Limited-time Event Assignments (authoritative claim foundation)**: client actions `222`/`223`
   belong to the separate Christmas-style `EventAssignmentManager`, not Squad Events. A strict,
   non-overlapping, disabled-by-default operator schedule publishes the exact outer
