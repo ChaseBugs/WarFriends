@@ -10,6 +10,7 @@ import { mutateProgression } from "./progressionMutationService";
 import { checkedRewardBalance } from "./rewardMathService";
 import { UNIT_CATALOG } from "./unitInventoryService";
 import { VISUAL_CATALOG, visualInventoryStateFor } from "./visualInventoryService";
+import { validatedCardLifecycleCounters } from "./cardLifecycleCounterAuthorityService";
 
 /**
  * Server-authoritative achievement progression.
@@ -176,6 +177,7 @@ export const ACHIEVEMENT_DEFINITIONS: Readonly<Record<number, readonly Achieveme
  * every count because they are temporary entitlements and must not unlock permanent rewards.
  */
 function snapshotAchievementValues(state: PlayerProgressionState): Readonly<Record<number, number>> {
+  const cardCounters = validatedCardLifecycleCounters(state);
   const itemInventory = itemInventoryStateFor(state);
   let unitsPurchased = 0;
   let weaponsPurchased = 0;
@@ -213,7 +215,7 @@ function snapshotAchievementValues(state: PlayerProgressionState): Readonly<Reco
     1: weaponsPurchased,
     // PvP settlement increments this only by cards it successfully validates and consumes.
     // It is therefore the server equivalent of StatsManager.cardsPlayed, not client telemetry.
-    8: Math.max(0, state.warCardsPlayed ?? 0),
+    8: cardCounters.warCardsPlayed,
     9: soldierUpgrades,
     10: mechanicalUpgrades,
     11: weaponUpgrades,

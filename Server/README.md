@@ -491,6 +491,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   publication. Safe-integer Gold/WarBucks chargeback debt remains legitimate; Tickets, Scraps, and
   XP must be nonnegative safe integers. NaN, Infinity, fractions, unsafe values, and invalid debt
   fail before they can bypass a debit or enter the Dynamo-style boot adapter's legacy zero fallback.
+- **Card lifecycle counter authority**: private lifetime `warCardsPlayed` and `goldCardsCrafted`
+  values must be nonnegative safe integers at read, publication, and achievement derivation. Missing
+  legacy counters normalize to zero; malformed values cannot satisfy card achievements/starter
+  assignments or be carried forward by an unrelated progression replacement.
 - **Gold-to-WarBucks exchange**: action `221` validates `WarbucksId` against the deployment-owned
   MainScene A/B prefix, debits the exact 50/200/500/1000/3500/7000 Gold row, and multiplies the
   exact row units by the authenticated player's source `CONVERTGOLDTOWARBUCKS` rank value. The

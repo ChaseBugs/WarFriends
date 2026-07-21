@@ -25,8 +25,27 @@ import {
 import { createInitialProgression } from "../services/playerStateService";
 import { UNIT_CATALOG } from "../services/unitInventoryService";
 import { VISUAL_CATALOG } from "../services/visualInventoryService";
+import { validatedCardLifecycleCounters } from "../services/cardLifecycleCounterAuthorityService";
 
 const NOW = Date.UTC(2026, 6, 19, 12, 0, 0) / 1_000;
+
+test("card lifecycle counters reject malformed durable reward authority", () => {
+  assert.deepEqual(validatedCardLifecycleCounters(createInitialProgression(NOW)), {
+    warCardsPlayed: 0,
+    goldCardsCrafted: 0,
+  });
+  for (const state of [
+    { ...createInitialProgression(NOW), warCardsPlayed: Number.NaN },
+    { ...createInitialProgression(NOW), warCardsPlayed: -1 },
+    { ...createInitialProgression(NOW), goldCardsCrafted: 1.5 },
+    { ...createInitialProgression(NOW), goldCardsCrafted: Number.POSITIVE_INFINITY },
+  ]) {
+    assert.throws(
+      () => validatedCardLifecycleCounters(state),
+      /Stored (War Card play|Gold-card craft) counter is invalid/,
+    );
+  }
+});
 
 test("achievement state uses the exact recovered AchievementsData wire fields", () => {
   const achievements = achievementStateFor(createInitialProgression(NOW));

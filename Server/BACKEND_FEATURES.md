@@ -143,6 +143,9 @@ The private paid-VIP daily-card marker is validated before comparison, read, and
 UTC day derives exactly from a safe non-future grant timestamp, and its exact two reward IDs must be
 implemented recovered Silver/Gold cards (a duplicate pair remains legal). Corruption cannot be
 overwritten to reopen the once-per-day grant.
+The private War Card play and Gold-card craft lifetime counters are nonnegative safe integers at
+shared read/publication and reward-derivation boundaries. Missing legacy fields normalize to zero;
+malformed values cannot satisfy starter assignments or achievements or survive an unrelated write.
 
 Starter and daily assignments, assignment mega rewards, achievements, reward-bearing inbox
 messages, one-time/tutorial grants, Gold conversion, level rewards, normal/VIP lootbox duplicates,
