@@ -1087,13 +1087,16 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
       if (!client.playerId) return;
       const p = envelope.Payload as MatchResultPayload;
       if (client.presenceHeartbeat) {
-        const active = await getMatch(p?.MatchId);
-        const joined = new Set(active?.joinedPlayerIds ?? []);
-        if (!active
-          || active.state !== "active"
-          || !(active.roomStartedAt instanceof Date)
-          || !active.players.some((participant) => participant.playerId === client.playerId)
-          || !active.players.every((participant) => joined.has(participant.playerId))) {
+        const durableMatch = await getMatch(p?.MatchId);
+        const joined = new Set(durableMatch?.joinedPlayerIds ?? []);
+        const terminalReplay = durableMatch?.state === "finished" || durableMatch?.state === "cancelled";
+        if (!durableMatch
+          || !durableMatch.players.some((participant) => participant.playerId === client.playerId)
+          || (!terminalReplay && (
+            durableMatch.state !== "active"
+            || !(durableMatch.roomStartedAt instanceof Date)
+            || !durableMatch.players.every((participant) => joined.has(participant.playerId))
+          ))) {
           return send(client, { Type: "MatchError", Payload: { MatchId: p?.MatchId, Reason: "InvalidResult" } });
         }
         let durable;
@@ -1113,7 +1116,13 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
             Type: "MatchError",
             Payload: { MatchId: p.MatchId, Reason: "ResultConflict" },
           };
-          await broadcastDistributedMatch(p.MatchId, active.players.map((participant) => participant.playerId), conflict);
+          await broadcastDistributedMatch(
+            p.MatchId,
+            durableMatch.players.map((participant) => participant.playerId),
+            conflict,
+          );
+          clearMatchJoinTimer(p.MatchId);
+          clearMatchDisconnectTimers(p.MatchId);
           return;
         }
         if (durable.status === "pending") {
@@ -1128,7 +1137,7 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
         };
         await broadcastDistributedMatch(
           p.MatchId,
-          active.players.map((participant) => participant.playerId),
+          durableMatch.players.map((participant) => participant.playerId),
           ended,
         );
         clearMatchJoinTimer(p.MatchId);
@@ -1142,7 +1151,13 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
       }
       // Settle only after both participants report the same winner.
       const report = roomManager.recordResult(p?.MatchId, client.playerId, p?.WinnerId);
-      if (report === "invalid") {
+      // Normal reports require current local-room membership. Once MongoDB is terminal the room
+      // should already be gone, so an assigned participant may bypass only that missing transient
+      // mirror to recover a lost immutable MatchEnded/ResultConflict response.
+      const terminalRetryMatch = report === "invalid" ? await getMatch(p?.MatchId) : null;
+      const allowDurableTerminalReplay = terminalRetryMatch?.state === "finished"
+        || terminalRetryMatch?.state === "cancelled";
+      if (report === "invalid" && !allowDurableTerminalReplay) {
         return send(client, { Type: "MatchError", Payload: { MatchId: p?.MatchId, Reason: "InvalidResult" } });
       }
       let durable;
@@ -1160,9 +1175,15 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
       // The local room report proves only that this socket currently belongs to the room. MongoDB
       // owns cross-handler consensus and may already be terminal when the local mirror says
       // pending, so only the durable decision may select pending/conflict/finished behavior.
-      const resolvedStatus = resolveMatchReportStatus(report, durable.status);
+      const resolvedStatus = resolveMatchReportStatus(report, durable.status, allowDurableTerminalReplay);
       if (resolvedStatus === "conflict") {
         roomManager.broadcast(p.MatchId, { Type: "MatchError", Payload: { MatchId: p.MatchId, Reason: "ResultConflict" } });
+        if (!roomManager.isParticipant(p.MatchId, client.playerId)) {
+          send(client, { Type: "MatchError", Payload: { MatchId: p.MatchId, Reason: "ResultConflict" } });
+        }
+        clearMatchJoinTimer(p.MatchId);
+        roomManager.finish(p.MatchId);
+        clearMatchDisconnectTimers(p.MatchId);
         return;
       }
       if (resolvedStatus === "pending") {
@@ -1177,7 +1198,9 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
       if (!settlement) {
         return send(client, { Type: "MatchError", Payload: { MatchId: p.MatchId, Reason: "InvalidResult" } });
       }
-      roomManager.broadcast(p.MatchId, { Type: "MatchEnded", Payload: { MatchId: p.MatchId, WinnerId: settlement.winnerId } });
+      const ended = { Type: "MatchEnded", Payload: { MatchId: p.MatchId, WinnerId: settlement.winnerId } };
+      roomManager.broadcast(p.MatchId, ended);
+      if (!roomManager.isParticipant(p.MatchId, client.playerId)) send(client, ended);
       clearMatchJoinTimer(p.MatchId);
       roomManager.finish(p.MatchId);
       clearMatchDisconnectTimers(p.MatchId);

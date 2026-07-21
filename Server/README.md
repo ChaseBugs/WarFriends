@@ -498,7 +498,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   membership, while every post-write reload recognizes finished receipts and conflict
   cancellations. A concurrent local pending/conflict observation therefore cannot suppress a
   committed terminal event, and cancellation-versus-settlement races notify clients from the row
-  that actually won the MongoDB transition.
+  that actually won the MongoDB transition. An assigned authenticated participant may recover a
+  lost terminal response after transient room cleanup, but cannot use that path to bypass active
+  room membership. Result conflict clears every join/disconnect timer and removes the local room
+  only after broadcasting the cancellation, preventing further relay against a cancelled row.
   Every distributed socket also owns a renewable Redis route that an older/replaced socket cannot
   refresh or delete. `Identify` enters this mode only after the exact player/socket owner write
   succeeds. Deliberate Redis-unavailable operation stays on the local-room path, while an attempted

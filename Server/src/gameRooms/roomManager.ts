@@ -21,8 +21,15 @@ export type DurableMatchReportStatus = LocalMatchReportStatus | "finished";
 export function resolveMatchReportStatus(
   local: LocalMatchReportStatus,
   durable: DurableMatchReportStatus,
+  allowDurableTerminalReplay = false,
 ): DurableMatchReportStatus {
-  return local === "invalid" ? "invalid" : durable;
+  if (local !== "invalid") return durable;
+  // A finished/cancelled room is deliberately absent from the local registry after cleanup. An
+  // authenticated assigned participant may still recover that lost terminal response, but this
+  // exception must never let a non-member bypass an active room with pending/confirmed state.
+  return allowDurableTerminalReplay && (durable === "finished" || durable === "conflict")
+    ? durable
+    : "invalid";
 }
 
 export interface Participant {

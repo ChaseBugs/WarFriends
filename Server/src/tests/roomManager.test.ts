@@ -42,6 +42,9 @@ test("durable result consensus overrides a stale process-local report mirror", (
   assert.equal(resolveMatchReportStatus("confirmed", "pending"), "pending");
   assert.equal(resolveMatchReportStatus("conflict", "pending"), "pending");
   assert.equal(resolveMatchReportStatus("invalid", "finished"), "invalid");
+  assert.equal(resolveMatchReportStatus("invalid", "finished", true), "finished");
+  assert.equal(resolveMatchReportStatus("invalid", "conflict", true), "conflict");
+  assert.equal(resolveMatchReportStatus("invalid", "confirmed", true), "invalid");
 });
 
 test("disconnect keeps the authorized room available for a legitimate reconnect", () => {

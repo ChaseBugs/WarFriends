@@ -120,7 +120,11 @@ socket membership and cannot override a concurrent durable pending, conflict, or
 Every conditional report write replays a finished receipt or result-conflict cancellation observed
 on reload, and cancellation-versus-settlement races re-read the committed terminal row before any
 client notification. This prevents both sockets from receiving only `ResultPending` after the
-opponent's concurrent handler has already completed the match. Cross-node reconnect,
+opponent's concurrent handler has already completed the match. Assigned authenticated sockets can
+also replay a lost terminal response after the transient room has been removed, without extending
+that exception to active pending/confirmed reports. Durable result conflict now clears join and
+disconnect timers on both transport paths and broadcasts before deleting the no-Redis room, so a
+cancelled match cannot continue relaying opaque events. Cross-node reconnect,
 disconnect-grace, and forfeit coordination now uses renewable compare-owned Redis socket routes,
 durable per-participant disconnect clocks, MongoDB-validated opponent notifications, retry-safe
 rejoin clearing, and grace-expiry forfeit or both-offline cancellation. Unknown Redis liveness
