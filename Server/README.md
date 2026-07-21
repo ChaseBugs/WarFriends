@@ -290,6 +290,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   name, password digest, and rotated session atomically with a stale-session guard.
   Repeated status, country, language, device-registration, and notification-setting values are
   exact no-ops; token and locale changes from one device-registration request publish together.
+  Persisted notification consent must contain exactly the recovered six Boolean
+  `SettingsManager.Settings` fields. A wholly absent legacy value boots with LoadEmpty's five
+  enabled categories and disabled maintenance default; partial, extra, or non-Boolean snapshots
+  fail closed before an unrelated write can normalize them or boot can change effective consent.
 - **Platform identities**: Facebook, Google Play, and Game Center identities have unique
   ownership, HMAC-protected credentials, provider login, collision-safe link/update, and
   unlink behavior. Every link, relink, and unlink transaction commits the authoritative identity

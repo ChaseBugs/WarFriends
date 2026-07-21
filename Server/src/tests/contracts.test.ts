@@ -78,6 +78,8 @@ import {
   normalizePlayerName,
   notificationSettingsEqual,
   parseNotificationSettings,
+  settingsForPlayer,
+  validatedNotificationSettings,
 } from "../services/playerSettingsService";
 import { normalizeReportInput } from "../services/reportService";
 import { reportHandlers } from "../handlers/reports";
@@ -1480,6 +1482,37 @@ test("player settings parser accepts only the recovered boolean preference contr
   assert.equal(notificationSettingsEqual(undefined, parsed), false);
   assert.throws(() => parseNotificationSettings(JSON.stringify({ challenge: "false" })));
   assert.throws(() => parseNotificationSettings("not-json"));
+});
+
+test("durable notification settings allow only complete Boolean authority or total legacy absence", () => {
+  const legacy = contractPlayer();
+  delete (legacy.player as { notificationSettings?: unknown }).notificationSettings;
+  const defaults = settingsForPlayer(legacy);
+  assert.deepEqual(defaults, {
+    challenge: true,
+    squadStatus: true,
+    squadEvents: true,
+    maintenance: false,
+    playerLeague: true,
+    dailyRewardNotification: true,
+  });
+  const boot = buildPlayerData(legacy);
+  assert.deepEqual(JSON.parse((boot.Settings as { S: string }).S), defaults);
+
+  const corruptBoolean = contractPlayer();
+  (corruptBoolean.player.notificationSettings as unknown as Record<string, unknown>).challenge = "false";
+  assert.throws(
+    () => validatedPlayerProfileLookup(corruptBoolean),
+    /Stored player public identity is invalid/,
+  );
+
+  const partial = { ...defaults } as Record<string, unknown>;
+  delete partial.maintenance;
+  assert.throws(() => validatedNotificationSettings(partial), /Stored notification settings are invalid/);
+  assert.throws(
+    () => validatedNotificationSettings({ ...defaults, futureSetting: true }),
+    /Stored notification settings are invalid/,
+  );
 });
 
 test("profile normalization preserves localized names and validates locale/country fields", () => {

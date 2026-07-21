@@ -66,6 +66,7 @@ import {
   validatedPlayerAccountEnvelope,
   validatedPlayerProfileMirrors,
 } from "./playerProfileMirrorAuthorityService";
+import { settingsForPlayer } from "./playerSettingsService";
 
 /** Unix seconds are used throughout the recovered Beanstalk protocol. */
 export function unixNow(): number {
@@ -391,7 +392,9 @@ export function buildPlayerData(player: PlayerDocument, now = unixNow()): Player
     Vip: numberAttribute(state.vipExpiration ?? dto.vipExpiration),
     VipStart: numberAttribute(state.vipStart),
     SendLogs: numberAttribute(dto.sendLogsValue),
-    Settings: stringAttribute(dto.notificationSettings),
+    // A wholly missing legacy snapshot maps to SettingsManager.LoadEmpty's exact defaults. The
+    // shared profile validator rejects partial or non-Boolean durable consent before this point.
+    Settings: stringAttribute(settingsForPlayer(player)),
     // EventAssignmentManager computes its zero-based calendar day from this server boundary.
     // Send the current UTC midnight (not the next reset) so day zero begins at startTime.
     Midnight: numberAttribute(currentUtcMidnight(now)),

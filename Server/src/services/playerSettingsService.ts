@@ -12,6 +12,31 @@ const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettingsDTO = {
   playerLeague: true,
   dailyRewardNotification: true,
 };
+const NOTIFICATION_SETTING_KEYS = Object.freeze(
+  Object.keys(DEFAULT_NOTIFICATION_SETTINGS) as (keyof NotificationSettingsDTO)[],
+);
+
+/**
+ * Validate the complete durable SettingsManager.Settings consent snapshot.
+ *
+ * The recovered object has exactly six Boolean fields. Only total absence is a legacy migration:
+ * SettingsManager.LoadEmpty establishes the same defaults below. A partially written or truthy
+ * string value must fail closed instead of silently re-enabling a notification category that the
+ * player disabled. Unknown durable keys are rejected even though unknown request keys are ignored
+ * for forward wire compatibility; stored authority must remain one understood consent model.
+ */
+export function validatedNotificationSettings(value: unknown): NotificationSettingsDTO {
+  if (value === undefined) return { ...DEFAULT_NOTIFICATION_SETTINGS };
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error("Stored notification settings are invalid.");
+  }
+  const source = value as Record<string, unknown>;
+  if (Object.keys(source).length !== NOTIFICATION_SETTING_KEYS.length
+    || !NOTIFICATION_SETTING_KEYS.every((key) => typeof source[key] === "boolean")) {
+    throw new Error("Stored notification settings are invalid.");
+  }
+  return value as NotificationSettingsDTO;
+}
 
 /**
  * Normalize a display name at the server boundary. Trimming before the length check prevents
@@ -57,8 +82,8 @@ export function parseNotificationSettings(value: unknown, current?: Notification
   }
 
   const source = parsed as Record<string, unknown>;
-  const result = { ...(current ?? DEFAULT_NOTIFICATION_SETTINGS) };
-  for (const key of Object.keys(DEFAULT_NOTIFICATION_SETTINGS) as (keyof NotificationSettingsDTO)[]) {
+  const result = { ...validatedNotificationSettings(current) };
+  for (const key of NOTIFICATION_SETTING_KEYS) {
     if (source[key] === undefined) continue;
     if (typeof source[key] !== "boolean") {
       throw new ApiError(ApiErrorCode.UnknownAction, `Setting ${key} must be boolean.`);
@@ -88,7 +113,7 @@ export function normalizeCountry(value: unknown): string {
 
 /** Resolve settings for legacy player rows created before notificationSettings was added. */
 export function settingsForPlayer(player: PlayerDocument): NotificationSettingsDTO {
-  return player.player.notificationSettings ?? { ...DEFAULT_NOTIFICATION_SETTINGS };
+  return validatedNotificationSettings(player.player.notificationSettings);
 }
 
 /** Compare every recovered notification preference without depending on object key order. */
@@ -97,6 +122,7 @@ export function notificationSettingsEqual(
   right: NotificationSettingsDTO,
 ): boolean {
   if (!left) return false;
-  return (Object.keys(DEFAULT_NOTIFICATION_SETTINGS) as (keyof NotificationSettingsDTO)[])
-    .every((key) => left[key] === right[key]);
+  const validatedLeft = validatedNotificationSettings(left);
+  const validatedRight = validatedNotificationSettings(right);
+  return NOTIFICATION_SETTING_KEYS.every((key) => validatedLeft[key] === validatedRight[key]);
 }

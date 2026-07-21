@@ -7,6 +7,7 @@ import {
 import { isSupportedAuthenticationScryptCost } from "./authSecretService";
 import { validatePlayerLeagueIdentity } from "./playerLeagueContract";
 import { isCanonicalStoredPlayerName } from "./playerNameContract";
+import { validatedNotificationSettings } from "./playerSettingsService";
 
 /**
  * Validate the public identity fields that are not duplicated at MongoDB's document root.
@@ -25,6 +26,10 @@ function validatePlayerPublicIdentityFields(player: PlayerDocument): void {
   }
   try {
     validatePlayerLeagueIdentity(dto);
+    // Settings are stored inside the DTO rather than duplicated at the root, but the same shared
+    // profile boundary is the earliest point that can prevent corrupt consent from reaching push
+    // selection or being normalized by an unrelated settings update.
+    validatedNotificationSettings(dto.notificationSettings);
   } catch {
     throw new Error("Stored player public identity is invalid.");
   }
