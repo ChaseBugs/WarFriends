@@ -1,5 +1,5 @@
 import type { PlayerDocument } from "../db";
-import { AccountType } from "../constants";
+import { AccountType, PlayerStatus, SquadRank } from "../constants";
 import {
   validatedFacebookPlayerId,
   validatedOptionalStringPlayerId,
@@ -31,6 +31,20 @@ function validatePlayerPublicIdentityFields(player: PlayerDocument): void {
     // selection or being normalized by an unrelated settings update.
     validatedNotificationSettings(dto.notificationSettings);
   } catch {
+    throw new Error("Stored player public identity is invalid.");
+  }
+  // These are direct numeric enums on DatabasePlayer's public wire. JavaScript accepts any number
+  // at runtime, but the recovered client defines no fallback value. In particular, presence must
+  // not overwrite an unknown stored status and thereby disguise durable damage as a heartbeat.
+  const statusValid = dto.status === PlayerStatus.Offline
+    || dto.status === PlayerStatus.Online
+    || dto.status === PlayerStatus.InGame;
+  const squadRankValid = dto.squadRank === SquadRank.None
+    || dto.squadRank === SquadRank.Member
+    || dto.squadRank === SquadRank.Veteran
+    || dto.squadRank === SquadRank.Leader
+    || dto.squadRank === SquadRank.Coleader;
+  if (!statusValid || !squadRankValid) {
     throw new Error("Stored player public identity is invalid.");
   }
 }

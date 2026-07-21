@@ -452,6 +452,15 @@ test("indexed player profile mirrors must match before client-visible projection
     /Stored player public identity is invalid/,
   );
 
+  for (const field of ["status", "squadRank"] as const) {
+    const invalidWireEnum = contractPlayer();
+    invalidWireEnum.player[field] = 99 as never;
+    assert.throws(
+      () => validatedPlayerProfileLookup(invalidWireEnum),
+      /Stored player public identity is invalid/,
+    );
+  }
+
   const indexedDisconnectedSentinel = contractPlayer();
   indexedDisconnectedSentinel.facebookId = "-1";
   indexedDisconnectedSentinel.player.facebookId = -1;

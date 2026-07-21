@@ -294,6 +294,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   `SettingsManager.Settings` fields. A wholly absent legacy value boots with LoadEmpty's five
   enabled categories and disabled maintenance default; partial, extra, or non-Boolean snapshots
   fail closed before an unrelated write can normalize them or boot can change effective consent.
+  The same profile proof restricts `PlayerStatus` to Offline/Online/InGame and `SquadRank` to the
+  five recovered values before authentication, publication, or mutation; a heartbeat must never
+  overwrite an unknown stored status and conceal durable damage.
 - **Platform identities**: Facebook, Google Play, and Game Center identities have unique
   ownership, HMAC-protected credentials, provider login, collision-safe link/update, and
   unlink behavior. Every link, relink, and unlink transaction commits the authoritative identity
