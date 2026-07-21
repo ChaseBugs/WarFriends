@@ -116,6 +116,10 @@ non-integer rewards, and rejects any sum outside JavaScript's safe-integer range
 calculates the final balance before consuming its claim marker or terminal receipt, so invalid
 persisted data or an operator-configured overflow fails closed without losing the reward on retry.
 
+Assignment, achievement, and War Arena eligibility counters are also validated before comparisons.
+This explicitly closes JavaScript's non-finite comparison behavior: `NaN` can never make an active
+Arena run appear finished, make an achievement tier appear complete, or unlock a mega reward.
+
 ## Implementation order
 
 1. Extend server-owned economy transactions to remaining combat-proven card consumption/rewards, Black Market selection/feature-weight/discount fidelity, and special/VIP offers; connect action 156 to provider-signed ad completion when a replacement ad SDK is selected.

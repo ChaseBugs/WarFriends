@@ -89,12 +89,61 @@ function cloneResponse(value: Record<string, unknown>): Record<string, unknown> 
 }
 
 function cloneArena(value: WarArenaState): WarArenaState {
+  // Every Arena mutation and reward gate starts here. Comparisons with NaN are always false, so
+  // an invalid wins/lives value would otherwise make an active run look finished and expose the
+  // Scraps claim. Reject damaged authority instead of guessing whether to restore or consume it.
+  const counters: readonly [string, number][] = [
+    ["wins", value.wins],
+    ["lives", value.lives],
+    ["runs", value.runs],
+    ["visualTimestamp", value.visualTimestamp],
+    ["flawless", value.flawless],
+    ["topRun", value.topRun],
+    ["matches", value.matches],
+    ["shields", value.shields],
+    ["runLosses", value.runLosses],
+  ];
+  if (counters.some(([, counter]) => !Number.isSafeInteger(counter) || counter < 0)
+    || value.wins > arenaPolicy().maxBattles
+    || value.topRun > arenaPolicy().maxBattles) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Stored War Arena counters are invalid.");
+  }
+  if (typeof value.played !== "boolean"
+    || typeof value.heartDialogShown !== "boolean"
+    || typeof value.runRewardClaimed !== "boolean") {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Stored War Arena flags are invalid.");
+  }
+  const shownArenaIds = value.shownArenaIds ?? [];
+  if (!Array.isArray(value.opponents) || value.opponents.some((id) => typeof id !== "string")
+    || !Array.isArray(shownArenaIds) || shownArenaIds.some((id) => typeof id !== "string")
+    || !Array.isArray(value.recentSettlements)) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Stored War Arena collections are invalid.");
+  }
+  if (value.lastHeartPurchaseAt !== undefined
+    && (!Number.isSafeInteger(value.lastHeartPurchaseAt) || value.lastHeartPurchaseAt < 0)) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Stored War Arena heart receipt is invalid.");
+  }
+  if (value.activeBattle
+    && (typeof value.activeBattle.battleId !== "string"
+      || typeof value.activeBattle.arenaId !== "string"
+      || !Number.isSafeInteger(value.activeBattle.startedAt)
+      || value.activeBattle.startedAt < 0)) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Stored War Arena battle receipt is invalid.");
+  }
+  if (value.recentSettlements.some((settlement) => (
+    typeof settlement.battleId !== "string"
+    || !Number.isSafeInteger(settlement.endReason)
+    || !Number.isSafeInteger(settlement.settledAt)
+    || settlement.settledAt < 0
+  ))) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Stored War Arena settlement receipt is invalid.");
+  }
   return {
     ...value,
     opponents: [...value.opponents],
     // Accounts written before action 212 became durable do not have this server-only field.
     // Normalize them while cloning instead of requiring a destructive database migration.
-    shownArenaIds: [...(value.shownArenaIds ?? [])],
+    shownArenaIds: [...shownArenaIds],
     activeBattle: value.activeBattle ? { ...value.activeBattle } : undefined,
     recentSettlements: value.recentSettlements.map((item) => ({
       ...item,

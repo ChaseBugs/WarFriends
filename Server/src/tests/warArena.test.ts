@@ -22,6 +22,7 @@ import {
   settleWarArenaBattleState,
   startWarArenaBattleState,
   takeWarArenaLifeState,
+  warArenaStateFor,
 } from "../services/warArenaService";
 
 const NOW = Date.UTC(2026, 6, 19, 12, 0, 0) / 1_000;
@@ -75,6 +76,25 @@ test("War Arena config and persisted wire use the recovered client field names",
     "heartDialogShown",
   ]);
   assert.deepEqual(wire.opponents, ["p2", "p3"]);
+});
+
+test("Arena reward gates reject corrupt counters and receipt timestamps", () => {
+  const corruptCounter = createInitialProgression(NOW);
+  corruptCounter.warArena = { ...initialWarArenaState(), wins: Number.NaN, lives: Number.NaN };
+  assert.throws(
+    () => claimWarArenaScrapsState(corruptCounter, NOW, false),
+    /Stored War Arena counters are invalid/,
+  );
+
+  const corruptReceipt = createInitialProgression(NOW);
+  corruptReceipt.warArena = {
+    ...initialWarArenaState(),
+    activeBattle: { battleId: "arena-corrupt", arenaId: "arena", startedAt: Number.NaN },
+  };
+  assert.throws(
+    () => warArenaStateFor(corruptReceipt),
+    /Stored War Arena battle receipt is invalid/,
+  );
 });
 
 test("WarArenaShown accepts only the current event and is replay safe", () => {
