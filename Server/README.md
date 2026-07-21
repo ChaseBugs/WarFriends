@@ -408,12 +408,14 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
 - **HTTP abuse boundary**: every non-health API request passes through a continuously refilled
   token bucket keyed by an HMAC-hidden client address. Redis provides bounded-TTL cross-process
   enforcement, while the memory-bounded limiter remains the explicit outage fallback. Proxy
-  addresses are trusted only when `TRUST_PROXY_HOPS` is explicitly configured; rejected bursts receive HTTP 429
+  addresses are trusted only when `TRUST_PROXY_HOPS` is explicitly configured as the exact zero-to-32
+  reviewed topology distance; rejected bursts receive HTTP 429
   and `Retry-After` without reaching request parsing or game handlers. HTTP capacity (1-100,000),
   window (1-86,400 seconds), and memory entries (100-1,000,000), plus WebSocket capacity/window,
   payload (1,024-1,048,576 bytes), and violation tolerance (1-100), resolve together as one
-  immutable exact-safe-integer snapshot. The WebSocket listener captures that same snapshot for
-  parser, bucket, and disconnect behavior. Malformed deployment policy fails startup instead of
+  immutable eight-value exact-safe-integer snapshot. Express and the WebSocket listener capture
+  that same snapshot for forwarded client identity, parser, bucket, and disconnect behavior.
+  Malformed deployment policy fails startup instead of
   being rounded, clamped, defaulted, or independently re-read.
 - **Photon-region profile compatibility**: action `140` validates and atomically persists the
   recovered ten-region latency dictionary plus `None`/`Cellural`/`Wifi` connection type.

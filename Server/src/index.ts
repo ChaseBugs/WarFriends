@@ -28,13 +28,15 @@ import { startSquadWarScheduler } from "./services/squadWarSchedulerService";
 import { adminModerationRouter } from "./routes/adminModeration";
 import { supportModerationRouter } from "./routes/supportModeration";
 import { validateAuthenticationSecretConfiguration } from "./services/authSecretService";
+import { trafficPolicy } from "./services/trafficPolicyService";
 
 const app = express();
+const publicTrafficPolicy = trafficPolicy();
 
 // Express trusts no forwarded client address by default. Enable only an explicit, bounded proxy
 // hop count so a public caller cannot choose its own rate-limit identity with X-Forwarded-For.
-if (Number.isInteger(config.trustProxyHops) && config.trustProxyHops > 0) {
-  app.set("trust proxy", config.trustProxyHops);
+if (publicTrafficPolicy.trustedProxyHops > 0) {
+  app.set("trust proxy", publicTrafficPolicy.trustedProxyHops);
 }
 
 // Correlation and metrics wrap every request, including rate-limit/404/error responses. Generated

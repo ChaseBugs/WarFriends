@@ -6,6 +6,7 @@ import { trafficPolicy } from "../services/trafficPolicyService";
 test("HTTP and WebSocket limits are one immutable startup traffic policy", () => {
   assert.equal(Object.isFrozen(trafficPolicy()), true);
   assert.deepEqual(trafficPolicy(), {
+    trustedProxyHops: 0,
     httpRequestCapacity: 120,
     httpWindowSeconds: 60,
     httpMemoryEntryCap: 10_000,
@@ -14,6 +15,20 @@ test("HTTP and WebSocket limits are one immutable startup traffic policy", () =>
     webSocketWindowSeconds: 10,
     webSocketViolationLimit: 3,
   });
+});
+
+test("trusted proxy hops preserve an exact bounded deployment topology", () => {
+  const configured = trafficPolicy();
+  assert.deepEqual(trafficPolicy({ ...configured, trustedProxyHops: 3 }), {
+    ...configured,
+    trustedProxyHops: 3,
+  });
+  for (const trustedProxyHops of [Number.NaN, Number.POSITIVE_INFINITY, -1, 0.5, 33]) {
+    assert.throws(
+      () => trafficPolicy({ ...configured, trustedProxyHops }),
+      /Traffic trusted-proxy hop-count policy is invalid/,
+    );
+  }
 });
 
 test("HTTP token bucket rejects a burst and refills continuously", () => {

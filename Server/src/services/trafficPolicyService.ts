@@ -21,6 +21,7 @@ export function exactTrafficPolicyInteger(
 }
 
 export interface TrafficPolicy {
+  readonly trustedProxyHops: number;
   readonly httpRequestCapacity: number;
   readonly httpWindowSeconds: number;
   readonly httpMemoryEntryCap: number;
@@ -32,6 +33,13 @@ export interface TrafficPolicy {
 
 function exactTrafficPolicy(policy: TrafficPolicy): TrafficPolicy {
   return {
+    // Express interprets this number as the exact distance from the application to its trusted
+    // edge. A negative/fractional value used to fall back silently to direct-client mode, while
+    // an unbounded value could trust attacker-controlled forwarding entries beyond the reviewed
+    // deployment topology. Keep zero as the safe direct-deployment setting.
+    trustedProxyHops: exactTrafficPolicyInteger(
+      policy.trustedProxyHops, "trusted-proxy hop-count", 0, 32,
+    ),
     httpRequestCapacity: exactTrafficPolicyInteger(
       policy.httpRequestCapacity, "HTTP request-capacity", 1, 100_000,
     ),
@@ -60,6 +68,7 @@ function exactTrafficPolicy(policy: TrafficPolicy): TrafficPolicy {
 // public-traffic boundary. Freeze the entire set before listeners start so concurrent paths cannot
 // enforce independently re-read process configuration.
 const CONFIGURED_TRAFFIC_POLICY = Object.freeze(exactTrafficPolicy({
+  trustedProxyHops: config.trustProxyHops,
   httpRequestCapacity: config.httpRateLimitMaxRequests,
   httpWindowSeconds: config.httpRateLimitWindowSeconds,
   httpMemoryEntryCap: config.httpRateLimitMaxEntries,
