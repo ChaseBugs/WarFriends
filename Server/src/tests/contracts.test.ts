@@ -319,6 +319,57 @@ test("progression schema authority accepts only the explicitly supported embedde
   assert.throws(() => progressionForPlayer(future), /Stored progression schema version is unsupported/);
 });
 
+test("shared progression boundaries reject malformed rental, Black Market, and visual authority", () => {
+  const corruptRead = contractPlayer();
+  corruptRead.progression!.visualInventory = {
+    visuals: {
+      broken: {
+        bought: false,
+        showed: false,
+        borrowed: false,
+        notificate: false,
+        parts: 0,
+        expiresOn: Number.POSITIVE_INFINITY,
+      },
+    },
+    slots: { "0": { equippedID: "Default" } },
+    previousHeadDecal: "",
+  };
+  assert.throws(() => progressionForPlayer(corruptRead), /Visual broken expiry is invalid/);
+
+  const current = createInitialProgression(1_700_000_000);
+  assert.throws(
+    () => validatedProgressionSuccessor(current, {
+      ...current,
+      revision: 1,
+      rental: {
+        id: "ASSAULTER",
+        type: 0,
+        discount: 20,
+        generation: 1,
+        nextGenerate: Number.POSITIVE_INFINITY,
+        trialExpiresAt: 0,
+        saleExpiresAt: 0,
+        status: "offered",
+      },
+    }),
+    /Rental replacement deadline is invalid/,
+  );
+  assert.throws(
+    () => validatedProgressionSuccessor(current, {
+      ...current,
+      revision: 1,
+      blackMarket: {
+        offersTotal: 1,
+        lastTrigger: "ServerSchedule",
+        offerEnd: Number.POSITIVE_INFINITY,
+        currentOffers: [],
+      },
+    }),
+    /Black Market offer expiry is invalid/,
+  );
+});
+
 test("dog-tag state uses accumulated seconds and recovered 900-second balancing", () => {
   const initial = createInitialProgression(1_000, 900, 5);
   assert.equal(initial.dogTagSeconds, 4_500);

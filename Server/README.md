@@ -560,8 +560,8 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   atomic. Re-equipping the current category item and replaying an already-cleared visual badge
   acknowledgement preserve exact state identity instead of creating false inventory revisions.
   One shared `DecalManagerData` authority boundary validates every saved flag, part counter, timed
-  expiry, equipped slot, and previous-head value before boot, ownership/equip, purchase, paid-pack
-  extension, or voided-purchase reversal. In particular, `NaN`, `Infinity`, fractional, negative,
+  expiry, equipped slot, and previous-head value at progression read/publication and before boot,
+  ownership/equip, purchase, paid-pack extension, or voided-purchase reversal. In particular, `NaN`, `Infinity`, fractional, negative,
   or out-of-Date-range expiry values fail closed instead of making a temporary power band permanent.
   Actions `104`/`105` now persist the weapon/unit `showed` flags through both direct and
   buffered transports without granting ownership; locked or unknown rows fail closed. Direct
@@ -740,8 +740,8 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   across retries; buffered `BuyWeapon` redemption requires the authenticated stored offer,
   its unexpired deadline, zero WarBucks, and its exact level price. Weapon level and special
   feature come only from server state, and the wallet/ownership mutation remains atomic and
-  BufferId-replay-safe. A shared validator protects boot projection, action-217 replay/rotation,
-  serialization, and redemption from non-finite expiry, unsafe issue cursors, duplicate or
+  BufferId-replay-safe. A shared validator protects progression read/publication, boot projection,
+  action-217 replay/rotation, serialization, and redemption from non-finite expiry, unsafe issue cursors, duplicate or
   oversized sets, malformed identities/levels, and nonzero feature authority. Derived expiries
   and cursors are revalidated before persistence. Reading the same active action-217 set preserves progression identity
   and does not rewrite MongoDB. Issued offers currently use recovered feature index 0; the original
@@ -759,8 +759,8 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   the discounted sale variant. That cleanup now commits inside the same authoritative battle
   transition as rewards/lives and is cached in the mission, Arena, or ranked-match receipt;
   a process failure can no longer commit the battle while accidentally preserving the trial.
-  One shared lifecycle validator protects boot, equip, Army Power, acceptance, settlement, and
-  redemption: item type, 20-25% discount, generation, previous-slot snapshot, and every deadline
+  One shared lifecycle validator protects progression read/publication, boot, equip, Army Power,
+  acceptance, settlement, and redemption: item type, 20-25% discount, generation, previous-slot snapshot, and every deadline
   must be valid, while trial/sale expiries must remain inside the replacement-offer boundary.
   `NaN`, `Infinity`, unsupported visual authority, and contradictory imported intervals fail closed
   instead of turning a borrowed weapon or unit into permanent access.

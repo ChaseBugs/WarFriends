@@ -132,6 +132,11 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
     state.videoAdRewards,
     progressionRevisionForRead(state.revision),
   );
+  const rental = validatedRentalState(state.rental);
+  const blackMarket = validatedBlackMarketOfferState(state.blackMarket);
+  const visualInventory = validatedVisualInventoryState(
+    state.visualInventory ?? createInitialVisualInventory(),
+  );
   // This is the shared persisted-progression read boundary, not only a boot serializer. Validate
   // wallet/rank balances here so cross-player transactions and ordinary economy actions cannot
   // let NaN/Infinity bypass a `< price` check before reaching a narrower service validator.
@@ -157,12 +162,12 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
       subscriptionAuthorityReceiptId: validatedSubscriptionAuthorityReceiptId(
         state.subscriptionAuthorityReceiptId,
       ),
-      rental: validatedRentalState(state.rental),
-      blackMarket: validatedBlackMarketOfferState(state.blackMarket),
+      rental,
+      blackMarket,
       matchesToNextLootboxes: validatedVipLootboxCountdown(state.matchesToNextLootboxes),
       collectedRewards: validatedCollectedRewards(state.collectedRewards),
       itemInventory: state.itemInventory ?? createInitialItemInventory(),
-      visualInventory: state.visualInventory ?? createInitialVisualInventory(),
+      visualInventory,
       cardInventory,
       cardCrafting,
       pvpWinStreak,
@@ -194,12 +199,12 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
     subscriptionAuthorityReceiptId: validatedSubscriptionAuthorityReceiptId(
       state.subscriptionAuthorityReceiptId,
     ),
-    rental: validatedRentalState(state.rental),
-    blackMarket: validatedBlackMarketOfferState(state.blackMarket),
+    rental,
+    blackMarket,
     matchesToNextLootboxes: validatedVipLootboxCountdown(state.matchesToNextLootboxes),
     collectedRewards: validatedCollectedRewards(state.collectedRewards),
     itemInventory: state.itemInventory ?? createInitialItemInventory(),
-    visualInventory: state.visualInventory ?? createInitialVisualInventory(),
+    visualInventory,
     cardInventory,
     cardCrafting,
     pvpWinStreak,

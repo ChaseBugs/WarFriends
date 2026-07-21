@@ -24,6 +24,9 @@ import { validatedFeatureIntroductions } from "./featureIntroductionAuthoritySer
 import { validatedSquadCreationsCount } from "./squadCreationAuthorityService";
 import { validatedInstantBattleShape } from "./instantBattleAuthorityService";
 import { validatedVideoAdRewardStateShape } from "./videoAdRewardAuthorityService";
+import { validatedRentalState } from "./rentalEntitlementService";
+import { validatedBlackMarketOfferState } from "./blackMarketEntitlementService";
+import { validatedVisualInventoryState } from "./visualEntitlementService";
 
 /**
  * Validate the common authority shared by every full progression-document replacement.
@@ -73,6 +76,12 @@ export function validatedProgressionSuccessor(
   validatedInstantBattleShape(next.instantBattle, progressionRevisionForRead(next.revision));
   validatedVideoAdRewardStateShape(current.videoAdRewards, progressionRevisionForRead(current.revision));
   validatedVideoAdRewardStateShape(next.videoAdRewards, progressionRevisionForRead(next.revision));
+  validatedRentalState(current.rental);
+  validatedRentalState(next.rental);
+  validatedBlackMarketOfferState(current.blackMarket);
+  validatedBlackMarketOfferState(next.blackMarket);
+  validatedVisualInventoryState(current.visualInventory);
+  validatedVisualInventoryState(next.visualInventory);
   validatedCoreProgressionBalances(current);
   validateProgressionRevisionAdvance(progressionRevisionForRead(current.revision), next.revision);
   validatedCoreProgressionBalances(next);
