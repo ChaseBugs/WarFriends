@@ -1,4 +1,5 @@
 import { ApiError, ApiErrorCode } from "../apiErrors";
+import { exactBinaryBoolean } from "./requestBooleanParsing";
 
 /**
  * Parse one integer carried by the recovered HTTP request contract without JavaScript's broad
@@ -34,8 +35,9 @@ export function requestedSquadJoinPolicy(req: Record<string, unknown>): number |
   if (req.JoinPolicy !== undefined) return exactSquadInteger(req.JoinPolicy, "JoinPolicy");
   if (req.IsPublic === undefined) return undefined;
 
-  const value = req.IsPublic;
-  if (value === 1 || value === "1" || value === true || value === "true") return 0;
-  if (value === 0 || value === "0" || value === false || value === "false") return 1;
-  throw new ApiError(ApiErrorCode.UnknownAction, "IsPublic must be an exact Boolean value.");
+  // Both recovered callers build IsPublic manually with the same literal "0"/"1" form
+  // contract as the match lifecycle flags. The server stores the newer JoinPolicy enum, whose
+  // value 0 means open and value 1 means request-only, so preserve the legacy inverse mapping
+  // only after the transport itself has been validated.
+  return exactBinaryBoolean(req.IsPublic, "IsPublic") ? 0 : 1;
 }

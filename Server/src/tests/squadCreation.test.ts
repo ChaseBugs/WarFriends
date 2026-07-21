@@ -46,7 +46,7 @@ test("squad admission settings reject coercion and preserve exact recovered inte
   assert.equal(exactSquadInteger(2_147_483_647, "RequiredMedals"), 2_147_483_647);
   assert.equal(exactSquadInteger(undefined, "RequiredMedals", 0), 0);
   assert.equal(requestedSquadJoinPolicy({ JoinPolicy: "2" }), 2);
-  assert.equal(requestedSquadJoinPolicy({ IsPublic: "true" }), 0);
+  assert.equal(requestedSquadJoinPolicy({ IsPublic: "1" }), 0);
   assert.equal(requestedSquadJoinPolicy({ IsPublic: false }), 1);
   assert.equal(validatedSquadJoinPolicy(undefined, 0), 0);
   assert.equal(validatedSquadJoinPolicy(2), 2);
@@ -65,8 +65,8 @@ test("squad admission settings reject coercion and preserve exact recovered inte
   ]) {
     assert.throws(() => exactSquadInteger(value, "RequiredMedals"), /must be an exact integer/);
   }
-  for (const value of [null, "", "yes", " true ", "TRUE", 2, {}, []]) {
-    assert.throws(() => requestedSquadJoinPolicy({ IsPublic: value }), /exact Boolean value/);
+  for (const value of [null, "", "yes", "true", "false", " true ", "TRUE", 0, 1, 2, {}, []]) {
+    assert.throws(() => requestedSquadJoinPolicy({ IsPublic: value }), /exact stock 0\/1 flag/);
   }
 });
 

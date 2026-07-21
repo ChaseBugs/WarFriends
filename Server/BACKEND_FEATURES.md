@@ -461,6 +461,8 @@ that same grammar when present. Action `138` accepts only C# `"True"`/`"False"` 
 `buyRentalDiscounted`. Replacement JSON clients may send actual Booleans for either contract.
 Numeric, lower-case, padded, null, array, and object aliases fail with action error `90` before
 they can select ranked, friendly, tutorial, Arena, free-trial, or permanent-purchase state.
+Legacy Squad create/update `IsPublic` uses the same exact `"0"`/`"1"`-or-JSON-Boolean parser
+before its inverse mapping to `JoinPolicy`; malformed aliases cannot change admission policy.
 
 ## Implementation order
 

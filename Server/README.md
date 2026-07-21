@@ -702,6 +702,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   JavaScript coercion. The recent-room retry lookup also compares every participant and payload
   field before replay; changing the map, game, region, version, or mission while retaining a room
   name creates a distinct challenge rather than returning stale invitation metadata.
+  Squad create/update likewise parses legacy `IsPublic` only as recovered `"0"`/`"1"` form text
+  or an actual JSON Boolean before mapping it to the inverse `JoinPolicy` enum. Numeric, lower-case,
+  padded, null, or container aliases cannot silently change a Squad between open and request-only.
   Direct DeathMatch challenges retain the stock Photon handoff: the inviter creates a named room
   carrying `battleID`, the inbox message transports room/region/version metadata, and actions
   `64`/`65` report `IsMatchMaking=0` after both clients join. The backend stores a separate,
