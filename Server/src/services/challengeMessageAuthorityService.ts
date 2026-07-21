@@ -39,6 +39,10 @@ function safeDate(value: unknown): value is Date {
   return value instanceof Date && Number.isSafeInteger(value.getTime()) && value.getTime() > 0;
 }
 
+function creationUnixSeconds(message: MessageDoc): number {
+  return Math.floor(message.createdAt.getTime() / 1_000);
+}
+
 function jsonObject(value: string): boolean {
   if (value.length === 0 || value.length > 262_144) return false;
   try {
@@ -82,7 +86,11 @@ export function validatedChallengeMessage(message: MessageDoc, now?: Date): Mess
     || !safeDate(message.expiresAt)
     || message.expiresAt.getTime() - message.createdAt.getTime() < MIN_CHALLENGE_TTL_MS
     || message.expiresAt.getTime() - message.createdAt.getTime() > MAX_CHALLENGE_TTL_MS
-    || message.messageId !== `${message.fromPlayerId}-${message.createdAt.getTime()}`
+    // HHFHFANGCEJ parses the final dash segment with Convert.ToInt32. Milliseconds overflow and
+    // make the stock client discard the complete inbox page, so challenge IDs use Unix seconds.
+    || creationUnixSeconds(message) <= 0
+    || creationUnixSeconds(message) > 2_147_483_647
+    || message.messageId !== `${message.fromPlayerId}-${creationUnixSeconds(message)}`
     || message.idempotencyKey !== undefined
     || message.rewardClaimed !== undefined
     || message.claimResponse !== undefined) invalid();

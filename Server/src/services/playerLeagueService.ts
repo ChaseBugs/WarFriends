@@ -220,7 +220,7 @@ function finishedMessage(
 ): PlayerLeagueFinishedMessage {
   const idempotencyKey = `player-league-finished:${formerLeagueId}:${member.id}`;
   return {
-    messageId: idempotencyKey,
+    messageId: `${idempotencyKey}-${Math.floor(createdAt.getTime() / 1_000)}`,
     idempotencyKey,
     toPlayerId: member.id,
     fromPlayerId: "system",

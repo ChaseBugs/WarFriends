@@ -8,7 +8,7 @@ const NOW = new Date(Date.UTC(2026, 6, 20, 12, 0, 0));
 
 function challenge(values: Partial<MessageDoc> = {}): MessageDoc {
   return {
-    messageId: `challenger-${NOW.getTime() - 1_000}`,
+    messageId: `challenger-${Math.floor(NOW.getTime() / 1_000) - 1}`,
     toPlayerId: "recipient",
     fromPlayerId: "challenger",
     fromName: "Challenger",
@@ -43,12 +43,21 @@ test("challenge authority binds recovered payload, identity, TTL, and acceptance
     () => validatedChallengeMessage(challenge({
       createdAt: new Date(NOW.getTime() + 1),
       expiresAt: new Date(NOW.getTime() + 61_000),
-      messageId: `challenger-${NOW.getTime() + 1}`,
+      messageId: `challenger-${Math.floor((NOW.getTime() + 1) / 1_000)}`,
     }), NOW),
     /Stored challenge message is invalid/,
   );
   assert.throws(
     () => validatedChallengeMessage(challenge({ payload: { ...valid.payload, Region: 11 } }), NOW),
+    /Stored challenge message is invalid/,
+  );
+  const afterInt32Time = new Date("2040-01-01T00:00:00Z");
+  assert.throws(
+    () => validatedChallengeMessage(challenge({
+      createdAt: afterInt32Time,
+      expiresAt: new Date(afterInt32Time.getTime() + 60_000),
+      messageId: `challenger-${Math.floor(afterInt32Time.getTime() / 1_000)}`,
+    }), new Date(afterInt32Time.getTime() + 1)),
     /Stored challenge message is invalid/,
   );
 });

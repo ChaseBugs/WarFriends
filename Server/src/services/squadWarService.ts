@@ -892,7 +892,7 @@ export async function settleSquadWarRound(roundId: string, now = new Date()): Pr
         // retries can neither omit the achievement nor increment it twice.
         await completeFirstSquadWarAchievement(member, session, now);
         const message: MessageDoc = {
-          messageId: `SquadWarEnd-${round.roundId}-${member.id}`,
+          messageId: `squad-war-end:${round.roundId}:${member.id}-${Math.floor(now.getTime() / 1_000)}`,
           idempotencyKey: `squad-war-end:${round.roundId}:${member.id}`,
           toPlayerId: member.id,
           fromPlayerId: "server",

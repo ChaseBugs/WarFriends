@@ -282,7 +282,7 @@ test("completing a tier advances ActiveTier and creates the exact claimable type
   assert.equal(message.messageType, 11);
   assert.deepEqual(claimableMessageReward(message), { Gold: 125, Warbucks: 0 });
   assert.deepEqual(toClientMessage(message), {
-    MessageId: { S: "squad-event-tier:one-tier:Alpha:0:member-1" },
+    MessageId: { S: "squad-event-tier:one-tier:Alpha:0:member-1-1774000300" },
     PlayerId: { S: "member-1" },
     MessageType: { N: "11" },
     Tier: { N: "0" },

@@ -4,6 +4,7 @@ import { mutateProgression } from "./progressionMutationService";
 import { findById } from "./playerService";
 import { getByName } from "./squadService";
 import type { MessageDoc } from "./socialService";
+import { validatedInboxMessageDocument } from "./inboxMessageAuthorityService";
 import {
   requestedSquadChatCursor,
   validatedSquadChatCursor,
@@ -64,9 +65,11 @@ export function buildSquadEventMessage(
   createdAt: Date,
 ): MessageDoc {
   const unixTimestamp = Math.floor(createdAt.getTime() / 1_000);
-  return {
+  const message: MessageDoc = {
     // HHFHFANGCEJ extracts the numeric suffix after the final dash as its timestamp.
-    messageId: `${actor.id}-${unixTimestamp}`,
+    // Keep the actor visible for diagnostics but namespace the ID away from a challenge sent by
+    // the same player during the same second. Only the numeric suffix is parsed by the base type.
+    messageId: `InformSquadLeader-${actor.id}-${unixTimestamp}`,
     toPlayerId: squad.founderId,
     fromPlayerId: actor.id,
     fromName: actor.player.accountName,
@@ -79,6 +82,7 @@ export function buildSquadEventMessage(
     accepted: false,
     createdAt,
   };
+  return validatedInboxMessageDocument(message, createdAt);
 }
 
 /**
@@ -115,7 +119,7 @@ export async function informSquadLeaderAboutEvent(
       { $setOnInsert: { ...message, idempotencyKey } },
       { upsert: true, returnDocument: "after" },
     );
-    if (result) return result as unknown as MessageDoc;
+    if (result) return validatedInboxMessageDocument(result as unknown as MessageDoc, now);
   } catch (error) {
     // Two server nodes can race on the first upsert. The unique idempotency index makes one
     // insert win; the loser converts duplicate-key into the already-created success below.
@@ -123,7 +127,7 @@ export async function informSquadLeaderAboutEvent(
   }
   const existing = await messages().findOne({ idempotencyKey });
   if (!existing) throw new ApiError(ApiErrorCode.InternalServerError, "Squad event notification was not persisted.");
-  return existing as unknown as MessageDoc;
+  return validatedInboxMessageDocument(existing as unknown as MessageDoc, now);
 }
 
 /**
@@ -146,7 +150,7 @@ export function buildDepositWarcardsMessage(
   }
 
   const unixTimestamp = Math.floor(createdAt.getTime() / 1_000);
-  return {
+  const message: MessageDoc = {
     // The stock local constructor uses DepositWarcards-{player name}-{timestamp}. Retaining the
     // same prefix makes diagnostics familiar, and the numeric suffix is required by the base
     // message parser for chronological presentation.
@@ -169,6 +173,7 @@ export function buildDepositWarcardsMessage(
     accepted: false,
     createdAt,
   };
+  return validatedInboxMessageDocument(message, createdAt);
 }
 
 /**
@@ -222,7 +227,7 @@ export async function notifySquadMemberToDeposit(
       { $setOnInsert: { ...message, idempotencyKey } },
       { upsert: true, returnDocument: "after" },
     );
-    if (result) return result as unknown as MessageDoc;
+    if (result) return validatedInboxMessageDocument(result as unknown as MessageDoc, now);
   } catch (error) {
     // A concurrent first request can lose the unique-index race. Treat that duplicate-key as a
     // successful retry and return the winner, while preserving every unrelated database error.
@@ -233,5 +238,5 @@ export async function notifySquadMemberToDeposit(
   if (!existing) {
     throw new ApiError(ApiErrorCode.InternalServerError, "War Card reminder was not persisted.");
   }
-  return existing as unknown as MessageDoc;
+  return validatedInboxMessageDocument(existing as unknown as MessageDoc, now);
 }

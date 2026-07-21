@@ -26,6 +26,7 @@ import {
   MIN_CHALLENGE_TTL_MS,
   validatedChallengeMessage,
 } from "./challengeMessageAuthorityService";
+import { validatedInboxMessageDocument } from "./inboxMessageAuthorityService";
 
 // Player discovery + messaging (BACKEND.md §2.3 "Social / messaging / hit list"). Search
 // and directory reads project players to the client's summary shape; messages are stored
@@ -105,7 +106,7 @@ export function buildSquadKickMessage(
   createdAt: Date,
 ): MessageDoc {
   const unixTimestamp = Math.floor(createdAt.getTime() / 1_000);
-  return {
+  const message: MessageDoc = {
     messageId: `SquadDemotion-${target.id}-${unixTimestamp}`,
     toPlayerId: target.id,
     fromPlayerId: actor.id,
@@ -129,6 +130,7 @@ export function buildSquadKickMessage(
     accepted: false,
     createdAt,
   };
+  return validatedInboxMessageDocument(message, createdAt);
 }
 
 function challengeTtlMilliseconds(): number {
@@ -167,16 +169,33 @@ async function enforceOutgoingMessageLimit(fromPlayerId: string, now: Date): Pro
 export async function sendMessage(fromPlayerId: string, fromName: string, toPlayerId: string, body: string): Promise<MessageDoc> {
   const recipient = await players().findOne({ id: toPlayerId }, { projection: { id: 1 } });
   if (!recipient) throw new ApiError(ApiErrorCode.PlayerNotFound, "Recipient not found.");
+  if (toPlayerId === fromPlayerId) throw new ApiError(ApiErrorCode.UnknownAction, "A player cannot message themselves.");
   const createdAt = new Date();
   await enforceOutgoingMessageLimit(fromPlayerId, createdAt);
   const normalizedBody = body.trim().slice(0, 500);
   requireModeratedText(normalizedBody, "Message");
+  const doc = buildDirectMessage(fromPlayerId, fromName, toPlayerId, normalizedBody, createdAt);
+  await messages().insertOne(doc);
+  return doc;
+}
+
+/** Build the type-27 row whose final numeric ID segment is parsed by the stock base constructor. */
+export function buildDirectMessage(
+  fromPlayerId: string,
+  fromName: string,
+  toPlayerId: string,
+  body: string,
+  createdAt: Date,
+  operationId = randomUUID(),
+): MessageDoc {
   const doc: MessageDoc = {
-    messageId: randomUUID(),
+    // HHFHFANGCEJ extracts the final dash segment and calls Convert.ToInt32. A bare UUID ends
+    // in hexadecimal and makes the entire inbox page fail to deserialize on the stock client.
+    messageId: `InGameMessage-${operationId}-${Math.floor(createdAt.getTime() / 1_000)}`,
     toPlayerId,
     fromPlayerId,
     fromName,
-    body: normalizedBody,
+    body,
     messageType: 27,
     payload: {},
     otherPlayerJson: "",
@@ -185,8 +204,7 @@ export async function sendMessage(fromPlayerId: string, fromName: string, toPlay
     accepted: false,
     createdAt,
   };
-  await messages().insertOne(doc);
-  return doc;
+  return validatedInboxMessageDocument(doc, createdAt);
 }
 
 export interface ChallengeMessageInput {
@@ -199,6 +217,21 @@ export interface ChallengeMessageInput {
   missionType?: string;
   numberOfMission?: number;
   missionData?: string;
+}
+
+function sameChallenge(message: MessageDoc, fromPlayerId: string, input: ChallengeMessageInput): boolean {
+  const payload = message.payload;
+  return message.messageType === 0
+    && message.fromPlayerId === fromPlayerId
+    && message.toPlayerId === input.challengedPlayerId
+    && payload.MapName === input.mapName
+    && payload.GameType === input.gameType
+    && payload.Region === input.region
+    && payload.roomName === input.roomName
+    && payload.clientVersion === input.clientVersion
+    && payload.MissionType === input.missionType
+    && payload.NumberOfMission === input.numberOfMission
+    && payload.MissionData === input.missionData;
 }
 
 /**
@@ -227,7 +260,7 @@ export async function sendChallenge(from: PlayerDocument, input: ChallengeMessag
   await enforceOutgoingMessageLimit(from.id, createdAt);
   const doc: MessageDoc = {
     // The recovered client strips the trailing numeric segment to recover challenger ID.
-    messageId: `${from.id}-${createdAt.getTime()}`,
+    messageId: `${from.id}-${Math.floor(createdAt.getTime() / 1_000)}`,
     toPlayerId: input.challengedPlayerId,
     fromPlayerId: from.id,
     fromName: from.player.accountName,
@@ -261,8 +294,20 @@ export async function sendChallenge(from: PlayerDocument, input: ChallengeMessag
     // protocol error before insertion; stored rows use the same validator without this translation.
     throw new ApiError(ApiErrorCode.UnknownAction, "Challenge payload is invalid.");
   }
-  await messages().insertOne(doc);
-  return doc;
+  try {
+    await messages().insertOne(doc);
+    return doc;
+  } catch (error) {
+    if ((error as { code?: number }).code !== 11000) throw error;
+    // A second process can race between the retry lookup and insert. Recipient+MessageId is
+    // unique because the stock Accept/Read/Ignore requests carry no stronger row identity.
+    const winner = await messages().findOne({ toPlayerId: doc.toPlayerId, messageId: doc.messageId });
+    if (winner) {
+      const validated = validatedChallengeMessage(winner as unknown as MessageDoc, createdAt)!;
+      if (sameChallenge(validated, from.id, input)) return validated;
+    }
+    throw new ApiError(ApiErrorCode.UnknownAction, "Another challenge was created in the same second. Try again.");
+  }
 }
 
 /** Encode a stable older-than boundary; recipient identity is deliberately not client-owned. */
@@ -334,7 +379,7 @@ export async function inboxPage(
   const typed = docs as unknown as MessageDoc[];
   // A future-dated invitation can pass MongoDB's expiry predicate. Validate every returned
   // challenge against the same page time so clock corruption cannot publish it as live authority.
-  for (const message of typed) validatedChallengeMessage(message, now);
+  for (const message of typed) validatedInboxMessageDocument(message, now);
   const hasMore = typed.length > safeLimit;
   const page = typed.slice(0, safeLimit);
   return {
@@ -349,17 +394,32 @@ export async function inbox(playerId: string, limit = 50): Promise<MessageDoc[]>
 }
 
 export async function markRead(playerId: string, messageId: string): Promise<void> {
-  await messages().updateOne({ messageId, toPlayerId: playerId }, { $set: { read: true } });
+  await withMongoTransaction(async (session) => {
+    const now = new Date();
+    const message = await messages().findOne({ messageId, toPlayerId: playerId }, { session }) as unknown as MessageDoc | null;
+    if (!message) return;
+    validatedInboxMessageDocument(message, now);
+    validatedInboxMessageDocument({ ...message, read: true }, now);
+    await messages().updateOne({ messageId, toPlayerId: playerId }, { $set: { read: true } }, { session });
+  });
 }
 
 export async function ignoreMessage(playerId: string, messageId: string): Promise<boolean> {
   // Recipient ownership is part of the update filter; one player can never hide a message
   // from another player's inbox by guessing its identifier.
-  const result = await messages().updateOne(
-    { messageId, toPlayerId: playerId },
-    { $set: { ignored: true, read: true } },
-  );
-  return result.matchedCount === 1;
+  return withMongoTransaction(async (session) => {
+    const now = new Date();
+    const message = await messages().findOne({ messageId, toPlayerId: playerId }, { session }) as unknown as MessageDoc | null;
+    if (!message) return false;
+    validatedInboxMessageDocument(message, now);
+    validatedInboxMessageDocument({ ...message, ignored: true, read: true }, now);
+    const result = await messages().updateOne(
+      { messageId, toPlayerId: playerId },
+      { $set: { ignored: true, read: true } },
+      { session },
+    );
+    return result.matchedCount === 1;
+  });
 }
 
 function canonicalProgression(state: PlayerProgressionState): PlayerProgressionState {
@@ -539,8 +599,7 @@ export function toClientMessage(doc: MessageDoc): Record<string, DynamoValue> {
   // Reward messages are durable economy authority, not merely presentation rows. Check their full
   // envelope before the generic numeric adapter can publish a believable but internally damaged
   // placement, reward, or replay receipt to the stock client.
-  validatedInboxRewardMessage(doc);
-  validatedChallengeMessage(doc);
+  validatedInboxMessageDocument(doc);
   const wire: Record<string, DynamoValue> = {
     MessageId: { S: doc.messageId },
     // HHFHFANGCEJ's local-message constructor assigns currentPlayer.id here, proving that

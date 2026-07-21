@@ -480,7 +480,7 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   The complete type-0 row is validated before insertion, duplicate replay, inbox publication,
   acceptance, and concurrent replay. It requires the exact recovered map/game/region/room/version
   payload and optional mission fields, bounded identities/text and parseable opponent snapshot, a
-  sender-and-created-millisecond-derived ID, and consistent accepted/read/timestamp state with no
+  sender-and-created-Unix-second-derived ID, and consistent accepted/read/timestamp state with no
   economy fields. The stored TTL must be ordered between one minute and seven days; the deployment
   setting is clamped to that range, and one captured application time rejects future or expired
   invitations independently of MongoDB TTL cleanup.
@@ -502,6 +502,19 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   client sends it back as `BeforeCursor` to read older pages. The cursor combines exact
   milliseconds with the message ID, page size remains server-bounded, and every query retains the
   authenticated recipient filter and immediate challenge-expiry rule.
+  Every supported durable row is routed through its complete family validator before pagination,
+  read/ignore mutation, or DynamoDB serialization. The recovered `HHFHFANGCEJ` constructor parses
+  the last dash-separated `MessageId` segment with `Convert.ToInt32`, so challenge, kick, Squad
+  Event, direct type-27, card-deposit, Squad War, Squad Event reward, and Player League IDs now end
+  in the same positive Int32-safe creation Unix second. The previous challenge-millisecond,
+  bare-UUID, and reward text-final forms are rejected because the stock client cannot deserialize
+  them. Types 3/21/27/28 additionally bind exact lifecycle flags, recovered payload fields,
+  sender/recipient and squad relationships, source-valid returned-card IDs, retry identities, and
+  non-future creation. Recipient plus message ID is unique because stock read/ignore/accept carries
+  no stronger row identity; an identical concurrent challenge replays its winner, while a different
+  same-second challenge collision asks the sender to retry. Read and ignore validate both the stored row and projected successor inside
+  one transaction; an unsupported or damaged row aborts the requested page instead of being
+  silently converted into believable generic content.
   The stock buffered `IgnoreMessage` path records a durable progression outbox entry beside
   `BufferId`, performs the recipient-filtered inbox update, and clears the entry afterward, so
   a process interruption is recoverable without allowing one player to hide another's message.
@@ -516,7 +529,8 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   Those three reward-message families are validated as complete durable snapshots before producer
   insertion, inbox publication, claim, or replay: exact type-specific payloads, bounded identities
   and text, safe creation time, non-challenge lifecycle, and bounded embedded JSON arrays are
-  required. A terminal marker must contain the exact payload-derived Gold response and be both read
+  required. Their parser-safe ID ends with creation Unix time and, when present, must equal the
+  idempotency key plus that suffix. A terminal marker must contain the exact payload-derived Gold response and be both read
   and ignored. Canonical safe-integer strings remain the explicit legacy DynamoDB-number migration,
   and only an absent older idempotency key is optional; malformed or extra authority fails closed.
 - **Moderation reports and sanctions**: authenticated player/cheater reports are validated, rate-limited,

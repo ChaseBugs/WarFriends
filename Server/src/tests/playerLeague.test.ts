@@ -293,7 +293,7 @@ test("player-league progression rejects corrupt tiers and permanent placement co
 
 test("PlayerLeagueFinished inbox messages use MMKFEEGDFKN's typed attribute contract", () => {
   const message: MessageDoc = {
-    messageId: "player-league-result",
+    messageId: "player-league-result-1704067200",
     toPlayerId: "league-player",
     fromPlayerId: "system",
     fromName: "Player League",
@@ -316,7 +316,7 @@ test("PlayerLeagueFinished inbox messages use MMKFEEGDFKN's typed attribute cont
   };
 
   assert.deepEqual(toClientMessage(message), {
-    MessageId: { S: "player-league-result" },
+    MessageId: { S: "player-league-result-1704067200" },
     PlayerId: { S: "league-player" },
     MessageType: { N: "23" },
     LeagueId: { N: "7" },

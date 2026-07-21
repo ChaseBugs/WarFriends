@@ -1234,6 +1234,11 @@ export async function connectMongo(): Promise<void> {
   // Stable cursor pagination adds messageId as a same-millisecond tie-breaker. Keep the older
   // index declaration compatible with existing deployments while this covering index rolls out.
   await messagesCollection.createIndex({ toPlayerId: 1, ignored: 1, createdAt: -1, messageId: -1 });
+  // Every stock inbox mutation is recipient-scoped and identifies one row by MessageId. The
+  // recovered protocol offers only second precision for challenge IDs, so this index converts a
+  // concurrent same-second collision into a recoverable duplicate-key result rather than leaving
+  // two rows that one Accept/Read/Ignore request could mutate ambiguously.
+  await messagesCollection.createIndex({ toPlayerId: 1, messageId: 1 }, { unique: true });
   // Outgoing-message rate limits use this index for a bounded rolling-window count.
   await messagesCollection.createIndex({ fromPlayerId: 1, createdAt: -1 });
   // Only expiring message types carry expiresAt. MongoDB's TTL monitor removes stale

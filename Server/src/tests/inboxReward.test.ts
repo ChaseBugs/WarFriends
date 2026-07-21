@@ -34,7 +34,7 @@ test("inbox Gold transition rejects malformed reward, balance, and revision auth
 
 test("reward inbox authority binds the payload to its terminal replay response", () => {
   const message: MessageDoc = {
-    messageId: "player-league-finished:league-1:player-1",
+    messageId: "player-league-finished:league-1:player-1-1784592000",
     idempotencyKey: "player-league-finished:league-1:player-1",
     toPlayerId: "player-1",
     fromPlayerId: "system",
@@ -74,5 +74,14 @@ test("reward inbox authority binds the payload to its terminal replay response",
       claimResponse: { Gold: 60, Warbucks: 0 },
     }),
     { Gold: 60, Warbucks: 0 },
+  );
+  const afterInt32Time = new Date("2040-01-01T00:00:00Z");
+  assert.throws(
+    () => validatedInboxRewardMessage({
+      ...message,
+      messageId: `${message.idempotencyKey}-${Math.floor(afterInt32Time.getTime() / 1_000)}`,
+      createdAt: afterInt32Time,
+    }),
+    /Stored inbox reward message is invalid/,
   );
 });

@@ -480,7 +480,7 @@ export function buildSquadEventTierRewardMessage(
 ): MessageDoc {
   const idempotencyKey = `squad-event-tier:${eventId}:${squadId}:${tierIndex}:${memberId}`;
   return {
-    messageId: idempotencyKey,
+    messageId: `${idempotencyKey}-${Math.floor(createdAt.getTime() / 1_000)}`,
     idempotencyKey,
     toPlayerId: memberId,
     fromPlayerId: "system",

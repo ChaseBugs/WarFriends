@@ -254,7 +254,7 @@ test("Squad Wars rewards only round-start members who still belong to the squad"
 
 test("SquadWarEnd message exposes the exact type-9 Dynamo contract and server-owned claim", () => {
   const message: MessageDoc = {
-    messageId: "SquadWarEnd-4-round-player-1",
+    messageId: "squad-war-end:4-round:player-1-1785110400",
     idempotencyKey: "squad-war-end:4-round:player-1",
     toPlayerId: "player-1",
     fromPlayerId: "server",

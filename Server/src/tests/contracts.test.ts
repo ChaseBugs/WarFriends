@@ -1480,7 +1480,7 @@ test("moderation report contract preserves recovered fields and requires authent
 
 test("challenge inbox adapter emits the DynamoDB attribute wrappers parsed by Unity", () => {
   const message: MessageDoc = {
-    messageId: "challenger-1700000000000",
+    messageId: "challenger-1700000000",
     toPlayerId: "target",
     fromPlayerId: "challenger",
     fromName: "Challenger",
@@ -1520,7 +1520,7 @@ test("challenge inbox adapter emits the DynamoDB attribute wrappers parsed by Un
   const corruptType = { ...message, messageType: Number.POSITIVE_INFINITY } as unknown as MessageDoc;
   assert.throws(
     () => toClientMessage(corruptType),
-    /DynamoDB numeric attribute authority is invalid/,
+    /Stored inbox message type is unsupported/,
   );
   assert.throws(
     () => toClientMessage({ ...message, expiresAt: undefined }),

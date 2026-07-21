@@ -247,7 +247,7 @@ test("offline squad kick message emits the exact MBACFNICJPL recovery contract",
     actor,
     target,
     "Test Squad",
-    ["AMMOCRATE", "AMMOCRATE", "TROOP_HEAL"],
+    ["AMMOCRATE", "AMMOCRATE", "HEALTHCRATE"],
     new Date(NOW * 1_000),
   );
 
@@ -264,7 +264,7 @@ test("offline squad kick message emits the exact MBACFNICJPL recovery contract",
     AdminName: { S: "Squad Leader" },
     AdminId: { S: actor.id },
     AdminLevel: { N: "28" },
-    KickedPlayerDepositedCards: { S: '["AMMOCRATE","AMMOCRATE","TROOP_HEAL"]' },
+    KickedPlayerDepositedCards: { S: '["AMMOCRATE","AMMOCRATE","HEALTHCRATE"]' },
   });
   assert.equal("SquadRank" in toClientMessage(message), false);
 });

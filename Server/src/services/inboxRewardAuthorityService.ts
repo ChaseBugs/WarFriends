@@ -62,9 +62,13 @@ function boundedJsonArray(value: unknown, maximumItems: number): boolean {
   }
 }
 
-function validCommonEnvelope(message: MessageDoc): boolean {
+function validCommonEnvelope(message: MessageDoc, now?: Date): boolean {
+  const unixSeconds = message.createdAt instanceof Date
+    ? Math.floor(message.createdAt.getTime() / 1_000)
+    : Number.NaN;
   return exactKeys(message, MESSAGE_KEYS)
-    && boundedText(message.messageId, 512)
+    // The page cursor carries this identity and has the same 256-character limit.
+    && boundedText(message.messageId, 256)
     && boundedText(message.toPlayerId, 256)
     && boundedText(message.fromPlayerId, 256)
     && boundedText(message.fromName, 256, true)
@@ -82,6 +86,16 @@ function validCommonEnvelope(message: MessageDoc): boolean {
     && message.createdAt instanceof Date
     && Number.isSafeInteger(message.createdAt.getTime())
     && message.createdAt.getTime() > 0
+    // The recovered base message constructor parses only the final dash-separated ID segment
+    // as Int32. Bind it to creation time so durable reward rows cannot break the entire page.
+    && Number.isSafeInteger(unixSeconds)
+    && unixSeconds > 0
+    && unixSeconds <= 2_147_483_647
+    && message.messageId.endsWith(`-${unixSeconds}`)
+    && (message.idempotencyKey === undefined || message.messageId === `${message.idempotencyKey}-${unixSeconds}`)
+    && (now === undefined || (now instanceof Date
+      && Number.isSafeInteger(now.getTime())
+      && now.getTime() >= message.createdAt.getTime()))
     && (message.idempotencyKey === undefined || boundedText(message.idempotencyKey, 512))
     && (message.rewardClaimed === undefined || typeof message.rewardClaimed === "boolean");
 }
@@ -150,9 +164,9 @@ function validateClaimMarker(message: MessageDoc, reward: number | null): void {
  * when present it is still bounded and control-free. Reward payload and terminal response are
  * never optional migrations: they must agree exactly or the message fails closed.
  */
-export function validatedInboxRewardMessage(message: MessageDoc): InboxRewardAuthority | null {
+export function validatedInboxRewardMessage(message: MessageDoc, now?: Date): InboxRewardAuthority | null {
   if (!message || typeof message !== "object" || !REWARD_MESSAGE_TYPES.has(message.messageType)) return null;
-  if (!validCommonEnvelope(message)) invalid();
+  if (!validCommonEnvelope(message, now)) invalid();
   const reward = message.messageType === 9
     ? type9Reward(message)
     : message.messageType === 11
