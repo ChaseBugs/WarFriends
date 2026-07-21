@@ -719,7 +719,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   to these typed messages.
 
 - **Leaderboards / player leagues**: `GetPlayersByExperience` and squad boards remain
-  MongoDB-authoritative with opportunistic Redis warming. `GetPlayerLeaguesDivision` now
+  MongoDB-authoritative with opportunistic Redis warming. The experience cache validates complete
+  public rows first, then atomically replaces its bounded sorted-set snapshot and applies one exact
+  1-3,600-second startup TTL. Historical top-player IDs cannot accumulate while steady traffic
+  keeps the cache alive, and Redis failure never blocks the MongoDB response.
+  `GetPlayerLeaguesDivision` now
   materializes a stable UTC season, ranks the exact division by weekly medals, and returns
   `LeagueEvaluation`; confirmed PvP consumes placement; `FinishPlayerLeague` atomically
   promotes/relegates all members and queues the recovered type-23 result/reward messages. The same

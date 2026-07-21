@@ -191,6 +191,12 @@ case-insensitive `true`/`false` literals or a documented missing-value default a
 padded, numeric, or misspelled settings stop startup instead of silently turning a safety worker
 off or allowing rolling-deployment nodes to run different coordination modes.
 
+The optional Redis experience leaderboard is now a complete bounded snapshot rather than an
+append-only warm-up. Every Mongo-backed public row validates first; one Lua operation deletes the
+old set, writes at most the current bounded result, and applies the immutable exact 1-3,600-second
+TTL. Duplicate/control-character identities and non-finite scores fail before Redis I/O, while an
+outage merely skips warming and never blocks the authoritative MongoDB leaderboard response.
+
 Squad War maintenance now widens its round/season queries beyond ordinary due dates so malformed or
 missing BSON dates and unknown statuses enter validation instead of remaining permanently invisible.
 Both selected batches validate before the first settlement write; any non-settled round blocks its

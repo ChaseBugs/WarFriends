@@ -1,7 +1,6 @@
 import { players, squads, type PlayerDocument } from "../db";
 import { RedisKeys } from "../constants";
-import { config } from "../config";
-import { redisZRevRange, redisZAdd } from "../redis";
+import { redisReplaceSortedSet, redisZRevRange } from "../redis";
 import { progressionForPlayer } from "./playerStateService";
 import { integerNumberAttribute as numberAttribute } from "./dynamoNumberAttributeService";
 import {
@@ -11,6 +10,7 @@ import {
 import { buildDatabaseSquad } from "./squadWireService";
 import { serializeWarArenaData } from "./warArenaContract";
 import { validatedSquadDocument } from "./squadAuthorityService";
+import { leaderboardCachePolicy } from "./leaderboardCachePolicyService";
 
 // MongoDB is authoritative; Redis is only an opportunistic rank cache. Wire conversion is
 // performed here because the experience leaderboard uses FHIPGDADNFG, which has different
@@ -56,12 +56,17 @@ export function buildPlayerLeaderboardItem(doc: PlayerDocument, position: number
 export async function topPlayersByExperience(limit = 100, country?: string): Promise<PlayerLeaderboardItem[]> {
   const filter = country ? { "player.country": country } : {};
   const docs = await players().find(filter).sort({ experience: -1 }).limit(limit).toArray();
+  const items = docs.map((doc, index) => buildPlayerLeaderboardItem(doc, index + 1));
   if (!country) {
-    // Cache warming is deliberately fire-and-forget: a Redis outage must never make the
-    // authoritative MongoDB leaderboard unavailable.
-    for (const doc of docs) void redisZAdd(RedisKeys.leaderboardExperience, doc.experience, doc.id);
+    // Validate every Mongo-backed public row before it can enter the cache, then atomically replace
+    // rather than append. A Redis outage must still never make the authoritative result unavailable.
+    void redisReplaceSortedSet(
+      RedisKeys.leaderboardExperience,
+      docs.map((doc) => ({ score: doc.experience, member: doc.id })),
+      leaderboardCachePolicy().ttlSeconds,
+    );
   }
-  return docs.map((doc, index) => buildPlayerLeaderboardItem(doc, index + 1));
+  return items;
 }
 
 /**
@@ -114,5 +119,3 @@ export async function cachedTopPlayerIds(limit = 100): Promise<string[] | null> 
   for (let i = 0; i < flat.length; i += 2) ids.push(flat[i]!);
   return ids;
 }
-
-export const leaderboardCacheTtl = config.redisLeaderboardTtl;

@@ -233,3 +233,43 @@ export async function redisZRevRange(key: string, count: number): Promise<string
     return null;
   }
 }
+
+export interface RedisSortedSetEntry {
+  readonly score: number;
+  readonly member: string;
+}
+
+/**
+ * Atomically replace one bounded, expiring cache snapshot.
+ *
+ * Repeated ZADD warm-ups retain members that have fallen out of the current top-N set, and merely
+ * refreshing a key TTL never removes that historical tail while traffic remains steady. DEL,
+ * bounded ZADD, and EXPIRE therefore execute in one Redis script so readers see either the old
+ * complete snapshot or the new complete snapshot, never a partially rebuilt set.
+ */
+export async function redisReplaceSortedSet(
+  key: string,
+  entries: readonly RedisSortedSetEntry[],
+  ttlSeconds: number,
+): Promise<boolean> {
+  if (!Number.isSafeInteger(ttlSeconds) || ttlSeconds < 1 || ttlSeconds > 86_400
+    || entries.length > 1_000
+    || new Set(entries.map((entry) => entry.member)).size !== entries.length
+    || entries.some((entry) => !Number.isFinite(entry.score)
+      || entry.member.length < 1
+      || entry.member.length > 256
+      || /\p{Cc}/u.test(entry.member))) {
+    throw new Error("Redis sorted-set snapshot is invalid.");
+  }
+  const result = await redisEval(
+    `redis.call('DEL', KEYS[1])
+     for index = 2, #ARGV, 2 do
+       redis.call('ZADD', KEYS[1], ARGV[index], ARGV[index + 1])
+     end
+     if #ARGV > 1 then redis.call('EXPIRE', KEYS[1], ARGV[1]) end
+     return (#ARGV - 1) / 2`,
+    [key],
+    [ttlSeconds, ...entries.flatMap((entry) => [entry.score, entry.member])],
+  );
+  return typeof result === "number";
+}
