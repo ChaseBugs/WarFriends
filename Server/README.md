@@ -511,7 +511,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   bounded safe counter, ordered safe dates, a non-future update, and the exact two-hour storage
   interval are required. Rejected traffic saturates at one global denial sentinel while the original
   one-hour window start remains unchanged, preventing both unsafe counter growth and a spam-extended
-  logical lock. The submitted
+  logical lock. The atomic ten-minute retry winner is also validated before its embedded report is
+  inserted into the moderation queue. Its exact HMAC identity, open-report fields, UUID, four
+  semantic identity dimensions, bounded client claims, creation/retention dates, and optional
+  six-hour two-participant ranked-match snapshot must agree; a concurrent winner may preserve its
+  own message and evidence but cannot redirect the reporter, target, type, or report family. The submitted
   evidence remains a claim until authoritative combat validation exists. Independently authenticated
   admin routes can issue, inspect, and revoke durable permanent or temporary account bans. Issue and
   revoke operations are idempotent, one active-ban index is race-safe across processes, expired bans

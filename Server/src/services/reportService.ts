@@ -1,13 +1,175 @@
 import { createHmac, randomUUID } from "crypto";
-import { matches, reportDeduplications, reports } from "../db";
+import {
+  matches,
+  reportDeduplications,
+  reports,
+  type ReportDeduplicationDocument,
+} from "../db";
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import { config } from "../config";
+import { League } from "../constants";
 import { findById } from "./playerService";
 import type { MatchDoc, MatchPlayer } from "./matchService";
 import { reserveReportSubmission } from "./reportRateLimitService";
 
 const DUPLICATE_WINDOW_MS = 10 * 60 * 1000;
 const MATCH_EVIDENCE_LOOKBACK_MS = 6 * 60 * 60 * 1000;
+const REPORT_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
+const CREATION_REPORT_KEYS = new Set([
+  "reportId", "reporterPlayerId", "kind", "reportedPlayerId", "reportType", "message", "evidence",
+  "status", "matchEvidence", "createdAt",
+]);
+const DEDUPLICATION_KEYS = new Set(["_id", "key", "report", "reportCreatedAt", "expiresAt"]);
+const MATCH_EVIDENCE_KEYS = new Set([
+  "source", "matchId", "state", "createdAt", "endedAt", "reporter", "reportedPlayer", "winnerId",
+  "cancelReason", "resultClaims", "relayedCardPlays", "usedCardClaims", "combatValidated",
+]);
+const MATCH_PLAYER_KEYS = new Set(["playerId", "name", "armyPower", "leagueTier"]);
+const REPORT_EVIDENCE_KEYS = new Set([
+  "MyArmyPower", "MyRank", "OpponentArmyPower", "OpponentRank", "TimeOfMatch",
+]);
+const MATCH_STATES = new Set<MatchDoc["state"]>(["active", "settling", "finished", "cancelled"]);
+
+function plainRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value) && !(value instanceof Date);
+}
+
+function exactKeys(value: Record<string, unknown>, allowed: Set<string>): boolean {
+  return Object.keys(value).every((key) => allowed.has(key));
+}
+
+function safeDate(value: unknown): value is Date {
+  return value instanceof Date && Number.isSafeInteger(value.getTime()) && value.getTime() >= 0;
+}
+
+function boundedIdentity(value: unknown, maximum = 128): value is string {
+  return typeof value === "string" && value.length >= 1 && value.length <= maximum && !/\p{Cc}/u.test(value);
+}
+
+function validMatchPlayer(value: unknown, expectedId: string): value is MatchPlayer {
+  if (!plainRecord(value) || !exactKeys(value, MATCH_PLAYER_KEYS)) return false;
+  return value.playerId === expectedId
+    && boundedIdentity(value.playerId)
+    && boundedIdentity(value.name, 64)
+    && typeof value.armyPower === "number"
+    && Number.isFinite(value.armyPower)
+    && value.armyPower >= 0
+    && typeof value.leagueTier === "number"
+    && Number.isSafeInteger(value.leagueTier)
+    && value.leagueTier >= League.NoLeague
+    && value.leagueTier <= League.Champion;
+}
+
+function validClaimMap(value: unknown, participantIds: Set<string>, arrays: boolean): boolean {
+  if (!plainRecord(value) || Object.keys(value).some((key) => !participantIds.has(key))) return false;
+  if (arrays && Object.keys(value).length !== participantIds.size) return false;
+  return Object.values(value).every((claim) => arrays
+    ? Array.isArray(claim)
+      && claim.length <= 16
+      && claim.every((cardId) => typeof cardId === "string" && cardId.length <= 128)
+    : typeof claim === "string" && claim.length <= 128);
+}
+
+function validAuthoritativeMatchEvidence(
+  value: unknown,
+  report: PlayerReportDocument,
+): value is AuthoritativeMatchEvidence {
+  if (!plainRecord(value) || !exactKeys(value, MATCH_EVIDENCE_KEYS)) return false;
+  const participantIds = new Set([report.reporterPlayerId, report.reportedPlayerId]);
+  if (value.source !== "ranked-match"
+    || !boundedIdentity(value.matchId)
+    || !MATCH_STATES.has(value.state as MatchDoc["state"])
+    || value.combatValidated !== false
+    || !safeDate(value.createdAt)
+    || value.createdAt.getTime() > report.createdAt.getTime()
+    || report.createdAt.getTime() - value.createdAt.getTime() > MATCH_EVIDENCE_LOOKBACK_MS
+    || !validMatchPlayer(value.reporter, report.reporterPlayerId)
+    || !validMatchPlayer(value.reportedPlayer, report.reportedPlayerId)
+    || !validClaimMap(value.resultClaims, participantIds, false)
+    || !validClaimMap(value.relayedCardPlays, participantIds, true)
+    || !validClaimMap(value.usedCardClaims, participantIds, true)
+    || (value.endedAt !== undefined && (!safeDate(value.endedAt)
+      || value.endedAt.getTime() < value.createdAt.getTime()
+      || value.endedAt.getTime() > report.createdAt.getTime()))
+    || (value.winnerId !== undefined && !participantIds.has(value.winnerId as string))
+    || (value.cancelReason !== undefined
+      && (typeof value.cancelReason !== "string" || value.cancelReason.length > 64))) return false;
+  return true;
+}
+
+/** Validate the immutable creation snapshot stored inside the retry-deduplication row. */
+export function validatedReportCreation(
+  report: PlayerReportDocument,
+  now: Date,
+): PlayerReportDocument {
+  const raw = report as unknown as Record<string, unknown>;
+  const evidence = report?.evidence as unknown;
+  if (!plainRecord(report)
+    || !exactKeys(raw, CREATION_REPORT_KEYS)
+    || !REPORT_ID_PATTERN.test(report.reportId)
+    || !boundedIdentity(report.reporterPlayerId)
+    || !boundedIdentity(report.reportedPlayerId)
+    || report.reporterPlayerId === report.reportedPlayerId
+    || (report.kind !== "player" && report.kind !== "cheat")
+    || !Number.isSafeInteger(report.reportType)
+    || report.reportType < 0
+    || report.reportType > 100
+    || typeof report.message !== "string"
+    || report.message.length > 1000
+    || (report.kind === "player" && report.message.length < 1)
+    || !plainRecord(evidence)
+    || !exactKeys(evidence, REPORT_EVIDENCE_KEYS)
+    || Object.values(evidence).some((item) => typeof item !== "string" || item.length > 64)
+    || report.status !== "open"
+    || !safeDate(report.createdAt)
+    || !safeDate(now)
+    || report.createdAt.getTime() > now.getTime()
+    || (report.matchEvidence !== undefined && !validAuthoritativeMatchEvidence(report.matchEvidence, report))) {
+    throw new Error("Stored report creation authority is invalid.");
+  }
+  return report;
+}
+
+/**
+ * Bind the complete retry winner to its semantic HMAC identity and exact logical/TTL interval.
+ * The embedded report may differ from a concurrent candidate's message or evidence, but the four
+ * identity dimensions must match; otherwise damaged durable data could publish a different report.
+ */
+export function validatedReportDeduplication(
+  state: ReportDeduplicationDocument,
+  candidate: PlayerReportDocument,
+): PlayerReportDocument {
+  validatedReportCreation(candidate, candidate.createdAt);
+  const raw = state as unknown as Record<string, unknown>;
+  const stored = state?.report as unknown as PlayerReportDocument;
+  const expectedKey = reportDeduplicationKey(
+    candidate.reporterPlayerId,
+    candidate.reportedPlayerId,
+    candidate.reportType,
+    candidate.kind,
+  );
+  if (!plainRecord(state)
+    || !exactKeys(raw, DEDUPLICATION_KEYS)
+    || state.key !== expectedKey
+    || !/^[0-9a-f]{64}$/u.test(state.key)
+    || !safeDate(state.reportCreatedAt)
+    || !safeDate(state.expiresAt)) {
+    throw new Error("Stored report deduplication authority is invalid.");
+  }
+  validatedReportCreation(stored, candidate.createdAt);
+  const age = candidate.createdAt.getTime() - stored.createdAt.getTime();
+  if (stored.reporterPlayerId !== candidate.reporterPlayerId
+    || stored.reportedPlayerId !== candidate.reportedPlayerId
+    || stored.reportType !== candidate.reportType
+    || stored.kind !== candidate.kind
+    || state.reportCreatedAt.getTime() !== stored.createdAt.getTime()
+    || age < 0
+    || age >= DUPLICATE_WINDOW_MS
+    || state.expiresAt.getTime() - state.reportCreatedAt.getTime() !== DUPLICATE_WINDOW_MS * 2) {
+    throw new Error("Stored report deduplication authority is invalid.");
+  }
+  return stored;
+}
 
 export interface PlayerReportInput {
   reportedPlayerId: string;
@@ -207,7 +369,7 @@ async function persistDeduplicatedReport(
       { upsert: true, returnDocument: "after" },
     );
     if (!winner?.report) throw new Error("Report deduplication winner was not persisted.");
-    const stored = winner.report as unknown as PlayerReportDocument;
+    const stored = validatedReportDeduplication(winner, candidate);
     await reports().updateOne({ reportId: stored.reportId }, { $setOnInsert: stored }, { upsert: true });
     return stored;
   } catch (error) {
