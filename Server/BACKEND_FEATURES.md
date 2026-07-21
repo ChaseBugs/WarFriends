@@ -129,7 +129,10 @@ heartbeat for that UUID, and startup plus periodic orphan recovery cancels only 
 is confirmed dead. Live peer-owned matches survive rolling node starts; an unavailable Redis
 liveness read is treated as unknown and never as permission to cancel gameplay. A Redis-selected
 node must now commit its first coordinator heartbeat before startup can proceed, so it cannot create
-durable matches naming an owner that peers have never observed. Presence repair
+durable matches naming an owner that peers have never observed. Orphan recovery reads coordinator
+owner and PTTL atomically: only the exact owner with one to 30,000 milliseconds left is alive, the
+exact missing tuple is dead, and malformed/non-expiring/overlong/incoherent state is unknown rather
+than permanent match authority. Presence repair
 excludes every participant still protected by any active or settling match.
 
 `SetPlayerStatus` now preserves mode compatibility while protecting ranked admission: the active

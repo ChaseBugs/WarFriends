@@ -480,7 +480,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   orphans from live peer-owned matches. When Redis coordination is selected, startup must commit
   that node's first heartbeat before it may create any durable match naming the owner. Startup and
   periodic recovery cancel confirmed orphans and repair only unprotected `InGame` profiles; an
-  unknown Redis observation is conservatively retried.
+  unknown Redis observation is conservatively retried. Recovery reads owner and PTTL in one Lua
+  operation: only the exact coordinator with a remaining one-to-30-second lease is alive, the exact
+  missing tuple is dead, and malformed, non-expiring, overlong, or incoherent state is unknown.
   Distributed `JoinMatch` writes authenticated participant membership idempotently to MongoDB. The
   request that atomically completes the assigned pair writes `roomStartedAt` once and fans a
   MongoDB-validated `MatchStart` to both nodes; late join-timeout callbacks cannot cancel it.

@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { selectOrphanMatchIds } from "../services/matchService";
-import { requireInitialPvpCoordinatorHeartbeat } from "../services/pvpCoordinatorService";
+import {
+  parsePvpCoordinatorLivenessObservation,
+  requireInitialPvpCoordinatorHeartbeat,
+} from "../services/pvpCoordinatorService";
 
 test("distributed PvP startup requires its first coordinator ownership heartbeat", () => {
   assert.doesNotThrow(() => requireInitialPvpCoordinatorHeartbeat(true));
@@ -9,6 +12,22 @@ test("distributed PvP startup requires its first coordinator ownership heartbeat
     () => requireInitialPvpCoordinatorHeartbeat(false),
     /heartbeat could not be established/i,
   );
+});
+
+test("orphan recovery accepts only the exact expiring coordinator owner", () => {
+  assert.equal(parsePvpCoordinatorLivenessObservation([1, "node-a", 30_000], "node-a"), true);
+  assert.equal(parsePvpCoordinatorLivenessObservation([0, "", -2], "node-a"), false);
+  for (const malformed of [
+    undefined,
+    [1, "node-b", 30_000],
+    [1, "node-a", -1],
+    [1, "node-a", 0],
+    [1, "node-a", 30_001],
+    [0, "node-a", -2],
+    [0, "", -1],
+  ]) {
+    assert.equal(parsePvpCoordinatorLivenessObservation(malformed, "node-a"), null);
+  }
 });
 
 test("orphan recovery preserves live and unknown peer coordinators", async () => {

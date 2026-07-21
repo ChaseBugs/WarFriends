@@ -1,9 +1,16 @@
 import { RedisKeys } from "../constants";
-import { isRedisAvailable, redisDel, redisGet, redisSet } from "../redis";
+import { isRedisAvailable, redisDel, redisEval, redisSet } from "../redis";
 import logger from "../utils/logger";
 
 const heartbeatTtlSeconds = 30;
 const heartbeatIntervalMs = 10_000;
+const observeHeartbeatScript = `
+local value = redis.call('GET', KEYS[1])
+if not value then
+  return {0, '', -2}
+end
+return {1, value, redis.call('PTTL', KEYS[1])}
+`;
 
 export interface PvpCoordinatorHeartbeat {
   stop: () => Promise<void>;
@@ -12,6 +19,28 @@ export interface PvpCoordinatorHeartbeat {
 /** A Redis-selected node must publish its owner lease before it can create durable match rows. */
 export function requireInitialPvpCoordinatorHeartbeat(written: boolean): void {
   if (!written) throw new Error("Initial PvP coordinator heartbeat could not be established.");
+}
+
+/**
+ * Interpret one atomic owner/PTTL observation. Only the exact coordinator identity with the
+ * bounded remaining lease proves a live node. Corrupt or non-expiring keys remain unknown so
+ * orphan recovery cannot cancel or preserve matches based on JavaScript truthiness alone.
+ */
+export function parsePvpCoordinatorLivenessObservation(
+  result: unknown,
+  instanceId: string,
+): boolean | null {
+  if (!Array.isArray(result) || result.length !== 3) return null;
+  const present = Number(result[0]);
+  const value = result[1];
+  const ttlMilliseconds = Number(result[2]);
+  if (present === 0) return value === "" && ttlMilliseconds === -2 ? false : null;
+  if (present !== 1
+    || value !== instanceId
+    || !Number.isInteger(ttlMilliseconds)
+    || ttlMilliseconds < 1
+    || ttlMilliseconds > heartbeatTtlSeconds * 1_000) return null;
+  return true;
 }
 
 /**
@@ -45,9 +74,6 @@ export async function startPvpCoordinatorHeartbeat(instanceId: string): Promise<
 /** Redis is a liveness oracle only; MongoDB remains authoritative for match state and ownership. */
 export async function isPvpCoordinatorAlive(instanceId: string): Promise<boolean | null> {
   if (!isRedisAvailable()) return null;
-  const value = await redisGet(RedisKeys.pvpCoordinator(instanceId));
-  // `null` is an authoritative missing key; `undefined` means Redis could not answer. Recovery is
-  // conservative on an unknown observation so a transient outage never cancels a healthy match.
-  if (value === undefined) return null;
-  return value === instanceId;
+  const result = await redisEval(observeHeartbeatScript, [RedisKeys.pvpCoordinator(instanceId)], []);
+  return parsePvpCoordinatorLivenessObservation(result, instanceId);
 }
