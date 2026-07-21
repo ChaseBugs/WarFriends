@@ -299,6 +299,12 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   code, and locale is a trimmed bounded language tag. Request handlers still normalize new input,
   but durable lower-case/padded/free-text damage is rejected instead of silently rewritten by a
   later country, language, or device-registration action.
+  The same boundary proves DTO-only public scalars before gameplay can consume them: `Level` must
+  select one exact 4.9.5 rank row; Reputation is a nonnegative signed-client integer; SendLogs is
+  exactly 0/1; awaiting-Squad state is Boolean; LastAction is a nonnegative signed-int Unix second;
+  and the War Arena crown tuple uses only empty/bronze/silver/gold/flawless plus a signed-int expiry.
+  This makes malformed state fail before squad-card arithmetic, level-gated economy selection,
+  presence, or public projection rather than relying on the final numeric wire adapter.
   The same profile proof restricts `PlayerStatus` to Offline/Online/InGame and `SquadRank` to the
   five recovered values before authentication, publication, or mutation; a heartbeat must never
   overwrite an unknown stored status and conceal durable damage.

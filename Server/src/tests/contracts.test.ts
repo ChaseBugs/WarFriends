@@ -369,7 +369,7 @@ test("DynamoDB numeric wire projection rejects corrupt profile authority instead
   corruptPublicProfile.player.reputation = Number.NaN;
   assert.throws(
     () => buildDatabasePlayer(corruptPublicProfile),
-    /DynamoDB numeric attribute authority is invalid/,
+    /Stored player public identity is invalid/,
   );
 
   const corruptPrivateBoot = contractPlayer();
@@ -384,7 +384,7 @@ test("DynamoDB numeric wire projection rejects corrupt profile authority instead
   unsafeProjection.player.sendLogsValue = Number.MAX_SAFE_INTEGER + 1;
   assert.throws(
     () => buildPlayerData(unsafeProjection),
-    /DynamoDB numeric attribute authority is invalid/,
+    /Stored player public identity is invalid/,
   );
 });
 
@@ -483,6 +483,23 @@ test("indexed player profile mirrors must match before client-visible projection
     () => validatedPlayerProfileLookup(incompleteStoredRouting),
     /Stored player public identity is invalid/,
   );
+
+  for (const [field, value] of [
+    ["level", 99],
+    ["reputation", -1],
+    ["sendLogsValue", 2],
+    ["awaitingSquadMember", 1],
+    ["lastAction", Number.POSITIVE_INFINITY],
+    ["visualType", "platinum"],
+    ["visualTimestamp", 2_147_483_648],
+  ] as const) {
+    const invalidPublicScalar = contractPlayer();
+    (invalidPublicScalar.player as unknown as Record<string, unknown>)[field] = value;
+    assert.throws(
+      () => validatedPlayerProfileLookup(invalidPublicScalar),
+      /Stored player public identity is invalid/,
+    );
+  }
 
   const indexedDisconnectedSentinel = contractPlayer();
   indexedDisconnectedSentinel.facebookId = "-1";

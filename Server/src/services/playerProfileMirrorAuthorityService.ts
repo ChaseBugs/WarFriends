@@ -15,6 +15,7 @@ import {
 import {
   validatedPhotonRoutingSnapshot,
 } from "./regionPingService";
+import { validatePlayerPublicScalarAuthority } from "./playerPublicScalarAuthorityService";
 
 /**
  * Validate the public identity fields that are not duplicated at MongoDB's document root.
@@ -42,6 +43,7 @@ function validatePlayerPublicIdentityFields(player: PlayerDocument): void {
     // bypassed write and accidentally turn damaged durable metadata into believable authority.
     validatedPlayerCountry(dto.country);
     validatedPlayerLocale(dto.locale);
+    validatePlayerPublicScalarAuthority(dto);
     // Action 140 validates new measurements, but legacy imports and bypassed writers can still
     // place malformed routing hints in MongoDB. Prove the entire stored snapshot here so an
     // unrelated heartbeat cannot overwrite connection metadata and hide pre-existing damage.
