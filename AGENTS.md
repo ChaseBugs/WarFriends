@@ -210,6 +210,7 @@
 
 ## Change discipline
 
+- Keep `npm run build` destructive only toward the generated `Server/dist` tree and clean that tree before TypeScript emission. Source renames/deletions must never leave stale compiled handlers or ghost `.test.js` files that can run alongside current sources and produce false verification counts.
 - Run `npm test` from `Server` for backend changes.
 - Update `Server/BACKEND_FEATURES.md` and `Server/README.md` when backend behavior or a documented gap changes.
 - Keep unresolved backend gaps explicit. Do not mark a feature complete while its authoritative source or external provider integration is missing.

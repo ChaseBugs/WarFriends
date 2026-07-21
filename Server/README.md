@@ -21,10 +21,16 @@ cp .env.example .env      # adjust MONGO_URL / REDIS_URL if needed
 npm install
 npm run dev               # ts-node-dev, watch mode
 # or: npm run build && npm start
+# build first removes only generated dist/ output, preventing stale renamed modules/tests
 # optional explicit catalog publication: npm run sync:catalog
 # read-only legacy squad/player integrity scan: npm run audit:squads
 # apply only unambiguous mirror/card repairs: npm run repair:squads
 ```
+
+`npm run build` executes the cross-platform Node `clean` script before TypeScript emission and
+removes only `Server/dist`. This prevents renamed/deleted source files from surviving as stale
+runtime modules or duplicate `node --test` inputs; the test count therefore reflects the current
+`src/tests` tree instead of historical compiler output.
 
 Squad Events are disabled by default because the retired production live-ops schedule was not
 recovered. Set `SQUAD_EVENT_CONFIG_PATH` only to an operator-reviewed file following

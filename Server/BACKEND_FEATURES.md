@@ -245,6 +245,10 @@ Missing fields, whitespace/control characters, alternate-case identity aliases, 
 and extra keys fail before credential lookup; authentication still provides the cryptographic proof
 and the successful socket identity remains immutable across its connection lifetime.
 
+The TypeScript build now removes only generated `Server/dist` output before emission. Renamed or
+deleted source modules/tests cannot survive as stale runtime code or duplicate test inputs, so
+`npm test` counts and executes only the current source tree rather than historical compiler output.
+
 Stock `BattleId` and replacement `MatchId` now share one exact alias boundary for start and result
 routes. Every present alias must be a string and simultaneous aliases must be identical; explicit
 null, non-string, blank-versus-nonblank, or conflicting IDs cannot choose a lifecycle by nullish
