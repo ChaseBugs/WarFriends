@@ -6,6 +6,7 @@ import {
 } from "./progressionRevisionAuthorityService";
 import { validatedProgressionSchemaVersion } from "./progressionSchemaAuthorityService";
 import { validatedVipTimeline } from "./vipEntitlementService";
+import { validatedSubscriptionAuthorityReceiptId } from "./subscriptionBenefitService";
 
 /**
  * Validate the common authority shared by every full progression-document replacement.
@@ -23,6 +24,8 @@ export function validatedProgressionSuccessor(
   validatedProgressionSchemaVersion(next.schemaVersion);
   validatedVipTimeline(current.vipStart, current.vipExpiration);
   validatedVipTimeline(next.vipStart, next.vipExpiration);
+  validatedSubscriptionAuthorityReceiptId(current.subscriptionAuthorityReceiptId);
+  validatedSubscriptionAuthorityReceiptId(next.subscriptionAuthorityReceiptId);
   validatedCoreProgressionBalances(current);
   validateProgressionRevisionAdvance(progressionRevisionForRead(current.revision), next.revision);
   validatedCoreProgressionBalances(next);

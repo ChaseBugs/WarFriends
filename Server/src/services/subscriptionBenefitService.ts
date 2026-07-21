@@ -6,6 +6,23 @@ export const SUBSCRIPTION_UPGRADE_TIME_MULTIPLIER = Math.fround(0.8);
 
 /** Largest Unix-second value that can still be represented by JavaScript's `Date`. */
 const MAX_DATE_UNIX_SECONDS = 8_640_000_000_000;
+const SUBSCRIPTION_AUTHORITY_RECEIPT_PATTERN = /^[0-9a-f]{64}$/;
+
+/**
+ * Validate the private receipt key that owns subscription revalidation authority.
+ *
+ * Purchase tokens are never stored directly. purchaseService domain-separates and HMAC-SHA256
+ * hashes them, producing exactly 64 lowercase hexadecimal characters. Absence remains valid for
+ * subscriptions created before receipt ownership was added; any present noncanonical value could
+ * make stale-event equality behave unpredictably and must not be republished.
+ */
+export function validatedSubscriptionAuthorityReceiptId(value: unknown): string | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== "string" || !SUBSCRIPTION_AUTHORITY_RECEIPT_PATTERN.test(value)) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Subscription authority receipt is invalid.");
+  }
+  return value;
+}
 
 /**
  * Validate a timestamp that participates in paid-subscription authority.

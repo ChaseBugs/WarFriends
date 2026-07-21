@@ -14,7 +14,10 @@ import {
   VIP_LOOTBOX_MATCH_INTERVAL,
 } from "./vipLootboxService";
 import { validatedVipTimeline } from "./vipEntitlementService";
-import { validatedSubscription } from "./subscriptionBenefitService";
+import {
+  validatedSubscription,
+  validatedSubscriptionAuthorityReceiptId,
+} from "./subscriptionBenefitService";
 import { validatedRentalState } from "./rentalEntitlementService";
 import { validatedBlackMarketOfferState } from "./blackMarketEntitlementService";
 import { validatedVisualInventoryState } from "./visualEntitlementService";
@@ -117,6 +120,9 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
       vipStart: vip.vipStart,
       vipExpiration: vip.vipExpiration,
       subscription: validatedSubscription(state.subscription),
+      subscriptionAuthorityReceiptId: validatedSubscriptionAuthorityReceiptId(
+        state.subscriptionAuthorityReceiptId,
+      ),
       rental: validatedRentalState(state.rental),
       blackMarket: validatedBlackMarketOfferState(state.blackMarket),
       matchesToNextLootboxes: validatedVipLootboxCountdown(state.matchesToNextLootboxes),
@@ -145,6 +151,9 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
     vipStart: vip.vipStart,
     vipExpiration: vip.vipExpiration,
     subscription: validatedSubscription(state.subscription),
+    subscriptionAuthorityReceiptId: validatedSubscriptionAuthorityReceiptId(
+      state.subscriptionAuthorityReceiptId,
+    ),
     rental: validatedRentalState(state.rental),
     blackMarket: validatedBlackMarketOfferState(state.blackMarket),
     matchesToNextLootboxes: validatedVipLootboxCountdown(state.matchesToNextLootboxes),

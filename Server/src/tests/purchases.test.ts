@@ -17,6 +17,7 @@ import { applyPurchaseEntitlementState, parseGooglePlayPurchaseInput } from "../
 import { buildPlayerData, createInitialProgression } from "../services/playerStateService";
 import { applySubscriptionRevalidationState } from "../services/googlePlaySubscriptionRevalidationService";
 import { decryptPurchaseToken, encryptPurchaseToken } from "../services/purchaseTokenCryptoService";
+import { validatedSubscriptionAuthorityReceiptId } from "../services/subscriptionBenefitService";
 
 const PACKAGE = "com.chillingo.warfriends.android.gplay";
 const NOW = 1_800_000_000;
@@ -267,6 +268,40 @@ test("subscription lifecycle rejects corrupt stored and observed deadlines", () 
     }, NOW),
     /Subscription timeline is invalid/,
   );
+});
+
+test("subscription authority receipt accepts only the durable HMAC key format", () => {
+  const receiptId = "a".repeat(64);
+  assert.equal(validatedSubscriptionAuthorityReceiptId(undefined), undefined);
+  assert.equal(validatedSubscriptionAuthorityReceiptId(receiptId), receiptId);
+
+  for (const corrupt of [null, "", "A".repeat(64), "g".repeat(64), "a".repeat(63), 1]) {
+    assert.throws(
+      () => validatedSubscriptionAuthorityReceiptId(corrupt),
+      /Subscription authority receipt is invalid/,
+    );
+  }
+
+  const dto = newPlayer("receipt-player", "ReceiptPlayer", AccountType.Guest);
+  const player: PlayerDocument = {
+    id: dto.id,
+    accountName: dto.accountName,
+    authToken: "receipt-session",
+    accountType: dto.accountType,
+    leagueTier: dto.leagueTier,
+    armyPower: dto.armyPower,
+    experience: dto.experience,
+    squadPoints: dto.squadPoints,
+    squadName: dto.squadName,
+    player: dto,
+    progression: {
+      ...createInitialProgression(NOW),
+      subscriptionAuthorityReceiptId: "readable-test-placeholder",
+    },
+    createdAt: new Date(NOW * 1_000),
+    updatedAt: new Date(NOW * 1_000),
+  };
+  assert.throws(() => buildPlayerData(player), /Subscription authority receipt is invalid/);
 });
 
 test("subscription purchase tokens are authenticated, receipt-bound ciphertext", () => {
