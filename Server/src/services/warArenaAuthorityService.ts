@@ -3,6 +3,10 @@ import type { WarArenaState } from "../db";
 import { arenaPolicy } from "./warArenaContract";
 
 const MAX_DATE_UNIX_SECONDS = 8_640_000_000_000;
+export const MAX_WAR_ARENA_CLIENT_INT = 2_147_483_647;
+export const WAR_ARENA_CROWN_TYPES: ReadonlySet<string> = new Set([
+  "", "bronze", "silver", "gold", "flawless",
+]);
 const MAX_RECENT_SETTLEMENTS = 20;
 const MAX_SHOWN_ARENA_IDS = 24;
 const MAX_RESPONSE_JSON_LENGTH = 65_536;
@@ -74,12 +78,20 @@ export function validatedWarArenaState(value: WarArenaState | undefined): WarAre
   }
 
   const counterNames = ["wins", "lives", "runs", "visualTimestamp", "flawless", "topRun", "matches", "shields", "runLosses"];
-  if (counterNames.some((name) => !Number.isSafeInteger(root[name]) || (root[name] as number) < 0)) {
+  // Every public WarArenaData counter is a C# int, even though JavaScript and MongoDB can retain
+  // much larger exact numbers. Rejecting those values here prevents boot serialization from
+  // wrapping a damaged lifetime counter or crown/shield expiry on the recovered client.
+  if (counterNames.some((name) => !Number.isSafeInteger(root[name])
+    || (root[name] as number) < 0
+    || (root[name] as number) > MAX_WAR_ARENA_CLIENT_INT)) {
     invalid("Stored War Arena counters are invalid.");
   }
   const counters = Object.fromEntries(counterNames.map((name) => [name, root[name] as number])) as Record<string, number>;
   if (counters.visualTimestamp! > MAX_DATE_UNIX_SECONDS
-    || counters.wins! > arenaPolicy().maxBattles || counters.topRun! > arenaPolicy().maxBattles) {
+    || counters.wins! > arenaPolicy().maxBattles
+    || counters.topRun! > arenaPolicy().maxBattles
+    || counters.lives! > arenaPolicy().startingLives
+    || counters.wins! > counters.matches!) {
     invalid("Stored War Arena counters are invalid.");
   }
   if (typeof root.played !== "boolean" || typeof root.heartDialogShown !== "boolean"
@@ -88,6 +100,7 @@ export function validatedWarArenaState(value: WarArenaState | undefined): WarAre
   }
   const arenaId = boundedString(root.arenaId, 128, "Stored War Arena identity");
   const visualType = boundedString(root.visualType, 128, "Stored War Arena visual type");
+  if (!WAR_ARENA_CROWN_TYPES.has(visualType)) invalid("Stored War Arena visual type is invalid.");
 
   if (!Array.isArray(root.opponents) || root.opponents.length > arenaPolicy().maxBattles) {
     invalid("Stored War Arena collections are invalid.");

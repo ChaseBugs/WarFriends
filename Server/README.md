@@ -1388,8 +1388,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   recovered response without a false revision increment or MongoDB replacement. Expired receipt
   cleanup remains durable because it unblocks a future battle. One complete lifecycle authority
   protects shared persisted reads/publication plus every Arena action and boot boundary. It
-  validates known fields, safe counters, bounded timestamps and response JSON, Boolean flags,
-  unique bounded opponent/shown-event collections, supported unique settlement receipts, and an
+  validates known fields, nonnegative C# `int` counters and public crown/shield timestamps, only
+  the recovered empty/bronze/silver/gold/flawless crown types, configured lives/win/top-run bounds,
+  wins no higher than lifetime matches, bounded private timestamps and response JSON, Boolean
+  flags, unique bounded opponent/shown-event collections, supported unique settlement receipts, and an
   active battle bound to the same Arena with no terminal duplicate. Only the absent legacy
   shown-event list normalizes empty; malformed durable history fails closed instead of being
   truncated into replay capacity or satisfying a reward gate. Arena achievement progress shares

@@ -2,9 +2,12 @@ import type { DatabasePlayerDTO } from "../dtos";
 import { playerLevelDefinition } from "./levelProgressionService";
 import { validatedRenameCount } from "./playerRenameAuthorityService";
 import { validatedVipExpiration } from "./vipEntitlementService";
+import {
+  MAX_WAR_ARENA_CLIENT_INT,
+  WAR_ARENA_CROWN_TYPES,
+} from "./warArenaAuthorityService";
 
 const MAX_CLIENT_INT = 2_147_483_647;
-const WAR_ARENA_CROWN_TYPES = new Set(["", "bronze", "silver", "gold", "flawless"]);
 
 /** Prove a Unix second fits the recovered client's signed C# `int` LastAction field. */
 export function validatedPlayerLastAction(value: unknown): number {
@@ -73,7 +76,7 @@ export function validatePlayerPublicScalarAuthority(player: DatabasePlayerDTO): 
     || !WAR_ARENA_CROWN_TYPES.has(player.visualType)
     || !Number.isSafeInteger(player.visualTimestamp)
     || player.visualTimestamp < 0
-    || player.visualTimestamp > MAX_CLIENT_INT) {
+    || player.visualTimestamp > MAX_WAR_ARENA_CLIENT_INT) {
     throw new Error("Stored player War Arena crown is invalid.");
   }
 }

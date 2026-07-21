@@ -25,7 +25,10 @@ import {
   takeWarArenaLifeState,
   warArenaStateFor,
 } from "../services/warArenaService";
-import { validatedWarArenaState } from "../services/warArenaAuthorityService";
+import {
+  MAX_WAR_ARENA_CLIENT_INT,
+  validatedWarArenaState,
+} from "../services/warArenaAuthorityService";
 import { validatedProgressionSuccessor } from "../services/progressionPublicationAuthorityService";
 
 const NOW = Date.UTC(2026, 6, 19, 12, 0, 0) / 1_000;
@@ -104,6 +107,25 @@ test("Arena reward gates reject corrupt counters and receipt timestamps", () => 
     () => warArenaStateFor(corruptReceipt),
     /Stored War Arena battle receipt is invalid/,
   );
+});
+
+test("War Arena public counters and crown types remain representable by the recovered client", () => {
+  for (const corrupt of [
+    { visualType: "platinum" },
+    { visualTimestamp: MAX_WAR_ARENA_CLIENT_INT + 1 },
+    { shields: MAX_WAR_ARENA_CLIENT_INT + 1 },
+    { runs: MAX_WAR_ARENA_CLIENT_INT + 1 },
+    { lives: arenaPolicy().startingLives + 1 },
+    { wins: 1, matches: 0 },
+  ]) {
+    assert.throws(
+      () => validatedWarArenaState({ ...initialWarArenaState(), ...corrupt }),
+      /Stored War Arena (counters|visual type) (are|is) invalid/,
+    );
+  }
+  for (const visualType of ["", "bronze", "silver", "gold", "flawless"]) {
+    assert.equal(validatedWarArenaState({ ...initialWarArenaState(), visualType })?.visualType, visualType);
+  }
 });
 
 test("shared progression publication rejects duplicate Arena history and mismatched battle receipts", () => {
