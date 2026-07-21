@@ -19,6 +19,7 @@ import {
   playerLeagueSettlementDecision,
   validatePlayerLeagueCompetitionScore,
   validatePlayerLeagueProgression,
+  validatePlayerLeagueIdentity,
 } from "../services/playerLeagueContract";
 import {
   claimableMessageReward,
@@ -289,6 +290,27 @@ test("player-league progression rejects corrupt tiers and permanent placement co
     }, 1_900_000_000),
     /Player league placement counter is invalid/,
   );
+});
+
+test("player-league identity matches DatabasePlayer's recovered first/last segment parser", () => {
+  assert.doesNotThrow(() => validatePlayerLeagueIdentity({
+    leagueTier: League.Gold2,
+    leagueId: "8-retired-production-west",
+    leagueDivision: "west",
+  }));
+  assert.doesNotThrow(() => validatePlayerLeagueIdentity({
+    leagueTier: League.Bronze3,
+    leagueId: "",
+    leagueDivision: "",
+  }));
+  for (const corrupt of [
+    { leagueTier: League.Gold2, leagueId: "7-retired-production-west", leagueDivision: "west" },
+    { leagueTier: League.Gold2, leagueId: "8-retired-production-west", leagueDivision: "east" },
+    { leagueTier: League.Gold2, leagueId: "8-", leagueDivision: "" },
+    { leagueTier: League.Gold2, leagueId: "", leagueDivision: "placement" },
+  ]) {
+    assert.throws(() => validatePlayerLeagueIdentity(corrupt), /Player league identity is invalid/);
+  }
 });
 
 test("PlayerLeagueFinished inbox messages use MMKFEEGDFKN's typed attribute contract", () => {

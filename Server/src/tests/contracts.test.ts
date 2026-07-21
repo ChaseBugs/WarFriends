@@ -422,6 +422,34 @@ test("indexed player profile mirrors must match before client-visible projection
     /Stored player provider identity is invalid/,
   );
 
+  // Mirror equality cannot prove that the shared value fits the recovered DatabasePlayer/UI
+  // contract. Validate the public identity shape before any lookup or wire adapter publishes it.
+  const oversizedName = contractPlayer();
+  oversizedName.accountName = "x".repeat(16);
+  oversizedName.player.accountName = oversizedName.accountName;
+  oversizedName.normalizedAccountName = oversizedName.accountName;
+  assert.throws(
+    () => validatedPlayerProfileLookup(oversizedName),
+    /Stored player public identity is invalid/,
+  );
+
+  const multilineName = contractPlayer();
+  multilineName.accountName = "Line\nBreak";
+  multilineName.player.accountName = multilineName.accountName;
+  multilineName.normalizedAccountName = multilineName.accountName.toLocaleLowerCase("en-US");
+  assert.throws(
+    () => buildDatabasePlayer(multilineName),
+    /Stored player public identity is invalid/,
+  );
+
+  const mismatchedLeagueParser = contractPlayer();
+  mismatchedLeagueParser.player.leagueId = "8-retired-production-west";
+  mismatchedLeagueParser.player.leagueDivision = "east";
+  assert.throws(
+    () => validatedPlayerProfileLookup(mismatchedLeagueParser),
+    /Stored player public identity is invalid/,
+  );
+
   const indexedDisconnectedSentinel = contractPlayer();
   indexedDisconnectedSentinel.facebookId = "-1";
   indexedDisconnectedSentinel.player.facebookId = -1;

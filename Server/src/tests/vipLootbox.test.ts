@@ -27,7 +27,7 @@ function selectVisual(name: string): (exclusiveMaximum: number) => number {
 }
 
 function playerDocument(): PlayerDocument {
-  const player = newPlayer("vip-lootbox-player", "VipLootboxPlayer", AccountType.Guest);
+  const player = newPlayer("vip-lootbox-player", "VipLootbox", AccountType.Guest);
   return {
     id: player.id,
     accountName: player.accountName,

@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { ApiError, ApiErrorCode } from "../apiErrors";
+import { League } from "../constants";
 import type { PlayerDocument } from "../db";
 import {
   INSTANT_BATTLE_MAX_CHARGES,
@@ -184,9 +185,9 @@ test("PlayerAnalyticsData restores authoritative timer, lifetime, and paid count
   };
   const player = {
     id: "instant-player",
-    accountName: "Instant Player",
+    accountName: "InstantPlayer",
     accountType: 0,
-    leagueTier: 0,
+    leagueTier: League.Bronze3,
     armyPower: 0,
     experience: 0,
     squadPoints: 0,
@@ -196,11 +197,11 @@ test("PlayerAnalyticsData restores authoritative timer, lifetime, and paid count
     updatedAt: new Date(NOW * 1_000),
     player: {
       id: "instant-player",
-      accountName: "Instant Player",
+      accountName: "InstantPlayer",
       level: UNLOCKED_LEVEL_INDEX,
       experience: 0,
       armyPower: 0,
-      leagueTier: 0,
+      leagueTier: League.Bronze3,
       squadPoints: 0,
       squadName: "",
       facebookId: -1,

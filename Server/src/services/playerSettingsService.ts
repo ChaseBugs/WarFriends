@@ -2,6 +2,7 @@ import { players, type PlayerDocument } from "../db";
 import type { NotificationSettingsDTO } from "../dtos";
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import { requireModeratedText } from "./textModerationService";
+import { PLAYER_ACCOUNT_NAME_MAX_LENGTH } from "./playerNameContract";
 
 const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettingsDTO = {
   challenge: true,
@@ -20,7 +21,7 @@ const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettingsDTO = {
 export function normalizePlayerName(value: unknown): string {
   if (typeof value !== "string") throw new ApiError(ApiErrorCode.UnknownAction, "A player name is required.");
   const name = value.trim();
-  if (name.length < 3 || name.length > 15 || /[\u0000-\u001f\u007f]/u.test(name)) {
+  if (name.length < 3 || name.length > PLAYER_ACCOUNT_NAME_MAX_LENGTH || /[\u0000-\u001f\u007f]/u.test(name)) {
     throw new ApiError(ApiErrorCode.UnknownAction, "Player name must contain 3 to 15 visible characters.");
   }
   return requireModeratedText(name, "Player name");

@@ -305,7 +305,7 @@ test("GetPlayerData restores only the public videoAdRewardTimes arrays", () => {
 });
 
 test("GetPlayerData validates and window-normalizes video-ad ledgers before boot projection", () => {
-  const dto = newPlayer("video-ad-window-player", "VideoAdWindowPlayer", AccountType.Guest);
+  const dto = newPlayer("video-ad-window-player", "VideoAdWindow", AccountType.Guest);
   const progression = state();
   progression.videoAdRewards = {
     times: {

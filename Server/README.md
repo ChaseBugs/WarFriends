@@ -513,7 +513,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   Every returned or settled member's weekly medals and global skill mirror must be nonnegative safe
   integers; beginner/normal tier and the recovered zero-or-one placement counter are likewise
   validated before boot, tutorial repair, admission, or PvP progress. One corrupt value aborts
-  settlement before any rank, transition, or reward is published.
+  settlement before any rank, transition, or reward is published. Public account validation also
+  reproduces `DatabasePlayer.maxPlayerName`'s 15-character cap and proves that every nonempty
+  `LeagueId` would make the recovered first/last dash-segment parser derive the stored tier and
+  division. Retired production IDs keep their opaque middle segments; mismatched or malformed
+  tuples fail closed instead of making the backend and Unity rank the account in different leagues.
 - **Social / messaging**: `SearchPlayers` (name prefix), `GetAllPlayers`, exact Facebook-friend and
   authoritative squad-mate resolution through `GetFriendsInfo`, challenge and normal
   `MessageSent`, `GetAllMessages`, `ReadMessage`, `IgnoreMessage`, and `AcceptChallenge`

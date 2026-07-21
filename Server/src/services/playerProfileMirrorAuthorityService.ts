@@ -5,6 +5,30 @@ import {
   validatedOptionalStringPlayerId,
 } from "./identityExternalIdAuthorityService";
 import { isSupportedAuthenticationScryptCost } from "./authSecretService";
+import { validatePlayerLeagueIdentity } from "./playerLeagueContract";
+import { isCanonicalStoredPlayerName } from "./playerNameContract";
+
+/**
+ * Validate the public identity fields that are not duplicated at MongoDB's document root.
+ *
+ * Equality alone is insufficient authority: a bypassed writer can put the same malformed name in
+ * both root and DTO copies, and DatabasePlayer's recovered UI allocates only fifteen characters.
+ * Current server writers also trim names and exclude controls, so accepting those shapes only from
+ * legacy storage would let search, chat, logs, or leaderboards publish invisible/multiline identity.
+ * League identity is checked against DatabasePlayer's real first/last-segment parser; importantly,
+ * this does not guess the middle portion of retired production division IDs.
+ */
+function validatePlayerPublicIdentityFields(player: PlayerDocument): void {
+  const dto = player.player;
+  if (!isCanonicalStoredPlayerName(dto.accountName)) {
+    throw new Error("Stored player public identity is invalid.");
+  }
+  try {
+    validatePlayerLeagueIdentity(dto);
+  } catch {
+    throw new Error("Stored player public identity is invalid.");
+  }
+}
 
 /**
  * Prove that MongoDB's indexed player fields still mirror the client-facing DatabasePlayer DTO.
@@ -17,6 +41,7 @@ import { isSupportedAuthenticationScryptCost } from "./authSecretService";
  */
 export function validatedPlayerProfileMirrors(player: PlayerDocument): PlayerDocument {
   const dto = player.player;
+  validatePlayerPublicIdentityFields(player);
   let facebookId: string;
   let googlePlayId: string;
   let gameCenterId: string;

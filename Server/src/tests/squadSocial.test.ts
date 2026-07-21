@@ -22,7 +22,8 @@ import { buildSquadKickMessage, toClientMessage } from "../services/socialServic
 const NOW = Date.UTC(2026, 6, 19, 12, 0, 0) / 1_000;
 
 function playerDocument(id: string): PlayerDocument {
-  const player = newPlayer(id, `Player-${id}`, AccountType.Guest);
+  // Keep fixtures inside DatabasePlayer.maxPlayerName just like real account creation.
+  const player = newPlayer(id, `Player-${id.slice(0, 8)}`, AccountType.Guest);
   return {
     id,
     accountName: player.accountName,

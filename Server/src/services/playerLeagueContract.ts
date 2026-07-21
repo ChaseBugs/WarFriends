@@ -191,6 +191,12 @@ export interface PlayerLeaguePlacementInput {
   remainingMatches: number;
 }
 
+export interface PlayerLeagueIdentityInput {
+  leagueTier: League;
+  leagueId: string;
+  leagueDivision: string;
+}
+
 export interface PlayerLeaguePlacementAdvance {
   leagueTier: League;
   leagueId: string;
@@ -206,6 +212,39 @@ export function validatedPlayerLeagueRemainingMatches(value: number): number {
     throw new Error("Player league placement counter is invalid.");
   }
   return value;
+}
+
+/**
+ * Prove that the durable LeagueId tuple will deserialize to the same tier and division.
+ *
+ * DatabasePlayer.CreateFromDatabase does not trust separate LeagueTier/LeagueDivision fields:
+ * when LeagueId is present it parses the first dash-separated segment as the tier and the final
+ * segment as the division. The replacement backend still stores those derived values because its
+ * ranking and allocation code consumes them directly. If the three values disagree, the server
+ * and stock client would authorize different competitions from one document. Unknown retired
+ * production IDs remain supported deliberately; only their source-defined prefix/suffix relation
+ * is checked, while their opaque middle segments are left untouched until migration evidence is
+ * recovered. An empty ID is the recovered placement fallback and therefore has no stored division.
+ */
+export function validatePlayerLeagueIdentity(player: PlayerLeagueIdentityInput): void {
+  playerLeagueRule(player.leagueTier);
+  if (typeof player.leagueId !== "string" || typeof player.leagueDivision !== "string") {
+    throw new Error("Player league identity is invalid.");
+  }
+  if (player.leagueId === "") {
+    if (player.leagueDivision !== "") throw new Error("Player league identity is invalid.");
+    return;
+  }
+
+  const parts = player.leagueId.split("-");
+  const tier = parts[0];
+  const division = parts[parts.length - 1];
+  if (parts.length < 2
+    || tier !== String(player.leagueTier)
+    || !division
+    || division !== player.leagueDivision) {
+    throw new Error("Player league identity is invalid.");
+  }
 }
 
 /**
@@ -225,6 +264,11 @@ export function validatePlayerLeagueProgression(player: PlayerLeaguePlacementInp
   }
   playerLeagueRule(player.leagueTier);
   validatedPlayerLeagueRemainingMatches(player.remainingMatches);
+  // Pure placement callers may omit the redundant division. Complete durable DTOs always carry
+  // it and receive the stronger parser-equivalence proof here and at the public-profile boundary.
+  if (player.leagueDivision !== undefined) {
+    validatePlayerLeagueIdentity(player as PlayerLeagueIdentityInput);
+  }
 }
 
 export function playerLeagueRule(tier: number): PlayerLeagueRule {
