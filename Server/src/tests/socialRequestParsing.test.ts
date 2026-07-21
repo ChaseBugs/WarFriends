@@ -2,6 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { parseChallengeMessageRequest } from "../handlers/socialRequestParsing";
 import { sameChallenge, type ChallengeMessageInput, type MessageDoc } from "../services/socialService";
+import {
+  requestedFacebookFriendCount,
+  requestedInboxPageLimit,
+} from "../services/socialRequestCountService";
 
 const NOW = new Date("2026-07-22T00:00:00.000Z");
 
@@ -88,4 +92,25 @@ test("challenge retry reuses only an identical payload, not merely the same room
   assert.equal(sameChallenge(stored, "challenger", { ...input, region: 4 }), false);
   assert.equal(sameChallenge(stored, "challenger", { ...input, numberOfMission: 2 }), false);
   assert.equal(sameChallenge(stored, "other-challenger", input), false);
+});
+
+test("social read counts honor recovered fields and retain bounded replacement defaults", () => {
+  assert.equal(requestedInboxPageLimit({ MessagesCount: "137" }), 100);
+  assert.equal(requestedInboxPageLimit({ MessagesCount: 20 }), 20);
+  assert.equal(requestedInboxPageLimit({ Limit: "25" }), 25);
+  assert.equal(requestedInboxPageLimit({}), 50);
+  assert.equal(requestedFacebookFriendCount("0"), 0);
+  assert.equal(requestedFacebookFriendCount("501"), 500);
+});
+
+test("social read counts reject JavaScript coercion and non-C# forms", () => {
+  for (const value of [
+    null, true, false, [], ["2"], {}, "", " 2", "2 ", "02", "+2", "-1", "2.0", "2e0",
+    -1, 2.5, 2_147_483_648, Number.NaN, Number.POSITIVE_INFINITY,
+  ]) {
+    assert.throws(() => requestedInboxPageLimit({ MessagesCount: value }));
+    assert.throws(() => requestedFacebookFriendCount(value));
+  }
+  assert.throws(() => requestedInboxPageLimit({ MessagesCount: "0" }));
+  assert.throws(() => requestedFacebookFriendCount(undefined));
 });

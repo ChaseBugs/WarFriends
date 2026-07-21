@@ -2,8 +2,8 @@ import { players, squads, type PlayerDocument } from "../db";
 import type { RequestEnvelope } from "../dtos";
 import { buildDatabasePlayer } from "./playerStateService";
 import { validatedSquadDocument } from "./squadAuthorityService";
-
-const MAX_FACEBOOK_FRIENDS_PER_REQUEST = 500;
+import { requestedFacebookFriendCount } from "./socialRequestCountService";
+import { validatedConnectedIdentityExternalId } from "./identityExternalIdAuthorityService";
 
 export interface FriendsInfoWire extends Record<string, unknown> {
   Friends: Record<string, unknown>[];
@@ -19,15 +19,17 @@ export interface FriendsInfoWire extends Record<string, unknown> {
  * before dynamic-key access so a modified APK cannot create an unbounded request loop or `$in`.
  */
 export function requestedFacebookFriendIds(req: RequestEnvelope): string[] {
-  const requestedCount = Number(req.Count);
-  if (!Number.isInteger(requestedCount) || requestedCount <= 0) return [];
-  const count = Math.min(requestedCount, MAX_FACEBOOK_FRIENDS_PER_REQUEST);
+  const count = requestedFacebookFriendCount(req.Count);
   const unique = new Set<string>();
   for (let index = 0; index < count; index += 1) {
     const value = req[`Friend${index}`];
-    if (typeof value !== "string") continue;
-    const id = value.trim();
-    if (/^-?\d{1,19}$/u.test(id) && id !== "-1") unique.add(id);
+    try {
+      // Reuse platform-identity authority so lookup hashes cannot have a spelling or range that
+      // the connected Facebook mirror and identity index would reject.
+      unique.add(validatedConnectedIdentityExternalId("facebook", value));
+    } catch {
+      // A single modified-client hash is not authority and must not hide otherwise valid friends.
+    }
   }
   return [...unique];
 }

@@ -15,6 +15,7 @@ import {
 import { getFriendsInfo } from "../services/friendService";
 import { authed, type HandlerEntry } from "./types";
 import { parseChallengeMessageRequest } from "./socialRequestParsing";
+import { requestedInboxPageLimit } from "../services/socialRequestCountService";
 
 // Player discovery and inbox handlers. Hit-list mutations remain rejected because their
 // recovered capacity semantics are ambiguous; normal/challenge messages use exact client
@@ -52,7 +53,7 @@ export const socialHandlers: Record<number, HandlerEntry> = {
   [DbAction.GetAllMessages]: authed(async ({ player, req }) => {
     const page = await inboxPage(
       player!.id,
-      Number(req.Limit) || 50,
+      requestedInboxPageLimit(req),
       str(req.BeforeCursor) || undefined,
     );
     // The stock parser reads only Items and safely ignores NextCursor. A replacement client can

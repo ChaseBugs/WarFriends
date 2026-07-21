@@ -1587,15 +1587,17 @@ test("durable login throttling hides identity keys and enforces a real cooldown"
 test("GetFriendsInfo preserves signed Int64 hashes and exact recovered result groups", () => {
   const ids = requestedFacebookFriendIds({
     DbAction: DbAction.GetFriendsInfo,
-    Count: "6",
+    Count: "8",
     Friend0: "9223372036854775807",
     Friend1: "-9223372036854775808",
     Friend2: "9223372036854775807",
     Friend3: "-1",
     Friend4: "not-a-number",
     Friend5: " 42 ",
+    Friend6: "9223372036854775808",
+    Friend7: "-0",
   });
-  assert.deepEqual(ids, ["9223372036854775807", "-9223372036854775808", "42"]);
+  assert.deepEqual(ids, ["9223372036854775807", "-9223372036854775808"]);
 
   const friend = contractPlayer();
   friend.id = "facebook-friend";

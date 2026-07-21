@@ -104,6 +104,14 @@ Boolean, array, blank, signed or space-padded, leading-zero, fractional, exponen
 out-of-range forms cannot silently enter category zero or alter report deduplication identity through
 JavaScript coercion.
 
+Stock social-read counts now use their recovered fields and exact client widths. `GetAllMessages`
+honors `MessagesCount` before the optional replacement `Limit`, preserves the 50-row absence default
+and 100-row cap, and rejects a present zero or noncanonical integer instead of letting `Number() ||`
+silently select 50. `GetFriendsInfo` requires canonical nonnegative C# signed-`int` `Count`, bounds
+only the processed prefix to 500, and routes every `FriendN` through the connected Facebook
+signed-`long` validator, so padded, alternate, disconnected, and out-of-range hashes cannot enter
+the MongoDB identity lookup.
+
 Moderation-retention retry receipts now validate exact identity fields, safe nonnegative report/appeal
 deletion counts, safe preview/creation chronology, and exact whole-day cutoffs within the global
 30-3650-day bounds before replay. Historical receipts remain valid across deploy-time policy changes.

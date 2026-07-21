@@ -703,7 +703,12 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   end reason. Missing `battleKind` remains the explicit legacy direct-challenge migration. Logical
   expiry and the settlement compare-and-set use application time, so delayed MongoDB TTL cleanup
   cannot extend the zero-reward receipt or let it be mistaken for ranked authority.
-  `GetAllMessages` keeps the stock `Items` array and adds an optional `NextCursor`; a replacement
+  `GetFriendsInfo` requires the recovered canonical nonnegative `Count`, bounds the processed
+  `FriendN` prefix to 500, and admits only hashes that satisfy the same canonical Facebook signed-`long`
+  authority as the connected identity index. `GetAllMessages` now honors stock `MessagesCount`
+  before the optional replacement `Limit` alias, keeps the 100-row page cap, and rejects present
+  zero or broadly coercible values instead of silently defaulting them. Its response keeps the stock
+  `Items` array and adds an optional `NextCursor`; a replacement
   client sends it back as `BeforeCursor` to read older pages. The cursor combines exact
   milliseconds with the message ID, page size remains server-bounded, and every query retains the
   authenticated recipient filter and immediate challenge-expiry rule.
