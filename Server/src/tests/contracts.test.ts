@@ -76,6 +76,7 @@ function contractPlayer(): PlayerDocument {
   };
 }
 import {
+  exactDeviceToken,
   normalizeCountry,
   normalizeLocale,
   normalizePlayerName,
@@ -1877,6 +1878,30 @@ test("profile normalization preserves localized names and validates locale/count
   assert.throws(
     () => buildDatabasePlayer(corruptCountry),
     /Stored player public identity is invalid/,
+  );
+});
+
+test("device registration preserves exact opaque tokens and the empty unregister sentinel", () => {
+  assert.equal(exactDeviceToken("fcm-token:abc_123-XYZ"), "fcm-token:abc_123-XYZ");
+  assert.equal(exactDeviceToken(""), "");
+  assert.equal(exactDeviceToken("x".repeat(4_096)).length, 4_096);
+  for (const value of [
+    undefined,
+    null,
+    123,
+    " padded-token ",
+    "token\nwith-control",
+    "x".repeat(4_097),
+  ]) {
+    assert.throws(() => exactDeviceToken(value), /Invalid device token/);
+  }
+
+  const corruptToken = contractPlayer();
+  corruptToken.deviceToken = "token\nwith-control";
+  corruptToken.player.deviceToken = "token\nwith-control";
+  assert.throws(
+    () => validatedPlayerProfileLookup(corruptToken),
+    /Stored player account envelope is invalid/,
   );
 });
 

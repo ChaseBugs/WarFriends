@@ -340,6 +340,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   name, password digest, and rotated session atomically with a stale-session guard.
   Repeated status, country, language, device-registration, and notification-setting values are
   exact no-ops; token and locale changes from one device-registration request publish together.
+  Action 13 treats its FCM token as an opaque credential: empty is the exact unregister sentinel,
+  while a nonempty value must already be trimmed, control-free, and no longer than 4096 characters.
+  Malformed values are rejected rather than trimmed or truncated into a different unusable token,
+  and the complete account boundary applies the same rule to both durable mirrors.
   Persisted notification consent must contain exactly the recovered six Boolean
   `SettingsManager.Settings` fields. A wholly absent legacy value boots with LoadEmpty's five
   enabled categories and disabled maintenance default; partial, extra, or non-Boolean snapshots

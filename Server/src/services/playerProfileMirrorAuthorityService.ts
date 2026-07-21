@@ -242,6 +242,7 @@ export function validatedPlayerPrivateAccountFields(player: PlayerDocument): Pla
     && typeof player.player.deviceToken === "string"
     && player.player.deviceToken.length <= 4096
     && player.player.deviceToken === player.player.deviceToken.trim()
+    && !/\p{Cc}/u.test(player.player.deviceToken)
     && Number.isFinite(createdAt)
     && Number.isFinite(updatedAt)
     && updatedAt >= createdAt;

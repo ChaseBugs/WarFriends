@@ -70,7 +70,9 @@ Status legend:
 Optional Firebase HTTP v1 delivery uses Google ADC under exact immutable enablement, project-ID,
 and 1-30-second request-timeout policy. Every call rebinds the committed recipient/message identity
 to complete MongoDB message authority and the validated player envelope; exact offline status, a
-nonempty mirrored token, and matching recovered six-field consent are required. The data-only
+nonempty mirrored token, and matching recovered six-field consent are required. Action 13 preserves
+the opaque token byte-for-byte, accepts only empty unregister or a control-free already-trimmed
+string up to 4096 characters, and rejects malformed values instead of trimming/truncating them. The data-only
 payload sends recovered `id=2` for challenges and `id=90` for supported system-inbox families, with
 type-28 following the recovered local `SQUAD_INFO` category. Structured FCM `UNREGISTERED` and
 FCM-specific `INVALID_ARGUMENT` responses retire both exact old token mirrors through compare-and-set

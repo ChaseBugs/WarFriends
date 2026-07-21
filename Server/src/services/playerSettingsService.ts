@@ -103,6 +103,23 @@ export function normalizeLocale(value: unknown): string {
   return locale;
 }
 
+/**
+ * Preserve the opaque FCM registration token exactly as the client received it.
+ *
+ * Empty is the recovered unregister sentinel. Nonempty tokens must already be trimmed, bounded,
+ * and control-free: silently trimming or slicing creates a different credential that Firebase can
+ * never recognize and can also make two distinct malformed requests converge on one stored value.
+ */
+export function exactDeviceToken(value: unknown): string {
+  if (typeof value !== "string"
+    || value.length > 4_096
+    || value !== value.trim()
+    || /\p{Cc}/u.test(value)) {
+    throw new ApiError(ApiErrorCode.UnknownAction, "Invalid device token.");
+  }
+  return value;
+}
+
 /** A country code is optional, but when present it must be an ISO-style two-letter code. */
 export function normalizeCountry(value: unknown): string {
   if (typeof value !== "string") throw new ApiError(ApiErrorCode.UnknownAction, "Country code is required.");

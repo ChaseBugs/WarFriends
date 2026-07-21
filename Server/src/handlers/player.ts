@@ -8,6 +8,7 @@ import { buildDatabasePlayer, buildPlayerStateResponse, progressionForPlayer, un
 import { recomputePlayerArmyPower } from "../services/armyPowerService";
 import {
   ensurePlayerNameAvailable,
+  exactDeviceToken,
   normalizeCountry,
   normalizeLocale,
   normalizePlayerName,
@@ -96,13 +97,11 @@ export const playerHandlers: Record<number, HandlerEntry> = {
 
   [DbAction.UpdateDeviceToken]: authed(async ({ player, req }) => {
     const fields: Parameters<typeof updatePlayerFields>[1] = {};
-    if (typeof req.DeviceToken === "string") {
-      // Push providers impose platform-specific token sizes. The server only needs a bounded,
-      // non-whitespace value; an empty token deliberately unregisters the current device.
-      const deviceToken = req.DeviceToken.trim().slice(0, 4096);
+    if (req.DeviceToken !== undefined) {
+      const deviceToken = exactDeviceToken(req.DeviceToken);
       if (player!.player.deviceToken !== deviceToken) fields.deviceToken = deviceToken;
     }
-    if (typeof req.Locale === "string") {
+    if (req.Locale !== undefined) {
       const locale = normalizeLocale(req.Locale);
       if (player!.player.locale !== locale) fields.locale = locale;
     }
