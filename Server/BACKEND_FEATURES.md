@@ -149,6 +149,10 @@ Economy/profile retry and transaction reloads independently revalidate the full 
 Power refresh, Daily Mission or Instant Battle settlement, PvP settlement, inbox reward claim, and
 Player League allocation or population ranking. One corrupt league member aborts the atomic season
 settlement before the first player or reward-message write.
+Squad creation, join, leave, rank, leadership, kick, card withdrawal, and chat sender reloads also
+prove the complete account before roster/profile publication, inventory transfer, or durable sender
+identity. Every player in a multi-account Squad transaction validates independently before its first
+write, preserving the all-or-nothing membership and card-transfer boundary.
 Action `221` validates its entire narrow lost-response receipt before replay, read, or publication:
 only the twelve recovered A/B IDs and matching Gold prices are accepted, the historical grant and
 timestamp must be safe, and its receipt revision cannot exceed current progression. Corruption is

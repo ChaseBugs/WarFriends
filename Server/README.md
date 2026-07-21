@@ -235,7 +235,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   settlement, inbox reward claims, and Player League allocation/settlement repeat the same account
   proof before calculating or publishing economy and indexed-profile changes. Authentication proves
   only its earlier snapshot; a newly damaged row aborts the retry or whole transaction, and one
-  corrupt league member aborts the complete division before its first rank or reward write.
+  corrupt league member aborts the complete division before its first rank or reward write. Squad
+  creation, admission, departure, rank, leadership, kick, card withdrawal, and chat sender reloads
+  apply the same rule before publishing roster/profile mirrors, transferring inventory, or recording
+  a sender identity; every player participating in a multi-player mutation must pass independently.
   Full-account creation hashes before its single insert, while the recovered action 121 publishes
   name, password digest, and rotated session atomically with a stale-session guard.
   Repeated status, country, language, device-registration, and notification-setting values are

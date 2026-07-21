@@ -12,6 +12,7 @@ import { SquadRank } from "../constants";
 import { newSquad, type SquadDTO, type SquadMemberDTO } from "../dtos";
 import { findById, updatePlayerFields } from "./playerService";
 import { progressionForPlayer } from "./playerStateService";
+import { validatedPlayerAccountEnvelope } from "./playerProfileMirrorAuthorityService";
 import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
 import { reclaimDepositedCardsForDepartureState } from "./squadCardPoolService";
 import { buildSquadKickMessage } from "./socialService";
@@ -174,6 +175,9 @@ export async function createSquad(
     const result = await withMongoTransaction(async (session) => {
       const founder = await players().findOne({ id: founderId }, { session });
       if (!founder) throw new ApiError(ApiErrorCode.PlayerNotFound, "Founder not found.");
+      // This fresh transaction snapshot owns both the creation debit and the first roster/profile
+      // mirrors; authentication's earlier player object is not sufficient publication authority.
+      validatedPlayerAccountEnvelope(founder);
       if (founder.player.squadName) {
         throw new ApiError(ApiErrorCode.SquadAlreadyExists, "Player already belongs to a squad.");
       }
@@ -351,6 +355,7 @@ async function joinSquadTransaction(playerId: string, requestedName: string, app
     ]);
     if (!squad) throw new ApiError(ApiErrorCode.SquadNoLongerExists, "Squad not found.");
     if (!player) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
+    validatedPlayerAccountEnvelope(player);
 
     const plan = planSquadJoin(squad, player, approvedBy);
     const now = new Date();
@@ -553,6 +558,7 @@ export async function leaveSquad(playerId: string, requestedName: string): Promi
   const result = await withMongoTransaction(async (session) => {
     const player = await players().findOne({ id: playerId }, { session });
     if (!player) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
+    validatedPlayerAccountEnvelope(player);
     let mirrorName: string;
     try {
       mirrorName = consistentPlayerSquadName(player);
@@ -729,6 +735,7 @@ async function changeMemberRankTransaction(
       : ApiErrorCode.DemotePlayerError;
     if (!squad) throw new ApiError(failureCode, "Squad not found.");
     if (!targetPlayer) throw new ApiError(failureCode, "Squad member not found.");
+    validatedPlayerAccountEnvelope(targetPlayer);
     const plan = planSquadRankChange(squad, actorId, targetId, direction);
     try {
       requireCompatiblePlayerSquad(targetPlayer, squad.name);
@@ -830,6 +837,10 @@ export async function transferLeadership(actorId: string, targetId: string, requ
     if (!actorPlayer || !targetPlayer) {
       throw new ApiError(ApiErrorCode.PromoteToFounderError, "Squad member not found.");
     }
+    // Leadership changes publish two player rank mirrors with the roster. Validate both accounts
+    // before the first cross-document write so a partial/damaged participant cannot inherit authority.
+    validatedPlayerAccountEnvelope(actorPlayer);
+    validatedPlayerAccountEnvelope(targetPlayer);
     const plan = planLeadershipTransfer(squad, actorId, targetId);
     try {
       requireCompatiblePlayerSquad(actorPlayer, squad.name);
@@ -921,6 +932,8 @@ export async function kickMember(actorId: string, targetId: string, requestedNam
     if (!squad) throw new ApiError(ApiErrorCode.KickPlayerError, "Squad not found.");
     if (!actorPlayer) throw new ApiError(ApiErrorCode.KickPlayerError, "Squad manager not found.");
     if (!targetPlayer) throw new ApiError(ApiErrorCode.KickPlayerError, "Squad member not found.");
+    validatedPlayerAccountEnvelope(actorPlayer);
+    validatedPlayerAccountEnvelope(targetPlayer);
     const plan = planSquadKick(squad, actorId, targetId);
     try {
       requireCompatiblePlayerSquad(targetPlayer, squad.name);

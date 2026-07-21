@@ -11,6 +11,7 @@ import {
   type SquadDocument,
 } from "../db";
 import { requireModeratedText } from "./textModerationService";
+import { validatedPlayerProfileLookup } from "./playerProfileMirrorAuthorityService";
 
 export interface SquadChatSendInput {
   clientMessageId: string;
@@ -109,7 +110,9 @@ export function resolveSquadChatMembership(
 }
 
 async function currentMembership(playerId: string): Promise<SquadChatMembership> {
-  const player = await players().findOne({ id: playerId });
+  // Chat reuses current name/level/league/rank fields in durable messages. Revalidate the complete
+  // account so a damaged profile cannot publish contradictory sender identity into squad history.
+  const player = validatedPlayerProfileLookup(await players().findOne({ id: playerId }));
   const mirroredSquad = player && player.squadName === player.player.squadName ? player.squadName : "";
   const squad = mirroredSquad ? await squads().findOne({ name: mirroredSquad }) : null;
   return resolveSquadChatMembership(player, squad);

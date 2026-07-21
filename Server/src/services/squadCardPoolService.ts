@@ -20,6 +20,7 @@ import {
 import { findById } from "./playerService";
 import { progressionForPlayer, unixNow } from "./playerStateService";
 import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
+import { validatedPlayerAccountEnvelope } from "./playerProfileMirrorAuthorityService";
 import { itemInventoryStateFor, weaponDefinitionFor } from "./itemInventoryService";
 import { visualInventoryStateFor } from "./visualInventoryService";
 import { validatedCardInventoryTime } from "./cardInventoryAuthorityService";
@@ -620,6 +621,10 @@ export async function withdrawSquadCard(
     ]);
     if (!recipient) throw new ApiError(ApiErrorCode.PlayerNotFound, "Recipient was not found.");
     if (!donor) throw new ApiError(CARD_ALREADY_WITHDRAWN, "Card donor was not found.");
+    // Both complete player snapshots authorize one indivisible inventory/reputation transfer. A
+    // damaged participant must abort before the donor card can leave or the recipient can receive it.
+    validatedPlayerAccountEnvelope(recipient);
+    validatedPlayerAccountEnvelope(donor);
     if (!recipient.player.squadName || recipient.player.squadName !== donor.player.squadName) {
       throw new ApiError(ApiErrorCode.NotSquadMember, "Players do not belong to the same squad.");
     }
