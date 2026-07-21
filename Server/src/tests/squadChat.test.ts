@@ -13,6 +13,7 @@ import {
   parseSquadChatHistoryCursor,
   resolveSquadChatMembership,
   toSquadChatWireMessage,
+  validatedSquadChatMessage,
 } from "../services/squadChatService";
 
 const NOW = Date.UTC(2026, 6, 20, 4, 30, 12);
@@ -97,7 +98,7 @@ test("squad chat membership requires matching player mirrors, roster, and rank",
 
 test("squad chat wire output contains server-owned display metadata and Unix time", () => {
   const document: SquadChatMessageDocument = {
-    messageId: "server-message-1",
+    messageId: "dff18ca4-1677-421c-bec4-62fcd96ea10d",
     idempotencyKey: "member-1:retry-1",
     clientMessageId: "retry-1",
     squadId: "Alpha Squad",
@@ -112,7 +113,7 @@ test("squad chat wire output contains server-owned display metadata and Unix tim
   };
 
   assert.deepEqual(toSquadChatWireMessage(document), {
-    MessageId: "server-message-1",
+    MessageId: "dff18ca4-1677-421c-bec4-62fcd96ea10d",
     SquadId: "Alpha Squad",
     SenderId: "member-1",
     SenderName: "Honest Member",
@@ -122,6 +123,32 @@ test("squad chat wire output contains server-owned display metadata and Unix tim
     Text: "Ready for battle!",
     Timestamp: NOW / 1_000,
   });
+});
+
+test("Squad Chat authority rejects forged sender metadata and invalid retention", () => {
+  const document: SquadChatMessageDocument = {
+    messageId: "dff18ca4-1677-421c-bec4-62fcd96ea10d",
+    idempotencyKey: "member-1:retry-1",
+    clientMessageId: "retry-1",
+    squadId: "Alpha Squad",
+    senderId: "member-1",
+    senderName: "Honest Member",
+    senderLevel: 19,
+    senderLeague: -2,
+    senderSquadRank: SquadRank.Veteran,
+    text: "Ready for battle!",
+    createdAt: new Date(NOW),
+    expiresAt: new Date(NOW + 86_400_000),
+  };
+  assert.equal(validatedSquadChatMessage(document, new Date(NOW + 1)), document);
+  assert.throws(
+    () => validatedSquadChatMessage({ ...document, idempotencyKey: "other:retry-1" }),
+    /Stored Squad Chat message is invalid/,
+  );
+  assert.throws(
+    () => validatedSquadChatMessage({ ...document, expiresAt: new Date(NOW + 1) }),
+    /Stored Squad Chat message is invalid/,
+  );
 });
 
 test("cross-node Squad Chat notices carry UUID identity but no trusted content", () => {

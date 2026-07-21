@@ -418,6 +418,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   MongoDB TTL index bound abuse and retention. Optional Redis pub/sub carries only the origin and
   durable message UUID between hub nodes; receiving nodes reload content and the latest roster
   from MongoDB, suppress duplicate notices, and continue single-node delivery when Redis is down.
+  Every durable row is validated before insertion, sender-nonce replay, history/cursor publication,
+  or cross-node fan-out. It must have exact known fields, a UUID message ID, the sender-bound
+  idempotency key, bounded nonce/squad/sender/text, source-valid level/league/rank snapshots, and
+  safe ordered dates with one-to-365-day retention. Reads use one captured application time to
+  reject future or expired rows, while deployment retention is clamped to the same interval.
   This is a replacement protocol: the stock client still needs its Photon Chat adapter repointed
   to these typed messages.
 

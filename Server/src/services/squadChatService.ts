@@ -52,9 +52,57 @@ interface SquadChatHistoryCursor {
 }
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const SQUAD_CHAT_KEYS = new Set([
+  "_id", "messageId", "idempotencyKey", "clientMessageId", "squadId", "senderId",
+  "senderName", "senderLevel", "senderLeague", "senderSquadRank", "text", "createdAt", "expiresAt",
+]);
+const MIN_RETENTION_MS = 86_400_000;
+const MAX_RETENTION_MS = 365 * 86_400_000;
 
 function positiveInteger(value: number, fallback: number): number {
   return Number.isSafeInteger(value) && value > 0 ? value : fallback;
+}
+
+function boundedText(value: unknown, maximum: number): value is string {
+  return typeof value === "string"
+    && value.length > 0
+    && value.length <= maximum
+    && value.trim() === value
+    && !/\p{Cc}/u.test(value);
+}
+
+function safeDate(value: unknown): value is Date {
+  return value instanceof Date && Number.isSafeInteger(value.getTime()) && value.getTime() > 0;
+}
+
+/** Validate one complete durable chat row before history, fan-out, replay, or insertion. */
+export function validatedSquadChatMessage(
+  message: SquadChatMessageDocument,
+  now?: Date,
+): SquadChatMessageDocument {
+  if (!message
+    || typeof message !== "object"
+    || Object.keys(message).some((key) => !SQUAD_CHAT_KEYS.has(key))
+    || !UUID_PATTERN.test(message.messageId)
+    || !boundedText(message.senderId, 160)
+    || !boundedText(message.squadId, 160)
+    || !boundedText(message.senderName, 256)
+    || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$/u.test(message.clientMessageId)
+    || message.idempotencyKey !== `${message.senderId}:${message.clientMessageId}`
+    || !Number.isSafeInteger(message.senderLevel) || message.senderLevel < 1 || message.senderLevel > 58
+    || !Number.isSafeInteger(message.senderLeague) || message.senderLeague < -3 || message.senderLeague > 16
+    || !Number.isSafeInteger(message.senderSquadRank) || message.senderSquadRank < 0 || message.senderSquadRank > 3
+    || !boundedText(message.text, 2_048)
+    || !safeDate(message.createdAt)
+    || !safeDate(message.expiresAt)
+    || message.expiresAt.getTime() - message.createdAt.getTime() < MIN_RETENTION_MS
+    || message.expiresAt.getTime() - message.createdAt.getTime() > MAX_RETENTION_MS
+    || (now !== undefined && (!safeDate(now)
+      || message.createdAt.getTime() > now.getTime()
+      || message.expiresAt.getTime() <= now.getTime()))) {
+    throw new Error("Stored Squad Chat message is invalid.");
+  }
+  return message;
 }
 
 /**
@@ -120,6 +168,7 @@ async function currentMembership(playerId: string): Promise<SquadChatMembership>
 
 /** Convert storage fields to the stable PascalCase WebSocket contract used by the hub. */
 export function toSquadChatWireMessage(message: SquadChatMessageDocument): SquadChatWireMessage {
+  validatedSquadChatMessage(message);
   return {
     MessageId: message.messageId,
     SquadId: message.squadId,
@@ -187,7 +236,8 @@ function recoveredLeagueValue(player: PlayerDocument): number {
 }
 
 function retentionMilliseconds(): number {
-  return positiveInteger(config.squadChatRetentionDays, 30) * 86_400_000;
+  const requested = positiveInteger(config.squadChatRetentionDays, 30) * 86_400_000;
+  return Math.min(MAX_RETENTION_MS, Math.max(MIN_RETENTION_MS, requested));
 }
 
 async function enforceRateLimit(senderId: string, now: Date): Promise<void> {
@@ -233,6 +283,7 @@ export async function getSquadChatHistory(playerId: string, beforeCursor?: strin
     .toArray();
   const hasMore = rows.length > limit;
   const page = rows.slice(0, limit);
+  for (const message of page) validatedSquadChatMessage(message, now);
   const nextBeforeCursor = hasMore && page.length > 0
     ? createSquadChatHistoryCursor(page[page.length - 1])
     : null;
@@ -256,8 +307,10 @@ export async function getSquadChatFanout(messageId: string): Promise<{
   memberPlayerIds: string[];
 } | null> {
   if (!UUID_PATTERN.test(messageId)) return null;
-  const document = await squadChatMessages().findOne({ messageId, expiresAt: { $gt: new Date() } });
+  const now = new Date();
+  const document = await squadChatMessages().findOne({ messageId, expiresAt: { $gt: now } });
   if (!document) return null;
+  validatedSquadChatMessage(document, now);
   const squad = await squads().findOne({ name: document.squadId });
   if (!squad) return null;
   return {
@@ -280,8 +333,10 @@ export async function sendSquadChatMessage(playerId: string, input: SquadChatSen
   const normalized = normalizeSquadChatSend(input);
   const membership = await currentMembership(playerId);
   const idempotencyKey = `${playerId}:${normalized.clientMessageId}`;
+  const now = new Date();
   const existing = await squadChatMessages().findOne({ idempotencyKey });
   if (existing) {
+    validatedSquadChatMessage(existing, now);
     if (existing.squadId !== membership.squad.name || existing.text !== normalized.text) {
       throw new ApiError(ApiErrorCode.UnknownAction, "Squad chat ClientMessageId was already used for different content.");
     }
@@ -292,7 +347,6 @@ export async function sendSquadChatMessage(playerId: string, input: SquadChatSen
     };
   }
 
-  const now = new Date();
   await enforceRateLimit(playerId, now);
   const document: SquadChatMessageDocument = {
     messageId: randomUUID(),
@@ -308,6 +362,7 @@ export async function sendSquadChatMessage(playerId: string, input: SquadChatSen
     createdAt: now,
     expiresAt: new Date(now.getTime() + retentionMilliseconds()),
   };
+  validatedSquadChatMessage(document, now);
 
   try {
     await squadChatMessages().insertOne(document);
@@ -316,6 +371,7 @@ export async function sendSquadChatMessage(playerId: string, input: SquadChatSen
     // A second process won the same nonce race. Read the committed row and apply the same
     // content check as the ordinary retry path rather than broadcasting our uncommitted UUID.
     const winner = await squadChatMessages().findOne({ idempotencyKey });
+    if (winner) validatedSquadChatMessage(winner, now);
     if (!winner || winner.squadId !== membership.squad.name || winner.text !== normalized.text) {
       throw new ApiError(ApiErrorCode.UnknownAction, "Squad chat ClientMessageId conflicted with another message.");
     }
