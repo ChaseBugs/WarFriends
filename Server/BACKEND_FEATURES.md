@@ -144,7 +144,12 @@ achievements, squad leaderboard aggregate, and embedded member contribution now 
 same MongoDB transaction as both player rewards and the terminal match receipt. Membership is
 re-read from the squad roster in that transaction instead of trusting the profile mirror. This
 removes the former best-effort post-commit window in which a crash could permanently lose progress;
-finished-match retries return the immutable receipt without applying any counter again.
+finished-match retries return the immutable receipt without applying any counter again. Shared
+profile authority now rejects equally corrupt Army Power, lifetime Experience, or Squad Point
+mirrors: Army Power retains finite nonnegative fractional storage with a signed-int projection,
+Experience is a nonnegative safe integer, and Squad Points are a nonnegative signed-client integer.
+PvP settlement checks both counter additions, replaces unchecked `$add` with literal successors,
+and validates the canonical progression plus complete projected account before its first write.
 
 The complete durable ranked-match row is now validated before room admission/start, disconnect and
 presence decisions, relayed-card mutation/delivery, result consensus, moderation correlation,

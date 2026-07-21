@@ -305,6 +305,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   and the War Arena crown tuple uses only empty/bronze/silver/gold/flawless plus a signed-int expiry.
   This makes malformed state fail before squad-card arithmetic, level-gated economy selection,
   presence, or public projection rather than relying on the final numeric wire adapter.
+  Equality of duplicated root/profile counters is not sufficient: Army Power must be finite and
+  nonnegative with a signed-int truncation result, lifetime Experience must be a nonnegative safe
+  integer, and Squad Points must be a nonnegative signed-client integer. This rejects matching
+  `NaN`/`Infinity` or overflow in both copies before authentication, matchmaking, leaderboards, or
+  settlement while retaining the server's documented fractional Army Power storage.
   The same profile proof restricts `PlayerStatus` to Offline/Online/InGame and `SquadRank` to the
   five recovered values before authentication, publication, or mutation; a heartbeat must never
   overwrite an unknown stored status and conceal durable damage.
@@ -436,7 +441,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   includes daily PvP assignments, ranked-win/squad-point achievements, and both the squad total
   and embedded member contribution. A crash therefore cannot commit the immutable reward receipt
   while losing one of those client-visible counters, and a finished-match retry cannot count the
-  battle again. Match creation inserts the
+  battle again. Lifetime Experience and Squad Points are checked against their storage bounds and
+  written as literal precomputed successors rather than unchecked MongoDB `$add` expressions. The
+  canonical progression and complete projected account, including root mirrors, league identity,
+  Army Power, presence, and audit time, are proven before the first participant write. Match
+  creation inserts the
   durable row and reserves both current profiles as `InGame` in one MongoDB transaction; duplicate
   participants, corrupt snapshots, missing accounts, and concurrent active-match claims fail
   without partial state, and still-eligible connected players are restored to the bounded queue.

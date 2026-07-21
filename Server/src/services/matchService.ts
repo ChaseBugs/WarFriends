@@ -25,7 +25,11 @@ import {
 } from "./cardInventoryService";
 import { ApiError } from "../apiErrors";
 import { progressionForPlayer } from "./playerStateService";
-import { validatedPlayerAccountEnvelope } from "./playerProfileMirrorAuthorityService";
+import {
+  checkedPlayerLifetimeExperience,
+  checkedPlayerLifetimeSquadPoints,
+  validatedPlayerAccountEnvelope,
+} from "./playerProfileMirrorAuthorityService";
 import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
 import { validatedSquadDocument } from "./squadAuthorityService";
 import { applyLevelExperienceState } from "./levelProgressionService";
@@ -997,6 +1001,46 @@ async function settlePlayerCore(
   const placementMatchesRequired = leagueAdvance?.remainingMatches ?? player.player.remainingMatches;
   const beginnersLeague = beginnerAdvance?.beginnersLeague ?? player.player.beginnersLeague;
   const medalsBalance = beginnerAdvance?.medalsBalance ?? medals.medalsBalance;
+  const nextExperience = checkedPlayerLifetimeExperience(player.experience, experience);
+  const nextSquadPoints = checkedPlayerLifetimeSquadPoints(player.squadPoints, squadPoints);
+  const nextLastAction = validatedPlayerLastAction(settlementUnix);
+  const nextLeagueTier = leagueAdvance?.leagueTier ?? player.player.leagueTier;
+  const nextLeagueId = leagueAdvance
+    ? allocatedLeague?.leagueId ?? leagueAdvance.leagueId
+    : player.player.leagueId;
+  const nextLeagueDivision = leagueAdvance
+    ? allocatedLeague?.division ?? leagueAdvance.leagueDivision
+    : player.player.leagueDivision;
+  const nextRemainingMatches = leagueAdvance?.remainingMatches ?? player.player.remainingMatches;
+
+  // Validate the exact account produced by the aggregation pipeline before its first write. This
+  // catches overflow and cross-field drift across root mirrors, public profile fields, league
+  // identity, progression, presence, and audit time while the whole match can still roll back.
+  validatedPlayerAccountEnvelope({
+    ...player,
+    leagueTier: nextLeagueTier,
+    armyPower: nextArmyPower,
+    experience: nextExperience,
+    squadPoints: nextSquadPoints,
+    progression: canonical,
+    player: {
+      ...player.player,
+      experience: nextExperience,
+      squadPoints: nextSquadPoints,
+      skill: medals.skill,
+      medalsBalance,
+      beginnersLeague,
+      level: leveled.levelTo,
+      armyPower: nextArmyPower,
+      status: PlayerStatus.Online,
+      lastAction: nextLastAction,
+      leagueTier: nextLeagueTier,
+      leagueId: nextLeagueId,
+      leagueDivision: nextLeagueDivision,
+      remainingMatches: nextRemainingMatches,
+    },
+    updatedAt: settledAt,
+  });
 
   const update = await players().updateOne(
     { id: playerId, ...progressionRevisionFilter(player) },
@@ -1004,10 +1048,12 @@ async function settlePlayerCore(
       {
         $set: {
           progression: { $literal: canonical },
-          experience: { $add: [{ $ifNull: ["$experience", 0] }, experience] },
-          squadPoints: { $add: [{ $ifNull: ["$squadPoints", 0] }, squadPoints] },
-          "player.experience": { $add: [{ $ifNull: ["$player.experience", 0] }, experience] },
-          "player.squadPoints": { $add: [{ $ifNull: ["$player.squadPoints", 0] }, squadPoints] },
+          // These literal successors were checked above. Using `$add` here would let MongoDB
+          // apply rewards to a non-finite or overflowing imported counter after validation.
+          experience: nextExperience,
+          squadPoints: nextSquadPoints,
+          "player.experience": nextExperience,
+          "player.squadPoints": nextSquadPoints,
           // Skill and MedalsBalance are global and weekly medal mirrors in DatabasePlayer.
           // Use literal prevalidated values so the immutable receipt exactly matches this write.
           "player.skill": medals.skill,
@@ -1019,7 +1065,7 @@ async function settlePlayerCore(
           "player.status": PlayerStatus.Online,
           // Settlement releases presence at the exact authoritative settlement second. A later
           // retry replays the terminal receipt and cannot publish a second heartbeat.
-          "player.lastAction": validatedPlayerLastAction(settlementUnix),
+          "player.lastAction": nextLastAction,
           // Beginner/placement advances occur only inside this confirmed two-party settlement.
           // Folding them into the same player write prevents a forged standalone request or
           // replay from changing leagues without the matching medal result.

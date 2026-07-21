@@ -17,6 +17,70 @@ import {
 } from "./regionPingService";
 import { validatePlayerPublicScalarAuthority } from "./playerPublicScalarAuthorityService";
 
+const MAX_CLIENT_INTEGER = 2_147_483_647;
+
+/**
+ * Validate the numeric profile values duplicated at the MongoDB root.
+ *
+ * Mirror equality is not shape authority: `Object.is(NaN, NaN)` is true, so a bypassed writer
+ * could previously make both copies equally corrupt and pass authentication, matchmaking, and
+ * settlement. Army Power retains the server's documented finite fractional storage but its
+ * recovered integer projection must fit C# `int`; lifetime XP uses the safe subset of C# `long`;
+ * Squad Points are a nonnegative C# `int`.
+ */
+export function validatedPlayerProfileMirrorScalars(player: PlayerDocument): void {
+  const armyPowerProjection = Math.trunc(player.player.armyPower);
+  const armyPowerValid = Number.isFinite(player.player.armyPower)
+    && player.player.armyPower >= 0
+    && Number.isSafeInteger(armyPowerProjection)
+    && armyPowerProjection <= MAX_CLIENT_INTEGER;
+  const experienceValid = Number.isSafeInteger(player.player.experience)
+    && player.player.experience >= 0;
+  const squadPointsValid = Number.isSafeInteger(player.player.squadPoints)
+    && player.player.squadPoints >= 0
+    && player.player.squadPoints <= MAX_CLIENT_INTEGER;
+  if (!armyPowerValid || !experienceValid || !squadPointsValid) {
+    throw new Error("Stored player profile mirror values are invalid.");
+  }
+}
+
+function checkedProfileCounterIncrement(
+  current: number,
+  increment: number,
+  maximum: number,
+  label: string,
+): number {
+  if (!Number.isSafeInteger(current)
+    || current < 0
+    || current > maximum
+    || !Number.isSafeInteger(increment)
+    || increment < 0
+    || increment > maximum - current) {
+    throw new Error(`${label} increment is invalid.`);
+  }
+  return current + increment;
+}
+
+/** Add server-authored battle XP without exceeding JavaScript's exact C# `long` subset. */
+export function checkedPlayerLifetimeExperience(current: number, increment: number): number {
+  return checkedProfileCounterIncrement(
+    current,
+    increment,
+    Number.MAX_SAFE_INTEGER,
+    "Player lifetime experience",
+  );
+}
+
+/** Add server-authored Squad Points without exceeding the recovered C# `int` field. */
+export function checkedPlayerLifetimeSquadPoints(current: number, increment: number): number {
+  return checkedProfileCounterIncrement(
+    current,
+    increment,
+    MAX_CLIENT_INTEGER,
+    "Player lifetime Squad Points",
+  );
+}
+
 /**
  * Validate the public identity fields that are not duplicated at MongoDB's document root.
  *
@@ -79,6 +143,7 @@ function validatePlayerPublicIdentityFields(player: PlayerDocument): void {
 export function validatedPlayerProfileMirrors(player: PlayerDocument): PlayerDocument {
   const dto = player.player;
   validatePlayerPublicIdentityFields(player);
+  validatedPlayerProfileMirrorScalars(player);
   let facebookId: string;
   let googlePlayId: string;
   let gameCenterId: string;

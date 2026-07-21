@@ -36,6 +36,8 @@ import {
 import { validatedProgressionSuccessor } from "../services/progressionPublicationAuthorityService";
 import { validatedProgressionSchemaVersion } from "../services/progressionSchemaAuthorityService";
 import {
+  checkedPlayerLifetimeExperience,
+  checkedPlayerLifetimeSquadPoints,
   validatedPlayerCredentialProjection,
   validatedPlayerPrivateAccountFields,
   validatedPlayerProfileLookup,
@@ -377,7 +379,7 @@ test("DynamoDB numeric wire projection rejects corrupt profile authority instead
   corruptPrivateBoot.experience = Number.POSITIVE_INFINITY;
   assert.throws(
     () => buildPlayerData(corruptPrivateBoot),
-    /DynamoDB numeric attribute authority is invalid/,
+    /Stored player profile mirror values are invalid/,
   );
 
   const unsafeProjection = contractPlayer();
@@ -385,6 +387,46 @@ test("DynamoDB numeric wire projection rejects corrupt profile authority instead
   assert.throws(
     () => buildPlayerData(unsafeProjection),
     /Stored player public identity is invalid/,
+  );
+});
+
+test("shared profile authority rejects equally corrupt numeric mirrors and unsafe increments", () => {
+  for (const [field, value] of [
+    ["armyPower", Number.NaN],
+    ["armyPower", -1],
+    ["armyPower", 2_147_483_648],
+    ["experience", Number.POSITIVE_INFINITY],
+    ["experience", -1],
+    ["experience", 1.5],
+    ["squadPoints", -1],
+    ["squadPoints", 1.5],
+    ["squadPoints", 2_147_483_648],
+  ] as const) {
+    const corrupt = contractPlayer();
+    corrupt[field] = value;
+    corrupt.player[field] = value;
+    assert.throws(
+      () => validatedPlayerProfileLookup(corrupt),
+      /Stored player profile mirror values are invalid/,
+    );
+  }
+
+  // Finite fractional Army Power is a deliberate storage contract: the recovered public wire
+  // truncates it to C# int, while lifetime XP and Squad Points must remain exact integers.
+  const fractionalArmyPower = contractPlayer();
+  fractionalArmyPower.armyPower = 321.75;
+  fractionalArmyPower.player.armyPower = 321.75;
+  assert.equal(validatedPlayerProfileLookup(fractionalArmyPower), fractionalArmyPower);
+
+  assert.equal(checkedPlayerLifetimeExperience(4_321, 30), 4_351);
+  assert.equal(checkedPlayerLifetimeSquadPoints(100, 25), 125);
+  assert.throws(
+    () => checkedPlayerLifetimeExperience(Number.MAX_SAFE_INTEGER, 1),
+    /lifetime experience increment is invalid/,
+  );
+  assert.throws(
+    () => checkedPlayerLifetimeSquadPoints(2_147_483_647, 1),
+    /lifetime Squad Points increment is invalid/,
   );
 });
 
@@ -1397,7 +1439,7 @@ test("experience leaderboard items use the FHIPGDADNFG field contract", () => {
   corruptExperience.experience = Number.NaN;
   assert.throws(
     () => buildPlayerLeaderboardItem(corruptExperience, 1),
-    /DynamoDB numeric attribute authority is invalid/,
+    /Stored player profile mirror values are invalid/,
   );
   assert.throws(
     () => buildPlayerLeaderboardItem(contractPlayer(), Number.POSITIVE_INFINITY),
