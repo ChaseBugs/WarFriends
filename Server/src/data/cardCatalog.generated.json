@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "clientVersion": "4.9.5",
   "source": "Client/ExportedProject/Assets/Scenes/MainScene.unity",
   "sourceSha256": "cf9b1da395cfb392d5bf274d3717ca11eb8b8bfefc85a8c782a46bdb24a0f996",
@@ -80,6 +80,308 @@
       10
     ]
   },
+  "squadLevelDefinitions": [
+    {
+      "level": 1,
+      "experience": 120000,
+      "size": 4,
+      "cardPoolSize": 3
+    },
+    {
+      "level": 2,
+      "experience": 122000,
+      "size": 4,
+      "cardPoolSize": 4
+    },
+    {
+      "level": 3,
+      "experience": 124100,
+      "size": 4,
+      "cardPoolSize": 5
+    },
+    {
+      "level": 4,
+      "experience": 252200,
+      "size": 8,
+      "cardPoolSize": 5
+    },
+    {
+      "level": 5,
+      "experience": 256300,
+      "size": 8,
+      "cardPoolSize": 6
+    },
+    {
+      "level": 6,
+      "experience": 260400,
+      "size": 8,
+      "cardPoolSize": 6
+    },
+    {
+      "level": 7,
+      "experience": 264500,
+      "size": 8,
+      "cardPoolSize": 6
+    },
+    {
+      "level": 8,
+      "experience": 380900,
+      "size": 8,
+      "cardPoolSize": 6
+    },
+    {
+      "level": 9,
+      "experience": 386700,
+      "size": 8,
+      "cardPoolSize": 7
+    },
+    {
+      "level": 10,
+      "experience": 784900,
+      "size": 16,
+      "cardPoolSize": 7
+    },
+    {
+      "level": 11,
+      "experience": 796500,
+      "size": 16,
+      "cardPoolSize": 7
+    },
+    {
+      "level": 12,
+      "experience": 1145900,
+      "size": 16,
+      "cardPoolSize": 7
+    },
+    {
+      "level": 13,
+      "experience": 1162400,
+      "size": 16,
+      "cardPoolSize": 7
+    },
+    {
+      "level": 14,
+      "experience": 1178800,
+      "size": 16,
+      "cardPoolSize": 7
+    },
+    {
+      "level": 15,
+      "experience": 1695000,
+      "size": 16,
+      "cardPoolSize": 7
+    },
+    {
+      "level": 16,
+      "experience": 1718200,
+      "size": 16,
+      "cardPoolSize": 7
+    },
+    {
+      "level": 17,
+      "experience": 1741500,
+      "size": 16,
+      "cardPoolSize": 8
+    },
+    {
+      "level": 18,
+      "experience": 3754100,
+      "size": 24,
+      "cardPoolSize": 8
+    },
+    {
+      "level": 19,
+      "experience": 3803700,
+      "size": 24,
+      "cardPoolSize": 8
+    },
+    {
+      "level": 20,
+      "experience": 5464400,
+      "size": 24,
+      "cardPoolSize": 8
+    },
+    {
+      "level": 21,
+      "experience": 5534700,
+      "size": 24,
+      "cardPoolSize": 8
+    },
+    {
+      "level": 22,
+      "experience": 7948600,
+      "size": 24,
+      "cardPoolSize": 8
+    },
+    {
+      "level": 23,
+      "experience": 8048200,
+      "size": 24,
+      "cardPoolSize": 8
+    },
+    {
+      "level": 24,
+      "experience": 11554800,
+      "size": 24,
+      "cardPoolSize": 8
+    },
+    {
+      "level": 25,
+      "experience": 16586700,
+      "size": 24,
+      "cardPoolSize": 8
+    },
+    {
+      "level": 26,
+      "experience": 22382700,
+      "size": 32,
+      "cardPoolSize": 8
+    },
+    {
+      "level": 27,
+      "experience": 31124700,
+      "size": 32,
+      "cardPoolSize": 8
+    },
+    {
+      "level": 28,
+      "experience": 43275200,
+      "size": 32,
+      "cardPoolSize": 8
+    },
+    {
+      "level": 29,
+      "experience": 43779600,
+      "size": 32,
+      "cardPoolSize": 9
+    },
+    {
+      "level": 30,
+      "experience": 60853900,
+      "size": 32,
+      "cardPoolSize": 9
+    },
+    {
+      "level": 31,
+      "experience": 84576400,
+      "size": 32,
+      "cardPoolSize": 9
+    },
+    {
+      "level": 32,
+      "experience": 117531500,
+      "size": 32,
+      "cardPoolSize": 9
+    },
+    {
+      "level": 33,
+      "experience": 163307400,
+      "size": 32,
+      "cardPoolSize": 9
+    },
+    {
+      "level": 34,
+      "experience": 226884500,
+      "size": 32,
+      "cardPoolSize": 9
+    },
+    {
+      "level": 35,
+      "experience": 286695000,
+      "size": 40,
+      "cardPoolSize": 9
+    },
+    {
+      "level": 36,
+      "experience": 325675700,
+      "size": 40,
+      "cardPoolSize": 9
+    },
+    {
+      "level": 37,
+      "experience": 369914400,
+      "size": 40,
+      "cardPoolSize": 9
+    },
+    {
+      "level": 38,
+      "experience": 420115600,
+      "size": 40,
+      "cardPoolSize": 9
+    },
+    {
+      "level": 39,
+      "experience": 477077700,
+      "size": 40,
+      "cardPoolSize": 9
+    },
+    {
+      "level": 40,
+      "experience": 541705100,
+      "size": 40,
+      "cardPoolSize": 9
+    },
+    {
+      "level": 41,
+      "experience": 615023100,
+      "size": 40,
+      "cardPoolSize": 9
+    },
+    {
+      "level": 42,
+      "experience": 698192900,
+      "size": 40,
+      "cardPoolSize": 9
+    },
+    {
+      "level": 43,
+      "experience": 1336033800,
+      "size": 60,
+      "cardPoolSize": 9
+    },
+    {
+      "level": 44,
+      "experience": 1516404600,
+      "size": 60,
+      "cardPoolSize": 9
+    },
+    {
+      "level": 45,
+      "experience": 1720960200,
+      "size": 60,
+      "cardPoolSize": 9
+    },
+    {
+      "level": 46,
+      "experience": 1952924500,
+      "size": 60,
+      "cardPoolSize": 9
+    },
+    {
+      "level": 47,
+      "experience": 2215949100,
+      "size": 60,
+      "cardPoolSize": 9
+    },
+    {
+      "level": 48,
+      "experience": 2514169400,
+      "size": 60,
+      "cardPoolSize": 9
+    },
+    {
+      "level": 49,
+      "experience": 3205537900,
+      "size": 60,
+      "cardPoolSize": 10
+    },
+    {
+      "level": 50,
+      "experience": 3636292600,
+      "size": 60,
+      "cardPoolSize": 10
+    }
+  ],
   "cards": [
     {
       "name": "AMMOCRATE",

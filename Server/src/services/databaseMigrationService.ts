@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import type { Db, Document } from "mongodb";
 import { mongoDatabase } from "../db";
 import logger from "../utils/logger";
+import { migrateLegacySquadExperienceState } from "./squadProgressionService";
 
 /**
  * Versioned database migrations for rolling deployments.
@@ -187,6 +188,57 @@ const migrations: readonly DatabaseMigration[] = [
         { joinPolicy: 1, requiredMedals: 1, squadPoints: -1, name: 1 },
         { name: "suggested_squad_eligibility" },
       );
+    },
+  },
+  {
+    id: "20260722_012_recovered_squad_progression",
+    checksum: "sha256:387994a056a9732a37c8ec1d4a4da068f02bdc53e152ff6c1dc230143613ec51",
+    description: "Roll legacy Squad experience into recovered rank progress and roster capacity.",
+    up: async (db) => {
+      const collection = db.collection("squads");
+      const rows = await collection.find({}, {
+        projection: { _id: 1, name: 1, level: 1, experience: 1, maxMembers: 1, members: 1 },
+      }).toArray();
+      const plans = rows.map((row) => {
+        const transition = migrateLegacySquadExperienceState(row.level, row.experience);
+        if (!Array.isArray(row.members) || row.members.length > transition.maxMembers) {
+          // The old reconstruction admitted up to 15 members at rank one. Silently removing a
+          // real roster member would be destructive, while retaining that capacity would keep an
+          // invented entitlement. Abort before the first write and require operator resolution.
+          throw new MigrationHistoryError(
+            `Squad ${String(row.name)} has ${Array.isArray(row.members) ? row.members.length : "an invalid roster"}`
+            + ` members but recovered level ${transition.levelTo} permits ${transition.maxMembers}.`,
+          );
+        }
+        return { row, transition };
+      });
+
+      // Planning every row first prevents a late malformed roster from leaving a partially
+      // transformed database. Each compare-and-set is still idempotent if the process terminates
+      // after writes but before the migration receipt is committed.
+      for (const { row, transition } of plans) {
+        if (row.level === transition.levelTo
+          && row.experience === transition.levelExperience
+          && row.maxMembers === transition.maxMembers) continue;
+        const result = await collection.updateOne(
+          {
+            _id: row._id,
+            level: row.level,
+            experience: row.experience,
+            maxMembers: row.maxMembers,
+          },
+          {
+            $set: {
+              level: transition.levelTo,
+              experience: transition.levelExperience,
+              maxMembers: transition.maxMembers,
+            },
+          },
+        );
+        if (result.matchedCount !== 1) {
+          throw new MigrationHistoryError(`Squad ${String(row.name)} changed during progression migration.`);
+        }
+      }
     },
   },
 ];

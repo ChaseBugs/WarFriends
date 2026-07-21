@@ -80,7 +80,9 @@ function squadCollection(
 test("action 101 admits Squads by recovered Skill order with stable name ties", async () => {
   const alpha = squadDocument("Alpha Squad", 500, 1);
   const bravo = squadDocument("Bravo Squad", 500, 10_000);
-  const lower = squadDocument("Lower Squad", 400, 1_000_000);
+  // Experience is within-rank progression, not this leaderboard's sort key. Keep every fixture
+  // below the recovered rank-one threshold while proving that Skill/squadPoints owns ordering.
+  const lower = squadDocument("Lower Squad", 400, 100_000);
   let captured: { filter: Filter<SquadDocument>; sort: Sort; limit: number } | undefined;
 
   const rows = await listByExperience(3, squadCollection(
@@ -191,7 +193,16 @@ test("Suggested Squads use authenticated global Skill and return only joinable r
     /not eligible for the authenticated player/,
   );
   const full = squadDocument("Full Squad", 600);
-  full.maxMembers = 1;
+  for (let index = 1; index < full.maxMembers; index += 1) {
+    full.members.push({
+      playerId: `full-member-${index}`,
+      name: `Member${index}`,
+      rank: SquadRank.Member,
+      squadPoints: 0,
+      joinedAt: NOW,
+      lastSeenChatTimestamp: 0,
+    });
+  }
   await assert.rejects(
     suggestedSquads(player, 1, squadCollection([full])),
     /not eligible for the authenticated player/,

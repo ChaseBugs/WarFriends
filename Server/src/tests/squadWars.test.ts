@@ -198,6 +198,27 @@ test("durable Squad War round authority binds division shape and score conservat
     updatedAt: createdAt,
   };
   assert.equal(validatedSquadWarRound(round, season, createdAt), round);
+  const sourceMaximumRoster = Array.from({ length: 60 }, (_, index) => ({
+    playerId: `player-${index}`,
+    name: `Player ${index}`,
+    score: 0,
+  }));
+  assert.equal(validatedSquadWarRound({
+    ...round,
+    entries: [{ ...round.entries[0]!, score: 0, wins: 0, members: sourceMaximumRoster }],
+  }, season, createdAt).entries[0]!.members.length, 60);
+  assert.throws(
+    () => validatedSquadWarRound({
+      ...round,
+      entries: [{
+        ...round.entries[0]!,
+        score: 0,
+        wins: 0,
+        members: [...sourceMaximumRoster, { playerId: "player-60", name: "Player 60", score: 0 }],
+      }],
+    }, season, createdAt),
+    /round authority is invalid/,
+  );
   assert.throws(
     () => validatedSquadWarRound({ ...round, entries: [{ ...round.entries[0]!, score: 10 }] }, season, createdAt),
     /round authority is invalid/,

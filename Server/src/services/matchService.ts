@@ -34,6 +34,7 @@ import {
 import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
 import { nextSquadUpdatedAt, validatedSquadDocument } from "./squadAuthorityService";
 import { applyLevelExperienceState } from "./levelProgressionService";
+import { applySquadExperienceState } from "./squadProgressionService";
 import { calculateArmyPower } from "./armyPowerService";
 import {
   advanceBeginnerLeagueAfterPvp,
@@ -1199,22 +1200,42 @@ async function settlePlayerCore(
     // transaction guarantees equality with the player's mirrored lifetime squad points.
     const rewardedMember = activeSquad!.members.find((member) => member.playerId === playerId)!;
     const squadUpdatedAt = nextSquadUpdatedAt(activeSquad!, settledAt);
+    const squadProgression = applySquadExperienceState(
+      activeSquad!.level,
+      activeSquad!.experience,
+      activeSquad!.maxMembers,
+      squadPoints,
+    );
     // Prove all three incremented mirrors before MongoDB applies them. A corrupt or exhausted
     // squad counter must abort the same transaction as player rewards and the terminal match.
     validatedSquadDocument({
       ...activeSquad!,
-      experience: activeSquad!.experience + squadPoints,
+      experience: squadProgression.levelExperience,
       squadPoints: activeSquad!.squadPoints + squadPoints,
+      level: squadProgression.levelTo,
+      maxMembers: squadProgression.maxMembers,
       members: activeSquad!.members.map((member) => member.playerId === playerId
         ? { ...member, squadPoints: rewardedMember.squadPoints + squadPoints }
         : member),
       updatedAt: squadUpdatedAt,
     }, squadUpdatedAt);
     const squadUpdate = await squads().updateOne(
-      { name: squadName, "members.playerId": playerId },
       {
-        $inc: { experience: squadPoints, squadPoints, "members.$.squadPoints": squadPoints },
-        $set: { updatedAt: squadUpdatedAt },
+        name: squadName,
+        "members.playerId": playerId,
+        updatedAt: activeSquad!.updatedAt,
+      },
+      {
+        // Experience can cross multiple recovered thresholds and must reset to the remainder;
+        // publish its coupled level/capacity as checked literals. Competitive and member totals
+        // remain monotonic increments inside this same match transaction.
+        $inc: { squadPoints, "members.$.squadPoints": squadPoints },
+        $set: {
+          experience: squadProgression.levelExperience,
+          level: squadProgression.levelTo,
+          maxMembers: squadProgression.maxMembers,
+          updatedAt: squadUpdatedAt,
+        },
       },
       { session },
     );

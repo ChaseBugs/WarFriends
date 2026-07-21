@@ -1,11 +1,14 @@
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import { SquadRank } from "../constants";
 import type { SquadDocument } from "../db";
+import {
+  MAX_SQUAD_ROSTER_SIZE,
+  validatedSquadProgressionSnapshot,
+} from "./squadProgressionService";
 
 const MAX_CLIENT_INTEGER = 2_147_483_647;
 const MAX_PLAYER_ID_LENGTH = 256;
 export const SQUAD_MAX_PENDING_ADMISSIONS = 100;
-const MAX_SQUAD_MEMBERS = 50;
 const MAX_CLOCK_SKEW_SECONDS = 300;
 const SQUAD_KEYS = new Set([
   "_id", "name", "emblem", "description", "experience", "squadPoints", "level", "leagueId",
@@ -68,6 +71,10 @@ function boundedClientInteger(value: unknown, minimum = 0): value is number {
   return Number.isSafeInteger(value) && (value as number) >= minimum && (value as number) <= MAX_CLIENT_INTEGER;
 }
 
+function nonnegativeSafeInteger(value: unknown): value is number {
+  return Number.isSafeInteger(value) && (value as number) >= 0;
+}
+
 /**
  * The recovered request sends one Icon string. Keep the internal object solely for compatibility
  * with older reconstructed rows, but do not let arbitrary nested client JSON become durable squad
@@ -113,7 +120,9 @@ export function validatedSquadDocument(
     || Object.keys(raw).some((key) => !SQUAD_KEYS.has(key))
     || !boundedCanonicalText(squad.name, 3, 24)
     || !boundedCanonicalText(squad.description, 0, 250)
-    || !boundedClientInteger(squad.experience)
+    // AANECPGDMGM parses LevelExperience as C# long. Later source thresholds exceed Int32, so
+    // applying the smaller competitive-counter bound here would make valid high ranks unusable.
+    || !nonnegativeSafeInteger(squad.experience)
     || !boundedClientInteger(squad.squadPoints)
     || !boundedClientInteger(squad.level, 1)
     || !boundedCanonicalText(squad.leagueId, 0, 128)
@@ -131,7 +140,7 @@ export function validatedSquadDocument(
     || !boundedClientInteger(squad.requiredMedals)
     || !Number.isSafeInteger(squad.maxMembers)
     || squad.maxMembers < 1
-    || squad.maxMembers > MAX_SQUAD_MEMBERS
+    || squad.maxMembers > MAX_SQUAD_ROSTER_SIZE
     || !Array.isArray(squad.members)
     || squad.members.length < 1
     || squad.members.length > squad.maxMembers
@@ -147,6 +156,9 @@ export function validatedSquadDocument(
     invalid();
   }
   validatedSquadEmblem(squad.emblem);
+  // `experience`, `level`, and `maxMembers` are one recovered Squads-table authority snapshot.
+  // Validate them together before roster capacity or card-pool access can use any one field.
+  validatedSquadProgressionSnapshot(squad.level, squad.experience, squad.maxMembers);
 
   const memberIds = new Set<string>();
   let leaders = 0;

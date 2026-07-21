@@ -22,8 +22,11 @@ export function buildDatabaseSquad(squad: SquadDTO): Record<string, unknown> {
     Level: squad.level,
     SkillRequirement: squad.requiredMedals,
     SquadPoints: squad.squadPoints,
-    Experience: squad.experience,
-    LevelExperience: 0,
+    // AANECPGDMGM parses Experience as an older 32-bit field but no recovered squad screen reads
+    // it. High-rank source thresholds exceed Int32, so do not mirror 64-bit progress into that
+    // incompatible legacy field. SquadStatsContent reads the exact long below.
+    Experience: 0,
+    LevelExperience: squad.experience,
     Icon: icon,
     Kills: 0,
     BattlesLost: 0,

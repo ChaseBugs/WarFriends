@@ -23,6 +23,7 @@ export interface SquadDTO {
   name: string;
   emblem: Record<string, unknown>;
   description: string;
+  /** Recovered `LevelExperience`: progress within the current one-based Squad level. */
   experience: number;
   squadPoints: number;
   level: number;
@@ -68,7 +69,9 @@ export function newSquad(name: string, founderId: string): SquadDTO {
     joinPolicy: 0,
     minLevel: 0,
     requiredMedals: 0,
-    maxMembers: 15,
+    // Client 4.9.5 Squads row 1 unlocks four members. Later rank transitions replace this with
+    // the exact SIZE from their source row; it is not a client-selected squad setting.
+    maxMembers: 4,
     members: [],
     joinRequests: [],
     invitedPlayerIds: [],

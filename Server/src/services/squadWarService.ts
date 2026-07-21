@@ -37,6 +37,7 @@ import {
 } from "./squadWarContract";
 import { integerNumberAttribute } from "./dynamoNumberAttributeService";
 import { nextSquadUpdatedAt, validatedSquadDocument } from "./squadAuthorityService";
+import { MAX_SQUAD_ROSTER_SIZE } from "./squadProgressionService";
 
 const MAX_UNIX_SECONDS = 2_147_483_647;
 const SQUAD_WAR_SEASON_KEYS = new Set([
@@ -172,7 +173,11 @@ export function validatedSquadWarRound(
       || !Number.isSafeInteger(entry.score) || entry.score < 0
       || !Number.isSafeInteger(entry.wins) || entry.wins < 0 || entry.wins > entry.score
       || entry.baseScore > Number.MAX_SAFE_INTEGER - entry.score
-      || !Array.isArray(entry.members) || entry.members.length < 1 || entry.members.length > 50) return false;
+      // A division contains at most 50 squads, but the recovered rank table unlocks up to 60
+      // members in one squad. Do not confuse those independent bounds at settlement authority.
+      || !Array.isArray(entry.members)
+      || entry.members.length < 1
+      || entry.members.length > MAX_SQUAD_ROSTER_SIZE) return false;
     let memberScore = 0;
     const memberIds = new Set<string>();
     for (const member of entry.members) {

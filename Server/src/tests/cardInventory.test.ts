@@ -72,7 +72,7 @@ const GOLD_PACK_CARDS = [
 ];
 
 test("card extraction joins serialized components, definitions, pack prices, and rarity rules", () => {
-  assert.equal(generatedCardCatalog.schemaVersion, 3);
+  assert.equal(generatedCardCatalog.schemaVersion, 4);
   assert.equal(generatedCardCatalog.clientVersion, "4.9.5");
   assert.match(generatedCardCatalog.sourceSha256, /^[0-9a-f]{64}$/);
   assert.equal(generatedCardCatalog.unlockLevel, 6);
@@ -97,6 +97,19 @@ test("card extraction joins serialized components, definitions, pack prices, and
       9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
       9, 9, 9, 9, 9, 9, 9, 9, 10, 10,
     ],
+  });
+  assert.equal(generatedCardCatalog.squadLevelDefinitions.length, 50);
+  assert.deepEqual(generatedCardCatalog.squadLevelDefinitions[0], {
+    level: 1,
+    experience: 120_000,
+    size: 4,
+    cardPoolSize: 3,
+  });
+  assert.deepEqual(generatedCardCatalog.squadLevelDefinitions[49], {
+    level: 50,
+    experience: 3_636_292_600,
+    size: 60,
+    cardPoolSize: 10,
   });
   assert.deepEqual(
     generatedCardCatalog.packs.map((pack) => [

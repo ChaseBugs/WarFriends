@@ -39,6 +39,18 @@ Status legend:
   replacement `Rank` metadata validates every strictly higher account instead of counting damaged
   indexed roots; the recovered stock parser continues to consume only `Items` and `Local`.
 
+- **Squad rank progression now follows the recovered 50-row table.** The card-catalog extractor
+  keeps each 4.9.5 `Squads` row's one-based `LEVEL`, 64-bit `EXPERIENCE` threshold, roster `SIZE`,
+  and `CARDPOOLSIZE` together. New squads start with four seats. Complete Squad authority rejects
+  a clamped/fractional/out-of-range rank, progress that should already have crossed a non-final
+  threshold, or capacity from another row. Confirmed ranked-PvP Squad Points atomically update the
+  competitive/member totals, subtract every crossed experience threshold, unlock the target
+  roster size, and publish the remainder through the `LevelExperience` field actually consumed by
+  `AANECPGDMGM`/`SquadStatsContent`. Startup migration 012 rolls the previous never-advanced
+  counter forward idempotently and aborts before its first write if a recovered capacity cannot
+  contain an existing roster. The recovered type-10 Squad-level-up notification remains explicit
+  follow-up work; no message reward or payload has been invented in this increment.
+
 ## Feature inventory
 
 | Priority | Feature | Client actions | Status | Implemented backend behavior | Required remaining work |

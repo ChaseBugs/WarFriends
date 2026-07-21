@@ -506,7 +506,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   server keeps their policy authority separate: policy 1 stores a bounded manager request, policy
   2 rejects an uninvited request, and an already invited player is routed through the atomic join
   transaction so the invitation is consumed exactly once. Capacity always uses the validated
-  stored `maxMembers`; no missing/falsey default can alter an admission decision.
+  stored `maxMembers`; no missing/falsey default can alter an admission decision. New squads start
+  with the four-member capacity from 4.9.5 `Squads` row 1. The extracted 50-row progression table
+  binds each one-based rank to `EXPERIENCE`, `SIZE`, and `CARDPOOLSIZE`; complete Squad validation
+  requires current progress to remain below its next threshold and capacity to equal the same row.
   A new policy-1 request transaction advances both the exact Squad revision and a strictly
   monotonic player-account revision. That player write serializes request creation against every
   membership transaction: a winning join makes the retried request observe membership and fail,
@@ -618,7 +621,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   logging or dispatch. WebSocket settlement requires matching reports from both
   participants, and the database settlement claim is idempotent. The terminal transaction now
   includes daily PvP assignments, ranked-win/squad-point achievements, and both the squad total
-  and embedded member contribution. A crash therefore cannot commit the immutable reward receipt
+  and embedded member contribution. The same transaction now advances the Squad's recovered
+  64-bit `LevelExperience`, subtracts every crossed rank threshold, and publishes the target row's
+  roster capacity. `AANECPGDMGM` receives that progress through `LevelExperience` instead of the
+  former hard-coded zero, so `SquadStatsContent` renders the real rank bar and card-pool/roster
+  unlocks follow the same source row. A crash therefore cannot commit the immutable reward receipt
   while losing one of those client-visible counters, and a finished-match retry cannot count the
   battle again. Lifetime Experience and Squad Points are checked against their storage bounds and
   written as literal precomputed successors rather than unchecked MongoDB `$add` expressions. The
@@ -1857,11 +1864,16 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   leadership, admission, chat, card-pool, event, PvP reward, leaderboard, or Squad War authority.
   The validator requires exact fields; bounded normalized names, descriptions, emblems, and player
   identities; source-valid ranks and join policy; safe nonnegative counters; ordered timestamps;
-  unique members and pending identities; exactly one Leader matching the founder; capacity-consistent
+  unique members and pending identities; exactly one Leader matching the founder; an exact
+  source-row level/progress/capacity tuple; capacity-consistent
   membership; bounded request/invitation queues; and no pending identity already in the roster.
   Mutations validate the projected successor before writing. MongoDB's implicit `_id` is treated as
   read-only storage metadata and removed before `$set`, so settings and roster replacements cannot
   fail by attempting to update MongoDB's immutable identifier.
+  Startup migration `20260722_012_recovered_squad_progression` rolls the old reconstruction's
+  never-advanced experience counter through those thresholds and replaces its invented rank-one
+  capacity. It plans every row before writing and stops for operator review if the recovered target
+  capacity cannot hold an existing roster; migration never removes a member to make data fit.
 - **War Arena (persistent core)**: login supplies the recovered Dynamo-style
   `WarArenaConfig`, while `EnterArena`, action-64/65 starts, Arena `GameEnded`, heart/life
   actions, scraps claims, rollover, and `GetArenaLeaderboards` use the exact `WarArenaData`

@@ -193,11 +193,22 @@ const squadsBlock = blocks.find(({ text }) =>
   && /^  - LEVEL: 1$/m.test(text)
   && /^  - LEVEL: 50$/m.test(text));
 if (!squadsBlock) throw new Error("Squads card-pool rows were not found in MainScene.");
-const squadRows = flatRows(squadsBlock, ["LEVEL", "CARDPOOLSIZE"], "Squads", false)
+const squadRows = flatRows(squadsBlock, ["LEVEL", "SIZE", "EXPERIENCE", "CARDPOOLSIZE"], "Squads", false)
   .sort((left, right) => left.LEVEL - right.LEVEL);
 for (let index = 0; index < squadRows.length; index++) {
-  if (squadRows[index].LEVEL !== index + 1 || !Number.isInteger(squadRows[index].CARDPOOLSIZE)) {
-    throw new Error(`Squads card-pool row ${index} is invalid or non-contiguous.`);
+  const row = squadRows[index];
+  if (
+    row.LEVEL !== index + 1
+    || !Number.isInteger(row.SIZE)
+    || row.SIZE < 1
+    || !Number.isSafeInteger(row.EXPERIENCE)
+    || row.EXPERIENCE < 1
+    || !Number.isInteger(row.CARDPOOLSIZE)
+    || row.CARDPOOLSIZE < 1
+    || (index > 0 && row.SIZE < squadRows[index - 1].SIZE)
+    || (index > 0 && row.CARDPOOLSIZE < squadRows[index - 1].CARDPOOLSIZE)
+  ) {
+    throw new Error(`Squads progression row ${index} is invalid or non-contiguous.`);
   }
 }
 
@@ -305,8 +316,18 @@ const cardPoolRules = {
   },
   capacityBySquadLevel: squadRows.map((row) => row.CARDPOOLSIZE),
 };
+// The recovered SquadStatsContent renders LevelExperience against the current row's EXPERIENCE,
+// while GetSquadRankSize and SquadCardpoolSize read SIZE/CARDPOOLSIZE from that same one-based
+// level. Keep the four values in one extracted row so backend rank transitions cannot combine
+// thresholds and unlocks from different source revisions.
+const squadLevelDefinitions = squadRows.map((row) => ({
+  level: row.LEVEL,
+  experience: row.EXPERIENCE,
+  size: row.SIZE,
+  cardPoolSize: row.CARDPOOLSIZE,
+}));
 const artifact = {
-  schemaVersion: 3,
+  schemaVersion: 4,
   clientVersion: "4.9.5",
   source: "Client/ExportedProject/Assets/Scenes/MainScene.unity",
   sourceSha256: createHash("sha256").update(sceneBuffer).digest("hex"),
@@ -314,6 +335,7 @@ const artifact = {
   rarityProbabilities,
   craftingRules,
   cardPoolRules,
+  squadLevelDefinitions,
   cards,
   unresolvedRows,
   packs,
