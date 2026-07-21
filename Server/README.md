@@ -1708,8 +1708,10 @@ therefore update its executable disposition instead of silently falling through 
   exact `FROMMISSION` card eligibility semantics, and production Heroic unit selection weighting
   to replace the documented uniform and bought-first cryptographic fallbacks; add combat-result
   validation.
-  Remaining deployment and stolen-crate achievement groups stay unclaimable until their gameplay
-  events are authoritative. Group 17 uses accepted owned-card consumption but still
+  Recovered groups 6 and 7 count the individual soldier and vehicle entities passed to
+  `MatchStats.DeployUnit`, not deployment clicks or War Card use; group 18 counts crates stolen.
+  All three stay unclaimable until the relay can validate those combat facts. Group 17 uses
+  accepted owned-card consumption but still
   shares the documented missing live card-event-validation boundary.
 - **PvP reward tuning** — XP/medal/squad values in `matchService.REWARDS` remain reconstruction
   policy. Normal WarBucks uses server-owned `PVP_WIN_WARBUCKS` / `PVP_LOSE_WARBUCKS` defaults

@@ -117,7 +117,7 @@ test("finishing a Squad War completes the exact one-time 4.9.5 achievement", () 
   assert.equal(replay.state, completed.state);
 });
 
-test("combat-telemetry achievements keep their exact 4.9.5 wire tiers but remain locked", () => {
+test("spawned-unit and stolen-crate achievements keep their exact tiers but remain locked", () => {
   assert.deepEqual([...NON_AUTHORITATIVE_ACHIEVEMENT_GROUPS], [6, 7, 18]);
   assert.deepEqual(
     [6, 7, 18].map((id) => ACHIEVEMENT_DEFINITIONS[id].map((tier) => [tier.target, tier.gold])),

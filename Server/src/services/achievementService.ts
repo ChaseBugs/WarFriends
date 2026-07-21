@@ -52,6 +52,12 @@ export interface AchievementTierDefinition {
  * their tiers does not make the client-reported Stats value trustworthy. Every mutation entry
  * point checks this set, and schema normalization pins the visible server value to zero until a
  * future combat authority can remove an ID from this boundary and supply validated increments.
+ * Recovered `StatsManager.IncrementStatistics` proves that group 6 adds
+ * `matchStats.soldierUnitsSpawned`, group 7 adds `matchStats.vehiclesSpawned`, and group 18 adds
+ * `matchStats.cratesStolen`. The first two values are entity counts supplied to `DeployUnit`, not
+ * deployment clicks or War Card plays. The replacement relay currently validates only CardPlayed;
+ * treating an opaque deployment RPC or a consumed card as one spawned unit would undercount squad
+ * spawns and would let a client manufacture progress without server-side combat simulation.
  */
 export const NON_AUTHORITATIVE_ACHIEVEMENT_GROUPS: ReadonlySet<number> = new Set([6, 7, 18]);
 
@@ -298,8 +304,9 @@ export function achievementStateFor(state: PlayerProgressionState): AchievementS
     }
   }
   // Groups 6, 7, and 18 are present in MainScene and must exist in AchievementsData, but their
-  // local StatsManager values are self-authored. Pin them to zero at every read/mutation boundary
-  // so an old imported blob or a modified action-220 payload cannot become economy authority.
+  // local StatsManager values are self-authored spawned-soldier, spawned-vehicle, and stolen-crate
+  // totals. Pin them to zero at every read/mutation boundary so an old imported blob, an opaque
+  // relayed deployment message, or a modified action-220 payload cannot become economy authority.
   for (const id of NON_AUTHORITATIVE_ACHIEVEMENT_GROUPS) {
     const group = byId.get(id);
     if (group) {
