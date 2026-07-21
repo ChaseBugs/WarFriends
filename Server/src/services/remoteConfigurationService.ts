@@ -31,10 +31,28 @@ export interface RemoteConfigurationManifest {
   signature: string;
 }
 
+const CLIENT_VERSION_MAXIMUM = 2_147_483_647;
+const MANIFEST_KEYS = new Set(["schemaVersion", "releaseId", "publications", "signature"]);
+const PUBLICATION_KEYS = new Set([
+  "sheetConfiguration", "variant", "languages", "minimumClientVersion", "maximumClientVersion",
+  "rolloutPercent", "rolloutSalt", "sheets",
+]);
+const PUBLICATION_REQUIRED_KEYS = new Set(["sheetConfiguration", "sheets"]);
+const SHEET_KEYS = new Set(["id", "version", "columns", "rowIds", "rows"]);
+
 let activeManifest: RemoteConfigurationManifest | null = null;
 
 function plainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function exactKeys(
+  value: Record<string, unknown>,
+  allowed: ReadonlySet<string>,
+  required: ReadonlySet<string>,
+): boolean {
+  const keys = Object.keys(value);
+  return keys.every((key) => allowed.has(key)) && [...required].every((key) => keys.includes(key));
 }
 
 /** Deterministic JSON representation shared by validation and the offline signing command. */
@@ -67,12 +85,19 @@ function boundedText(value: unknown, field: string, maximum: number, allowWildca
 
 function optionalInteger(value: unknown, field: string): number | undefined {
   if (value === undefined) return undefined;
-  if (!Number.isInteger(value) || Number(value) < 0) throw new Error(`${field} must be a non-negative integer.`);
-  return Number(value);
+  if (typeof value !== "number"
+    || !Number.isSafeInteger(value)
+    || value < 0
+    || value > CLIENT_VERSION_MAXIMUM) {
+    throw new Error(`${field} must be a non-negative signed-client integer.`);
+  }
+  return value;
 }
 
 function validateSheet(value: unknown, publicationIndex: number, sheetIndex: number): RemoteConfigurationSheet {
-  if (!plainObject(value)) throw new Error(`Publication ${publicationIndex} sheet ${sheetIndex} is invalid.`);
+  if (!plainObject(value) || !exactKeys(value, SHEET_KEYS, SHEET_KEYS)) {
+    throw new Error(`Publication ${publicationIndex} sheet ${sheetIndex} is invalid.`);
+  }
   const prefix = `publications[${publicationIndex}].sheets[${sheetIndex}]`;
   const id = boundedText(value.id, `${prefix}.id`, 128);
   const version = boundedText(value.version, `${prefix}.version`, 64);
@@ -107,7 +132,10 @@ function validateSheet(value: unknown, publicationIndex: number, sheetIndex: num
 /** Validate strict schema and HMAC before a publication can influence a live client. */
 export function validateRemoteConfigurationManifest(value: unknown, secret: string): RemoteConfigurationManifest {
   if (secret.length < 32) throw new Error("REMOTE_CONFIGURATION_SIGNING_SECRET must contain at least 32 characters.");
-  if (!plainObject(value) || value.schemaVersion !== 1 || !Array.isArray(value.publications)) {
+  if (!plainObject(value)
+    || !exactKeys(value, MANIFEST_KEYS, MANIFEST_KEYS)
+    || value.schemaVersion !== 1
+    || !Array.isArray(value.publications)) {
     throw new Error("Remote configuration manifest schema is invalid.");
   }
   const suppliedSignature = typeof value.signature === "string" ? value.signature.toLowerCase() : "";
@@ -120,7 +148,11 @@ export function validateRemoteConfigurationManifest(value: unknown, secret: stri
   const releaseId = boundedText(value.releaseId, "releaseId", 128);
   if (value.publications.length > 100) throw new Error("Remote configuration manifest has too many publications.");
   const publications = value.publications.map((entry, publicationIndex) => {
-    if (!plainObject(entry) || !Array.isArray(entry.sheets) || entry.sheets.length === 0 || entry.sheets.length > 20) {
+    if (!plainObject(entry)
+      || !exactKeys(entry, PUBLICATION_KEYS, PUBLICATION_REQUIRED_KEYS)
+      || !Array.isArray(entry.sheets)
+      || entry.sheets.length === 0
+      || entry.sheets.length > 20) {
       throw new Error(`publications[${publicationIndex}] is invalid.`);
     }
     const sheetConfiguration = boundedText(
@@ -142,6 +174,9 @@ export function validateRemoteConfigurationManifest(value: unknown, secret: stri
         true,
       ));
     })();
+    if (new Set(languages.map((language) => language.toLowerCase())).size !== languages.length) {
+      throw new Error(`publications[${publicationIndex}].languages contains duplicates.`);
+    }
     const minimumClientVersion = optionalInteger(
       entry.minimumClientVersion,
       `publications[${publicationIndex}].minimumClientVersion`,
@@ -154,8 +189,11 @@ export function validateRemoteConfigurationManifest(value: unknown, secret: stri
       && maximumClientVersion < minimumClientVersion) {
       throw new Error(`publications[${publicationIndex}] client-version range is invalid.`);
     }
-    const rolloutPercent = entry.rolloutPercent === undefined ? 100 : Number(entry.rolloutPercent);
-    if (!Number.isFinite(rolloutPercent) || rolloutPercent < 0 || rolloutPercent > 100) {
+    const rolloutPercent = entry.rolloutPercent === undefined ? 100 : entry.rolloutPercent;
+    if (typeof rolloutPercent !== "number"
+      || !Number.isFinite(rolloutPercent)
+      || rolloutPercent < 0
+      || rolloutPercent > 100) {
       throw new Error(`publications[${publicationIndex}].rolloutPercent is invalid.`);
     }
     const rolloutSalt = entry.rolloutSalt === undefined

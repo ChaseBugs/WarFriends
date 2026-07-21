@@ -117,7 +117,10 @@ range, and deterministic player rollout targeting. A ranged publication requires
 numeric `ClientVersion`/`clientVersion` from a replacement client; conflicting aliases or malformed
 values fail targeting, and the stock client's dotted `Version` (for example `1.6.0`) is never
 coerced through `NaN` into a ranged match. Unbounded publications may still target the stock client.
-See `config/README.md`; unsigned or malformed publication data fails startup, while an empty path
+The signed manifest itself uses exact root/publication/sheet keys, case-insensitively unique language
+selectors, signed-client-safe integer build bounds, and an actual finite numeric 0-100 rollout
+percentage; ignored typo fields and JavaScript-coercible policy values fail startup. See
+`config/README.md`; unsigned or malformed publication data fails startup, while an empty path
 preserves the APK-bundled sheets.
 
 Google Play purchases are fail-closed by default. To enable verified Android currency, reviewed

@@ -136,3 +136,30 @@ test("remote manifest rejects tampering and row delimiters that would corrupt th
   invalid.signature = remoteConfigurationSignature(invalid, secret);
   assert.throws(() => validateRemoteConfigurationManifest(invalid, secret), /wire-safe/);
 });
+
+test("remote manifest rejects ignored fields and JavaScript-coercible rollout authority", () => {
+  const mutateAndValidate = (
+    mutate: (value: Record<string, any>) => void,
+    expected: RegExp,
+  ): void => {
+    const invalid = JSON.parse(JSON.stringify(signedManifest())) as Record<string, any>;
+    mutate(invalid);
+    invalid.signature = remoteConfigurationSignature(invalid, secret);
+    assert.throws(() => validateRemoteConfigurationManifest(invalid, secret), expected);
+  };
+
+  mutateAndValidate((value) => { value.release = "typo"; }, /schema is invalid/);
+  mutateAndValidate((value) => { value.publications[0].rollout = 50; }, /publications\[0\] is invalid/);
+  mutateAndValidate((value) => { value.publications[0].sheets[0].column = []; }, /sheet 0 is invalid/);
+  for (const rolloutPercent of [null, false, "50", [], {}]) {
+    mutateAndValidate((value) => { value.publications[0].rolloutPercent = rolloutPercent; }, /rolloutPercent is invalid/);
+  }
+  mutateAndValidate(
+    (value) => { value.publications[0].maximumClientVersion = Number.MAX_SAFE_INTEGER; },
+    /signed-client integer/,
+  );
+  mutateAndValidate(
+    (value) => { value.publications[0].languages = ["en", "EN"]; },
+    /languages contains duplicates/,
+  );
+});

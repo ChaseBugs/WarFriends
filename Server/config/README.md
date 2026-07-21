@@ -176,10 +176,14 @@ npm run sign:remote-config -- config/remote-configuration.json
 ```
 
 Set `REMOTE_CONFIGURATION_MANIFEST_PATH` to that signed file and restart. Startup verifies the
-HMAC, schema, unique sheet/row IDs, column counts, client-version bounds, variant/language targets,
-rollout percentage, and delimiter safety before listening. Publications are evaluated in manifest
-order. A rollout below 100 percent requires a player ID; pre-login requests retain their bundled
-sheets. The same `sheetConfiguration` returns a three-segment no-change response.
+HMAC, exact root/publication/sheet fields, unique sheet/row IDs and case-insensitive language
+selectors, column counts, signed-client-safe integer version bounds, actual finite numeric 0-100
+rollout percentage, and delimiter safety before listening. Unknown typo fields and coercible values
+such as `"50"`, `false`, or `null` are rejected even when the manifest was signed. Publications are
+evaluated in manifest order. A rollout below 100 percent requires a player ID; pre-login requests
+retain their bundled sheets. A ranged publication also requires one canonical numeric replacement-
+client `ClientVersion`/`clientVersion`; the stock dotted `Version` is not an integer build. The same
+`sheetConfiguration` returns a three-segment no-change response.
 
 Each `rows` entry contains cell values in exactly the same order as `columns`. The stock client
 uses `/` inside each row and `;` between outer response segments, so `/` is rejected in cells and
