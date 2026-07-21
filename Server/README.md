@@ -952,8 +952,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   the stock request buffer and restores it as `PlayerAnalyticsData`; equal or stale cross-device
   cursor updates return the authoritative value without a false revision/write. Both incoming and
   stored cursors must be nonnegative signed-client integers inside the bounded server-time skew
-  window before comparison, mutation, or boot, so malformed/future durable state cannot suppress
-  later messages or poison the recovered C# `int` field. Squad-event notices are
+  window before shared persisted reads/publication, comparison, mutation, or boot; both snapshots
+  in one publication use the same captured server time. Malformed/future durable state therefore
+  cannot suppress later messages, poison the recovered C# `int` field, or survive an unrelated
+  full-progression replacement. Squad-event notices are
   membership-validated, founder-targeted, durable, and duplicate-suppressed. The `/hub` replacement
   now persists moderated Squad Chat messages, returns recovered-size history, suppresses nonce
   retries, and fans out only to authenticated subscribers still present in the current roster.

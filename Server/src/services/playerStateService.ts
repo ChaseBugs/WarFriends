@@ -138,6 +138,7 @@ export function progressionForPlayer(player: PlayerDocument, now = unixNow()): P
   const itemInventory = itemInventoryAuthorityFor(state.itemInventory);
   const dailyReward = dailyRewardAuthorityFor(state.dailyReward, now);
   const assignments = validatedAssignmentState(state.assignments);
+  const lastSeenSquadChatTimestamp = validatedSquadChatCursor(state.lastSeenSquadChatTimestamp, now);
   const rental = validatedRentalState(state.rental);
   const blackMarket = validatedBlackMarketOfferState(state.blackMarket);
   const visualInventory = validatedVisualInventoryState(
@@ -184,6 +185,7 @@ export function progressionForPlayer(player: PlayerDocument, now = unixNow()): P
       videoAdRewards,
       dailyReward,
       assignments,
+      lastSeenSquadChatTimestamp,
     };
   }
 
@@ -223,6 +225,7 @@ export function progressionForPlayer(player: PlayerDocument, now = unixNow()): P
     videoAdRewards,
     dailyReward,
     assignments,
+    lastSeenSquadChatTimestamp,
   };
 }
 

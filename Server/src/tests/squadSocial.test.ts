@@ -143,6 +143,26 @@ test("shared progression boundaries validate the squad creation price counter", 
   assert.equal(progressionForPlayer(playerDocument("legacy-creation-read")).squadCreationsCount, 0);
 });
 
+test("shared progression boundaries reject a corrupt or far-future squad chat cursor", () => {
+  const corruptRead = playerDocument("corrupt-chat-cursor-read");
+  corruptRead.progression!.lastSeenSquadChatTimestamp = Number.NaN;
+  assert.throws(
+    () => progressionForPlayer(corruptRead, NOW),
+    /Stored squad chat cursor is invalid/,
+  );
+
+  const current = createInitialProgression(NOW);
+  assert.throws(
+    () => validatedProgressionSuccessor(current, {
+      ...current,
+      revision: 1,
+      lastSeenSquadChatTimestamp: NOW + 301,
+    }, NOW),
+    /Stored squad chat cursor is invalid/,
+  );
+  assert.equal(progressionForPlayer(playerDocument("legacy-chat-cursor-read"), NOW).lastSeenSquadChatTimestamp, 0);
+});
+
 test("squad event notification uses the message type and numeric suffix parsed by Unity", () => {
   const actor = playerDocument("member-1");
   const squad = {
