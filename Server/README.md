@@ -312,6 +312,12 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   The shared `DatabasePlayer` and leaderboard adapters also prove that complete envelope before
   public projection. Search, friend, squad-roster, challenge, experience, and Arena views therefore
   cannot advertise a damaged account merely because its public mirrors still look consistent.
+  Global and country action-107 pages use a stable `(Experience descending, player ID ascending)`
+  order backed by dedicated compound indexes. Every selected row must match the optional country
+  and returned order before receiving its one-based `Position`. The recovered callback reads only
+  `Items` and `Local`; the additional replacement-compatible `Rank` is one plus the number of
+  strictly higher-Experience accounts, and every such account is streamed through the same full
+  mirror/credential/audit/progression proof instead of trusting an unvalidated MongoDB count.
   Full-profile saves set/unset those roots atomically, so
   MongoDB cannot order, select, or authenticate by a value different from the one Unity displays.
   Human passwords use versioned salted scrypt with automatic legacy-HMAC migration; provider

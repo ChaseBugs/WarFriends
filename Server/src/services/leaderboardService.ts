@@ -6,7 +6,7 @@ import { progressionForPlayer } from "./playerStateService";
 import { integerNumberAttribute as numberAttribute } from "./dynamoNumberAttributeService";
 import {
   validatedPlayerAccountEnvelope,
-  validatedPlayerProfileMirrors,
+  validatedPlayerProfileLookup,
 } from "./playerProfileMirrorAuthorityService";
 import { buildDatabaseSquad } from "./squadWireService";
 import { currentArenaId, serializeWarArenaData } from "./warArenaContract";
@@ -54,9 +54,34 @@ export function buildPlayerLeaderboardItem(doc: PlayerDocument, position: number
   return item;
 }
 
-export async function topPlayersByExperience(limit = 100, country?: string): Promise<PlayerLeaderboardItem[]> {
+export async function topPlayersByExperience(
+  limit = 100,
+  country?: string,
+  collection?: Collection<PlayerDocument>,
+): Promise<PlayerLeaderboardItem[]> {
+  if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100) {
+    throw new Error("Experience leaderboard limit is invalid.");
+  }
   const filter = country ? { "player.country": country } : {};
-  const docs = await players().find(filter).sort({ experience: -1 }).limit(limit).toArray();
+  const docs = await (collection ?? players())
+    .find(filter)
+    .sort({ experience: -1, id: 1 })
+    .limit(limit)
+    .toArray();
+  if (docs.length > limit) throw new Error("Experience leaderboard returned too many rows.");
+  for (let index = 0; index < docs.length; index += 1) {
+    const doc = validatedPlayerAccountEnvelope(docs[index]!);
+    if (country !== undefined && doc.player.country !== country) {
+      throw new Error("Selected experience leaderboard row does not match the country query.");
+    }
+    if (index > 0) {
+      const previous = docs[index - 1]!;
+      if (previous.experience < doc.experience
+        || (previous.experience === doc.experience && previous.id >= doc.id)) {
+        throw new Error("Selected experience leaderboard rows are not in authoritative rank order.");
+      }
+    }
+  }
   const items = docs.map((doc, index) => buildPlayerLeaderboardItem(doc, index + 1));
   if (!country) {
     // Validate every Mongo-backed public row before it can enter the cache, then atomically replace
@@ -177,11 +202,27 @@ export async function topArenaPlayers(
 }
 
 /** 1-based global rank by experience (players strictly ahead plus one). */
-export async function playerRank(playerId: string): Promise<number> {
-  const doc = await players().findOne({ id: playerId });
+export async function playerRank(
+  playerId: string,
+  collection?: Collection<PlayerDocument>,
+): Promise<number> {
+  const source = collection ?? players();
+  const doc = validatedPlayerProfileLookup(await source.findOne({ id: playerId }));
   if (!doc) return 0;
-  validatedPlayerProfileMirrors(doc);
-  const ahead = await players().countDocuments({ experience: { $gt: doc.experience } });
+  let ahead = 0;
+  // countDocuments would let a split root/DTO row, malformed credential, or damaged progression
+  // influence an honest player's rank without passing the same complete authority required for a
+  // visible leaderboard item. Stream every strictly higher row through that proof instead.
+  for await (const candidate of source.find({ experience: { $gt: doc.experience } })) {
+    validatedPlayerAccountEnvelope(candidate);
+    if (candidate.experience <= doc.experience) {
+      throw new Error("Selected experience rank row is not strictly ahead of the player.");
+    }
+    if (ahead === 2_147_483_646) {
+      throw new Error("Experience leaderboard rank exceeds the recovered client integer range.");
+    }
+    ahead += 1;
+  }
   return ahead + 1;
 }
 

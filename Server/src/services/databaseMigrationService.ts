@@ -146,6 +146,21 @@ const migrations: readonly DatabaseMigration[] = [
       );
     },
   },
+  {
+    id: "20260722_009_stable_experience_leaderboard_indexes",
+    checksum: "sha256:15cc19cb52ddd2cb6a5c2cdacb02eb67f2d05058438072cb24210a5725140fe1",
+    description: "Index deterministic global and country experience leaderboards.",
+    up: async (db) => {
+      await db.collection("players").createIndex(
+        { experience: -1, id: 1 },
+        { name: "player_experience_stable" },
+      );
+      await db.collection("players").createIndex(
+        { "player.country": 1, experience: -1, id: 1 },
+        { name: "player_country_experience_stable" },
+      );
+    },
+  },
 ];
 
 const receiptCollectionName = "schemaMigrations";
