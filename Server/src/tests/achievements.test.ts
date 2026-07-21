@@ -26,6 +26,8 @@ import { createInitialProgression } from "../services/playerStateService";
 import { UNIT_CATALOG } from "../services/unitInventoryService";
 import { VISUAL_CATALOG } from "../services/visualInventoryService";
 import { validatedCardLifecycleCounters } from "../services/cardLifecycleCounterAuthorityService";
+import { validatedAchievementState } from "../services/achievementAuthorityService";
+import { validatedProgressionSuccessor } from "../services/progressionPublicationAuthorityService";
 
 const NOW = Date.UTC(2026, 6, 19, 12, 0, 0) / 1_000;
 
@@ -358,6 +360,30 @@ test("achievement claims reject corrupt progress before a tier marker or reward 
   );
   assert.equal(missionGroup.progress[0]!.claimed, false);
   assert.equal(corrupt.gold, initial.gold);
+});
+
+test("shared progression publication rejects duplicate, out-of-order, or unearned achievement authority", () => {
+  const current = createInitialProgression(NOW);
+  const achievements = achievementStateFor(current);
+  const first = achievements.data[0]!;
+  const duplicate = { data: [first, structuredClone(first)] };
+  assert.throws(() => validatedAchievementState(duplicate), /group IDs are duplicated/);
+  assert.throws(
+    () => validatedProgressionSuccessor(current, {
+      ...current,
+      revision: 1,
+      achievements: duplicate,
+    }),
+    /group IDs are duplicated/,
+  );
+
+  const outOfOrder = achievementStateFor(current);
+  outOfOrder.data.find((group) => group.id === 2)!.progress[1]!.claimed = true;
+  assert.throws(() => validatedAchievementState(outOfOrder), /claim order is invalid/);
+
+  const unearned = achievementStateFor(current);
+  unearned.data.find((group) => group.id === 2)!.progress[0]!.claimed = true;
+  assert.throws(() => validatedAchievementState(unearned), /claimed tier is not earned/);
 });
 
 test("achievement RequestBuffer replay cannot grant the same tier twice", () => {

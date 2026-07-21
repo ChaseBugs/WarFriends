@@ -946,8 +946,15 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   card list and grants the exact one-time 50,000-WarBucks reward at five cards. Group 19 completes
   only with an eligible type-9 Squad War settlement and exposes its exact one-time 5,000-WarBucks
   reward. Exact serialized MainScene tier rewards are granted atomically and replay-safely.
-  Stored group values, IDs, offsets, and claim booleans are validated before any projection or
-  tier comparison, so `NaN` and malformed persisted state cannot bypass completion gates.
+  A dependency-free durable authority now protects shared progression reads/publication and every
+  normalization, projection, acknowledgement, increment, claim, and serialization boundary. It
+  requires exact outer/group/tier shapes, bounded unique IDs, signed-client-safe offsets and values,
+  bounded known/unknown tier arrays, ordered Boolean claim prefixes, known values no higher than
+  their final recovered target, and no claimed known tier without its earned value. Missing groups
+  and short known tier arrays remain schema-migration inputs; bounded well-formed future groups are
+  preserved but cannot produce a reward without an explicit server definition. Thus duplicate IDs,
+  `NaN`, oversized values, and forged claim markers cannot bypass completion gates or survive an
+  unrelated full-progression replacement.
 - **Squad social state**: action `193` persists the monotonic Photon Chat unread cursor through
   the stock request buffer and restores it as `PlayerAnalyticsData`; equal or stale cross-device
   cursor updates return the authoritative value without a false revision/write. Both incoming and

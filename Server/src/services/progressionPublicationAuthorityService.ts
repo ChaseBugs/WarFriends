@@ -31,6 +31,7 @@ import { itemInventoryAuthorityFor } from "./itemInventoryAuthorityService";
 import { dailyRewardAuthorityFor } from "./dailyRewardAuthorityService";
 import { validatedAssignmentState } from "./assignmentAuthorityService";
 import { validatedSquadChatCursor } from "./squadChatCursorAuthorityService";
+import { validatedAchievementState } from "./achievementAuthorityService";
 
 /**
  * Validate the common authority shared by every full progression-document replacement.
@@ -95,6 +96,8 @@ export function validatedProgressionSuccessor(
   validatedAssignmentState(next.assignments);
   validatedSquadChatCursor(current.lastSeenSquadChatTimestamp, now);
   validatedSquadChatCursor(next.lastSeenSquadChatTimestamp, now);
+  validatedAchievementState(current.achievements);
+  validatedAchievementState(next.achievements);
   validatedCoreProgressionBalances(current);
   validateProgressionRevisionAdvance(progressionRevisionForRead(current.revision), next.revision);
   validatedCoreProgressionBalances(next);

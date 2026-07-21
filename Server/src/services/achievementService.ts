@@ -11,6 +11,7 @@ import { checkedRewardBalance } from "./rewardMathService";
 import { UNIT_CATALOG } from "./unitInventoryService";
 import { VISUAL_CATALOG, visualInventoryStateFor } from "./visualInventoryService";
 import { validatedCardLifecycleCounters } from "./cardLifecycleCounterAuthorityService";
+import { validatedAchievementState } from "./achievementAuthorityService";
 
 /**
  * Server-authoritative achievement progression.
@@ -257,7 +258,8 @@ function cloneGroup(group: AchievementGroupState): AchievementGroupState {
  * upgrades safe: adding a newly authoritative group or tier preserves every existing claim.
  */
 export function achievementStateFor(state: PlayerProgressionState): AchievementState {
-  const byId = new Map((state.achievements?.data ?? []).map((group) => [group.id, cloneGroup(group)]));
+  const persisted = validatedAchievementState(state.achievements);
+  const byId = new Map((persisted?.data ?? []).map((group) => [group.id, cloneGroup(group)]));
   for (const [rawId, tiers] of Object.entries(ACHIEVEMENT_DEFINITIONS)) {
     const id = Number(rawId);
     const existing = byId.get(id);
