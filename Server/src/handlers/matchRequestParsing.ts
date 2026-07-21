@@ -1,4 +1,5 @@
 import { ApiError, ApiErrorCode } from "../apiErrors";
+import { parsePvpUsedCards } from "../services/cardInventoryService";
 
 const CSHARP_INT32_MAX = 2_147_483_647;
 
@@ -40,4 +41,15 @@ export function assertedPvpWinnerId(
     throw new ApiError(ApiErrorCode.UnknownAction, "WinnerId does not match the recovered EndReason result.");
   }
   return inferredWinnerId;
+}
+
+/**
+ * Decode GameEnded.UsedCards while preserving the replacement client's omission shorthand.
+ *
+ * Stock 1.6.0 always sends a JSON string. The replacement transport may omit the field for an
+ * empty list, but an explicitly present null/Boolean/object is malformed and must not become an
+ * empty authoritative consumption report through nullish-coalescing or other broad defaults.
+ */
+export function exactGameEndedUsedCards(value: unknown): string[] {
+  return parsePvpUsedCards(value === undefined ? [] : value);
 }

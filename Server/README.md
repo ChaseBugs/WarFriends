@@ -749,6 +749,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   outside the client width fail before settlement. Optional replacement `WinnerId` is only an exact
   assertion of the participant derived from a supported recovered `EndReason`; explicit malformed,
   contradictory, or unsupported-outcome aliases fail before a durable result report is written.
+  Stock `UsedCards` JSON strings and replacement native arrays share one strict parser. Only an
+  actually omitted replacement field means an empty list; explicit null, Boolean, number, object,
+  malformed JSON, oversized, or invalid list input fails before result consensus rather than being
+  nullish-defaulted into a zero-consumption report.
   Action `29` remains the presence heartbeat for non-ranked modes, but its active-match read and
   profile write share a MongoDB transaction. An active/settling ranked reservation always wins
   over a forged or early `Online`/`Offline` report. The same transaction validates the full durable

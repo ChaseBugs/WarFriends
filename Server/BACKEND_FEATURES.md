@@ -224,6 +224,11 @@ the alias cannot bypass the mandatory recovered `EndReason` field. When present,
 exactly equal the participant derived from a supported PvP end reason; malformed, contradictory,
 or unsupported-outcome aliases fail before either consensus report is persisted.
 
+`GameEnded.UsedCards` now preserves transport presence at the REST boundary. Stock JSON strings and
+replacement native arrays use the same bounded card parser, while only true field absence selects
+the replacement empty-list shorthand. Explicit null, Boolean, numeric, object, malformed JSON, or
+invalid list values fail before result consensus instead of becoming a zero-consumption report.
+
 Both recovered moderation-report actions now parse mandatory `ReportType` as canonical nonnegative
 decimal text or an exact JSON integer in the existing bounded compatibility range. Missing, null,
 Boolean, array, blank, signed or space-padded, leading-zero, fractional, exponent, non-finite, and

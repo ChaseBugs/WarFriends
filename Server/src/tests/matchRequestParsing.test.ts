@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { assertedPvpWinnerId, exactMatchInteger } from "../handlers/matchRequestParsing";
+import {
+  assertedPvpWinnerId,
+  exactGameEndedUsedCards,
+  exactMatchInteger,
+} from "../handlers/matchRequestParsing";
 
 test("GameEnded integers preserve canonical C# form and JSON-number adapters", () => {
   assert.equal(exactMatchInteger("0", "EndReason"), 0);
@@ -31,5 +35,15 @@ test("replacement WinnerId is only an assertion of recovered EndReason semantics
     [null, "winner"],
   ] as const) {
     assert.throws(() => assertedPvpWinnerId(inferred, alias));
+  }
+});
+
+test("replacement UsedCards defaults only true absence to an empty report", () => {
+  assert.deepEqual(exactGameEndedUsedCards(undefined), []);
+  assert.deepEqual(exactGameEndedUsedCards("[]"), []);
+  assert.deepEqual(exactGameEndedUsedCards(["AMMOCRATE"]), ["AMMOCRATE"]);
+
+  for (const value of [null, false, true, 0, "", {}, { 0: "AMMOCRATE" }]) {
+    assert.throws(() => exactGameEndedUsedCards(value));
   }
 });
