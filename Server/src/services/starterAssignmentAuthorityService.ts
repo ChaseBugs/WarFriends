@@ -1,17 +1,60 @@
-import { ApiError } from "../apiErrors";
+import { ApiError, ApiErrorCode } from "../apiErrors";
 import { config } from "../config";
 import type { StarterAssignmentState } from "../db";
 
 export const STARTER_ASSIGNMENTS_INCORRECT = 18501;
 
-const MAX_DATE_UNIX_SECONDS = 8_640_000_000_000;
+// StarterAssignmentsManager.StarterAssignmentsData.deadline is a C# signed int in the recovered
+// client. A wider JavaScript-safe timestamp would pass backend arithmetic but fail client JSON
+// deserialization, so the transport width is the authoritative deadline and duration ceiling.
+const MAX_CLIENT_UNIX_SECONDS = 2_147_483_647;
 const STARTER_ASSIGNMENT_IDS = new Set(
   Array.from({ length: 10 }, (_unused, index) => `ID_${index + 1}`),
 );
 
+export interface StarterAssignmentDurationPolicy {
+  readonly seconds: number;
+}
+
+/**
+ * Validate the server-owned replacement for the retired onboarding deadline policy.
+ *
+ * The recovered clients consume an absolute deadline but do not contain the production duration.
+ * Resolve this reconstruction policy once during module startup so one process cannot issue
+ * different onboarding windows after a mutable config change. The upper bound is the same bounded
+ * signed-client Unix-second domain accepted by the durable StarterAssignmentsData validator.
+ */
+function exactStarterAssignmentDurationPolicy(
+  policy: StarterAssignmentDurationPolicy,
+): StarterAssignmentDurationPolicy {
+  if (
+    !Number.isSafeInteger(policy.seconds)
+    || policy.seconds < 0
+    || policy.seconds > MAX_CLIENT_UNIX_SECONDS
+  ) {
+    throw new ApiError(
+      ApiErrorCode.InternalServerError,
+      "Starter assignment duration policy is invalid.",
+    );
+  }
+  return { seconds: policy.seconds };
+}
+
+const CONFIGURED_STARTER_ASSIGNMENT_DURATION_POLICY = Object.freeze(
+  exactStarterAssignmentDurationPolicy({ seconds: config.starterAssignmentDurationSeconds }),
+);
+
+export function starterAssignmentDurationPolicy(
+  policy?: StarterAssignmentDurationPolicy,
+): StarterAssignmentDurationPolicy {
+  return policy === undefined
+    ? CONFIGURED_STARTER_ASSIGNMENT_DURATION_POLICY
+    : exactStarterAssignmentDurationPolicy(policy);
+}
+
 /** Validate a starter-assignment time before it controls completion or reward eligibility. */
 export function validatedStarterAssignmentUnixSeconds(value: number, field: string): number {
-  if (!Number.isSafeInteger(value) || value < 0 || value > MAX_DATE_UNIX_SECONDS) {
+  if (!Number.isSafeInteger(value) || value < 0 || value > MAX_CLIENT_UNIX_SECONDS) {
     throw new ApiError(STARTER_ASSIGNMENTS_INCORRECT, `${field} is invalid.`);
   }
   return value;
@@ -57,12 +100,14 @@ export function validatedStarterAssignmentState(
 /** Derive a new or legacy account deadline without allowing arithmetic overflow. */
 export function createInitialStarterAssignmentState(issuedAt: number): StarterAssignmentState {
   const start = validatedStarterAssignmentUnixSeconds(issuedAt, "Starter assignment issue time");
-  const duration = config.starterAssignmentDurationSeconds;
-  if (!Number.isSafeInteger(duration) || duration < 0) {
-    throw new ApiError(STARTER_ASSIGNMENTS_INCORRECT, "Starter assignment duration is invalid.");
+  const duration = CONFIGURED_STARTER_ASSIGNMENT_DURATION_POLICY.seconds;
+  if (start > MAX_CLIENT_UNIX_SECONDS - duration) {
+    // Check subtraction before addition so an extreme but individually valid issue time can never
+    // overflow the recovered signed-int durable deadline domain during initialization.
+    throw new ApiError(STARTER_ASSIGNMENTS_INCORRECT, "Starter assignment deadline is invalid.");
   }
   return {
-    deadline: validatedStarterAssignmentUnixSeconds(start + duration, "Starter assignment deadline"),
+    deadline: start + duration,
     assignments: {},
   };
 }

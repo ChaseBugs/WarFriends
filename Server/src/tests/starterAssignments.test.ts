@@ -5,6 +5,10 @@ import { processAssignmentBufferState } from "../services/assignmentService";
 import { dailyMissionsStateFor } from "../services/dailyMissionService";
 import { createInitialProgression } from "../services/playerStateService";
 import {
+  createInitialStarterAssignmentState,
+  starterAssignmentDurationPolicy,
+} from "../services/starterAssignmentAuthorityService";
+import {
   STARTER_ASSIGNMENT_DEFINITIONS,
   claimStarterAssignmentState,
   completeStarterAssignmentsState,
@@ -13,6 +17,31 @@ import {
 
 const NOW = Date.UTC(2026, 6, 19, 12, 0, 0) / 1_000;
 const FACTS = { medalsBalance: 35, level: 6, squadPointsTotal: 3 };
+
+test("starter assignment duration is immutable exact startup authority", () => {
+  assert.equal(Object.isFrozen(starterAssignmentDurationPolicy()), true);
+  assert.deepEqual(starterAssignmentDurationPolicy(), { seconds: 604_800 });
+  assert.deepEqual(starterAssignmentDurationPolicy({ seconds: 0 }), { seconds: 0 });
+  for (const seconds of [
+    Number.NaN,
+    Number.POSITIVE_INFINITY,
+    -1,
+    1.5,
+    2_147_483_648,
+  ]) {
+    assert.throws(
+      () => starterAssignmentDurationPolicy({ seconds }),
+      /Starter assignment duration policy is invalid/,
+    );
+  }
+
+  // Even a valid configured duration cannot push an unusual imported issue time beyond the
+  // recovered signed-int deadline domain.
+  assert.throws(
+    () => createInitialStarterAssignmentState(2_147_483_647),
+    /Starter assignment deadline is invalid/,
+  );
+});
 
 test("starter assignment table preserves recovered thresholds, rewards, and display order", () => {
   assert.deepEqual(
@@ -198,6 +227,10 @@ test("starter assignment deadlines and records fail closed before completion, cl
       deadline: NOW + 1_000,
       assignments: { ID_99: { completed: true, claimed: false } },
     }),
+    (error: unknown) => (error as { code?: number }).code === 18501,
+  );
+  assert.throws(
+    () => starterAssignmentWireData({ deadline: 2_147_483_648, assignments: {} }),
     (error: unknown) => (error as { code?: number }).code === 18501,
   );
 });

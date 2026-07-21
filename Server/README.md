@@ -1476,10 +1476,15 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   ID_7, and a server-granted Gold craft for ID_8 are checked against server state. Every numeric
   proof is validated as a nonnegative safe integer before a permanent completion marker is
   published, and both timed and subscription Gold-card crafts reject proof-counter overflow before
-  clearing their receipt. One shared snapshot boundary validates the bounded Unix deadline, exact
-  ten-ID namespace, Boolean completion/claim flags, and the rule that a claimed record must already
-  be completed before creation, boot, completion, claim, or serialization. Non-finite deadlines
-  therefore fail closed instead of making a pre-completed onboarding reward permanently claimable.
+  clearing their receipt. One shared snapshot boundary validates the deadline as a nonnegative Unix
+  second within the recovered C# signed-int width, the exact ten-ID namespace, Boolean
+  completion/claim flags, and the rule that a claimed record must already be completed before
+  creation, boot, completion, claim, or serialization. Non-finite and client-unrepresentable
+  deadlines therefore fail closed instead of making a pre-completed onboarding reward permanently
+  claimable. `STARTER_ASSIGNMENT_DURATION_SECONDS` is resolved once during module startup as an
+  immutable exact value in that same domain, and initialization rejects issue-time-plus-duration
+  overflow before addition. The default seven days remains explicit reconstruction policy because
+  the production duration is absent from the recovered clients.
   If a buffered claim encounters corrupt durable state, its error adapter returns an expired empty
   client view while preserving the damaged database snapshot for operator repair; it never retries
   serialization of the rejected object or aborts unrelated RequestBuffer results.
