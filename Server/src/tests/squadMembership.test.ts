@@ -10,6 +10,7 @@ import {
   planLeadershipTransfer,
   planDeclineSquadJoinRequest,
   planSquadInvitation,
+  planSquadInvitationRevocation,
   squadInvitationJoinDisposition,
   planSquadJoin,
   planSquadKick,
@@ -226,6 +227,20 @@ test("squad invitations are membership-aware capabilities with no-write exact re
     () => planSquadInvitation(squad, "outsider", target),
     (error: unknown) => (error as { code?: number }).code === ApiErrorCode.OnlyLeaderCanSendInvites,
   );
+});
+
+test("joining one Squad revokes stale future-admission capability snapshots", () => {
+  const squad = squadDocument(2);
+  squad.invitedPlayerIds.push("member", "other");
+
+  const revoked = planSquadInvitationRevocation(squad, "member");
+  assert.equal(revoked.changed, true);
+  assert.deepEqual(revoked.squad.invitedPlayerIds, ["other"]);
+  assert.deepEqual(squad.invitedPlayerIds, ["member", "other"]);
+
+  const replay = planSquadInvitationRevocation(revoked.squad, "member");
+  assert.equal(replay.changed, false);
+  assert.equal(replay.squad, revoked.squad);
 });
 
 test("type-1 invitation identity requires both the inbox row and current Squad capability", () => {

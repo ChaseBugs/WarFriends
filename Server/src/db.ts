@@ -1319,6 +1319,9 @@ export async function connectMongo(): Promise<void> {
   await squadsCollection.createIndex({ name: 1 }, { unique: true });
   await squadsCollection.createIndex({ experience: -1 });
   await squadsCollection.createIndex({ squadPoints: -1 });
+  // Joining one Squad revokes every pending invitation for that player. This multikey lookup
+  // keeps the cross-Squad cleanup bounded by matching queues rather than scanning all Squads.
+  await squadsCollection.createIndex({ invitedPlayerIds: 1, name: 1 });
 
   await playerLeagueAllocationsCollection.createIndex({ seasonKey: 1 }, { unique: true });
   await playerLeagueAllocationsCollection.createIndex({ endsAt: 1 });

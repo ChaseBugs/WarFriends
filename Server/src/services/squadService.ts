@@ -471,6 +471,26 @@ async function joinSquadTransaction(
 
     const transactionTime = new Date();
     const queueContainsPlayer = squad.invitedPlayerIds.includes(player.id);
+    const [otherInvitationSquads, activeInvitationRows] = await Promise.all([
+      squads().find(
+        { name: { $ne: squad.name }, invitedPlayerIds: player.id },
+        { session },
+      ).limit(SQUAD_MAX_PENDING_ADMISSIONS + 1).toArray(),
+      messages().find(
+        { toPlayerId: player.id, messageType: 1, ignored: false, accepted: false },
+        { session },
+      ).limit(SQUAD_MAX_PENDING_ADMISSIONS + 1).toArray(),
+    ]);
+    if (otherInvitationSquads.length > SQUAD_MAX_PENDING_ADMISSIONS
+      || activeInvitationRows.length > SQUAD_MAX_PENDING_ADMISSIONS) {
+      // A legitimate Squad can hold at most this many pending admissions. Reuse that audited
+      // bound for one player's cross-Squad cleanup so damaged or adversarial fan-out cannot make
+      // a membership transaction grow without limit or partially revoke authority.
+      throw new ApiError(ApiErrorCode.InternalServerError, "Player has too many pending Squad invitations.");
+    }
+    for (const otherSquad of otherInvitationSquads) validatedSquadDocument(otherSquad, transactionTime);
+    const activeInvitations = activeInvitationRows.map((row) =>
+      validatedSquadInvitationMessage(row as unknown as MessageDoc, transactionTime)!);
     let invitationMessage: MessageDoc | null = null;
     if (requestedInvitationMessageId) {
       invitationMessage = await messages().findOne(
@@ -484,16 +504,7 @@ async function joinSquadTransaction(
       // Action 132 has no MessageId. If its admission is backed by a new type-1 row, consume that
       // row too; a missing row is the bounded legacy migration for invitations created before
       // durable message delivery existed.
-      invitationMessage = await messages().findOne(
-        {
-          toPlayerId: player.id,
-          messageType: 1,
-          "payload.SquadId": squad.name,
-          ignored: false,
-          accepted: false,
-        },
-        { session },
-      ) as unknown as MessageDoc | null;
+      invitationMessage = activeInvitations.find((message) => message.payload.SquadId === squad.name) ?? null;
     }
     if (invitationMessage) {
       validatedSquadInvitationMessage(invitationMessage, transactionTime);
@@ -574,6 +585,49 @@ async function joinSquadTransaction(
       );
       if (messageUpdate.modifiedCount !== 1) {
         throw new ApiError(ApiErrorCode.InternalServerError, "Squad invitation changed concurrently.");
+      }
+    }
+    for (const otherSquad of otherInvitationSquads) {
+      const revocation = planSquadInvitationRevocation(otherSquad, player.id);
+      if (!revocation.changed) {
+        throw new ApiError(ApiErrorCode.InternalServerError, "Other Squad invitation query returned no capability.");
+      }
+      const updatedAt = nextSquadUpdatedAt(otherSquad, transactionTime);
+      validatedSquadDocument({
+        ...otherSquad,
+        invitedPlayerIds: revocation.squad.invitedPlayerIds,
+        updatedAt,
+      }, updatedAt);
+      const cleanup = await squads().updateOne(
+        { name: otherSquad.name, updatedAt: otherSquad.updatedAt, invitedPlayerIds: player.id },
+        { $set: { invitedPlayerIds: revocation.squad.invitedPlayerIds, updatedAt } },
+        { session },
+      );
+      if (cleanup.modifiedCount !== 1) {
+        throw new ApiError(ApiErrorCode.InternalServerError, "Other Squad invitation changed concurrently.");
+      }
+    }
+    for (const staleMessage of activeInvitations) {
+      if (staleMessage.messageId === invitationMessage?.messageId) continue;
+      const revoked = validatedSquadInvitationMessage({
+        ...staleMessage,
+        read: true,
+        ignored: true,
+      }, transactionTime)!;
+      const cleanup = await messages().updateOne(
+        {
+          messageId: staleMessage.messageId,
+          toPlayerId: player.id,
+          messageType: 1,
+          read: staleMessage.read,
+          ignored: false,
+          accepted: false,
+        },
+        { $set: { read: revoked.read, ignored: revoked.ignored } },
+        { session },
+      );
+      if (cleanup.modifiedCount !== 1) {
+        throw new ApiError(ApiErrorCode.InternalServerError, "Stale Squad invitation changed concurrently.");
       }
     }
     return { squad: plan.squad, joined: plan.rosterChanged };
@@ -688,6 +742,22 @@ export async function declineJoinRequest(actorId: string, targetId: string, name
 export interface SquadInvitationPlan {
   squad: SquadDTO;
   changed: boolean;
+}
+
+export interface SquadInvitationRevocationPlan {
+  squad: SquadDTO;
+  changed: boolean;
+}
+
+/** Remove one player's future-admission capability without mutating the validated snapshot. */
+export function planSquadInvitationRevocation(
+  squad: SquadDTO,
+  playerId: string,
+): SquadInvitationRevocationPlan {
+  const invitedPlayerIds = squad.invitedPlayerIds.filter((id) => id !== playerId);
+  return invitedPlayerIds.length === squad.invitedPlayerIds.length
+    ? { squad, changed: false }
+    : { squad: { ...squad, invitedPlayerIds }, changed: true };
 }
 
 function requireInvitationManager(squad: SquadDTO, actorId: string): void {
