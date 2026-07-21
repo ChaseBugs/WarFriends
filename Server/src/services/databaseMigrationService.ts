@@ -175,6 +175,20 @@ const migrations: readonly DatabaseMigration[] = [
       );
     },
   },
+  {
+    id: "20260722_011_suggested_squad_eligibility_index",
+    checksum: "sha256:960f75fd8c7ce3585e77213e55bf178ee098207eeed4e73a6430f1cf6f920ee2",
+    description: "Index server-authoritative Suggested Squad eligibility and ranking.",
+    up: async (db) => {
+      // Capacity remains an exact $expr over the validated roster/maxMembers pair. This prefix
+      // index removes invite-only and medal-ineligible rows before that expression and preserves
+      // the same stable competitive order used by the recovered Suggested Squads response.
+      await db.collection("squads").createIndex(
+        { joinPolicy: 1, requiredMedals: 1, squadPoints: -1, name: 1 },
+        { name: "suggested_squad_eligibility" },
+      );
+    },
+  },
 ];
 
 const receiptCollectionName = "schemaMigrations";

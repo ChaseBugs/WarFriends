@@ -4,7 +4,10 @@ import { ApiErrorCode } from "../apiErrors";
 import {
   exactSquadInteger,
   requestedDirectSquadChatTimestamp,
+  requestedGlobalSquadDirectory,
+  requestedSquadNamePrefix,
   requestedSquadJoinPolicy,
+  requestedSuggestedSquadSkill,
 } from "../handlers/squadAdmissionParsing";
 import {
   SQUAD_CREATE_BASE_WARBUCKS_COST,
@@ -71,6 +74,24 @@ test("squad admission settings reject coercion and preserve exact recovered inte
   }
   for (const value of [null, "", "yes", "true", "false", " true ", "TRUE", 0, 1, 2, {}, []]) {
     assert.throws(() => requestedSquadJoinPolicy({ IsPublic: value }), /exact stock 0\/1 flag/);
+  }
+});
+
+test("Squad directory request fields preserve recovered prefix, scope, and Skill assertions", () => {
+  assert.equal(requestedSquadNamePrefix({ SquadNameStart: "  Alpha   Sq " }), "Alpha Sq");
+  assert.equal(requestedGlobalSquadDirectory({}), false);
+  assert.equal(requestedGlobalSquadDirectory({ IsGlobal: "1" }), true);
+  assert.equal(requestedGlobalSquadDirectory({ IsGlobal: false }), false);
+  assert.equal(requestedSuggestedSquadSkill("123"), 123);
+
+  for (const value of [undefined, null, {}, "ab", "a".repeat(25), "bad\nname"]) {
+    assert.throws(() => requestedSquadNamePrefix({ SquadNameStart: value }), /SquadNameStart is invalid/);
+  }
+  for (const value of [1, "true", "01", null]) {
+    assert.throws(() => requestedGlobalSquadDirectory({ IsGlobal: value }), /exact stock 0\/1 flag/);
+  }
+  for (const value of [-1, "-1", 1.5, "1.0", true]) {
+    assert.throws(() => requestedSuggestedSquadSkill(value), /Skill/);
   }
 });
 

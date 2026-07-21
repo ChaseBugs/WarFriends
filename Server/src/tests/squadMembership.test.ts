@@ -169,6 +169,21 @@ test("capacity and medal requirements are rechecked at the admission snapshot", 
     () => planSquadJoin(gated, playerDocument("member")),
     (error: unknown) => (error as { code?: number }).code === ApiErrorCode.NotEnoughSquadSkill,
   );
+
+  // SquadRecord compares SkillRequirement to DatabasePlayer.skill (global medals), not the
+  // separately reset weekly Player League MedalsBalance field.
+  const globallyEligible = playerDocument("global-medals");
+  globallyEligible.player.skill = 10;
+  globallyEligible.player.medalsBalance = 0;
+  assert.equal(planSquadJoin(gated, globallyEligible).rosterChanged, true);
+
+  const weeklyOnly = playerDocument("weekly-medals");
+  weeklyOnly.player.skill = 0;
+  weeklyOnly.player.medalsBalance = 10;
+  assert.throws(
+    () => planSquadJoin(gated, weeklyOnly),
+    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.NotEnoughSquadSkill,
+  );
 });
 
 test("idempotent admission repairs a missing player mirror without duplicating the roster", () => {

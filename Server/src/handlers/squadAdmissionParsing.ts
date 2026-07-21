@@ -63,3 +63,30 @@ export function requestedDirectSquadChatTimestamp(req: Record<string, unknown>):
   }
   return exactSquadInteger(req[supplied[0]], supplied[0]);
 }
+
+/** Parse action 79's only recovered search text field without alias or object coercion. */
+export function requestedSquadNamePrefix(req: Record<string, unknown>): string {
+  if (typeof req.SquadNameStart !== "string" || /\p{Cc}/u.test(req.SquadNameStart)) {
+    throw new ApiError(ApiErrorCode.UnknownAction, "SquadNameStart is invalid.");
+  }
+  const normalized = req.SquadNameStart.trim().replace(/\s+/gu, " ");
+  if (normalized.length < 3 || normalized.length > 24 || /\p{Cc}/u.test(normalized)) {
+    throw new ApiError(ApiErrorCode.UnknownAction, "SquadNameStart is invalid.");
+  }
+  return normalized;
+}
+
+/** The stock search/suggestion caller omits IsGlobal for local and emits exact `"1"` for global. */
+export function requestedGlobalSquadDirectory(req: Record<string, unknown>): boolean {
+  return exactBinaryBoolean(req.IsGlobal, "IsGlobal", false) ?? false;
+}
+
+/**
+ * Validate action 81's client Skill echo as an assertion, never as recommendation authority.
+ * The service receives the already-proven authenticated account and derives its query from that.
+ */
+export function requestedSuggestedSquadSkill(value: unknown): number {
+  const skill = exactSquadInteger(value, "Skill");
+  if (skill < 0) throw new ApiError(ApiErrorCode.UnknownAction, "Skill is invalid.");
+  return skill;
+}

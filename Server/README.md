@@ -489,6 +489,13 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   The global page is therefore admitted by `(squadPoints descending, squad name ascending)` through
   a matching compound index; every full Squad snapshot, result cap, and returned order is checked
   before serialization so lifetime experience cannot displace a higher competitive score.
+  Action `79` now applies its recovered literal `SquadNameStart` prefix instead of returning that
+  same leaderboard. Action `81` validates the client `Skill` echo against the authenticated
+  profile, then recommends only non-full open/request-required squads whose `requiredMedals` the
+  player's global `skill` satisfies. Final join/request admission uses that same global value;
+  weekly Player League `medalsBalance` is not interchangeable. Because neither recovered Squad
+  documents nor requests identify one authoritative country for a multi-member Squad, both reads
+  return `IsLocal=false`; the stock UI may use its global fallback and no locale is fabricated.
   Malformed or blank input is rejected instead of floored, broadly coerced, silently ignored, or
   replaced by a default. Every core membership, settings, invitation, join-request, PvP Squad
   Point, and Squad War write advances `updatedAt` through one shared strictly monotonic helper,

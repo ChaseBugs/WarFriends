@@ -366,7 +366,10 @@ export function planSquadJoin(
     if (squad.members.length >= (squad.maxMembers || 15)) {
       throw new ApiError(ApiErrorCode.SquadIsFull, "Squad is full.");
     }
-    if (player.player.medalsBalance < (squad.requiredMedals || 0)) {
+    // SquadRecord compares the parsed SkillRequirement to DatabasePlayer.skill. MedalsBalance is
+    // the separate weekly Player League counter and can reset independently, so it must never
+    // reject a player whose persistent global-medal Skill satisfies the Squad gate.
+    if (player.player.skill < (squad.requiredMedals || 0)) {
       throw new ApiError(ApiErrorCode.NotEnoughSquadSkill, "Player does not meet the squad medal requirement.");
     }
     // Policy zero is open. A non-open squad requires either a persisted invitation or an
@@ -491,7 +494,7 @@ export async function requestToJoin(playerId: string, name: string): Promise<Squ
   if (squad.members.length >= (squad.maxMembers || 15)) {
     throw new ApiError(ApiErrorCode.SquadIsFull, "Squad is full.");
   }
-  if (player.player.medalsBalance < (squad.requiredMedals || 0)) {
+  if (player.player.skill < (squad.requiredMedals || 0)) {
     throw new ApiError(ApiErrorCode.NotEnoughSquadSkill, "Player does not meet the squad medal requirement.");
   }
   // A player has at most one pending request per squad. Repeated taps are idempotent and do
@@ -1148,6 +1151,101 @@ export async function listByExperience(
       if (previous.squadPoints < row.squadPoints
         || (previous.squadPoints === row.squadPoints && previous.name >= row.name)) {
         throw new Error("Selected Squad leaderboard rows are not in authoritative rank order.");
+      }
+    }
+  }
+  return rows;
+}
+
+function validatedSquadReadLimit(limit: number, family: string): number {
+  if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100) {
+    throw new Error(`${family} limit is invalid.`);
+  }
+  return limit;
+}
+
+/**
+ * Resolve action 79's literal SquadNameStart contract.
+ *
+ * Search is intentionally a directory read, not an admission shortcut: full, private, or
+ * medal-gated squads may still be found by name and the normal join/request path remains the sole
+ * authority for membership. The anchored case-insensitive behavior matches the recovered field's
+ * prefix meaning and the existing player-directory search contract.
+ */
+export async function searchSquadsByName(
+  prefix: string,
+  limit = 50,
+  collection?: Collection<SquadDocument>,
+): Promise<SquadDocument[]> {
+  const exactLimit = validatedSquadReadLimit(limit, "Squad search");
+  if (/\p{Cc}/u.test(prefix)) {
+    throw new ApiError(ApiErrorCode.UnknownAction, "SquadNameStart is invalid.");
+  }
+  const normalized = cleanName(prefix);
+  if (normalized.length < 3 || normalized.length > 24 || /\p{Cc}/u.test(normalized)) {
+    throw new ApiError(ApiErrorCode.UnknownAction, "SquadNameStart is invalid.");
+  }
+  const escaped = normalized.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const rows = await (collection ?? squads())
+    .find({ name: { $regex: `^${escaped}`, $options: "i" } })
+    .sort({ name: 1 })
+    .limit(exactLimit)
+    .toArray();
+  if (rows.length > exactLimit) throw new Error("Squad search returned too many rows.");
+  const now = new Date();
+  for (let index = 0; index < rows.length; index += 1) {
+    const row = validatedSquadDocument(rows[index]!, now);
+    if (!row.name.toLocaleLowerCase("en-US").startsWith(normalized.toLocaleLowerCase("en-US"))) {
+      throw new Error("Selected Squad search row does not match the requested prefix.");
+    }
+    if (index > 0 && rows[index - 1]!.name >= row.name) {
+      throw new Error("Selected Squad search rows are not in authoritative name order.");
+    }
+  }
+  return rows;
+}
+
+/**
+ * Return joinable action-81 recommendations using authenticated player authority.
+ *
+ * The stock caller sends `Skill`, but that number is only an assertion. The handler compares it
+ * with the complete authenticated profile before this service runs. Recommendations include open
+ * and request-required squads, exclude invite-only or full rosters, and keep the same recovered
+ * Skill/squadPoints order used by the global board. Geographic local-vs-global membership was not
+ * recovered, so callers explicitly publish IsLocal=false and let the stock UI use its global
+ * fallback instead of inventing a country owner for a multi-member Squad.
+ */
+export async function suggestedSquads(
+  player: PlayerDocument,
+  limit = 20,
+  collection?: Collection<SquadDocument>,
+): Promise<SquadDocument[]> {
+  const exactLimit = validatedSquadReadLimit(limit, "Suggested Squads");
+  const authority = validatedPlayerAccountEnvelope(player);
+  const skill = authority.player.skill;
+  const rows = await (collection ?? squads())
+    .find({
+      joinPolicy: { $in: [0, 1] },
+      requiredMedals: { $lte: skill },
+      $expr: { $lt: [{ $size: "$members" }, "$maxMembers"] },
+    })
+    .sort({ squadPoints: -1, name: 1 })
+    .limit(exactLimit)
+    .toArray();
+  if (rows.length > exactLimit) throw new Error("Suggested Squads returned too many rows.");
+  const now = new Date();
+  for (let index = 0; index < rows.length; index += 1) {
+    const row = validatedSquadDocument(rows[index]!, now);
+    if (row.joinPolicy === 2
+      || row.requiredMedals > skill
+      || row.members.length >= row.maxMembers) {
+      throw new Error("Selected Suggested Squad is not eligible for the authenticated player.");
+    }
+    if (index > 0) {
+      const previous = rows[index - 1]!;
+      if (previous.squadPoints < row.squadPoints
+        || (previous.squadPoints === row.squadPoints && previous.name >= row.name)) {
+        throw new Error("Selected Suggested Squads are not in authoritative rank order.");
       }
     }
   }

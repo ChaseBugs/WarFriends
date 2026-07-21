@@ -13,6 +13,8 @@ import {
   kickMember,
   leaveSquad,
   listByExperience,
+  searchSquadsByName,
+  suggestedSquads,
   promoteMember,
   requestToJoin,
   SQUAD_CREATE_NOT_ENOUGH_WARBUCKS,
@@ -39,7 +41,10 @@ import { rankSquadWarDivision } from "../services/squadWarContract";
 import { publishInboxFanout } from "../services/inboxFanoutService";
 import {
   exactSquadInteger,
+  requestedGlobalSquadDirectory,
   requestedDirectSquadChatTimestamp,
+  requestedSquadNamePrefix,
+  requestedSuggestedSquadSkill,
   requestedSquadJoinPolicy,
 } from "./squadAdmissionParsing";
 
@@ -323,9 +328,16 @@ export const squadHandlers: Record<number, HandlerEntry> = {
     return ok(DbAction.GetAllSquadMembers, { SquadId: name, SquadMembers: members, Members: members });
   }),
 
-  [DbAction.GetSquads]: authed(async () =>
-    ok(DbAction.GetSquads, { Items: (await listByExperience()).map(buildDatabaseSquad) }),
-  ),
+  [DbAction.GetSquads]: authed(async ({ req }) => {
+    const prefix = requestedSquadNamePrefix(req);
+    // The recovered data model has no authoritative Squad country/locale owner. Always identify
+    // the global fallback honestly; the stock parser stores IsLocal and can present that state.
+    requestedGlobalSquadDirectory(req);
+    return ok(DbAction.GetSquads, {
+      Items: (await searchSquadsByName(prefix)).map(buildDatabaseSquad),
+      IsLocal: false,
+    });
+  }),
 
   [DbAction.GetSquadsByExperience]: authed(async () =>
     ok(DbAction.GetSquadsByExperience, { Items: (await listByExperience()).map(buildDatabaseSquad) }),
@@ -352,9 +364,17 @@ export const squadHandlers: Record<number, HandlerEntry> = {
     ));
   }),
 
-  [DbAction.FindSuggestedSquads]: authed(async () =>
-    ok(DbAction.FindSuggestedSquads, { Items: (await listByExperience(20)).map(buildDatabaseSquad) }),
-  ),
+  [DbAction.FindSuggestedSquads]: authed(async ({ player, req }) => {
+    const assertedSkill = requestedSuggestedSquadSkill(req.Skill);
+    if (assertedSkill !== player!.player.skill) {
+      throw new ApiError(ApiErrorCode.UnknownAction, "Skill does not match authenticated player authority.");
+    }
+    requestedGlobalSquadDirectory(req);
+    return ok(DbAction.FindSuggestedSquads, {
+      Items: (await suggestedSquads(player!)).map(buildDatabaseSquad),
+      IsLocal: false,
+    });
+  }),
 
   [DbAction.UpdateSquad]: authed(async ({ player, req }) => {
     const squad = await updateSquad(player!.id, squadName(req) || player!.player.squadName, {
