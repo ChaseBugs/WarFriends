@@ -51,7 +51,8 @@ function report(overrides: Partial<PlayerReportDocument> = {}): PlayerReportDocu
 }
 
 function appeal(overrides: Partial<PlayerAppealDocument> = {}): PlayerAppealDocument {
-  return {
+  const reviewedAt = new Date("2026-01-02T00:00:00Z");
+  const row: PlayerAppealDocument = {
     _id: "223e4567-e89b-42d3-a456-426614174000",
     sanctionId: "323e4567-e89b-42d3-a456-426614174000",
     playerId: "player-1",
@@ -59,20 +60,35 @@ function appeal(overrides: Partial<PlayerAppealDocument> = {}): PlayerAppealDocu
     message: "Please review this sanction because the evidence is incorrect.",
     submissionOperationId: "appeal:player-1:001",
     createdAt: new Date("2026-01-01T00:00:00Z"),
-    updatedAt: new Date("2026-01-02T00:00:00Z"),
+    updatedAt: reviewedAt,
+    reviewHistory: [{
+      operationId: "appeal-review:retention:001",
+      fromStatus: "open",
+      toStatus: "accepted",
+      actor: "retention-reviewer",
+      note: "accepted before retention",
+      createdAt: reviewedAt,
+    }],
     ...overrides,
   };
+  if (row.status === "open") {
+    row.updatedAt = row.createdAt;
+    delete row.reviewHistory;
+  }
+  return row;
 }
 
 function matchesRetention(
-  row: { reportId?: string; status: string; createdAt: Date; updatedAt?: Date },
+  row: { _id?: string; reportId?: string; status: string; createdAt: Date; updatedAt?: Date },
   filter: Record<string, unknown>,
 ): boolean {
   const statuses = (filter.status as { $in: string[] }).$in;
   const before = (filter.createdAt as { $lt: Date }).$lt;
   const previewedAt = (filter.updatedAt as { $lte: Date }).$lte;
   const reportIds = (filter.reportId as { $in?: string[] } | undefined)?.$in;
+  const appealIds = (filter._id as { $in?: string[] } | undefined)?.$in;
   return (!reportIds || (row.reportId !== undefined && reportIds.includes(row.reportId)))
+    && (!appealIds || (row._id !== undefined && appealIds.includes(row._id)))
     && statuses.includes(row.status) && row.createdAt < before &&
     row.updatedAt !== undefined && row.updatedAt <= previewedAt;
 }
@@ -195,6 +211,31 @@ test("retention cannot count or delete a forged terminal report without its audi
     /moderation report authority is invalid/,
   );
   assert.equal(reports.length, 1);
+  assert.equal(runs.length, 0);
+});
+
+test("retention cannot count or delete a forged terminal appeal without its audit proof", async () => {
+  const corrupt = appeal();
+  delete corrupt.reviewHistory;
+  const appeals = [corrupt];
+  const runs: ModerationRetentionRunDocument[] = [];
+  await assert.rejects(
+    applyModerationRetentionInCollections(
+      {
+        previewedAt: new Date("2026-07-21T00:00:00Z"),
+        actor: "privacy-operator@example.test",
+        operationId: "moderation-retention:corrupt-appeal:001",
+      },
+      new Date("2026-07-21T01:00:00Z"),
+      mutableCollection<PlayerReportDocument>([]) as unknown as Collection<Document>,
+      mutableCollection(appeals),
+      runCollection(runs),
+      undefined,
+      POLICY,
+    ),
+    /player appeal authority is invalid/,
+  );
+  assert.equal(appeals.length, 1);
   assert.equal(runs.length, 0);
 });
 

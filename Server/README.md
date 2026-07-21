@@ -543,10 +543,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   export, and explicitly confirmed transactional purge. The frozen timestamp prevents review/export
   drift; active/open records are excluded, exact retries return the immutable deletion receipt, and
   sanctions remain indefinitely auditable.
-  Report preview, export, and purge validate every selected report lifecycle. Purge deletes only the
-  validated report IDs that still satisfy the frozen terminal/date filter inside the transaction,
-  so a forged terminal status aborts before either collection changes and a concurrent report
-  change cannot broaden destructive authority.
+  Preview, export, and purge validate every selected report and appeal lifecycle. Purge proves both
+  complete sets before its first delete, then deletes only validated IDs that still satisfy each
+  frozen terminal/date filter inside the transaction. A forged terminal status therefore aborts
+  before either collection changes, and a concurrent record change cannot broaden destructive authority.
   Army Power/rank/time fields remain explicitly untrusted claims. When both accounts occur in a
   recent replacement-backend ranked match, the report also captures the exact server match ID,
   participant snapshots, state, terminal winner/cancellation, authenticated result claims, and

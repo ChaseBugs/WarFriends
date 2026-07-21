@@ -10,6 +10,7 @@ import {
   type PlayerAppealDocument,
 } from "../db";
 import { validatedModerationReport, type PlayerReportDocument } from "./reportService";
+import { validatedPlayerAppeal } from "./playerAppealService";
 
 const MILLISECONDS_PER_DAY = 86_400_000;
 const MINIMUM_RETENTION_DAYS = 30;
@@ -198,6 +199,16 @@ async function validatedEligibleReports(
   return rows.map((report) => validatedModerationReport(report, authorityTime));
 }
 
+async function validatedEligibleAppeals(
+  collection: Collection<PlayerAppealDocument>,
+  filter: Filter<PlayerAppealDocument>,
+  authorityTime: Date,
+  session?: ClientSession,
+): Promise<PlayerAppealDocument[]> {
+  const rows = await collection.find(filter, sessionOptions(session)).toArray();
+  return rows.map((appeal) => validatedPlayerAppeal(appeal, authorityTime));
+}
+
 /** Count exactly what a later apply call with this timestamp is allowed to remove. */
 export async function previewModerationRetention(
   previewedAt = new Date(),
@@ -206,15 +217,24 @@ export async function previewModerationRetention(
   policy = moderationRetentionPolicy(),
 ): Promise<ModerationRetentionPreview> {
   const cutoffs = moderationRetentionCutoffs(previewedAt, policy);
-  const [eligibleReportRows, eligibleAppeals] = await Promise.all([
+  const [eligibleReportRows, eligibleAppealRows] = await Promise.all([
     validatedEligibleReports(
       reportCollection,
       reportRetentionFilter(cutoffs.reportBefore, previewedAt),
       previewedAt,
     ),
-    appealCollection.countDocuments(appealRetentionFilter(cutoffs.appealBefore, previewedAt)),
+    validatedEligibleAppeals(
+      appealCollection,
+      appealRetentionFilter(cutoffs.appealBefore, previewedAt),
+      previewedAt,
+    ),
   ]);
-  return { previewedAt, ...cutoffs, eligibleReports: eligibleReportRows.length, eligibleAppeals };
+  return {
+    previewedAt,
+    ...cutoffs,
+    eligibleReports: eligibleReportRows.length,
+    eligibleAppeals: eligibleAppealRows.length,
+  };
 }
 
 function encodeModerationExportCursor(cursor: ModerationExportCursor): string {
@@ -300,7 +320,8 @@ export async function exportModerationRetentionPage(
     .sort({ createdAt: -1, _id: -1 })
     .limit(input.limit + 1)
     .toArray();
-  const page = rows.slice(0, input.limit);
+  const page = rows.slice(0, input.limit)
+    .map((appeal) => validatedPlayerAppeal(appeal, input.previewedAt));
   return {
     kind: input.kind,
     appealRows: page,
@@ -351,18 +372,20 @@ export async function applyModerationRetentionInCollections(
 
   const cutoffs = moderationRetentionCutoffs(input.previewedAt, policy);
   const reportFilter = reportRetentionFilter(cutoffs.reportBefore, input.previewedAt);
-  const eligibleReportRows = await validatedEligibleReports(
-    reportCollection,
-    reportFilter,
-    input.previewedAt,
-    session,
-  );
+  const appealFilter = appealRetentionFilter(cutoffs.appealBefore, input.previewedAt);
+  // Prove both destructive sets before either delete. Transactions would roll back a later
+  // validation failure, but validating first is clearer operator semantics and also protects
+  // injected/test collection implementations that cannot emulate MongoDB rollback.
+  const [eligibleReportRows, eligibleAppealRows] = await Promise.all([
+    validatedEligibleReports(reportCollection, reportFilter, input.previewedAt, session),
+    validatedEligibleAppeals(appealCollection, appealFilter, input.previewedAt, session),
+  ]);
   const reportResult = await reportCollection.deleteMany(
     { ...reportFilter, reportId: { $in: eligibleReportRows.map((report) => report.reportId) } },
     options,
   );
   const appealResult = await appealCollection.deleteMany(
-    appealRetentionFilter(cutoffs.appealBefore, input.previewedAt),
+    { ...appealFilter, _id: { $in: eligibleAppealRows.map((appeal) => appeal._id) } },
     options,
   );
   const run: ModerationRetentionRunDocument = {
