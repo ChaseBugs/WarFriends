@@ -127,6 +127,7 @@ import {
   pvpGameReward,
   pvpLevelGoldAmount,
   pvpLevelFields,
+  pvpWarBucksPolicy,
   pvpWarBucksAmounts,
   winnerFromEndReason,
 } from "../services/matchService";
@@ -1531,6 +1532,28 @@ test("PvP VIP receipts expose base XP and WarBucks while settlement persists exa
     NewVisuals: '{"HEAD_CLOWN-VIP":"1"}',
   });
   assert.equal(pvpGameReward(false, 30, 7, true, "{}").NewVisuals, undefined);
+});
+
+test("PvP WarBucks policy is exact and remains C#-representable after VIP scaling", () => {
+  assert.equal(Object.isFrozen(pvpWarBucksPolicy()), true);
+  assert.deepEqual(pvpWarBucksPolicy({ win: 800, loss: 400 }), { win: 800, loss: 400 });
+  assert.deepEqual(
+    pvpWarBucksPolicy({ win: 1_431_655_765, loss: 0 }),
+    { win: 1_431_655_765, loss: 0 },
+  );
+  for (const configuration of [
+    { win: Number.NaN, loss: 400 },
+    { win: Infinity, loss: 400 },
+    { win: -1, loss: 400 },
+    { win: 800.5, loss: 400 },
+    { win: 1_431_655_766, loss: 400 },
+    { win: 800, loss: Number.NaN },
+    { win: 800, loss: -1 },
+    { win: 800, loss: 400.5 },
+    { win: 800, loss: 1_431_655_766 },
+  ]) {
+    assert.throws(() => pvpWarBucksPolicy(configuration), /PvP .* WarBucks policy is invalid/);
+  }
 });
 
 test("PvP Level is emitted only when the server actually advances the level", () => {

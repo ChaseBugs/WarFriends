@@ -1650,6 +1650,10 @@ therefore update its executable disposition instead of silently falling through 
   policy. Normal WarBucks uses server-owned `PVP_WIN_WARBUCKS` / `PVP_LOSE_WARBUCKS` defaults
   because the retired Fusebox `BattleWarbucksRewards` document is not present in either APK;
   client-echoed reward values are never trusted. VIP's 1.5x WarBucks multiplier is source-decoded.
+  Both deployment values are validated once during module startup as exact nonnegative integers no
+  greater than 1,431,655,765, which keeps the independently truncated VIP component inside the
+  recovered C# signed-`int` field. Invalid policy stops startup rather than silently restoring the
+  800/400 defaults, and the resolved policy remains immutable for every match in that process.
 - **REST result consensus** — `MATCH_RESULT_CONSENSUS_WAIT_MS` is an exact integer from 0 through
   15,000 and bounds the read-only wait that lets the first stock `GameEnded` request receive the
   receipt committed by the second agreeing report. Zero returns the pending response immediately.

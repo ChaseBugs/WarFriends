@@ -457,6 +457,56 @@ export const VIP_LEVEL_GOLD_MULTIPLIER = 2;
 /** `VipWarbucksMultiplier` decoded from the 4.9.5 MainScene Constants component. */
 export const VIP_BATTLE_WARBUCKS_MULTIPLIER = 1.5;
 
+export interface PvpWarBucksPolicyConfiguration {
+  readonly win: number;
+  readonly loss: number;
+}
+
+const CSHARP_REWARD_INTEGER_MAX = 2_147_483_647;
+
+/**
+ * Validate the offline PvP economy policy without replacing a malformed deployment value.
+ *
+ * The stock reward parser stores `BattleRewards` in a C# `int` and independently applies the
+ * recovered 1.5x VIP multiplier. A base grant is therefore valid only when both its normal and VIP
+ * forms fit that signed width. Falling back to 800/400 after an operator supplied bad policy would
+ * hide configuration drift and make nodes settle a different economy than the reviewed deploy.
+ */
+function exactPvpWarBucksPolicy(
+  configuration: PvpWarBucksPolicyConfiguration,
+): PvpWarBucksPolicyConfiguration {
+  const exactGrant = (value: number, outcome: string): number => {
+    const vipValue = Math.trunc(value * VIP_BATTLE_WARBUCKS_MULTIPLIER);
+    if (!Number.isSafeInteger(value)
+      || value < 0
+      || value > CSHARP_REWARD_INTEGER_MAX
+      || !Number.isSafeInteger(vipValue)
+      || vipValue > CSHARP_REWARD_INTEGER_MAX) {
+      throw new Error(`PvP ${outcome} WarBucks policy is invalid.`);
+    }
+    return value;
+  };
+  return {
+    win: exactGrant(configuration.win, "win"),
+    loss: exactGrant(configuration.loss, "loss"),
+  };
+}
+
+// Resolve environment-owned economy authority during module startup and keep it immutable for the
+// process. Every match on one node must settle against the same reviewed Win/Loss policy.
+const CONFIGURED_PVP_WARBUCKS_POLICY = Object.freeze(exactPvpWarBucksPolicy({
+  win: config.pvpWinWarBucks,
+  loss: config.pvpLoseWarBucks,
+}));
+
+export function pvpWarBucksPolicy(
+  configuration?: PvpWarBucksPolicyConfiguration,
+): PvpWarBucksPolicyConfiguration {
+  return configuration === undefined
+    ? CONFIGURED_PVP_WARBUCKS_POLICY
+    : exactPvpWarBucksPolicy(configuration);
+}
+
 export interface PvpWinStreakTransition {
   state: PvpWinStreakState;
   baseWarBucks: number;
@@ -504,13 +554,6 @@ export function advancePvpWinStreak(
   };
 }
 
-function configuredNonNegativeInteger(value: number, fallback: number): number {
-  // Environment configuration is an operator-controlled economy input, but it still must
-  // not introduce NaN, fractions, negative grants, or integers Mongo/JavaScript cannot
-  // represent exactly. Falling back keeps a malformed local .env from corrupting wallets.
-  return Number.isSafeInteger(value) && value >= 0 ? value : fallback;
-}
-
 /**
  * Resolve the base and durable normal PvP WarBucks grant.
  *
@@ -526,8 +569,8 @@ export function pvpWarBucksAmounts(won: boolean, isVip: boolean): {
   warBucks: number;
 } {
   const baseWarBucks = won
-    ? configuredNonNegativeInteger(config.pvpWinWarBucks, 800)
-    : configuredNonNegativeInteger(config.pvpLoseWarBucks, 400);
+    ? CONFIGURED_PVP_WARBUCKS_POLICY.win
+    : CONFIGURED_PVP_WARBUCKS_POLICY.loss;
   const warBucks = isVip
     ? Math.trunc(baseWarBucks * VIP_BATTLE_WARBUCKS_MULTIPLIER)
     : baseWarBucks;
