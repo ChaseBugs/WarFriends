@@ -7,6 +7,7 @@ import {
   grantMissionCardsState,
 } from "./cardInventoryService";
 import { mutateProgression } from "./progressionMutationService";
+import { checkedRewardBalance } from "./rewardMathService";
 import {
   grantDailyVipCardsState,
   type VipDailyCardReward,
@@ -157,19 +158,6 @@ export function buildDailyRewardConfig(year: number, month: number): Record<stri
   return result;
 }
 
-function checkedAdd(left: number, right: number, name: string): number {
-  // Gold/WarBucks can be negative chargeback debt. Reward amounts remain nonnegative and every
-  // addition stays integer-bounded, so ordinary rewards automatically repay that debt.
-  if (!Number.isSafeInteger(left) || !Number.isSafeInteger(right) || right < 0) {
-    throw new ApiError(ApiErrorCode.InternalServerError, `${name} is invalid.`);
-  }
-  const result = left + right;
-  if (!Number.isSafeInteger(result)) {
-    throw new ApiError(ApiErrorCode.InternalServerError, `${name} overflowed.`);
-  }
-  return result;
-}
-
 function packNameForReward(type: number): string | undefined {
   if (type === BRONZE_PACK_REWARD_TYPE) return "BRONZE_CARDPACK";
   if (type === SILVER_PACK_REWARD_TYPE) return "SILVER_CARDPACK";
@@ -254,20 +242,25 @@ export function claimDailyRewardState(
 
   if (definition.Type === GOLD_REWARD_TYPE) {
     goldAdded = definition.Count;
-    rewardedState = { ...rewardedState, gold: checkedAdd(rewardedState.gold, goldAdded, "Daily reward Gold") };
+    // Currency and the calendar cursor publish in one revision. Use the shared reward guard before
+    // advancing that cursor so overflow cannot consume a day whose value was not safely credited.
+    rewardedState = {
+      ...rewardedState,
+      gold: checkedRewardBalance(rewardedState.gold, goldAdded, "Daily reward Gold"),
+    };
     added = goldAdded;
   } else if (definition.Type === WARBUCKS_REWARD_TYPE) {
     warBucksAdded = definition.Count;
     rewardedState = {
       ...rewardedState,
-      warBucks: checkedAdd(rewardedState.warBucks, warBucksAdded, "Daily reward WarBucks"),
+      warBucks: checkedRewardBalance(rewardedState.warBucks, warBucksAdded, "Daily reward WarBucks"),
     };
     added = warBucksAdded;
   } else if (definition.Type === ARENA_TICKETS_REWARD_TYPE) {
     ticketsAdded = definition.Count;
     rewardedState = {
       ...rewardedState,
-      tickets: checkedAdd(rewardedState.tickets, ticketsAdded, "Daily reward Tickets"),
+      tickets: checkedRewardBalance(rewardedState.tickets, ticketsAdded, "Daily reward Tickets"),
     };
     added = ticketsAdded;
   } else {

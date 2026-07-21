@@ -869,7 +869,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
 - **Daily rewards**: `CheckDailyReward` and `ClaimDailyReward` provide the recovered monthly
   `dailyRewardData` calendar contract, one UTC-day unlock, ordered replay-safe claim cursors,
   and exact parser payloads for Gold, WarBucks, Arena Tickets, loose Bronze/Silver/Gold cards,
-  and Bronze/Silver/Gold packs. Wallets, inventory, achievement progress, the optional VIP pair,
+  and Bronze/Silver/Gold packs. All three currency branches use the shared nonnegative safe-reward
+  balance guard before advancing the claim cursor, so invalid amounts, damaged wallets, or overflow
+  leave the day retryable. Wallets, inventory, achievement progress, the optional VIP pair,
   and the claim cursor commit atomically. The deterministic seven-position schedule and amounts
   are an explicit conservative replacement because the original remote live-ops sheet is absent.
   One time-aware authority validates the exact five-field snapshot at shared persisted reads and

@@ -1016,6 +1016,43 @@ test("daily claims atomically deliver WarBucks, Tickets, loose cards, and card p
   assert.equal(pack.state.revision, packState.revision + 1);
 });
 
+test("daily currency claims use the shared safe reward boundary before consuming the calendar day", () => {
+  const now = Date.parse("2026-07-19T12:00:00Z") / 1000;
+  const calendar = (claimReward: number, canClaim: number) => ({
+    year: 2026,
+    month: 7,
+    canClaim,
+    claimReward,
+    lastCheckDay: "2026-07-19",
+  });
+  const initial = createInitialProgression(now);
+
+  assert.throws(
+    () => claimDailyRewardState({
+      ...initial,
+      gold: Number.MAX_SAFE_INTEGER,
+      dailyReward: calendar(0, 1),
+    }, now, 1),
+    /Daily reward Gold reward balance overflowed/,
+  );
+  assert.throws(
+    () => claimDailyRewardState({
+      ...initial,
+      warBucks: Number.MAX_SAFE_INTEGER,
+      dailyReward: calendar(1, 2),
+    }, now, 2),
+    /Daily reward WarBucks reward balance overflowed/,
+  );
+  assert.throws(
+    () => claimDailyRewardState({
+      ...initial,
+      tickets: Number.MAX_SAFE_INTEGER,
+      dailyReward: calendar(3, 4),
+    }, now, 4),
+    /Daily reward Tickets reward balance overflowed/,
+  );
+});
+
 test("daily calendar claim composes the active VIP card pair into the same state transition", () => {
   const now = Date.parse("2026-07-19T12:00:00Z") / 1000;
   const active = {
