@@ -4,9 +4,15 @@ import { config } from "../config";
 import { authRateLimits, type AuthRateLimitDocument } from "../db";
 
 export interface LoginRateLimitPolicy {
+  readonly maxAttempts: number;
+  readonly windowMilliseconds: number;
+  readonly lockoutMilliseconds: number;
+}
+
+export interface LoginRateLimitPolicyConfiguration {
   maxAttempts: number;
-  windowMilliseconds: number;
-  lockoutMilliseconds: number;
+  windowSeconds: number;
+  lockoutSeconds: number;
 }
 
 export interface LoginAttemptReservation {
@@ -70,17 +76,44 @@ export function validatedAuthRateLimit(
   return state;
 }
 
-/** Clamp deploy-time values so a malformed environment cannot silently disable protection. */
-export function loginRateLimitPolicy(): LoginRateLimitPolicy {
-  const boundedInteger = (value: number, fallback: number, minimum: number, maximum: number): number =>
-    Number.isFinite(value) ? Math.min(maximum, Math.max(minimum, Math.floor(value))) : fallback;
-  const windowSeconds = boundedInteger(config.authLoginWindowSeconds, 900, 60, 86_400);
-  const lockoutSeconds = boundedInteger(config.authLoginLockoutSeconds, 900, 60, 604_800);
+/**
+ * Validate the reviewed credential-throttle policy without changing operator intent.
+ *
+ * Rounding a fraction, clamping an out-of-range value, or replacing `NaN` with a default can make
+ * different nodes enforce different login protection during a rolling deployment. These values
+ * are therefore exact deployment authority: malformed configuration must stop startup before any
+ * password or provider credential is checked.
+ */
+function exactLoginRateLimitPolicy(configuration: LoginRateLimitPolicyConfiguration): LoginRateLimitPolicy {
+  const exactInteger = (value: number, label: string, minimum: number, maximum: number): number => {
+    if (!Number.isSafeInteger(value) || value < minimum || value > maximum) {
+      throw new Error(`Login rate-limit ${label} policy is invalid.`);
+    }
+    return value;
+  };
+  const windowSeconds = exactInteger(configuration.windowSeconds, "window-seconds", 60, 86_400);
+  const lockoutSeconds = exactInteger(configuration.lockoutSeconds, "lockout-seconds", 60, 604_800);
   return {
-    maxAttempts: boundedInteger(config.authLoginMaxAttempts, 5, 2, 100),
+    maxAttempts: exactInteger(configuration.maxAttempts, "maximum-attempts", 2, 100),
     windowMilliseconds: windowSeconds * 1_000,
     lockoutMilliseconds: lockoutSeconds * 1_000,
   };
+}
+
+// Evaluate environment-owned policy while modules are loading. Keeping this immutable also means
+// every reservation in one process uses the same reviewed policy instead of observing mutation.
+const CONFIGURED_LOGIN_RATE_LIMIT_POLICY = Object.freeze(exactLoginRateLimitPolicy({
+  maxAttempts: config.authLoginMaxAttempts,
+  windowSeconds: config.authLoginWindowSeconds,
+  lockoutSeconds: config.authLoginLockoutSeconds,
+}));
+
+export function loginRateLimitPolicy(
+  configuration?: LoginRateLimitPolicyConfiguration,
+): LoginRateLimitPolicy {
+  return configuration === undefined
+    ? CONFIGURED_LOGIN_RATE_LIMIT_POLICY
+    : exactLoginRateLimitPolicy(configuration);
 }
 
 /**

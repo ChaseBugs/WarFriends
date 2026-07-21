@@ -298,7 +298,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   lower-case HMAC key, bounded positive attempt/revision counters, ordered safe dates, non-future
   audit time, and a bounded lock contained by expiry. Validation uses the globally supported policy
   range so configuration changes remain compatible without allowing malformed rows to lock forever
-  or silently reopen credential work.
+  or silently reopen credential work. Deployment policy is validated once during module startup:
+  maximum attempts must be an exact integer from 2-100, the attempt window from 60-86,400 seconds,
+  and lockout from 60-604,800 seconds. Fractional, non-finite, or out-of-range values stop startup
+  instead of being rounded, clamped, or replaced by defaults.
   Raw full-document reloads inside Army Power refresh, Daily Missions, Instant Battle, PvP
   settlement, inbox reward claims, and Player League allocation/settlement repeat the same account
   proof before calculating or publishing economy and indexed-profile changes. Authentication proves

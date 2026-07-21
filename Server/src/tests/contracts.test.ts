@@ -1696,6 +1696,37 @@ test("durable login throttling hides identity keys and enforces a real cooldown"
   );
 });
 
+test("login throttle deployment policy requires exact bounded integers", () => {
+  assert.equal(Object.isFrozen(loginRateLimitPolicy()), true);
+  assert.deepEqual(loginRateLimitPolicy({
+    maxAttempts: 5,
+    windowSeconds: 900,
+    lockoutSeconds: 900,
+  }), {
+    maxAttempts: 5,
+    windowMilliseconds: 900_000,
+    lockoutMilliseconds: 900_000,
+  });
+
+  for (const configuration of [
+    { maxAttempts: Number.NaN, windowSeconds: 900, lockoutSeconds: 900 },
+    { maxAttempts: 5.5, windowSeconds: 900, lockoutSeconds: 900 },
+    { maxAttempts: 1, windowSeconds: 900, lockoutSeconds: 900 },
+    { maxAttempts: 101, windowSeconds: 900, lockoutSeconds: 900 },
+    { maxAttempts: 5, windowSeconds: 59, lockoutSeconds: 900 },
+    { maxAttempts: 5, windowSeconds: 86_401, lockoutSeconds: 900 },
+    { maxAttempts: 5, windowSeconds: 900.5, lockoutSeconds: 900 },
+    { maxAttempts: 5, windowSeconds: 900, lockoutSeconds: 59 },
+    { maxAttempts: 5, windowSeconds: 900, lockoutSeconds: 604_801 },
+    { maxAttempts: 5, windowSeconds: 900, lockoutSeconds: Infinity },
+  ]) {
+    assert.throws(
+      () => loginRateLimitPolicy(configuration),
+      /Login rate-limit .* policy is invalid/,
+    );
+  }
+});
+
 test("GetFriendsInfo preserves signed Int64 hashes and exact recovered result groups", () => {
   const ids = requestedFacebookFriendIds({
     DbAction: DbAction.GetFriendsInfo,
