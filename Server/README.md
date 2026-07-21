@@ -508,8 +508,12 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   promotes/relegates all members and queues the recovered type-23 result/reward messages. The same
   transitions persist exact group-13 league achievement progress (Silver II/Gold I/Master III for
   5/10/20 Gold) from the server-owned profile tier. A background sweep discovers expired managed
-  divisions and reuses that transaction under one crash-expiring MongoDB lease, so inactive clients
-  do not block settlement and multiple nodes do not intentionally run the same scheduler job.
+  divisions through a grouped, database-limited candidate pipeline and reuses that transaction
+  under one crash-expiring MongoDB lease, so historical IDs cannot overflow one unbounded
+  `distinct` result, inactive clients do not block settlement, and multiple nodes do not
+  intentionally run the same scheduler job. Malformed IDs in the replacement backend's exact
+  three-segment `*-local*` namespace are selected and rejected before the first settlement write;
+  archived production namespaces remain outside local scheduler ownership.
   Every returned or settled member's weekly medals and global skill mirror must be nonnegative safe
   integers; beginner/normal tier and the recovered zero-or-one placement counter are likewise
   validated before boot, tutorial repair, admission, or PvP progress. One corrupt value aborts

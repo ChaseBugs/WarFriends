@@ -169,6 +169,10 @@ export const CHAMPION_REWARD_FRACTION = 0.1;
 
 const CHAMPION_REWARDS = { first: 700, second: 350, remainingTop: 150 } as const;
 const LEGACY_MANAGED_DIVISION = "local";
+/** Exact IDs emitted by managedPlayerLeagueId; exported so MongoDB discovery cannot drift. */
+export const MANAGED_PLAYER_LEAGUE_ID_PATTERN = /^([1-9]|1[0-6])-(\d{9,11})-(local(?:[1-9]\d*)?)$/;
+/** Broad backend-owned namespace used only to surface malformed local IDs for repair. */
+export const MANAGED_PLAYER_LEAGUE_NAMESPACE_PATTERN = /^[^-]+-[^-]+-local[^-]*$/;
 
 export interface ManagedLeagueId {
   tier: League;
@@ -312,7 +316,7 @@ export function playerLeagueDivisionIndexForOrdinal(ordinal: number): number {
 
 /** Parse only IDs owned by this scheduler. Unknown production-era IDs fail closed. */
 export function parseManagedPlayerLeagueId(value: string): ManagedLeagueId | null {
-  const match = /^([1-9]|1[0-6])-(\d{9,11})-(local(?:[1-9]\d*)?)$/.exec(value);
+  const match = MANAGED_PLAYER_LEAGUE_ID_PATTERN.exec(value);
   if (!match) return null;
   const tier = Number(match[1]) as League;
   const endsAt = Number(match[2]);
