@@ -214,12 +214,13 @@ export function missionBattleRewardFor(
   missionType: DailyMissionMode,
   missionIndex: number,
 ): MissionBattleReward {
+  const level = playerLevelDefinition(playerLevelIndex);
   if (missionType === "Coop") return { experience: 0, warBucks: 0 };
 
   // DatabasePlayer.Level is LevelManager's zero-based index, while GenerateRewards reads
   // currentLevel.displayNumber. Resolve the exact recovered row instead of assuming those two
   // values are interchangeable; otherwise every payout is scaled one display rank too low.
-  const displayLevel = playerLevelDefinition(playerLevelIndex).displayLevel;
+  const displayLevel = level.displayLevel;
   const modifiers = missionType === "Heroic" ? HEROIC_REWARD_MODIFIERS : DAILY_REWARD_MODIFIERS;
   if (!Number.isInteger(missionIndex) || missionIndex < 0 || missionIndex >= modifiers.length) {
     throw new ApiError(ApiErrorCode.UnknownAction, "Mission reward index is invalid.");
@@ -345,8 +346,8 @@ function rewardRow(playerLevel: number): MissionRewardRow {
   // MissionsRewards rows are upper level bounds (5, 10, 15, ...), not exact-level-only
   // records. Levels beyond the final recovered row intentionally use that final row rather
   // than yielding no reward or guessing unrecovered high-level balancing.
-  const level = Math.max(1, Math.floor(playerLevel));
-  return MISSION_REWARD_ROWS.find((row) => row.level >= level)
+  const displayLevel = playerLevelDefinition(playerLevel).displayLevel;
+  return MISSION_REWARD_ROWS.find((row) => row.level >= displayLevel)
     ?? MISSION_REWARD_ROWS[MISSION_REWARD_ROWS.length - 1];
 }
 
@@ -360,7 +361,8 @@ export function selectDailyCompletionRewardIndex(
    * across Gold/Tickets/Scraps and, after the source War Card unlock display level, the three
    * exact-rarity card variants. Persisting the index makes every device preview the same prize.
   */
-  const cardRewardsUnlocked = Math.max(0, Math.floor(playerLevelIndex)) >= CARD_UNLOCK_LEVEL - 1;
+  const sourceLevel = playerLevelDefinition(playerLevelIndex);
+  const cardRewardsUnlocked = sourceLevel.index >= CARD_UNLOCK_LEVEL - 1;
   const upperBound = cardRewardsUnlocked ? 6 : 3;
   const selected = choose(upperBound);
   if (!Number.isInteger(selected) || selected < 0 || selected >= upperBound) {
@@ -381,6 +383,10 @@ export function dailyMissionsStateFor(
   playerLevel: number,
 ): DailyMissionsState {
   const currentTime = validatedApplicationUnixSeconds(now, "Daily mission request time");
+  // DatabasePlayer.Level is one zero-based source-row identity. Validate it before any existing
+  // cycle replay or new reward selection so direct/replacement callers cannot floor a malformed
+  // rank into stored mission levels, War Card availability, or the Heroic unit reward pool.
+  const sourceLevel = playerLevelDefinition(playerLevel);
   const key = utcDayKey(currentTime);
   const existing = state.dailyMissions;
   if (existing?.dayKey === key && existing.tomorrow > currentTime) {
@@ -393,7 +399,7 @@ export function dailyMissionsStateFor(
     // Accounts issued by the earlier currency-only reconstruction stored an empty target.
     // Fill it once at the normal persistence boundary before any Heroic reward is claimable.
     if (!cloned.heroicUnitReward) {
-      cloned.heroicUnitReward = selectMissionElitePartUnit(state, playerLevel);
+      cloned.heroicUnitReward = selectMissionElitePartUnit(state, sourceLevel.index);
     }
     return cloned;
   }
@@ -403,20 +409,19 @@ export function dailyMissionsStateFor(
   // daily reset. An open but untouched chain may be regenerated because no reward-bearing
   // progress exists yet; isHeroicOpened itself remains true below.
   const keepOpenHeroic = previous?.isHeroicOpened === true && previous.heroicMissions.some((item) => item.completedSolo);
-  const displayLevel = Math.max(1, Math.floor(playerLevel));
   const heroicUnitReward = keepOpenHeroic && previous!.heroicUnitReward
     ? previous!.heroicUnitReward
-    : selectMissionElitePartUnit(state, playerLevel);
+    : selectMissionElitePartUnit(state, sourceLevel.index);
   return {
     dailyMissions: newDailyMissionList(),
     heroicMissions: keepOpenHeroic ? previous!.heroicMissions : newHeroicMissionList(),
     heroicPoints: Math.min(HEROIC_POINTS_TO_UNLOCK, Math.max(0, previous?.heroicPoints ?? 0)),
     isHeroicOpened: previous?.isHeroicOpened ?? false,
     tomorrow: nextUtcMidnight(currentTime),
-    dailyMissionRewardInd: selectDailyCompletionRewardIndex(playerLevel),
+    dailyMissionRewardInd: selectDailyCompletionRewardIndex(sourceLevel.index),
     // DailyMissionsManager exposes these stored zero-based values as `value + 1`.
-    dailyMissionLevel: displayLevel - 1,
-    heroicMissionLevel: displayLevel - 1,
+    dailyMissionLevel: sourceLevel.index,
+    heroicMissionLevel: sourceLevel.index,
     // The exact target is part of DailyMissionsData before the chain starts. Persisting it
     // here keeps the Heroic rewards preview and eventual completion response on one unit.
     heroicUnitReward,

@@ -14,7 +14,7 @@ import {
   settleDailyMissionState,
   startDailyMissionState,
 } from "../services/dailyMissionService";
-import { playerLevelDefinition } from "../services/levelProgressionService";
+import { PLAYER_LEVELS, playerLevelDefinition } from "../services/levelProgressionService";
 import { createInitialProgression } from "../services/playerStateService";
 import { validatedDailyMissionsState } from "../services/dailyMissionAuthorityService";
 import { validatedProgressionSuccessor } from "../services/progressionPublicationAuthorityService";
@@ -100,6 +100,50 @@ test("daily mission cycle, start, and settlement reject malformed application ti
   }
 });
 
+test("daily mission issuance and settlement require an exact recovered player-level row", () => {
+  const initial = createInitialProgression(NOW);
+  const settlement = {
+    battleId: "invalid-mission-level",
+    missionIndex: 0,
+    missionType: "Daily" as const,
+    endReason: 10,
+  };
+  for (const invalidLevel of [
+    Number.NaN,
+    Number.POSITIVE_INFINITY,
+    -1,
+    1.5,
+    PLAYER_LEVELS.length,
+  ]) {
+    assert.throws(
+      () => dailyMissionsStateFor(initial, NOW, invalidLevel),
+      /Player level index .* is invalid/,
+    );
+    assert.throws(
+      () => selectDailyCompletionRewardIndex(invalidLevel),
+      /Player level index .* is invalid/,
+    );
+    assert.throws(
+      () => missionBattleRewardFor(invalidLevel, "Coop", 0),
+      /Player level index .* is invalid/,
+    );
+    assert.throws(
+      () => startDailyMissionState(
+        initial,
+        NOW,
+        invalidLevel,
+        settlement.battleId,
+        DbAction.GameStartedCampaign,
+      ),
+      /Player level index .* is invalid/,
+    );
+    assert.throws(
+      () => settleDailyMissionState(initial, NOW, invalidLevel, settlement),
+      /Player level index .* is invalid/,
+    );
+  }
+});
+
 test("shared progression publication rejects forged Heroic order and duplicate mission receipts", () => {
   const current = createInitialProgression(NOW);
   const missions = dailyMissionsStateFor(current, NOW, 1);
@@ -170,7 +214,7 @@ test("daily mission wire matches DailyMissionsData and rolls at UTC midnight", (
     6,
   );
   assert.equal(nextDay.heroicPoints, 7);
-  assert.equal(nextDay.dailyMissionLevel, 5);
+  assert.equal(nextDay.dailyMissionLevel, 6);
   assert.equal(nextDay.dailyMissions.every((item) => !item.completedSolo), true);
 });
 

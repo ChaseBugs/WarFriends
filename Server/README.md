@@ -1708,6 +1708,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   mission start, and settlement require one exact Date-bounded application time. Settlement reuses
   it for receipt expiry, VIP benefits, rank-up dog-tag refill, rental cleanup, and the terminal
   receipt, so fractions or malformed clocks cannot choose a UTC cycle or create mixed timestamps.
+  The authenticated `DatabasePlayer.Level` must also identify one exact recovered zero-based rank
+  row before cycle replay/issuance, reward selection, start, or settlement. That index is stored
+  directly in `dailyMissionLevel`/`heroicMissionLevel` for the client's `+1` display conversion;
+  only the row's one-based display number selects the recovered reward-table threshold. This fixes
+  the earlier floor-and-subtract rank offset without inventing a new progression scale.
   Mission XP and WarBucks now reproduce the
   recovered `MissionsConstants` exponential level formula, per-slot `MissionsSettings`
   modifiers, upward-to-50 rounding, zero co-op-master share, and half co-op-client share. The

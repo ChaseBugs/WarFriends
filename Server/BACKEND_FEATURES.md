@@ -642,6 +642,10 @@ Daily Missions cycle materialization, start, and settlement now use the same sha
 Settlement carries that one value through receipt expiry, VIP evaluation, rank-up dog-tag refill,
 rental cleanup, and terminal receipt publication; malformed time cannot select a UTC mission set or
 split one transition across different normalized timestamps.
+Daily Missions also require `DatabasePlayer.Level` to identify one exact recovered zero-based rank
+row before cycle replay/issuance, reward availability, start, or settlement. The server persists that
+index directly for the client's `+1` display conversion and uses the row's one-based display number
+for mission reward-table thresholds, fixing the previous floor-and-subtract off-by-one.
 Limited-time Event Assignment selection, UTC day indexing, trusted progress, daily claims, and
 milestone claims now use the shared Date-bounded clock without flooring. Malformed application time
 cannot select an active schedule or turn a fractional boundary into an eligible reward day.
