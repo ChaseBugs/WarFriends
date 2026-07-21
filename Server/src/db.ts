@@ -1,5 +1,6 @@
 import { MongoClient, type ClientSession, type Collection, type Db, type Document } from "mongodb";
 import { config } from "./config";
+import { runtimeInfrastructurePolicy } from "./services/runtimeInfrastructurePolicyService";
 import type { DatabasePlayerDTO, SquadDTO } from "./dtos";
 import {
   syncGameCatalog,
@@ -1077,7 +1078,8 @@ export interface FriendlyBattleDocument {
   expiresAt: Date;
 }
 
-const client = new MongoClient(config.mongoUrl, { maxPoolSize: config.mongoPoolSize });
+const runtimeInfrastructure = runtimeInfrastructurePolicy();
+const client = new MongoClient(config.mongoUrl, { maxPoolSize: runtimeInfrastructure.mongoPoolSize });
 
 let db: Db | null = null;
 let playersCollection: Collection<PlayerDocument> | null = null;
@@ -1174,7 +1176,7 @@ let scheduledJobLeasesCollection: Collection<ScheduledJobLeaseDocument> | null =
 
 export async function connectMongo(): Promise<void> {
   await client.connect();
-  db = client.db(config.mongoDbName);
+  db = client.db(runtimeInfrastructure.mongoDatabaseName);
 
   playersCollection = db.collection<PlayerDocument>("players");
   squadsCollection = db.collection<SquadDocument>("squads");

@@ -36,6 +36,12 @@ multi-document transactions, so enable a single-node replica set for local devel
 replicated/sharded managed deployment) and include `replicaSet` in `MONGO_URL`. Health check:
 `GET /health`.
 
+`PORT`, `MONGO_POOL_SIZE`, and `MONGO_DB_NAME` form one immutable early-startup policy: port must be
+an exact 1-65,535 integer, pool size an exact 1-1,000 integer, and the trimmed database name must be
+platform-safe and shorter than 64 UTF-8 bytes. This validation runs before MongoClient construction,
+migrations, workers, or listener startup. Connection logs intentionally omit MongoDB/Redis URLs
+because deployment URLs may embed credentials.
+
 All enablement variables accept only complete case-insensitive `true`/`false` literals. Blank,
 whitespace-padded, numeric, or misspelled values stop startup instead of silently selecting
 `false`, which prevents one node from accidentally disabling Redis or a provider safety worker.

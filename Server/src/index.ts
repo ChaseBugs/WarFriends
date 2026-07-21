@@ -29,9 +29,11 @@ import { adminModerationRouter } from "./routes/adminModeration";
 import { supportModerationRouter } from "./routes/supportModeration";
 import { validateAuthenticationSecretConfiguration } from "./services/authSecretService";
 import { trafficPolicy } from "./services/trafficPolicyService";
+import { runtimeInfrastructurePolicy } from "./services/runtimeInfrastructurePolicyService";
 
 const app = express();
 const publicTrafficPolicy = trafficPolicy();
+const runtimeInfrastructure = runtimeInfrastructurePolicy();
 
 // Express trusts no forwarded client address by default. Enable only an explicit, bounded proxy
 // hop count so a public caller cannot choose its own rate-limit identity with X-Forwarded-For.
@@ -143,7 +145,10 @@ async function start(): Promise<void> {
   // listener. A malformed live-ops file therefore fails deployment instead of reaching clients.
   initializeRemoteConfiguration();
   await connectMongo();
-  logger.db.connect("MongoDB connected", { provider: "mongodb", database: config.mongoDbName });
+  logger.db.connect("MongoDB connected", {
+    provider: "mongodb",
+    database: runtimeInfrastructure.mongoDatabaseName,
+  });
   // Migrations run before any repair or listener opens. A node with unknown/drifted history stays
   // out of service, and the database lease prevents two rolling-deployment nodes changing schema
   // concurrently.
@@ -169,8 +174,8 @@ async function start(): Promise<void> {
   googlePlaySubscriptionSchedulerTimer = startGooglePlaySubscriptionRevalidationScheduler();
   googlePlayVoidedPurchaseSchedulerTimer = startGooglePlayVoidedPurchaseScheduler();
 
-  httpServer.listen(config.port, () => {
-    logger.server.start(config.port, process.env.NODE_ENV ?? "development");
+  httpServer.listen(runtimeInfrastructure.listenPort, () => {
+    logger.server.start(runtimeInfrastructure.listenPort, process.env.NODE_ENV ?? "development");
     logger.infoWithEmoji("🌐", `Public URL: ${config.publicUrl}`, "SERVER");
     logger.infoWithEmoji("🔌", `WebSocket hub: ${config.publicUrl.replace(/^http/, "ws")}/hub`, "SERVER");
   });

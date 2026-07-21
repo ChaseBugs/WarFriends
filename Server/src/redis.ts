@@ -74,7 +74,9 @@ export async function connectRedis(): Promise<void> {
   try {
     await Promise.all([getRedisPublisher()?.connect(), getRedisSubscriber()?.connect(), getRedisDataClient()?.connect()]);
     redisAvailable = true;
-    logger.redis.connected({ url: config.redisUrl });
+    // A Redis URL may embed a username/password. Connection success needs only the provider label;
+    // never copy the credential-bearing deployment string into structured logs.
+    logger.redis.connected({ provider: "redis" });
   } catch (err) {
     logger.redis.error("Failed to connect — continuing without Redis (MongoDB-only fallback)", {
       error: (err as Error).message,

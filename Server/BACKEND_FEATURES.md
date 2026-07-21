@@ -197,6 +197,13 @@ old set, writes at most the current bounded result, and applies the immutable ex
 TTL. Duplicate/control-character identities and non-finite scores fail before Redis I/O, while an
 outage merely skips warming and never blocks the authoritative MongoDB leaderboard response.
 
+Listener port, MongoDB pool size, and database name now resolve as one immutable startup policy
+before MongoClient construction, migrations, workers, or the HTTP listener. Ports must be exact
+integers from 1 through 65,535, pool sizes from 1 through 1,000, and database names must be trimmed,
+platform-safe, and shorter than 64 UTF-8 bytes. The obsolete unused Redis session-TTL setting was
+removed, and successful Redis connection logs no longer publish a configured URL that may embed
+credentials.
+
 Squad War maintenance now widens its round/season queries beyond ordinary due dates so malformed or
 missing BSON dates and unknown statuses enter validation instead of remaining permanently invisible.
 Both selected batches validate before the first settlement write; any non-settled round blocks its

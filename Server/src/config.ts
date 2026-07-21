@@ -30,7 +30,6 @@ export const config = {
 
   redisEnabled: exactEnvironmentBoolean(process.env.REDIS_ENABLED, true, "REDIS_ENABLED"),
   redisUrl: process.env.REDIS_URL ?? "redis://127.0.0.1:6379",
-  redisSessionTtl: Number(process.env.REDIS_SESSION_TTL ?? 1800),
   redisLeaderboardTtl: Number(process.env.REDIS_LEADERBOARD_TTL ?? 15),
 
   authSecret: process.env.AUTH_SECRET ?? "change-me-in-production",
