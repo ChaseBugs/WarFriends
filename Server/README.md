@@ -732,9 +732,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   (recipient-owned persistent inbox). Challenges expire logically and through MongoDB TTL;
   identical challenge retries are deduplicated before admission. New direct/challenge attempts use
   one HMAC-hidden MongoDB fixed-window counter per sender, so concurrent backend nodes cannot all
-  pass the former count-then-insert race. `OUTGOING_MESSAGES_PER_MINUTE` must be an exact safe
-  integer from 1 through 1,000 (default 20). Rejected traffic saturates one bounded sentinel without
-  extending the original minute, and inactive rows expire after a separate storage margin. The
+  pass the former count-then-insert race. `OUTGOING_MESSAGES_PER_MINUTE` and the report maximum
+  resolve together during module startup as one immutable abuse-policy snapshot; the outgoing value
+  must be an exact safe integer from 1 through 1,000 (default 20). Rejected traffic saturates one
+  bounded sentinel without extending the original minute, and inactive rows expire after a separate
+  storage margin. The
   complete recipient account is validated before a message targets it, rather than trusting an
   ID-only index projection.
   Acceptance records its first durable timestamp and is idempotent after a lost response, while
@@ -818,8 +820,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   deduplicated for safe retries, and stored with review status and evidence metadata. Mandatory
   `ReportType` accepts only canonical recovered decimal text or an exact JSON integer in the bounded
   compatibility range; missing or coercible JavaScript values cannot silently become category zero. The
-  configurable five-per-hour default is reserved by one atomic MongoDB counter per reporter, so
-  simultaneous requests across backend processes cannot overrun it. Each complete throttle row is
+  configurable five-per-hour default is the same frozen startup abuse-policy snapshot's exact
+  1-through-100 report value. It is reserved by one atomic MongoDB counter per reporter, so
+  simultaneous requests across backend processes cannot overrun it or observe a process-local
+  policy re-read. Each complete throttle row is
   validated before its count is trusted: exact fields, the expected HMAC-hidden reporter key, a
   bounded safe counter, ordered safe dates, a non-future update, and the exact two-hour storage
   interval are required. Rejected traffic saturates at one global denial sentinel while the original

@@ -6,6 +6,20 @@ import {
   outgoingMessageRateLimitMaximum,
   validatedOutgoingMessageRateLimit,
 } from "../services/outgoingMessageRateLimitService";
+import {
+  abuseLimitPolicy,
+  reportRateLimitMaximum,
+} from "../services/abuseLimitPolicyService";
+
+test("player-authored abuse limits are one immutable startup snapshot", () => {
+  assert.equal(Object.isFrozen(abuseLimitPolicy()), true);
+  assert.deepEqual(abuseLimitPolicy(), {
+    outgoingMessagesPerMinute: 20,
+    reportsPerHour: 5,
+  });
+  assert.equal(outgoingMessageRateLimitMaximum(), 20);
+  assert.equal(reportRateLimitMaximum(), 5);
+});
 
 test("outgoing-message policy preserves exact supported values and rejects normalization", () => {
   assert.equal(outgoingMessageRateLimitMaximum(1), 1);

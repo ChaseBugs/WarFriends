@@ -162,12 +162,13 @@ only 30-to-3,600 seconds for subscriptions and 60-to-3,600 seconds for void reco
 sweep batch accepts 1-to-1,000 receipts. Fractional, non-finite, negative, and out-of-range settings
 fail closed instead of being rounded, clamped, or stored as invalid dates.
 
-Player-authored inbox and moderation-report limits now share one exact abuse-policy boundary before
-their atomic fixed-window counters authorize a reserved attempt. Outgoing direct/challenge traffic
-accepts only 1-1,000 attempts per minute and reports accept only 1-100 per hour. Fractional,
-non-finite, zero, negative, and oversized deployment settings fail closed instead of being floored,
-clamped, or replaced with hidden defaults; durable counters retain their global denial-sentinel
-bounds so later valid policy changes remain compatible.
+Player-authored inbox and moderation-report limits now resolve once during module startup as one
+immutable exact abuse-policy snapshot before their atomic fixed-window counters authorize any
+reserved attempt. Outgoing direct/challenge traffic accepts only 1-1,000 attempts per minute and
+reports accept only 1-100 per hour. Fractional, non-finite, zero, negative, and oversized deployment
+settings stop startup instead of being floored, clamped, replaced with hidden defaults, or re-read
+after traffic begins; durable counters retain their global denial-sentinel bounds so later valid
+policy changes remain compatible after restart.
 
 Squad War maintenance now widens its round/season queries beyond ordinary due dates so malformed or
 missing BSON dates and unknown statuses enter validation instead of remaining permanently invisible.
