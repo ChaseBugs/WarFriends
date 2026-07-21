@@ -92,6 +92,13 @@ import {
   validatedRequestBufferAuthority,
   validatedRequestBufferId,
 } from "./requestBufferAuthorityService";
+import {
+  ASSIGNMENT_TEMPLATES,
+  assignmentCounter,
+  assignmentUnixSeconds,
+  validatedAssignmentState,
+  type AssignmentTemplate,
+} from "./assignmentAuthorityService";
 
 /**
  * Daily assignments and the recovered RequestBuffer transaction boundary.
@@ -114,47 +121,12 @@ const SUCCESS = 1; // IJEAJGCCHEF.Success
 const ASSIGNMENT_NOT_FOUND = 11201;
 const ASSIGNMENT_INCORRECT_REWARD = 11203;
 const MEGA_REWARD_POINTS = 50;
-const MAX_DATE_UNIX_SECONDS = 8_640_000_000_000;
-
-/** Validate a daily-assignment clock value before it controls rollover or serialization. */
-function assignmentUnixSeconds(value: number, label: string): number {
-  if (!Number.isSafeInteger(value) || value < 0 || value > MAX_DATE_UNIX_SECONDS) {
-    throw new ApiError(ApiErrorCode.InternalServerError, `${label} is invalid.`);
-  }
-  return value;
-}
-
-/**
- * Validate a persisted assignment counter before it can influence claim eligibility.
- *
- * In particular, JavaScript comparisons against NaN are false. Without this boundary a damaged
- * `megaReward` value could bypass the `< 50` gate, consume a mega claim, and serialize back as an
- * unusable value. Counters are server-owned nonnegative integers, so repairing them silently would
- * risk either deleting earned progress or fabricating it; fail closed and leave operator recovery
- * possible instead.
- */
-function assignmentCounter(value: number, label: string): number {
-  if (!Number.isSafeInteger(value) || value < 0) {
-    throw new ApiError(ApiErrorCode.InternalServerError, `${label} is invalid.`);
-  }
-  return value;
-}
-
 function addAssignmentCounter(value: number, increment: number, label: string): number {
   const current = assignmentCounter(value, label);
   if (!Number.isSafeInteger(increment) || increment < 0 || current > Number.MAX_SAFE_INTEGER - increment) {
     throw new ApiError(ApiErrorCode.InternalServerError, `${label} overflowed.`);
   }
   return current + increment;
-}
-
-interface AssignmentTemplate {
-  id: number;
-  target: number;
-  gold: number;
-  megaPoints: number;
-  progressPerPvpMatch: number;
-  winsOnly: boolean;
 }
 
 /**
@@ -166,12 +138,6 @@ interface AssignmentTemplate {
  * cannot yet verify crates, unit categories, cards, or skillshots. Generating only objectives
  * derived from a confirmed match prevents a modified client from completing arbitrary tasks.
  */
-const ASSIGNMENT_TEMPLATES: readonly AssignmentTemplate[] = [
-  { id: 5, target: 2_000, gold: 2, megaPoints: 1, progressPerPvpMatch: 1_000, winsOnly: false },
-  { id: 8, target: 6, gold: 4, megaPoints: 2, progressPerPvpMatch: 1, winsOnly: false },
-  { id: 7, target: 3, gold: 8, megaPoints: 3, progressPerPvpMatch: 1, winsOnly: true },
-];
-
 export interface AssignmentMutationResult {
   state: PlayerProgressionState;
   assignments: AssignmentState;
@@ -208,17 +174,6 @@ function nextUtcMidnight(now: number): number {
  * objectives and mega progression. Checking both timestamps and re-deriving the day/reset pair
  * from `issued` also rejects partial imports that combine individually valid values from two days.
  */
-function validatedAssignmentCycleTimeline(assignments: AssignmentState): AssignmentState {
-  const issued = assignmentUnixSeconds(assignments.issued, "Stored assignment issue time");
-  const tomorrow = assignmentUnixSeconds(assignments.tomorrow, "Stored assignment reset time");
-  const expectedDayKey = utcDayKey(issued);
-  const expectedTomorrow = nextUtcMidnight(issued);
-  if (assignments.dayKey !== expectedDayKey || tomorrow !== expectedTomorrow) {
-    throw new ApiError(ApiErrorCode.InternalServerError, "Stored assignment UTC cycle is inconsistent.");
-  }
-  return assignments;
-}
-
 function newAssignment(template: AssignmentTemplate): AssignmentRecordState {
   return {
     id: template.id,
@@ -241,7 +196,7 @@ function newAssignment(template: AssignmentTemplate): AssignmentRecordState {
 export function assignmentStateFor(state: PlayerProgressionState, now: number): AssignmentState {
   const currentTime = assignmentUnixSeconds(now, "Assignment request time");
   const key = utcDayKey(currentTime);
-  const existing = state.assignments ? validatedAssignmentCycleTimeline(state.assignments) : undefined;
+  const existing = validatedAssignmentState(state.assignments);
   const megaReward = assignmentCounter(existing?.megaReward ?? 0, "Stored assignment mega reward");
   if (existing?.dayKey === key && existing.tomorrow > currentTime) {
     const completed = assignmentCounter(existing.completed, "Stored daily assignment completion count");
@@ -268,7 +223,7 @@ export function assignmentStateFor(state: PlayerProgressionState, now: number): 
 
 /** Omit server-only reset metadata and preserve the exact AssignmentData JSON property names. */
 export function assignmentWireData(assignments: AssignmentState): Record<string, unknown> {
-  validatedAssignmentCycleTimeline(assignments);
+  validatedAssignmentState(assignments);
   return {
     assignments: assignments.assignments,
     tomorrow: assignments.tomorrow,

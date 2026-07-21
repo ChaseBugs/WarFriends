@@ -15,6 +15,8 @@ import {
   validatedRequestBufferAuthority,
   validatedRequestBufferId,
 } from "../services/requestBufferAuthorityService";
+import { validatedAssignmentState } from "../services/assignmentAuthorityService";
+import { validatedProgressionSuccessor } from "../services/progressionPublicationAuthorityService";
 
 const NOW = Date.UTC(2026, 6, 19, 12, 0, 0) / 1_000;
 
@@ -194,5 +196,30 @@ test("daily assignment UTC cycles reject permanent or internally inconsistent re
       assignments: { ...assignments, dayKey: "2026-07-18" },
     }, NOW + 60),
     /Stored assignment UTC cycle is inconsistent/,
+  );
+});
+
+test("shared progression publication rejects forged daily-assignment definitions and completion flags", () => {
+  const current = createInitialProgression(NOW);
+  const assignments = assignmentStateFor(current, NOW);
+  assignments.assignments[0]!.target = 1;
+  assert.throws(
+    () => validatedAssignmentState(assignments),
+    /Stored assignment 0 definition is invalid/,
+  );
+  assert.throws(
+    () => validatedProgressionSuccessor(current, {
+      ...current,
+      revision: 1,
+      assignments,
+    }),
+    /Stored assignment 0 definition is invalid/,
+  );
+
+  const inconsistent = assignmentStateFor(current, NOW);
+  inconsistent.assignments[1]!.claimed = true;
+  assert.throws(
+    () => validatedAssignmentState(inconsistent),
+    /completion authority is inconsistent/,
   );
 });

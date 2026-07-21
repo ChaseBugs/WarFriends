@@ -844,8 +844,13 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   confirmed PvP settlement advance. Same-day `GetNewAssignments` reads preserve progression
   identity while the UTC rollover persists once; buffered claim retries are idempotent by `BufferId`, return
   the cached response without a revision/write, and never roll an unrelated UTC cycle. Daily
-  completion and carried mega-reward counters are safe-integer validated before claim eligibility;
-  corrupt counters fail closed instead of bypassing JavaScript comparisons or consuming a marker.
+  assignment authority is now validated completely at shared persisted reads and progression
+  publication as well as action/serialization boundaries: the exact three supported records must
+  retain their recovered order, IDs and targets; progress fractions and done/claimed flags must
+  agree; `completed` must equal claimed records; skip and mega counters must be typed and bounded;
+  and issue/reset/day-key values must derive one UTC cycle. Corrupt records or counters fail closed
+  instead of changing reward prices, bypassing comparisons, freezing rollover, or surviving an
+  unrelated full-progression replacement.
 - **Reward arithmetic boundary**: server-authored nonnegative currency rewards use one shared
   safe-integer addition guard before publishing their claim or receipt markers. Assignment,
   achievement, inbox, one-time, tutorial, conversion, level-up, lootbox, core-PvP, Elite-part, and War Arena rewards

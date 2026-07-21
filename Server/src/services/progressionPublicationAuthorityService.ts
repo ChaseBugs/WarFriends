@@ -29,6 +29,7 @@ import { validatedBlackMarketOfferState } from "./blackMarketEntitlementService"
 import { validatedVisualInventoryState } from "./visualEntitlementService";
 import { itemInventoryAuthorityFor } from "./itemInventoryAuthorityService";
 import { dailyRewardAuthorityFor } from "./dailyRewardAuthorityService";
+import { validatedAssignmentState } from "./assignmentAuthorityService";
 
 /**
  * Validate the common authority shared by every full progression-document replacement.
@@ -89,6 +90,8 @@ export function validatedProgressionSuccessor(
   itemInventoryAuthorityFor(next.itemInventory);
   dailyRewardAuthorityFor(current.dailyReward, now);
   dailyRewardAuthorityFor(next.dailyReward, now);
+  validatedAssignmentState(current.assignments);
+  validatedAssignmentState(next.assignments);
   validatedCoreProgressionBalances(current);
   validateProgressionRevisionAdvance(progressionRevisionForRead(current.revision), next.revision);
   validatedCoreProgressionBalances(next);

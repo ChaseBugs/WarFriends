@@ -56,6 +56,7 @@ import { cardCraftingAuthorityFor } from "./cardCraftingAuthorityService";
 import { cardInventoryAuthorityFor } from "./cardInventoryAuthorityService";
 import { itemInventoryAuthorityFor } from "./itemInventoryAuthorityService";
 import { dailyRewardAuthorityFor } from "./dailyRewardAuthorityService";
+import { validatedAssignmentState } from "./assignmentAuthorityService";
 
 /** Unix seconds are used throughout the recovered Beanstalk protocol. */
 export function unixNow(): number {
@@ -136,6 +137,7 @@ export function progressionForPlayer(player: PlayerDocument, now = unixNow()): P
   );
   const itemInventory = itemInventoryAuthorityFor(state.itemInventory);
   const dailyReward = dailyRewardAuthorityFor(state.dailyReward, now);
+  const assignments = validatedAssignmentState(state.assignments);
   const rental = validatedRentalState(state.rental);
   const blackMarket = validatedBlackMarketOfferState(state.blackMarket);
   const visualInventory = validatedVisualInventoryState(
@@ -181,6 +183,7 @@ export function progressionForPlayer(player: PlayerDocument, now = unixNow()): P
       instantBattle,
       videoAdRewards,
       dailyReward,
+      assignments,
     };
   }
 
@@ -219,6 +222,7 @@ export function progressionForPlayer(player: PlayerDocument, now = unixNow()): P
     instantBattle,
     videoAdRewards,
     dailyReward,
+    assignments,
   };
 }
 
