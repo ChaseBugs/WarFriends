@@ -306,6 +306,13 @@ before `$set`, preventing valid settings and roster updates from failing on the 
 
 ### Current economy-safety increment
 
+Action 199 now preserves the recovered free-versus-paid wire distinction before Instant Battle
+eligibility or wallet logic. Only an absent `IsPaid` field selects the free path; a present paid
+price must be the exact positive nonnegative C# signed-int decimal emitted by the confirmation
+dialog. Explicit null, blank, Boolean, array, padded, signed, fractional, exponent, zero, negative,
+or oversized values return the stock authorization failure instead of becoming a free batch or a
+coerced price.
+
 The shared persisted-progression read boundary and mutation-result boundary validate all five core
 numeric fields before price comparison, publication, or the boot adapter: Gold and WarBucks retain
 safe-integer chargeback debt, while Tickets, Scraps, and level experience must be nonnegative safe

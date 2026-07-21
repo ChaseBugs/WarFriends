@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import { League } from "../constants";
 import type { PlayerDocument } from "../db";
+import { optionalInstantBattlePaidCost } from "../handlers/instantBattle";
 import {
   INSTANT_BATTLE_MAX_CHARGES,
   INSTANT_BATTLE_RELOAD_SECONDS,
@@ -32,6 +33,19 @@ function unlockedState() {
     warBucks: 5_000,
   };
 }
+
+test("Instant Battle distinguishes an omitted free request from an exact paid C# integer", () => {
+  assert.equal(optionalInstantBattlePaidCost(undefined), undefined);
+  assert.equal(optionalInstantBattlePaidCost(35), 35);
+  assert.equal(optionalInstantBattlePaidCost("35"), 35);
+
+  for (const value of [null, false, true, [], [35], "", " 35", "35 ", "+35", "035", "35.0", "35e0", 0, -35, "2147483648"]) {
+    assert.throws(
+      () => optionalInstantBattlePaidCost(value),
+      (error: unknown) => error instanceof ApiError && error.code === ApiErrorCode.RequestNotAuthorized,
+    );
+  }
+});
 
 test("Instant Battle source contract uses rank 9, five charges, 48 minutes, and 35/70/140 Gold", () => {
   assert.equal(playerLevelDefinition(UNLOCKED_LEVEL_INDEX).displayLevel, INSTANT_BATTLE_UNLOCK_DISPLAY_LEVEL);

@@ -880,7 +880,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   new account starts with five ready battles; after a batch is consumed, one battle recharges
   every 48 minutes up to five. A free request consumes every currently ready battle. When none
   are ready, the paid path verifies and debits the exact 35/70/140-Gold escalating price and
-  simulates a full five-battle batch. Timer, lifetime/paid counters, wallet, XP, level Gold,
+  simulates a full five-battle batch. Only an omitted `IsPaid` field selects the free path; the
+  paid dialog's C# integer string must be canonical and positive, so explicit null, blank, Boolean,
+  array, padded, signed, fractional, exponent, zero, negative, or oversized values reject before
+  readiness and wallet logic. Timer, lifetime/paid counters, wallet, XP, level Gold,
   dog-tag rank-up refill, and rank Army Power commit in one revision-guarded player write and
   are restored through `PlayerAnalyticsData`. One shared validator requires all three public
   counters and the exact private replay receipt to retain signed-client values, source price/count
