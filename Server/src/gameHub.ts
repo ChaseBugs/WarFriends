@@ -53,6 +53,7 @@ import {
 import { isRedisAvailable, redisPublish, redisSubscribe } from "./redis";
 import {
   buildPvpFanoutNotice,
+  completePvpCardFanout,
   parsePvpFanoutNotice,
   pvpFanoutMatchesDurableAuthority,
   PVP_FANOUT_REDIS_CHANNEL,
@@ -404,11 +405,22 @@ async function receiveRemotePvpFanout(raw: string): Promise<void> {
     const payload = notice.envelope.Payload as MatchEventPayload;
     if (payload.Event === "CardPlayed") {
       const sequence = Number((payload.Data as CardPlayedEventData).Sequence);
+      const cardId = String((payload.Data as CardPlayedEventData).CardId);
       const receiptKey = `${notice.matchId}:${notice.sourcePlayerId}:${sequence}`;
-      if (deliveredPvpCardFanout.has(receiptKey)) return;
-      if (sendToPlayer(notice.targetPlayerId, notice.envelope)) {
-        rememberPvpCardFanoutDelivery(receiptKey);
-      }
+      // Redis publication proves only that a subscriber received a transport hint. The node owning
+      // the opponent socket writes the durable receipt after the actual socket send; if only that
+      // marker fails, a repeated notice retries MongoDB without replaying the visible card effect.
+      await completePvpCardFanout(
+        deliveredPvpCardFanout.has(receiptKey),
+        () => sendToPlayer(notice.targetPlayerId, notice.envelope),
+        () => { rememberPvpCardFanoutDelivery(receiptKey); },
+        () => markRelayedCardDelivered(
+          notice.matchId,
+          notice.sourcePlayerId!,
+          sequence,
+          cardId,
+        ),
+      );
       return;
     }
   }
@@ -420,13 +432,32 @@ async function deliverPvpEnvelope(
   matchId: string,
   envelope: ClientEnvelope,
   sourcePlayerId?: string,
-): Promise<boolean> {
-  if (sendToPlayer(playerId, envelope)) return true;
+): Promise<"local" | "published" | false> {
+  if (sendToPlayer(playerId, envelope)) return "local";
   if (!isRedisAvailable()) return false;
-  return redisPublish(
+  const published = await redisPublish(
     PVP_FANOUT_REDIS_CHANNEL,
     buildPvpFanoutNotice(hubInstanceId, playerId, matchId, envelope, sourcePlayerId),
   );
+  return published ? "published" : false;
+}
+
+/**
+ * Bound the wait for the receiving node's durable socket-delivery acknowledgement. The card play
+ * evidence remains retryable when the receipt never appears; it must not become delivered merely
+ * because Redis accepted the pub/sub frame.
+ */
+async function waitForRelayedCardDelivery(
+  matchId: string,
+  playerId: string,
+  sequence: number,
+): Promise<boolean> {
+  const deadline = Date.now() + 2_000;
+  do {
+    if (await wasRelayedCardDelivered(matchId, playerId, sequence)) return true;
+    await new Promise<void>((resolve) => setTimeout(resolve, 25));
+  } while (Date.now() < deadline);
+  return wasRelayedCardDelivered(matchId, playerId, sequence);
 }
 
 async function distributedMatchOpponent(matchId: string, playerId: string): Promise<string | null> {
@@ -1190,22 +1221,34 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
             // failed after evidence committed, the same sequence may retry delivery; once the
             // handoff receipt exists, an acknowledgement retry cannot emit a second effect.
             const alreadyDelivered = await wasRelayedCardDelivered(p.MatchId, client.playerId, sequence);
-            const delivered = alreadyDelivered
-              || await deliverPvpEnvelope(opponentId, p.MatchId, {
+            let delivered = alreadyDelivered;
+            if (!delivered) {
+              const cardId = typeof data?.CardId === "string" ? data.CardId : "";
+              const dispatch = await deliverPvpEnvelope(opponentId, p.MatchId, {
                 Type: "MatchEvent",
                 Payload: {
                   MatchId: p.MatchId,
                   Event: "CardPlayed",
-                  Data: { Sequence: sequence, CardId: typeof data?.CardId === "string" ? data.CardId : "" },
+                  Data: { Sequence: sequence, CardId: cardId },
                 },
               }, client.playerId);
+              if (dispatch === "local") {
+                delivered = await markRelayedCardDelivered(
+                  p.MatchId,
+                  client.playerId,
+                  sequence,
+                  cardId,
+                );
+              } else if (dispatch === "published") {
+                delivered = await waitForRelayedCardDelivery(p.MatchId, client.playerId, sequence);
+              }
+            }
             if (!delivered) {
               return send(client, {
                 Type: "MatchError",
                 Payload: { MatchId: p.MatchId, Reason: "EventDeliveryFailed" },
               });
             }
-            if (!alreadyDelivered) await markRelayedCardDelivered(p.MatchId, client.playerId, sequence);
             send(client, {
               Type: "MatchEventAccepted",
               Payload: {

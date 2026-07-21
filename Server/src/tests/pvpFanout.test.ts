@@ -2,10 +2,35 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   buildPvpFanoutNotice,
+  completePvpCardFanout,
   parsePvpFanoutNotice,
   pvpFanoutMatchesDurableAuthority,
   type PvpFanoutMatchAuthority,
 } from "../services/pvpFanoutService";
+
+test("remote card fan-out writes a receipt only after one live socket effect", async () => {
+  const operations: string[] = [];
+  assert.equal(await completePvpCardFanout(
+    false,
+    () => { operations.push("send"); return true; },
+    () => { operations.push("remember"); },
+    async () => { operations.push("receipt"); return true; },
+  ), "delivered");
+  assert.deepEqual(operations, ["send", "remember", "receipt"]);
+});
+
+test("repeated remote card fan-out retries only its missing durable receipt", async () => {
+  const operations: string[] = [];
+  assert.equal(await completePvpCardFanout(
+    true,
+    () => { operations.push("duplicate-send"); return true; },
+    () => { operations.push("duplicate-remember"); },
+    async () => { operations.push("receipt"); return true; },
+  ), "receipt-retried");
+  assert.deepEqual(operations, ["receipt"]);
+
+  assert.equal(await completePvpCardFanout(false, () => false, () => undefined, async () => true), "not-delivered");
+});
 
 function activeAuthority(values: Partial<PvpFanoutMatchAuthority> = {}): PvpFanoutMatchAuthority {
   return {

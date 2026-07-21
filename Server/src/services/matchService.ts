@@ -1488,25 +1488,38 @@ export async function wasRelayedCardDelivered(
   return Boolean(match?.relayedCardDeliveries?.[playerId]?.includes(sequence));
 }
 
-/** Persist transport handoff only after local send or Redis publish succeeds. */
+/**
+ * Persist transport handoff only after the opponent's node actually wrote the event to its live
+ * socket. Redis publish acknowledgement is not delivery acknowledgement: pub/sub can accept a
+ * message while the target route closes or the subscriber is unavailable.
+ */
 export async function markRelayedCardDelivered(
   matchId: string,
   playerId: string,
   sequence: number,
-): Promise<void> {
+  cardId: string,
+): Promise<boolean> {
   const match = await getMatch(matchId);
   if (!match || match.state !== "active" || !match.players.some((participant) => participant.playerId === playerId)) {
-    return;
+    return false;
   }
+  if (match.relayedCardPlays?.[playerId]?.[sequence] !== cardId) return false;
+  if (match.relayedCardDeliveries?.[playerId]?.includes(sequence)) return true;
   const deliveries = [...new Set([...(match.relayedCardDeliveries?.[playerId] ?? []), sequence])];
   validatedMatchDocument({
     ...match,
     relayedCardDeliveries: { ...(match.relayedCardDeliveries ?? {}), [playerId]: deliveries },
   });
-  await matches().updateOne(
-    { matchId, state: "active", "players.playerId": playerId },
+  const delivered = await matches().updateOne(
+    {
+      matchId,
+      state: "active",
+      "players.playerId": playerId,
+      [`relayedCardPlays.${playerId}.${sequence}`]: cardId,
+    },
     { $addToSet: { [`relayedCardDeliveries.${playerId}`]: sequence } },
   );
+  return delivered.modifiedCount === 1;
 }
 
 export type MatchReportStatus = "pending" | "confirmed" | "conflict" | "invalid" | "finished";

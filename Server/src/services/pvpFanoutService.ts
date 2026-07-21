@@ -14,6 +14,29 @@ export interface PvpFanoutNotice {
   envelope: ClientEnvelope;
 }
 
+export type PvpCardFanoutCompletion = "not-delivered" | "delivered" | "receipt-retried";
+
+/**
+ * Preserve the ordering between one process-local socket effect and its durable acknowledgement.
+ * A repeated Redis notice after the socket write retries only MongoDB; a first delivery remembers
+ * the effect synchronously before awaiting the marker so another notice cannot replay it.
+ */
+export async function completePvpCardFanout(
+  alreadyDeliveredOnProcess: boolean,
+  sendToSocket: () => boolean,
+  rememberDelivery: () => void,
+  markDurableReceipt: () => Promise<boolean>,
+): Promise<PvpCardFanoutCompletion> {
+  if (alreadyDeliveredOnProcess) {
+    await markDurableReceipt();
+    return "receipt-retried";
+  }
+  if (!sendToSocket()) return "not-delivered";
+  rememberDelivery();
+  await markDurableReceipt();
+  return "delivered";
+}
+
 export type PvpFanoutMatchAuthority = Pick<MatchDoc,
   | "matchId"
   | "players"

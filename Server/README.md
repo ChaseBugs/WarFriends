@@ -510,9 +510,13 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   `roomStartedAt` to remain absent inside the transaction; a started room returns `AlreadyStarted`
   and must use normal result or disconnect-forfeit handling.
   In-match fan-out is source-bound and requires both durable joins. Card activations store ordered
-  evidence separately from the successful live-delivery receipt, allowing a failed handoff retry
-  without duplicating an already delivered effect; receiving nodes independently require that same
-  durable sequence/card identity before delivery. Results use MongoDB's two-party consensus and
+  evidence separately from the successful live-delivery receipt. Redis publish success is only
+  transport acceptance: the node owning the opponent socket writes the receipt after its actual
+  socket send, and the sender waits a bounded interval for that MongoDB acknowledgement before
+  returning `MatchEventAccepted`. A missing receipt returns `EventDeliveryFailed` and keeps the
+  evidence retryable. The receiving process suppresses an already-sent effect while retrying only
+  a failed marker write, and independently requires the same durable sequence/card identity before
+  delivery. Results use MongoDB's two-party consensus and
   terminal settlement before `MatchEnded` or `ResultConflict` is delivered across nodes. The same
   durable decision controls the process-local room path: its report map proves only current socket
   membership, while every post-write reload recognizes finished receipts and conflict
