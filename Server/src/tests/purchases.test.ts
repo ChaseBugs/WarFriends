@@ -326,7 +326,9 @@ test("subscription authority receipt accepts only the durable HMAC key format", 
     createdAt: new Date(NOW * 1_000),
     updatedAt: new Date(NOW * 1_000),
   };
-  assert.throws(() => buildPlayerData(player), /Subscription authority receipt is invalid/);
+  // The fixture deliberately lives at a fixed future epoch. Pass that same captured boot time so
+  // this assertion isolates receipt-format authority instead of tripping the dog-tag time guard.
+  assert.throws(() => buildPlayerData(player, NOW), /Subscription authority receipt is invalid/);
 });
 
 test("subscription purchase tokens are authenticated, receipt-bound ciphertext", () => {

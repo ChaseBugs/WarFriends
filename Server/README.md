@@ -466,10 +466,13 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   balancing and refill-price formula. A verified subscription accelerates only the interval
   between its server-issued timer lock and expiry to the exact 450-second MainScene rate;
   reconnect after expiry materializes the historical split without granting post-expiry speed.
-  Before boot or time arithmetic, the refill/cap pair must describe whole positive tags, the
-  update cursor must be a non-future safe Unix second, and base credit must stay between the
-  normal cap and the source-backed two-tag VIP debt floor. Count-only legacy migration requires
-  the canonical tuple to be absent; malformed present fields fail closed instead of being rebuilt.
+  Every shared persisted read/publication validates the complete tuple shape. Callers that own an
+  authoritative request/boot time supply one captured server time for both snapshots and also
+  reject future cursors; context-free publishers remain deterministic while still rejecting every
+  malformed tuple value. The refill/cap pair must describe whole positive tags, and base credit
+  must stay between the normal cap and the source-backed two-tag VIP debt floor. Count-only legacy
+  migration requires the canonical tuple to be absent; malformed present fields fail closed
+  instead of being rebuilt or surviving an unrelated full-document replacement.
 - **Progression revision authority**: the central progression read boundary migrates only an
   absent pre-revision field to zero. Present and produced values must be nonnegative safe integers,
   and every non-no-op transition must advance monotonically before MongoDB builds its revision

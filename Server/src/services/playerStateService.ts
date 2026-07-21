@@ -117,9 +117,10 @@ export function createInitialProgression(
  * Callers that mutate balances must first migrate the document atomically; read-only boot
  * responses may safely use this deterministic fallback.
  */
-export function progressionForPlayer(player: PlayerDocument, now = unixNow()): PlayerProgressionState {
+export function progressionForPlayer(player: PlayerDocument, now?: number): PlayerProgressionState {
   if (!player.progression) return createInitialProgression(Math.floor(player.createdAt.getTime() / 1000));
   const state = player.progression;
+  const authorityNow = now ?? unixNow();
   validatedProgressionSchemaVersion(state.schemaVersion);
   validatedRequestBufferAuthority(state);
   validatedWarBucksConversionReceipt(state.warBucksConversion, progressionRevisionForRead(state.revision));
@@ -140,9 +141,12 @@ export function progressionForPlayer(player: PlayerDocument, now = unixNow()): P
     progressionRevisionForRead(state.revision),
   );
   const itemInventory = itemInventoryAuthorityFor(state.itemInventory);
-  const dailyReward = dailyRewardAuthorityFor(state.dailyReward, now);
+  const dailyReward = dailyRewardAuthorityFor(state.dailyReward, authorityNow);
   const assignments = validatedAssignmentState(state.assignments);
-  const lastSeenSquadChatTimestamp = validatedSquadChatCursor(state.lastSeenSquadChatTimestamp, now);
+  const lastSeenSquadChatTimestamp = validatedSquadChatCursor(
+    state.lastSeenSquadChatTimestamp,
+    authorityNow,
+  );
   const achievements = validatedAchievementState(state.achievements);
   const warArena = validatedWarArenaState(state.warArena);
   const dailyMissions = validatedDailyMissionsState(state.dailyMissions);
@@ -168,6 +172,10 @@ export function progressionForPlayer(player: PlayerDocument, now = unixNow()): P
     // tuple is damaged authority that downstream boot/economy validators must reject, not a
     // count-only legacy account that this read boundary is allowed to reconstruct.
     const vip = validatedVipTimeline(state.vipStart, state.vipExpiration ?? player.player.vipExpiration);
+    // Every shared read proves the complete tuple shape. A caller that owns a captured request or
+    // boot time supplies it so the same proof also rejects a future regeneration cursor. Keeping
+    // the parameter optional avoids making context-free publishers depend on wall-clock time.
+    const dogTags = validatedDogTagAuthority(state, now);
     return {
       ...state,
       revision: progressionRevisionForRead(state.revision),
@@ -198,6 +206,7 @@ export function progressionForPlayer(player: PlayerDocument, now = unixNow()): P
       warArena,
       dailyMissions,
       eventAssignment,
+      ...dogTags,
     };
   }
 
@@ -208,13 +217,16 @@ export function progressionForPlayer(player: PlayerDocument, now = unixNow()): P
   const cap = Math.max(1, Math.floor(config.dogTagCap));
   const legacyCount = Math.max(0, Math.floor(state.dogTags ?? cap));
   const vip = validatedVipTimeline(state.vipStart, state.vipExpiration ?? player.player.vipExpiration);
-  return {
-    ...state,
-    revision: progressionRevisionForRead(state.revision),
+  const migratedDogTags = validatedDogTagAuthority({
     dogTagSeconds: Math.min(cap, legacyCount) * refillSeconds,
     dogTagLastUpdate: state.dogTagLastUpdate || Math.floor(player.createdAt.getTime() / 1000),
     dogTagMax: cap * refillSeconds,
     dogTagRefillSeconds: refillSeconds,
+  }, now);
+  return {
+    ...state,
+    revision: progressionRevisionForRead(state.revision),
+    ...migratedDogTags,
     vipStart: vip.vipStart,
     vipExpiration: vip.vipExpiration,
     subscription: validatedSubscription(state.subscription),
@@ -357,7 +369,7 @@ export function buildDatabasePlayer(document: PlayerDocument): Record<string, un
  * OGLEHLIPEFM.NCNNKGNJNOH in the recovered 1.6.0 client.
  */
 export function buildPlayerData(player: PlayerDocument, now = unixNow()): PlayerDataMap {
-  const state = progressionForPlayer(player);
+  const state = progressionForPlayer(player, Math.floor(now));
   const dto = player.player;
   const balances = validatedCoreProgressionBalances(state);
   const dogTags = validatedDogTagAuthority(state, Math.floor(now));

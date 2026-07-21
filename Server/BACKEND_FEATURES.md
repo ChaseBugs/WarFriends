@@ -112,11 +112,14 @@ numeric fields before price comparison, publication, or the boot adapter: Gold a
 safe-integer chargeback debt, while Tickets, Scraps, and level experience must be nonnegative safe
 integers. Non-finite, fractional, unsafe, or invalid-negative values fail closed instead of
 bypassing a debit, entering the adapter's legacy zero fallback, or losing precision in Unity.
-The dog-tag tuple is likewise validated before boot and every time calculation: refill/cap values
-must describe whole positive tags, the update cursor cannot be future or non-finite, and stored
-seconds remain bounded by the normal cap and the recovered two-virtual-tag VIP debt floor. The
-legacy count-only migration is selected only when the canonical tuple is absent; malformed present
-fields are rejected instead of being reinterpreted as legacy state.
+The dog-tag tuple shape is likewise validated at every shared persisted read/publication and before
+boot or time arithmetic. Callers that own an authoritative request/boot time supply one captured
+time for both snapshots and additionally reject future cursors; context-free publishers remain
+deterministic while still rejecting every malformed tuple value. Refill/cap values must describe
+whole positive tags, the cursor must be a safe Unix second, and stored seconds remain bounded by
+the normal cap and the recovered two-virtual-tag VIP debt floor. The legacy count-only migration is
+selected only when the canonical tuple is absent; malformed present fields are rejected instead of
+being reinterpreted as legacy state or surviving an unrelated replacement.
 The shared progression read/mutation boundary now treats only an absent legacy revision as zero.
 Present and produced revisions must be nonnegative safe integers, and every state-changing write
 must advance monotonically before its MongoDB compare-and-swap filter or replacement is built;

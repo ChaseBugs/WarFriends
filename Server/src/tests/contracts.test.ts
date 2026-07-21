@@ -424,6 +424,25 @@ test("dog-tag state uses accumulated seconds and recovered 900-second balancing"
   );
 });
 
+test("shared progression boundaries reject malformed or future dog-tag authority", () => {
+  const corruptRead = contractPlayer();
+  corruptRead.progression!.dogTagMax = Number.NaN;
+  assert.throws(
+    () => progressionForPlayer(corruptRead, 1_700_000_000),
+    /Stored dog-tag authority is invalid/,
+  );
+
+  const current = createInitialProgression(1_000);
+  assert.throws(
+    () => validatedProgressionSuccessor(current, {
+      ...current,
+      revision: 1,
+      dogTagLastUpdate: 1_001,
+    }, 1_000),
+    /Stored dog-tag time authority is invalid/,
+  );
+});
+
 test("dog-tag authority rejects malformed tuples and preserves bounded VIP debt", () => {
   const initial = createInitialProgression(1_000, 900, 5);
   const debt = { ...initial, dogTagSeconds: -1_800 };

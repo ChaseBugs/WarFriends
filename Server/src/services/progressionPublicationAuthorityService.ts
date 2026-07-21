@@ -35,6 +35,7 @@ import { validatedAchievementState } from "./achievementAuthorityService";
 import { validatedWarArenaState } from "./warArenaAuthorityService";
 import { validatedDailyMissionsState } from "./dailyMissionAuthorityService";
 import { validatedEventAssignmentState } from "./eventAssignmentAuthorityService";
+import { validatedDogTagAuthority } from "./dogTagAuthorityService";
 
 /**
  * Validate the common authority shared by every full progression-document replacement.
@@ -47,8 +48,12 @@ import { validatedEventAssignmentState } from "./eventAssignmentAuthorityService
 export function validatedProgressionSuccessor(
   current: PlayerProgressionState,
   next: PlayerProgressionState,
-  now = Math.floor(Date.now() / 1000),
+  now?: number,
 ): PlayerProgressionState {
+  // Calendar and chat authority always need a comparison clock. Dog tags use the optional raw
+  // value below: mutation flows with an authoritative request time prove non-future cursors,
+  // while context-free publishers still prove the complete tuple shape deterministically.
+  const authorityNow = now ?? Math.floor(Date.now() / 1000);
   validatedProgressionSchemaVersion(current.schemaVersion);
   validatedProgressionSchemaVersion(next.schemaVersion);
   validatedVipTimeline(current.vipStart, current.vipExpiration);
@@ -93,12 +98,12 @@ export function validatedProgressionSuccessor(
   validatedVisualInventoryState(next.visualInventory);
   itemInventoryAuthorityFor(current.itemInventory);
   itemInventoryAuthorityFor(next.itemInventory);
-  dailyRewardAuthorityFor(current.dailyReward, now);
-  dailyRewardAuthorityFor(next.dailyReward, now);
+  dailyRewardAuthorityFor(current.dailyReward, authorityNow);
+  dailyRewardAuthorityFor(next.dailyReward, authorityNow);
   validatedAssignmentState(current.assignments);
   validatedAssignmentState(next.assignments);
-  validatedSquadChatCursor(current.lastSeenSquadChatTimestamp, now);
-  validatedSquadChatCursor(next.lastSeenSquadChatTimestamp, now);
+  validatedSquadChatCursor(current.lastSeenSquadChatTimestamp, authorityNow);
+  validatedSquadChatCursor(next.lastSeenSquadChatTimestamp, authorityNow);
   validatedAchievementState(current.achievements);
   validatedAchievementState(next.achievements);
   validatedWarArenaState(current.warArena);
@@ -107,6 +112,8 @@ export function validatedProgressionSuccessor(
   validatedDailyMissionsState(next.dailyMissions);
   validatedEventAssignmentState(current.eventAssignment);
   validatedEventAssignmentState(next.eventAssignment);
+  validatedDogTagAuthority(current, now);
+  validatedDogTagAuthority(next, now);
   validatedCoreProgressionBalances(current);
   validateProgressionRevisionAdvance(progressionRevisionForRead(current.revision), next.revision);
   validatedCoreProgressionBalances(next);
