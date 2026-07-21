@@ -28,6 +28,7 @@ import { validatedInstantBattleState } from "./instantBattleAuthorityService";
 import { validatedSquadCreationsCount } from "./squadCreationAuthorityService";
 import { validatedRenameCount } from "./playerRenameAuthorityService";
 import { validatedCollectedRewards } from "./oneTimeRewardAuthorityService";
+import { validatedSquadChatCursor } from "./squadChatCursorAuthorityService";
 
 /** Unix seconds are used throughout the recovered Beanstalk protocol. */
 export function unixNow(): number {
@@ -374,7 +375,7 @@ export function buildPlayerData(player: PlayerDocument, now = unixNow()): Player
   // behavior for the remaining analytics fields. The creation counter must also cross this
   // boot boundary: PlayerAnalytics derives the next squad price from it after every restart.
   addSerializedObject(data, "PlayerAnalyticsData", {
-    lastSeenSquadChatTimeStampDB: state.lastSeenSquadChatTimestamp ?? 0,
+    lastSeenSquadChatTimeStampDB: validatedSquadChatCursor(state.lastSeenSquadChatTimestamp, Math.floor(now)),
     squadCreationsCount: validatedSquadCreationsCount(state.squadCreationsCount),
     // PlayerAnalytics.renameGoldPrice is profile-owned even though most fields in this object
     // live in progression. Restore the validated count so reconnecting cannot display a free

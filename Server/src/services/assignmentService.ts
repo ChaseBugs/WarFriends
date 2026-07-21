@@ -980,7 +980,10 @@ export function processAssignmentBufferState(
 
     if (request.action === DbAction.SaveLastSeenSquadChatTimeStamp) {
       try {
-        const timestamp = Number(request.data);
+        // JavaScript converts an empty string to zero. The recovered setter never queues its
+        // default zero value, so preserve an empty/missing payload as invalid instead of silently
+        // normalizing a modified RequestBuffer item into a successful no-op.
+        const timestamp = request.data.trim() === "" ? Number.NaN : Number(request.data);
         working = advanceSquadChatCursorState(working, now, timestamp).state;
         responses.push({ ActionId: request.action, Result: SUCCESS });
       } catch (error) {

@@ -4,10 +4,13 @@ import { mutateProgression } from "./progressionMutationService";
 import { findById } from "./playerService";
 import { getByName } from "./squadService";
 import type { MessageDoc } from "./socialService";
+import {
+  requestedSquadChatCursor,
+  validatedSquadChatCursor,
+} from "./squadChatCursorAuthorityService";
 
 const SQUAD_EVENT_MESSAGE_TYPE = 21;
 const DEPOSIT_WARCARDS_MESSAGE_TYPE = 28;
-const MAX_CURSOR_CLOCK_SKEW_SECONDS = 300;
 
 export interface SquadChatCursorMutation {
   state: PlayerProgressionState;
@@ -28,22 +31,18 @@ export function advanceSquadChatCursorState(
   now: number,
   requestedTimestamp: number,
 ): SquadChatCursorMutation {
-  if (!Number.isInteger(requestedTimestamp) || requestedTimestamp < 0) {
-    throw new ApiError(ApiErrorCode.UnknownAction, "Squad chat timestamp must be a non-negative integer.");
-  }
-  if (requestedTimestamp > Math.floor(now) + MAX_CURSOR_CLOCK_SKEW_SECONDS) {
-    throw new ApiError(ApiErrorCode.UnknownAction, "Squad chat timestamp is too far in the future.");
-  }
-
-  const current = state.lastSeenSquadChatTimestamp ?? 0;
-  if (requestedTimestamp <= current) {
+  const current = validatedSquadChatCursor(state.lastSeenSquadChatTimestamp, now);
+  const timestamp = requestedSquadChatCursor(requestedTimestamp, now);
+  if (timestamp <= current) {
     // A second device can flush an older RequestBuffer after another device has already read
     // further into the channel. Acknowledge the authoritative cursor without fabricating a
     // progression revision or replacing identical state.
     return { state, timestamp: current };
   }
 
-  const timestamp = requestedTimestamp;
+  if (!Number.isSafeInteger(state.revision) || state.revision < 0 || state.revision === Number.MAX_SAFE_INTEGER) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Squad chat cursor progression revision is invalid.");
+  }
   return {
     state: {
       ...state,

@@ -49,6 +49,30 @@ test("squad chat cursor is monotonic and rejects destructive future values", () 
     () => advanceSquadChatCursorState(rollback.state, NOW, NOW + 301),
     (error: unknown) => (error as { code?: number }).code === ApiErrorCode.UnknownAction,
   );
+  assert.throws(
+    () => advanceSquadChatCursorState(rollback.state, NOW, 2_147_483_648),
+    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.UnknownAction,
+  );
+  assert.throws(
+    () => advanceSquadChatCursorState(rollback.state, NOW, Number.NaN),
+    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.UnknownAction,
+  );
+});
+
+test("squad chat cursor rejects corrupt durable authority before comparison or revision", () => {
+  const corrupt = createInitialProgression(NOW);
+  corrupt.lastSeenSquadChatTimestamp = Number.POSITIVE_INFINITY;
+  assert.throws(
+    () => advanceSquadChatCursorState(corrupt, NOW, NOW - 30),
+    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.InternalServerError,
+  );
+
+  const exhaustedRevision = createInitialProgression(NOW);
+  exhaustedRevision.revision = Number.MAX_SAFE_INTEGER;
+  assert.throws(
+    () => advanceSquadChatCursorState(exhaustedRevision, NOW, NOW - 30),
+    /Squad chat cursor progression revision is invalid/,
+  );
 });
 
 test("stock RequestBuffer persists and idempotently replays squad chat cursor action 193", () => {
@@ -64,6 +88,14 @@ test("stock RequestBuffer persists and idempotently replays squad chat cursor ac
   assert.equal(replay.replayed, true);
   assert.equal(replay.state.lastSeenSquadChatTimestamp, NOW - 10);
   assert.equal(replay.requestsResults, first.requestsResults);
+
+  const malformed = processAssignmentBufferState(initial, NOW, "cursor-empty", [
+    { action: DbAction.SaveLastSeenSquadChatTimeStamp, data: "" },
+  ]);
+  assert.equal(malformed.state.lastSeenSquadChatTimestamp, undefined);
+  assert.deepEqual(JSON.parse(malformed.requestsResults), [
+    { ActionId: 193, Result: ApiErrorCode.UnknownAction },
+  ]);
 });
 
 test("GetPlayerData restores squad analytics through the recovered PlayerAnalyticsData key", () => {
@@ -75,6 +107,10 @@ test("GetPlayerData restores squad analytics through the recovered PlayerAnalyti
 
   assert.equal(analytics.lastSeenSquadChatTimeStampDB, NOW - 5);
   assert.equal(analytics.squadCreationsCount, 3);
+
+  player.progression!.lastSeenSquadChatTimestamp = Number.POSITIVE_INFINITY;
+  assert.throws(() => buildPlayerData(player, NOW), /Stored squad chat cursor is invalid/);
+  player.progression!.lastSeenSquadChatTimestamp = NOW - 5;
 
   player.progression!.squadCreationsCount = Number.POSITIVE_INFINITY;
   assert.throws(() => buildPlayerData(player), /Stored squad creation count is invalid/);

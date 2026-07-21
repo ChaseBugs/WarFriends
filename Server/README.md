@@ -850,7 +850,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   tier comparison, so `NaN` and malformed persisted state cannot bypass completion gates.
 - **Squad social state**: action `193` persists the monotonic Photon Chat unread cursor through
   the stock request buffer and restores it as `PlayerAnalyticsData`; equal or stale cross-device
-  cursor updates return the authoritative value without a false revision/write. Squad-event notices are
+  cursor updates return the authoritative value without a false revision/write. Both incoming and
+  stored cursors must be nonnegative signed-client integers inside the bounded server-time skew
+  window before comparison, mutation, or boot, so malformed/future durable state cannot suppress
+  later messages or poison the recovered C# `int` field. Squad-event notices are
   membership-validated, founder-targeted, durable, and duplicate-suppressed. The `/hub` replacement
   now persists moderated Squad Chat messages, returns recovered-size history, suppresses nonce
   retries, and fans out only to authenticated subscribers still present in the current roster.

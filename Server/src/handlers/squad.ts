@@ -104,10 +104,14 @@ export const squadHandlers: Record<number, HandlerEntry> = {
     // The stock 1.6.0 client normally submits the cursor as RequestBuffer.data. This direct
     // form remains useful for repaired clients and diagnostics, but accepts only explicit
     // timestamp aliases and never derives a value from the server receive time.
-    const timestamp = integer(
-      req.LastSeenSquadChatTimeStamp ?? req.Timestamp ?? req.TimeStamp,
-      Number.NaN,
-    );
+    // Do not use the generic squad integer helper here: it floors decimals, which would turn a
+    // malformed cursor into different valid authority before the shared action-193 validator sees it.
+    const rawTimestamp = req.LastSeenSquadChatTimeStamp ?? req.Timestamp ?? req.TimeStamp;
+    const timestamp = rawTimestamp === undefined
+      || rawTimestamp === null
+      || (typeof rawTimestamp === "string" && rawTimestamp.trim() === "")
+      ? Number.NaN
+      : Number(rawTimestamp);
     const result = await saveSquadChatCursor(player!.id, timestamp);
     return ok(DbAction.SaveLastSeenSquadChatTimeStamp, {
       LastSeenSquadChatTimeStamp: result.timestamp,
