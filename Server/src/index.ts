@@ -27,6 +27,7 @@ import { startGooglePlayVoidedPurchaseScheduler } from "./services/googlePlayVoi
 import { startSquadWarScheduler } from "./services/squadWarSchedulerService";
 import { adminModerationRouter } from "./routes/adminModeration";
 import { adminDiagnosticsRouter } from "./routes/adminDiagnostics";
+import { adminReplayVideosRouter } from "./routes/adminReplayVideos";
 import { supportModerationRouter } from "./routes/supportModeration";
 import { validateAuthenticationSecretConfiguration } from "./services/authSecretService";
 import { trafficPolicy } from "./services/trafficPolicyService";
@@ -93,6 +94,10 @@ app.use("/admin/moderation", requireAdmin, adminModerationRouter);
 // Retained diagnostics can contain player logs and failed-response bodies. Keep the entire read
 // surface behind the independent admin credential; game sessions never authorize this router.
 app.use("/admin/diagnostics", requireAdmin, adminDiagnosticsRouter);
+
+// Replay URLs are retained third-party references and may identify a player or match. Only the
+// independent admin credential can inspect them; this server stores but never fetches the URL.
+app.use("/admin/replay-videos", requireAdmin, adminReplayVideosRouter);
 
 // Sanctioned players cannot use the normal game dispatcher, but may prove their current session
 // credential to this narrowly scoped support router. It can read/create only their own appeals and

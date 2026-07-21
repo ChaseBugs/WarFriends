@@ -118,6 +118,21 @@ const migrations: readonly DatabaseMigration[] = [
       }
     },
   },
+  {
+    id: "20260722_007_admin_replay_video_indexes",
+    checksum: "sha256:7cf7eaf54ef9679fe61ec8bda5c211d055266dfa49b75baf8795c473f2977f71",
+    description: "Index stable global and per-player replay-video administration pages.",
+    up: async (db) => {
+      await db.collection("videoFeed").createIndex(
+        { createdAt: -1, videoId: -1 },
+        { name: "video_feed_admin_time" },
+      );
+      await db.collection("videoFeed").createIndex(
+        { playerId: 1, createdAt: -1, videoId: -1 },
+        { name: "video_feed_admin_player_time" },
+      );
+    },
+  },
 ];
 
 const receiptCollectionName = "schemaMigrations";

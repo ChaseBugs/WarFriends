@@ -1171,6 +1171,15 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   stale row even while MongoDB TTL deletion is delayed. The response echoes the exact `URL`
   consumed by `MHEHGPLIFHF.LLCLNJKBGGM`. No feed-read database action exists in 1.6.0, so the
   backend does not invent an unreachable mobile browsing API.
+
+  Operators can review retained publications through admin-Bearer-only
+  `GET /admin/replay-videos` and `GET /admin/replay-videos/:videoId`. The list accepts an optional
+  exact `playerId`, a canonical integer `limit` from 1 through 100, and an opaque canonical
+  Base64URL cursor bound to that player filter. Its descending `(createdAt, videoId)` ordering is
+  backed by global and per-player migration indexes, so concurrent newer uploads do not duplicate
+  or skip older pages. Both endpoints exclude expired rows at query time and validate the complete
+  receipt again before returning the reviewed `videoId`, `playerId`, URL/hash, and creation/expiry
+  fields. They do not fetch, preview, probe, or redirect to the player-supplied URL.
 - **VIP purchase and expiry authority**: action `114` validates `VIP_1` through `VIP_4` against
   the 4.9.5 MainScene table (49 Gold/12 hours, 249/3 days, 499/7 days, and 1799/30 days), debits
   Gold and extends the Unix entitlement in one revision-safe transaction, emits the exact
