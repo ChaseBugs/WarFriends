@@ -734,11 +734,13 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   reward-type weights and `FROMMISSION` selector semantics remain explicit uniform/level fallbacks.
 - **Starter assignments (authoritative subset)**: actions `185`/`186` restore the exact
   `StarterAssignmentsData` object and the MainScene-defined thresholds, order, Gold, and
-  WarBucks rewards. Ranked wins, medal balance, level, lifetime squad points, and the first
-  replay-safe mission completion, and the exact equipped secondary-weapon level required by
-  ID_7 and a server-granted Gold craft for ID_8 are checked against server state; buffered claims
-  are ordered, atomic, reward-validated, and replay safe. Unit deployment and war-card completions
-  remain disabled until those event sources exist.
+  WarBucks rewards. Ranked wins, medal balance, level, lifetime squad points, the first replay-safe
+  mission completion, confirmed War Cards played, the exact equipped secondary-weapon level for
+  ID_7, and a server-granted Gold craft for ID_8 are checked against server state. Every numeric
+  proof is validated as a nonnegative safe integer before a permanent completion marker is
+  published, and both timed and subscription Gold-card crafts reject proof-counter overflow before
+  clearing their receipt. Buffered claims are ordered, atomic, reward-validated, and replay safe.
+  Unit deployment remains disabled until that event source exists.
 - **Achievements (authoritative subset)**: actions `218`-`220` use the recovered
   `AchievementsData`/RequestBuffer contract. Solo missions, ranked wins, assignment completion,
   squad points, and daily-reward claims advance only from accepted server settlements. Purchased

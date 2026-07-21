@@ -335,6 +335,28 @@ function craftedResultCard(inputRarity: 1 | 2, choose: (upperBound: number) => n
   return pool[index];
 }
 
+/**
+ * Advance the private proof used by starter assignment ID_8.
+ *
+ * This value is not a client statistic: it is written only when the backend successfully
+ * exchanges three Silver cards for one Gold card. Validate it before constructing the final
+ * crafting state because `Infinity + 1` remains `Infinity`, while a value above JavaScript's
+ * exact integer range could later make the starter reward gate appear satisfied without a
+ * trustworthy count. Running this check before the craft receipt is cleared keeps the complete
+ * three-for-one exchange retryable when a legacy account contains damaged authority.
+ */
+function goldCardsCraftedAfter(state: PlayerProgressionState, inputRarity: 1 | 2): number {
+  const current = state.goldCardsCrafted ?? 0;
+  if (!Number.isSafeInteger(current) || current < 0) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Gold-card craft counter is invalid.");
+  }
+  if (inputRarity === 1) return current;
+  if (current === Number.MAX_SAFE_INTEGER) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Gold-card craft counter overflowed.");
+  }
+  return current + 1;
+}
+
 /** Grant a finished server-selected result and clear the receipt atomically. */
 export function claimCraftedCardState(
   state: PlayerProgressionState,
@@ -348,6 +370,7 @@ export function claimCraftedCardState(
   const inputRarity = recipeRarity(crafting.cards);
   const cardId = craftedResultCard(inputRarity, choose);
   const inventory = cardInventoryStateFor(state);
+  const goldCardsCrafted = goldCardsCraftedAfter(state, inputRarity);
   const current = inventory.cardData[cardId]?.amount ?? 0;
   if (!Number.isSafeInteger(current) || current < 0 || current === Number.MAX_SAFE_INTEGER) {
     throw new ApiError(ApiErrorCode.InternalServerError, `Card count for ${cardId} is invalid.`);
@@ -359,7 +382,7 @@ export function claimCraftedCardState(
     revision: state.revision + 1,
     cardInventory: inventory,
     cardCrafting,
-    goldCardsCrafted: (state.goldCardsCrafted ?? 0) + (inputRarity === 2 ? 1 : 0),
+    goldCardsCrafted,
   };
   return { state: next, cardInventory: inventory, cardCrafting, cardId };
 }
@@ -397,6 +420,7 @@ export function craftAndClaimSubscribedCardState(
   consumeRecipe(inventory, cards);
 
   const cardId = craftedResultCard(inputRarity, choose);
+  const goldCardsCrafted = goldCardsCraftedAfter(state, inputRarity);
   const current = inventory.cardData[cardId]?.amount ?? 0;
   if (!Number.isSafeInteger(current) || current < 0 || current === Number.MAX_SAFE_INTEGER) {
     throw new ApiError(ApiErrorCode.InternalServerError, `Card count for ${cardId} is invalid.`);
@@ -408,7 +432,7 @@ export function craftAndClaimSubscribedCardState(
     revision: state.revision + 1,
     cardInventory: inventory,
     cardCrafting,
-    goldCardsCrafted: (state.goldCardsCrafted ?? 0) + (inputRarity === 2 ? 1 : 0),
+    goldCardsCrafted,
   };
   return { state: next, cardInventory: inventory, cardCrafting, cardId };
 }

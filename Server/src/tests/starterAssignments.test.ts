@@ -110,6 +110,58 @@ test("weapon-upgrade starter assignment uses the equipped secondary weapon level
   assert.equal(completed.starterAssignments.assignments.ID_7.completed, true);
 });
 
+test("starter completion rejects corrupt authority before publishing a reward marker", () => {
+  const cases: Array<{
+    id: string;
+    mutate: (state: ReturnType<typeof createInitialProgression>, facts: typeof FACTS) => void;
+  }> = [
+    {
+      id: "ID_1",
+      mutate: (state) => {
+        state.achievements = {
+          data: [{ id: 2, offset: 0, value: Number.POSITIVE_INFINITY, progress: [{ claimed: false }] }],
+        };
+      },
+    },
+    { id: "ID_4", mutate: (_state, facts) => { facts.medalsBalance = Number.NaN; } },
+    { id: "ID_5", mutate: (_state, facts) => { facts.level = Number.POSITIVE_INFINITY; } },
+    {
+      id: "ID_6",
+      mutate: (state) => {
+        state.dailyMissions = {
+          ...dailyMissionsStateFor(state, NOW, FACTS.level),
+          heroicPoints: Number.POSITIVE_INFINITY,
+        };
+      },
+    },
+    {
+      id: "ID_7",
+      mutate: (state) => {
+        state.itemInventory!.levelManagerData.savedWeapons["Google2u.SniperRifle_M24"]!.boughtIndex = Number.NaN;
+      },
+    },
+    { id: "ID_8", mutate: (state) => { state.goldCardsCrafted = Number.POSITIVE_INFINITY; } },
+    { id: "ID_10", mutate: (_state, facts) => { facts.squadPointsTotal = Number.NaN; } },
+    { id: "ID_2", mutate: (state) => { state.warCardsPlayed = Number.POSITIVE_INFINITY; } },
+  ];
+
+  for (const scenario of cases) {
+    const state = createInitialProgression(NOW);
+    const facts = { ...FACTS };
+    scenario.mutate(state, facts);
+    assert.throws(
+      () => completeStarterAssignmentsState(state, NOW + 10, NOW, facts, [scenario.id]),
+      (error: unknown) => (error as { code?: number }).code === 18501,
+      scenario.id,
+    );
+    assert.equal(
+      state.starterAssignments?.assignments[scenario.id],
+      undefined,
+      `${scenario.id} must not publish a completion marker`,
+    );
+  }
+});
+
 test("starter claims enforce order and server balancing before crediting currency", () => {
   const initial = createInitialProgression(NOW);
   initial.achievements = {

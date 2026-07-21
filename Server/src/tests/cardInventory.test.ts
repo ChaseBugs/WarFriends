@@ -209,6 +209,41 @@ test("timed Bronze and Silver recipes consume three cards and grant one server-s
   assert.equal(goldResult.state.goldCardsCrafted, 1);
 });
 
+test("Gold-card crafting rejects a corrupt or overflowing starter-assignment proof", () => {
+  const initial = createInitialProgression(NOW);
+  initial.cardInventory = {
+    ...createInitialCardInventory(),
+    cardData: { AMMOBOX: { amount: 6 } },
+  };
+
+  const timed = startCardCraftingState(initial, NOW, ["AMMOBOX", "AMMOBOX", "AMMOBOX"]);
+  timed.state.goldCardsCrafted = Number.MAX_SAFE_INTEGER;
+  assert.throws(
+    () => claimCraftedCardState(timed.state, timed.cardCrafting.end, () => 0),
+    /Gold-card craft counter overflowed/,
+  );
+
+  const subscribed = {
+    ...initial,
+    goldCardsCrafted: Number.NaN,
+    subscription: {
+      type: "subscription1" as const,
+      subscribeSince: NOW - 60,
+      expireTime: NOW + 60,
+      dogTagTimerLock: NOW - 60,
+    },
+  };
+  assert.throws(
+    () => craftAndClaimSubscribedCardState(
+      subscribed,
+      NOW,
+      ["AMMOBOX", "AMMOBOX", "AMMOBOX"],
+      () => 0,
+    ),
+    /Gold-card craft counter is invalid/,
+  );
+});
+
 test("crafting rejects invalid recipes, insufficient ownership, concurrent receipts, and duplicate claims", () => {
   const initial = createInitialProgression(NOW);
   initial.cardInventory = {

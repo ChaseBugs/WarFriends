@@ -104,10 +104,29 @@ function definitionFor(id: string): StarterAssignmentDefinition {
   return definition;
 }
 
+/**
+ * Validate one persisted fact before it participates in a starter reward decision.
+ *
+ * JavaScript comparisons fail open in different directions for damaged numeric values:
+ * `Infinity >= target` is true, while `NaN >= target` is false. Neither result describes an
+ * authoritative gameplay fact. Rejecting both here also prevents a partially imported profile
+ * from publishing a permanent `completed` marker that would remain claimable after the source
+ * counter is repaired.
+ */
+function starterCounter(value: number, label: string): number {
+  if (!Number.isSafeInteger(value) || value < 0) {
+    throw new ApiError(STARTER_ASSIGNMENTS_INCORRECT, `Starter assignment ${label} counter is invalid.`);
+  }
+  return value;
+}
+
 function rankedWins(state: PlayerProgressionState): number {
   // Achievement group 2 is advanced only by confirmed ranked PvP settlement. Reusing that
   // server-owned counter avoids maintaining two sources of truth for the same client stat.
-  return state.achievements?.data.find((group) => group.id === 2)?.value ?? 0;
+  return starterCounter(
+    state.achievements?.data.find((group) => group.id === 2)?.value ?? 0,
+    "ranked-win",
+  );
 }
 
 /**
@@ -125,7 +144,12 @@ function equippedSecondaryWeaponLevel(state: PlayerProgressionState): number {
   const equipped = inventory.inventoryData.slots["1"];
   if (!equipped) return 0;
   const weapon = inventory.levelManagerData.savedWeapons[equipped.name];
-  return weapon?.bought ? Math.max(0, weapon.boughtIndex) + 1 : 0;
+  if (!weapon?.bought) return 0;
+  const boughtIndex = starterCounter(weapon.boughtIndex, "equipped-weapon-level");
+  if (boughtIndex === Number.MAX_SAFE_INTEGER) {
+    throw new ApiError(STARTER_ASSIGNMENTS_INCORRECT, "Starter assignment equipped-weapon-level counter overflowed.");
+  }
+  return boughtIndex + 1;
 }
 
 function isServerConfirmed(
@@ -135,13 +159,19 @@ function isServerConfirmed(
 ): boolean {
   switch (definition.authority) {
     case "rankedWins": return rankedWins(state) >= definition.target;
-    case "medals": return facts.medalsBalance >= definition.target;
-    case "level": return facts.level >= definition.target;
-    case "squadPoints": return facts.squadPointsTotal >= definition.target;
-    case "heroicPoints": return (state.dailyMissions?.heroicPoints ?? 0) >= definition.target;
+    case "medals": return starterCounter(facts.medalsBalance, "medal") >= definition.target;
+    case "level": return starterCounter(facts.level, "level") >= definition.target;
+    case "squadPoints": return starterCounter(facts.squadPointsTotal, "squad-point") >= definition.target;
+    case "heroicPoints": return starterCounter(
+      state.dailyMissions?.heroicPoints ?? 0,
+      "heroic-point",
+    ) >= definition.target;
     case "weaponLevel": return equippedSecondaryWeaponLevel(state) >= definition.target;
-    case "craftedGold": return (state.goldCardsCrafted ?? 0) > 0;
-    case "warCardsPlayed": return (state.warCardsPlayed ?? 0) >= definition.target;
+    case "craftedGold": return starterCounter(state.goldCardsCrafted ?? 0, "Gold-card-craft") > 0;
+    case "warCardsPlayed": return starterCounter(
+      state.warCardsPlayed ?? 0,
+      "War-Card-play",
+    ) >= definition.target;
     case "unrecovered": return false;
   }
 }
