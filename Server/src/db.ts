@@ -1191,6 +1191,26 @@ export interface FirebasePushDeliveryDocument extends Document {
 
 let firebasePushDeliveriesCollection: Collection<FirebasePushDeliveryDocument> | null = null;
 
+/**
+ * Expiring diagnostic copy of one authenticated action-179 PlayerAnalytics submission.
+ *
+ * `payloadJson` is intentionally opaque. Some recovered fields resemble currency, inventory,
+ * and progression counters, so persisting a parsed object beside player state would invite an
+ * accidental future authority join. No gameplay service reads this collection.
+ */
+export interface ClientAnalyticsEventDocument extends Document {
+  _id: string;
+  playerId: string;
+  payloadJson: string;
+  payloadSha256: string;
+  byteLength: number;
+  receivedAt: Date;
+  /** Storage cleanup only; application code never uses analytics rows for eligibility. */
+  expiresAt: Date;
+}
+
+let clientAnalyticsEventsCollection: Collection<ClientAnalyticsEventDocument> | null = null;
+
 export async function connectMongo(): Promise<void> {
   await client.connect();
   db = client.db(runtimeInfrastructure.mongoDatabaseName);
@@ -1224,6 +1244,7 @@ export async function connectMongo(): Promise<void> {
   );
   scheduledJobLeasesCollection = db.collection<ScheduledJobLeaseDocument>("scheduledJobLeases");
   firebasePushDeliveriesCollection = db.collection<FirebasePushDeliveryDocument>("firebasePushDeliveries");
+  clientAnalyticsEventsCollection = db.collection<ClientAnalyticsEventDocument>("clientAnalyticsEvents");
 
   await playersCollection.createIndex({ id: 1 }, { unique: true });
   await playersCollection.createIndex({ authToken: 1 });
@@ -1442,6 +1463,7 @@ export async function disconnectMongo(): Promise<void> {
   purchaseReconciliationCursorsCollection = null;
   scheduledJobLeasesCollection = null;
   firebasePushDeliveriesCollection = null;
+  clientAnalyticsEventsCollection = null;
 }
 
 /**
@@ -1528,6 +1550,10 @@ export function scheduledJobLeases(): Collection<ScheduledJobLeaseDocument> {
 
 export function firebasePushDeliveries(): Collection<FirebasePushDeliveryDocument> {
   return requireCollection("firebasePushDeliveries", firebasePushDeliveriesCollection);
+}
+
+export function clientAnalyticsEvents(): Collection<ClientAnalyticsEventDocument> {
+  return requireCollection("clientAnalyticsEvents", clientAnalyticsEventsCollection);
 }
 
 export function messages(): Collection<Document> {

@@ -69,7 +69,7 @@ export function validatedOutgoingMessageRateLimit(
 /** Keep the operational collection from becoming a plaintext secondary player directory. */
 export function outgoingMessageRateLimitKey(
   playerId: string,
-  scope: "inbox" | "squad-chat" = "inbox",
+  scope: "inbox" | "squad-chat" | "client-analytics" = "inbox",
 ): string {
   return createHmac("sha256", config.authSecret).update(`${scope}:${playerId}`).digest("hex");
 }
@@ -84,7 +84,7 @@ export function outgoingMessageRateLimitKey(
  */
 async function reservePlayerAuthoredMessageSlot(
   playerId: string,
-  scope: "inbox" | "squad-chat",
+  scope: "inbox" | "squad-chat" | "client-analytics",
   maximum: number,
   now: Date,
   collisionRetry: number,
@@ -125,7 +125,9 @@ async function reservePlayerAuthoredMessageSlot(
     if (!state) throw new Error("Outgoing-message rate-limit reservation was not persisted.");
     validatedOutgoingMessageRateLimit(state, now, key);
     if (!outgoingMessageRateLimitAllows(state.attemptCount, maximum)) {
-      const label = scope === "squad-chat" ? "Squad chat" : "Message";
+      const label = scope === "squad-chat"
+        ? "Squad chat"
+        : scope === "client-analytics" ? "Analytics" : "Message";
       throw new ApiError(ApiErrorCode.UnknownAction, `${label} rate limit reached. Try again later.`);
     }
   } catch (error) {
@@ -170,6 +172,28 @@ export async function reserveSquadChatMessageSlot(
   return reservePlayerAuthoredMessageSlot(
     playerId,
     "squad-chat",
+    maximum,
+    now,
+    collisionRetry,
+  );
+}
+
+/**
+ * Reserve one action-179 diagnostic submission without sharing inbox or Squad Chat capacity.
+ *
+ * The same atomic fixed-window implementation is reused, but the HMAC domain is independent.
+ * This prevents an analytics flood from consuming social-message quota and prevents concurrent
+ * backend nodes from passing a count-then-insert race.
+ */
+export async function reserveClientAnalyticsSlot(
+  playerId: string,
+  maximum: number,
+  now = new Date(),
+  collisionRetry = 0,
+): Promise<void> {
+  return reservePlayerAuthoredMessageSlot(
+    playerId,
+    "client-analytics",
     maximum,
     now,
     collisionRetry,

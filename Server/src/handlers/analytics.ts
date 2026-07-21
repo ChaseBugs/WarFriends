@@ -4,6 +4,7 @@ import {
   markFeatureIntroduction,
   type FeatureIntroductionKey,
 } from "../services/featureIntroductionService";
+import { ingestClientAnalytics } from "../services/clientAnalyticsService";
 import { authed, type HandlerEntry } from "./types";
 
 /**
@@ -46,7 +47,6 @@ const featureIntroductionHandlers: Record<number, HandlerEntry> = Object.fromEnt
  * no-mutation behavior but require the same session proof as their surrounding gameplay flow.
  */
 const authenticatedIgnoredActions = [
-  DbAction.UpdateAnalytics,
   DbAction.MessageWasShown,
   DbAction.SpecialOfferShowed,
 ] as const;
@@ -61,4 +61,11 @@ const authenticatedIgnoredHandlers: Record<number, HandlerEntry> = Object.fromEn
 export const analyticsHandlers: Record<number, HandlerEntry> = {
   ...featureIntroductionHandlers,
   ...authenticatedIgnoredHandlers,
+  [DbAction.UpdateAnalytics]: authed(async ({ player, req }) => {
+    // BeanstalkServerManager.JCHLLCLOFHN sends exactly this Json.NET string. It is deliberately
+    // stored outside the player document because many nested fields are client-owned gameplay
+    // assertions and must never become currency, inventory, or progression authority.
+    const stored = await ingestClientAnalytics(player!.id, req.PlayerAnalytics);
+    return ok(DbAction.UpdateAnalytics, { Stored: stored });
+  }),
 };

@@ -150,9 +150,8 @@ test("all seven dedicated shown actions now require authentication", () => {
   }
 });
 
-test("broad analytics and impression actions acknowledge without mutating gameplay", async () => {
+test("non-durable impression actions acknowledge without mutating gameplay", async () => {
   for (const action of [
-    DbAction.UpdateAnalytics,
     DbAction.MessageWasShown,
     DbAction.SpecialOfferShowed,
   ]) {

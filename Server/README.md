@@ -464,7 +464,8 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   and a real false-to-true write validates progression revision before incrementing it. Action
   `182` was corrected from an unrelated
   top-Squads response to its real `leagueLeaderboardsShown` write. The broad action `179` blob
-  remains ignored because it also contains client-controlled economy and progression counters.
+  remains non-authoritative because it also contains client-controlled economy and progression
+  counters. Optional diagnostic ingestion is described below; it never mutates player state.
 - **Squads (core membership)**: create / unique-name check / public or requested join /
   invite / accept / decline / promote / demote / kick / leadership transfer / guarded
   leave, plus details and full member snapshots. Client ranks exactly mirror
@@ -1706,16 +1707,37 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   so entry/heart/scraps values are environment-tunable and final lootboxes currently use a
   documented scraps fallback rather than fabricated inventory objects.
 
-Unimplemented state-changing `DbAction` values return error code `90`. Post-login broad analytics
-and impression actions `179`, `194`, and `1007` are explicit authenticated no-ops, so their
-untrusted payloads cannot change gameplay and an unauthenticated request cannot receive a false
-success. The narrow handler-less allowlist is reserved for bounded pre-login crash/error telemetry.
+Unimplemented state-changing `DbAction` values return error code `90`. Post-login impression
+actions `194` and `1007` are explicit authenticated no-ops, so their untrusted payloads cannot
+change gameplay and an unauthenticated request cannot receive a false success. Action `179` is
+also authenticated and remains non-authoritative, but can optionally retain its exact recovered
+`PlayerAnalytics` JSON string for short-lived diagnostics. The narrow handler-less allowlist is
+reserved for bounded pre-login crash/error telemetry.
 `handlerlessActionDispositions` records every other intentional dispatcher exception: actions that
 run only inside the atomic RequestBuffer, client response/local-only values, retired contracts,
 disabled debug mutations, the raw configuration route, open non-authoritative telemetry, and the
 enum sentinel. `backendActionCoverage.test.ts` combines those groups with the live handler registry
 and requires every recovered enum value to appear exactly once. Adding or activating an action must
 therefore update its executable disposition instead of silently falling through error `90`.
+
+### Client analytics ingestion
+
+`CLIENT_ANALYTICS_ENABLED=false` is the privacy-safe default because the recovered client exposes
+no separate analytics-consent field. When an operator explicitly enables it, action `179` requires
+the normal gameplay session and exactly the source-defined `PlayerAnalytics` JSON object string.
+The immutable startup policy bounds that UTF-8 value to 256-65,536 bytes, retains it for 1-90 whole
+days, and admits 1-120 submissions per player/minute. Defaults are 32 KiB, 30 days, and 12/minute.
+
+The atomic rate reservation uses an HMAC-hidden domain separate from inbox and Squad Chat quotas,
+so concurrent nodes cannot pass a count-then-insert race or let diagnostics consume social capacity.
+The stored row binds a server UUID, authenticated player ID, exact opaque bytes, SHA-256, byte
+length, receipt time, and expiry; complete row validation rejects field, digest, JSON-shape, clock,
+and retention corruption. A versioned migration installs player/time and TTL indexes. Action `179`
+has no operation UUID, so an uncertain network retry may create a second diagnostic observation;
+guessing deduplication from equal JSON would collapse legitimate equal submissions. Most
+importantly, no gameplay service reads this collection: client Gold, inventory, achievement,
+progression, or match values remain assertions even when preserved for operator analysis. Actions
+`194` and `1007` remain authenticated no-ops until their original retention semantics are recovered.
 
 ### Next
 

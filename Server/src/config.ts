@@ -130,6 +130,18 @@ export const config = {
   firebasePushMaximumRetrySeconds:
     Number(process.env.FIREBASE_PUSH_MAXIMUM_RETRY_SECONDS ?? 3_600),
 
+  // Action 179 contains a broad client-owned PlayerAnalytics snapshot. Collection is opt-in
+  // because the stock client exposes no separate analytics-consent field. Even when enabled,
+  // these rows are diagnostics only: gameplay services never read them as economy authority.
+  clientAnalyticsEnabled: exactEnvironmentBoolean(
+    process.env.CLIENT_ANALYTICS_ENABLED,
+    false,
+    "CLIENT_ANALYTICS_ENABLED",
+  ),
+  clientAnalyticsRetentionDays: Number(process.env.CLIENT_ANALYTICS_RETENTION_DAYS ?? 30),
+  clientAnalyticsMaximumPayloadBytes: Number(process.env.CLIENT_ANALYTICS_MAX_PAYLOAD_BYTES ?? 32_768),
+  clientAnalyticsEventsPerMinute: Number(process.env.CLIENT_ANALYTICS_EVENTS_PER_MINUTE ?? 12),
+
   // Optional signed publication manifest for the stock GetConfigurations raw-text protocol.
   // Empty keeps bundled APK sheets active. The signing key is backend-only and protects the
   // operator file from accidental or unauthorized modification before any values are served.
