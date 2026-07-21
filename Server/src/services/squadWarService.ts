@@ -15,6 +15,7 @@ import {
   type SquadWarSeasonDocument,
 } from "../db";
 import { ApiError, ApiErrorCode } from "../apiErrors";
+import { squadWarSeasonDurationSeconds } from "./competitionSchedulerPolicyService";
 import { buildDatabasePlayer } from "./playerStateService";
 import { progressionForPlayer } from "./playerStateService";
 import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
@@ -278,7 +279,7 @@ function duplicateKey(error: unknown): boolean {
  */
 export async function ensureActiveSquadWarSeason(now = new Date()): Promise<SquadWarSeasonDocument | null> {
   if (!config.squadWarsEnabled) return null;
-  const window = squadWarWindowAt(now, config.squadWarsSeasonDurationSeconds);
+  const window = squadWarWindowAt(now, squadWarSeasonDurationSeconds());
   const existing = await squadWarSeasons().findOne({ seasonId: window.seasonId });
   // A settled row is terminal. It must never be reopened merely because an operator shortened
   // the configured duration and the reconstructed window calculation happens to reuse its ID.
@@ -390,7 +391,7 @@ export async function prepareSquadWarSettlement(now = new Date()): Promise<boole
   // score. `ensureActiveSquadWarSeason` returns null only for a terminal or maintenance window.
   const active = await ensureActiveSquadWarSeason(now);
   if (active) return true;
-  const window = squadWarWindowAt(now, config.squadWarsSeasonDurationSeconds);
+  const window = squadWarWindowAt(now, squadWarSeasonDurationSeconds());
   // Re-read after preparation because another node may have completed allocation between the
   // first check and this classification. A settled row is an intentional no-event window;
   // absence means expired rounds are still being finalized and must be retried.

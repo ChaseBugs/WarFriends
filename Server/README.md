@@ -68,10 +68,12 @@ is drained, and release deletes only the current owner/duration tuple. If a hear
 expiry or any fence loses its compare-and-set, the old worker fails instead of resurrecting itself or
 continuing into the next mutation.
 
-Player League and Squad War polling intervals share an exact 10-through-3,600-second competition
-policy. The same validated interval drives the local scheduler and renewable lease sizing.
-Fractional, non-finite, negative, or out-of-range deployment values fail closed rather than being
-floored or clamped into settlement timing the operator did not configure.
+Player League polling, Squad War polling, and Squad War season duration resolve once during module
+startup as one immutable competition-timing snapshot. Polling values must be exact integers from 10
+through 3,600 seconds, and each same frozen value drives its local scheduler and renewable lease
+sizing. Season duration must be an exact 3,600-through-2,147,483,647-second value shared by every
+window derivation. Fractional, non-finite, negative, or out-of-range deployment values stop startup
+rather than being floored, clamped, or re-read into conflicting settlement authority.
 
 ### Rotate `AUTH_SECRET` without invalidating accounts
 
@@ -461,9 +463,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   exact fields, an ID bound to its UTC start second, a safe window of at least one hour, creation
   inside that window, and an exact active or terminal timestamp shape. Future durable timestamps
   fail on live paths, and settled windows cannot reopen after a configuration-duration change.
-  Calendar derivation itself requires a valid nonnegative client-width Unix time and an exact
-  safe-integer duration of at least one hour whose resulting end remains client-representable;
-  invalid policy cannot be floored/clamped or produce an `swNaN` season.
+  Calendar derivation itself requires a valid nonnegative client-width Unix time and the immutable
+  startup duration from the shared competition-timing snapshot: an exact one-hour-through-signed-
+  client-int value whose resulting end remains client-representable. Every allocation, read, and
+  settlement path uses that same value; invalid policy cannot be floored/clamped, change inside one
+  process, or produce an `swNaN` season.
   Every complete division row is likewise proved before creation, assignment/pointer repair,
   scoring, eligibility mutation, reads, placement, or settlement. Its exact round ID, season
   window, level/division, bounded unique squads and members, safe counters, revision and dates,

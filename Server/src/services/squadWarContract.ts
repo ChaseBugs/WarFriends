@@ -54,6 +54,23 @@ export interface SquadWarPlacement extends SquadWarRankedValue {
   nextLevel: number;
 }
 
+/**
+ * Validate reconstruction-owned season cadence without deriving a date window.
+ *
+ * The value becomes part of every durable season ID and deadline. Keeping this pure validator in
+ * the contract module lets startup policy and direct window tests share exactly the same boundary.
+ */
+export function validatedSquadWarSeasonDurationSeconds(value: number): number {
+  if (
+    !Number.isSafeInteger(value)
+    || value < 3_600
+    || value > MAX_CLIENT_UNIX_SECONDS
+  ) {
+    throw new Error("Squad Wars calendar policy is invalid.");
+  }
+  return value;
+}
+
 function boundedLevel(level: number): number {
   if (!Number.isInteger(level)) return SQUAD_WAR_MIN_LEVEL;
   return Math.min(SQUAD_WAR_MAX_LEVEL, Math.max(SQUAD_WAR_MIN_LEVEL, level));
@@ -154,16 +171,12 @@ export function squadWarWindowAt(now: Date, durationSeconds = 7 * 24 * 60 * 60):
     || !Number.isSafeInteger(now.getTime())
     || now.getTime() < 0
     || now.getTime() > MAX_CLIENT_UNIX_SECONDS * 1_000
-    || !Number.isSafeInteger(durationSeconds)
-    || durationSeconds < 3_600
-    || durationSeconds > MAX_CLIENT_UNIX_SECONDS
   ) {
-    // The duration defines both the persistent season ID and every settlement deadline. Silently
-    // flooring/clamping operator policy would let different nodes derive different authority,
-    // while NaN previously produced a superficially shaped `swNaN` season with invalid dates.
+    // The application time selects the persistent season ID. NaN or an out-of-client-range date
+    // must fail before arithmetic instead of producing a superficially shaped `swNaN` window.
     throw new Error("Squad Wars calendar policy is invalid.");
   }
-  const duration = durationSeconds;
+  const duration = validatedSquadWarSeasonDurationSeconds(durationSeconds);
   const mondayEpochSeconds = Date.UTC(2020, 0, 6) / 1_000;
   const nowSeconds = Math.floor(now.getTime() / 1_000);
   const startsAtSeconds = mondayEpochSeconds
