@@ -162,6 +162,8 @@ never contain paths, actions, players, addresses, tokens, or arbitrary WebSocket
 response also includes a generated `X-Request-ID`; request/response/error boundary logs include the
 same ID while logging only the query-free request path. Async-local context automatically adds that
 ID to downstream authentication, database, economy, and gameplay logger helpers across awaited work.
+Firebase and Google Play HTTP requests forward only this generated UUID as `X-Request-ID`; background
+provider calls generate a fresh UUID, while malformed manually installed contexts are never sent.
 Deployable Prometheus scrape/rule examples and a Grafana overview live under `ops/`. Alerts cover
 target loss, sustained 5xx/latency/rate-limit pressure, explicitly required Redis loss, repeated
 restarts, high concurrency, sustained meaningful-volume Firebase retry pressure, and repeated

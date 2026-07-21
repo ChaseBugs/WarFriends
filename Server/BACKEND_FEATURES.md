@@ -95,6 +95,16 @@ attempt, while Squad Event type-11 identities return through the enclosing PvP s
 reward notices publish sequentially after commit, reload the complete MongoDB row on the receiving
 node, and remain unclaimed until the existing action-91 transaction succeeds.
 
+### Outbound provider correlation — Implemented
+
+Firebase HTTP v1 and all three Google Play Developer API request families now send the generated
+`X-Request-ID` already used by the authenticated HTTP boundary and structured logs. Foreground
+provider calls reuse only a canonical UUID from `AsyncLocalStorage`; background schedulers generate
+a fresh UUID per external call, and a malformed manually installed context is replaced rather than
+forwarded. No player ID, inbox identity, purchase token, URL, or arbitrary caller text enters the
+header. Any future external service must adopt this same bounded helper before the Operations row's
+remaining general propagation item can be retired completely.
+
 The documented offline PvP Win/Loss WarBucks policy is immutable module-startup authority. Both
 values must be exact nonnegative integers whose base grant and independently truncated recovered
 1.5x VIP grant fit the client's signed-`int` reward fields; the largest supported base is

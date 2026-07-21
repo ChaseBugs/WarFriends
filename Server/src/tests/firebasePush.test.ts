@@ -10,6 +10,7 @@ import {
   invalidFirebaseTokenRetirement,
 } from "../services/firebasePushService";
 import { exactFirebasePushPolicy } from "../services/firebasePushPolicyService";
+import { runWithRequestContext } from "../services/requestContextService";
 
 const ALL_ENABLED: NotificationSettingsDTO = {
   challenge: true,
@@ -78,19 +79,21 @@ test("Firebase deployment policy is exact, bounded, and fail-closed when enabled
   }
 });
 
-test("Firebase HTTP v1 request contains only recovered data and transport scheduling", () => {
-  const request = firebaseHttpV1RequestFor(
+test("Firebase HTTP v1 request contains only recovered data, scheduling, and correlation", () => {
+  const requestId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+  const request = runWithRequestContext(requestId, () => firebaseHttpV1RequestFor(
     { token: "device-token", data: { id: "90" } },
     {
       enabled: true,
       projectId: "warfriends-offline",
       requestTimeoutMilliseconds: 5_000,
     },
-  );
+  ));
   assert.deepEqual(request, {
     method: "POST",
     url: "https://fcm.googleapis.com/v1/projects/warfriends-offline/messages:send",
     timeout: 5_000,
+    headers: { "X-Request-ID": requestId },
     data: {
       message: {
         token: "device-token",

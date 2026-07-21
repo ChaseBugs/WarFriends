@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { currentRequestId, runWithRequestContext } from "../services/requestContextService";
+import {
+  currentRequestId,
+  outboundRequestHeaders,
+  runWithRequestContext,
+} from "../services/requestContextService";
 
 test("request correlation survives asynchronous downstream work and remains isolated", async () => {
   assert.equal(currentRequestId(), undefined);
@@ -15,4 +19,17 @@ test("request correlation survives asynchronous downstream work and remains isol
     }),
   ]);
   assert.equal(currentRequestId(), undefined);
+});
+
+test("outbound provider headers forward only generated UUID correlation identity", () => {
+  const fallback = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  const inbound = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+  assert.deepEqual(outboundRequestHeaders(fallback), { "X-Request-ID": fallback });
+  runWithRequestContext(inbound, () => {
+    assert.deepEqual(outboundRequestHeaders(fallback), { "X-Request-ID": inbound });
+  });
+  runWithRequestContext("player-controlled-text", () => {
+    assert.deepEqual(outboundRequestHeaders(fallback), { "X-Request-ID": fallback });
+  });
+  assert.throws(() => outboundRequestHeaders("not-a-uuid"), /outbound request ID is invalid/);
 });

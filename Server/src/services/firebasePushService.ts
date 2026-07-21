@@ -8,6 +8,7 @@ import { getLiveInboxFanout } from "./inboxFanoutService";
 import { validatedPlayerAccountEnvelope } from "./playerProfileMirrorAuthorityService";
 import { settingsForPlayer } from "./playerSettingsService";
 import { firebasePushPolicy, type FirebasePushPolicy } from "./firebasePushPolicyService";
+import { outboundRequestHeaders } from "./requestContextService";
 
 const FIREBASE_MESSAGING_SCOPE = "https://www.googleapis.com/auth/firebase.messaging";
 
@@ -79,6 +80,7 @@ export function firebaseHttpV1RequestFor(message: FirebaseDataPush, policy: Fire
     method: "POST" as const,
     url: `https://fcm.googleapis.com/v1/projects/${encodeURIComponent(policy.projectId)}/messages:send`,
     timeout: policy.requestTimeoutMilliseconds,
+    headers: outboundRequestHeaders(),
     data: {
       message: {
         token: message.token,

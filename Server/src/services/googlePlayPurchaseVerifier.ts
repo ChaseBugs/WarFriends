@@ -1,4 +1,5 @@
 import { GoogleAuth } from "google-auth-library";
+import { outboundRequestHeaders } from "./requestContextService";
 import { googlePlayStoreProductId, type InAppEntitlement } from "./inAppCatalogService";
 
 const androidPublisherScope = "https://www.googleapis.com/auth/androidpublisher";
@@ -324,6 +325,7 @@ export class GooglePlayDeveloperApiVerifier implements
       const response = await client.request<GoogleVoidedPurchasesResponse>({
         method: "GET",
         url: `${publisherRoot}/${packageName}/purchases/voidedpurchases?${query.toString()}`,
+        headers: outboundRequestHeaders(),
       });
       return parseGoogleVoidedPurchasesPage(response.data);
     } catch (error) {
@@ -343,6 +345,7 @@ export class GooglePlayDeveloperApiVerifier implements
       const response = await client.request<GoogleSubscriptionPurchaseV2Response>({
         method: "GET",
         url: `${publisherRoot}/${packageName}/purchases/subscriptionsv2/tokens/${token}`,
+        headers: outboundRequestHeaders(),
       });
       return parseGoogleSubscriptionStatus(response.data, input, now);
     } catch (error) {
@@ -382,6 +385,7 @@ export class GooglePlayDeveloperApiVerifier implements
       const response = await client.request<GoogleProductPurchaseResponse>({
         method: "GET",
         url: `${publisherRoot}/${packageName}/purchases/products/${storeProductId}/tokens/${token}`,
+        headers: outboundRequestHeaders(),
       });
       return parseGoogleProductPurchase(response.data, input);
     } catch (error) {
