@@ -7,6 +7,7 @@ import { integerNumberAttribute as numberAttribute } from "./dynamoNumberAttribu
 import { validatedPlayerProfileMirrors } from "./playerProfileMirrorAuthorityService";
 import { buildDatabaseSquad } from "./squadWireService";
 import { serializeWarArenaData } from "./warArenaContract";
+import { validatedSquadDocument } from "./squadAuthorityService";
 
 // MongoDB is authoritative; Redis is only an opportunistic rank cache. Wire conversion is
 // performed here because the experience leaderboard uses FHIPGDADNFG, which has different
@@ -94,6 +95,8 @@ export async function playerRank(playerId: string): Promise<number> {
 
 export async function topSquads(limit = 100): Promise<Record<string, unknown>[]> {
   const docs = await squads().find().sort({ experience: -1 }).limit(limit).toArray();
+  const now = new Date();
+  docs.forEach((squad) => validatedSquadDocument(squad, now));
   return docs.map(buildDatabaseSquad);
 }
 

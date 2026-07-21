@@ -1129,7 +1129,16 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   now persists moderated Squad Chat messages, returns recovered-size history, suppresses nonce
   retries, and fans out only to authenticated subscribers still present in the current roster.
   Multi-node delivery uses non-authoritative Redis notices followed by an authoritative MongoDB
-  message/current-roster reload on each receiving node.
+   message/current-roster reload on each receiving node.
+  All squad consumers now share one complete durable-document validator before using roster,
+  leadership, admission, chat, card-pool, event, PvP reward, leaderboard, or Squad War authority.
+  The validator requires exact fields; bounded normalized names, descriptions, emblems, and player
+  identities; source-valid ranks and join policy; safe nonnegative counters; ordered timestamps;
+  unique members and pending identities; exactly one Leader matching the founder; capacity-consistent
+  membership; bounded request/invitation queues; and no pending identity already in the roster.
+  Mutations validate the projected successor before writing. MongoDB's implicit `_id` is treated as
+  read-only storage metadata and removed before `$set`, so settings and roster replacements cannot
+  fail by attempting to update MongoDB's immutable identifier.
 - **War Arena (persistent core)**: login supplies the recovered Dynamo-style
   `WarArenaConfig`, while `EnterArena`, action-64/65 starts, Arena `GameEnded`, heart/life
   actions, scraps claims, rollover, and `GetArenaLeaderboards` use the exact `WarArenaData`

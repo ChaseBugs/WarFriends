@@ -24,6 +24,11 @@ import {
   squadCreationWarBucksPrice,
   validatedSquadCreationsCount,
 } from "./squadCreationAuthorityService";
+import {
+  requestedSquadEmblem,
+  SQUAD_MAX_PENDING_ADMISSIONS,
+  validatedSquadDocument,
+} from "./squadAuthorityService";
 
 export {
   SQUAD_CREATE_BASE_WARBUCKS_COST,
@@ -96,13 +101,20 @@ export async function isNameAvailable(name: string): Promise<boolean> {
 
 export async function getByName(name: string): Promise<SquadDocument | null> {
   const normalized = cleanName(name);
-  return normalized ? squads().findOne({ name: normalized }) : null;
+  if (!normalized) return null;
+  const squad = await squads().findOne({ name: normalized });
+  return squad ? validatedSquadDocument(squad) : null;
 }
 
-async function persist(squad: SquadDTO): Promise<void> {
+async function persist(squad: SquadDocument): Promise<void> {
   // Match by the immutable squad name and require an existing document. Silently upserting
   // here would allow a delayed mutation to recreate a squad after its last member left.
-  const result = await squads().updateOne({ name: squad.name }, { $set: { ...squad, updatedAt: new Date() } });
+  const now = new Date();
+  const successor = validatedSquadDocument({ ...squad, updatedAt: now }, now);
+  // MongoDB supplies `_id` even though the public DTO does not declare it. Never echo that field
+  // through `$set`: it is immutable and would make otherwise valid settings/request edits fail.
+  const { _id: _mongoId, ...writable } = successor as SquadDocument & { _id?: unknown };
+  const result = await squads().updateOne({ name: squad.name }, { $set: writable });
   if (result.matchedCount !== 1) {
     throw new ApiError(ApiErrorCode.SquadNoLongerExists, "Squad no longer exists.");
   }
@@ -167,7 +179,7 @@ export async function createSquad(
   options: CreateSquadOptions = {},
 ): Promise<CreateSquadResult> {
   const name = cleanName(requestedName);
-  if (name.length < 3 || name.length > 24) {
+  if (name.length < 3 || name.length > 24 || /\p{Cc}/u.test(name)) {
     throw new ApiError(ApiErrorCode.SquadNotFound, "Squad name must be between 3 and 24 characters.");
   }
   requireModeratedText(name, "Squad name");
@@ -190,9 +202,14 @@ export async function createSquad(
       // All initial values are derived or bounded on the server. In particular, the request
       // cannot choose its founder, inject members, or create an out-of-range join policy.
       const squad = newSquad(name, founderId);
-      const description = options.description?.trim().slice(0, 250) ?? "";
-      squad.description = description ? requireModeratedText(description, "Squad description") : "";
-      squad.emblem = options.emblem ?? {};
+      const description = options.description?.trim().replace(/\s+/gu, " ").slice(0, 250) ?? "";
+      if (/\p{Cc}/u.test(description)) {
+        throw new ApiError(ApiErrorCode.UnknownAction, "Squad description contains unsupported control characters.");
+      }
+      squad.description = description
+        ? requireModeratedText(description, "Squad description")
+        : "";
+      squad.emblem = requestedSquadEmblem(options.emblem ?? {});
       squad.joinPolicy = options.joinPolicy === 1 || options.joinPolicy === 2 ? options.joinPolicy : 0;
       squad.requiredMedals = Math.max(0, Math.floor(options.requiredMedals ?? 0));
       squad.members.push({
@@ -205,9 +222,10 @@ export async function createSquad(
       });
 
       const now = new Date();
+      const document = validatedSquadDocument({ ...squad, createdAt: now, updatedAt: now }, now);
       // The unique index is the final arbiter for simultaneous create requests. The separate
       // availability action is UI feedback only and is never trusted as a reservation.
-      await squads().insertOne({ ...squad, createdAt: now, updatedAt: now } as SquadDocument, { session });
+      await squads().insertOne(document, { session });
 
       const update = await players().updateOne(
         {
@@ -355,10 +373,12 @@ async function joinSquadTransaction(playerId: string, requestedName: string, app
     ]);
     if (!squad) throw new ApiError(ApiErrorCode.SquadNoLongerExists, "Squad not found.");
     if (!player) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
+    validatedSquadDocument(squad);
     validatedPlayerAccountEnvelope(player);
 
     const plan = planSquadJoin(squad, player, approvedBy);
     const now = new Date();
+    validatedSquadDocument({ ...plan.squad, createdAt: squad.createdAt, updatedAt: now }, now);
     if (plan.rosterChanged || plan.admissionStateChanged) {
       const squadUpdate = await squads().updateOne(
         { name: squad.name, updatedAt: squad.updatedAt },
@@ -430,6 +450,9 @@ export async function requestToJoin(playerId: string, name: string): Promise<Squ
   // A player has at most one pending request per squad. Repeated taps are idempotent and do
   // not grow the embedded request list or reset its original creation time.
   if (!squad.joinRequests.some((request) => request.playerId === playerId)) {
+    if (squad.joinRequests.length >= SQUAD_MAX_PENDING_ADMISSIONS) {
+      throw new ApiError(ApiErrorCode.UnknownAction, "Squad join-request queue is full.");
+    }
     squad.joinRequests.push({ playerId, name: player.player.accountName, createdAt: Date.now() });
     await persist(squad);
   }
@@ -469,7 +492,12 @@ export async function invitePlayer(actorId: string, targetId: string, name: stri
   }
   if (!(await findById(targetId))) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
   squad.invitedPlayerIds ??= [];
-  if (!squad.invitedPlayerIds.includes(targetId)) squad.invitedPlayerIds.push(targetId);
+  if (!squad.invitedPlayerIds.includes(targetId)) {
+    if (squad.invitedPlayerIds.length >= SQUAD_MAX_PENDING_ADMISSIONS) {
+      throw new ApiError(ApiErrorCode.UnknownAction, "Squad invitation queue is full.");
+    }
+    squad.invitedPlayerIds.push(targetId);
+  }
   await persist(squad);
   return squad;
 }
@@ -568,6 +596,7 @@ export async function leaveSquad(playerId: string, requestedName: string): Promi
     }
     const name = cleanName(requestedName) || mirrorName;
     const squad = name ? await squads().findOne({ name }, { session }) : null;
+    if (squad) validatedSquadDocument(squad);
     const plan = planSquadLeave(squad, player, name);
     const now = new Date();
 
@@ -580,6 +609,7 @@ export async function leaveSquad(playerId: string, requestedName: string): Promi
         throw new ApiError(ApiErrorCode.InternalServerError, "Squad departure changed concurrently.");
       }
     } else if (plan.squadWrite === "update" && squad && plan.squad) {
+      validatedSquadDocument({ ...plan.squad, createdAt: squad.createdAt, updatedAt: now }, now);
       const updated = await squads().updateOne(
         { name: squad.name, updatedAt: squad.updatedAt },
         { $set: { members: plan.squad.members, updatedAt: now } },
@@ -735,6 +765,7 @@ async function changeMemberRankTransaction(
       : ApiErrorCode.DemotePlayerError;
     if (!squad) throw new ApiError(failureCode, "Squad not found.");
     if (!targetPlayer) throw new ApiError(failureCode, "Squad member not found.");
+    validatedSquadDocument(squad);
     validatedPlayerAccountEnvelope(targetPlayer);
     const plan = planSquadRankChange(squad, actorId, targetId, direction);
     try {
@@ -744,6 +775,7 @@ async function changeMemberRankTransaction(
       throw error;
     }
     const now = new Date();
+    validatedSquadDocument({ ...plan.squad, createdAt: squad.createdAt, updatedAt: now }, now);
 
     const squadUpdate = await squads().updateOne(
       { name: squad.name, updatedAt: squad.updatedAt },
@@ -841,6 +873,7 @@ export async function transferLeadership(actorId: string, targetId: string, requ
     // before the first cross-document write so a partial/damaged participant cannot inherit authority.
     validatedPlayerAccountEnvelope(actorPlayer);
     validatedPlayerAccountEnvelope(targetPlayer);
+    validatedSquadDocument(squad);
     const plan = planLeadershipTransfer(squad, actorId, targetId);
     try {
       requireCompatiblePlayerSquad(actorPlayer, squad.name);
@@ -850,6 +883,7 @@ export async function transferLeadership(actorId: string, targetId: string, requ
       throw error;
     }
     const now = new Date();
+    validatedSquadDocument({ ...plan.squad, createdAt: squad.createdAt, updatedAt: now }, now);
 
     const squadUpdate = await squads().updateOne(
       { name: squad.name, updatedAt: squad.updatedAt },
@@ -932,6 +966,7 @@ export async function kickMember(actorId: string, targetId: string, requestedNam
     if (!squad) throw new ApiError(ApiErrorCode.KickPlayerError, "Squad not found.");
     if (!actorPlayer) throw new ApiError(ApiErrorCode.KickPlayerError, "Squad manager not found.");
     if (!targetPlayer) throw new ApiError(ApiErrorCode.KickPlayerError, "Squad member not found.");
+    validatedSquadDocument(squad);
     validatedPlayerAccountEnvelope(actorPlayer);
     validatedPlayerAccountEnvelope(targetPlayer);
     const plan = planSquadKick(squad, actorId, targetId);
@@ -952,6 +987,7 @@ export async function kickMember(actorId: string, targetId: string, requestedNam
       : currentProgression;
     const { dogTags: _legacyDogTags, ...canonicalState } = successor;
     const now = new Date();
+    validatedSquadDocument({ ...plan.squad, createdAt: squad.createdAt, updatedAt: now }, now);
 
     const squadUpdate = await squads().updateOne(
       { name: squad.name, updatedAt: squad.updatedAt },
@@ -1016,18 +1052,23 @@ export async function updateSquad(actorId: string, name: string, values: UpdateS
   // Apply only fields explicitly present in the request. This patch behavior prevents an
   // emblem-only update from resetting the description, join policy, or medal requirement.
   if (values.description !== undefined) {
-    const description = values.description.trim().slice(0, 250);
+    const description = values.description.trim().replace(/\s+/gu, " ").slice(0, 250);
+    if (/\p{Cc}/u.test(description)) {
+      throw new ApiError(ApiErrorCode.UnknownAction, "Squad description contains unsupported control characters.");
+    }
     squad.description = description ? requireModeratedText(description, "Squad description") : "";
   }
   if (values.joinPolicy === 0 || values.joinPolicy === 1 || values.joinPolicy === 2) squad.joinPolicy = values.joinPolicy;
   if (values.requiredMedals !== undefined) squad.requiredMedals = Math.max(0, Math.floor(values.requiredMedals));
-  if (values.emblem !== undefined) squad.emblem = values.emblem;
+  if (values.emblem !== undefined) squad.emblem = requestedSquadEmblem(values.emblem);
   await persist(squad);
   return squad;
 }
 
 export async function listByExperience(limit = 50): Promise<SquadDocument[]> {
-  return squads().find().sort({ experience: -1 }).limit(Math.min(Math.max(limit, 1), 100)).toArray();
+  const rows = await squads().find().sort({ experience: -1 }).limit(Math.min(Math.max(limit, 1), 100)).toArray();
+  const now = new Date();
+  return rows.map((row) => validatedSquadDocument(row, now));
 }
 
 export async function getSquadMemberPlayers(name: string) {

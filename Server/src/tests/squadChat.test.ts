@@ -40,14 +40,24 @@ function memberDocuments(): { player: PlayerDocument; squad: SquadDocument } {
   };
   const squad: SquadDocument = {
     ...newSquad("Alpha Squad", "leader-1"),
-    members: [{
-      playerId: player.id,
-      name: snapshot.accountName,
-      rank: SquadRank.Veteran,
-      squadPoints: 0,
-      joinedAt: NOW / 1_000,
-      lastSeenChatTimestamp: 0,
-    }],
+    members: [
+      {
+        playerId: "leader-1",
+        name: "Squad Leader",
+        rank: SquadRank.Leader,
+        squadPoints: 0,
+        joinedAt: NOW,
+        lastSeenChatTimestamp: 0,
+      },
+      {
+        playerId: player.id,
+        name: snapshot.accountName,
+        rank: SquadRank.Veteran,
+        squadPoints: 0,
+        joinedAt: NOW,
+        lastSeenChatTimestamp: 0,
+      },
+    ],
     createdAt: new Date(NOW),
     updatedAt: new Date(NOW),
   };
@@ -84,13 +94,17 @@ test("squad chat membership requires matching player mirrors, roster, and rank",
     (error: unknown) => (error as { code?: number }).code === ApiErrorCode.NotSquadMember,
   );
   assert.throws(
-    () => resolveSquadChatMembership(player, { ...squad, members: [] }),
+    () => resolveSquadChatMembership(player, {
+      ...squad,
+      members: squad.members.filter((member) => member.playerId !== player.id),
+    }),
     (error: unknown) => (error as { code?: number }).code === ApiErrorCode.NotSquadMember,
   );
   assert.throws(
     () => resolveSquadChatMembership(player, {
       ...squad,
-      members: squad.members.map((member) => ({ ...member, rank: SquadRank.Member })),
+      members: squad.members.map((member) =>
+        member.playerId === player.id ? { ...member, rank: SquadRank.Member } : member),
     }),
     (error: unknown) => (error as { code?: number }).code === ApiErrorCode.NotSquadMember,
   );

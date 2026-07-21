@@ -27,6 +27,7 @@ import { ApiError } from "../apiErrors";
 import { progressionForPlayer } from "./playerStateService";
 import { validatedPlayerAccountEnvelope } from "./playerProfileMirrorAuthorityService";
 import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
+import { validatedSquadDocument } from "./squadAuthorityService";
 import { applyLevelExperienceState } from "./levelProgressionService";
 import { calculateArmyPower } from "./armyPowerService";
 import {
@@ -808,9 +809,10 @@ async function settlePlayerCore(
   const activeSquad = player.player.squadName
     ? await squads().findOne(
       { name: player.player.squadName, "members.playerId": playerId },
-      { session, projection: { name: 1 } },
+      { session },
     )
     : null;
+  if (activeSquad) validatedSquadDocument(activeSquad, settledAt);
   const squadName = activeSquad?.name ?? "";
   const squadPoints = squadName ? leagueReward.squadPoints : 0;
   const consumed = consumePvpUsedCardsState(initialState, usedCards);
@@ -947,6 +949,18 @@ async function settlePlayerCore(
     // The squad leaderboard total and embedded member contribution are not a best-effort cache:
     // both are client-visible economy/progression state. Updating them inside the match
     // transaction guarantees equality with the player's mirrored lifetime squad points.
+    const rewardedMember = activeSquad!.members.find((member) => member.playerId === playerId)!;
+    // Prove all three incremented mirrors before MongoDB applies them. A corrupt or exhausted
+    // squad counter must abort the same transaction as player rewards and the terminal match.
+    validatedSquadDocument({
+      ...activeSquad!,
+      experience: activeSquad!.experience + squadPoints,
+      squadPoints: activeSquad!.squadPoints + squadPoints,
+      members: activeSquad!.members.map((member) => member.playerId === playerId
+        ? { ...member, squadPoints: rewardedMember.squadPoints + squadPoints }
+        : member),
+      updatedAt: settledAt,
+    }, settledAt);
     const squadUpdate = await squads().updateOne(
       { name: squadName, "members.playerId": playerId },
       {

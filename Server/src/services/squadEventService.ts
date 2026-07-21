@@ -15,6 +15,7 @@ import { PLAYER_LEVELS, playerLevelDefinition } from "./levelProgressionService"
 import type { MessageDoc } from "./socialService";
 import { decimalNumberAttribute } from "./dynamoNumberAttributeService";
 import { validatedInboxRewardMessage } from "./inboxRewardAuthorityService";
+import { validatedSquadDocument } from "./squadAuthorityService";
 
 const MAX_UNIX_SECONDS = 2_147_483_647;
 const MAX_SEASONS = 128;
@@ -393,6 +394,7 @@ export async function joinSquadEventForSeason(
 ): Promise<SquadEventProgressDocument> {
   const squadId = player.player.squadName;
   const squad = squadId ? await squads().findOne({ name: squadId }) : null;
+  if (squad) validatedSquadDocument(squad, now);
   if (!squad || !squad.members.some((member) => member.playerId === player.id)) {
     throw new ApiError(ApiErrorCode.NotSquadMember, "Player is not a member of a squad.");
   }
@@ -531,6 +533,7 @@ export async function recordConfirmedPvpSquadEventProgress(
   if (!squad) {
     return "not_member";
   }
+  validatedSquadDocument(squad, now);
   const current = await squadEventProgress().findOne({ squadId, eventId: season.id }, { session });
   if (!current) return "not_joined";
   // `applyConfirmedPvpSquadEventProgress` verifies both the immutable configuration hash and the

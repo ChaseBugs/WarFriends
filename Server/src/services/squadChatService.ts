@@ -12,6 +12,7 @@ import {
 } from "../db";
 import { requireModeratedText } from "./textModerationService";
 import { validatedPlayerProfileLookup } from "./playerProfileMirrorAuthorityService";
+import { validatedSquadDocument } from "./squadAuthorityService";
 
 export interface SquadChatSendInput {
   clientMessageId: string;
@@ -145,6 +146,7 @@ export function resolveSquadChatMembership(
   squad: SquadDocument | null,
 ): SquadChatMembership {
   if (!player) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
+  if (squad) validatedSquadDocument(squad);
   const topLevelSquad = player.squadName?.trim() ?? "";
   const snapshotSquad = player.player.squadName?.trim() ?? "";
   if (!topLevelSquad || topLevelSquad !== snapshotSquad || !squad || squad.name !== topLevelSquad) {
@@ -313,6 +315,7 @@ export async function getSquadChatFanout(messageId: string): Promise<{
   validatedSquadChatMessage(document, now);
   const squad = await squads().findOne({ name: document.squadId });
   if (!squad) return null;
+  validatedSquadDocument(squad, now);
   return {
     message: toSquadChatWireMessage(document),
     memberPlayerIds: squad.members.map((member) => member.playerId),

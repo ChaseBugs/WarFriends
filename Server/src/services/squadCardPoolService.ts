@@ -24,6 +24,7 @@ import { validatedPlayerAccountEnvelope } from "./playerProfileMirrorAuthoritySe
 import { itemInventoryStateFor, weaponDefinitionFor } from "./itemInventoryService";
 import { visualInventoryStateFor } from "./visualInventoryService";
 import { validatedCardInventoryTime } from "./cardInventoryAuthorityService";
+import { validatedSquadDocument } from "./squadAuthorityService";
 
 const MAX_CONCURRENCY_RETRIES = 4;
 const MAX_CHANGE_ENTRIES = 128;
@@ -560,6 +561,7 @@ export async function depositSquadCards(
       ? await squads().findOne({ name: player.player.squadName })
       : null;
     if (!squad) throw new ApiError(ApiErrorCode.NotSquadMember, "Player is not in a squad.");
+    validatedSquadDocument(squad);
     requireSquadMembership(player, squad);
     const currentProgression = progressionForPlayer(player);
     const result = applyDepositCardChangesState(
@@ -630,6 +632,7 @@ export async function withdrawSquadCard(
     }
     const squad = await squads().findOne({ name: recipient.player.squadName }, { session });
     if (!squad) throw new ApiError(ApiErrorCode.NotSquadMember, "Squad was not found.");
+    validatedSquadDocument(squad);
     requireSquadMembership(recipient, squad);
     requireSquadMembership(donor, squad);
 

@@ -1,6 +1,7 @@
 import { players, squads, type PlayerDocument } from "../db";
 import type { RequestEnvelope } from "../dtos";
 import { buildDatabasePlayer } from "./playerStateService";
+import { validatedSquadDocument } from "./squadAuthorityService";
 
 const MAX_FACEBOOK_FRIENDS_PER_REQUEST = 500;
 
@@ -88,6 +89,7 @@ export async function getFriendsInfo(
   const squad = squadName
     ? await squads().findOne({ name: squadName, "members.playerId": actor.id })
     : null;
+  if (squad) validatedSquadDocument(squad);
   const squadPlayerIds = squad?.members
     .map((member) => member.playerId)
     .filter((playerId) => playerId !== actor.id) ?? [];

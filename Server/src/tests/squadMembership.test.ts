@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { ApiErrorCode } from "../apiErrors";
 import { AccountType, SquadRank } from "../constants";
-import type { PlayerDocument } from "../db";
+import type { PlayerDocument, SquadDocument } from "../db";
 import { newPlayer, newSquad, type SquadDTO } from "../dtos";
 import { createInitialProgression } from "../services/playerStateService";
 import { reclaimDepositedCardsForDepartureState } from "../services/squadCardPoolService";
@@ -13,6 +13,10 @@ import {
   planSquadLeave,
   planSquadRankChange,
 } from "../services/squadService";
+import {
+  validatedSquadDocument,
+  validatedSquadEmblem,
+} from "../services/squadAuthorityService";
 
 const NOW = Date.UTC(2026, 6, 20, 12, 0, 0);
 
@@ -48,6 +52,49 @@ function squadDocument(joinPolicy = 0): SquadDTO {
   });
   return squad;
 }
+
+function durableSquad(overrides: Partial<SquadDocument> = {}): SquadDocument {
+  return {
+    ...squadDocument(),
+    createdAt: new Date(NOW),
+    updatedAt: new Date(NOW),
+    ...overrides,
+  };
+}
+
+test("complete squad authority binds roster leadership, admission identities, counters, and clocks", () => {
+  const now = new Date(NOW + 1_000);
+  const squad = durableSquad();
+  assert.equal(validatedSquadDocument(squad, now), squad);
+  assert.deepEqual(validatedSquadEmblem({ id: "menu-squad-1" }), { id: "menu-squad-1" });
+
+  assert.throws(
+    () => validatedSquadDocument({
+      ...squad,
+      members: [...squad.members, { ...squad.members[0]!, playerId: "leader-2" }],
+    }, now),
+    /Stored squad authority is invalid/u,
+  );
+  assert.throws(
+    () => validatedSquadDocument({ ...squad, squadPoints: Number.NaN }, now),
+    /Stored squad authority is invalid/u,
+  );
+  assert.throws(
+    () => validatedSquadDocument({
+      ...squad,
+      joinRequests: [{ playerId: "leader", name: "Player-leader", createdAt: NOW }],
+    }, now),
+    /Stored squad authority is invalid/u,
+  );
+  assert.throws(
+    () => validatedSquadDocument({ ...squad, updatedAt: new Date(now.getTime() + 1) }, now),
+    /Stored squad authority is invalid/u,
+  );
+  assert.throws(
+    () => validatedSquadEmblem({ id: "menu-squad-1", forged: true }),
+    /Stored squad authority is invalid/u,
+  );
+});
 
 test("squad failures use the exact recovered IJEAJGCCHEF numeric contract", () => {
   assert.equal(ApiErrorCode.SquadIsFull, 3801);

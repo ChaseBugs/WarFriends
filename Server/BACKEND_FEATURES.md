@@ -115,6 +115,15 @@ re-read from the squad roster in that transaction instead of trusting the profil
 removes the former best-effort post-commit window in which a crash could permanently lose progress;
 finished-match retries return the immutable receipt without applying any counter again.
 
+The complete durable squad document is now one shared authority boundary across membership,
+leadership, admission, chat, card-pool transfers, Squad Events, confirmed-PvP squad rewards,
+leaderboards, and Squad Wars. It requires exact fields, bounded normalized identities and text,
+source-valid ranks and join policy, safe nonnegative counters, ordered timestamps, unique roster and
+pending identities, exactly one founder Leader, capacity-consistent membership, bounded admission
+queues, and no pending identity already present in the roster. Every reviewed replacement validates
+its projected successor before the write. MongoDB's implicit `_id` is accepted only while reading and stripped
+before `$set`, preventing valid settings and roster updates from failing on the immutable field.
+
 ### Current economy-safety increment
 
 The shared persisted-progression read boundary and mutation-result boundary validate all five core

@@ -31,6 +31,7 @@ import {
   squadWarWindowAt,
 } from "./squadWarContract";
 import { integerNumberAttribute } from "./dynamoNumberAttributeService";
+import { validatedSquadDocument } from "./squadAuthorityService";
 
 const MAX_UNIX_SECONDS = 2_147_483_647;
 const SQUAD_WAR_SEASON_KEYS = new Set([
@@ -308,6 +309,7 @@ export async function ensureActiveSquadWarSeason(now = new Date()): Promise<Squa
         createdAt: now,
       }, now);
       const allSquads = await squads().find({}, { session }).sort({ squadWarLevel: 1, squadPoints: -1, name: 1 }).toArray();
+      allSquads.forEach((squad) => validatedSquadDocument(squad, now));
       const rounds: SquadWarRoundDocument[] = [];
       for (let level = SQUAD_WAR_MIN_LEVEL; level <= SQUAD_WAR_MAX_LEVEL; level += 1) {
         const atLevel = allSquads.filter((squad) => boundedLevel(squad.squadWarLevel) === level);
@@ -331,6 +333,14 @@ export async function ensureActiveSquadWarSeason(now = new Date()): Promise<Squa
           validatedSquadWarRound(round, season, now);
           rounds.push(round);
           for (const squad of members) {
+            validatedSquadDocument({
+              ...squad,
+              squadWarLevel: level,
+              squadWarRoundId: roundId,
+              leagueId: roundId,
+              leagueDivision: window.seasonId,
+              updatedAt: now,
+            }, now);
             await squads().updateOne(
               { name: squad.name },
               {
@@ -389,6 +399,7 @@ export async function ensureSquadWarAssignment(squadId: string, now = new Date()
   return withMongoTransaction(async (session) => {
     const squad = await squads().findOne({ name: squadId }, { session });
     if (!squad) throw new ApiError(ApiErrorCode.SquadNoLongerExists, "Squad not found.");
+    validatedSquadDocument(squad, now);
     // The round entry is authoritative, while squadWarRoundId is a denormalized client pointer.
     // Search by entry first so a stale or missing pointer is repaired without inserting the same
     // squad into another division. More than one entry is ambiguous corruption and must not be
@@ -411,6 +422,14 @@ export async function ensureSquadWarAssignment(squadId: string, now = new Date()
         || squad.leagueId !== assigned.roundId
         || squad.leagueDivision !== season.seasonId;
       if (pointerNeedsRepair) {
+        validatedSquadDocument({
+          ...squad,
+          squadWarLevel: assigned.level,
+          squadWarRoundId: assigned.roundId,
+          leagueId: assigned.roundId,
+          leagueDivision: season.seasonId,
+          updatedAt: now,
+        }, now);
         const repair = await squads().updateOne(
           { name: squadId },
           {
@@ -469,6 +488,14 @@ export async function ensureSquadWarAssignment(squadId: string, now = new Date()
       await squadWarRounds().insertOne(round, { session });
     }
     if (!round) throw new Error(`Squad Wars assignment did not create a round for ${squadId}.`);
+    validatedSquadDocument({
+      ...squad,
+      squadWarLevel: SQUAD_WAR_MIN_LEVEL,
+      squadWarRoundId: round.roundId,
+      leagueId: round.roundId,
+      leagueDivision: season.seasonId,
+      updatedAt: now,
+    }, now);
     const assignment = await squads().updateOne(
       { name: squadId },
       {
@@ -505,8 +532,8 @@ export async function prepareSquadWarParticipantAssignments(
   if (ids.length === 0) return;
   const participantSquads = await squads().find(
     { "members.playerId": { $in: ids } },
-    { projection: { name: 1 } },
   ).toArray();
+  participantSquads.forEach((squad) => validatedSquadDocument(squad, now));
   // At most two squads normally participate, so sequential assignment is inexpensive and avoids
   // manufacturing avoidable revision conflicts when both late squads enter the same division.
   for (const squadId of [...new Set(participantSquads.map((squad) => squad.name))].sort()) {
@@ -565,6 +592,7 @@ export async function getSquadWarDivision(
   if (!season) throw new Error(`Squad Wars season ${round.seasonId} is missing.`);
   validatedSquadWarSeason(season, now);
   const docs = await squads().find({ name: { $in: round.entries.map((entry) => entry.squadId) } }).toArray();
+  docs.forEach((squad) => validatedSquadDocument(squad, now));
   const byName = new Map(docs.map((doc) => [doc.name, doc]));
   const orderedSquads: SquadDocument[] = [];
   for (const entry of round.entries) {
@@ -621,6 +649,7 @@ export async function recordConfirmedSquadWarProgress(
   if (!won || !Number.isSafeInteger(confirmedPoints) || confirmedPoints <= 0) return "no_points";
   const squad = await squads().findOne({ name: squadId, "members.playerId": playerId }, { session });
   if (!squad) return "not_member";
+  validatedSquadDocument(squad, settledAt);
   const roundId = squad.squadWarRoundId ?? "";
   const round = roundId
     ? await squadWarRounds().findOne({ roundId, status: "active", "entries.squadId": squadId }, { session })
@@ -842,6 +871,7 @@ export async function settleSquadWarRound(roundId: string, now = new Date()): Pr
       const entry = round.entries.find((candidate) => candidate.squadId === placement.squadId)!;
       const squad = await squads().findOne({ name: placement.squadId }, { session });
       if (!squad) continue;
+      validatedSquadDocument(squad, now);
       const currentRosterIds = new Set(squad.members.map((member) => member.playerId));
       const eligiblePlayerIds = squadWarRewardEligiblePlayerIds(entry, currentRosterIds);
       const playerDocs = eligiblePlayerIds.length > 0
@@ -894,6 +924,15 @@ export async function settleSquadWarRound(roundId: string, now = new Date()): Pr
       }
       // Do not clear a pointer already advanced by an operator repair/newer season. This guard
       // makes a delayed old-round settlement unable to roll a squad backward.
+      validatedSquadDocument({
+        ...squad,
+        squadWarLevel: placement.nextLevel,
+        squadWarRoundId: "",
+        leagueId: "",
+        leagueDivision: "",
+        squadWarWins: (squad.squadWarWins ?? 0) + (placement.position === 1 ? 1 : 0),
+        updatedAt: now,
+      }, now);
       await squads().updateOne(
         { name: squad.name, squadWarRoundId: round.roundId },
         {
