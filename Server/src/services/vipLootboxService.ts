@@ -55,18 +55,20 @@ function emptySavedVisual(): SavedVisualState {
 }
 
 /**
- * Normalize legacy or damaged countdowns at the authority boundary.
+ * Validate the exact source-defined paid-benefit countdown at the authority boundary.
  *
  * The stock client treats zero as an uninitialized value during boot and clamps its display
- * to a small positive range. Persisting only 1..4 removes that ambiguity: 1 means the next
- * confirmed active-VIP battle grants the pair, while 4 is the freshly reset cycle.
+ * to a small positive range. The server must not repeat that presentation clamp: turning a
+ * damaged zero, fraction, or oversized value into 1..4 either loses earned progress or creates
+ * a reward schedule the durable state did not prove. Only an absent legacy field starts at four;
+ * 1 means the next confirmed active-VIP battle grants the pair and 4 is a freshly reset cycle.
  */
-export function normalizedVipLootboxCountdown(value: number | undefined): number {
-  if (typeof value !== "number" || !Number.isFinite(value)) return VIP_LOOTBOX_MATCH_INTERVAL;
-  const integer = Math.floor(value);
-  return integer >= 1 && integer <= VIP_LOOTBOX_MATCH_INTERVAL
-    ? integer
-    : VIP_LOOTBOX_MATCH_INTERVAL;
+export function validatedVipLootboxCountdown(value: number | undefined): number {
+  if (value === undefined) return VIP_LOOTBOX_MATCH_INTERVAL;
+  if (!Number.isSafeInteger(value) || value < 1 || value > VIP_LOOTBOX_MATCH_INTERVAL) {
+    throw new Error("Stored VIP lootbox countdown is invalid.");
+  }
+  return value;
 }
 
 /**
@@ -106,7 +108,7 @@ function chooseVisualId(pickIndex: PickIndex): string {
  *
  * This is a pure state transition so matchService can place it inside the same MongoDB
  * transaction as XP, medals, card consumption, both player writes, and the terminal match
- * receipt. An inactive account keeps its existing normalized countdown; it does not make
+ * receipt. An inactive account keeps its existing validated countdown; it does not make
  * progress toward a paid benefit. At the threshold, two independent draws are performed,
  * which intentionally permits the same visual twice just like the recovered `_#` wire
  * convention.
@@ -121,7 +123,7 @@ export function applyVipBattleLootboxState(
   isVip: boolean,
   pickIndex: PickIndex = (exclusiveMaximum) => randomInt(exclusiveMaximum),
 ): VipLootboxTransition {
-  const current = normalizedVipLootboxCountdown(state.matchesToNextLootboxes);
+  const current = validatedVipLootboxCountdown(state.matchesToNextLootboxes);
   if (!isVip) {
     return {
       state,
@@ -160,11 +162,13 @@ export function applyVipBattleLootboxState(
       throw new Error(`VIP lootbox selected invalid visual ${visualId}.`);
     }
     const saved = visualInventory.visuals[visualId] ?? emptySavedVisual();
-    // MongoDB is typed only at the application boundary. Treat a legacy/corrupt non-finite
-    // part count as zero instead of allowing NaN to poison ownership and wallet decisions.
-    const storedParts = Number.isFinite(saved.parts)
-      ? Math.max(0, Math.min(definition.parts, Math.floor(saved.parts)))
-      : 0;
+    // visualInventoryStateFor already rejects non-integer/negative counts. Enforce the selected
+    // catalog row's upper bound here as well: clamping an imported over-target value would make
+    // an unproven item look owned and turn this paid benefit into duplicate WarBucks.
+    const storedParts = saved.parts;
+    if (storedParts > definition.parts) {
+      throw new Error(`VIP lootbox visual ${visualId} parts are invalid.`);
+    }
     const ownedBeforeReward = saved.bought || storedParts >= definition.parts;
     if (ownedBeforeReward) {
       if (duplicateWarBucks > Number.MAX_SAFE_INTEGER - definition.duplicateWarBucks) {

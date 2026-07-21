@@ -9,7 +9,10 @@ import {
   validatePlayerLeagueCompetitionScore,
   validatePlayerLeagueProgression,
 } from "./playerLeagueContract";
-import { VIP_LOOTBOX_MATCH_INTERVAL } from "./vipLootboxService";
+import {
+  validatedVipLootboxCountdown,
+  VIP_LOOTBOX_MATCH_INTERVAL,
+} from "./vipLootboxService";
 import { validatedVipExpiration } from "./vipEntitlementService";
 import { validatedSubscription } from "./subscriptionBenefitService";
 import { validatedRentalState } from "./rentalEntitlementService";
@@ -90,7 +93,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
       subscription: validatedSubscription(state.subscription),
       rental: validatedRentalState(state.rental),
       blackMarket: validatedBlackMarketOfferState(state.blackMarket),
-      matchesToNextLootboxes: state.matchesToNextLootboxes ?? VIP_LOOTBOX_MATCH_INTERVAL,
+      matchesToNextLootboxes: validatedVipLootboxCountdown(state.matchesToNextLootboxes),
       collectedRewards: state.collectedRewards ?? {},
       itemInventory: state.itemInventory ?? createInitialItemInventory(),
       visualInventory: state.visualInventory ?? createInitialVisualInventory(),
@@ -116,7 +119,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
     subscription: validatedSubscription(state.subscription),
     rental: validatedRentalState(state.rental),
     blackMarket: validatedBlackMarketOfferState(state.blackMarket),
-    matchesToNextLootboxes: state.matchesToNextLootboxes ?? VIP_LOOTBOX_MATCH_INTERVAL,
+    matchesToNextLootboxes: validatedVipLootboxCountdown(state.matchesToNextLootboxes),
     collectedRewards: state.collectedRewards ?? {},
     itemInventory: state.itemInventory ?? createInitialItemInventory(),
     visualInventory: state.visualInventory ?? createInitialVisualInventory(),
@@ -375,7 +378,7 @@ export function buildPlayerData(player: PlayerDocument, now = unixNow()): Player
     // PlayerAnalytics.remainingMatchesToNextLootbox renders this countdown before the next
     // match. Sending the server-owned value on boot prevents reconnecting from restoring the
     // client's local zero/default and accidentally desynchronizing the four-battle cycle.
-    matchesToNextLootboxes: state.matchesToNextLootboxes ?? VIP_LOOTBOX_MATCH_INTERVAL,
+    matchesToNextLootboxes: validatedVipLootboxCountdown(state.matchesToNextLootboxes),
     // PlayerAnalytics computes both the visible charge count and the escalating purchase
     // price locally. Restoring all three server-owned action-199 counters prevents reconnects
     // from resetting the timer to a free full batch or resetting a paid price to 35 Gold.

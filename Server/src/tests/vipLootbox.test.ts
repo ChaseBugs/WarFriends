@@ -6,8 +6,8 @@ import { newPlayer } from "../dtos";
 import { buildPlayerData, createInitialProgression } from "../services/playerStateService";
 import {
   applyVipBattleLootboxState,
-  normalizedVipLootboxCountdown,
   serializeVipLootboxVisuals,
+  validatedVipLootboxCountdown,
   VIP_LOOTBOX_ELIGIBLE_VISUAL_IDS,
   VIP_LOOTBOX_MATCH_INTERVAL,
   VIP_LOOTBOX_REWARDS_PER_CYCLE,
@@ -141,11 +141,17 @@ test("VIP duplicate rewards pay chargeback debt and reject a corrupt wallet befo
   );
 });
 
-test("countdown migration and duplicate wire suffixes match the recovered parser", () => {
-  assert.equal(normalizedVipLootboxCountdown(undefined), 4);
-  assert.equal(normalizedVipLootboxCountdown(0), 4);
-  assert.equal(normalizedVipLootboxCountdown(99), 4);
-  assert.equal(normalizedVipLootboxCountdown(2.9), 2);
+test("countdown authority and duplicate wire suffixes match the recovered parser", () => {
+  assert.equal(validatedVipLootboxCountdown(undefined), 4);
+  for (const countdown of [1, 2, 3, 4]) {
+    assert.equal(validatedVipLootboxCountdown(countdown), countdown);
+  }
+  for (const countdown of [Number.NaN, Number.POSITIVE_INFINITY, -1, 0, 2.9, 5, 99]) {
+    assert.throws(
+      () => validatedVipLootboxCountdown(countdown),
+      /Stored VIP lootbox countdown is invalid/,
+    );
+  }
   assert.equal(serializeVipLootboxVisuals([]), undefined);
   assert.equal(
     serializeVipLootboxVisuals([
@@ -162,4 +168,25 @@ test("GetPlayerData restores the authoritative VIP lootbox countdown", () => {
   const wire = buildPlayerData(player);
   const analytics = JSON.parse((wire.PlayerAnalyticsData as { S: string }).S) as Record<string, number>;
   assert.equal(analytics.matchesToNextLootboxes, 2);
+
+  player.progression!.matchesToNextLootboxes = Number.POSITIVE_INFINITY;
+  assert.throws(() => buildPlayerData(player), /Stored VIP lootbox countdown is invalid/);
+});
+
+test("VIP lootbox settlement rejects selected over-target parts before duplicate currency", () => {
+  const initial = createInitialProgression(NOW);
+  initial.matchesToNextLootboxes = 1;
+  initial.visualInventory!.visuals.HEAD_CLOWN = {
+    bought: false,
+    showed: false,
+    expiresOn: 0,
+    borrowed: false,
+    parts: VISUAL_CATALOG.HEAD_CLOWN.parts + 1,
+    notificate: false,
+  };
+
+  assert.throws(
+    () => applyVipBattleLootboxState(initial, true, selectVisual("HEAD_CLOWN")),
+    /VIP lootbox visual HEAD_CLOWN parts are invalid/,
+  );
 });

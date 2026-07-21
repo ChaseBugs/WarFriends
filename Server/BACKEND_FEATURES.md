@@ -145,6 +145,9 @@ Arena run appear finished, make an achievement tier appear complete, or unlock a
 - Ranked-PvP win-streak authority must be an exact 0-9 count/timestamp pair before settlement or
   boot; future or non-client-int timestamps and inconsistent zero states fail closed instead of
   selecting the maximum reward or entering the recovered client's permanent-streak branch.
+- Paid-VIP lootbox countdowns must be exact 1-4 integers; only an absent legacy field defaults to
+  four. A selected visual's persisted parts may not exceed its catalog target before duplicate
+  conversion, so damaged ownership cannot be normalized into WarBucks.
 - A current daily-reward calendar must have a real UTC year/month/last-check date and ordered,
   month-bounded unlock/claim cursors before any check, claim, or wire projection.
   Subscription authority must also remain an ordered start/lock/expiry interval; future or inverted

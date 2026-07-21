@@ -503,7 +503,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   contract. Client-authored sales remain rejected. Confirmed active-VIP PvP settlement also owns
   the source-defined four-battle countdown
   and two one-part suitcase rewards: parts, exact duplicate WarBucks, `NewVisuals`, and immutable
-  retry receipts commit in the terminal match transaction. The retired production weights are
+  retry receipts commit in the terminal match transaction. The persisted countdown is validated
+  as an exact 1-4 integer at migration, boot, and settlement; only an absent legacy field defaults
+  to four. Selected over-target visual parts fail before duplicate conversion instead of being
+  clamped into unproven ownership. The retired production weights are
   unavailable, so selection is explicitly reconstructed as uniform across the 73 normal-shop
   part rows; event/Arena/loyalty/assignment/value-pack grants, visual rentals, and unsupported
   discounts remain fail-closed. Run `npm run verify:visual-catalog` to compare the artifact with
