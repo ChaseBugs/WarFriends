@@ -501,6 +501,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   2 rejects an uninvited request, and an already invited player is routed through the atomic join
   transaction so the invitation is consumed exactly once. Capacity always uses the validated
   stored `maxMembers`; no missing/falsey default can alter an admission decision.
+  Action `59` proves manager authority before looking up the requested player, then creates only a
+  bounded future-admission capability. A target already owned by any Squad is rejected through the
+  recovered `13301` callback with its `PlayerId` and current Squad `Name`; an exact retry for an
+  already pending target returns the same Squad snapshot without advancing `updatedAt`.
   Action `181` follows its recovered misleading form names exactly: `MessageId` is the applicant
   player ID and `Id` is the manager's current Squad name. The handler binds that Squad assertion to
   authenticated membership before removing only the named pending row. Replaying an already

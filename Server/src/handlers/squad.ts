@@ -214,8 +214,24 @@ export const squadHandlers: Record<number, HandlerEntry> = {
   }),
 
   [DbAction.InvitePlayerToSquad]: authed(async ({ player, req }) => {
-    const squad = await invitePlayer(player!.id, targetId(req), squadName(req) || player!.player.squadName);
-    return ok(DbAction.InvitePlayerToSquad, { Squad: buildDatabaseSquad(squad) });
+    const target = targetId(req);
+    try {
+      const squad = await invitePlayer(player!.id, target, squadName(req) || player!.player.squadName);
+      return ok(DbAction.InvitePlayerToSquad, { Squad: buildDatabaseSquad(squad) });
+    } catch (error) {
+      if (!(error instanceof ApiError) || error.code !== ApiErrorCode.PlayerAlreadyInSquad) throw error;
+      const targetPlayer = await findById(target);
+      return {
+        DbAction: DbAction.InvitePlayerToSquad,
+        Result: error.code,
+        Code: error.code,
+        Message: error.message,
+        // The shared recovered 13301 callback displays the target's current Squad name and can
+        // remove that player from stale pending UI only when these exact identity fields exist.
+        PlayerId: target,
+        Name: targetPlayer?.squadName || targetPlayer?.player.squadName || "",
+      };
+    }
   }),
 
   [DbAction.LeaveSquad]: authed(async ({ player, req }) => {

@@ -574,13 +574,17 @@ export async function declineJoinRequest(actorId: string, targetId: string, name
   // A lost-response retry is already complete. Do not advance updatedAt for an identical result;
   // that false write could make an unrelated manager's fresh optimistic snapshot fail.
   if (!plan.changed) return plan.squad;
-  await persist(plan.squad as SquadDocument);
-  return plan.squad;
+  const successor: SquadDocument = { ...squad, joinRequests: plan.squad.joinRequests };
+  await persist(successor);
+  return successor;
 }
 
-export async function invitePlayer(actorId: string, targetId: string, name: string): Promise<SquadDTO> {
-  const squad = await getByName(name);
-  if (!squad) throw new ApiError(ApiErrorCode.SquadNoLongerExists, "Squad not found.");
+export interface SquadInvitationPlan {
+  squad: SquadDTO;
+  changed: boolean;
+}
+
+function requireInvitationManager(squad: SquadDTO, actorId: string): void {
   try {
     requireManager(squad, actorId);
   } catch (error) {
@@ -589,16 +593,47 @@ export async function invitePlayer(actorId: string, targetId: string, name: stri
     }
     throw error;
   }
-  if (!(await findById(targetId))) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
-  squad.invitedPlayerIds ??= [];
-  if (!squad.invitedPlayerIds.includes(targetId)) {
-    if (squad.invitedPlayerIds.length >= SQUAD_MAX_PENDING_ADMISSIONS) {
-      throw new ApiError(ApiErrorCode.UnknownAction, "Squad invitation queue is full.");
-    }
-    squad.invitedPlayerIds.push(targetId);
+}
+
+/**
+ * Plan one action-59 invitation against the same validated manager, target, and Squad snapshot.
+ * An invitation is a future admission capability, so a player already owned by any Squad cannot
+ * receive one. Exact retries return the identical object and must not consume queue capacity or a
+ * new optimistic revision.
+ */
+export function planSquadInvitation(
+  squad: SquadDTO,
+  actorId: string,
+  target: PlayerDocument,
+): SquadInvitationPlan {
+  requireInvitationManager(squad, actorId);
+  if (target.squadName || target.player.squadName) {
+    throw new ApiError(ApiErrorCode.PlayerAlreadyInSquad, "Player already belongs to a squad.");
   }
-  await persist(squad);
-  return squad;
+  if (squad.invitedPlayerIds.includes(target.id)) return { squad, changed: false };
+  if (squad.invitedPlayerIds.length >= SQUAD_MAX_PENDING_ADMISSIONS) {
+    throw new ApiError(ApiErrorCode.UnknownAction, "Squad invitation queue is full.");
+  }
+  return {
+    squad: { ...squad, invitedPlayerIds: [...squad.invitedPlayerIds, target.id] },
+    changed: true,
+  };
+}
+
+export async function invitePlayer(actorId: string, targetId: string, name: string): Promise<SquadDTO> {
+  const squad = await getByName(name);
+  if (!squad) throw new ApiError(ApiErrorCode.SquadNoLongerExists, "Squad not found.");
+  // Prove manager authority before resolving the target account. Besides matching the recovered
+  // 5901 permission failure, this prevents an unauthorized caller from probing whether a player
+  // identifier exists through the action's distinct PlayerNotFound response.
+  requireInvitationManager(squad, actorId);
+  const target = await findById(targetId);
+  if (!target) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
+  const plan = planSquadInvitation(squad, actorId, target);
+  if (!plan.changed) return plan.squad;
+  const successor: SquadDocument = { ...squad, invitedPlayerIds: plan.squad.invitedPlayerIds };
+  await persist(successor);
+  return successor;
 }
 
 export interface SquadLeavePlan {

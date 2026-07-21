@@ -9,6 +9,7 @@ import { reclaimDepositedCardsForDepartureState } from "../services/squadCardPoo
 import {
   planLeadershipTransfer,
   planDeclineSquadJoinRequest,
+  planSquadInvitation,
   planSquadJoin,
   planSquadKick,
   planSquadLeave,
@@ -193,6 +194,35 @@ test("declining a join request removes only the recovered applicant and replays 
   assert.throws(
     () => planDeclineSquadJoinRequest(squad, "outsider", "first"),
     (error: unknown) => (error as { code?: number }).code === ApiErrorCode.NotLeaderOfSquad,
+  );
+});
+
+test("squad invitations are membership-aware capabilities with no-write exact replay", () => {
+  const squad = squadDocument(2);
+  const target = playerDocument("member");
+  const invited = planSquadInvitation(squad, "leader", target);
+
+  assert.equal(invited.changed, true);
+  assert.deepEqual(invited.squad.invitedPlayerIds, ["member"]);
+  assert.deepEqual(squad.invitedPlayerIds, []);
+
+  const replay = planSquadInvitation(invited.squad, "leader", target);
+  assert.equal(replay.changed, false);
+  assert.equal(replay.squad, invited.squad);
+
+  assert.throws(
+    () => planSquadInvitation(squad, "leader", playerDocument("owned", "Other Squad")),
+    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.PlayerAlreadyInSquad,
+  );
+  const rootOwned = playerDocument("root-owned");
+  rootOwned.squadName = "Other Squad";
+  assert.throws(
+    () => planSquadInvitation(squad, "leader", rootOwned),
+    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.PlayerAlreadyInSquad,
+  );
+  assert.throws(
+    () => planSquadInvitation(squad, "outsider", target),
+    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.OnlyLeaderCanSendInvites,
   );
 });
 
