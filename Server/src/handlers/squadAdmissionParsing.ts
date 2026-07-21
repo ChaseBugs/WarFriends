@@ -1,4 +1,5 @@
 import { ApiError, ApiErrorCode } from "../apiErrors";
+import { SquadRank } from "../constants";
 import { exactBinaryBoolean } from "./requestBooleanParsing";
 
 /**
@@ -121,6 +122,44 @@ function requestedExistingSquadId(value: unknown, action: string): string {
 /** Parse action 59's sole recovered gameplay field without accepting another action's aliases. */
 export function requestedSquadInvitation(req: Record<string, unknown>): string {
   return requestedSquadPlayerId(req.PlayerToInviteId, "Squad invitation");
+}
+
+export interface SquadRankChangeInput {
+  playerId: string;
+  oldRank: SquadRank;
+}
+
+/**
+ * Bind the optimistic rank action to the exact roster rank the recovered caller displayed.
+ * `OldSquadRank` is not decorative rollback metadata: without checking it, a transport retry can
+ * promote or demote the same member twice after the first response was lost.
+ */
+export function requestedSquadRankChange(
+  req: Record<string, unknown>,
+  direction: "promote" | "demote",
+): SquadRankChangeInput {
+  const targetField = direction === "promote" ? "PlayerToPromoteId" : "PlayerToDemoteId";
+  const oldRank = exactSquadInteger(req.OldSquadRank, "OldSquadRank");
+  const rankAllowed = direction === "promote"
+    ? oldRank === SquadRank.Member || oldRank === SquadRank.Veteran
+    : oldRank === SquadRank.Veteran || oldRank === SquadRank.Coleader;
+  if (!rankAllowed) {
+    throw new ApiError(ApiErrorCode.UnknownAction, "OldSquadRank is invalid for this action.");
+  }
+  return {
+    playerId: requestedSquadPlayerId(req[targetField], `Squad ${direction}`),
+    oldRank,
+  };
+}
+
+/** Action 57 reuses `PlayerToPromoteId` but has no `OldSquadRank` field. */
+export function requestedSquadLeadershipTarget(req: Record<string, unknown>): string {
+  return requestedSquadPlayerId(req.PlayerToPromoteId, "Squad leadership transfer");
+}
+
+/** Parse action 172's sole recovered target field. */
+export function requestedSquadKickTarget(req: Record<string, unknown>): string {
+  return requestedSquadPlayerId(req.PlayerToKickId, "Squad kick");
 }
 
 export interface AcceptSquadJoinRequestInput {

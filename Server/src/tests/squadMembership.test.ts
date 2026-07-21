@@ -387,14 +387,24 @@ test("rank planning applies exactly one promotion or demotion step", () => {
     joinedAt: NOW,
     lastSeenChatTimestamp: 0,
   });
-  const promoted = planSquadRankChange(squad, "leader", "member", "promote");
+  const promoted = planSquadRankChange(squad, "leader", "member", "promote", SquadRank.Member);
   const promotedRank = promoted.squad.members.find((member) => member.playerId === "member")?.rank;
-  const demoted = planSquadRankChange(promoted.squad, "leader", "member", "demote");
+  const demoted = planSquadRankChange(
+    promoted.squad,
+    "leader",
+    "member",
+    "demote",
+    SquadRank.Veteran,
+  );
 
   assert.equal(promoted.rank, SquadRank.Veteran);
   assert.equal(promotedRank, SquadRank.Veteran);
   assert.equal(demoted.rank, SquadRank.Member);
   assert.equal(squad.members.find((member) => member.playerId === "member")?.rank, SquadRank.Member);
+  assert.throws(
+    () => planSquadRankChange(promoted.squad, "leader", "member", "promote", SquadRank.Member),
+    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.PromotePlayerError,
+  );
 });
 
 test("rank planning enforces explicit authority instead of numeric enum order", () => {
@@ -418,11 +428,11 @@ test("rank planning enforces explicit authority instead of numeric enum order", 
     },
   );
   assert.throws(
-    () => planSquadRankChange(squad, "coleader", "veteran", "promote"),
+    () => planSquadRankChange(squad, "coleader", "veteran", "promote", SquadRank.Veteran),
     (error: unknown) => (error as { code?: number }).code === ApiErrorCode.PromotePlayerError,
   );
   assert.throws(
-    () => planSquadRankChange(squad, "coleader", "leader", "demote"),
+    () => planSquadRankChange(squad, "coleader", "leader", "demote", SquadRank.Leader),
     (error: unknown) => (error as { code?: number }).code === ApiErrorCode.DemotePlayerError,
   );
 });

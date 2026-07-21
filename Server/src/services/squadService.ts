@@ -826,6 +826,7 @@ export function planSquadRankChange(
   actorId: string,
   targetId: string,
   direction: "promote" | "demote",
+  expectedOldRank: SquadRank,
 ): SquadRankChangePlan {
   const failureCode = direction === "promote"
     ? ApiErrorCode.PromotePlayerError
@@ -838,6 +839,12 @@ export function planSquadRankChange(
   } catch (error) {
     if (error instanceof ApiError) throw new ApiError(failureCode, error.message);
     throw error;
+  }
+  if (target.rank !== expectedOldRank) {
+    // The stock client sends the rank it optimistically changed from. Binding that assertion to
+    // this transaction snapshot makes a lost-response retry fail into the existing 5501/5801
+    // full-roster rollback path instead of applying a second rank step.
+    throw new ApiError(failureCode, "Squad member rank changed before this action.");
   }
   let next: SquadRank | null;
   if (direction === "promote") {
@@ -887,6 +894,7 @@ async function changeMemberRankTransaction(
   targetId: string,
   requestedName: string,
   direction: "promote" | "demote",
+  expectedOldRank: SquadRank,
 ): Promise<SquadDTO> {
   const name = cleanName(requestedName);
   return withMongoTransaction(async (session) => {
@@ -901,7 +909,7 @@ async function changeMemberRankTransaction(
     if (!targetPlayer) throw new ApiError(failureCode, "Squad member not found.");
     validatedSquadDocument(squad);
     validatedPlayerAccountEnvelope(targetPlayer);
-    const plan = planSquadRankChange(squad, actorId, targetId, direction);
+    const plan = planSquadRankChange(squad, actorId, targetId, direction, expectedOldRank);
     try {
       requireCompatiblePlayerSquad(targetPlayer, squad.name);
     } catch (error) {
@@ -952,12 +960,22 @@ async function changeMemberRankTransaction(
   });
 }
 
-export async function promoteMember(actorId: string, targetId: string, name: string): Promise<SquadDTO> {
-  return changeMemberRankTransaction(actorId, targetId, name, "promote");
+export async function promoteMember(
+  actorId: string,
+  targetId: string,
+  name: string,
+  expectedOldRank: SquadRank,
+): Promise<SquadDTO> {
+  return changeMemberRankTransaction(actorId, targetId, name, "promote", expectedOldRank);
 }
 
-export async function demoteMember(actorId: string, targetId: string, name: string): Promise<SquadDTO> {
-  return changeMemberRankTransaction(actorId, targetId, name, "demote");
+export async function demoteMember(
+  actorId: string,
+  targetId: string,
+  name: string,
+  expectedOldRank: SquadRank,
+): Promise<SquadDTO> {
+  return changeMemberRankTransaction(actorId, targetId, name, "demote", expectedOldRank);
 }
 
 export interface LeadershipTransferPlan {

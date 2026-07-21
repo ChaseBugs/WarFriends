@@ -513,6 +513,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   authenticated membership before removing only the named pending row. Replaying an already
   completed decline returns the current Squad without advancing `updatedAt` or invalidating another
   manager's otherwise fresh optimistic snapshot.
+  Rank and removal mutations are equally action-specific: promote/demote accept only their recovered
+  target field and canonical `OldSquadRank`, leadership transfer accepts only `PlayerToPromoteId`,
+  and kick accepts only `PlayerToKickId`; all derive the mutable Squad from authenticated membership.
+  The old-rank assertion is checked against the same roster snapshot as authority, so a lost-response
+  retry returns the stock `5501`/`5801` member-list rollback instead of applying a second rank step.
   Malformed or blank input is rejected instead of floored, broadly coerced, silently ignored, or
   replaced by a default. Every core membership, settings, invitation, join-request, PvP Squad
   Point, and Squad War write advances `updatedAt` through one shared strictly monotonic helper,

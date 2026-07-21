@@ -46,7 +46,10 @@ import {
   requestedDirectSquadChatTimestamp,
   requestedDeclineSquadJoinRequest,
   requestedSquadInvitation,
+  requestedSquadKickTarget,
+  requestedSquadLeadershipTarget,
   requestedSquadNamePrefix,
+  requestedSquadRankChange,
   requestedSuggestedSquadSkill,
   requestedSquadJoinPolicy,
 } from "./squadAdmissionParsing";
@@ -251,10 +254,11 @@ export const squadHandlers: Record<number, HandlerEntry> = {
   }),
 
   [DbAction.PromotePlayer]: authed(async ({ player, req }) => {
-    const name = squadName(req) || player!.player.squadName;
+    const input = requestedSquadRankChange(req, "promote");
+    const name = player!.player.squadName;
     try {
-      const squad = await promoteMember(player!.id, targetId(req), name);
-      const promoted = await findById(targetId(req));
+      const squad = await promoteMember(player!.id, input.playerId, name, input.oldRank);
+      const promoted = await findById(input.playerId);
       return ok(DbAction.PromotePlayer, {
         Squad: buildDatabaseSquad(squad),
         ...(promoted ? { PromotedPlayer: buildDatabasePlayer(promoted) } : {}),
@@ -274,8 +278,9 @@ export const squadHandlers: Record<number, HandlerEntry> = {
   }),
 
   [DbAction.PromotePlayerToFounder]: authed(async ({ player, req }) => {
-    const squad = await transferLeadership(player!.id, targetId(req), squadName(req) || player!.player.squadName);
-    const promoted = await findById(targetId(req));
+    const target = requestedSquadLeadershipTarget(req);
+    const squad = await transferLeadership(player!.id, target, player!.player.squadName);
+    const promoted = await findById(target);
     return ok(DbAction.PromotePlayerToFounder, {
       Squad: buildDatabaseSquad(squad),
       ...(promoted ? { PromotedPlayer: buildDatabasePlayer(promoted) } : {}),
@@ -283,10 +288,11 @@ export const squadHandlers: Record<number, HandlerEntry> = {
   }),
 
   [DbAction.DemotePlayer]: authed(async ({ player, req }) => {
-    const name = squadName(req) || player!.player.squadName;
+    const input = requestedSquadRankChange(req, "demote");
+    const name = player!.player.squadName;
     try {
-      const squad = await demoteMember(player!.id, targetId(req), name);
-      const demoted = await findById(targetId(req));
+      const squad = await demoteMember(player!.id, input.playerId, name, input.oldRank);
+      const demoted = await findById(input.playerId);
       return ok(DbAction.DemotePlayer, {
         Squad: buildDatabaseSquad(squad),
         ...(demoted ? { DemotedPlayer: buildDatabasePlayer(demoted) } : {}),
@@ -305,8 +311,8 @@ export const squadHandlers: Record<number, HandlerEntry> = {
   }),
 
   [DbAction.KickPlayer]: authed(async ({ player, req }) => {
-    const target = targetId(req);
-    const squad = await kickMember(player!.id, target, squadName(req) || player!.player.squadName);
+    const target = requestedSquadKickTarget(req);
+    const squad = await kickMember(player!.id, target, player!.player.squadName);
     const kicked = await findById(target);
     return ok(DbAction.KickPlayer, {
       Squad: buildDatabaseSquad(squad),

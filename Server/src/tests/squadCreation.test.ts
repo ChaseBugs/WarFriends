@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { ApiErrorCode } from "../apiErrors";
+import { SquadRank } from "../constants";
 import {
   exactSquadInteger,
   requestedAcceptSquadJoinRequest,
@@ -8,8 +9,11 @@ import {
   requestedDeclineSquadJoinRequest,
   requestedGlobalSquadDirectory,
   requestedSquadInvitation,
+  requestedSquadKickTarget,
+  requestedSquadLeadershipTarget,
   requestedSquadNamePrefix,
   requestedSquadJoinPolicy,
+  requestedSquadRankChange,
   requestedSuggestedSquadSkill,
 } from "../handlers/squadAdmissionParsing";
 import {
@@ -150,6 +154,43 @@ test("Squad invitation and approval parse only their recovered identity fields",
       /Squad join-request approval.*field is invalid/,
     );
   }
+});
+
+test("Squad rank and kick actions bind exact targets and optimistic old ranks", () => {
+  assert.deepEqual(
+    requestedSquadRankChange(
+      { PlayerToPromoteId: "member-id", OldSquadRank: String(SquadRank.Member) },
+      "promote",
+    ),
+    { playerId: "member-id", oldRank: SquadRank.Member },
+  );
+  assert.deepEqual(
+    requestedSquadRankChange(
+      { PlayerToDemoteId: "member-id", OldSquadRank: SquadRank.Coleader },
+      "demote",
+    ),
+    { playerId: "member-id", oldRank: SquadRank.Coleader },
+  );
+  assert.equal(requestedSquadLeadershipTarget({ PlayerToPromoteId: "successor-id" }), "successor-id");
+  assert.equal(requestedSquadKickTarget({ PlayerToKickId: "member-id" }), "member-id");
+
+  for (const request of [
+    { TargetPlayerId: "member-id", OldSquadRank: "0" },
+    { PlayerToPromoteId: "member-id" },
+    { PlayerToPromoteId: "member-id", OldSquadRank: "00" },
+    { PlayerToPromoteId: "member-id", OldSquadRank: String(SquadRank.Coleader) },
+  ]) {
+    assert.throws(() => requestedSquadRankChange(request, "promote"), /(player field|OldSquadRank)/);
+  }
+  for (const request of [
+    { PlayerToDemoteId: "member-id", OldSquadRank: String(SquadRank.Member) },
+    { PlayerToDemoteId: " member-id", OldSquadRank: String(SquadRank.Veteran) },
+    { PlayerToPromoteId: "member-id", OldSquadRank: String(SquadRank.Veteran) },
+  ]) {
+    assert.throws(() => requestedSquadRankChange(request, "demote"), /(player field|OldSquadRank)/);
+  }
+  assert.throws(() => requestedSquadLeadershipTarget({ TargetPlayerId: "member-id" }), /player field/);
+  assert.throws(() => requestedSquadKickTarget({ PlayerToPromoteId: "member-id" }), /player field/);
 });
 
 test("direct squad-chat cursor accepts exactly one canonical C# integer alias", () => {
