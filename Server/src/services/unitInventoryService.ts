@@ -174,6 +174,27 @@ const PLAYER_UNIT_CATALOG: Readonly<Record<string, UnitDefinition>> = Object.fre
   ),
 );
 
+/** Resolve one concrete player-roster row, including the dedicated tutorial unit. */
+export function playerUnitDefinitionFor(value: string): UnitDefinition | undefined {
+  return PLAYER_UNIT_CATALOG[value];
+}
+
+/** Return source row counts used to bound persisted normal, special, and Elite cursors. */
+export function playerUnitUpgradeLimitsFor(value: string): {
+  normal: number;
+  special: number;
+  elite: number;
+} | undefined {
+  const upgrades = UNIT_UPGRADE_CATALOG[value];
+  return upgrades === undefined
+    ? undefined
+    : {
+      normal: upgrades.normalLevels.length,
+      special: upgrades.specialLevels.length,
+      elite: upgrades.eliteLevels.length,
+    };
+}
+
 /** Validate a server-configured Elite-parts reward without exposing helper-only unit rows. */
 export function isPlayerUnitName(value: string): boolean {
   return PLAYER_UNIT_CATALOG[value] !== undefined;

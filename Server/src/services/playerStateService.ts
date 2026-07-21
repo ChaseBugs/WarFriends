@@ -54,6 +54,7 @@ import { validatedVipDailyCardState } from "./vipDailyCardAuthorityService";
 import { validatedCardLifecycleCounters } from "./cardLifecycleCounterAuthorityService";
 import { cardCraftingAuthorityFor } from "./cardCraftingAuthorityService";
 import { cardInventoryAuthorityFor } from "./cardInventoryAuthorityService";
+import { itemInventoryAuthorityFor } from "./itemInventoryAuthorityService";
 
 /** Unix seconds are used throughout the recovered Beanstalk protocol. */
 export function unixNow(): number {
@@ -132,6 +133,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
     state.videoAdRewards,
     progressionRevisionForRead(state.revision),
   );
+  const itemInventory = itemInventoryAuthorityFor(state.itemInventory);
   const rental = validatedRentalState(state.rental);
   const blackMarket = validatedBlackMarketOfferState(state.blackMarket);
   const visualInventory = validatedVisualInventoryState(
@@ -166,7 +168,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
       blackMarket,
       matchesToNextLootboxes: validatedVipLootboxCountdown(state.matchesToNextLootboxes),
       collectedRewards: validatedCollectedRewards(state.collectedRewards),
-      itemInventory: state.itemInventory ?? createInitialItemInventory(),
+      itemInventory,
       visualInventory,
       cardInventory,
       cardCrafting,
@@ -203,7 +205,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
     blackMarket,
     matchesToNextLootboxes: validatedVipLootboxCountdown(state.matchesToNextLootboxes),
     collectedRewards: validatedCollectedRewards(state.collectedRewards),
-    itemInventory: state.itemInventory ?? createInitialItemInventory(),
+    itemInventory,
     visualInventory,
     cardInventory,
     cardCrafting,

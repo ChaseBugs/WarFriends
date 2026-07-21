@@ -27,6 +27,7 @@ import { validatedVideoAdRewardStateShape } from "./videoAdRewardAuthorityServic
 import { validatedRentalState } from "./rentalEntitlementService";
 import { validatedBlackMarketOfferState } from "./blackMarketEntitlementService";
 import { validatedVisualInventoryState } from "./visualEntitlementService";
+import { itemInventoryAuthorityFor } from "./itemInventoryAuthorityService";
 
 /**
  * Validate the common authority shared by every full progression-document replacement.
@@ -82,6 +83,8 @@ export function validatedProgressionSuccessor(
   validatedBlackMarketOfferState(next.blackMarket);
   validatedVisualInventoryState(current.visualInventory);
   validatedVisualInventoryState(next.visualInventory);
+  itemInventoryAuthorityFor(current.itemInventory);
+  itemInventoryAuthorityFor(next.itemInventory);
   validatedCoreProgressionBalances(current);
   validateProgressionRevisionAdvance(progressionRevisionForRead(current.revision), next.revision);
   validatedCoreProgressionBalances(next);

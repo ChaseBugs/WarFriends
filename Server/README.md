@@ -701,7 +701,17 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   type-28 sender snapshot with one actor/target reminder per UTC day.
 - **Weapon inventory foundation**: private and public player snapshots now serialize the
   exact recovered `InventoryData.slots` and `LevelManagerData.savedWeapons` structures with
-  the 4.9.5 starter loadout. Stock buffered `BuyWeapon`/`ActivateWeapon`/`EquipWeapon` supports all 84
+  the 4.9.5 starter loadout. One shared authority now validates the complete nested
+  `InventoryData`/`LevelManagerData` snapshot before persisted reads and progression publication:
+  exactly four slots must point to an owned source-backed weapon with the recovered index and
+  compatible category; saved weapon/unit records must retain their exact Boolean/integer shape,
+  catalog-bounded upgrade cursors, tier bounds, consistent bought/borrowed/equipped flags, and
+  the recovered two-per-deployment-category and three-mechanical equipped-unit limits;
+  and each delivery must be either the exact empty tuple or an active bounded-time receipt that
+  matches the permanent saved upgrade cursor. Only a wholly absent legacy item inventory receives
+  the exact starter loadout. A malformed nested snapshot therefore fails closed instead of being
+  cloned into boot data, Army Power, a price check, or an unrelated full-progression replacement.
+  Stock buffered `BuyWeapon`/`ActivateWeapon`/`EquipWeapon` supports all 84
   `PURCHASABLE: shop` rows that also have real LevelManager entries. Their obscured Gold and
   WarBucks prices, level gates, category masks, and non-sequential indexes are recovered from
   MainScene; purchases grant immediate ownership because every enabled row has

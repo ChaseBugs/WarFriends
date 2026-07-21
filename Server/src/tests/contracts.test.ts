@@ -370,6 +370,40 @@ test("shared progression boundaries reject malformed rental, Black Market, and v
   );
 });
 
+test("shared progression boundaries validate the complete recovered item inventory authority", () => {
+  const legacy = contractPlayer();
+  delete legacy.progression!.itemInventory;
+  const migrated = progressionForPlayer(legacy).itemInventory!;
+  assert.equal(Object.keys(migrated.inventoryData.slots).length, 4);
+  assert.equal(
+    migrated.inventoryData.slots["0"]?.name,
+    "Google2u.AssaultRifle_AK47",
+  );
+
+  const corruptRead = contractPlayer();
+  corruptRead.progression!.itemInventory!.inventoryData.slots["0"]!.weaponIndex = Number.NaN;
+  assert.throws(
+    () => progressionForPlayer(corruptRead),
+    /Weapon slot 0 index is invalid/,
+  );
+
+  const current = createInitialProgression(1_700_000_000);
+  const corruptSuccessor = structuredClone(current);
+  corruptSuccessor.revision = 1;
+  corruptSuccessor.itemInventory!.levelManagerData.weaponDelivery = {
+    activationNeeded: true,
+    boughtIndex: 1,
+    end: 1_700_000_100,
+    itemId: "Google2u.AssaultRifle_AK47",
+    slotId: 0,
+    start: 1_700_000_001,
+  };
+  assert.throws(
+    () => validatedProgressionSuccessor(current, corruptSuccessor),
+    /Active weapon delivery has no matching permanent weapon cursor/,
+  );
+});
+
 test("dog-tag state uses accumulated seconds and recovered 900-second balancing", () => {
   const initial = createInitialProgression(1_000, 900, 5);
   assert.equal(initial.dogTagSeconds, 4_500);
