@@ -36,6 +36,35 @@ multi-document transactions, so enable a single-node replica set for local devel
 replicated/sharded managed deployment) and include `replicaSet` in `MONGO_URL`. Health check:
 `GET /health`.
 
+### Rotate `AUTH_SECRET` without invalidating accounts
+
+Production requires `AUTH_SECRET` and every comma-separated `AUTH_SECRET_FALLBACKS` entry to be
+distinct and at least 32 characters; at most three fallback keys are accepted. New session tokens,
+custom-password digests, and provider-credential digests always use the active `AUTH_SECRET`.
+Existing gameplay sessions survive a rotation because their opaque tokens are stored and compared
+directly. A durable password/provider login that matches a fallback key is atomically rehashed with
+the active key before its replacement gameplay session is returned.
+
+Use this staged procedure for a rolling deployment from key `old` to key `new`:
+
+1. Generate `new` with a cryptographically secure secret manager. Deploy this server version to
+   every node with `AUTH_SECRET=old` and `AUTH_SECRET_FALLBACKS=new`. This compatibility stage makes
+   both keys readable before any node starts writing with `new`.
+2. Roll every node to `AUTH_SECRET=new` and `AUTH_SECRET_FALLBACKS=old`. Mixed nodes can verify both
+   keys; after the roll completes, successful durable logins converge their stored digest to `new`.
+3. Keep `old` in the fallback list for the chosen dormant-account recovery window. Removing it does
+   not end already-issued gameplay sessions, but an account whose password/provider credential was
+   never presented during the overlap will require a supported password reset or provider relink.
+4. Remove `old` everywhere after the recovery window and archive/revoke it in the secret manager.
+   Never place secrets in Git, application logs, or a comma-containing representation.
+
+An `AUTH_SECRET` change also starts fresh HMAC-hidden HTTP/WebSocket/login/report rate-limit keys and
+report fingerprints, so schedule the activation during a monitored low-traffic window. If Google
+Play purchases are enabled, set and retain an independent `PURCHASE_TOKEN_HASH_SECRET`; allowing it
+to follow `AUTH_SECRET` would orphan receipt-ledger lookups. `ADMIN_SECRET`,
+`PURCHASE_TOKEN_ENCRYPTION_SECRET`, and `REMOTE_CONFIGURATION_SIGNING_SECRET` have separate rotation
+lifecycles and must not be copied into the authentication key ring.
+
 Remote Google2u sheets remain disabled unless `REMOTE_CONFIGURATION_MANIFEST_PATH` points to an
 operator-reviewed manifest signed with `REMOTE_CONFIGURATION_SIGNING_SECRET`. The exact stock
 semicolon/DynamoDB-shaped wire supports sheet versions, row IDs, AB variant, language, client-build

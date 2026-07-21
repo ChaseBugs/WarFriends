@@ -12,6 +12,14 @@ export const config = {
   redisLeaderboardTtl: Number(process.env.REDIS_LEADERBOARD_TTL ?? 15),
 
   authSecret: process.env.AUTH_SECRET ?? "change-me-in-production",
+  // Temporary verification-only keys used during an AUTH_SECRET rotation. New session,
+  // password, and provider digests always use authSecret; a successful fallback-key login is
+  // compare-and-set upgraded to the current key. Keep this list short and remove retired keys
+  // after the documented overlap window.
+  authSecretFallbacks: (process.env.AUTH_SECRET_FALLBACKS ?? "")
+    .split(",")
+    .map((secret) => secret.trim())
+    .filter(Boolean),
   // Separate operator credential. It is never accepted by gameplay authentication and protects
   // metrics/maintenance routes when configured.
   adminSecret: process.env.ADMIN_SECRET ?? "",

@@ -5,6 +5,7 @@ import { config } from "../config";
 import { AccountType } from "../constants";
 import { identities, type IdentityDocument, type PlayerDocument } from "../db";
 import { findById, updatePlayerFields } from "./playerService";
+import { authenticationCredentialSecrets } from "./authSecretService";
 
 export type IdentityProvider = IdentityDocument["provider"];
 
@@ -26,16 +27,43 @@ function accountTypeForProvider(provider: IdentityProvider): AccountType {
   return AccountType.GameCenter;
 }
 
-function hashCredential(provider: IdentityProvider, externalId: string, credential: string): string {
+export function hashIdentityCredential(
+  provider: IdentityProvider,
+  externalId: string,
+  credential: string,
+  secret = config.authSecret,
+): string {
   // Third-party passwords/tokens must never be stored in plaintext. Binding all three
   // values prevents an identical provider token from producing a reusable database hash.
-  return createHmac("sha256", config.authSecret).update(`${provider}:${externalId}:${credential}`).digest("hex");
+  return createHmac("sha256", secret).update(`${provider}:${externalId}:${credential}`).digest("hex");
 }
 
 function equalHash(a: string, b: string): boolean {
   const left = Buffer.from(a, "hex");
   const right = Buffer.from(b, "hex");
   return left.length === right.length && timingSafeEqual(left, right);
+}
+
+export interface IdentityCredentialVerification {
+  matches: boolean;
+  /** True when the credential matched a verification-only fallback secret. */
+  needsUpgrade: boolean;
+}
+
+/** Verify a provider credential without exposing which key produced its stored digest. */
+export function verifyIdentityCredentialHash(
+  storedHash: string,
+  provider: IdentityProvider,
+  externalId: string,
+  credential: string,
+): IdentityCredentialVerification {
+  const secrets = authenticationCredentialSecrets();
+  for (let index = 0; index < secrets.length; index += 1) {
+    if (equalHash(storedHash, hashIdentityCredential(provider, externalId, credential, secrets[index]!))) {
+      return { matches: true, needsUpgrade: index > 0 };
+    }
+  }
+  return { matches: false, needsUpgrade: false };
 }
 
 function normalize(value: string, label: string, maxLength: number): string {
@@ -76,7 +104,7 @@ export async function insertIdentityForNewPlayer(
       provider,
       externalId,
       playerId,
-      credentialHash: hashCredential(provider, externalId, credential),
+      credentialHash: hashIdentityCredential(provider, externalId, credential),
       displayName: displayName.trim().slice(0, 100),
       createdAt: now,
       updatedAt: now,
@@ -121,7 +149,7 @@ export async function linkIdentity(
       {
         $set: {
           externalId,
-          credentialHash: hashCredential(provider, externalId, credential),
+          credentialHash: hashIdentityCredential(provider, externalId, credential),
           displayName: displayName.trim().slice(0, 100),
           updatedAt: now,
         },
@@ -177,6 +205,32 @@ export async function authenticateIdentity(
   const identity = await findIdentity(provider, externalId);
   // Compare fixed-length HMAC values with timingSafeEqual so credential checks do not leak
   // the first mismatching byte through response timing.
-  if (!identity || !equalHash(identity.credentialHash, hashCredential(provider, externalId, credential))) return null;
+  if (!identity) return null;
+  const verification = verifyIdentityCredentialHash(
+    identity.credentialHash,
+    provider,
+    externalId,
+    credential,
+  );
+  if (!verification.matches) return null;
+  if (verification.needsUpgrade) {
+    const upgradedHash = hashIdentityCredential(provider, externalId, credential);
+    const upgraded = await identities().updateOne(
+      { provider, externalId, credentialHash: identity.credentialHash },
+      { $set: { credentialHash: upgradedHash, updatedAt: new Date() } },
+    );
+    if (upgraded.modifiedCount !== 1) {
+      // A concurrent link/rotation may have replaced the digest after we read it. Trust that
+      // winner only if the same presented credential verifies against its current value;
+      // otherwise the owner changed credentials during login and this stale proof is rejected.
+      const current = await findIdentity(provider, externalId);
+      if (!current || !verifyIdentityCredentialHash(
+        current.credentialHash,
+        provider,
+        externalId,
+        credential,
+      ).matches) return null;
+    }
+  }
   return findById(identity.playerId);
 }

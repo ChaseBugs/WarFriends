@@ -27,6 +27,7 @@ import { startGooglePlayVoidedPurchaseScheduler } from "./services/googlePlayVoi
 import { startSquadWarScheduler } from "./services/squadWarSchedulerService";
 import { adminModerationRouter } from "./routes/adminModeration";
 import { supportModerationRouter } from "./routes/supportModeration";
+import { validateAuthenticationSecretConfiguration } from "./services/authSecretService";
 
 const app = express();
 
@@ -117,11 +118,12 @@ httpServer.keepAliveTimeout = 65_000;
 httpServer.headersTimeout = 66_000;
 
 async function start(): Promise<void> {
-  if (process.env.NODE_ENV === "production" && config.authSecret === "change-me-in-production") {
-    throw new Error("AUTH_SECRET must be changed before starting in production.");
-  }
+  validateAuthenticationSecretConfiguration(process.env.NODE_ENV === "production");
   if (process.env.NODE_ENV === "production" && config.adminSecret.length < 32) {
     throw new Error("ADMIN_SECRET must contain at least 32 characters in production.");
+  }
+  if (config.googlePlayPurchasesEnabled && !process.env.PURCHASE_TOKEN_HASH_SECRET?.trim()) {
+    throw new Error("PURCHASE_TOKEN_HASH_SECRET must be set independently when purchases are enabled.");
   }
   if (config.googlePlayPurchasesEnabled && config.purchaseTokenHashSecret.length < 32) {
     throw new Error("PURCHASE_TOKEN_HASH_SECRET must contain at least 32 characters when purchases are enabled.");

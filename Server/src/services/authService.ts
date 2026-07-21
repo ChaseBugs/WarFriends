@@ -28,6 +28,7 @@ import {
   type LoginAttemptReservation,
 } from "./authRateLimitService";
 import { assertPlayerNotSanctioned } from "./playerSanctionService";
+import { authenticationCredentialSecrets } from "./authSecretService";
 
 // Auth model (BACKEND.md §2.2): id + token credential. On CreateAccount the server mints a
 // player id and an HMAC auth token derived from a server-side salt; the client stores both
@@ -37,11 +38,11 @@ function issueToken(playerId: string, salt: string): string {
   return createHmac("sha256", config.authSecret).update(`${playerId}:${salt}`).digest("hex");
 }
 
-function legacyCredentialHash(playerId: string, credential: string): string {
+function legacyCredentialHash(playerId: string, credential: string, secret = config.authSecret): string {
   // Bind the digest to the account ID so identical passwords on two accounts never produce
   // the same stored value. AUTH_SECRET acts as a server-side pepper and must be rotated using
   // a migration strategy in production.
-  return createHmac("sha256", config.authSecret).update(`custom:${playerId}:${credential}`).digest("hex");
+  return createHmac("sha256", secret).update(`custom:${playerId}:${credential}`).digest("hex");
 }
 
 const SCRYPT_VERSION = "v1";
@@ -56,11 +57,11 @@ interface ParsedScryptHash {
   digest: Buffer;
 }
 
-function passwordMaterial(playerId: string, credential: string): Buffer {
+function passwordMaterial(playerId: string, credential: string, secret = config.authSecret): Buffer {
   // The HMAC is a server-side pepper applied before the deliberately expensive KDF. A database
   // leak alone is therefore insufficient for offline guesses, while random per-password salt
   // still prevents equal passwords from sharing a stored digest.
-  return createHmac("sha256", config.authSecret)
+  return createHmac("sha256", secret)
     .update("custom-password\0")
     .update(playerId)
     .update("\0")
@@ -120,11 +121,41 @@ export function customCredentialHashNeedsUpgrade(value: string | undefined): boo
   return Boolean(value && !parseScryptHash(value));
 }
 
-async function customCredentialMatches(playerId: string, storedHash: string, credential: string): Promise<boolean> {
+export interface CustomCredentialVerification {
+  matches: boolean;
+  /** True when the stored digest uses a retired syntax or a verification-only fallback key. */
+  needsUpgrade: boolean;
+}
+
+/**
+ * Verify a durable password against the active pepper and then the bounded fallback ring.
+ *
+ * Most requests perform exactly one scrypt derivation. Extra work occurs only during the short
+ * rotation overlap and only for accounts that have not yet logged in. The caller compare-and-set
+ * rewrites a successful fallback digest with the active key so the cost converges back to one KDF
+ * without an offline plaintext-password migration.
+ */
+export async function verifyCustomCredential(
+  playerId: string,
+  storedHash: string,
+  credential: string,
+): Promise<CustomCredentialVerification> {
   const parsed = parseScryptHash(storedHash);
-  if (!parsed) return tokensMatch(storedHash, legacyCredentialHash(playerId, credential));
-  const candidate = await deriveScryptKey(passwordMaterial(playerId, credential), parsed.salt);
-  return candidate.length === parsed.digest.length && timingSafeEqual(candidate, parsed.digest);
+  const secrets = authenticationCredentialSecrets();
+  for (let index = 0; index < secrets.length; index += 1) {
+    const secret = secrets[index]!;
+    if (!parsed) {
+      if (tokensMatch(storedHash, legacyCredentialHash(playerId, credential, secret))) {
+        return { matches: true, needsUpgrade: true };
+      }
+      continue;
+    }
+    const candidate = await deriveScryptKey(passwordMaterial(playerId, credential, secret), parsed.salt);
+    if (candidate.length === parsed.digest.length && timingSafeEqual(candidate, parsed.digest)) {
+      return { matches: true, needsUpgrade: index > 0 };
+    }
+  }
+  return { matches: false, needsUpgrade: false };
 }
 
 function tokensMatch(a: string, b: string): boolean {
@@ -160,9 +191,9 @@ export async function playerCredentialMatches(
   const sessionMatches = typeof doc.authToken === "string" && tokensMatch(doc.authToken, credential);
   if (sessionMatches) return true;
   const passwordMatches = allowCustomPassword && typeof doc.authTokenHash === "string"
-    ? await customCredentialMatches(doc.id, doc.authTokenHash, credential)
+    ? (await verifyCustomCredential(doc.id, doc.authTokenHash, credential)).matches
     : false;
-  return sessionMatches || passwordMatches;
+  return passwordMatches;
 }
 
 export interface CreatedAccount {
@@ -367,15 +398,15 @@ export async function authenticate(
     }
   }
 
-  const customPasswordMatches = doc
-    ? await playerCredentialMatches(doc, token, allowCustomPassword)
-    : false;
-  if (doc && customPasswordMatches) {
+  const customPasswordVerification = doc && allowCustomPassword && typeof doc.authTokenHash === "string"
+    ? await verifyCustomCredential(doc.id, doc.authTokenHash, token)
+    : { matches: false, needsUpgrade: false };
+  if (doc && customPasswordVerification.matches) {
     if (loginReservation) await clearLoginAttempt(loginReservation);
     // A banned login must not rotate or upgrade any credential. The stock client receives its
     // exact AccountBanned contract and keeps the existing account data for a later retry.
     await assertPlayerNotSanctioned(doc);
-    if (customCredentialHashNeedsUpgrade(doc.authTokenHash)) {
+    if (customCredentialHashNeedsUpgrade(doc.authTokenHash) || customPasswordVerification.needsUpgrade) {
       const legacyHash = doc.authTokenHash!;
       const upgradedHash = await hashCustomCredential(doc.id, token);
       if (await compareAndUpgradeCredentialHash(doc.id, legacyHash, upgradedHash)) {
