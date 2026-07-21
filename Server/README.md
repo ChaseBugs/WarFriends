@@ -99,6 +99,10 @@ never contain paths, actions, players, addresses, tokens, or arbitrary WebSocket
 response also includes a generated `X-Request-ID`; request/response/error boundary logs include the
 same ID while logging only the query-free request path. Async-local context automatically adds that
 ID to downstream authentication, database, economy, and gameplay logger helpers across awaited work.
+Deployable Prometheus scrape/rule examples and a Grafana overview live under `ops/`. Alerts cover
+target loss, sustained 5xx/latency/rate-limit pressure, explicitly required Redis loss, repeated
+restarts, and high concurrency; contract tests reject monitoring expressions that reference metrics
+the server does not export.
 
 Production MongoDB backups can use `npm run backup:mongodb:offhost`. The command creates plaintext
 only in a unique OS temporary directory, validates the existing dump manifest, and sends an

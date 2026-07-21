@@ -1,0 +1,83 @@
+groups:
+  - name: warfriends-backend
+    interval: 30s
+    rules:
+      - alert: WarFriendsBackendDown
+        expr: min(up{job="warfriends"}) < 1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: WarFriends backend target is unavailable
+          description: At least one configured WarFriends backend target has failed scraping for two minutes.
+
+      - alert: WarFriendsHighHttpErrorRatio
+        expr: |
+          (
+            sum(rate(warfriends_http_requests_total{status_class="5xx"}[5m]))
+            /
+            clamp_min(sum(rate(warfriends_http_requests_total[5m])), 0.001)
+          ) > 0.05
+          and
+          sum(rate(warfriends_http_requests_total[5m])) > 0.1
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: WarFriends HTTP 5xx ratio exceeds 5 percent
+          description: The backend has sustained both meaningful traffic and a 5xx ratio above 5 percent for ten minutes.
+
+      - alert: WarFriendsHighMeanHttpLatency
+        expr: |
+          sum(rate(warfriends_http_request_duration_seconds_sum[5m]))
+          /
+          clamp_min(sum(rate(warfriends_http_request_duration_seconds_count[5m])), 0.001)
+          > 1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: WarFriends mean HTTP latency exceeds one second
+          description: Mean HTTP processing time has remained above one second for ten minutes.
+
+      - alert: WarFriendsRedisUnavailable
+        expr: min(warfriends_redis_available{redis_required="true"}) < 1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: Required WarFriends Redis coordination is unavailable
+          description: A target labeled redis_required=true has reported Redis unavailable for five minutes.
+
+      - alert: WarFriendsWebSocketRateLimitPressure
+        expr: |
+          (
+            sum(rate(warfriends_websocket_rate_limited_total[5m]))
+            /
+            clamp_min(sum(rate(warfriends_websocket_messages_total[5m])), 0.001)
+          ) > 0.05
+          and
+          sum(rate(warfriends_websocket_messages_total[5m])) > 1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: WarFriends WebSocket rejection ratio exceeds 5 percent
+          description: WebSocket rate limiting is rejecting a sustained share of meaningful traffic.
+
+      - alert: WarFriendsRepeatedRestarts
+        expr: changes(warfriends_process_start_time_seconds[15m]) > 2
+        labels:
+          severity: warning
+        annotations:
+          summary: WarFriends backend restarted repeatedly
+          description: A backend target has changed process start time more than twice in fifteen minutes.
+
+      - alert: WarFriendsHighInflightRequests
+        expr: warfriends_http_requests_in_flight > 100
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: WarFriends has more than 100 in-flight HTTP requests
+          description: One backend target has sustained unusually high request concurrency for ten minutes.

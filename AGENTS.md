@@ -22,6 +22,7 @@
 - Treat each stored custom-password scrypt factor as verification authority within the bounded supported range. Raising `AUTH_SCRYPT_COST` may upgrade a successful login, but a temporary lower setting must never downgrade an already stronger digest.
 - Keep ordinary offline-bot battles outside ranked settlement. Their action-64 metadata may select a durable zero-reward lifecycle only after server-owned Play Warcards eligibility is checked; client-simulated bot results must never grant or consume economy, progression, cards, rentals, achievements, assignments, leagues, or events.
 - Keep production MongoDB backups authenticated and encrypted before they leave temporary local storage. Retention may delete only an old, path-confined archive/manifest pair whose database, size, and SHA-256 all validate; malformed, damaged, unrelated, or orphaned files must remain for operator review.
+- Keep monitoring artifacts on the bounded metrics contract actually exported by `metricsService`. Alerts must require sustained signals and meaningful traffic where ratios are used; Redis alerts apply only to scrape targets explicitly labeled `redis_required=true`.
 - Preserve legitimate negative Gold or WarBucks chargeback debt, but reject non-safe-integer rewards and arithmetic overflow.
 - Fail closed when authoritative combat evidence, live-event configuration, or source-backed balancing is unavailable.
 - Add detailed English comments where recovered names are opaque or atomicity, replay, migration, or fallback decisions are not obvious.

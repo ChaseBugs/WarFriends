@@ -85,3 +85,25 @@ script independently verifies the plaintext database, byte count, and SHA-256 be
 3. Confirm `/health`, authenticated `/metrics`, and that Redis reports available when enabled.
 4. Roll remaining nodes. PvP coordinator heartbeats preserve matches owned by healthy peers.
 5. Watch HTTP 5xx, rate rejections, WebSocket connections, Redis availability, and memory.
+
+## Prometheus alerts and Grafana dashboard
+
+`ops/prometheus/prometheus.example.yml` shows an authenticated multi-node scrape. Put only the raw
+`ADMIN_SECRET` value in its external `credentials_file`; do not add the `Bearer ` prefix and do not
+commit that secret file. Copy `warfriends-alerts.yml` beside the Prometheus configuration, retain
+the `rule_files` entry, and validate both files with the deployed Prometheus `promtool` before
+reloading. The example labels production targets `redis_required=true`; omit or set that label to
+`false` for intentionally Mongo-only deployments so the Redis alert has no matching series.
+
+The alert group covers target loss, sustained HTTP 5xx ratio, sustained mean latency, required Redis
+loss, sustained WebSocket rate-limit pressure, repeated restarts, and high in-flight requests. Ratio
+alerts include minimum-traffic gates so an isolated failure does not look like a production outage.
+Route `severity=critical` to the primary on-call destination and `severity=warning` to the secondary
+notification path in the deployment-owned Alertmanager configuration.
+
+Import `ops/grafana/warfriends-overview.json` and select the Prometheus data source when prompted.
+The dashboard uses only bounded metrics exported by this repository: availability, request rate,
+mean processing time, WebSocket connections/messages/rejections, in-flight work, Redis availability,
+resident memory, and error/rejection ratios. The repository contract test parses the dashboard and
+checks every referenced `warfriends_*` name against the live exposition contract; `promtool` remains
+the deployment gate for full PromQL/YAML validation.
