@@ -909,6 +909,21 @@ export interface VideoFeedDocument {
   expiresAt: Date;
 }
 
+/** One atomic, bounded rolling-window authority row for action 3000 publications. */
+export interface VideoFeedRateLimitDocument extends Document {
+  _id: string;
+  key: string;
+  /** At most the 20 URL reservations that can still consume the recovered 24-hour allowance. */
+  entries: Array<{ urlHash: string; reservedAt: Date }>;
+  updatedAt: Date;
+  /** TTL cleanup is storage hygiene; application-time pruning controls admission. */
+  expiresAt: Date;
+  /** Last atomic decision, retained so findOneAndUpdate can return this caller's result. */
+  lastUrlHash?: string;
+  lastAttemptAt?: Date;
+  lastAdmitted?: boolean;
+}
+
 /**
  * Server-only authentication record for a linked platform account.
  *
@@ -1073,6 +1088,7 @@ let squadWarRoundsCollection: Collection<SquadWarRoundDocument> | null = null;
 let squadEventProgressCollection: Collection<SquadEventProgressDocument> | null = null;
 let squadChatMessagesCollection: Collection<SquadChatMessageDocument> | null = null;
 let videoFeedCollection: Collection<VideoFeedDocument> | null = null;
+let videoFeedRateLimitsCollection: Collection<VideoFeedRateLimitDocument> | null = null;
 let matchesCollection: Collection<Document> | null = null;
 let messagesCollection: Collection<Document> | null = null;
 let identitiesCollection: Collection<IdentityDocument> | null = null;
@@ -1168,6 +1184,7 @@ export async function connectMongo(): Promise<void> {
   squadEventProgressCollection = db.collection<SquadEventProgressDocument>("squadEventProgress");
   squadChatMessagesCollection = db.collection<SquadChatMessageDocument>("squadChatMessages");
   videoFeedCollection = db.collection<VideoFeedDocument>("videoFeed");
+  videoFeedRateLimitsCollection = db.collection<VideoFeedRateLimitDocument>("videoFeedRateLimits");
   matchesCollection = db.collection("matches");
   messagesCollection = db.collection("messages");
   identitiesCollection = db.collection<IdentityDocument>("identities");
@@ -1237,6 +1254,7 @@ export async function connectMongo(): Promise<void> {
   await videoFeedCollection.createIndex({ playerId: 1, urlHash: 1 }, { unique: true });
   await videoFeedCollection.createIndex({ playerId: 1, createdAt: -1 });
   await videoFeedCollection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+  await videoFeedRateLimitsCollection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
   await matchesCollection.createIndex({ matchId: 1 }, { unique: true });
   await matchesCollection.createIndex({ "players.playerId": 1, createdAt: -1 });
@@ -1368,6 +1386,7 @@ export async function disconnectMongo(): Promise<void> {
   squadEventProgressCollection = null;
   squadChatMessagesCollection = null;
   videoFeedCollection = null;
+  videoFeedRateLimitsCollection = null;
   matchesCollection = null;
   messagesCollection = null;
   identitiesCollection = null;
@@ -1447,6 +1466,10 @@ export function squadChatMessages(): Collection<SquadChatMessageDocument> {
 
 export function videoFeed(): Collection<VideoFeedDocument> {
   return requireCollection("videoFeed", videoFeedCollection);
+}
+
+export function videoFeedRateLimits(): Collection<VideoFeedRateLimitDocument> {
+  return requireCollection("videoFeedRateLimits", videoFeedRateLimitsCollection);
 }
 
 export function matches(): Collection<Document> {

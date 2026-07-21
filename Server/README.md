@@ -1038,8 +1038,14 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
 - **Replay video publishing**: action `3000` restores the retired Everyplay submission callback.
   It validates the authenticated player's bounded HTTP/HTTPS URL, rejects executable, local-file,
   credential-bearing, malformed, and control-character input, and stores a deterministic
-  per-player publication. Unique URL identity makes concurrent/lost-response retries harmless,
-  while a 20-per-day cap and one-year TTL bound this write-only compatibility collection. Every
+  per-player publication. Unique URL identity makes concurrent/lost-response retries harmless.
+  A separate per-player rolling ledger atomically prunes and reserves each URL across all backend
+  nodes, so simultaneous distinct uploads cannot exceed 20 publications in 24 hours and an exact
+  retry after a reservation/receipt crash window does not consume another slot. On first use the
+  ledger is conservatively seeded from up to 21 recent legacy receipts, preventing deployment from
+  reopening an already-used allowance; exact-key/hash/date/cap/decision/48-hour-retention validation
+  fails closed before a damaged row can be pruned. The receipt collection's one-year TTL bounds
+  this write-only compatibility data, while the ledger TTL is storage hygiene only. Every
   insert and idempotent replay validates the complete stored row: exact known fields, canonical
   URL, matching SHA-256 URL hash, deterministic player-and-URL ID, bounded player identity,
   immutable creation/update time, and an exact 365-day expiry. Application-time expiry rejects a

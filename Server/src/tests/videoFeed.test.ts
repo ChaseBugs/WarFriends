@@ -4,8 +4,13 @@ import { createHash } from "node:crypto";
 import { ApiErrorCode } from "../apiErrors";
 import { DbAction } from "../dbActions";
 import { videoFeedHandlers } from "../handlers/videoFeed";
-import type { VideoFeedDocument } from "../db";
-import { normalizeVideoFeedUrl, validatedVideoFeedDocument } from "../services/videoFeedService";
+import type { VideoFeedDocument, VideoFeedRateLimitDocument } from "../db";
+import {
+  normalizeVideoFeedUrl,
+  validatedVideoFeedDocument,
+  validatedVideoFeedRateLimit,
+  videoFeedRateLimitKey,
+} from "../services/videoFeedService";
 
 test("AddVideoFeed accepts the hosted HTTP URL forms used by the recovered upload callback", () => {
   assert.equal(
@@ -70,5 +75,64 @@ test("video-feed receipt authority binds URL hash, deterministic ID, and retenti
   assert.throws(
     () => validatedVideoFeedDocument({ ...valid, expiresAt: new Date(createdAt.getTime() + 1) }),
     /Stored video-feed receipt is invalid/,
+  );
+});
+
+test("video-feed rolling authority binds its opaque key, bounded unique ledger, and exact lifetime", () => {
+  const now = new Date("2026-07-22T00:00:00.000Z");
+  const key = videoFeedRateLimitKey("player-1");
+  const state: VideoFeedRateLimitDocument = {
+    _id: key,
+    key,
+    entries: [{ urlHash: "a".repeat(64), reservedAt: new Date(now.getTime() - 1) }],
+    updatedAt: now,
+    expiresAt: new Date(now.getTime() + (48 * 60 * 60 * 1_000)),
+  };
+  assert.equal(validatedVideoFeedRateLimit(state, now, key), state);
+  assert.throws(
+    () => validatedVideoFeedRateLimit({ ...state, entries: [...state.entries, state.entries[0]] }, now, key),
+    /Stored video-feed rate-limit authority is invalid/,
+  );
+  assert.throws(
+    () => validatedVideoFeedRateLimit({ ...state, expiresAt: new Date(now.getTime() + 1) }, now, key),
+    /Stored video-feed rate-limit authority is invalid/,
+  );
+  assert.throws(
+    () => validatedVideoFeedRateLimit({ ...state, unexpected: true } as VideoFeedRateLimitDocument, now, key),
+    /Stored video-feed rate-limit authority is invalid/,
+  );
+});
+
+test("video-feed rolling authority proves admitted replay and saturated denial decisions", () => {
+  const now = new Date("2026-07-22T00:00:00.000Z");
+  const key = videoFeedRateLimitKey("player-2");
+  const entries = Array.from({ length: 20 }, (_, index) => ({
+    urlHash: index.toString(16).padStart(64, "0"),
+    reservedAt: new Date(now.getTime() - index),
+  }));
+  const base = {
+    _id: key,
+    key,
+    entries,
+    updatedAt: now,
+    expiresAt: new Date(now.getTime() + (48 * 60 * 60 * 1_000)),
+    lastAttemptAt: now,
+  };
+  const replay: VideoFeedRateLimitDocument = {
+    ...base,
+    lastUrlHash: entries[0].urlHash,
+    lastAdmitted: true,
+  };
+  assert.equal(validatedVideoFeedRateLimit(replay, now, key), replay);
+
+  const denied: VideoFeedRateLimitDocument = {
+    ...base,
+    lastUrlHash: "f".repeat(64),
+    lastAdmitted: false,
+  };
+  assert.equal(validatedVideoFeedRateLimit(denied, now, key), denied);
+  assert.throws(
+    () => validatedVideoFeedRateLimit({ ...denied, entries: entries.slice(1) }, now, key),
+    /Stored video-feed rate-limit authority is invalid/,
   );
 });
