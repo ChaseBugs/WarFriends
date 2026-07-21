@@ -17,14 +17,29 @@ test("HTTP token bucket rejects a burst and refills continuously", () => {
   assert.equal(limiter.consume("client", 3_000).allowed, true);
 });
 
-test("HTTP limiter has a hard LRU memory bound and clamps unsafe configuration", () => {
-  const limiter = new HttpRateLimiter(Number.NaN, -1, 2);
+test("HTTP limiter has a hard LRU memory bound", () => {
+  const limiter = new HttpRateLimiter(120, 1, 100);
   assert.equal(limiter.capacity, 120);
   assert.equal(limiter.windowMs, 1_000);
   assert.equal(limiter.maxEntries, 100);
 
   for (let index = 0; index < 130; index += 1) limiter.consume(`client-${index}`, index);
   assert.equal(limiter.size(), 100);
+});
+
+test("HTTP limiter rejects policy values previously floored, clamped, or defaulted", () => {
+  for (const args of [
+    [Number.NaN, 60, 10_000],
+    [120.5, 60, 10_000],
+    [0, 60, 10_000],
+    [100_001, 60, 10_000],
+    [120, 0, 10_000],
+    [120, 86_401, 10_000],
+    [120, 60, 99],
+    [120, 60, 1_000_001],
+  ] as const) {
+    assert.throws(() => new HttpRateLimiter(args[0], args[1], args[2]), /Traffic HTTP .* policy is invalid/);
+  }
 });
 
 test("HTTP limiter keys are deterministic, secret-bound, and hide raw addresses", () => {

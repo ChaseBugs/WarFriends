@@ -31,13 +31,23 @@ test("WebSocket limiter grants nothing when the clock moves backwards", () => {
   assert.equal(limiter.consume(20_000).allowed, true);
 });
 
-test("WebSocket safety configuration is clamped to useful hard bounds", () => {
-  const limiter = new WebSocketRateLimiter(Number.NaN, -20);
-  assert.equal(limiter.capacity, 120);
-  assert.equal(limiter.windowMs, 1_000);
-  assert.equal(webSocketPayloadLimit(Number.NaN), 65_536);
-  assert.equal(webSocketPayloadLimit(1), 1_024);
-  assert.equal(webSocketPayloadLimit(9_999_999), 1_048_576);
-  assert.equal(webSocketViolationLimit(0), 1);
-  assert.equal(webSocketViolationLimit(500), 100);
+test("WebSocket safety configuration requires exact bounded integers", () => {
+  assert.equal(webSocketPayloadLimit(65_536), 65_536);
+  assert.equal(webSocketViolationLimit(3), 3);
+  for (const args of [
+    [Number.NaN, 10],
+    [120.5, 10],
+    [0, 10],
+    [100_001, 10],
+    [120, 0],
+    [120, 86_401],
+  ] as const) {
+    assert.throws(() => new WebSocketRateLimiter(args[0], args[1]), /Traffic WebSocket .* policy is invalid/);
+  }
+  for (const value of [Number.NaN, 1, 1_048_577, 65_536.5]) {
+    assert.throws(() => webSocketPayloadLimit(value), /payload-byte-limit policy is invalid/);
+  }
+  for (const value of [Number.NaN, 0, 101, 3.5]) {
+    assert.throws(() => webSocketViolationLimit(value), /violation-limit policy is invalid/);
+  }
 });

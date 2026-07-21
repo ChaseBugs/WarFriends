@@ -4,20 +4,14 @@ export interface WebSocketRateLimitDecision {
   retryAfterSeconds: number;
 }
 
-function boundedInteger(value: number, fallback: number, minimum: number, maximum: number): number {
-  return Number.isFinite(value)
-    ? Math.min(maximum, Math.max(minimum, Math.floor(value)))
-    : fallback;
-}
-
-/** Clamp the ws library's per-frame allocation before it accepts a payload into application code. */
+/** Validate the ws library's per-frame allocation before it accepts a payload into application code. */
 export function webSocketPayloadLimit(value: number): number {
-  return boundedInteger(value, 65_536, 1_024, 1_048_576);
+  return exactTrafficPolicyInteger(value, "WebSocket payload-byte-limit", 1_024, 1_048_576);
 }
 
-/** Clamp repeated-violation tolerance so configuration cannot disable eventual disconnect. */
+/** Require an exact repeated-violation tolerance so configuration cannot disable disconnect. */
 export function webSocketViolationLimit(value: number): number {
-  return boundedInteger(value, 3, 1, 100);
+  return exactTrafficPolicyInteger(value, "WebSocket violation-limit", 1, 100);
 }
 
 /**
@@ -34,8 +28,8 @@ export class WebSocketRateLimiter {
   private lastRefillAt: number | null = null;
 
   constructor(capacity: number, windowSeconds: number) {
-    this.capacity = boundedInteger(capacity, 120, 1, 100_000);
-    this.windowMs = boundedInteger(windowSeconds, 10, 1, 86_400) * 1_000;
+    this.capacity = exactTrafficPolicyInteger(capacity, "WebSocket message-capacity", 1, 100_000);
+    this.windowMs = exactTrafficPolicyInteger(windowSeconds, "WebSocket window-seconds", 1, 86_400) * 1_000;
     this.tokens = this.capacity;
   }
 
@@ -78,3 +72,4 @@ export async function consumeWebSocketRateLimit(
 import { createHmac } from "crypto";
 import { config } from "../config";
 import { consumeDistributedToken } from "./distributedRateLimitService";
+import { exactTrafficPolicyInteger } from "./trafficPolicyService";

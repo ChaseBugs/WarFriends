@@ -3,6 +3,7 @@ import type { NextFunction, Request, Response } from "express";
 import { config } from "../config";
 import logger from "../utils/logger";
 import { consumeDistributedToken } from "./distributedRateLimitService";
+import { exactTrafficPolicyInteger } from "./trafficPolicyService";
 
 interface Bucket {
   tokens: number;
@@ -15,12 +16,6 @@ export interface RateLimitDecision {
   limit: number;
   remaining: number;
   retryAfterSeconds: number;
-}
-
-function boundedInteger(value: number, fallback: number, minimum: number, maximum: number): number {
-  return Number.isFinite(value)
-    ? Math.min(maximum, Math.max(minimum, Math.floor(value)))
-    : fallback;
 }
 
 /**
@@ -37,9 +32,9 @@ export class HttpRateLimiter {
   private readonly buckets = new Map<string, Bucket>();
 
   constructor(capacity: number, windowSeconds: number, maxEntries: number) {
-    this.capacity = boundedInteger(capacity, 120, 1, 100_000);
-    this.windowMs = boundedInteger(windowSeconds, 60, 1, 86_400) * 1_000;
-    this.maxEntries = boundedInteger(maxEntries, 10_000, 100, 1_000_000);
+    this.capacity = exactTrafficPolicyInteger(capacity, "HTTP request-capacity", 1, 100_000);
+    this.windowMs = exactTrafficPolicyInteger(windowSeconds, "HTTP window-seconds", 1, 86_400) * 1_000;
+    this.maxEntries = exactTrafficPolicyInteger(maxEntries, "HTTP memory-entry-cap", 100, 1_000_000);
   }
 
   consume(key: string, now = Date.now()): RateLimitDecision {

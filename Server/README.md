@@ -399,7 +399,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   token bucket keyed by an HMAC-hidden client address. Redis provides bounded-TTL cross-process
   enforcement, while the memory-bounded limiter remains the explicit outage fallback. Proxy
   addresses are trusted only when `TRUST_PROXY_HOPS` is explicitly configured; rejected bursts receive HTTP 429
-  and `Retry-After` without reaching request parsing or game handlers.
+  and `Retry-After` without reaching request parsing or game handlers. HTTP capacity (1-100,000),
+  window (1-86,400 seconds), and memory entries (100-1,000,000), plus WebSocket capacity/window,
+  payload (1,024-1,048,576 bytes), and violation tolerance (1-100), must be exact safe integers;
+  malformed deployment policy fails startup instead of being rounded, clamped, or defaulted.
 - **Photon-region profile compatibility**: action `140` validates and atomically persists the
   recovered ten-region latency dictionary plus `None`/`Cellural`/`Wifi` connection type.
   Public `DatabasePlayer` snapshots restore the exact `Regions: { S: "..." }` contract used by
