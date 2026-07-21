@@ -83,21 +83,35 @@ export class RoomManager {
   }
 
   /**
+   * Check every process-local admission constraint without mutating the room registry.
+   *
+   * The no-Redis hub runs this before its durable `joinActiveMatch` write. Keeping the preflight
+   * and the actual join on one predicate prevents a known local conflict from being written into
+   * `joinedPlayerIds`; the second check after MongoDB still catches an unexpected interleaving.
+   */
+  canJoin(matchId: string, playerId: string, allowedPlayerIds: readonly string[]): boolean {
+    const suppliedAllowlist = new Set(allowedPlayerIds);
+    if (allowedPlayerIds.length !== 2
+      || suppliedAllowlist.size !== 2
+      || !suppliedAllowlist.has(playerId)) return false;
+    const currentMatchId = this.playerRoom.get(playerId);
+    if (currentMatchId !== undefined && currentMatchId !== matchId) return false;
+    const room = this.rooms.get(matchId);
+    if (!room) return true;
+    if (room.allowedPlayerIds.size !== suppliedAllowlist.size
+      || [...suppliedAllowlist].some((id) => !room.allowedPlayerIds.has(id))
+      || !room.allowedPlayerIds.has(playerId)) return false;
+    return room.participants.has(playerId) || room.participants.size < room.allowedPlayerIds.size;
+  }
+
+  /**
    * Attach an authenticated player to the room, creating its in-memory representation on
    * first arrival. The persistent match supplies allowedPlayerIds; checking that immutable
    * pair prevents an unrelated authenticated account from guessing a MatchId and joining.
    * Rejoining replaces only that player's socket ID, which supports reconnect safely.
    */
   join(matchId: string, playerId: string, clientId: string, allowedPlayerIds: readonly string[]): MatchRoom | null {
-    const suppliedAllowlist = new Set(allowedPlayerIds);
-    if (allowedPlayerIds.length !== 2
-      || suppliedAllowlist.size !== 2
-      || !suppliedAllowlist.has(playerId)) return null;
-    const currentMatchId = this.playerRoom.get(playerId);
-    // The authenticated socket identity can own only one process-local room. Without this check a
-    // stale/duplicate JoinMatch could leave the same client in two room participant maps; close
-    // cleanup would evict only the first and the ghost room could continue relaying opaque events.
-    if (currentMatchId !== undefined && currentMatchId !== matchId) return null;
+    if (!this.canJoin(matchId, playerId, allowedPlayerIds)) return null;
     let room = this.rooms.get(matchId);
     if (!room) {
       room = {
@@ -111,11 +125,6 @@ export class RoomManager {
       };
       this.rooms.set(matchId, room);
     }
-    // Every join reloads the durable match allowlist. Require it to reproduce the room's immutable
-    // pair exactly rather than accepting one overlapping player from a contradictory snapshot.
-    if (room.allowedPlayerIds.size !== suppliedAllowlist.size
-      || [...suppliedAllowlist].some((id) => !room!.allowedPlayerIds.has(id))
-      || !room.allowedPlayerIds.has(playerId)) return null;
     const existing = room.participants.get(playerId);
     if (!existing && room.participants.size >= 2) {
       return null; // room full with two different players

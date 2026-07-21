@@ -957,11 +957,37 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
       }
       const match = await getMatch(p?.MatchId);
       const allowedPlayerIds = match?.state === "active" ? match.players.map((participant) => participant.playerId) : [];
-      const room = roomManager.join(p?.MatchId, client.playerId, client.id, allowedPlayerIds);
-      if (!room) {
+      // Local rooms use the same MongoDB join/start authority as distributed rooms. Preflight the
+      // transient registry first so a known second-room or contradictory-pair conflict cannot
+      // pollute durable joinedPlayerIds, then repeat the exact check while attaching the socket.
+      if (!roomManager.canJoin(p?.MatchId, client.playerId, allowedPlayerIds)) {
         return send(client, { Type: "MatchError", Payload: { MatchId: p?.MatchId, Reason: "NotParticipantOrFull" } });
       }
-      const reconnected = clearDisconnectTimer(p.MatchId, client.playerId);
+      const joined = await joinActiveMatch(p?.MatchId, client.playerId);
+      if (!joined) {
+        return send(client, { Type: "MatchError", Payload: { MatchId: p?.MatchId, Reason: "NotParticipantOrFull" } });
+      }
+      const durableAllowedPlayerIds = joined.match.players.map((participant) => participant.playerId);
+      const room = roomManager.join(p?.MatchId, client.playerId, client.id, durableAllowedPlayerIds);
+      if (!room) {
+        // This should be unreachable without another local handler changing the registry while the
+        // MongoDB call was in flight. The durable join may already have started the pair, so fail
+        // closed by cancelling and releasing both profiles rather than leaving a start row with no
+        // corresponding local socket authority.
+        const cancelled = await cancelMatch(p?.MatchId, "local_room_admission_failed");
+        if (cancelled) {
+          roomManager.broadcast(p?.MatchId, {
+            Type: "MatchError",
+            Payload: { MatchId: p?.MatchId, Reason: "LocalRoomAdmissionFailed" },
+          });
+        }
+        clearMatchJoinTimer(p?.MatchId);
+        clearMatchDisconnectTimers(p?.MatchId);
+        roomManager.finish(p?.MatchId);
+        return send(client, { Type: "MatchError", Payload: { MatchId: p?.MatchId, Reason: "NotParticipantOrFull" } });
+      }
+      const durableReconnected = await clearMatchParticipantDisconnected(p.MatchId, client.playerId);
+      const reconnected = clearDisconnectTimer(p.MatchId, client.playerId) || durableReconnected;
       if (reconnected) {
         roomManager.broadcast(p.MatchId, {
           Type: "OpponentReconnected",
@@ -970,10 +996,10 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
       }
       // The room becomes active only when both assigned players have joined. At that exact
       // transition the pre-game deadline no longer owns the match and must be cancelled.
-      if (room.state === "active") clearMatchJoinTimer(p.MatchId);
+      if (room.state === "active" && joined.started) clearMatchJoinTimer(p.MatchId);
       send(client, {
         Type: "MatchJoined",
-        Payload: { MatchId: p.MatchId, State: room.state, Participants: room.participants.size },
+        Payload: { MatchId: p.MatchId, State: room.state, Participants: joined.joinedCount },
       });
       return;
     }

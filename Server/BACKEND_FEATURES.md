@@ -98,7 +98,11 @@ every join and enforces its player-to-room index. One authenticated identity can
 process-local rooms, a contradictory overlapping allowlist cannot revise an existing room, and
 rejected joins cannot create ghost rooms that survive close cleanup or relay opaque events. During
 reconnect grace the room may retain active lifecycle state, but both exact assigned participants
-must be currently present before any generic or CardPlayed relay reports successful delivery.
+must be currently present before any generic or CardPlayed relay reports successful delivery. The
+local path now preflights those constraints without mutation, commits the same durable
+`joinedPlayerIds`/one-time `roomStartedAt` transition as distributed admission, and only then
+attaches/activates the socket room. An unexpected post-write local conflict cancels the match and
+releases both profiles instead of leaving a durable started ghost room.
 
 `MatchFound` can cross backend nodes through a size/type-bounded pub/sub instruction. The receiving
 node never trusts that instruction as match authority: it reloads MongoDB and proves that the local

@@ -108,11 +108,15 @@ test("one authenticated player cannot occupy two process-local match rooms", () 
 
 test("every room join must reproduce one exact two-player durable allowlist", () => {
   const manager = new RoomManager();
+  assert.equal(manager.canJoin("allowlist", "p1", ["p1", "p2"]), true);
+  assert.equal(manager.getRoom("allowlist"), undefined, "admission preflight must not create a room");
   assert.equal(manager.join("allowlist", "p1", "c1", ["p1"]), null);
   assert.equal(manager.join("allowlist", "p1", "c1", ["p1", "p1"]), null);
   assert.equal(manager.getRoom("allowlist"), undefined);
 
   assert.ok(manager.join("allowlist", "p1", "c1", ["p1", "p2"]));
+  assert.equal(manager.canJoin("other-room", "p1", ["p1", "p3"]), false);
+  assert.equal(manager.canJoin("allowlist", "p2", ["p1", "p3"]), false);
   assert.equal(
     manager.join("allowlist", "p2", "c2", ["p1", "p3"]),
     null,
