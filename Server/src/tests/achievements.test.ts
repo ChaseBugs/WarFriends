@@ -31,6 +31,24 @@ import { validatedProgressionSuccessor } from "../services/progressionPublicatio
 
 const NOW = Date.UTC(2026, 6, 19, 12, 0, 0) / 1_000;
 
+test("buffered achievement members require exact C# integer JSON numbers", () => {
+  for (const value of [undefined, null, false, true, "13", [], [13], -1, 13.5, 2_147_483_648]) {
+    const result = processAssignmentBufferState(
+      createInitialProgression(NOW),
+      NOW,
+      `achievement-transport-${JSON.stringify(value)}`,
+      [{
+        action: DbAction.ChangeAchievementProgres,
+        data: JSON.stringify({ Id: value, Progress: 0 }),
+      }],
+    );
+    assert.equal(
+      (JSON.parse(result.requestsResults) as Array<{ Result: number }>)[0]?.Result,
+      ACHIEVEMENT_REWARD_NOT_FOUND,
+    );
+  }
+});
+
 test("card lifecycle counters reject malformed durable reward authority", () => {
   assert.deepEqual(validatedCardLifecycleCounters(createInitialProgression(NOW)), {
     warCardsPlayed: 0,

@@ -99,6 +99,10 @@ import {
   validatedAssignmentState,
   type AssignmentTemplate,
 } from "./assignmentAuthorityService";
+import {
+  exactRequestJsonInteger,
+  exactRequestJsonNonnegativeInteger,
+} from "./requestJsonNumberService";
 
 /**
  * Daily assignments and the recovered RequestBuffer transaction boundary.
@@ -415,11 +419,8 @@ function parseClaimData(data: string): { assignmentId: number; reward: number } 
     throw new ApiError(ASSIGNMENT_NOT_FOUND, "Buffered assignment data is missing.");
   }
   const record = value as Record<string, unknown>;
-  const assignmentId = Number(record.AssignmentId);
-  const reward = Number(record.Reward);
-  if (!Number.isInteger(assignmentId) || !Number.isInteger(reward)) {
-    throw new ApiError(ASSIGNMENT_NOT_FOUND, "Buffered assignment fields are invalid.");
-  }
+  const assignmentId = exactRequestJsonNonnegativeInteger(record.AssignmentId, "AssignmentId", ASSIGNMENT_NOT_FOUND);
+  const reward = exactRequestJsonNonnegativeInteger(record.Reward, "Reward", ASSIGNMENT_NOT_FOUND);
   return { assignmentId, reward };
 }
 
@@ -452,13 +453,11 @@ function parseStarterAssignmentClaimData(data: string): {
   }
   const record = value as Record<string, unknown>;
   const assignmentId = record.AssignmentId;
-  const gold = Number(record.Gold);
-  const warBucks = Number(record.WarBucks);
+  const gold = exactRequestJsonNonnegativeInteger(record.Gold, "Gold", 18501);
+  const warBucks = exactRequestJsonNonnegativeInteger(record.WarBucks, "WarBucks", 18501);
   if (
     typeof assignmentId !== "string" ||
-    !/^ID_(?:[1-9]|10)$/.test(assignmentId) ||
-    !Number.isInteger(gold) ||
-    !Number.isInteger(warBucks)
+    !/^ID_(?:[1-9]|10)$/.test(assignmentId)
   ) {
     throw new ApiError(18501, "Buffered starter-assignment fields are invalid.");
   }
@@ -467,28 +466,27 @@ function parseStarterAssignmentClaimData(data: string): {
 
 function parseEventClaimData(data: string): { rewardType: number; rewardValue: number } {
   const record = parseAchievementData(data);
-  const rewardType = Number(record.RewardType);
-  const rewardValue = Number(record.RewardValue);
-  if (!Number.isInteger(rewardType) || !Number.isInteger(rewardValue)) {
-    throw new ApiError(ApiErrorCode.UnknownAction, "Buffered Event Assignment reward fields are invalid.");
-  }
+  const rewardType = exactRequestJsonNonnegativeInteger(record.RewardType, "RewardType", ApiErrorCode.UnknownAction);
+  const rewardValue = exactRequestJsonNonnegativeInteger(record.RewardValue, "RewardValue", ApiErrorCode.UnknownAction);
   return { rewardType, rewardValue };
 }
 
 function parseEventMilestoneData(data: string): { milestoneId: number; rewardValue: string } {
   const record = parseAchievementData(data);
-  const milestoneId = Number(record.MilestoneId);
+  const milestoneId = exactRequestJsonNonnegativeInteger(record.MilestoneId, "MilestoneId", ApiErrorCode.UnknownAction);
   const rewardValue = record.RewardValue;
-  if (!Number.isInteger(milestoneId) || typeof rewardValue !== "string" || rewardValue.length > 128) {
+  if (typeof rewardValue !== "string" || rewardValue.length > 128) {
     throw new ApiError(ApiErrorCode.UnknownAction, "Buffered Event milestone fields are invalid.");
   }
   return { milestoneId, rewardValue };
 }
 
 function achievementInteger(record: Record<string, unknown>, field: string): number {
-  const value = Number(record[field]);
-  if (!Number.isInteger(value)) throw new ApiError(21801, `Achievement ${field} is invalid.`);
-  return value;
+  // Offset is computed from pre-achievement local statistics and may be signed. Every ID,
+  // progress cursor, and current progress sent by the recovered client is nonnegative.
+  return field === "Offset"
+    ? exactRequestJsonInteger(record[field], `Achievement ${field}`, 21801)
+    : exactRequestJsonNonnegativeInteger(record[field], `Achievement ${field}`, 21801);
 }
 
 function boundedReplayCache(

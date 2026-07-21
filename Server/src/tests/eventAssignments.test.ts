@@ -37,6 +37,26 @@ const EVENT: EventAssignmentEventConfig = {
   ],
 };
 
+test("Event Assignment claim indexes and rewards require exact C# integer JSON numbers", () => {
+  const initialized = ensureEventAssignmentState(createInitialProgression(START), EVENT).state;
+  for (const value of [undefined, null, false, true, "1", [], [1], -1, 1.5, 2_147_483_648]) {
+    const result = processAssignmentBufferState(
+      initialized,
+      START + 100,
+      `event-claim-transport-${JSON.stringify(value)}`,
+      [{
+        action: DbAction.ClaimEventAssignment,
+        data: JSON.stringify({ RewardType: value, RewardValue: 5 }),
+      }],
+      1,
+      0,
+      0,
+      EVENT,
+    );
+    assert.notEqual((JSON.parse(result.requestsResults) as Array<{ Result: number }>)[0]?.Result, 1);
+  }
+});
+
 function document(progression = createInitialProgression(START)): PlayerDocument {
   const player = newPlayer("event-player", "EventPlayer", AccountType.Guest);
   return {

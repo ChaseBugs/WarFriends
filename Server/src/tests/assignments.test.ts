@@ -46,6 +46,21 @@ test("assignment requests require canonical integers and contiguous RequestBuffe
   }
 });
 
+test("buffered assignment claim fields require exact C# integer JSON numbers", () => {
+  for (const value of [undefined, null, false, true, "5", [], [5], -1, 5.5, 2_147_483_648]) {
+    const result = processAssignmentBufferState(
+      createInitialProgression(NOW),
+      NOW,
+      `assignment-claim-transport-${JSON.stringify(value)}`,
+      [{
+        action: DbAction.ClaimAssignment,
+        data: JSON.stringify({ AssignmentId: value, Reward: 2 }),
+      }],
+    );
+    assert.equal((JSON.parse(result.requestsResults) as Array<{ Result: number }>)[0]?.Result, 11201);
+  }
+});
+
 test("assignment cycle is stable for one UTC day and rolls at midnight", () => {
   const initial = createInitialProgression(NOW);
   const first = assignmentStateFor(initial, NOW);

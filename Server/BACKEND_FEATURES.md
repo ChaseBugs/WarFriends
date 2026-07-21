@@ -150,6 +150,14 @@ created by `requests.Add(requestCount++, value)`. JavaScript-coercible values an
 negative, gapped, oversized, or nonnumeric keys reject the complete envelope before its first
 per-action result or progression mutation; valid envelopes retain the recovered per-action isolation.
 
+The same boundary now covers the nested Json.NET dictionaries inside buffered daily/starter
+assignment claims, Event Assignment claims/milestones, and achievement actions 218-220. IDs,
+reward/currency echoes, milestone indexes, and progress cursors must be nonnegative Int32 JSON
+numbers; achievement `Offset` alone remains signed because the recovered client derives it from
+pre-achievement local statistics. Null, Boolean, string, array, fractional, negative, non-finite,
+and out-of-range alternatives are isolated as the action's recovered error before claim or reward
+state changes.
+
 ### Current PvP relay increment
 
 Redis-enabled deployments now use one atomic Lua operation for cross-node queue deduplication,

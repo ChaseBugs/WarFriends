@@ -22,6 +22,19 @@ export function exactRequestJsonInteger(value: unknown, field: string, errorCode
   return value;
 }
 
+/** Require the nonnegative subset used by recovered request counts, IDs, prices, and rewards. */
+export function exactRequestJsonNonnegativeInteger(
+  value: unknown,
+  field: string,
+  errorCode: number,
+): number {
+  const parsed = exactRequestJsonInteger(value, field, errorCode);
+  if (parsed < 0) {
+    throw new ApiError(errorCode, `${field} must be a nonnegative C# integer JSON number.`);
+  }
+  return parsed;
+}
+
 /** Require an actual finite JSON number for recovered C# float/double dictionary members. */
 export function exactRequestJsonFiniteNumber(value: unknown, field: string, errorCode: number): number {
   if (typeof value !== "number" || !Number.isFinite(value)) {

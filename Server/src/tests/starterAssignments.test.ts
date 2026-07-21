@@ -249,6 +249,21 @@ test("starter RequestBuffer replay returns the cached result without granting tw
   assert.equal(replay.replayed, true);
 });
 
+test("starter claim currency echoes require exact C# integer JSON numbers", () => {
+  for (const value of [undefined, null, false, true, "2", [], [2], -1, 2.5, 2_147_483_648]) {
+    const result = processAssignmentBufferState(
+      createInitialProgression(NOW),
+      NOW,
+      `starter-claim-transport-${JSON.stringify(value)}`,
+      [{
+        action: DbAction.ClaimStarterAssignment,
+        data: JSON.stringify({ AssignmentId: "ID_1", Gold: value, WarBucks: 0 }),
+      }],
+    );
+    assert.equal((JSON.parse(result.requestsResults) as Array<{ Result: number }>)[0]?.Result, 18501);
+  }
+});
+
 test("starter RequestBuffer returns a safe error snapshot when durable onboarding state is corrupt", () => {
   const initial = createInitialProgression(NOW);
   initial.starterAssignments = {

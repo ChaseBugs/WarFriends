@@ -4,6 +4,7 @@ import {
   exactRequestIntegerText,
   exactRequestJsonFiniteNumber,
   exactRequestJsonInteger,
+  exactRequestJsonNonnegativeInteger,
 } from "../services/requestJsonNumberService";
 
 const ERROR_CODE = 777;
@@ -44,6 +45,14 @@ test("C# floating dictionary members require actual finite JSON numbers", () => 
 
   for (const value of [undefined, null, false, true, "0.5", [], Number.NaN, Number.POSITIVE_INFINITY]) {
     assert.throws(() => exactRequestJsonFiniteNumber(value, "Value", ERROR_CODE), hasExpectedCode);
+  }
+});
+
+test("nonnegative C# request integers retain the exact JSON-number boundary", () => {
+  assert.equal(exactRequestJsonNonnegativeInteger(0, "Value", ERROR_CODE), 0);
+  assert.equal(exactRequestJsonNonnegativeInteger(2_147_483_647, "Value", ERROR_CODE), 2_147_483_647);
+  for (const value of [-1, "0", null, false, 0.5, 2_147_483_648]) {
+    assert.throws(() => exactRequestJsonNonnegativeInteger(value, "Value", ERROR_CODE), hasExpectedCode);
   }
 });
 

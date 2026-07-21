@@ -1387,6 +1387,13 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   serialization of the rejected object or aborts unrelated RequestBuffer results.
   Buffered claims are ordered, atomic, reward-validated, and replay safe.
   Unit deployment remains disabled until that event source exists.
+  All nested claim dictionaries now retain their recovered Json.NET numeric types before these
+  transitions run: daily/starter assignment IDs and currency echoes, Event Assignment reward and
+  milestone fields, and achievement IDs/progress cursors require nonnegative Int32 JSON numbers.
+  Achievement `Offset` is the only signed Int32 exception because it represents pre-achievement
+  local statistics. JavaScript-coercible nulls, booleans, strings, arrays, fractions, negative
+  non-offset values, and out-of-range numbers stay inside the recovered per-action error result and
+  cannot reach reward or claim authority.
 - **Daily assignment cycle integrity**: `AssignmentData` keeps its private `dayKey`, `issued`, and
   `tomorrow` values as one server-authored UTC tuple. Rollover, PvP progress, skips, claims, mega
   claims, and serialization validate both timestamps as bounded safe Unix seconds and require the
