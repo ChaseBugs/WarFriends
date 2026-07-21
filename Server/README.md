@@ -589,7 +589,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   `DogTagLastUpdate`, `Gold`, `WarBucks`, `NewVisuals`, and `videoAdRewardTimes` fields, and restores
   all four ledgers at boot. XOR-decoded 4.9.5 limits are enforced server-side as 24 claims per
   rolling 5/12/15/100-hour window, with the exact one-minute Golden Suitcase spacing. A shared
-  validator rejects malformed/non-finite/oversized durable ledgers before grant or boot;
+  validator rejects malformed/non-finite/oversized durable ledgers at progression read/publication
+  and before grant or boot. Its exact private replay receipt must bind a supported reward, safe
+  timestamp, non-future progression revision, matching ledger grant, and bounded immutable JSON
+  response containing the same ledger snapshot;
   only valid timestamps provably older than their reward window are removed, while future entries
   retain capacity after a clock rollback. A narrow
   same-revision five-second receipt prevents a lost HTTP response from granting twice. The

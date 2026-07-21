@@ -2,7 +2,6 @@ import { randomInt } from "node:crypto";
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import type {
   PlayerProgressionState,
-  VideoAdRewardTimesState,
 } from "../db";
 import { grantMissionCardsState } from "./cardInventoryService";
 import { materializeDogTags } from "./economyService";
@@ -11,7 +10,7 @@ import { mutateProgression } from "./progressionMutationService";
 import {
   VIDEO_AD_LIMITS,
   VideoAdRewardKind,
-  videoAdRewardTimesForState,
+  validatedVideoAdRewardState,
 } from "./videoAdRewardAuthorityService";
 
 export {
@@ -46,13 +45,6 @@ export interface VideoAdRewardTransition {
   reward: VideoAdRewardKind;
   response: Record<string, unknown>;
   replayed: boolean;
-}
-
-function normalizedTimes(
-  state: PlayerProgressionState,
-  now: number,
-): VideoAdRewardTimesState {
-  return videoAdRewardTimesForState(state, now);
 }
 
 function selectedIndex(pick: PickIndex, upperBound: number, context: string): number {
@@ -172,7 +164,10 @@ export function grantVideoAdRewardState(
     throw new ApiError(ApiErrorCode.UnknownAction, "Video ad reward request is invalid.");
   }
 
-  const prior = state.videoAdRewards?.lastReceipt;
+  // Validate the complete private receipt before consulting its replay fields. A malformed
+  // truthy object must never bypass grant/rate-limit work or return attacker-controlled JSON.
+  const authority = validatedVideoAdRewardState(state.videoAdRewards, currentTime, state.revision);
+  const prior = authority.lastReceipt;
   if (
     prior?.reward === reward
     && prior.progressionRevision === state.revision
@@ -184,7 +179,7 @@ export function grantVideoAdRewardState(
     return { state, reward, response: immutableResponse(prior.response), replayed: true };
   }
 
-  const times = normalizedTimes(state, currentTime);
+  const times = authority.times;
   const ledger = times[limit.key];
   if (ledger.length >= limit.count) {
     throw new ApiError(ApiErrorCode.UnknownAction, "Video ad reward limit reached.", {

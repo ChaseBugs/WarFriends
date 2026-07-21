@@ -26,7 +26,10 @@ import {
   createInitialStarterAssignmentState,
   validatedStarterAssignmentState,
 } from "./starterAssignmentAuthorityService";
-import { videoAdRewardTimesForState } from "./videoAdRewardAuthorityService";
+import {
+  validatedVideoAdRewardStateShape,
+  videoAdRewardTimesForState,
+} from "./videoAdRewardAuthorityService";
 import { validatedPvpWinStreak, validatedPvpWinStreakShape } from "./pvpWinStreakAuthorityService";
 import {
   validatedInstantBattleShape,
@@ -125,6 +128,10 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
     state.instantBattle,
     progressionRevisionForRead(state.revision),
   );
+  const videoAdRewards = validatedVideoAdRewardStateShape(
+    state.videoAdRewards,
+    progressionRevisionForRead(state.revision),
+  );
   // This is the shared persisted-progression read boundary, not only a boot serializer. Validate
   // wallet/rank balances here so cross-player transactions and ordinary economy actions cannot
   // let NaN/Infinity bypass a `< price` check before reaching a narrower service validator.
@@ -163,6 +170,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
       featureIntroductions,
       squadCreationsCount,
       instantBattle,
+      videoAdRewards,
     };
   }
 
@@ -199,6 +207,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
     featureIntroductions,
     squadCreationsCount,
     instantBattle,
+    videoAdRewards,
   };
 }
 

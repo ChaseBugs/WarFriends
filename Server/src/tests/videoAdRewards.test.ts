@@ -3,7 +3,12 @@ import test from "node:test";
 import type { PlayerDocument, PlayerProgressionState } from "../db";
 import { AccountType } from "../constants";
 import { newPlayer } from "../dtos";
-import { buildPlayerData, createInitialProgression } from "../services/playerStateService";
+import {
+  buildPlayerData,
+  createInitialProgression,
+  progressionForPlayer,
+} from "../services/playerStateService";
+import { validatedProgressionSuccessor } from "../services/progressionPublicationAuthorityService";
 import { VIP_LOOTBOX_ELIGIBLE_VISUAL_IDS } from "../services/vipLootboxService";
 import {
   grantVideoAdRewardState,
@@ -219,6 +224,42 @@ test("same-revision HTTP replay returns the immutable receipt without a second g
   assert.deepEqual(replay.state.videoAdRewards?.times.warcards, [NOW]);
 });
 
+test("video-ad replay receipts fail closed at grant and shared publication boundaries", () => {
+  const first = grantVideoAdRewardState(state(), NOW, 5, VideoAdRewardKind.RandomCard, picker(0));
+  const corruptReplay = {
+    ...first.state,
+    videoAdRewards: {
+      ...first.state.videoAdRewards!,
+      lastReceipt: {
+        ...first.state.videoAdRewards!.lastReceipt!,
+        response: { AddedCards: ["FORGED"] },
+      },
+    },
+  };
+  assert.throws(
+    () => grantVideoAdRewardState(corruptReplay, NOW + 1, 5, VideoAdRewardKind.RandomCard, picker(0)),
+    /Video ad reward ledger is invalid/,
+  );
+
+  const validSuccessor = { ...first.state, revision: first.state.revision + 1 };
+  assert.equal(validatedProgressionSuccessor(first.state, validSuccessor), validSuccessor);
+  const futureReceipt = {
+    ...validSuccessor,
+    revision: validSuccessor.revision + 1,
+    videoAdRewards: {
+      ...validSuccessor.videoAdRewards!,
+      lastReceipt: {
+        ...validSuccessor.videoAdRewards!.lastReceipt!,
+        progressionRevision: validSuccessor.revision + 2,
+      },
+    },
+  };
+  assert.throws(
+    () => validatedProgressionSuccessor(validSuccessor, futureReceipt),
+    /Video ad reward receipt is inconsistent/,
+  );
+});
+
 test("GetPlayerData restores only the public videoAdRewardTimes arrays", () => {
   const dto = newPlayer("video-ad-player", "VideoAdPlayer", AccountType.Guest);
   const progression = state();
@@ -228,9 +269,13 @@ test("GetPlayerData restores only the public videoAdRewardTimes arrays", () => {
       reward: VideoAdRewardKind.RandomCard,
       settledAt: NOW,
       progressionRevision: 1,
-      response: { AddedCards: ["AIRSTRIKE"] },
+      response: {
+        AddedCards: ["AIRSTRIKE"],
+        videoAdRewardTimes: { warcards: [NOW], dogtags: [], goldenSuitcase: [], lootboxes: [] },
+      },
     },
   };
+  progression.revision = 1;
   const player: PlayerDocument = {
     id: dto.id,
     accountName: dto.accountName,
@@ -251,6 +296,12 @@ test("GetPlayerData restores only the public videoAdRewardTimes arrays", () => {
   const restored = JSON.parse((wire.videoAdRewardTimes as { S: string }).S);
   assert.deepEqual(restored, progression.videoAdRewards.times);
   assert.equal(JSON.stringify(restored).includes("lastReceipt"), false);
+
+  progression.videoAdRewards.lastReceipt!.response = { AddedCards: ["FORGED"] };
+  assert.throws(
+    () => progressionForPlayer(player),
+    /Video ad reward ledger is invalid/,
+  );
 });
 
 test("GetPlayerData validates and window-normalizes video-ad ledgers before boot projection", () => {

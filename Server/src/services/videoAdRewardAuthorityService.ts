@@ -1,5 +1,10 @@
 import { ApiError, ApiErrorCode } from "../apiErrors";
-import type { PlayerProgressionState, VideoAdRewardTimesState } from "../db";
+import type {
+  PlayerProgressionState,
+  VideoAdRewardReceiptState,
+  VideoAdRewardState,
+  VideoAdRewardTimesState,
+} from "../db";
 
 /** Exact MHNMOFPPKBN values sent in action 156's `Reward` field. */
 export enum VideoAdRewardKind {
@@ -50,8 +55,146 @@ export const VIDEO_AD_LIMITS: Readonly<Record<VideoAdRewardKind, Readonly<VideoA
   }),
 });
 
+const VIDEO_AD_TIME_KEYS = new Set(["warcards", "dogtags", "goldenSuitcase", "lootboxes"]);
+const VIDEO_AD_STATE_KEYS = new Set(["times", "lastReceipt"]);
+const VIDEO_AD_RECEIPT_KEYS = new Set(["reward", "settledAt", "progressionRevision", "response"]);
+const MAX_REPLAY_RESPONSE_BYTES = 64 * 1_024;
+
 export function emptyVideoAdRewardTimes(): VideoAdRewardTimesState {
   return { warcards: [], dogtags: [], goldenSuitcase: [], lootboxes: [] };
+}
+
+function safeInteger(value: number, label: string, positive = false): number {
+  if (!Number.isSafeInteger(value) || value < (positive ? 1 : 0)) {
+    throw new ApiError(ApiErrorCode.InternalServerError, `${label} is invalid.`);
+  }
+  return value;
+}
+
+function validatedReplayJson(value: unknown, depth = 0): unknown {
+  if (depth > 8) throw new ApiError(ApiErrorCode.InternalServerError, "Video ad replay response is invalid.");
+  if (value === null || typeof value === "boolean") return value;
+  if (typeof value === "string") {
+    if (value.length > 4_096 || /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(value)) {
+      throw new ApiError(ApiErrorCode.InternalServerError, "Video ad replay response is invalid.");
+    }
+    return value;
+  }
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) {
+      throw new ApiError(ApiErrorCode.InternalServerError, "Video ad replay response is invalid.");
+    }
+    return value;
+  }
+  if (Array.isArray(value)) {
+    if (value.length > 256) {
+      throw new ApiError(ApiErrorCode.InternalServerError, "Video ad replay response is invalid.");
+    }
+    return value.map((item) => validatedReplayJson(item, depth + 1));
+  }
+  if (typeof value !== "object" || Object.getPrototypeOf(value) !== Object.prototype) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Video ad replay response is invalid.");
+  }
+  const entries = Object.entries(value);
+  if (entries.length > 128) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Video ad replay response is invalid.");
+  }
+  return Object.fromEntries(entries.map(([key, item]) => {
+    if (key.length < 1 || key.length > 128 || /[\u0000-\u001f\u007f]/.test(key)) {
+      throw new ApiError(ApiErrorCode.InternalServerError, "Video ad replay response is invalid.");
+    }
+    return [key, validatedReplayJson(item, depth + 1)];
+  }));
+}
+
+/** Validate all four raw ledgers without using wall-clock time or discarding capacity. */
+export function validatedVideoAdRewardTimesShape(value: VideoAdRewardTimesState): VideoAdRewardTimesState {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Video ad reward ledger is invalid.");
+  }
+  const keys = Object.keys(value);
+  if (keys.length !== VIDEO_AD_TIME_KEYS.size || keys.some((key) => !VIDEO_AD_TIME_KEYS.has(key))) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Video ad reward ledger is invalid.");
+  }
+  const result = emptyVideoAdRewardTimes();
+  for (const limit of Object.values(VIDEO_AD_LIMITS)) {
+    const ledger = value[limit.key];
+    if (!Array.isArray(ledger) || ledger.length > limit.count) {
+      throw new ApiError(ApiErrorCode.InternalServerError, "Video ad reward ledger is invalid.");
+    }
+    if (ledger.some((timestamp) => !Number.isSafeInteger(timestamp) || timestamp <= 0)) {
+      throw new ApiError(ApiErrorCode.InternalServerError, "Video ad reward timestamp is invalid.");
+    }
+    result[limit.key] = [...ledger];
+  }
+  return result;
+}
+
+function validatedVideoAdRewardReceipt(
+  value: VideoAdRewardReceiptState,
+  times: VideoAdRewardTimesState,
+  progressionRevision?: number,
+): VideoAdRewardReceiptState {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Video ad reward receipt is invalid.");
+  }
+  const keys = Object.keys(value);
+  if (keys.length !== VIDEO_AD_RECEIPT_KEYS.size
+    || keys.some((key) => !VIDEO_AD_RECEIPT_KEYS.has(key))) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Video ad reward receipt is invalid.");
+  }
+  const reward = value.reward;
+  const limit = VIDEO_AD_LIMITS[reward];
+  const settledAt = safeInteger(value.settledAt, "Video ad reward receipt time", true);
+  const receiptRevision = safeInteger(value.progressionRevision, "Video ad reward receipt revision", true);
+  if (!limit || (progressionRevision !== undefined && receiptRevision > progressionRevision)) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Video ad reward receipt is inconsistent.");
+  }
+  if (!times[limit.key].includes(settledAt)) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Video ad reward receipt has no ledger grant.");
+  }
+  const response = validatedReplayJson(value.response);
+  if (!response || typeof response !== "object" || Array.isArray(response)) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Video ad replay response is invalid.");
+  }
+  const serialized = JSON.stringify(response);
+  if (Buffer.byteLength(serialized, "utf8") > MAX_REPLAY_RESPONSE_BYTES) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Video ad replay response is too large.");
+  }
+  const responseTimes = (response as Record<string, unknown>).videoAdRewardTimes;
+  const validatedResponseTimes = validatedVideoAdRewardTimesShape(responseTimes as VideoAdRewardTimesState);
+  if (JSON.stringify(validatedResponseTimes) !== JSON.stringify(times)) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Video ad replay response ledger is inconsistent.");
+  }
+  return { reward, settledAt, progressionRevision: receiptRevision, response: response as Record<string, unknown> };
+}
+
+/** Validate the complete durable ledger and replay receipt without any wall-clock decision. */
+export function validatedVideoAdRewardStateShape(
+  value: VideoAdRewardState | undefined,
+  progressionRevision?: number,
+): VideoAdRewardState {
+  if (progressionRevision !== undefined) {
+    safeInteger(progressionRevision, "Video ad reward progression revision");
+  }
+  if (value === undefined) return { times: emptyVideoAdRewardTimes() };
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Video ad reward state is invalid.");
+  }
+  const keys = Object.keys(value);
+  if (keys.length < 1 || keys.length > VIDEO_AD_STATE_KEYS.size
+    || keys.some((key) => !VIDEO_AD_STATE_KEYS.has(key))) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Video ad reward state is invalid.");
+  }
+  const times = validatedVideoAdRewardTimesShape(value.times);
+  const lastReceipt = Object.prototype.hasOwnProperty.call(value, "lastReceipt")
+    ? validatedVideoAdRewardReceipt(
+      value.lastReceipt as VideoAdRewardReceiptState,
+      times,
+      progressionRevision,
+    )
+    : undefined;
+  return { times, ...(lastReceipt ? { lastReceipt } : {}) };
 }
 
 /**
@@ -69,18 +212,13 @@ export function validatedVideoAdRewardTimes(
   value: VideoAdRewardTimesState,
   now: number,
 ): VideoAdRewardTimesState {
-  if (!Number.isSafeInteger(now) || now <= 0 || !value || typeof value !== "object") {
+  if (!Number.isSafeInteger(now) || now <= 0) {
     throw new ApiError(ApiErrorCode.InternalServerError, "Video ad reward ledger is invalid.");
   }
+  const current = validatedVideoAdRewardTimesShape(value);
   const result = emptyVideoAdRewardTimes();
   for (const limit of Object.values(VIDEO_AD_LIMITS)) {
-    const ledger = value[limit.key];
-    if (!Array.isArray(ledger) || ledger.length > limit.count) {
-      throw new ApiError(ApiErrorCode.InternalServerError, "Video ad reward ledger is invalid.");
-    }
-    if (ledger.some((timestamp) => !Number.isSafeInteger(timestamp) || timestamp <= 0)) {
-      throw new ApiError(ApiErrorCode.InternalServerError, "Video ad reward timestamp is invalid.");
-    }
+    const ledger = current[limit.key];
     const cutoff = now - limit.intervalSeconds;
     result[limit.key] = ledger
       .filter((timestamp) => timestamp >= cutoff)
@@ -89,12 +227,26 @@ export function validatedVideoAdRewardTimes(
   return result;
 }
 
+/** Validate authority first, then discard only timestamps provably outside their rolling window. */
+export function validatedVideoAdRewardState(
+  value: VideoAdRewardState | undefined,
+  now: number,
+  progressionRevision?: number,
+): VideoAdRewardState {
+  const current = validatedVideoAdRewardStateShape(value, progressionRevision);
+  if (current.lastReceipt && current.lastReceipt.settledAt > now) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Video ad reward receipt is in the future.");
+  }
+  return {
+    times: validatedVideoAdRewardTimes(current.times, now),
+    ...(current.lastReceipt ? { lastReceipt: current.lastReceipt } : {}),
+  };
+}
+
 /** Treat an absent reward record as a fresh account, but never as a repair for a partial record. */
 export function videoAdRewardTimesForState(
   state: PlayerProgressionState,
   now: number,
 ): VideoAdRewardTimesState {
-  return state.videoAdRewards === undefined
-    ? emptyVideoAdRewardTimes()
-    : validatedVideoAdRewardTimes(state.videoAdRewards.times, now);
+  return validatedVideoAdRewardState(state.videoAdRewards, now, state.revision).times;
 }
