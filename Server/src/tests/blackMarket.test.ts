@@ -23,6 +23,7 @@ import {
 import { equippedWeaponPower } from "../services/armyPowerService";
 import { buildPlayerData, createInitialProgression } from "../services/playerStateService";
 import { validatedBlackMarketOfferState } from "../services/blackMarketEntitlementService";
+import { PLAYER_LEVELS } from "../services/levelProgressionService";
 
 const NOW = 1_900_000_000;
 
@@ -197,4 +198,22 @@ test("Black Market authority rejects permanent deadlines, duplicate rows, and un
     }, "player-black-market-integrity", 4, NOW),
     /Black Market issue cursor is invalid/,
   );
+
+  for (const invalidLevel of [
+    Number.NaN,
+    Number.POSITIVE_INFINITY,
+    -1,
+    1.5,
+    PLAYER_LEVELS.length,
+  ]) {
+    assert.throws(
+      () => ensureBlackMarketOfferState(
+        issued.state,
+        "player-black-market-integrity",
+        invalidLevel,
+        issued.blackMarket.offerEnd,
+      ),
+      /Player level index .* is invalid/,
+    );
+  }
 });

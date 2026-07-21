@@ -1516,7 +1516,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   weapon extractor now also XOR-decodes all 5,860 normal-level `WEAPONPRICE` Gold values
   across the 79 concrete Black Market rows that contain that purchase column.
   Active sets contain up to four unowned supported weapons for 24 hours and are deterministic
-  across retries; buffered `BuyWeapon` redemption requires the authenticated stored offer,
+  across retries. New issuance/rotation first requires the authenticated zero-based player level to
+  match one exact recovered rank row; only each shorter weapon-price table is then clamped to its
+  own last level. Fractional, non-finite, negative, or out-of-catalog levels cannot create an empty
+  or lower-rank receipt, while reading an already-active set remains level-independent. Buffered
+  `BuyWeapon` redemption requires the authenticated stored offer,
   its unexpired deadline, zero WarBucks, and its exact level price. Weapon level and special
   feature come only from server state, and the wallet/ownership mutation remains atomic and
   BufferId-replay-safe. A shared validator protects progression read/publication, boot projection,

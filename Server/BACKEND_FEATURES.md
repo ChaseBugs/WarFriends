@@ -645,6 +645,10 @@ split one transition across different normalized timestamps.
 Limited-time Event Assignment selection, UTC day indexing, trusted progress, daily claims, and
 milestone claims now use the shared Date-bounded clock without flooring. Malformed application time
 cannot select an active schedule or turn a fractional boundary into an eligible reward day.
+Black Market issuance and rotation now require the authenticated player level to identify one exact
+recovered rank row before per-weapon maximum-level clamping. Fractions, non-finite values, negative
+levels, and indexes beyond the source catalog cannot publish an empty or lower-rank 24-hour set;
+reading an already-active durable set still does not depend on the caller's current level.
 One shared application-clock boundary now protects initial progression creation, persisted
 progression reads, successor publication, `PlayerData`, and the top-level player-state response.
 It requires a nonnegative safe Unix second inside JavaScript/BSON Date support and passes that same

@@ -12,6 +12,7 @@ import {
   validatedBlackMarketOfferState,
   validatedBlackMarketUnixSeconds,
 } from "./blackMarketEntitlementService";
+import { playerLevelDefinition } from "./levelProgressionService";
 
 /**
  * Recovered Black Market offer lifecycle.
@@ -59,7 +60,9 @@ function offeredWeapon(weaponId: string, playerLevel: number): BlackMarketOffere
 
   // DatabasePlayer.Level is the same zero-based levelNumber used elsewhere in the recovered
   // LevelManager. BlackMarketManager passes this `level` directly to SavedWeapon.boughtIndex.
-  const level = Math.min(prices.length - 1, Math.max(0, Math.floor(playerLevel)));
+  // ensureBlackMarketOfferState proves this is an exact source rank before candidate selection.
+  // Only the shorter weapon-price table is clamped, matching the recovered per-weapon max level.
+  const level = Math.min(prices.length - 1, playerLevel);
   if (!Number.isInteger(prices[level]) || prices[level]! < 0) return null;
   return { weaponId, level, special: 0 };
 }
@@ -90,6 +93,12 @@ export function ensureBlackMarketOfferState(
     };
   }
 
+  // The authenticated profile normally proves this before entering progression mutation, but
+  // this exported pure transition is also used by replacement callers and tests. Flooring a
+  // fraction or turning NaN into an empty candidate set would publish a believable 24-hour offer
+  // receipt with the wrong rank authority, so validate the exact recovered level row here too.
+  const sourcePlayerLevel = playerLevelDefinition(playerLevel).index;
+
   const owned = state.itemInventory?.levelManagerData.savedWeapons ?? {};
   const issue = (current?.offersTotal ?? 0) + 1;
   const currentOffers = Object.values(BLACK_MARKET_WEAPON_CATALOG)
@@ -98,7 +107,7 @@ export function ensureBlackMarketOfferState(
     // no concrete LevelManager setup and never enter this runtime catalog at all.
     .filter((definition) => !owned[definition.name]?.bought)
     .map((definition) => ({
-      offer: offeredWeapon(definition.name, playerLevel),
+      offer: offeredWeapon(definition.name, sourcePlayerLevel),
       order: offerOrderKey(playerId, issue, currentTime, definition.name),
     }))
     .filter((entry): entry is { offer: BlackMarketOfferedWeaponState; order: string } => entry.offer !== null)
