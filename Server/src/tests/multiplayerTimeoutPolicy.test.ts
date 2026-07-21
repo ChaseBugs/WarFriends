@@ -5,7 +5,22 @@ import {
   matchDisconnectGraceSeconds,
   matchJoinTimeoutSeconds,
   matchResultConsensusTimeoutMilliseconds,
+  multiplayerTimeoutPolicy,
 } from "../services/multiplayerTimeoutPolicyService";
+
+test("multiplayer timing is one immutable startup snapshot", () => {
+  assert.equal(Object.isFrozen(multiplayerTimeoutPolicy()), true);
+  assert.deepEqual(multiplayerTimeoutPolicy(), {
+    matchmakingSeconds: 30,
+    joinSeconds: 30,
+    disconnectGraceSeconds: 20,
+    resultConsensusMilliseconds: 5_000,
+  });
+  assert.equal(matchmakingTimeoutSeconds(), 30);
+  assert.equal(matchJoinTimeoutSeconds(), 30);
+  assert.equal(matchDisconnectGraceSeconds(), 20);
+  assert.equal(matchResultConsensusTimeoutMilliseconds(), 5_000);
+});
 
 test("multiplayer timeout policy preserves exact supported deployment values", () => {
   assert.equal(matchmakingTimeoutSeconds(30), 30);

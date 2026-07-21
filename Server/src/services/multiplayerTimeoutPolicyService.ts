@@ -18,19 +18,79 @@ function exactTimeout(
   return value;
 }
 
+export interface MultiplayerTimeoutPolicy {
+  readonly matchmakingSeconds: number;
+  readonly joinSeconds: number;
+  readonly disconnectGraceSeconds: number;
+  readonly resultConsensusMilliseconds: number;
+}
+
+/**
+ * Resolve every wall-clock boundary that participates in one reconstructed PvP lifecycle.
+ *
+ * Queue expiry is enforced by both local timers and Redis cleanup; disconnects can be resolved by
+ * local rooms or distributed presence; and REST consensus bridges the same terminal match. Reading
+ * mutable config separately at those points could give one match contradictory deadlines even when
+ * each value is individually valid. Validate and freeze the complete process policy at startup.
+ */
+function exactMultiplayerTimeoutPolicy(policy: MultiplayerTimeoutPolicy): MultiplayerTimeoutPolicy {
+  return {
+    matchmakingSeconds: exactTimeout(
+      policy.matchmakingSeconds,
+      "matchmaking",
+      1,
+      MAX_NODE_TIMEOUT_SECONDS,
+    ),
+    joinSeconds: exactTimeout(policy.joinSeconds, "join", 1, MAX_NODE_TIMEOUT_SECONDS),
+    disconnectGraceSeconds: exactTimeout(
+      policy.disconnectGraceSeconds,
+      "disconnect-grace",
+      1,
+      MAX_NODE_TIMEOUT_SECONDS,
+    ),
+    resultConsensusMilliseconds: exactTimeout(
+      policy.resultConsensusMilliseconds,
+      "result-consensus",
+      0,
+      MAX_RESULT_CONSENSUS_MILLISECONDS,
+    ),
+  };
+}
+
+const CONFIGURED_MULTIPLAYER_TIMEOUT_POLICY = Object.freeze(exactMultiplayerTimeoutPolicy({
+  matchmakingSeconds: config.matchmakingTimeout,
+  joinSeconds: config.matchJoinTimeoutSeconds,
+  disconnectGraceSeconds: config.matchDisconnectGraceSeconds,
+  resultConsensusMilliseconds: config.matchResultConsensusWaitMilliseconds,
+}));
+
+export function multiplayerTimeoutPolicy(
+  policy?: MultiplayerTimeoutPolicy,
+): MultiplayerTimeoutPolicy {
+  return policy === undefined
+    ? CONFIGURED_MULTIPLAYER_TIMEOUT_POLICY
+    : exactMultiplayerTimeoutPolicy(policy);
+}
+
 /** Queue search duration shared by the local timer and Redis stale-entry cutoff. */
-export function matchmakingTimeoutSeconds(value = config.matchmakingTimeout): number {
-  return exactTimeout(value, "matchmaking", 1, MAX_NODE_TIMEOUT_SECONDS);
+export function matchmakingTimeoutSeconds(value?: number): number {
+  return value === undefined
+    ? CONFIGURED_MULTIPLAYER_TIMEOUT_POLICY.matchmakingSeconds
+    : exactTimeout(value, "matchmaking", 1, MAX_NODE_TIMEOUT_SECONDS);
 }
 
 /** Maximum delay between durable pairing and both assigned players activating the room. */
-export function matchJoinTimeoutSeconds(value = config.matchJoinTimeoutSeconds): number {
-  return exactTimeout(value, "join", 1, MAX_NODE_TIMEOUT_SECONDS);
+export function matchJoinTimeoutSeconds(value?: number): number {
+  return value === undefined
+    ? CONFIGURED_MULTIPLAYER_TIMEOUT_POLICY.joinSeconds
+    : exactTimeout(value, "join", 1, MAX_NODE_TIMEOUT_SECONDS);
 }
 
 /** Reconnect grace used identically by local-room and distributed-presence resolution. */
-export function matchDisconnectGraceSeconds(value = config.matchDisconnectGraceSeconds): number {
-  return exactTimeout(value, "disconnect-grace", 1, MAX_NODE_TIMEOUT_SECONDS);
+export function matchDisconnectGraceSeconds(value?: number): number {
+  return value === undefined
+    ? CONFIGURED_MULTIPLAYER_TIMEOUT_POLICY.disconnectGraceSeconds
+    : exactTimeout(value, "disconnect-grace", 1, MAX_NODE_TIMEOUT_SECONDS);
 }
 
 /**
@@ -41,7 +101,9 @@ export function matchDisconnectGraceSeconds(value = config.matchDisconnectGraceS
  * instead of being floored, clamped, or replaced by a hidden five-second default.
  */
 export function matchResultConsensusTimeoutMilliseconds(
-  value = config.matchResultConsensusWaitMilliseconds,
+  value?: number,
 ): number {
-  return exactTimeout(value, "result-consensus", 0, MAX_RESULT_CONSENSUS_MILLISECONDS);
+  return value === undefined
+    ? CONFIGURED_MULTIPLAYER_TIMEOUT_POLICY.resultConsensusMilliseconds
+    : exactTimeout(value, "result-consensus", 0, MAX_RESULT_CONSENSUS_MILLISECONDS);
 }

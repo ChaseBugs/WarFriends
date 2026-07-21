@@ -1729,7 +1729,7 @@ export async function reportMatchResult(
  */
 export async function waitForMatchResolution(
   matchId: string,
-  timeoutMilliseconds = config.matchResultConsensusWaitMilliseconds,
+  timeoutMilliseconds = matchResultConsensusTimeoutMilliseconds(),
 ): Promise<MatchReportResult> {
   const boundedTimeout = matchResultConsensusTimeoutMilliseconds(timeoutMilliseconds);
   const deadline = Date.now() + boundedTimeout;

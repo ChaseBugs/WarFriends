@@ -533,12 +533,13 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   non-authoritative transport. A closing local socket is not counted as a successful delivery, and
   committed join-timeout or initial-delivery cancellation reaches remote participants through this
   same validated path.
-  Queue, post-pair join, and reconnect-grace seconds now share one exact timer policy across local
-  scheduling and Redis stale cleanup. Each must be a positive safe integer whose millisecond delay
-  fits Node's timer range, preventing oversized values from firing after roughly one millisecond.
-  The REST result-consensus wait is an exact 0-through-15,000 milliseconds; zero disables waiting,
-  while malformed values fail closed instead of being floored, clamped, or replaced by a hidden
-  five-second wait.
+  Queue, post-pair join, reconnect grace, and REST result consensus now resolve once during module
+  startup as one immutable timing snapshot. The first three must be positive safe integer seconds
+  whose millisecond delay fits Node's timer range. The same frozen queue value owns local scheduling
+  and Redis stale cleanup, and the same disconnect value owns local/distributed resolution. Result
+  consensus is an exact 0-through-15,000 milliseconds and its frozen value is every REST bridge's
+  default; zero disables waiting. Malformed values stop startup instead of being floored, clamped,
+  re-read into one match, or replaced by a hidden five-second wait.
   Without Redis, the same code retains the verified process-local queue and direct delivery path.
   Its room registry accepts only an exact two-distinct-player allowlist reproduced by every join and
   enforces one room per authenticated player. Contradictory overlapping pairs and second-room joins
