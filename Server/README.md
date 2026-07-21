@@ -612,7 +612,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
 - **PvP (WebSocket `/hub`)**: identify → `FindMatch` (matchmaking pairs by army-power within
   a widening league window) → `MatchFound` → `JoinMatch` → `MatchStart` → in-match
   `MatchEvent` relay to the opponent → `MatchResult`. Room joins/events are restricted to
-  recorded match participants, WebSocket settlement requires matching reports from both
+  recorded match participants. Every decoded client message first requires an exact root envelope:
+  one bounded trimmed control-free string `Type`, only optional opaque `Payload`, and no aliases or
+  extra root keys. Message-specific validation then owns Payload; malformed roots never reach
+  logging or dispatch. WebSocket settlement requires matching reports from both
   participants, and the database settlement claim is idempotent. The terminal transaction now
   includes daily PvP assignments, ranked-win/squad-point achievements, and both the squad total
   and embedded member contribution. A crash therefore cannot commit the immutable reward receipt

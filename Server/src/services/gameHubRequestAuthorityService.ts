@@ -1,5 +1,6 @@
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import type {
+  ClientEnvelope,
   IdentifyPayload,
   JoinMatchPayload,
   MatchEventPayload,
@@ -8,6 +9,7 @@ import type {
   SquadChatHistoryPayload,
 } from "../gameRooms/types";
 
+const CLIENT_ENVELOPE_KEYS = new Set(["Type", "Payload"]);
 const IDENTIFY_KEYS = new Set(["PlayerId", "Token"]);
 const JOIN_MATCH_KEYS = new Set(["MatchId"]);
 const MATCH_EVENT_KEYS = new Set(["MatchId", "Event", "Data"]);
@@ -29,6 +31,24 @@ function boundedText(value: unknown, maximum: number): value is string {
 
 function hasOnlyKnownKeys(value: Record<string, unknown>, keys: ReadonlySet<string>): boolean {
   return Object.keys(value).every((key) => keys.has(key));
+}
+
+/**
+ * Validate the common replacement WebSocket envelope immediately after JSON decoding.
+ *
+ * Payload remains optional and opaque here because each message owns its deeper contract. The
+ * root still needs one exact bounded Type and no alternate or extension keys; otherwise a
+ * primitive JSON root, an omitted Type, or competing type aliases can reach logging and dispatch
+ * before the message-specific authority gets a chance to fail closed.
+ */
+export function validatedClientEnvelope(value: unknown): ClientEnvelope {
+  if (!plainRecord(value)
+    || !Object.prototype.hasOwnProperty.call(value, "Type")
+    || !hasOnlyKnownKeys(value, CLIENT_ENVELOPE_KEYS)
+    || !boundedText(value.Type, 128)) {
+    throw new ApiError(ApiErrorCode.UnknownAction, "WebSocket message envelope is invalid.");
+  }
+  return value as unknown as ClientEnvelope;
 }
 
 /**

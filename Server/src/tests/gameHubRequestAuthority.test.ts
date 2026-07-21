@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  validatedClientEnvelope,
   validatedIdentifyPayload,
   validatedJoinMatchPayload,
   validatedMatchEventPayload,
@@ -8,6 +9,30 @@ import {
   validatedSendSquadChatPayload,
   validatedSquadChatHistoryPayload,
 } from "../services/gameHubRequestAuthorityService";
+
+test("WebSocket messages require one exact bounded root envelope", () => {
+  const withoutPayload = { Type: "FindMatch" };
+  assert.equal(validatedClientEnvelope(withoutPayload), withoutPayload);
+  const withPayload = { Type: "MatchEvent", Payload: { opaque: true } };
+  assert.equal(validatedClientEnvelope(withPayload), withPayload);
+
+  for (const value of [
+    undefined,
+    null,
+    false,
+    "FindMatch",
+    [],
+    {},
+    { Type: "" },
+    { Type: " FindMatch" },
+    { Type: 1 },
+    { type: "FindMatch" },
+    { Type: "FindMatch", type: "CancelMatch" },
+    { Type: "FindMatch", Extra: true },
+  ]) {
+    assert.throws(() => validatedClientEnvelope(value), /WebSocket message envelope is invalid/u);
+  }
+});
 
 test("WebSocket Identify accepts only one exact bounded credential pair", () => {
   const valid = { PlayerId: "player-a", Token: "token-value" };

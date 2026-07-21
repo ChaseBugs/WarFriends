@@ -28,6 +28,7 @@ import {
 } from "./services/matchService";
 import { parseOptionalPvpUsedCards } from "./services/cardInventoryService";
 import {
+  validatedClientEnvelope,
   validatedIdentifyPayload,
   validatedJoinMatchPayload,
   validatedMatchEventPayload,
@@ -730,7 +731,7 @@ export async function createGameHub(httpServer: HttpServer): Promise<WebSocketSe
         client.consecutiveRateLimitViolations = 0;
         let envelope: ClientEnvelope;
         try {
-          envelope = JSON.parse(raw.toString()) as ClientEnvelope;
+          envelope = validatedClientEnvelope(JSON.parse(raw.toString()) as unknown);
         } catch {
           logger.websocket.error("Malformed message", { clientId: client.id });
           return;

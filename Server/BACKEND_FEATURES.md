@@ -245,6 +245,11 @@ Missing fields, whitespace/control characters, alternate-case identity aliases, 
 and extra keys fail before credential lookup; authentication still provides the cryptographic proof
 and the successful socket identity remains immutable across its connection lifetime.
 
+Every decoded replacement WebSocket message now first passes one exact root-envelope boundary. It
+requires a bounded trimmed control-free string `Type`, permits only optional opaque `Payload`, and
+rejects primitive/array roots, missing types, alternate aliases, or extra root keys before logging
+or dispatch. Each recognized message then applies its own deeper payload authority.
+
 Replacement WebSocket Squad Chat now has the same executable wrapper boundary before persistence.
 `SendSquadChat` requires exactly string `ClientMessageId` and `Text`, then delegates nonce grammar,
 normalization, moderation, membership, quota, and replay authority to the shared chat service.
