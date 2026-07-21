@@ -394,6 +394,22 @@ test("indexed player profile mirrors must match before client-visible projection
     () => buildDatabasePlayer(corruptIdentity),
     /Stored player profile mirrors are inconsistent/,
   );
+
+  const invalidProvider = contractPlayer();
+  invalidProvider.facebookId = "not-a-long";
+  invalidProvider.player.facebookId = "not-a-long";
+  assert.throws(
+    () => validatedPlayerProfileLookup(invalidProvider),
+    /Stored player provider identity is invalid/,
+  );
+
+  const indexedDisconnectedSentinel = contractPlayer();
+  indexedDisconnectedSentinel.facebookId = "-1";
+  indexedDisconnectedSentinel.player.facebookId = -1;
+  assert.throws(
+    () => validatedPlayerProfileLookup(indexedDisconnectedSentinel),
+    /Stored player profile mirrors are inconsistent/,
+  );
 });
 
 test("progression revision authority migrates absence and rejects corrupt or non-monotonic writes", () => {

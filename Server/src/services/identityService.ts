@@ -7,6 +7,7 @@ import { identities, withMongoTransaction, type IdentityDocument, type PlayerDoc
 import { findById, updatePlayerFields } from "./playerService";
 import { authenticationCredentialSecrets } from "./authSecretService";
 import { validatedPlayerProfileMirrors } from "./playerProfileMirrorAuthorityService";
+import { validatedConnectedIdentityExternalId } from "./identityExternalIdAuthorityService";
 
 export type IdentityProvider = IdentityDocument["provider"];
 
@@ -75,9 +76,6 @@ function normalize(value: string, label: string, maxLength: number): string {
   return normalized;
 }
 
-const signedLongMinimum = -(1n << 63n);
-const signedLongMaximum = (1n << 63n) - 1n;
-
 /**
  * Normalize the provider id without losing the recovered Facebook `long` representation.
  *
@@ -87,21 +85,14 @@ const signedLongMaximum = (1n << 63n) - 1n;
  * Center are native string fields, so their existing bounded non-empty contract remains intact.
  */
 export function normalizeIdentityExternalId(provider: IdentityProvider, value: string): string {
-  const externalId = normalize(value, "External account id", 256);
-  if (provider !== "facebook") return externalId;
-  if (!/^-?(?:0|[1-9][0-9]{0,18})$/u.test(externalId)) {
-    throw new ApiError(ApiErrorCode.RequestNotAuthorized, "Facebook account id is invalid.");
+  try {
+    return validatedConnectedIdentityExternalId(provider, value);
+  } catch {
+    throw new ApiError(
+      ApiErrorCode.RequestNotAuthorized,
+      provider === "facebook" ? "Facebook account id is invalid." : "External account id is invalid.",
+    );
   }
-  const parsed = BigInt(externalId);
-  if (
-    parsed < signedLongMinimum
-    || parsed > signedLongMaximum
-    || parsed === -1n
-    || parsed.toString() !== externalId
-  ) {
-    throw new ApiError(ApiErrorCode.RequestNotAuthorized, "Facebook account id is invalid.");
-  }
-  return externalId;
 }
 
 export async function findIdentity(

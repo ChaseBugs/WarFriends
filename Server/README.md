@@ -215,7 +215,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   lifetime-experience, squad-point, and squad-name mirrors must exactly match the client-facing
   `DatabasePlayer` DTO after every shared player lookup and before insert, authentication/gameplay
   use, or boot/profile/leaderboard projection. A missing row remains a normal lookup miss, while an
-  existing split profile fails closed. Full-profile saves set/unset those roots atomically, so
+  existing split profile fails closed. Provider IDs must also satisfy their recovered wire shapes
+  even when root and DTO agree; disconnected sentinels live only in the DTO and their sparse root
+  index keys must be absent. Full-profile saves set/unset those roots atomically, so
   MongoDB cannot order, select, or authenticate by a value different from the one Unity displays.
   Human passwords use versioned salted scrypt with automatic legacy-HMAC migration; provider
   credentials remain separate from the rotated internal
