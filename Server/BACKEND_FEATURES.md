@@ -92,6 +92,12 @@ which also write the membership mirrors: whichever operation loses must re-read 
 membership and either reject the request or include it in cross-Squad cleanup. Exact already-pending
 replays remain read-only, so a row removed after their snapshot cannot be recreated.
 
+Action-59 invitation creation now uses the same target-player serialization fence for both a new
+queue/message pair and legacy queue repair that materializes a missing type-1 row. A concurrent
+join and invitation therefore cannot both commit from pre-membership snapshots: the retried loser
+must either reject current membership or expose its capability to join cleanup. Exact active-row
+replays remain read-only and do not advance either revision.
+
 Actions 55 and 58 now require their exact recovered target field and canonical `OldSquadRank`; the
 asserted rank is compared to the same authoritative roster snapshot used for permission and the
 transactional write. A stale/lost-response retry therefore returns the stock `5501`/`5801` full-roster

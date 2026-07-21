@@ -7,7 +7,7 @@ import {
   type PlayerProgressionState,
   type SquadDocument,
 } from "../db";
-import type { Collection } from "mongodb";
+import type { ClientSession, Collection } from "mongodb";
 import { randomUUID } from "crypto";
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import { SquadRank } from "../constants";
@@ -147,6 +147,62 @@ async function persist(squad: SquadDocument): Promise<void> {
     // Never retry this stale object automatically: manager rank, roster membership, pending
     // capability, or admission limits may have changed in the winning write.
     throw new ApiError(ApiErrorCode.InternalServerError, "Squad changed concurrently; retry from a fresh snapshot.");
+  }
+}
+
+/**
+ * Produce the strictly monotonic account timestamp used to serialize admission capabilities.
+ *
+ * A plain transaction read does not conflict with a concurrent membership write under snapshot
+ * isolation. Every new invitation or join request therefore performs a real target-player write.
+ * The next millisecond is used when both operations begin in the same clock tick, while invalid or
+ * exhausted Date authority fails closed rather than turning the intended fence into a no-op.
+ */
+export function nextSquadAdmissionPlayerFenceAt(
+  currentUpdatedAt: Date,
+  transactionTime: Date,
+): Date {
+  const current = currentUpdatedAt instanceof Date ? currentUpdatedAt.getTime() : Number.NaN;
+  const observed = transactionTime instanceof Date ? transactionTime.getTime() : Number.NaN;
+  const next = Math.max(observed, current + 1);
+  if (!Number.isSafeInteger(current)
+    || !Number.isSafeInteger(observed)
+    || !Number.isSafeInteger(next)) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Player Squad admission revision is invalid.");
+  }
+  const result = new Date(next);
+  if (!Number.isFinite(result.getTime())) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Player Squad admission revision is exhausted.");
+  }
+  return result;
+}
+
+/**
+ * Write the target account revision inside the caller's admission transaction.
+ *
+ * Membership joins update the same player document, so MongoDB can no longer commit a new request
+ * or invitation from a snapshot taken before that join. `withTransaction` retries the loser and
+ * the callback then revalidates current membership or includes the capability in join cleanup.
+ */
+async function fenceSquadAdmissionPlayer(
+  session: ClientSession,
+  player: PlayerDocument,
+  transactionTime: Date,
+): Promise<void> {
+  const playerUpdatedAt = nextSquadAdmissionPlayerFenceAt(player.updatedAt, transactionTime);
+  validatedPlayerAccountEnvelope({ ...player, updatedAt: playerUpdatedAt });
+  const playerFence = await players().updateOne(
+    {
+      id: player.id,
+      updatedAt: player.updatedAt,
+      squadName: player.squadName,
+      "player.squadName": player.player.squadName,
+    },
+    { $set: { updatedAt: playerUpdatedAt } },
+    { session },
+  );
+  if (playerFence.modifiedCount !== 1) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Player Squad admission state changed concurrently.");
   }
 }
 
@@ -756,25 +812,9 @@ export async function requestToJoin(playerId: string, name: string): Promise<Squ
       joinRequests: plan.squad.joinRequests,
       updatedAt: squadUpdatedAt,
     }, squadUpdatedAt);
-    // Force a real, strictly monotonic write to the player document. MongoDB write conflicts then
-    // serialize this request against every join, which also writes the membership mirrors. If the
-    // join wins, withTransaction retries and the fresh player snapshot rejects this stale request;
-    // if the request wins, the join retries and its cross-Squad cleanup removes the new row.
-    const playerUpdatedAt = new Date(Math.max(transactionTime.getTime(), player.updatedAt.getTime() + 1));
-    validatedPlayerAccountEnvelope({ ...player, updatedAt: playerUpdatedAt });
-    const playerFence = await players().updateOne(
-      {
-        id: player.id,
-        updatedAt: player.updatedAt,
-        squadName: player.squadName,
-        "player.squadName": player.player.squadName,
-      },
-      { $set: { updatedAt: playerUpdatedAt } },
-      { session },
-    );
-    if (playerFence.modifiedCount !== 1) {
-      throw new ApiError(ApiErrorCode.InternalServerError, "Player Squad admission state changed concurrently.");
-    }
+    // A real target-account write makes concurrent membership and request creation contend on the
+    // same document; the helper also guarantees that a same-millisecond request is not a no-op.
+    await fenceSquadAdmissionPlayer(session, player, transactionTime);
     const squadUpdate = await squads().updateOne(
       squadSnapshotWriteFilter(squad),
       { $set: { joinRequests: successor.joinRequests, updatedAt: successor.updatedAt } },
@@ -962,6 +1002,11 @@ export async function invitePlayer(actorId: string, targetId: string, name: stri
         invitedPlayerIds: plan.squad.invitedPlayerIds,
         updatedAt: plan.changed ? now : squad.updatedAt,
       }, plan.changed ? now : transactionTime);
+      // Reading target membership is insufficient under snapshot isolation. Fence the target
+      // before creating either a normal invitation or a missing legacy presentation row so a
+      // concurrent join must retry and revoke this capability, or this callback must retry and
+      // observe that the target already belongs to a Squad.
+      await fenceSquadAdmissionPlayer(session, target, transactionTime);
       if (plan.changed) {
         const squadUpdate = await squads().updateOne(
           squadSnapshotWriteFilter(squad),

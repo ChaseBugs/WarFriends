@@ -13,6 +13,7 @@ import {
   planSquadInvitationRevocation,
   planSquadJoinRequest,
   planSquadJoinRequestRevocation,
+  nextSquadAdmissionPlayerFenceAt,
   squadInvitationJoinDisposition,
   planSquadJoin,
   planSquadKick,
@@ -188,6 +189,21 @@ test("join-request planning is immutable, bounded, and membership-aware", () => 
   assert.throws(
     () => planSquadJoinRequest(full, player, NOW),
     (error: unknown) => (error as { code?: number }).code === ApiErrorCode.SquadIsFull,
+  );
+});
+
+test("Squad admission player fencing always advances a valid account revision", () => {
+  assert.equal(
+    nextSquadAdmissionPlayerFenceAt(new Date(NOW), new Date(NOW + 10)).getTime(),
+    NOW + 10,
+  );
+  assert.equal(
+    nextSquadAdmissionPlayerFenceAt(new Date(NOW), new Date(NOW)).getTime(),
+    NOW + 1,
+  );
+  assert.throws(
+    () => nextSquadAdmissionPlayerFenceAt(new Date(Number.NaN), new Date(NOW)),
+    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.InternalServerError,
   );
 });
 

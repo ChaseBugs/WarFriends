@@ -511,7 +511,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   recovered `13301` callback with its `PlayerId` and current Squad `Name`; an exact retry for an
   already pending target returns the same Squad snapshot without advancing `updatedAt`. Its request
   accepts only recovered `PlayerToInviteId` and derives the mutable Squad from authenticated
-  membership. Action `133` likewise requires its exact recovered `SquadId` and `PlayerToJoin` pair;
+  membership. Every new invitation, including a missing legacy type-1 row materialized from its
+  queue, advances the target's strictly monotonic account revision in the same transaction. That
+  real player write serializes invitation creation against a concurrent join, while an identical
+  active invitation remains a no-write replay. Action `133` likewise requires its exact recovered
+  `SquadId` and `PlayerToJoin` pair;
   neither boundary accepts generic aliases belonging to promotion, kick, decline, or another action.
   Action `181` follows its recovered misleading form names exactly: `MessageId` is the applicant
   player ID and `Id` is the manager's current Squad name. The handler binds that Squad assertion to
