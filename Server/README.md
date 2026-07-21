@@ -1530,6 +1530,12 @@ Unimplemented state-changing `DbAction` values return error code `90`. Post-logi
 and impression actions `179`, `194`, and `1007` are explicit authenticated no-ops, so their
 untrusted payloads cannot change gameplay and an unauthenticated request cannot receive a false
 success. The narrow handler-less allowlist is reserved for bounded pre-login crash/error telemetry.
+`handlerlessActionDispositions` records every other intentional dispatcher exception: actions that
+run only inside the atomic RequestBuffer, client response/local-only values, retired contracts,
+disabled debug mutations, the raw configuration route, open non-authoritative telemetry, and the
+enum sentinel. `backendActionCoverage.test.ts` combines those groups with the live handler registry
+and requires every recovered enum value to appear exactly once. Adding or activating an action must
+therefore update its executable disposition instead of silently falling through error `90`.
 
 ### Next
 

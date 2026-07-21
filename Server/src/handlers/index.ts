@@ -42,6 +42,47 @@ const benignNoOpActions = new Set<number>([
   141, 166, // crash/log telemetry
 ]);
 
+/**
+ * Recovered enum values that intentionally do not own a direct dispatcher handler.
+ *
+ * This is an executable companion to BACKEND_FEATURES.md. Buffer-only economy actions execute
+ * inside SendRequestBuffer's transaction; response-only values are emitted/consumed locally;
+ * retired actions lack a trustworthy active call contract; debug mutations remain closed; and
+ * GetConfigurations is intercepted by the raw semicolon-response route. Keeping every exception
+ * explicit lets the coverage test distinguish a deliberate fail-closed boundary from a newly
+ * forgotten backend action.
+ */
+export const handlerlessActionDispositions = Object.freeze({
+  buffered: Object.freeze([
+    DbAction.BuyWeaponUpgrade, DbAction.InstantWeaponUpgrade, DbAction.ActivateWeaponUpgrade,
+    DbAction.BuyWeapon, DbAction.BuyUnitUpgrade, DbAction.InstantUnitUpgrade,
+    DbAction.ActivateUnitUpgrade, DbAction.BuyUnit, DbAction.BuyCardPack, DbAction.EquipWeapon,
+    DbAction.InstantBuyUnit, DbAction.InstantBuyWeapon, DbAction.ActivateUnit,
+    DbAction.ActivateWeapon, DbAction.PromoteUnit, DbAction.ConvertScrapsToParts,
+    DbAction.ConvertPartsToScraps, DbAction.UpgradeEliteSlot, DbAction.ClaimAchievement,
+    DbAction.ChangeAchievementOffset, DbAction.ChangeAchievementProgres,
+    DbAction.UpdateEquippedUnits,
+  ] as const),
+  responseOnly: Object.freeze([
+    DbAction.UniqueSquadNameFailure, DbAction.UniqueSquadNameSuccess, DbAction.FacebookLoginOk,
+    DbAction.UserAddedToSquadSuccess, DbAction.SystemMessage,
+  ] as const),
+  retired: Object.freeze([
+    DbAction.SwitchToFacebook, DbAction.AddToHitList, DbAction.GetPlayersFromHitList,
+    DbAction.ExpandHitList, DbAction.HitListPlayerLoggedIn, DbAction.ProvokePlayer,
+  ] as const),
+  debugDisabled: Object.freeze([
+    DbAction.DebugAddLevel, DbAction.DebugAddSquadLevel, DbAction.AddDebugGoodies,
+    DbAction.DebugChangeLevel, DbAction.DebugChangeMedals, DbAction.Test,
+    DbAction.DebugChangeArenaLives, DbAction.DebugChangeArenaWins, DbAction.DebugAddScraps,
+    DbAction.DebugRenewRental, DbAction.DebugChangeLeague, DbAction.DebugChangeDivision,
+    DbAction.DebugChangeAnticheat, DbAction.DebugSetHeroicPoints,
+  ] as const),
+  rawRoute: Object.freeze([DbAction.GetConfigurations] as const),
+  openTelemetry: Object.freeze([...benignNoOpActions]),
+  sentinel: Object.freeze([DbAction.MaxAll] as const),
+});
+
 // The dispatch table: DbAction code → handler. Grouped registries are merged here; later
 // spreads would override earlier ones, so keep action codes unique across groups.
 const registry: Record<number, HandlerEntry> = {
@@ -73,6 +114,11 @@ const registry: Record<number, HandlerEntry> = {
   ...videoFeedHandlers,
   ...offerHandlers,
 };
+
+/** Read-only direct-handler inventory used by the recovered action coverage test. */
+export const registeredHandlerActions = Object.freeze(
+  Object.keys(registry).map((value) => Number(value)).sort((left, right) => left - right),
+);
 
 function clientVersion(req: RequestEnvelope): number | undefined {
   const value = req.ClientVersion ?? req.clientVersion;

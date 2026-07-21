@@ -152,6 +152,13 @@ values, upper-case aliases, extra or missing entry members, and arbitrary, padde
 oversized, or nonnumeric keys reject the complete envelope before its first per-action result or
 progression mutation; valid envelopes retain the recovered per-action isolation.
 
+Backend action coverage is now executable rather than inferred from this matrix. The dispatcher
+exports its registered handler actions plus an explicit disposition manifest for RequestBuffer-only,
+client response/local-only, retired, debug-disabled, raw-route, open non-authoritative telemetry,
+and sentinel values. A dedicated test enumerates the recovered `DbAction` contract and requires
+every value to occur exactly once across those groups. This prevents an enum addition, handler
+removal, or newly recovered call path from becoming an undocumented generic error-90 gap.
+
 The same boundary now covers the nested Json.NET dictionaries inside buffered daily/starter
 assignment claims, Event Assignment claims/milestones, and achievement actions 218-220. IDs,
 reward/currency echoes, milestone indexes, and progress cursors must be nonnegative Int32 JSON
