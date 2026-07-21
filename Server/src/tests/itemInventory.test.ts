@@ -317,6 +317,17 @@ test("active subscription applies the recovered float32 0.8 weapon delivery mult
   );
   assert.equal(subscriptionUpgradeDeliverySeconds(initial, NOW + 3_600, 60), 60);
 
+  for (const invalid of [NaN, Infinity, -1, 0.5, 2_147_483_648]) {
+    assert.throws(
+      () => subscriptionUpgradeDeliverySeconds(initial, NOW, invalid),
+      /Subscription upgrade delivery duration is invalid/,
+    );
+    assert.throws(
+      () => subscriptionUpgradeDeliverySeconds(initial, NOW + 3_600, invalid),
+      /Subscription upgrade delivery duration is invalid/,
+    );
+  }
+
   // A corrupt imported deadline must fail closed instead of turning the 20% paid speed benefit
   // into permanent access through JavaScript's `Infinity > now` comparison behavior.
   assert.throws(

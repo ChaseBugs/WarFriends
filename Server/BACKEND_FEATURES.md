@@ -262,6 +262,12 @@ the HTTP parser and inside reusable entry/heart mutation services. Fractions are
 oversized safe JavaScript integers are rejected, and `NaN`/`Infinity` can no longer become zero and
 silently select a valid free, Ticket, or Gold branch for a replacement/direct caller.
 
+Paid-subscription weapon/unit upgrade timing now revalidates its server-authored source duration as
+a nonnegative C# signed `int` inside the shared calculator before applying the recovered float32
+0.8 multiplier, and validates the discounted result before receipt publication. Fractions are no
+longer floored, negatives cannot become invented instant delivery, and non-finite or oversized
+durations fail identically for subscribed and unsubscribed callers.
+
 The TypeScript build now removes only generated `Server/dist` output before emission. Renamed or
 deleted source modules/tests cannot survive as stale runtime code or duplicate test inputs, so
 `npm test` counts and executes only the current source tree rather than historical compiler output.

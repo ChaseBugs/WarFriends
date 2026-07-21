@@ -6,6 +6,7 @@ export const SUBSCRIPTION_UPGRADE_TIME_MULTIPLIER = Math.fround(0.8);
 
 /** Largest Unix-second value that can still be represented by JavaScript's `Date`. */
 const MAX_DATE_UNIX_SECONDS = 8_640_000_000_000;
+const MAX_CLIENT_INTEGER = 2_147_483_647;
 const SUBSCRIPTION_AUTHORITY_RECEIPT_PATTERN = /^[0-9a-f]{64}$/;
 
 /**
@@ -120,7 +121,20 @@ export function subscriptionUpgradeDeliverySeconds(
   now: number,
   sourceDeliverySeconds: number,
 ): number {
-  const seconds = Math.max(0, Math.floor(sourceDeliverySeconds));
+  // This duration comes from the extracted server catalog, but this exported helper is also the
+  // common boundary for weapon and unit mutations. TypeScript's number annotation disappears at
+  // runtime: flooring a fraction or allowing NaN would publish a duration the recovered C# int
+  // contract never emitted, while a negative value used to become an invented instant upgrade.
+  if (!Number.isSafeInteger(sourceDeliverySeconds)
+    || sourceDeliverySeconds < 0
+    || sourceDeliverySeconds > MAX_CLIENT_INTEGER) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Subscription upgrade delivery duration is invalid.");
+  }
+  const seconds = sourceDeliverySeconds;
   if (!hasActiveSubscription(state, now)) return seconds;
-  return Math.ceil(Math.fround(Math.fround(seconds) * SUBSCRIPTION_UPGRADE_TIME_MULTIPLIER));
+  const discounted = Math.ceil(Math.fround(Math.fround(seconds) * SUBSCRIPTION_UPGRADE_TIME_MULTIPLIER));
+  if (!Number.isSafeInteger(discounted) || discounted < 0 || discounted > MAX_CLIENT_INTEGER) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Subscription upgrade delivery duration overflowed.");
+  }
+  return discounted;
 }

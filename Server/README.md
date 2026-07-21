@@ -1486,7 +1486,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   Google2u tables across shop and Black Market families (11,640 normal-level transitions).
   BuyWeaponUpgrade validates the old index and server-derived duration, including the recovered
   float32 `ceil(source * 0.8)` reduction while a verified subscription is active, debits the
-  server-owned WarBucks price, and creates the single shared
+  server-owned WarBucks price. The common weapon/unit timer
+  revalidates both its catalog source and discounted result as nonnegative C# signed integers;
+  fractions are not floored, negatives cannot become instant delivery, and non-finite or oversized
+  values fail before a receipt is published. The upgrade creates the single shared
   `weaponDelivery` receipt used by
   LevelManager. Normal activation enforces its server end time; instant activation derives
   Gold from the recovered float32 `0.6325`/`-0.175` formula and the persisted delivery receipt.
