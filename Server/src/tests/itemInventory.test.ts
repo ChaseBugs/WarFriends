@@ -47,6 +47,7 @@ import {
   SUBSCRIPTION_UPGRADE_TIME_MULTIPLIER,
   subscriptionUpgradeDeliverySeconds,
 } from "../services/subscriptionBenefitService";
+import { MAX_ITEM_DELIVERY_UNIX_SECONDS } from "../services/itemDeliveryTimeAuthorityService";
 
 const NOW = Date.UTC(2026, 6, 19, 12, 0, 0) / 1_000;
 const FAMAS = "Google2u.AssaultRifle_Famas";
@@ -261,6 +262,37 @@ test("weapon upgrade purchase debits WarBucks and activation waits for server de
     slotId: 0,
     start: NOW,
   });
+
+  for (const invalidTime of [NaN, Infinity, -1, 0.5, MAX_ITEM_DELIVERY_UNIX_SECONDS + 1]) {
+    assert.throws(
+      () => startWeaponUpgradeState(initial, invalidTime, parseWeaponUpgradePurchaseData(upgradePurchaseData())),
+      /(?:Subscription comparison time|Weapon upgrade receipt time) is invalid/u,
+    );
+    assert.throws(
+      () => activateWeaponUpgradeState(
+        started.state,
+        invalidTime,
+        parseWeaponUpgradeActivateData(upgradeActivateData()),
+      ),
+      /Weapon upgrade activation time is invalid/u,
+    );
+    assert.throws(
+      () => instantWeaponUpgradeState(
+        started.state,
+        invalidTime,
+        parseWeaponUpgradeInstantData(upgradeInstantData(weaponUpgradeInstantPrice(60))),
+      ),
+      /Weapon instant-upgrade time is invalid/u,
+    );
+  }
+  assert.throws(
+    () => startWeaponUpgradeState(
+      initial,
+      MAX_ITEM_DELIVERY_UNIX_SECONDS,
+      parseWeaponUpgradePurchaseData(upgradePurchaseData()),
+    ),
+    /Weapon upgrade receipt end is invalid/u,
+  );
 
   assert.throws(
     () => activateWeaponUpgradeState(

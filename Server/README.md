@@ -1489,7 +1489,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   server-owned WarBucks price. The common weapon/unit timer
   revalidates both its catalog source and discounted result as nonnegative C# signed integers;
   fractions are not floored, negatives cannot become instant delivery, and non-finite or oversized
-  values fail before a receipt is published. The upgrade creates the single shared
+  values fail before a receipt is published. Receipt creation, normal activation, and instant
+  completion also share an exact nonnegative application-clock boundary limited to the safe
+  JavaScript/BSON Date range. Deadline addition is checked before publication; malformed clocks
+  cannot be floored or clamped into an invalid receipt, early activation, or lower instant price.
+  The upgrade creates the single shared
   `weaponDelivery` receipt used by
   LevelManager. Normal activation enforces its server end time; instant activation derives
   Gold from the recovered float32 `0.6325`/`-0.175` formula and the persisted delivery receipt.
@@ -1560,6 +1564,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   special cursors, promotion-gated special access, current-tier maximums, one shared unit-delivery
   receipt, server time, the same subscription-expiry-gated float32 0.8 duration, exact WarBucks
   debit, receipt-backed instant Gold cost, atomic completion, Unity rollback, and replay safety.
+  Unit receipt creation, activation, and instant pricing use the same checked application-clock and
+  deadline authority as weapon upgrades, so non-finite, fractional, negative, oversized, or
+  addition-overflowing times fail before any item or wallet transition.
   `PromoteUnit` then validates normal-tier completion, the
   recovered one-based `UNLOCKTIER2`-`UNLOCKTIER6` level gates, maximum tier 6, ownership, and an
   empty delivery receipt before advancing only `tier`; the exact 11405 level error includes the

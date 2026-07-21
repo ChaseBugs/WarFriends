@@ -18,6 +18,7 @@ import {
   weaponUpgradeInstantPrice,
 } from "../services/itemInventoryService";
 import { createInitialProgression } from "../services/playerStateService";
+import { MAX_ITEM_DELIVERY_UNIX_SECONDS } from "../services/itemDeliveryTimeAuthorityService";
 import {
   activateUnitState,
   activateUnitUpgradeState,
@@ -394,6 +395,41 @@ test("normal unit upgrade debits extracted price and waits for server delivery",
     slotId: 0,
     start: NOW,
   });
+  const upgradeState = { ...owned.state, warBucks: 375 };
+  for (const invalidTime of [NaN, Infinity, -1, 0.5, MAX_ITEM_DELIVERY_UNIX_SECONDS + 1]) {
+    assert.throws(
+      () => startUnitUpgradeState(
+        upgradeState,
+        invalidTime,
+        parseUnitUpgradePurchaseData(upgradePurchaseData()),
+      ),
+      /(?:Subscription comparison time|Unit upgrade receipt time) is invalid/u,
+    );
+    assert.throws(
+      () => activateUnitUpgradeState(
+        started.state,
+        invalidTime,
+        parseUnitUpgradeActivateData(upgradeActivateData()),
+      ),
+      /Unit upgrade activation time is invalid/u,
+    );
+    assert.throws(
+      () => instantUnitUpgradeState(
+        started.state,
+        invalidTime,
+        parseUnitUpgradeInstantData(upgradeInstantData(weaponUpgradeInstantPrice(60))),
+      ),
+      /Unit instant-upgrade time is invalid/u,
+    );
+  }
+  assert.throws(
+    () => startUnitUpgradeState(
+      upgradeState,
+      MAX_ITEM_DELIVERY_UNIX_SECONDS,
+      parseUnitUpgradePurchaseData(upgradePurchaseData()),
+    ),
+    /Unit upgrade receipt end is invalid/u,
+  );
   assert.throws(
     () => activateUnitUpgradeState(
       started.state,

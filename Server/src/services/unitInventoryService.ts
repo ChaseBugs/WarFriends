@@ -30,6 +30,10 @@ import {
   weaponUpgradeInstantPrice,
 } from "./itemInventoryService";
 import { subscriptionUpgradeDeliverySeconds } from "./subscriptionBenefitService";
+import {
+  checkedItemDeliveryEnd,
+  validatedItemDeliveryUnixSeconds,
+} from "./itemDeliveryTimeAuthorityService";
 import { checkedRewardBalance } from "./rewardMathService";
 import { hasActiveRentalItem } from "./rentalEntitlementService";
 
@@ -863,11 +867,11 @@ export function startUnitUpgradeState(
     throw new ApiError(ITEM_NOT_ENOUGH_WARBUCKS, "Not enough WarBucks for this unit upgrade.");
   }
 
-  const start = Math.max(0, Math.floor(now));
+  const start = validatedItemDeliveryUnixSeconds(now, "Unit upgrade receipt time");
   itemInventory.levelManagerData.unitDelivery = {
     activationNeeded: true,
     boughtIndex: payload.boughtIndex,
-    end: start + deliverySeconds,
+    end: checkedItemDeliveryEnd(start, deliverySeconds, "Unit upgrade receipt"),
     itemId: definition.name,
     slotId,
     start,
@@ -932,7 +936,8 @@ export function activateUnitUpgradeState(
   if (payload.armyPower < 0) {
     throw new ApiError(ITEM_PRICE_MISMATCH, "ArmyPower must be non-negative.");
   }
-  if (Math.floor(now) < delivery.end) {
+  const currentTime = validatedItemDeliveryUnixSeconds(now, "Unit upgrade activation time");
+  if (currentTime < delivery.end) {
     throw new ApiError(ITEM_TOO_SOON_TO_ACTIVATE, "Unit upgrade delivery is not finished.");
   }
   return finishUnitUpgrade(state, itemInventory, unit, definition, delivery.slotId);
@@ -970,7 +975,8 @@ export function instantUnitUpgradeState(
     throw new ApiError(ITEM_PRICE_MISMATCH, "Unit instant-upgrade constants do not match balancing.");
   }
 
-  const remainingAtReceipt = Math.max(0, delivery.end - Math.floor(now));
+  const currentTime = validatedItemDeliveryUnixSeconds(now, "Unit instant-upgrade time");
+  const remainingAtReceipt = Math.max(0, delivery.end - currentTime);
   const fullDeliveryDuration = Math.max(0, delivery.end - delivery.start);
   const minimumPrice = weaponUpgradeInstantPrice(remainingAtReceipt);
   const maximumPrice = weaponUpgradeInstantPrice(fullDeliveryDuration);

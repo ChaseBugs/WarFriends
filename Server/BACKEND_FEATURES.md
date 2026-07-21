@@ -268,6 +268,12 @@ a nonnegative C# signed `int` inside the shared calculator before applying the r
 longer floored, negatives cannot become invented instant delivery, and non-finite or oversized
 durations fail identically for subscribed and unsubscribed callers.
 
+Weapon and unit upgrade receipt creation, normal activation, and instant completion now share one
+application-clock authority. Each path requires a nonnegative safe Unix second inside the
+JavaScript/BSON Date range, and receipt creation checks the duration addition before publishing its
+deadline. Malformed clocks are no longer floored or clamped into a plausible receipt, early
+activation, or a cheaper instant-completion price.
+
 The TypeScript build now removes only generated `Server/dist` output before emission. Renamed or
 deleted source modules/tests cannot survive as stale runtime code or duplicate test inputs, so
 `npm test` counts and executes only the current source tree rather than historical compiler output.

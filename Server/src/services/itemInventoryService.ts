@@ -13,6 +13,10 @@ import {
   WEAPON_UPGRADE_CATALOG,
 } from "../data/weaponUpgradeCatalog.generated";
 import { subscriptionUpgradeDeliverySeconds } from "./subscriptionBenefitService";
+import {
+  checkedItemDeliveryEnd,
+  validatedItemDeliveryUnixSeconds,
+} from "./itemDeliveryTimeAuthorityService";
 import { hasActiveRentalItem } from "./rentalEntitlementService";
 import {
   hasActiveBlackMarketOffer,
@@ -819,11 +823,11 @@ export function startWeaponUpgradeState(
     throw new ApiError(ITEM_NOT_ENOUGH_WARBUCKS, "Not enough WarBucks for this weapon upgrade.");
   }
 
-  const start = Math.max(0, Math.floor(now));
+  const start = validatedItemDeliveryUnixSeconds(now, "Weapon upgrade receipt time");
   itemInventory.levelManagerData.weaponDelivery = {
     activationNeeded: true,
     boughtIndex: weapon.boughtIndex,
-    end: start + deliverySeconds,
+    end: checkedItemDeliveryEnd(start, deliverySeconds, "Weapon upgrade receipt"),
     itemId: definition.name,
     // WeaponLevelsSetup uses one upgrade lane. slotId is retained for exact ItemDelivery
     // serialization even though the recovered weapon code does not read it.
@@ -961,7 +965,8 @@ export function activateWeaponUpgradeState(
   if (payload.armyPower < 0) {
     throw new ApiError(ITEM_PRICE_MISMATCH, "ArmyPower must be non-negative.");
   }
-  if (Math.floor(now) < delivery.end) {
+  const currentTime = validatedItemDeliveryUnixSeconds(now, "Weapon upgrade activation time");
+  if (currentTime < delivery.end) {
     throw new ApiError(ITEM_TOO_SOON_TO_ACTIVATE, "Weapon upgrade delivery is not finished.");
   }
   return finishWeaponUpgrade(state, itemInventory, weapon, definition);
@@ -1001,7 +1006,8 @@ export function instantWeaponUpgradeState(
     throw new ApiError(ITEM_PRICE_MISMATCH, "Weapon instant-upgrade constants do not match server balancing.");
   }
 
-  const remainingAtReceipt = Math.max(0, delivery.end - Math.floor(now));
+  const currentTime = validatedItemDeliveryUnixSeconds(now, "Weapon instant-upgrade time");
+  const remainingAtReceipt = Math.max(0, delivery.end - currentTime);
   const fullDeliveryDuration = Math.max(0, delivery.end - delivery.start);
   const minimumPrice = weaponUpgradeInstantPrice(remainingAtReceipt);
   const maximumPrice = weaponUpgradeInstantPrice(fullDeliveryDuration);
