@@ -8,6 +8,10 @@ import {
   validatedCardCraftingState,
   validatedCardCraftingTime,
 } from "./cardCraftingAuthorityService";
+import {
+  cardInventoryAuthorityFor,
+  validatedCardInventoryState,
+} from "./cardInventoryAuthorityService";
 
 export const CARD_PACK_NOT_FOUND = 112;
 export const CARD_PACK_NOT_ENOUGH_FUNDS = 100;
@@ -123,23 +127,8 @@ export function createInitialCardCrafting(): CardCraftingState {
   return { cards: [], start: 0, end: 0 };
 }
 
-function cloneCardInventory(value: CardInventoryState): CardInventoryState {
-  return {
-    cardData: Object.fromEntries(Object.entries(value.cardData).map(([id, card]) => [id, { ...card }])),
-    buddyCardData: Object.fromEntries(Object.entries(value.buddyCardData).map(([id, card]) => [id, {
-      ...card,
-      equippedVisuals: Object.fromEntries(
-        Object.entries(card.equippedVisuals).map(([slot, visual]) => [slot, { ...visual }]),
-      ),
-    }])),
-    nextWithdraw: value.nextWithdraw,
-    nextBuddyDeposit: value.nextBuddyDeposit,
-    extraSlot: value.extraSlot,
-  };
-}
-
 export function cardInventoryStateFor(state: PlayerProgressionState): CardInventoryState {
-  return cloneCardInventory(state.cardInventory ?? createInitialCardInventory());
+  return cardInventoryAuthorityFor(state.cardInventory);
 }
 
 export function cardCraftingStateFor(state: PlayerProgressionState): CardCraftingState {
@@ -696,7 +685,7 @@ export function purchaseCardPackState(
 }
 
 export function serializeCardInventory(value: CardInventoryState): string {
-  return JSON.stringify(value);
+  return JSON.stringify(validatedCardInventoryState(value));
 }
 
 /** Exact rollback body consumed by BuyCardPack failure branches. */

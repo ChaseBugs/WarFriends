@@ -12,6 +12,7 @@ import { validatedWarBucksConversionReceipt } from "./warBucksConversionAuthorit
 import { validatedVipDailyCardState } from "./vipDailyCardAuthorityService";
 import { validatedCardLifecycleCounters } from "./cardLifecycleCounterAuthorityService";
 import { cardCraftingAuthorityFor } from "./cardCraftingAuthorityService";
+import { cardInventoryAuthorityFor } from "./cardInventoryAuthorityService";
 
 /**
  * Validate the common authority shared by every full progression-document replacement.
@@ -41,6 +42,8 @@ export function validatedProgressionSuccessor(
   validatedCardLifecycleCounters(next);
   cardCraftingAuthorityFor(current.cardCrafting);
   cardCraftingAuthorityFor(next.cardCrafting);
+  cardInventoryAuthorityFor(current.cardInventory);
+  cardInventoryAuthorityFor(next.cardInventory);
   validatedCoreProgressionBalances(current);
   validateProgressionRevisionAdvance(progressionRevisionForRead(current.revision), next.revision);
   validatedCoreProgressionBalances(next);

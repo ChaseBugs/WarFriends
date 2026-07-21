@@ -43,6 +43,7 @@ import { validatedWarBucksConversionReceipt } from "./warBucksConversionAuthorit
 import { validatedVipDailyCardState } from "./vipDailyCardAuthorityService";
 import { validatedCardLifecycleCounters } from "./cardLifecycleCounterAuthorityService";
 import { cardCraftingAuthorityFor } from "./cardCraftingAuthorityService";
+import { cardInventoryAuthorityFor } from "./cardInventoryAuthorityService";
 
 /** Unix seconds are used throughout the recovered Beanstalk protocol. */
 export function unixNow(): number {
@@ -107,6 +108,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
   validatedWarBucksConversionReceipt(state.warBucksConversion, progressionRevisionForRead(state.revision));
   validatedVipDailyCardState(state.vipDailyCards);
   validatedCardLifecycleCounters(state);
+  const cardInventory = cardInventoryAuthorityFor(state.cardInventory);
   const cardCrafting = cardCraftingAuthorityFor(state.cardCrafting);
   // This is the shared persisted-progression read boundary, not only a boot serializer. Validate
   // wallet/rank balances here so cross-player transactions and ordinary economy actions cannot
@@ -139,7 +141,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
       collectedRewards: validatedCollectedRewards(state.collectedRewards),
       itemInventory: state.itemInventory ?? createInitialItemInventory(),
       visualInventory: state.visualInventory ?? createInitialVisualInventory(),
-      cardInventory: state.cardInventory ?? createInitialCardInventory(),
+      cardInventory,
       cardCrafting,
     };
   }
@@ -170,7 +172,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
     collectedRewards: validatedCollectedRewards(state.collectedRewards),
     itemInventory: state.itemInventory ?? createInitialItemInventory(),
     visualInventory: state.visualInventory ?? createInitialVisualInventory(),
-    cardInventory: state.cardInventory ?? createInitialCardInventory(),
+    cardInventory,
     cardCrafting,
   };
 }

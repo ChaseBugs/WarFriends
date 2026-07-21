@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import generatedCardCatalog from "../data/cardCatalog.generated.json";
 import { AccountType } from "../constants";
-import type { CardCraftingState, PlayerDocument } from "../db";
+import type { CardCraftingState, CardInventoryState, PlayerDocument } from "../db";
 import { DbAction } from "../dbActions";
 import { newPlayer } from "../dtos";
 import { processAssignmentBufferState } from "../services/assignmentService";
@@ -125,6 +125,65 @@ test("new accounts serialize the exact empty CardManagerData contract", () => {
   assert.deepEqual(
     JSON.parse((wire.CraftData as { S: string }).S),
     createInitialCardCrafting(),
+  );
+});
+
+test("War Card inventory authority rejects malformed durable ownership before boot, action, or publication", () => {
+  const initialInventory = createInitialCardInventory();
+  const buddy = {
+    amount: 1,
+    buddyName: "Legacy Buddy",
+    equippedVisuals: { "0": { equippedID: "HEAD_DEFAULT" } },
+    unityType: 2,
+    primaryWeapon: 3,
+    secondaryWeapon: -1,
+    armypower: 900,
+    level: 12,
+  };
+  const malformed: unknown[] = [
+    { ...initialInventory, cardData: { MISSING: { amount: 1 } } },
+    { ...initialInventory, cardData: { AMMOCRATE: { amount: 0 } } },
+    { ...initialInventory, cardData: { AMMOCRATE: { amount: Number.NaN } } },
+    { ...initialInventory, cardData: { AMMOCRATE: { amount: 1, claimed: true } } },
+    { ...initialInventory, buddyCardData: { buddy: { ...buddy, amount: 2 } } },
+    { ...initialInventory, buddyCardData: { buddy: { ...buddy, primaryWeapon: 999 } } },
+    { ...initialInventory, buddyCardData: { buddy: { ...buddy, equippedVisuals: { "4": { equippedID: "x" } } } } },
+    { ...initialInventory, nextWithdraw: 2_147_483_648 },
+    { ...initialInventory, nextBuddyDeposit: Number.POSITIVE_INFINITY },
+    { ...initialInventory, extraSlot: 1 },
+    { ...initialInventory, unknown: true },
+  ];
+  for (const cardInventory of malformed) {
+    const document = playerDocument();
+    document.progression!.cardInventory = cardInventory as CardInventoryState;
+    assert.throws(() => buildPlayerData(document), /War Card inventory/);
+  }
+
+  const corruptAction = createInitialProgression(NOW);
+  corruptAction.cardInventory = malformed[1] as CardInventoryState;
+  assert.throws(
+    () => consumePvpUsedCardsState(corruptAction, ["AMMOCRATE"]),
+    /War Card inventory/,
+  );
+
+  const clean = createInitialProgression(NOW);
+  assert.throws(
+    () => validatedProgressionSuccessor(clean, {
+      ...clean,
+      revision: clean.revision + 1,
+      cardInventory: malformed[4] as CardInventoryState,
+    }),
+    /War Card inventory/,
+  );
+  assert.throws(
+    () => withdrawSquadCardState(
+      clean,
+      { AMMOCRATE: JSON.stringify({ amount: 1 }) },
+      0,
+      "AMMOCRATE",
+      2_147_483_647,
+    ),
+    /War Card inventory/,
   );
 });
 

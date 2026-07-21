@@ -22,6 +22,7 @@ import { progressionForPlayer, unixNow } from "./playerStateService";
 import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
 import { itemInventoryStateFor, weaponDefinitionFor } from "./itemInventoryService";
 import { visualInventoryStateFor } from "./visualInventoryService";
+import { validatedCardInventoryTime } from "./cardInventoryAuthorityService";
 
 const MAX_CONCURRENCY_RETRIES = 4;
 const MAX_CHANGE_ENTRIES = 128;
@@ -237,6 +238,7 @@ export function buddyDepositAuthorityFor(
   state: PlayerProgressionState,
   now: number,
 ): BuddyDepositAuthority {
+  const authorityTime = validatedCardInventoryTime(now);
   const itemInventory = itemInventoryStateFor(state);
   const weapons = ["0", "1", "2", "3"].map((slotId) => {
     const slot = itemInventory.inventoryData.slots[slotId];
@@ -256,7 +258,7 @@ export function buddyDepositAuthorityFor(
     armyPower: player.player.armyPower,
     equippedVisuals: visualInventoryStateFor(state).slots,
     weapons,
-    now,
+    now: authorityTime,
   };
 }
 
@@ -366,7 +368,8 @@ export function applyDepositCardChangesState(
       if (!buddyAuthority) {
         throw new ApiError(BUDDY_CARD_NOT_READY, "Authoritative Buddy card inputs are unavailable.");
       }
-      if (cardInventory.nextBuddyDeposit > buddyAuthority.now) {
+      const authorityTime = validatedCardInventoryTime(buddyAuthority.now);
+      if (cardInventory.nextBuddyDeposit > authorityTime) {
         throw new ApiError(BUDDY_CARD_NOT_READY, "Buddy card deposit is still on cooldown.");
       }
       if (Object.entries(depositedCards).some(([cardId, serialized]) =>
@@ -378,8 +381,9 @@ export function applyDepositCardChangesState(
       }
       validateNewBuddy(id, requested.data, buddyAuthority);
       depositedCards[id] = encodeBuddy(requested.data);
-      cardInventory.nextBuddyDeposit = buddyAuthority.now
-        + CARD_POOL_RULES.buddyDepositCooldownMinutes * 60;
+      cardInventory.nextBuddyDeposit = validatedCardInventoryTime(
+        authorityTime + CARD_POOL_RULES.buddyDepositCooldownMinutes * 60,
+      );
       continue;
     }
     const owned = cardInventory.cardData[id]?.amount ?? 0;
@@ -461,8 +465,9 @@ export function withdrawSquadCardState(
   cardId: string,
   now: number,
 ): WithdrawCardMutationResult {
+  const authorityTime = validatedCardInventoryTime(now);
   const recipientInventory = cardInventoryStateFor(recipientState);
-  if (recipientInventory.nextWithdraw > now) {
+  if (recipientInventory.nextWithdraw > authorityTime) {
     throw new ApiError(WITHDRAW_NOT_YET_AVAILABLE, "Squad card withdrawal is still on cooldown.");
   }
   const serialized = donorDepositedCards[cardId];
@@ -500,7 +505,9 @@ export function withdrawSquadCardState(
   if (!Number.isSafeInteger(donorReputation) || donorReputation < 0 || donorReputation > Number.MAX_SAFE_INTEGER - reputation) {
     throw new ApiError(ApiErrorCode.InternalServerError, "Donor reputation is invalid.");
   }
-  const nextWithdraw = now + CARD_POOL_RULES.withdrawCooldownMinutes * 60;
+  const nextWithdraw = validatedCardInventoryTime(
+    authorityTime + CARD_POOL_RULES.withdrawCooldownMinutes * 60,
+  );
   recipientInventory.nextWithdraw = nextWithdraw;
   const nextRecipient: PlayerProgressionState = {
     ...recipientState,

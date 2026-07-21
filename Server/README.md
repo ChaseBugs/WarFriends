@@ -658,7 +658,13 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   rollback fields. The stock client selects card identities before sending and cannot consume
   replacement IDs on success, so identities inside the verified rarity envelope remain
   client-selected until a nonce or client adapter is added. Run `npm run verify:card-catalog` to
-  verify the generated artifact.
+  verify the generated artifact. The complete five-field inventory snapshot is validated before
+  read, gameplay use, recovery serialization, and every progression publication. Normal ownership
+  is sparse, positive, signed-client-safe, and limited to implemented IDs. Buddy ownership is capped
+  at ten exact loadout records with source-backed unit/weapon indexes and bounded legacy visual IDs;
+  cooldowns fit the recovered C# `int`, and `extraSlot` must be a real Boolean. Present malformed
+  state fails closed instead of being normalized into free ownership, an unlocked slot, or an expired
+  squad cooldown.
 - **Timed and subscription War Card crafting**: exact `CraftData` is returned at boot. Direct `CraftCard` atomically
   consumes three same-rarity owned cards and creates the extracted 30-minute Bronze-to-Silver or
   60-minute Silver-to-Gold receipt. `ClaimCraftedCard` enforces server time, selects one playable
