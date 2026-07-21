@@ -1,13 +1,16 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { ApiErrorCode } from "../apiErrors";
+import { AccountType } from "../constants";
+import type { PlayerDocument } from "../db";
+import { newPlayer } from "../dtos";
 import {
   PLAYER_RENAME_NOT_ENOUGH_GOLD,
   SECOND_RENAME_BASE_GOLD_COST,
   applyRenameEconomyState,
   renameGoldPrice,
 } from "../services/playerRenameService";
-import { createInitialProgression } from "../services/playerStateService";
+import { buildPlayerData, createInitialProgression } from "../services/playerStateService";
 
 const NOW = Date.UTC(2026, 6, 20, 12, 0, 0) / 1_000;
 
@@ -58,6 +61,59 @@ test("paid rename rejects missing confirmation, insufficient Gold, and overflow 
   );
   assert.throws(
     () => renameGoldPrice(30),
-    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.UnknownAction,
+    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.InternalServerError,
   );
+});
+
+test("rename authority rejects malformed counts, wallets, revisions, and an overflowing next count", () => {
+  for (const count of [Number.NaN, Number.POSITIVE_INFINITY, -1, 1.5, 30]) {
+    assert.throws(
+      () => renameGoldPrice(count),
+      (error: unknown) => (error as { code?: number }).code === ApiErrorCode.InternalServerError,
+    );
+  }
+  for (const gold of [Number.NaN, Number.POSITIVE_INFINITY]) {
+    assert.throws(
+      () => applyRenameEconomyState({ ...createInitialProgression(NOW), gold }, 1, true),
+      /Rename Gold balance is invalid/,
+    );
+  }
+  assert.throws(
+    () => applyRenameEconomyState({
+      ...createInitialProgression(NOW),
+      gold: 10,
+      revision: Number.MAX_SAFE_INTEGER,
+    }, 0, true),
+    /Rename progression revision is invalid/,
+  );
+  assert.throws(
+    () => applyRenameEconomyState({ ...createInitialProgression(NOW), gold: Number.MAX_SAFE_INTEGER }, 29, true),
+    /Stored rename count is invalid/,
+  );
+});
+
+test("PlayerAnalyticsData restores validated rename count for the doubling price", () => {
+  const dto = newPlayer("rename-player", "RenamePlayer", AccountType.Guest);
+  dto.renameCount = 2;
+  const player: PlayerDocument = {
+    id: dto.id,
+    accountName: dto.accountName,
+    accountType: dto.accountType,
+    leagueTier: dto.leagueTier,
+    armyPower: dto.armyPower,
+    experience: dto.experience,
+    squadPoints: dto.squadPoints,
+    squadName: dto.squadName,
+    player: dto,
+    progression: createInitialProgression(NOW),
+    createdAt: new Date(NOW * 1_000),
+    updatedAt: new Date(NOW * 1_000),
+  };
+  const analytics = JSON.parse(
+    (buildPlayerData(player, NOW).PlayerAnalyticsData as { S: string }).S,
+  ) as Record<string, number>;
+  assert.equal(analytics.renameCount, 2);
+
+  player.player.renameCount = 30;
+  assert.throws(() => buildPlayerData(player, NOW), /Stored rename count is invalid/);
 });

@@ -154,6 +154,9 @@ Arena run appear finished, make an achievement tier appear complete, or unlock a
 - Squad-creation history must keep its linear `(count + 1) * 25` WarBucks price inside the
   recovered client's signed integer before mutation or boot; wallet, revision, and the next count
   are validated before the transactional squad/debit write.
+- Profile-owned rename count must remain 0-29 for price, recovery, mutation, and PlayerAnalytics
+  boot. The next count, Gold wallet, and progression revision validate before the atomic rename so
+  count 29 cannot publish count 30 and enter the client's signed shift/multiply overflow.
 - A current daily-reward calendar must have a real UTC year/month/last-check date and ordered,
   month-bounded unlock/claim cursors before any check, claim, or wire projection.
   Subscription authority must also remain an ordered start/lock/expiry interval; future or inverted

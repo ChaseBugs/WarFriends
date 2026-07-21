@@ -19,6 +19,7 @@ import { authed, type HandlerEntry } from "./types";
 import {
   PLAYER_RENAME_NOT_ENOUGH_GOLD,
   renamePlayer,
+  validatedRenameCount,
 } from "../services/playerRenameService";
 import { ensureRentalOffer } from "../services/rentalService";
 import { ensureDailyVipCards } from "../services/vipService";
@@ -133,7 +134,7 @@ export const playerHandlers: Record<number, HandlerEntry> = {
         Message: error.message,
         // LEDNENKKDJM's 11402 branch uses both fields to restore the optimistic wallet and
         // keep PlayerAnalytics.renameGoldPrice aligned with the server's next attempt.
-        RenameCount: latest.player.renameCount ?? 0,
+        RenameCount: validatedRenameCount(latest.player.renameCount),
         PlayerGold: progressionForPlayer(latest).gold,
       };
     }

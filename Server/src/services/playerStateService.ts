@@ -26,6 +26,7 @@ import { videoAdRewardTimesForState } from "./videoAdRewardAuthorityService";
 import { validatedPvpWinStreak } from "./pvpWinStreakAuthorityService";
 import { validatedInstantBattleState } from "./instantBattleAuthorityService";
 import { validatedSquadCreationsCount } from "./squadCreationAuthorityService";
+import { validatedRenameCount } from "./playerRenameAuthorityService";
 
 /** Unix seconds are used throughout the recovered Beanstalk protocol. */
 export function unixNow(): number {
@@ -374,6 +375,10 @@ export function buildPlayerData(player: PlayerDocument, now = unixNow()): Player
   addSerializedObject(data, "PlayerAnalyticsData", {
     lastSeenSquadChatTimeStampDB: state.lastSeenSquadChatTimestamp ?? 0,
     squadCreationsCount: validatedSquadCreationsCount(state.squadCreationsCount),
+    // PlayerAnalytics.renameGoldPrice is profile-owned even though most fields in this object
+    // live in progression. Restore the validated count so reconnecting cannot display a free
+    // rename while the backend correctly expects an exponentially priced attempt.
+    renameCount: validatedRenameCount(dto.renameCount),
     // The stock UI checks this recovered dictionary before showing an already collected
     // one-time reward. Restoring the server-owned markers prevents a reconnect/reinstall from
     // presenting the button again even though a repeated action 161 would not pay twice.

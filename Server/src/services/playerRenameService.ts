@@ -2,22 +2,24 @@ import { ApiError, ApiErrorCode } from "../apiErrors";
 import { players, type PlayerProgressionState } from "../db";
 import { findById } from "./playerService";
 import { progressionForPlayer } from "./playerStateService";
+import {
+  SECOND_RENAME_BASE_GOLD_COST,
+  renameGoldPrice,
+  validatedRenameCount,
+} from "./playerRenameAuthorityService";
+
+export {
+  SECOND_RENAME_BASE_GOLD_COST,
+  renameGoldPrice,
+  validatedRenameCount,
+} from "./playerRenameAuthorityService";
 
 /** IJEAJGCCHEF.PlayerNameTaken, consumed by the stock rename error dialog. */
 export const PLAYER_NAME_TAKEN = 11;
 /** IJEAJGCCHEF.NotEnoughGoldForChangeName, which reads RenameCount and PlayerGold. */
 export const PLAYER_RENAME_NOT_ENOUGH_GOLD = 11402;
 
-/**
- * Exact 4.9.5 `SecondRenameGoldCost` Constants value.
- *
- * MainScene serializes the CodeStage ObscuredFloat as hidden bytes `e7858340` with key
- * 230887. Reading the bytes as little-endian and XORing the key yields IEEE-754 value 4.
- */
-export const SECOND_RENAME_BASE_GOLD_COST = 4;
-
 const MAX_CONCURRENCY_RETRIES = 4;
-const MAX_POSITIVE_STOCK_RENAME_COUNT = 29;
 
 export interface RenameEconomyResult {
   state: PlayerProgressionState;
@@ -31,33 +33,22 @@ export interface RenamePlayerResult extends RenameEconomyResult {
   payForRename: boolean;
 }
 
-/**
- * Reproduce PlayerAnalytics.renameGoldPrice without reproducing its 32-bit overflow bug.
- *
- * The first rename is free because renameCount is zero. Every later price doubles from four
- * Gold: count 1 costs 4, count 2 costs 8, and so on. Unity's signed shift becomes negative
- * and then zero at extreme counts; the server rejects that unreachable overflow region rather
- * than allowing a long-lived or modified account to obtain free renames.
- */
-export function renameGoldPrice(renameCount: number): number {
-  if (!Number.isInteger(renameCount) || renameCount < 0) {
-    throw new ApiError(ApiErrorCode.UnknownAction, "RenameCount is invalid.");
-  }
-  if (renameCount === 0) return 0;
-  if (renameCount > MAX_POSITIVE_STOCK_RENAME_COUNT) {
-    throw new ApiError(ApiErrorCode.UnknownAction, "The stock rename price has exceeded its safe range.");
-  }
-  return SECOND_RENAME_BASE_GOLD_COST * (2 ** (renameCount - 1));
-}
-
 /** Calculate and apply only the server-owned currency/count portion of a rename. */
 export function applyRenameEconomyState(
   state: PlayerProgressionState,
   renameCount: number,
   payForRename: boolean,
 ): RenameEconomyResult {
-  const goldSpent = renameGoldPrice(renameCount);
-  if (renameCount > 0 && !payForRename) {
+  const previousRenameCount = validatedRenameCount(renameCount);
+  const nextRenameCount = validatedRenameCount(previousRenameCount + 1);
+  if (!Number.isSafeInteger(state.revision) || state.revision < 0 || state.revision === Number.MAX_SAFE_INTEGER) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Rename progression revision is invalid.");
+  }
+  if (!Number.isSafeInteger(state.gold)) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Rename Gold balance is invalid.");
+  }
+  const goldSpent = renameGoldPrice(previousRenameCount);
+  if (previousRenameCount > 0 && !payForRename) {
     // GameLoginManager may request a free platform-name sync only before any rename. Once the
     // free rename is consumed, the explicit RenameDialog confirmation flag is mandatory.
     throw new ApiError(ApiErrorCode.UnknownAction, "PayForRename is required after the free rename.");
@@ -71,8 +62,8 @@ export function applyRenameEconomyState(
       revision: state.revision + 1,
       gold: state.gold - goldSpent,
     },
-    previousRenameCount: renameCount,
-    renameCount: renameCount + 1,
+    previousRenameCount,
+    renameCount: nextRenameCount,
     goldSpent,
   };
 }
@@ -110,7 +101,7 @@ export async function renamePlayer(
     }
 
     const rawRenameCount = player.player.renameCount;
-    const renameCount = rawRenameCount ?? 0;
+    const renameCount = validatedRenameCount(rawRenameCount);
     const economy = applyRenameEconomyState(
       progressionForPlayer(player),
       renameCount,
