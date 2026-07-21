@@ -4,6 +4,7 @@ import {
   progressionRevisionForRead,
   validateProgressionRevisionAdvance,
 } from "./progressionRevisionAuthorityService";
+import { validatedProgressionSchemaVersion } from "./progressionSchemaAuthorityService";
 
 /**
  * Validate the common authority shared by every full progression-document replacement.
@@ -17,6 +18,8 @@ export function validatedProgressionSuccessor(
   current: PlayerProgressionState,
   next: PlayerProgressionState,
 ): PlayerProgressionState {
+  validatedProgressionSchemaVersion(current.schemaVersion);
+  validatedProgressionSchemaVersion(next.schemaVersion);
   validatedCoreProgressionBalances(current);
   validateProgressionRevisionAdvance(progressionRevisionForRead(current.revision), next.revision);
   validatedCoreProgressionBalances(next);

@@ -470,6 +470,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   inbox, Google Play entitlement, mission, Instant Battle, rename, Squad economy/card/departure,
   tutorial, Squad War, core PvP, and operator-integrity transactions, validating both core-balance
   snapshots and their revision ordering before a full progression replacement is built.
+- **Progression schema authority**: an embedded progression document must declare the exact
+  supported schema version `1` at read and publication boundaries. Only a wholly absent progression
+  uses the deterministic account fallback; a missing, malformed, or future embedded version fails
+  closed until a versioned migration explicitly understands it.
 - **Core progression balance authority**: every persisted progression read and every produced
   mutation state validates Gold, WarBucks, Tickets, Scraps, and level XP before price comparison or
   publication. Safe-integer Gold/WarBucks chargeback debt remains legitimate; Tickets, Scraps, and

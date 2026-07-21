@@ -28,6 +28,7 @@ import {
   validateProgressionRevisionAdvance,
 } from "../services/progressionRevisionAuthorityService";
 import { validatedProgressionSuccessor } from "../services/progressionPublicationAuthorityService";
+import { validatedProgressionSchemaVersion } from "../services/progressionSchemaAuthorityService";
 
 function contractPlayer(): PlayerDocument {
   const player = newPlayer("player-contract", "ContractPlayer", AccountType.Facebook);
@@ -302,6 +303,20 @@ test("progression revision authority migrates absence and rejects corrupt or non
     () => validatedProgressionSuccessor(current, { ...current, revision: 1, gold: Number.NaN }),
     /Stored Gold balance is invalid/,
   );
+});
+
+test("progression schema authority accepts only the explicitly supported embedded version", () => {
+  assert.equal(validatedProgressionSchemaVersion(1), 1);
+  for (const unsupported of [undefined, null, 0, 2, "1", Number.NaN]) {
+    assert.throws(
+      () => validatedProgressionSchemaVersion(unsupported),
+      /Stored progression schema version is unsupported/,
+    );
+  }
+
+  const future = contractPlayer();
+  (future.progression as unknown as { schemaVersion: number }).schemaVersion = 2;
+  assert.throws(() => progressionForPlayer(future), /Stored progression schema version is unsupported/);
 });
 
 test("dog-tag state uses accumulated seconds and recovered 900-second balancing", () => {

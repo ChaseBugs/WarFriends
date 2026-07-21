@@ -126,6 +126,9 @@ verified Play purchase delivery/revalidation/reversal, Daily Missions, Instant B
 Squad creation/card transfers/departure, tutorial completion, first-Squad-War achievement, core PvP
 settlement, and operator Squad-integrity repair all prove both core-balance snapshots plus the
 monotonic revision before their transaction can publish progression.
+The embedded progression envelope must carry exact schema version 1 at both read and publication
+boundaries. A wholly absent progression may use the deterministic account fallback; a missing,
+malformed, or future version in a present document fails closed until an explicit migration exists.
 
 Starter and daily assignments, assignment mega rewards, achievements, reward-bearing inbox
 messages, one-time/tutorial grants, Gold conversion, level rewards, normal/VIP lootbox duplicates,

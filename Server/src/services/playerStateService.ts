@@ -34,6 +34,7 @@ import { validatedTutorialLifecycle } from "./tutorialCompletionAuthorityService
 import { validatedCoreProgressionBalances } from "./coreProgressionAuthorityService";
 import { validatedDogTagAuthority } from "./dogTagAuthorityService";
 import { progressionRevisionForRead } from "./progressionRevisionAuthorityService";
+import { validatedProgressionSchemaVersion } from "./progressionSchemaAuthorityService";
 
 /** Unix seconds are used throughout the recovered Beanstalk protocol. */
 export function unixNow(): number {
@@ -93,6 +94,7 @@ export function createInitialProgression(
 export function progressionForPlayer(player: PlayerDocument): PlayerProgressionState {
   if (!player.progression) return createInitialProgression(Math.floor(player.createdAt.getTime() / 1000));
   const state = player.progression;
+  validatedProgressionSchemaVersion(state.schemaVersion);
   // This is the shared persisted-progression read boundary, not only a boot serializer. Validate
   // wallet/rank balances here so cross-player transactions and ordinary economy actions cannot
   // let NaN/Infinity bypass a `< price` check before reaching a narrower service validator.
