@@ -44,6 +44,21 @@ test("assignment requests require canonical integers and contiguous RequestBuffe
   ]) {
     assert.throws(() => bufferedRequests(JSON.stringify(payload)), /sequence is invalid/);
   }
+
+  // Request.cs exposes only these two lower-case public fields. Alias, duplicate-description,
+  // missing, and extension members must not create a second interpretation of an economy action.
+  for (const entry of [
+    { Action: 171, Data: "{}" },
+    { action: 171, data: "{}", Action: 172 },
+    { action: 171 },
+    { data: "{}" },
+    { action: 171, data: "{}", ignored: true },
+  ]) {
+    assert.throws(
+      () => bufferedRequests(JSON.stringify({ 0: entry })),
+      /entry shape is invalid/,
+    );
+  }
 });
 
 test("buffered assignment claim fields require exact C# integer JSON numbers", () => {

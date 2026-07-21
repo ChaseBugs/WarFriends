@@ -104,8 +104,16 @@ export function bufferedRequests(value: unknown): BufferedRequestInput[] {
       throw new ApiError(ApiErrorCode.UnknownAction, "Buffered request entry is invalid.");
     }
     const request = item as Record<string, unknown>;
-    const action = requestedAssignmentInteger(request.action ?? request.Action, "Buffered action");
-    const data = request.data ?? request.Data;
+    // Recovered `Request.cs` contains exactly two public fields: lower-case `action` and `data`.
+    // Accepting aliases or extra fields creates two possible descriptions of one buffered action;
+    // JavaScript property preference would then decide which description receives economy authority.
+    // Reject the complete outer buffer before processing any item unless its nested shape is exact.
+    const keys = Object.keys(request).sort();
+    if (keys.length !== 2 || keys[0] !== "action" || keys[1] !== "data") {
+      throw new ApiError(ApiErrorCode.UnknownAction, "Buffered request entry shape is invalid.");
+    }
+    const action = requestedAssignmentInteger(request.action, "Buffered action");
+    const data = request.data;
     if (typeof data !== "string" || data.length > 64_000) {
       throw new ApiError(ApiErrorCode.UnknownAction, "Buffered request data is invalid.");
     }
