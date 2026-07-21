@@ -1174,6 +1174,23 @@ export interface ScheduledJobLeaseDocument extends Document {
 
 let scheduledJobLeasesCollection: Collection<ScheduledJobLeaseDocument> | null = null;
 
+/** Durable at-least-once Firebase delivery state for one committed inbox row. */
+export interface FirebasePushDeliveryDocument extends Document {
+  _id: string;
+  recipientPlayerId: string;
+  messageId: string;
+  status: "pending" | "delivered" | "suppressed";
+  attempts: number;
+  createdAt: Date;
+  updatedAt: Date;
+  nextAttemptAt: Date | null;
+  completedAt: Date | null;
+  lastDisposition: "transient" | "configuration" | null;
+  terminalReason: "not-eligible" | "invalid-token" | null;
+}
+
+let firebasePushDeliveriesCollection: Collection<FirebasePushDeliveryDocument> | null = null;
+
 export async function connectMongo(): Promise<void> {
   await client.connect();
   db = client.db(runtimeInfrastructure.mongoDatabaseName);
@@ -1206,6 +1223,7 @@ export async function connectMongo(): Promise<void> {
     "purchaseReconciliationCursors",
   );
   scheduledJobLeasesCollection = db.collection<ScheduledJobLeaseDocument>("scheduledJobLeases");
+  firebasePushDeliveriesCollection = db.collection<FirebasePushDeliveryDocument>("firebasePushDeliveries");
 
   await playersCollection.createIndex({ id: 1 }, { unique: true });
   await playersCollection.createIndex({ authToken: 1 });
@@ -1224,6 +1242,17 @@ export async function connectMongo(): Promise<void> {
   // support/refund audits without ever storing or logging the raw Play purchase token.
   await purchaseReceiptsCollection.createIndex({ playerId: 1, purchasedAt: -1 });
   await purchaseReceiptsCollection.createIndex({ orderId: 1 }, { unique: true, sparse: true });
+
+  // One scheduler query reads only due pending rows. `_id` is already the unique recipient/message
+  // digest, so retries and fan-out replays cannot create a second provider delivery lifecycle.
+  await firebasePushDeliveriesCollection.createIndex(
+    { status: 1, nextAttemptAt: 1, _id: 1 },
+    { name: "firebase_push_due" },
+  );
+  await firebasePushDeliveriesCollection.createIndex(
+    { recipientPlayerId: 1, messageId: 1 },
+    { name: "firebase_push_inbox_identity", unique: true },
+  );
 
   await squadsCollection.createIndex({ name: 1 }, { unique: true });
   await squadsCollection.createIndex({ experience: -1 });
@@ -1281,6 +1310,12 @@ export async function connectMongo(): Promise<void> {
   // prevents simultaneous retries from inserting duplicate message-center entries while
   // remaining compatible with all legacy message rows, which do not have this field.
   await messagesCollection.createIndex({ idempotencyKey: 1 }, { unique: true, sparse: true });
+  // The Firebase outbox reconciler closes the post-commit crash window by discovering supported
+  // unread messages that do not yet have a delivery ledger row. This index bounds that scan.
+  await messagesCollection.createIndex(
+    { messageType: 1, read: 1, ignored: 1, accepted: 1, createdAt: 1, messageId: 1 },
+    { name: "firebase_push_recovery" },
+  );
   // One external identity cannot authenticate two different WarFriends players.
   await identitiesCollection.createIndex({ provider: 1, externalId: 1 }, { unique: true });
   // A player may link multiple providers, but only one identity from each provider.
@@ -1406,6 +1441,7 @@ export async function disconnectMongo(): Promise<void> {
   purchaseReceiptsCollection = null;
   purchaseReconciliationCursorsCollection = null;
   scheduledJobLeasesCollection = null;
+  firebasePushDeliveriesCollection = null;
 }
 
 /**
@@ -1488,6 +1524,10 @@ export function purchaseReconciliationCursors(): Collection<PurchaseReconciliati
 
 export function scheduledJobLeases(): Collection<ScheduledJobLeaseDocument> {
   return requireCollection("scheduledJobLeases", scheduledJobLeasesCollection);
+}
+
+export function firebasePushDeliveries(): Collection<FirebasePushDeliveryDocument> {
+  return requireCollection("firebasePushDeliveries", firebasePushDeliveriesCollection);
 }
 
 export function messages(): Collection<Document> {

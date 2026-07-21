@@ -176,6 +176,64 @@ export class FirebaseHttpV1Transport implements FirebasePushTransport {
 
 const productionTransport = new FirebaseHttpV1Transport();
 
+export type FirebasePushAttemptResult =
+  | { readonly outcome: "sent" }
+  | { readonly outcome: "not-eligible" }
+  | {
+    readonly outcome: "failed";
+    readonly disposition: FirebaseFailureDisposition;
+    readonly attemptedToken: string;
+    readonly error: string;
+  };
+
+/**
+ * Resolve current inbox, account, consent, presence, and token authority immediately before send.
+ *
+ * Provider failures are returned as data so the durable delivery worker can choose between retry,
+ * token retirement, and terminal suppression. MongoDB validation failures deliberately escape:
+ * malformed durable authority is an operator repair condition and must stop the leased batch
+ * rather than being mislabeled as a transient Firebase outage.
+ */
+export async function attemptOfflineInboxPush(
+  recipientPlayerId: string,
+  messageId: string,
+  transport: FirebasePushTransport = productionTransport,
+  policy: FirebasePushPolicy = firebasePushPolicy(),
+): Promise<FirebasePushAttemptResult> {
+  if (!policy.enabled) return { outcome: "not-eligible" };
+  const fanout = await getLiveInboxFanout(recipientPlayerId, messageId);
+  if (!fanout) return { outcome: "not-eligible" };
+  const messageTypeAttribute = fanout.message.MessageType;
+  if (!messageTypeAttribute || !("N" in messageTypeAttribute)) return { outcome: "not-eligible" };
+  const rawMessageType = Number(messageTypeAttribute.N);
+  const wake = firebaseWakeActionFor(rawMessageType as MessageDoc["messageType"]);
+  if (!wake) return { outcome: "not-eligible" };
+
+  const player = await players().findOne({ id: recipientPlayerId });
+  if (!player) return { outcome: "not-eligible" };
+  validatedPlayerAccountEnvelope(player);
+  const dataPush = firebaseDataPushFor(
+    rawMessageType as MessageDoc["messageType"],
+    player.player.status,
+    player.player.deviceToken,
+    settingsForPlayer(player),
+  );
+  if (!dataPush) return { outcome: "not-eligible" };
+  try {
+    await transport.send(dataPush, policy);
+    return { outcome: "sent" };
+  } catch (error) {
+    return {
+      outcome: "failed",
+      disposition: error instanceof FirebasePushDeliveryError
+        ? error.disposition
+        : firebaseFailureDisposition(error),
+      attemptedToken: dataPush.token,
+      error: error instanceof Error ? error.message : "Unknown Firebase error",
+    };
+  }
+}
+
 /**
  * Best-effort offline wake-up after the inbox row has committed.
  *
@@ -190,41 +248,18 @@ export async function publishOfflineInboxPush(
   transport: FirebasePushTransport = productionTransport,
   policy: FirebasePushPolicy = firebasePushPolicy(),
 ): Promise<boolean> {
-  if (!policy.enabled) return false;
-  let attemptedToken = "";
   try {
-    const fanout = await getLiveInboxFanout(recipientPlayerId, messageId);
-    if (!fanout) return false;
-    const messageTypeAttribute = fanout.message.MessageType;
-    if (!messageTypeAttribute || !("N" in messageTypeAttribute)) return false;
-    const rawMessageType = Number(messageTypeAttribute.N);
-    const wake = firebaseWakeActionFor(rawMessageType as MessageDoc["messageType"]);
-    if (!wake) return false;
-
-    const player = await players().findOne({ id: recipientPlayerId });
-    if (!player) return false;
-    validatedPlayerAccountEnvelope(player);
-    const dataPush = firebaseDataPushFor(
-      rawMessageType as MessageDoc["messageType"],
-      player.player.status,
-      player.player.deviceToken,
-      settingsForPlayer(player),
-    );
-    if (!dataPush) return false;
-    attemptedToken = dataPush.token;
-    await transport.send(dataPush, policy);
-    return true;
-  } catch (error) {
-    if (attemptedToken
-      && error instanceof FirebasePushDeliveryError
-      && error.disposition === "invalidToken") {
+    const result = await attemptOfflineInboxPush(recipientPlayerId, messageId, transport, policy);
+    if (result.outcome === "sent") return true;
+    if (result.outcome === "not-eligible") return false;
+    if (result.disposition === "invalidToken") {
       // Compare both mirrored copies so a concurrent action-13 token refresh wins. Only the exact
       // token rejected by Firebase is retired; a newer installation credential is never cleared by
       // a delayed provider response from an older send attempt.
       try {
         const retirement = invalidFirebaseTokenRetirement(
           recipientPlayerId,
-          attemptedToken,
+          result.attemptedToken,
           new Date(),
         );
         await players().updateOne(retirement.filter, retirement.update);
@@ -239,8 +274,15 @@ export async function publishOfflineInboxPush(
     logger.warnWithEmoji("PUSH", "Firebase inbox wake-up failed", "FIREBASE", {
       recipientPlayerId,
       messageId,
-      disposition: error instanceof FirebasePushDeliveryError ? error.disposition : "unknown",
-      error: error instanceof Error ? error.message : "Unknown Firebase error",
+      disposition: result.disposition,
+      error: result.error,
+    });
+    return false;
+  } catch (error) {
+    logger.warnWithEmoji("PUSH", "Firebase inbox wake-up authority failed", "FIREBASE", {
+      recipientPlayerId,
+      messageId,
+      error: error instanceof Error ? error.message : "Unknown database error",
     });
     return false;
   }

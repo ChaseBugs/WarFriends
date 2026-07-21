@@ -7,7 +7,10 @@ import {
   type MessageDoc,
 } from "./socialService";
 import { validatedInboxMessageDocument } from "./inboxMessageAuthorityService";
-import { publishOfflineInboxPush } from "./firebasePushService";
+import {
+  enqueueFirebaseInboxPush,
+  runFirebasePushDeliverySweep,
+} from "./firebasePushDeliveryService";
 
 /** Transient wake-up channel; MongoDB remains the complete inbox authority. */
 export const INBOX_FANOUT_REDIS_CHANNEL = "warfriends:inbox:fanout:v1";
@@ -160,9 +163,19 @@ export async function publishInboxFanout(recipientPlayerId: string, messageId: s
   }
   const notice = buildInboxFanoutNotice(inboxFanoutOriginId, recipientPlayerId, messageId);
   await redisPublish(INBOX_FANOUT_REDIS_CHANNEL, notice);
-  // Firebase is another post-commit presentation path. It re-reads MongoDB authority and may
-  // safely fail without changing the durable inbox or the socket/Redis recovery contract.
-  await publishOfflineInboxPush(recipientPlayerId, messageId);
+  // Firebase is another post-commit presentation path. Its token-free delivery ledger survives
+  // provider/process outages and deduplicates this same fan-out replay across backend nodes. The
+  // leased immediate sweep keeps challenge latency low; contention simply leaves the row for the
+  // periodic worker and never changes the durable inbox or socket/Redis recovery contract.
+  try {
+    if (await enqueueFirebaseInboxPush(recipientPlayerId, messageId)) {
+      await runFirebasePushDeliverySweep();
+    }
+  } catch {
+    // A later reconciliation sweep discovers the committed inbox row if even ledger insertion
+    // failed. Presentation infrastructure must never turn a successful gameplay mutation into an
+    // HTTP error that encourages the stock client to repeat the authoritative action.
+  }
 }
 
 /**

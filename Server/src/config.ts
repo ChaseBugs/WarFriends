@@ -119,6 +119,16 @@ export const config = {
   firebaseProjectId: process.env.FIREBASE_PROJECT_ID ?? "",
   firebasePushRequestTimeoutMilliseconds:
     Number(process.env.FIREBASE_PUSH_REQUEST_TIMEOUT_MS ?? 5_000),
+  // Provider delivery is recovered from a MongoDB ledger after process or Firebase outages. The
+  // one-minute initial delay follows FCM's documented quota backoff floor; every later delay is
+  // bounded so a repaired deployment eventually revisits configuration failures as well.
+  firebasePushSchedulerIntervalSeconds:
+    Number(process.env.FIREBASE_PUSH_SCHEDULER_INTERVAL_SECONDS ?? 60),
+  firebasePushBatchSize: Number(process.env.FIREBASE_PUSH_BATCH_SIZE ?? 100),
+  firebasePushInitialRetrySeconds:
+    Number(process.env.FIREBASE_PUSH_INITIAL_RETRY_SECONDS ?? 60),
+  firebasePushMaximumRetrySeconds:
+    Number(process.env.FIREBASE_PUSH_MAXIMUM_RETRY_SECONDS ?? 3_600),
 
   // Optional signed publication manifest for the stock GetConfigurations raw-text protocol.
   // Empty keeps bundled APK sheets active. The signing key is backend-only and protects the

@@ -30,6 +30,7 @@ import { supportModerationRouter } from "./routes/supportModeration";
 import { validateAuthenticationSecretConfiguration } from "./services/authSecretService";
 import { trafficPolicy } from "./services/trafficPolicyService";
 import { runtimeInfrastructurePolicy } from "./services/runtimeInfrastructurePolicyService";
+import { startFirebasePushDeliveryScheduler } from "./services/firebasePushDeliveryService";
 
 const app = express();
 const publicTrafficPolicy = trafficPolicy();
@@ -117,6 +118,7 @@ let playerLeagueSchedulerTimer: NodeJS.Timeout | null = null;
 let googlePlaySubscriptionSchedulerTimer: NodeJS.Timeout | null = null;
 let googlePlayVoidedPurchaseSchedulerTimer: NodeJS.Timeout | null = null;
 let squadWarSchedulerTimer: NodeJS.Timeout | null = null;
+let firebasePushDeliverySchedulerTimer: NodeJS.Timeout | null = null;
 // Let Unity's BestHTTP reuse keep-alive sockets; headersTimeout must exceed keepAliveTimeout.
 httpServer.keepAliveTimeout = 65_000;
 httpServer.headersTimeout = 66_000;
@@ -173,6 +175,7 @@ async function start(): Promise<void> {
   squadWarSchedulerTimer = startSquadWarScheduler();
   googlePlaySubscriptionSchedulerTimer = startGooglePlaySubscriptionRevalidationScheduler();
   googlePlayVoidedPurchaseSchedulerTimer = startGooglePlayVoidedPurchaseScheduler();
+  firebasePushDeliverySchedulerTimer = startFirebasePushDeliveryScheduler();
 
   httpServer.listen(runtimeInfrastructure.listenPort, () => {
     logger.server.start(runtimeInfrastructure.listenPort, process.env.NODE_ENV ?? "development");
@@ -189,6 +192,7 @@ async function shutdown(signal: string): Promise<void> {
   if (squadWarSchedulerTimer) clearInterval(squadWarSchedulerTimer);
   if (googlePlaySubscriptionSchedulerTimer) clearInterval(googlePlaySubscriptionSchedulerTimer);
   if (googlePlayVoidedPurchaseSchedulerTimer) clearInterval(googlePlayVoidedPurchaseSchedulerTimer);
+  if (firebasePushDeliverySchedulerTimer) clearInterval(firebasePushDeliverySchedulerTimer);
   await pvpCoordinatorHeartbeat?.stop();
   await disconnectRedis();
   await disconnectMongo();

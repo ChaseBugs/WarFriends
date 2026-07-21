@@ -70,8 +70,9 @@ being guessed expired.
 
 ### Cross-node scheduled-job leases
 
-Player League settlement, Squad War maintenance, Google Play subscription revalidation, and Voided
-Purchases reconciliation share renewable rows in `scheduledJobLeases`. A new row records its exact
+Player League settlement, Squad War maintenance, Google Play subscription revalidation, Voided
+Purchases reconciliation, and Firebase inbox delivery share renewable rows in `scheduledJobLeases`.
+A new row records its exact
 `leaseMs`, `renewedAt`, and derived expiry. The older four-field row is an explicit read-only legacy
 shape: it may finish naturally, then the first exact expired takeover replaces it with the renewable
 schema. Absence is acquired by singleton insert, and takeover compare-and-sets every prior field plus
@@ -864,7 +865,7 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   announced sequentially through the same local/Redis inbox fan-out, avoiding both an uncommitted
   reward notice and an unbounded division-close burst. A live `InboxMessage` remains presentation
   only: action `91` is still the sole atomic Gold-claim boundary.
-  Optional Firebase Cloud Messaging HTTP v1 delivery adds a best-effort offline wake-up after the
+  Optional Firebase Cloud Messaging HTTP v1 delivery adds a durable offline wake-up path after the
   same durable commit. `FIREBASE_PUSH_ENABLED=true` requires an exact Firebase project ID, Google
   Application Default Credentials with messaging permission, and a bounded 1-30 second request
   timeout. The sender re-reads the complete message and player, requires `PlayerStatus.Offline`, a
@@ -878,9 +879,18 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   Structured HTTP v1 failures retire a token only for `UNREGISTERED` or FCM-specific
   `INVALID_ARGUMENT`. The update compare-and-sets both token mirrors, so a delayed rejection cannot
   erase a newer action-13 registration. Generic payload errors, sender/project/auth mistakes,
-  quota, service, internal, and transport failures retain the token. Visible notification copy,
-  durable provider retry/deduplication, and a source-backed direct-message consent category remain
-  explicit platform-integration gaps.
+  quota, service, internal, and transport failures retain the token. Each recipient/message pair is
+  inserted once into `firebasePushDeliveries`; a renewable cross-node lease selects one bounded
+  worker, and transient/configuration failures retry with saturating exponential backoff. The
+  worker also joins unread supported inbox rows against the ledger to recover a process crash after
+  inbox commit but before normal enqueue. Complete fixed-shape ledger authority is validated before
+  provider I/O and every terminal/retry transition compare-and-sets the selected pending snapshot.
+  This is at-least-once delivery: a provider acceptance followed by a lost HTTP response can produce
+  a duplicate wake-up, which is safe because the payload only asks Unity to reload its durable
+  inbox. Configure the exact worker bounds with `FIREBASE_PUSH_SCHEDULER_INTERVAL_SECONDS` (5-3600),
+  `FIREBASE_PUSH_BATCH_SIZE` (1-1000), `FIREBASE_PUSH_INITIAL_RETRY_SECONDS` (60-86400), and
+  `FIREBASE_PUSH_MAXIMUM_RETRY_SECONDS` (initial through seven days). Visible notification copy and
+  a source-backed direct-message consent category remain explicit platform-integration gaps.
 - **Moderation reports and sanctions**: authenticated player/cheater reports are validated, rate-limited,
   deduplicated for safe retries, and stored with review status and evidence metadata. Mandatory
   `ReportType` accepts only canonical recovered decimal text or an exact JSON integer in the bounded
@@ -1704,12 +1714,13 @@ therefore update its executable disposition instead of silently falling through 
 
 ### Next
 
-- **Squad extensions** — normal/Buddy pool deposits and withdrawals are implemented.
-  Server-selected Buddy unit-type RNG and squad events/wars remain. Type-28 card-pool request
-  notifications validate same-roster membership and use daily actor/target idempotency. Persistent
-  Squad Chat delivery now exists on `/hub`, including optional Redis multi-node fan-out; add the
-  Unity Photon-to-WebSocket adapter. Source-backed FCM data wake-ups now cover durable Squad inbox
-  rows when enabled; visible platform notification copy and durable provider retry remain gaps.
+- **Squad extensions** — normal/Buddy pool deposits and withdrawals, configured Squad Events,
+  reconstruction-scheduled Squad Wars, and persistent `/hub` Squad Chat with optional Redis
+  multi-node fan-out are implemented. Type-28 card-pool request notifications validate same-roster
+  membership and use daily actor/target idempotency. Add the Unity Photon/Photon-Chat-to-WebSocket
+  adapters, recover the retired Squad Event calendar, and recover server-selected Buddy unit-type
+  weighting. Source-backed FCM data wake-ups now use durable retry/deduplication for supported Squad
+  inbox rows; visible notification copy remains an external platform/presentation gap.
 - **Item economy expansion** — unit Elite upgrades, normal shop visuals, Gold lootbox bundles,
   weapon/unit notification acknowledgements, normal card-pack
   purchase, dedicated Black Market weapons, daily weapon/unit rentals, and complete active-loadout
