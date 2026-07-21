@@ -484,6 +484,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   four-slot equipment, notification state, rollback data, and `BufferId` replay protection are
   atomic. Re-equipping the current category item and replaying an already-cleared visual badge
   acknowledgement preserve exact state identity instead of creating false inventory revisions.
+  One shared `DecalManagerData` authority boundary validates every saved flag, part counter, timed
+  expiry, equipped slot, and previous-head value before boot, ownership/equip, purchase, paid-pack
+  extension, or voided-purchase reversal. In particular, `NaN`, `Infinity`, fractional, negative,
+  or out-of-Date-range expiry values fail closed instead of making a temporary power band permanent.
   Actions `104`/`105` now persist the weapon/unit `showed` flags through both direct and
   buffered transports without granting ownership; locked or unknown rows fail closed. Direct
   action `194` and its stock buffered form are explicit telemetry acknowledgements, so opening a

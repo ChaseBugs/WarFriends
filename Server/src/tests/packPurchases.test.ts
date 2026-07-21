@@ -146,6 +146,38 @@ test("pack extension preserves active VIP start and remaining timed visual durat
   assert.equal(visual.parts, 7);
 });
 
+test("pack delivery rejects a non-finite existing timed visual before extending it", () => {
+  const initial = {
+    ...createInitialProgression(NOW),
+    visualInventory: {
+      ...visualInventoryStateFor(createInitialProgression(NOW)),
+      visuals: {
+        BANDS_DAMAGE_0: {
+          bought: true,
+          showed: true,
+          expiresOn: Number.POSITIVE_INFINITY,
+          borrowed: false,
+          parts: 0,
+          notificate: false,
+        },
+      },
+    },
+  };
+
+  // Failing before the paid-pack transition ensures corrupt imported state cannot be extended,
+  // serialized, or used to create an irreversible purchase receipt.
+  assert.throws(
+    () => applyPurchaseEntitlementState(
+      initial,
+      entitlement("starterpackB"),
+      verified("starterpackB"),
+      NOW,
+    ),
+    /Visual BANDS_DAMAGE_0 expiry is invalid/,
+  );
+  assert.equal(initial.revision, 0);
+});
+
 test("pack delivery rejects a mismatched verified product before changing state", () => {
   const initial = createInitialProgression(NOW);
   assert.throws(() => applyPurchaseEntitlementState(

@@ -147,6 +147,10 @@ Arena run appear finished, make an achievement tier appear complete, or unlock a
 - Black Market state must pass one shared set validator before boot, issuance replay/rotation,
   serialization, or redemption. Unsafe expiry/cursors, duplicate weapon identities, oversized sets,
   and nonzero retired-feature authority fail closed instead of creating permanent offers.
+- Visual inventory state must pass one shared authority validator before boot, purchase,
+  ownership/equip, paid-pack extension, or voided-purchase reversal. Timed expiry and part counters,
+  saved flags, slot keys, equipped IDs, and the previous-head field must retain their bounded recovered
+  shape; non-finite expiry fails closed instead of granting a permanent temporary cosmetic.
 - Client-provided serialized blobs may be round-tripped but must not be trusted for rewards.
 - Add tests for contract field names, authorization failures, duplicate requests, and concurrency.
 - Update this tracker in the same commit whenever a feature status changes.

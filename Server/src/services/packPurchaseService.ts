@@ -5,6 +5,7 @@ import type { PackEntitlement } from "./inAppCatalogService";
 import { itemInventoryStateFor, WEAPON_CATALOG } from "./itemInventoryService";
 import { VISUAL_CATALOG, visualInventoryStateFor } from "./visualInventoryService";
 import { validatedVipExpiration } from "./vipEntitlementService";
+import { validatedVisualUnixSeconds } from "./visualEntitlementService";
 
 function checkedAmount(current: number, amount: number, field: string): number {
   const next = current + amount;
@@ -102,12 +103,16 @@ export function applyPackEntitlementState(
     } else {
       // Re-buying a timed pack extends remaining paid time instead of throwing it away. A stale
       // or missing instance starts from authoritative server time, never a client timestamp.
-      const activeBase = current.bought && current.expiresOn > now ? current.expiresOn : now;
+      const currentExpiry = validatedVisualUnixSeconds(current.expiresOn, `Pack visual ${visualGrant.name} expiry`);
+      const activeBase = current.bought && currentExpiry > now ? currentExpiry : now;
       visualInventory.visuals[visualGrant.name] = {
         ...current,
         bought: true,
         borrowed: false,
-        expiresOn: checkedDeadline(activeBase, visualGrant.durationSeconds, "Pack visual"),
+        expiresOn: validatedVisualUnixSeconds(
+          checkedDeadline(activeBase, visualGrant.durationSeconds, "Pack visual"),
+          `Pack visual ${visualGrant.name} expiry`,
+        ),
         notificate: true,
       };
     }

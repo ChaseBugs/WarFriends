@@ -10,6 +10,7 @@ import { validatedVipExpiration } from "./vipEntitlementService";
 import { validatedSubscription } from "./subscriptionBenefitService";
 import { validatedRentalState } from "./rentalEntitlementService";
 import { validatedBlackMarketOfferState } from "./blackMarketEntitlementService";
+import { validatedVisualInventoryState } from "./visualEntitlementService";
 
 /** Unix seconds are used throughout the recovered Beanstalk protocol. */
 export function unixNow(): number {
@@ -255,7 +256,7 @@ export function buildPlayerData(player: PlayerDocument, now = unixNow()): Player
   // copied onto the wire.
   addSerializedObject(data, "InventoryData", state.itemInventory?.inventoryData ?? dto.inventoryData);
   addSerializedObject(data, "LevelManagerData", state.itemInventory?.levelManagerData ?? dto.levelManagerData);
-  addSerializedObject(data, "DecalManagerData", state.visualInventory);
+  addSerializedObject(data, "DecalManagerData", validatedVisualInventoryState(state.visualInventory));
   addSerializedObject(data, "CardManagerData", state.cardInventory);
   addSerializedObject(data, "CraftData", state.cardCrafting);
   // SubscriptionManager inherits DatabaseSerializedObjectGeneric<Subscription>. The stock

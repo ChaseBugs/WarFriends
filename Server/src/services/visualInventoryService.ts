@@ -6,6 +6,11 @@ import type {
   VisualInventoryState,
 } from "../db";
 import { isVipActiveAt } from "./vipEntitlementService";
+import {
+  hasActiveTimedVisual,
+  validatedVisualInventoryState,
+  validatedVisualUnixSeconds,
+} from "./visualEntitlementService";
 
 // Exact IJEAJGCCHEF values handled by the recovered BuyDecal/EquipDecal response branches.
 export const VISUAL_NOT_ENOUGH_WARBUCKS = 100;
@@ -105,7 +110,8 @@ function cloneVisualInventory(value: VisualInventoryState): VisualInventoryState
 }
 
 export function visualInventoryStateFor(state: PlayerProgressionState): VisualInventoryState {
-  return cloneVisualInventory(state.visualInventory ?? createInitialVisualInventory());
+  const source = validatedVisualInventoryState(state.visualInventory) ?? createInitialVisualInventory();
+  return cloneVisualInventory(source);
 }
 
 /**
@@ -203,7 +209,7 @@ function ownsVisual(
   // dedicated authority path, but a borrowed visual remains invalid unless future source
   // data enables and defines that family.
   if (saved?.borrowed) return false;
-  if (definition.durationSeconds > 0) return (saved?.expiresOn ?? 0) > now;
+  if (definition.durationSeconds > 0) return hasActiveTimedVisual(saved, now, definition.name);
   return saved?.bought === true || (definition.parts > 0 && (saved?.parts ?? 0) >= definition.parts);
 }
 
@@ -222,6 +228,7 @@ export function purchaseVisualState(
   vipExpiration: number,
   payload: VisualPurchasePayload,
 ): VisualMutationResult {
+  const currentTime = validatedVisualUnixSeconds(now, "Visual purchase time");
   const definition = VISUAL_CATALOG[payload.name];
   if (!definition || definition.purchasable !== "shop") {
     throw new ApiError(VISUAL_CATEGORY_NOT_FOUND, "Visual is not available in the authoritative shop catalog.");
@@ -233,7 +240,7 @@ export function purchaseVisualState(
   if (playerLevelIndex < definition.unlockLevel - 1) {
     throw new ApiError(VISUAL_NOT_ENOUGH_LEVEL, "Player level is below the visual unlock level.");
   }
-  if (definition.vipOnly && !isVipActiveAt(vipExpiration, now)) {
+  if (definition.vipOnly && !isVipActiveAt(vipExpiration, currentTime)) {
     throw new ApiError(VISUAL_ONLY_FOR_VIP, "Visual requires an active VIP entitlement.");
   }
 
@@ -248,7 +255,7 @@ export function purchaseVisualState(
 
   const visualInventory = visualInventoryStateFor(state);
   const saved = visualInventory.visuals[definition.name];
-  if (ownsVisual(definition, saved, now)) {
+  if (ownsVisual(definition, saved, currentTime)) {
     return { state, visualInventory, definition, expiresOn: saved?.expiresOn ?? 0 };
   }
   if (state.warBucks < definition.priceWarBucks) {
@@ -258,7 +265,9 @@ export function purchaseVisualState(
     throw new ApiError(VISUAL_NOT_ENOUGH_GOLD, "Not enough Gold for this visual.");
   }
 
-  const expiresOn = definition.durationSeconds > 0 ? Math.floor(now) + definition.durationSeconds : 0;
+  const expiresOn = definition.durationSeconds > 0
+    ? validatedVisualUnixSeconds(currentTime + definition.durationSeconds, "Visual purchase expiry")
+    : 0;
   visualInventory.visuals[definition.name] = {
     ...(saved ?? emptySavedVisual()),
     bought: true,
@@ -281,6 +290,7 @@ export function equipVisualState(
   now: number,
   name: string,
 ): VisualMutationResult {
+  const currentTime = validatedVisualUnixSeconds(now, "Visual equip time");
   const definition = VISUAL_CATALOG[name];
   const category = definition ? CATEGORY_CATALOG[definition.categoryId] : undefined;
   const visualInventory = visualInventoryStateFor(state);
@@ -288,7 +298,7 @@ export function equipVisualState(
   if (!definition || !category) {
     throw new ApiError(VISUAL_CATEGORY_NOT_FOUND, "Visual category was not found.");
   }
-  if (!ownsVisual(definition, saved, now)) {
+  if (!ownsVisual(definition, saved, currentTime)) {
     throw new ApiError(VISUAL_NOT_BOUGHT, "Visual is not owned or its temporary entitlement expired.");
   }
 

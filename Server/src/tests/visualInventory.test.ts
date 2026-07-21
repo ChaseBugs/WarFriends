@@ -146,6 +146,34 @@ test("temporary power bands expire and VIP-only bands require live entitlement",
     () => equipVisualState(purchased.state, purchased.expiresOn, "BANDS_DAMAGE_1"),
     (error: unknown) => (error as { code?: number }).code === VISUAL_NOT_BOUGHT,
   );
+
+  // Imported JSON can contain values that MongoDB/BSON later exposes as Infinity. A raw
+  // `expiresOn > now` comparison would turn that damaged record into permanent ownership.
+  // Exercise both the gameplay ownership boundary and the boot serializer so neither path can
+  // publish or consume a malformed timed-cosmetic entitlement.
+  const corrupted = {
+    ...purchased.state,
+    visualInventory: {
+      ...purchased.visualInventory,
+      visuals: {
+        ...purchased.visualInventory.visuals,
+        BANDS_DAMAGE_1: {
+          ...purchased.visualInventory.visuals.BANDS_DAMAGE_1!,
+          expiresOn: Number.POSITIVE_INFINITY,
+        },
+      },
+    },
+  };
+  assert.throws(
+    () => equipVisualState(corrupted, NOW, "BANDS_DAMAGE_1"),
+    /Visual BANDS_DAMAGE_1 expiry is invalid/,
+  );
+  const corruptedPlayer = playerDocument();
+  corruptedPlayer.progression = corrupted;
+  assert.throws(
+    () => buildPlayerData(corruptedPlayer, NOW),
+    /Visual BANDS_DAMAGE_1 expiry is invalid/,
+  );
 });
 
 test("visual purchases fail closed for wrong price, event rows, and unresolved assets", () => {
