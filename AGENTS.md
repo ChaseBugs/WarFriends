@@ -12,6 +12,7 @@
 - Keep every currency, item, reward, receipt, and claim transition atomic and retry-safe. Validate a nonnegative server-authored currency reward with `checkedRewardBalance` before publishing its claim or receipt marker.
 - Apply that guard to direct rewards, conversion proceeds, level-up bonuses, PvP settlement components, and duplicate-item compensation; do not reintroduce one-off `balance + reward` checks.
 - Bind each real-money purchase action to its reviewed entitlement family; sharing store-proof verification must never let a token cross into an incompatible response or grant path.
+- Keep account sanctions as audited server-owned records. Enforce active bans through the shared authentication path only after credential proof, evaluate temporary expiry from application time rather than TTL cleanup, return the recovered `AccountBanned` fields, and require retry-safe operator issue/revoke keys.
 - Preserve legitimate negative Gold or WarBucks chargeback debt, but reject non-safe-integer rewards and arithmetic overflow.
 - Fail closed when authoritative combat evidence, live-event configuration, or source-backed balancing is unavailable.
 - Add detailed English comments where recovered names are opaque or atomicity, replay, migration, or fallback decisions are not obvious.

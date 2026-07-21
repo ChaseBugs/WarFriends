@@ -27,6 +27,7 @@ import {
   reserveLoginAttempt,
   type LoginAttemptReservation,
 } from "./authRateLimitService";
+import { assertPlayerNotSanctioned } from "./playerSanctionService";
 
 // Auth model (BACKEND.md §2.2): id + token credential. On CreateAccount the server mints a
 // player id and an HMAC auth token derived from a server-side salt; the client stores both
@@ -343,6 +344,12 @@ export async function authenticate(
   const sessionCredentialMatches = doc ? await playerCredentialMatches(doc, token, false) : false;
   if (doc && sessionCredentialMatches) {
     if (allowCustomPassword) await clearLoginAttemptsForSession(id);
+    // Check the server-owned moderation record only after proving account ownership. This avoids
+    // turning a public player ID into a ban-status oracle while still terminating already-issued
+    // gameplay sessions as soon as an operator activates a sanction. A proven credential clears
+    // its brute-force reservation first so repeated banned-login retries cannot create a false
+    // credential lock that survives after the sanction ends.
+    await assertPlayerNotSanctioned(doc);
     if (allowCustomPassword) await rotateAuthenticatedSession(doc, { allowConcurrentWinner: false });
     logger.auth.login(id, true, { playerId: id });
     return doc;
@@ -365,6 +372,9 @@ export async function authenticate(
     : false;
   if (doc && customPasswordMatches) {
     if (loginReservation) await clearLoginAttempt(loginReservation);
+    // A banned login must not rotate or upgrade any credential. The stock client receives its
+    // exact AccountBanned contract and keeps the existing account data for a later retry.
+    await assertPlayerNotSanctioned(doc);
     if (customCredentialHashNeedsUpgrade(doc.authTokenHash)) {
       const legacyHash = doc.authTokenHash!;
       const upgradedHash = await hashCustomCredential(doc.id, token);
@@ -389,6 +399,7 @@ export async function authenticate(
   const identityPlayer = provider ? await authenticateIdentity(provider, id, token) : null;
   if (identityPlayer) {
     if (loginReservation) await clearLoginAttempt(loginReservation);
+    await assertPlayerNotSanctioned(identityPlayer);
     await rotateAuthenticatedSession(identityPlayer, { allowConcurrentWinner: true });
     logger.auth.login(id, true, { playerId: identityPlayer.id, provider });
     return identityPlayer;

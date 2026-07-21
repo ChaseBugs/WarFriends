@@ -955,6 +955,30 @@ export interface ReportDeduplicationDocument {
 }
 
 /**
+ * Append-preserving moderation decision for one account.
+ *
+ * Historic rows remain available after revocation/expiry for operator audit. A partial unique
+ * index permits only one row whose status is `active` per player; application time checks make
+ * an elapsed temporary ban non-blocking immediately, without waiting for cleanup or a TTL pass.
+ */
+export interface PlayerSanctionDocument extends Document {
+  _id: string;
+  playerId: string;
+  status: "active" | "revoked" | "expired";
+  reason: string;
+  issuedBy: string;
+  issuedAt: Date;
+  durationSeconds?: number;
+  expiresAt?: Date;
+  operationId: string;
+  revokedAt?: Date;
+  revokedBy?: string;
+  revocationReason?: string;
+  revocationOperationId?: string;
+  resolvedAt?: Date;
+}
+
+/**
  * Server-only lifecycle receipt for one participant in a direct PvP challenge.
  *
  * The recovered Photon client creates the room before it sends the inbox challenge. The room
@@ -996,6 +1020,7 @@ let reportsCollection: Collection<Document> | null = null;
 let authRateLimitsCollection: Collection<AuthRateLimitDocument> | null = null;
 let reportRateLimitsCollection: Collection<ReportRateLimitDocument> | null = null;
 let reportDeduplicationsCollection: Collection<ReportDeduplicationDocument> | null = null;
+let playerSanctionsCollection: Collection<PlayerSanctionDocument> | null = null;
 let friendlyBattlesCollection: Collection<FriendlyBattleDocument> | null = null;
 let gameCatalogEntriesCollection: Collection<GameCatalogEntryDocument> | null = null;
 let gameCatalogReleasesCollection: Collection<GameCatalogReleaseDocument> | null = null;
@@ -1087,6 +1112,7 @@ export async function connectMongo(): Promise<void> {
   authRateLimitsCollection = db.collection<AuthRateLimitDocument>("authRateLimits");
   reportRateLimitsCollection = db.collection<ReportRateLimitDocument>("reportRateLimits");
   reportDeduplicationsCollection = db.collection<ReportDeduplicationDocument>("reportDeduplications");
+  playerSanctionsCollection = db.collection<PlayerSanctionDocument>("playerSanctions");
   friendlyBattlesCollection = db.collection<FriendlyBattleDocument>("friendlyBattles");
   gameCatalogEntriesCollection = db.collection<GameCatalogEntryDocument>("gameCatalogEntries");
   gameCatalogReleasesCollection = db.collection<GameCatalogReleaseDocument>("gameCatalogReleases");
@@ -1182,6 +1208,19 @@ export async function connectMongo(): Promise<void> {
   await reportRateLimitsCollection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
   await reportDeduplicationsCollection.createIndex({ key: 1 }, { unique: true });
   await reportDeduplicationsCollection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+  // The active-state uniqueness boundary is race-safe across every backend and admin process.
+  // Expired history is retained intentionally; issuePlayerSanction first marks elapsed rows
+  // expired so a later sanction can take ownership of this partial index.
+  await playerSanctionsCollection.createIndex(
+    { playerId: 1, status: 1 },
+    { unique: true, partialFilterExpression: { status: "active" } },
+  );
+  await playerSanctionsCollection.createIndex({ operationId: 1 }, { unique: true });
+  await playerSanctionsCollection.createIndex(
+    { revocationOperationId: 1 },
+    { unique: true, sparse: true },
+  );
+  await playerSanctionsCollection.createIndex({ playerId: 1, issuedAt: -1 });
 
   // A reconnect or lost HTTP response may repeat the same challenge start. The compound unique
   // key turns every process into the same idempotent writer, while TTL bounds telemetry storage.
@@ -1244,6 +1283,7 @@ export async function disconnectMongo(): Promise<void> {
   authRateLimitsCollection = null;
   reportRateLimitsCollection = null;
   reportDeduplicationsCollection = null;
+  playerSanctionsCollection = null;
   friendlyBattlesCollection = null;
   gameCatalogEntriesCollection = null;
   gameCatalogReleasesCollection = null;
@@ -1352,6 +1392,10 @@ export function reportRateLimits(): Collection<ReportRateLimitDocument> {
 
 export function reportDeduplications(): Collection<ReportDeduplicationDocument> {
   return requireCollection("reportDeduplications", reportDeduplicationsCollection);
+}
+
+export function playerSanctions(): Collection<PlayerSanctionDocument> {
+  return requireCollection("playerSanctions", playerSanctionsCollection);
 }
 
 export function friendlyBattles(): Collection<FriendlyBattleDocument> {

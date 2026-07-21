@@ -3,6 +3,10 @@ import type { Server as HttpServer } from "http";
 import { WebSocket, WebSocketServer } from "ws";
 import { authenticate } from "./services/authService";
 import { findById } from "./services/playerService";
+import {
+  assertPlayerNotSanctioned,
+  webSocketMessageRequiresSanctionCheck,
+} from "./services/playerSanctionService";
 import { enqueueForHub, removeForHub as leaveQueue, restoreWaitingForHub } from "./services/matchmakingService";
 import {
   cancelMatch,
@@ -34,7 +38,7 @@ import type {
 import logger from "./utils/logger";
 import { PlayerStatus } from "./constants";
 import { config } from "./config";
-import { ApiError } from "./apiErrors";
+import { ApiError, ApiErrorCode } from "./apiErrors";
 import {
   buildSquadChatFanoutNotice,
   getSquadChatFanout,
@@ -92,6 +96,8 @@ interface Client {
   id: string;
   socket: WebSocket;
   playerId?: string;
+  /** Captured only after Identify; used to reproduce AccountBanned without a second player read. */
+  accountName?: string;
   /** Current replacement-chat subscription; every delivery is still re-bound to live roster. */
   squadChatId?: string;
   /** Serialize one socket's messages so CardPlayed persistence completes before MatchResult. */
@@ -592,6 +598,32 @@ export async function createGameHub(httpServer: HttpServer): Promise<WebSocketSe
 }
 
 async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<void> {
+  if (client.playerId && webSocketMessageRequiresSanctionCheck(envelope.Type)) {
+    // Identify verifies the sanction at connection time, but a PvP socket can outlive an operator
+    // decision. Re-read the small indexed moderation row before every non-heartbeat action so a
+    // player cannot keep matchmaking, relaying combat, settling rewards, or sending chat on a
+    // session that was active before the ban. Ping remains available only as transport liveness.
+    try {
+      // Identify already captured the authenticated public account name. Reusing it avoids a
+      // second players-collection read for each relay event; the indexed sanction lookup remains
+      // the only authoritative query and never trusts a name supplied by a later socket payload.
+      await assertPlayerNotSanctioned({
+        id: client.playerId,
+        accountName: client.accountName ?? client.playerId,
+      });
+    } catch (error) {
+      if (error instanceof ApiError && error.code === ApiErrorCode.AccountBanned) {
+        send(client, {
+          Type: "AuthError",
+          Payload: { Code: error.code, Message: error.message, ...(error.details ?? {}) },
+        });
+        client.socket.close(4003, "Account suspended");
+        return;
+      }
+      throw error;
+    }
+  }
+
   switch (envelope.Type) {
     case "Identify": {
       const p = envelope.Payload as IdentifyPayload | undefined;
@@ -601,6 +633,7 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
         const previousClient = previousClientId ? clients.get(previousClientId) : undefined;
         if (previousClient && previousClient.id !== client.id) previousClient.socket.close(4001, "Signed in elsewhere");
         client.playerId = doc.id;
+        client.accountName = doc.accountName;
         // Once authenticated, every connection/node for this account shares one player bucket.
         // This prevents reconnecting or changing source addresses from resetting the WS allowance.
         client.rateLimitKey = webSocketRateLimitKey(`player:${doc.id}`);

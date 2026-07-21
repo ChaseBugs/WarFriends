@@ -25,6 +25,7 @@ import { startGooglePlaySubscriptionRevalidationScheduler } from "./services/goo
 import { initializeRemoteConfiguration } from "./services/remoteConfigurationService";
 import { startGooglePlayVoidedPurchaseScheduler } from "./services/googlePlayVoidedPurchaseService";
 import { startSquadWarScheduler } from "./services/squadWarSchedulerService";
+import { adminModerationRouter } from "./routes/adminModeration";
 
 const app = express();
 
@@ -75,6 +76,11 @@ app.get("/health", (_req, res) => {
 app.get("/metrics", requireAdmin, (_req, res) => {
   res.type("text/plain; version=0.0.4; charset=utf-8").send(serverMetrics.render(isRedisAvailable()));
 });
+
+// Moderation mutations share the independent constant-time admin credential used by metrics.
+// Per-operation actor and idempotency headers are validated inside the router and retained in
+// the sanction audit history; the Bearer secret itself is never persisted or returned.
+app.use("/admin/moderation", requireAdmin, adminModerationRouter);
 
 app.use(apiRouter);
 

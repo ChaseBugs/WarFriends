@@ -63,6 +63,19 @@ response also includes a generated `X-Request-ID`; request/response/error bounda
 same ID while logging only the query-free request path. Async-local context automatically adds that
 ID to downstream authentication, database, economy, and gameplay logger helpers across awaited work.
 
+Account sanctions use the same independent admin Bearer credential under
+`/admin/moderation`. `POST /sanctions` issues a permanent ban when `durationSeconds` is omitted or a
+bounded temporary ban when it is present; `POST /sanctions/:sanctionId/revoke` revokes an active ban;
+and `GET /players/:playerId/sanctions` returns the latest 100 audit rows. Mutation requests require
+`X-Admin-Actor` and an 8-128 character `Idempotency-Key`, so a lost response can be retried without
+creating a second ban, extending a temporary deadline, or duplicating a revocation. The collection
+retains expired and revoked history, permits only one active sanction per player, and evaluates expiry
+from application time instead of waiting for MongoDB cleanup. After a caller proves account ownership,
+all authenticated HTTP gameplay paths enforce the same record, and every non-heartbeat action on an
+already-identified WebSocket rechecks it before reading or mutating live game state. The stock client receives exact error
+`3003`, `accountId`, and `accountName`; temporary bans additionally receive remaining `seconds`, while
+private operator identity and reason never leave the admin API.
+
 ## How the client talks to it
 
 The client (`BeanstalkServerManager`) sends form fields to a URL ending in the numeric
@@ -285,10 +298,15 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   The stock buffered `IgnoreMessage` path records a durable progression outbox entry beside
   `BufferId`, performs the recipient-filtered inbox update, and clears the entry afterward, so
   a process interruption is recoverable without allowing one player to hide another's message.
-- **Moderation reports**: authenticated player/cheater reports are validated, rate-limited,
+- **Moderation reports and sanctions**: authenticated player/cheater reports are validated, rate-limited,
   deduplicated for safe retries, and stored with review status and evidence metadata. The
   configurable five-per-hour default is reserved by one atomic MongoDB counter per reporter, so
   simultaneous requests across backend processes cannot overrun it. The submitted
+  evidence remains a claim until authoritative combat validation exists. Independently authenticated
+  admin routes can issue, inspect, and revoke durable permanent or temporary account bans. Issue and
+  revoke operations are idempotent, one active-ban index is race-safe across processes, expired bans
+  stop blocking immediately, and enforcement returns the recovered client dialog contract from the
+  shared authentication boundary.
   Army Power/rank/time fields remain explicitly untrusted claims. When both accounts occur in a
   recent replacement-backend ranked match, the report also captures the exact server match ID,
   participant snapshots, state, terminal winner/cancellation, authenticated result claims, and
