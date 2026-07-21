@@ -660,6 +660,10 @@ Rental generation now requires one exact recovered zero-based rank row before th
 candidate window, and deterministic selection seed. Malformed levels cannot generate a lower-pool
 offer, while replaying an already-live durable offer intentionally remains independent of a later
 profile-level argument.
+Normal weapon and unit purchase mutations now resolve that same exact source row before their
+zero-based catalog unlock comparisons. Direct or replacement callers can no longer floor a
+fractional rank or use a finite integer beyond the 58 recovered rows to authorize ownership; Black
+Market redemption continues to use its validated durable offer instead of a later rank argument.
 One shared application-clock boundary now protects initial progression creation, persisted
 progression reads, successor publication, `PlayerData`, and the top-level player-state response.
 It requires a nonnegative safe Unix second inside JavaScript/BSON Date support and passes that same

@@ -36,6 +36,7 @@ import {
 } from "./itemDeliveryTimeAuthorityService";
 import { checkedRewardBalance } from "./rewardMathService";
 import { hasActiveRentalItem } from "./rentalEntitlementService";
+import { playerLevelDefinition } from "./levelProgressionService";
 
 /** IJEAJGCCHEF.CantEquipUnit, consumed by UpdateEquippedUnits rollback logic. */
 export const UNIT_CANT_EQUIP = 11406;
@@ -616,7 +617,12 @@ export function purchaseUnitState(
     // artifact changes this value, fail closed until InstantBuyUnit/ActivateUnit are recovered.
     throw new ApiError(ITEM_PRICE_NOT_FOUND, "Timed unit purchase is not implemented.");
   }
-  if (!Number.isInteger(playerLevel) || playerLevel < definition.canBuyLevelIndex) {
+  // DatabasePlayer.Level is a zero-based source-row identity, not an arbitrary integer. The
+  // shared profile validator normally proves it first, but this exported mutation also serves
+  // direct and replacement callers. Resolve the exact recovered row before comparing the unit's
+  // unlock index so an oversized or malformed rank can never authorize a roster purchase.
+  const sourcePlayerLevel = playerLevelDefinition(playerLevel).index;
+  if (sourcePlayerLevel < definition.canBuyLevelIndex) {
     throw new ApiError(ITEM_NOT_ENOUGH_LEVEL, "Player level is too low for this unit.");
   }
 

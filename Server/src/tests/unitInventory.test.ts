@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { ApiError, ApiErrorCode } from "../apiErrors";
 import generatedUnitCatalog from "../data/unitCatalog.generated.json";
 import generatedUnitUpgradeCatalog from "../data/unitUpgradeCatalog.generated.json";
 import { DbAction } from "../dbActions";
@@ -19,6 +20,7 @@ import {
 } from "../services/itemInventoryService";
 import { createInitialProgression } from "../services/playerStateService";
 import { MAX_ITEM_DELIVERY_UNIX_SECONDS } from "../services/itemDeliveryTimeAuthorityService";
+import { PLAYER_LEVELS } from "../services/levelProgressionService";
 import {
   activateUnitState,
   activateUnitUpgradeState,
@@ -351,6 +353,21 @@ test("WarBucks unit purchase enforces level, price, balance, and duplicate owner
     () => purchaseUnitState(bought.state, 1, payload),
     (error: unknown) => (error as { code?: number }).code === ITEM_ALREADY_MAXIMUM_UPGRADE,
   );
+});
+
+test("normal unit purchase requires one exact recovered player-level row", () => {
+  const initial = { ...createInitialProgression(NOW), warBucks: 20_000 };
+  const payload = parseUnitPurchaseData(buyData(SNIPER));
+
+  for (const playerLevel of [Number.NaN, Number.POSITIVE_INFINITY, -1, 1.5, PLAYER_LEVELS.length]) {
+    assert.throws(
+      () => purchaseUnitState(initial, playerLevel, payload),
+      (error: unknown) => error instanceof ApiError && error.code === ApiErrorCode.InternalServerError,
+    );
+  }
+  assert.equal(initial.warBucks, 20_000);
+  assert.equal(initial.revision, 0);
+  assert.equal(initial.itemInventory?.levelManagerData.savedArmies[SNIPER], undefined);
 });
 
 test("Gold unit purchase debits the recovered premium price", () => {

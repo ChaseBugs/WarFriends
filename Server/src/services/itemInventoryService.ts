@@ -18,6 +18,7 @@ import {
   validatedItemDeliveryUnixSeconds,
 } from "./itemDeliveryTimeAuthorityService";
 import { hasActiveRentalItem } from "./rentalEntitlementService";
+import { playerLevelDefinition } from "./levelProgressionService";
 import {
   hasActiveBlackMarketOffer,
   validatedBlackMarketOfferState,
@@ -588,11 +589,16 @@ export function purchaseWeaponState(
   if (!Number.isFinite(payload.startTime) || payload.startTime < 0) {
     throw new ApiError(ITEM_PRICE_MISMATCH, "Weapon purchase start time is invalid.");
   }
-  // DatabasePlayer.Level is passed directly to LevelManager.LoadData and stored as the
-  // zero-based levelNumber. Comparing it to a display level here would create an off-by-one
-  // purchase gate relative to WeaponLevelsSetup.canBeBought.
-  if (!isBlackMarketPurchase && Math.max(0, Math.floor(playerLevel)) < definition.canBuyLevelIndex) {
-    throw new ApiError(ITEM_NOT_ENOUGH_LEVEL, "Player level is too low for this weapon.");
+  if (!isBlackMarketPurchase) {
+    // DatabasePlayer.Level is the exact zero-based LevelManager row identity. Do not floor or
+    // clamp it here: this pure mutation is callable outside the authenticated HTTP path, and a
+    // fractional, non-finite, negative, or out-of-catalog rank must not select a cheaper shop
+    // gate. Black Market redemption deliberately skips this lookup because the already-issued
+    // durable offer, not the player's later rank argument, is the purchase authority.
+    const sourcePlayerLevel = playerLevelDefinition(playerLevel).index;
+    if (sourcePlayerLevel < definition.canBuyLevelIndex) {
+      throw new ApiError(ITEM_NOT_ENOUGH_LEVEL, "Player level is too low for this weapon.");
+    }
   }
 
   const itemInventory = itemInventoryStateFor(state);

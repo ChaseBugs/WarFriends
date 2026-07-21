@@ -1466,7 +1466,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   Stock buffered `BuyWeapon`/`ActivateWeapon`/`EquipWeapon` supports all 84
   `PURCHASABLE: shop` rows that also have real LevelManager entries. Their obscured Gold and
   WarBucks prices, level gates, category masks, and non-sequential indexes are recovered from
-  MainScene; purchases grant immediate ownership because every enabled row has
+  MainScene. Normal purchases require the authenticated zero-based level to select one exact row
+  in the 58-level source catalog before comparing the weapon gate; fractions, non-finite values,
+  negative indexes, and oversized integers fail instead of being floored or clamped. Purchases
+  grant immediate ownership because every enabled row has
   `DELIVERTIME=0`. Action `128` validates the preceding permanent purchase as an idempotent
   zero-delivery acknowledgement and cannot grant or convert a rental. Recovered buffered actions
   `125`/`126` apply the same rule to Unity's optimistic `InstantBuyUnit`/`InstantBuyWeapon` calls:
@@ -1574,7 +1577,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   gates, display unlock checks, initial tier state, atomic wallet/ownership writes, Unity rollback
   fields, and `BufferId` replay protection. All supported rows have `DELIVERTIME=0`, so BuyUnit
   grants ownership and the stock client's immediate ActivateUnit is a validated idempotent
-  acknowledgement rather than a fabricated timer. `UpdateEquippedUnits` persists the tutorial
+  acknowledgement rather than a fabricated timer. The unit purchase mutation resolves the exact
+  recovered player-level row before the zero-based gate, so an out-of-catalog integer or malformed
+  number cannot manufacture shop eligibility even when a replacement caller bypasses the shared
+  profile validator. `UpdateEquippedUnits` persists the tutorial
   Assaulter's first backend-visible grant and the full owned roster while enforcing the recovered
   two-per-category and three-mechanical-unit caps; invalid changes receive the exact 11406 rollback
   dictionary. Replaying an identical valid roster returns exact state, while a missing tutorial

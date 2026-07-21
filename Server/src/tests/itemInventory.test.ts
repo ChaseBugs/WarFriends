@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { ApiError, ApiErrorCode } from "../apiErrors";
 import generatedWeaponCatalog from "../data/weaponCatalog.generated.json";
 import { DbAction } from "../dbActions";
 import {
@@ -48,6 +49,7 @@ import {
   subscriptionUpgradeDeliverySeconds,
 } from "../services/subscriptionBenefitService";
 import { MAX_ITEM_DELIVERY_UNIX_SECONDS } from "../services/itemDeliveryTimeAuthorityService";
+import { PLAYER_LEVELS } from "../services/levelProgressionService";
 
 const NOW = Date.UTC(2026, 6, 19, 12, 0, 0) / 1_000;
 const FAMAS = "Google2u.AssaultRifle_Famas";
@@ -202,6 +204,21 @@ test("FAMAS purchase enforces recovered level and price before debiting Gold", (
   assert.equal(bought.state.itemInventory?.levelManagerData.savedWeapons[FAMAS]?.bought, true);
   // Buying does not silently equip the weapon; EquipWeapon owns that separate mutation.
   assert.equal(bought.state.itemInventory?.inventoryData.slots["0"]?.weaponIndex, 1);
+});
+
+test("normal weapon purchase requires one exact recovered player-level row", () => {
+  const initial = { ...createInitialProgression(NOW), gold: 1_000 };
+  const payload = parseWeaponPurchaseData(purchaseData());
+
+  for (const playerLevel of [Number.NaN, Number.POSITIVE_INFINITY, -1, 13.5, PLAYER_LEVELS.length]) {
+    assert.throws(
+      () => purchaseWeaponState(initial, playerLevel, payload),
+      (error: unknown) => error instanceof ApiError && error.code === ApiErrorCode.InternalServerError,
+    );
+  }
+  assert.equal(initial.gold, 1_000);
+  assert.equal(initial.revision, 0);
+  assert.equal(initial.itemInventory?.levelManagerData.savedWeapons[FAMAS], undefined);
 });
 
 test("weapon catalog contains every shop row with a resolvable LevelManager entry", () => {
