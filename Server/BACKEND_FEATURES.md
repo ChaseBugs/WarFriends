@@ -62,6 +62,13 @@ full recovered five-charge batch inside action 199's signed-`int` response field
 stops startup before traffic. Free Skirmish rewards preserve negative safe-integer Gold debt and
 pay down negative safe-integer WarBucks debt instead of treating audited chargebacks as corruption.
 
+Dog-tag deployment policy is an immutable source-compatibility assertion: refill must be exactly
+900 seconds and the normal cap exactly five tags, yielding the only supported 4,500-second base
+maximum. Account creation and count-only legacy migration share that startup-resolved policy.
+Every durable tuple must retain those source values, its two-tag VIP debt floor, and signed-client
+boot widths; alternate safe integers and Unix seconds beyond C# `int` range fail before arithmetic,
+mutation, migration, or projection instead of creating energy the stock client cannot interpret.
+
 Login throttle configuration is immutable startup authority: maximum attempts must be an exact
 safe integer from 2 through 100, the attempt window from 60 through 86,400 seconds, and lockout from
 60 through 604,800 seconds. Fractional, non-finite, or out-of-range policy stops startup instead of

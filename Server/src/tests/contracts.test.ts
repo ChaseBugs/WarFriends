@@ -27,6 +27,7 @@ import {
   buildPlayerData,
   buildPlayerStateResponse,
   createInitialProgression,
+  dogTagDeploymentPolicy,
   progressionForPlayer,
 } from "../services/playerStateService";
 import {
@@ -794,6 +795,12 @@ test("shared progression boundaries validate the complete recovered item invento
 });
 
 test("dog-tag state uses accumulated seconds and recovered 900-second balancing", () => {
+  assert.equal(Object.isFrozen(dogTagDeploymentPolicy()), true);
+  assert.deepEqual(dogTagDeploymentPolicy(), {
+    refillSeconds: 900,
+    cap: 5,
+    maximumSeconds: 4_500,
+  });
   const initial = createInitialProgression(1_000, 900, 5);
   assert.equal(initial.dogTagSeconds, 4_500);
   assert.equal(initial.dogTagMax, 4_500);
@@ -817,12 +824,19 @@ test("new-account dog-tag policy rejects malformed or overflowing deployment val
   for (const [refillSeconds, cap] of [
     [Number.NaN, 5],
     [900.5, 5],
+    [899, 5],
+    [901, 5],
     [900, 0],
+    [900, 6],
     [Number.MAX_SAFE_INTEGER, 2],
   ]) {
     assert.throws(
       () => createInitialProgression(1_000, refillSeconds, cap),
       /Dog-tag deployment policy (is invalid|overflowed)/,
+    );
+    assert.throws(
+      () => dogTagDeploymentPolicy({ refillSeconds, cap }),
+      /Dog-tag deployment policy is invalid/,
     );
   }
 });
@@ -873,7 +887,19 @@ test("dog-tag authority rejects malformed tuples and preserves bounded VIP debt"
     /Stored dog-tag authority is invalid/,
   );
   assert.throws(
+    () => materializeDogTags({ ...initial, dogTagRefillSeconds: 901 }, 1_000),
+    /Stored dog-tag authority is invalid/,
+  );
+  assert.throws(
     () => materializeDogTags({ ...initial, dogTagLastUpdate: 1_001 }, 1_000),
+    /Stored dog-tag time authority is invalid/,
+  );
+  assert.throws(
+    () => materializeDogTags({ ...initial, dogTagLastUpdate: 2_147_483_648 }, 2_147_483_648),
+    /Stored dog-tag authority is invalid/,
+  );
+  assert.throws(
+    () => materializeDogTags(initial, 2_147_483_648),
     /Stored dog-tag time authority is invalid/,
   );
 

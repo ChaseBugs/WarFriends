@@ -885,16 +885,19 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   balancing and refill-price formula. A verified subscription accelerates only the interval
   between its server-issued timer lock and expiry to the exact 450-second MainScene rate;
   reconnect after expiry materializes the historical split without granting post-expiry speed.
+  `DOG_TAG_REFILL_SECONDS=900` and `DOG_TAG_CAP=5` are immutable module-startup compatibility
+  assertions, not tunable balancing, because the stock client independently uses those constants.
   Every shared persisted read/publication validates the complete tuple shape. Callers that own an
   authoritative request/boot time supply one captured server time for both snapshots and also
   reject future cursors; context-free publishers remain deterministic while still rejecting every
-  malformed tuple value. The refill/cap pair must describe whole positive tags, and base credit
-  must stay between the normal cap and the source-backed two-tag VIP debt floor. Count-only legacy
+  malformed tuple value. Refill must remain 900, normal maximum 4,500, and base credit between that
+  cap and the source-backed two-tag VIP debt floor. All boot fields and timestamps retain C#
+  signed-`int` width, so alternate safe-integer policies and post-2038 cursors fail closed.
+  Count-only legacy
   migration requires the canonical tuple to be absent and its old count to remain a nonnegative
   safe integer; fractions, negative values, and non-finite counts cannot be rounded into energy.
-  New-account and legacy-migration deployment values must likewise be exact positive safe integers
-  whose persisted seconds product cannot overflow. Malformed present fields fail closed instead of
-  being rebuilt or surviving an unrelated full-document replacement.
+  New accounts and legacy migration share the one startup-resolved policy. Malformed present fields
+  fail closed instead of being rebuilt or surviving an unrelated full-document replacement.
 - **Progression revision authority**: the central progression read boundary migrates only an
   absent pre-revision field to zero. Present and produced values must be nonnegative safe integers,
   and every non-no-op transition must advance monotonically before MongoDB builds its revision

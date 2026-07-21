@@ -46,7 +46,12 @@ import {
   validatedTutorialLifecycleShape,
 } from "./tutorialCompletionAuthorityService";
 import { validatedCoreProgressionBalances } from "./coreProgressionAuthorityService";
-import { validatedDogTagAuthority } from "./dogTagAuthorityService";
+import {
+  RECOVERED_DOG_TAG_CAP,
+  RECOVERED_DOG_TAG_MAX_SECONDS,
+  RECOVERED_DOG_TAG_REFILL_SECONDS,
+  validatedDogTagAuthority,
+} from "./dogTagAuthorityService";
 import { progressionRevisionForRead } from "./progressionRevisionAuthorityService";
 import { validatedProgressionSchemaVersion } from "./progressionSchemaAuthorityService";
 import { validatedRequestBufferAuthority } from "./requestBufferAuthorityService";
@@ -75,33 +80,43 @@ export function unixNow(): number {
   return Math.floor(Date.now() / 1000);
 }
 
-interface InitialDogTagPolicy {
-  refillSeconds: number;
-  cap: number;
-  maximumSeconds: number;
+export interface InitialDogTagPolicy {
+  readonly refillSeconds: number;
+  readonly cap: number;
+  readonly maximumSeconds: number;
 }
 
 /**
  * Validate deployment-owned dog-tag balancing before creating or migrating durable authority.
  *
- * `Math.floor` and `Math.max` propagate `NaN`, and silently rounding a fractional environment
- * value would make the stored economy policy differ from the operator's configuration. The
- * product is persisted as the normal energy ceiling, so it must remain an exact safe integer too.
+ * The recovered client performs its own energy arithmetic with the 900-second and five-tag
+ * MainScene constants. Even another positive integer pair would make the server persist a policy
+ * the stock client cannot interpret consistently, so configuration is an exact compatibility
+ * assertion rather than tunable balancing.
  */
-function initialDogTagPolicy(refillSeconds: number, cap: number): InitialDogTagPolicy {
+function exactInitialDogTagPolicy(refillSeconds: number, cap: number): InitialDogTagPolicy {
   if (
-    !Number.isSafeInteger(refillSeconds)
-    || refillSeconds <= 0
-    || !Number.isSafeInteger(cap)
-    || cap <= 0
+    refillSeconds !== RECOVERED_DOG_TAG_REFILL_SECONDS
+    || cap !== RECOVERED_DOG_TAG_CAP
   ) {
     throw new ApiError(ApiErrorCode.InternalServerError, "Dog-tag deployment policy is invalid.");
   }
-  const maximumSeconds = refillSeconds * cap;
-  if (!Number.isSafeInteger(maximumSeconds)) {
-    throw new ApiError(ApiErrorCode.InternalServerError, "Dog-tag deployment policy overflowed.");
-  }
-  return { refillSeconds, cap, maximumSeconds };
+  return { refillSeconds, cap, maximumSeconds: RECOVERED_DOG_TAG_MAX_SECONDS };
+}
+
+// Resolve the exact client-compatibility assertion during module startup. Account creation and
+// legacy migration must not observe a later mutable config value or disagree within one process.
+const CONFIGURED_DOG_TAG_POLICY = Object.freeze(exactInitialDogTagPolicy(
+  config.dogTagRefillSeconds,
+  config.dogTagCap,
+));
+
+export function dogTagDeploymentPolicy(
+  policy?: Pick<InitialDogTagPolicy, "refillSeconds" | "cap">,
+): InitialDogTagPolicy {
+  return policy === undefined
+    ? CONFIGURED_DOG_TAG_POLICY
+    : exactInitialDogTagPolicy(policy.refillSeconds, policy.cap);
 }
 
 function currentUtcMidnight(now: number): number {
@@ -119,10 +134,10 @@ function currentUtcMidnight(now: number): number {
  */
 export function createInitialProgression(
   now = unixNow(),
-  refillSeconds = config.dogTagRefillSeconds,
-  cap = config.dogTagCap,
+  refillSeconds = CONFIGURED_DOG_TAG_POLICY.refillSeconds,
+  cap = CONFIGURED_DOG_TAG_POLICY.cap,
 ): PlayerProgressionState {
-  const dogTags = initialDogTagPolicy(refillSeconds, cap);
+  const dogTags = exactInitialDogTagPolicy(refillSeconds, cap);
   return {
     schemaVersion: 1,
     revision: 0,
@@ -249,7 +264,7 @@ export function progressionForPlayer(player: PlayerDocument, now?: number): Play
   // An early unreleased reconstruction stored dogTags as a count. Convert that shape at the
   // read boundary so development databases remain usable; the next economy mutation persists
   // the canonical seconds-based representation and removes the transitional field.
-  const policy = initialDogTagPolicy(config.dogTagRefillSeconds, config.dogTagCap);
+  const policy = CONFIGURED_DOG_TAG_POLICY;
   const legacyCount = state.dogTags ?? policy.cap;
   if (!Number.isSafeInteger(legacyCount) || legacyCount < 0) {
     // Do not let Math.floor normalize fractions/negative counts or Math.min turn Infinity into a
