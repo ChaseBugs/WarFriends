@@ -34,6 +34,7 @@ import {
   settleFriendlyBattle,
   startFriendlyBattle,
 } from "../services/friendlyBattleService";
+import { exactMatchInteger } from "./matchRequestParsing";
 
 // PvP match lifecycle reported to the meta server. Live event traffic runs over /hub, while
 // these actions preserve compatibility with the recovered client's Photon-era REST calls.
@@ -51,14 +52,6 @@ function missionMode(value: unknown): DailyMissionMode {
   // reward-bearing mode and weaken the start-action/mode ownership check.
   if (value === "Daily" || value === "Coop" || value === "CoopClient" || value === "Heroic") return value;
   throw new ApiError(ApiErrorCode.UnknownAction, "MissionType is invalid.");
-}
-
-function integer(value: unknown, field: string): number {
-  // BestHTTP form values arrive as strings. Number() accepts that wire shape, while the
-  // integer check rejects fractional indices, NaN, and malformed EndReason values.
-  const parsed = Number(value);
-  if (!Number.isInteger(parsed)) throw new ApiError(ApiErrorCode.UnknownAction, `${field} must be an integer.`);
-  return parsed;
 }
 
 function enabled(value: unknown): boolean {
@@ -181,7 +174,7 @@ export const matchHandlers: Record<number, HandlerEntry> = {
         player!.id,
         player!.player.level,
         id,
-        integer(req.EndReason, "EndReason"),
+        exactMatchInteger(req.EndReason, "EndReason"),
       );
       return ok(DbAction.GameEnded, {
         Settled: result.awarded || result.replayed,
@@ -203,7 +196,7 @@ export const matchHandlers: Record<number, HandlerEntry> = {
       // match-consensus collection. The service still requires the action-64/65 start proof.
       const result = await settleWarArenaBattle(player!.id, {
         battleId: id,
-        endReason: integer(req.EndReason, "EndReason"),
+        endReason: exactMatchInteger(req.EndReason, "EndReason"),
       });
       const rentalFields = await rentalFieldsAfterBattle(player!.id, id, result.state);
       return ok(DbAction.GameEnded, {
@@ -222,9 +215,9 @@ export const matchHandlers: Record<number, HandlerEntry> = {
       // action, so the presence of MissionType alone is not enough to obtain a reward.
       const result = await settleDailyMission(player!.id, {
         battleId: id,
-        missionIndex: integer(req.MissionIndex, "MissionIndex"),
+        missionIndex: exactMatchInteger(req.MissionIndex, "MissionIndex"),
         missionType: missionMode(req.MissionType),
-        endReason: integer(req.EndReason, "EndReason"),
+        endReason: exactMatchInteger(req.EndReason, "EndReason"),
       });
       const rentalFields = await rentalFieldsAfterBattle(player!.id, id, result.state);
       return ok(DbAction.GameEnded, {
@@ -250,7 +243,7 @@ export const matchHandlers: Record<number, HandlerEntry> = {
       const result = await settleFriendlyBattle(
         player!.id,
         id,
-        integer(req.EndReason, "EndReason"),
+        exactMatchInteger(req.EndReason, "EndReason"),
       );
       const progression = progressionForPlayer(player!);
       const offlineBot = friendlyReceipt.battleKind === "offline-bot";
@@ -277,7 +270,10 @@ export const matchHandlers: Record<number, HandlerEntry> = {
     }
 
     const match = id ? await getMatch(id) : null;
-    const endReason = Number(req.EndReason);
+    // The stock action always carries EndReason as an invariant C# decimal. Parse it before the
+    // optional replacement-transport WinnerId alias so malformed input cannot bypass the common
+    // result contract merely by naming a participant explicitly.
+    const endReason = exactMatchInteger(req.EndReason, "EndReason");
 
     // The stock 1.6.0 request sends EndReason, not WinnerId. A WinnerId alias remains useful
     // for the replacement transport, but it is accepted only when it names a real match

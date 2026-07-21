@@ -582,7 +582,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   `InGame` back to `Online`. Disconnects allow a configurable reconnect grace period,
   then resolve as a forfeit or no-reward cancellation; interrupted matches are recovered
   on server restart. Photon-era `GameEnded` reports interpret the recovered `EndReason`
-  enum and require matching durable reports from both assigned participants before rewards.
+  enum and require matching durable reports from both assigned participants before rewards. One
+  exact nonnegative C# signed-`int` parser now protects `EndReason` and `MissionIndex` across every
+  tutorial, Arena, mission, friendly, and ranked branch; coercible JavaScript values and values
+  outside the client width fail before settlement, and `WinnerId` cannot bypass that required field.
   Action `29` remains the presence heartbeat for non-ranked modes, but its active-match read and
   profile write share a MongoDB transaction. An active/settling ranked reservation always wins
   over a forged or early `Online`/`Offline` report. The same transaction validates the full durable

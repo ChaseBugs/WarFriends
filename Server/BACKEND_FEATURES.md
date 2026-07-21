@@ -91,6 +91,13 @@ signed or space-padded, leading-zero, fractional, exponent, unsafe, and unknown 
 into a provider digest or index; an invalid value remains outside provider authentication instead
 of being normalized differently by the two boundaries.
 
+Every `GameEnded` branch now shares one exact nonnegative C# signed-`int` parser for `EndReason` and
+`MissionIndex` before feature-specific enum, receipt, or assignment validation. Missing, null,
+Boolean, array, blank, signed or space-padded, leading-zero, fractional, exponent, unsafe, and
+oversized values cannot become combat or mission authority through JavaScript coercion. Ranked
+settlement applies the same boundary before its optional replacement-transport `WinnerId` alias, so
+the alias cannot bypass the mandatory recovered `EndReason` field.
+
 Moderation-retention retry receipts now validate exact identity fields, safe nonnegative report/appeal
 deletion counts, safe preview/creation chronology, and exact whole-day cutoffs within the global
 30-3650-day bounds before replay. Historical receipts remain valid across deploy-time policy changes.
