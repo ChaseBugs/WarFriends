@@ -184,6 +184,7 @@ test("review rejects stale snapshots, terminal rewrites, and changed retry inten
     createdAt: new Date("2026-07-21T01:00:00Z"),
   };
   const rows = [report({ status: "reviewing", reviewHistory: [initialEntry] })];
+  rows[0]!.updatedAt = initialEntry.createdAt;
   const collection = mutationCollection(rows);
 
   await assert.rejects(
@@ -219,7 +220,22 @@ test("review rejects stale snapshots, terminal rewrites, and changed retry inten
       note: "cannot rewrite terminal decision",
       operationId: "review:report:0003",
     }, new Date(), collection),
-    (error: unknown) => error instanceof ReportReviewInputError && error.httpStatus === 409,
+    /moderation report authority is invalid/,
+  );
+});
+
+test("moderation rows reject status projections without a complete ordered audit chain", async () => {
+  const corrupt = report({
+    status: "resolved",
+    updatedAt: new Date("2026-07-21T01:00:00Z"),
+  });
+  await assert.rejects(
+    listModerationReports(
+      { limit: 1 },
+      listCollection([corrupt], {}),
+      new Date("2026-07-21T02:00:00Z"),
+    ),
+    /moderation report authority is invalid/,
   );
 });
 

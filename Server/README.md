@@ -525,6 +525,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   optimistic `open -> reviewing -> resolved/dismissed` decisions. Each transition appends actor,
   note, previous/next status, operation ID, and timestamp atomically; terminal states are immutable,
   stale snapshots conflict, and identical retries return the committed review without a second entry.
+  Every report is proved before admin detail/list publication, mutation, or replay: immutable creation
+  authority must remain intact, `open` has no audit metadata, and each later status must be the exact
+  projection of one or two unique, legal, bounded, chronologically ordered audit entries ending at
+  `updatedAt`. A bare or contradictory terminal status therefore has no moderation authority.
   A separately authenticated support API now accepts one ownership-checked appeal per active
   sanction, permits owned reads and optimistic withdrawal, and exposes no private moderation data.
   Its admin queue supports audited `open -> reviewing -> accepted/rejected` decisions; acceptance

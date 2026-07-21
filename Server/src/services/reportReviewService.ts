@@ -4,6 +4,7 @@ import type {
   PlayerReportDocument,
   PlayerReportReviewEntry,
 } from "./reportService";
+import { validatedModerationReport } from "./reportService";
 
 export type PlayerReportStatus = PlayerReportDocument["status"];
 export type PlayerReportKind = PlayerReportDocument["kind"];
@@ -209,6 +210,7 @@ export async function reviewPlayerReport(
   }
   const current = await collection.findOne({ reportId: input.reportId }) as unknown as PlayerReportDocument | null;
   if (!current) throw new ReportReviewInputError("Report was not found.", 404);
+  validatedModerationReport(current, now);
 
   const replay = existingReview(current, input.operationId);
   if (replay) {
@@ -251,16 +253,22 @@ export async function reviewPlayerReport(
     if ((error as { code?: number }).code !== 11000) throw error;
     const operationOwner = (await collection.findOne({ "reviewHistory.operationId": input.operationId })) as
       unknown as PlayerReportDocument | null;
+    if (operationOwner) validatedModerationReport(operationOwner, now);
     const ownerEntry = operationOwner ? existingReview(operationOwner, input.operationId) : undefined;
     if (operationOwner?.reportId === input.reportId && ownerEntry && reviewEntryMatches(ownerEntry, input)) {
       return { report: operationOwner, replayed: true };
     }
     throw new ReportReviewInputError("Idempotency-Key was already used for another report review.", 409);
   }
-  if (updated) return { report: updated as unknown as PlayerReportDocument, replayed: false };
+  if (updated) {
+    const report = updated as unknown as PlayerReportDocument;
+    validatedModerationReport(report, now);
+    return { report, replayed: false };
+  }
 
   // A concurrent identical retry can win after our initial read but before compare-and-set.
   const winner = await collection.findOne({ reportId: input.reportId }) as unknown as PlayerReportDocument | null;
+  if (winner) validatedModerationReport(winner, now);
   const winnerEntry = winner ? existingReview(winner, input.operationId) : undefined;
   if (winner && winnerEntry && reviewEntryMatches(winnerEntry, input)) {
     return { report: winner, replayed: true };
@@ -271,14 +279,17 @@ export async function reviewPlayerReport(
 export async function findModerationReport(
   reportId: string,
   collection: Collection<Document> = reports(),
+  now = new Date(),
 ): Promise<PlayerReportDocument | null> {
-  return collection.findOne({ reportId }) as unknown as PlayerReportDocument | null;
+  const report = await collection.findOne({ reportId }) as unknown as PlayerReportDocument | null;
+  return report ? validatedModerationReport(report, now) : null;
 }
 
 /** Stable newest-first moderation queue with an opaque createdAt/reportId tie-break cursor. */
 export async function listModerationReports(
   input: ReportListInput,
   collection: Collection<Document> = reports(),
+  now = new Date(),
 ): Promise<ReportListPage> {
   const filter: Filter<Document> = {};
   if (input.status) filter.status = input.status;
@@ -298,7 +309,7 @@ export async function listModerationReports(
     .limit(input.limit + 1)
     .toArray() as unknown as PlayerReportDocument[];
   const hasMore = rows.length > input.limit;
-  const page = rows.slice(0, input.limit);
+  const page = rows.slice(0, input.limit).map((report) => validatedModerationReport(report, now));
   return {
     reports: page,
     ...(hasMore && page.length > 0 ? { nextCursor: encodeReportCursor(page[page.length - 1]!) } : {}),

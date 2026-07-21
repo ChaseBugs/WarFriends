@@ -19,6 +19,8 @@ const CREATION_REPORT_KEYS = new Set([
   "reportId", "reporterPlayerId", "kind", "reportedPlayerId", "reportType", "message", "evidence",
   "status", "matchEvidence", "createdAt",
 ]);
+const MODERATION_REPORT_KEYS = new Set([...CREATION_REPORT_KEYS, "_id", "updatedAt", "reviewHistory"]);
+const REVIEW_ENTRY_KEYS = new Set(["operationId", "fromStatus", "toStatus", "actor", "note", "createdAt"]);
 const DEDUPLICATION_KEYS = new Set(["_id", "key", "report", "reportCreatedAt", "expiresAt"]);
 const MATCH_EVIDENCE_KEYS = new Set([
   "source", "matchId", "state", "createdAt", "endedAt", "reporter", "reportedPlayer", "winnerId",
@@ -126,6 +128,85 @@ export function validatedReportCreation(
     || report.createdAt.getTime() > now.getTime()
     || (report.matchEvidence !== undefined && !validAuthoritativeMatchEvidence(report.matchEvidence, report))) {
     throw new Error("Stored report creation authority is invalid.");
+  }
+  return report;
+}
+
+/**
+ * Validate one moderation queue row as an immutable report followed by at most two audited moves.
+ * A status field is only a projection: it has no authority unless the ordered review history and
+ * exact updatedAt timestamp prove how the row reached that state. This prevents damaged terminal
+ * rows from bypassing optimistic review or being published as credible operator decisions.
+ */
+export function validatedModerationReport(
+  report: PlayerReportDocument,
+  now: Date,
+): PlayerReportDocument {
+  const raw = report as unknown as Record<string, unknown>;
+  if (!plainRecord(report) || !exactKeys(raw, MODERATION_REPORT_KEYS)) {
+    throw new Error("Stored moderation report authority is invalid.");
+  }
+  // Reuse the creation proof with an explicit open projection. Review-only fields are excluded
+  // from this snapshot so they cannot weaken the immutable reporter/target/evidence contract.
+  validatedReportCreation({
+    reportId: report.reportId,
+    reporterPlayerId: report.reporterPlayerId,
+    kind: report.kind,
+    reportedPlayerId: report.reportedPlayerId,
+    reportType: report.reportType,
+    message: report.message,
+    evidence: report.evidence,
+    status: "open",
+    ...(report.matchEvidence === undefined ? {} : { matchEvidence: report.matchEvidence }),
+    createdAt: report.createdAt,
+  }, now);
+
+  const history = report.reviewHistory;
+  if (report.status === "open") {
+    if (history !== undefined || report.updatedAt !== undefined) {
+      throw new Error("Stored moderation report authority is invalid.");
+    }
+    return report;
+  }
+  if ((report.status !== "reviewing" && report.status !== "resolved" && report.status !== "dismissed")
+    || !Array.isArray(history)
+    || history.length < 1
+    || history.length > 2
+    || !safeDate(report.updatedAt)) {
+    throw new Error("Stored moderation report authority is invalid.");
+  }
+
+  let projected: PlayerReportDocument["status"] = "open";
+  let previousTime = report.createdAt.getTime();
+  const operationIds = new Set<string>();
+  for (const entry of history) {
+    const entryRaw = entry as unknown as Record<string, unknown>;
+    const terminal = entry.toStatus === "resolved" || entry.toStatus === "dismissed";
+    if (!plainRecord(entry)
+      || !exactKeys(entryRaw, REVIEW_ENTRY_KEYS)
+      || !/^[A-Za-z0-9._:-]{8,128}$/u.test(entry.operationId)
+      || operationIds.has(entry.operationId)
+      || entry.fromStatus !== projected
+      || (projected === "open"
+        ? !["reviewing", "resolved", "dismissed"].includes(entry.toStatus)
+        : projected === "reviewing"
+          ? !["resolved", "dismissed"].includes(entry.toStatus)
+          : true)
+      || !boundedIdentity(entry.actor, 100)
+      || typeof entry.note !== "string"
+      || entry.note.length > 1000
+      || (terminal && entry.note.length < 1)
+      || !safeDate(entry.createdAt)
+      || entry.createdAt.getTime() < previousTime
+      || entry.createdAt.getTime() > now.getTime()) {
+      throw new Error("Stored moderation report authority is invalid.");
+    }
+    operationIds.add(entry.operationId);
+    projected = entry.toStatus;
+    previousTime = entry.createdAt.getTime();
+  }
+  if (projected !== report.status || report.updatedAt.getTime() !== previousTime) {
+    throw new Error("Stored moderation report authority is invalid.");
   }
   return report;
 }
