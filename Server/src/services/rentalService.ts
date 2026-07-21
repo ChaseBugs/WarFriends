@@ -17,6 +17,11 @@ import {
 } from "./itemInventoryService";
 import { mutateProgression } from "./progressionMutationService";
 import { UNIT_CATALOG } from "./unitInventoryService";
+import {
+  hasActiveRentalItem,
+  validatedRentalState,
+  validatedRentalUnixSeconds,
+} from "./rentalEntitlementService";
 
 /** IJEAJGCCHEF.NoRentalFound, handled explicitly by action 138's nested parser. */
 export const RENTAL_NOT_FOUND = 13_602;
@@ -103,14 +108,7 @@ export function isActiveRentalItem(
   id: string,
   now: number,
 ): boolean {
-  const rental = state.rental;
-  return Boolean(
-    rental
-      && rental.status === "trial"
-      && rental.type === type
-      && rental.id === id
-      && rental.trialExpiresAt > now,
-  );
+  return hasActiveRentalItem(state, type, id, now);
 }
 
 function capturedWeaponSlot(state: PlayerProgressionState, weaponId: string) {
@@ -202,29 +200,34 @@ export function ensureRentalOfferState(
   playerLevel: number,
   now: number,
 ): RentalMutationResult {
+  const currentTime = validatedRentalUnixSeconds(now, "Rental offer time");
+  const current = validatedRentalState(state.rental);
   if (!state.tutorialFinished) {
     // The recovered rental gate explicitly requires both level 4 and a finished tutorial.
     // GetPlayerData must not issue a valuable free trial to an unfinished account even if a
     // modified/debug client has raised its visible level. Remove any legacy borrowed row too.
-    if (!state.rental) return { state };
-    const cleared = clearBorrowedItem(state, state.rental);
+    if (!current) return { state };
+    const cleared = clearBorrowedItem(state, current);
     const { rental: _rental, ...withoutRental } = cleared;
     return { state: { ...withoutRental, revision: state.revision + 1 } };
   }
   let working = state;
-  let previousGeneration = Math.max(0, Math.floor(state.rental?.generation ?? 0));
-  const current = state.rental;
+  let previousGeneration = current?.generation ?? 0;
   if (current) {
     // The trial can end before the source-backed 24-hour generation deadline. Remove its
     // borrowed inventory immediately, but preserve a private cooldown record so relogging at
     // hour 12 cannot force a second daily offer.
-    if (current.status === "trial" && current.trialExpiresAt <= now && current.nextGenerate > now) {
+    if (
+      current.status === "trial"
+      && current.trialExpiresAt <= currentTime
+      && current.nextGenerate > currentTime
+    ) {
       const cleared = clearBorrowedItem(state, current);
-      const cooldown: RentalOfferState = {
+      const cooldown = validatedRentalState({
         ...current,
         status: "cooldown",
         trialExpiresAt: 0,
-      };
+      })!;
       return {
         state: { ...cleared, revision: state.revision + 1, rental: cooldown },
         rental: cooldown,
@@ -235,7 +238,7 @@ export function ensureRentalOfferState(
       : current.status === "sale"
         ? current.saleExpiresAt
         : current.nextGenerate;
-    if (deadline > now) {
+    if (deadline > currentTime) {
       return {
         // GetPlayerData may run repeatedly during reconnect. Projection of the same live offer
         // is a read, so preserve state identity and avoid turning every boot into a write.
@@ -260,16 +263,16 @@ export function ensureRentalOfferState(
     const { rental: _expired, ...withoutRental } = working;
     return { state: { ...withoutRental, revision: state.revision + 1 } };
   }
-  const rental: RentalOfferState = {
+  const rental = validatedRentalState({
     id: selected.id,
     type: selected.type,
     discount: selected.discount,
     status: "offered",
     generation,
-    nextGenerate: now + RENTAL_OFFER_SECONDS,
+    nextGenerate: currentTime + RENTAL_OFFER_SECONDS,
     trialExpiresAt: 0,
     saleExpiresAt: 0,
-  };
+  })!;
   return {
     state: { ...working, revision: state.revision + 1, rental },
     rental,
@@ -307,11 +310,12 @@ export function acceptRentalOfferState(
   buyRentalDiscounted: boolean,
   now: number,
 ): RentalAcceptanceResult {
-  const rental = state.rental;
+  const currentTime = validatedRentalUnixSeconds(now, "Rental acceptance time");
+  const rental = validatedRentalState(state.rental);
   if (!rental) throw new ApiError(RENTAL_NOT_FOUND, "No server-issued rental exists.");
 
   if (!buyRentalDiscounted) {
-    if (rental.status === "trial" && rental.trialExpiresAt > now) {
+    if (rental.status === "trial" && rental.trialExpiresAt > currentTime) {
       return {
         // Action 138 may be retried after Unity loses the response. The borrowed item and
         // trial deadline already exist, so return the exact input progression and let
@@ -323,18 +327,18 @@ export function acceptRentalOfferState(
         replayed: true,
       };
     }
-    if (rental.status !== "offered" || rental.nextGenerate <= now) {
+    if (rental.status !== "offered" || rental.nextGenerate <= currentTime) {
       throw new ApiError(RENTAL_NOT_FOUND, "The free rental offer is no longer active.");
     }
     const itemInventory = itemInventoryStateFor(state);
-    const nextRental: RentalOfferState = {
+    const nextRental = validatedRentalState({
       ...rental,
       status: "trial",
-      trialExpiresAt: now + RENTAL_TRIAL_SECONDS,
+      trialExpiresAt: currentTime + RENTAL_TRIAL_SECONDS,
       saleExpiresAt: 0,
-      nextGenerate: Math.max(rental.nextGenerate, now + RENTAL_OFFER_SECONDS),
+      nextGenerate: Math.max(rental.nextGenerate, currentTime + RENTAL_OFFER_SECONDS),
       ...(rental.type === 1 ? { previousWeaponSlot: capturedWeaponSlot(state, rental.id) } : {}),
-    };
+    })!;
     if (rental.type === 1 && WEAPON_CATALOG[rental.id]) {
       itemInventory.levelManagerData.savedWeapons[rental.id] = borrowedWeapon();
     } else if (rental.type === 0 && UNIT_CATALOG[rental.id]) {
@@ -351,7 +355,7 @@ export function acceptRentalOfferState(
     };
   }
 
-  if (rental.status === "purchased" && rental.nextGenerate > now) {
+  if (rental.status === "purchased" && rental.nextGenerate > currentTime) {
     return {
       // Permanent ownership and the debit were committed together on the first request.
       // Replaying the purchase must not manufacture a new revision as a fake side effect.
@@ -362,7 +366,7 @@ export function acceptRentalOfferState(
       replayed: true,
     };
   }
-  if (rental.status !== "sale" || rental.saleExpiresAt <= now) {
+  if (rental.status !== "sale" || rental.saleExpiresAt <= currentTime) {
     throw new ApiError(RENTAL_NOT_FOUND, "The discounted rental purchase is not active.");
   }
 
@@ -391,12 +395,12 @@ export function acceptRentalOfferState(
   } else {
     itemInventory.levelManagerData.savedArmies[rental.id] = unitState("owned", rental.id);
   }
-  const purchased: RentalOfferState = {
+  const purchased = validatedRentalState({
     ...rental,
     status: "purchased",
     trialExpiresAt: 0,
     saleExpiresAt: 0,
-  };
+  })!;
   working = {
     ...working,
     revision: state.revision + 1,
@@ -420,32 +424,37 @@ export function advanceRentalAfterBattleState(
   battleId: string,
   now: number,
 ): RentalMutationResult {
-  const rental = state.rental;
+  const currentTime = validatedRentalUnixSeconds(now, "Rental battle-settlement time");
+  const rental = validatedRentalState(state.rental);
   // The optimistic mutation helper now recognizes exact-state no-ops. Returning `state` is also
   // the correct race behavior: if action 138 or GetPlayerData changed the rental after the match
   // handler inspected it, this transition observes that newer snapshot and acknowledges it
   // without inventing a revision or replacing MongoDB with identical progression.
   if (!rental || !battleId) return { state };
-  if (rental.status === "sale" && rental.saleBattleId === battleId && rental.saleExpiresAt > now) {
+  if (
+    rental.status === "sale"
+    && rental.saleBattleId === battleId
+    && rental.saleExpiresAt > currentTime
+  ) {
     return {
       state,
       rental,
       saleOffer: saleWire(rental),
     };
   }
-  if (rental.status !== "trial" || rental.trialExpiresAt <= now) {
+  if (rental.status !== "trial" || rental.trialExpiresAt <= currentTime) {
     return { state, rental };
   }
 
   const cleared = clearBorrowedItem(state, rental);
-  const sale: RentalOfferState = {
+  const sale = validatedRentalState({
     ...rental,
     status: "sale",
     trialExpiresAt: 0,
-    saleExpiresAt: now + RENTAL_OFFER_SECONDS,
-    nextGenerate: now + RENTAL_OFFER_SECONDS,
+    saleExpiresAt: currentTime + RENTAL_OFFER_SECONDS,
+    nextGenerate: currentTime + RENTAL_OFFER_SECONDS,
     saleBattleId: battleId,
-  };
+  })!;
   return {
     state: { ...cleared, revision: state.revision + 1, rental: sale },
     rental: sale,

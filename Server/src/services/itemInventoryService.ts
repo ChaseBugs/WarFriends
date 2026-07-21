@@ -13,6 +13,7 @@ import {
   WEAPON_UPGRADE_CATALOG,
 } from "../data/weaponUpgradeCatalog.generated";
 import { subscriptionUpgradeDeliverySeconds } from "./subscriptionBenefitService";
+import { hasActiveRentalItem } from "./rentalEntitlementService";
 
 /**
  * Recovered weapon ownership and loadout logic.
@@ -655,11 +656,8 @@ export function equipWeaponState(
     !definition
     || !weapon?.bought
     || (weapon.borrowed && !(
-      Number.isInteger(now)
-      && state.rental?.status === "trial"
-      && state.rental.type === 1
-      && state.rental.id === definition.name
-      && state.rental.trialExpiresAt > now!
+      now !== undefined
+      && hasActiveRentalItem(state, 1, definition.name, now)
     ))
     || payload.index !== definition.index
     || slotMask === undefined

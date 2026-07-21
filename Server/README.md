@@ -655,6 +655,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   the discounted sale variant. That cleanup now commits inside the same authoritative battle
   transition as rewards/lives and is cached in the mission, Arena, or ranked-match receipt;
   a process failure can no longer commit the battle while accidentally preserving the trial.
+  One shared lifecycle validator protects boot, equip, Army Power, acceptance, settlement, and
+  redemption: item type, 20-25% discount, generation, previous-slot snapshot, and every deadline
+  must be valid, while trial/sale expiries must remain inside the replacement-offer boundary.
+  `NaN`, `Infinity`, unsupported visual authority, and contradictory imported intervals fail closed
+  instead of turning a borrowed weapon or unit into permanent access.
   Permanent redemption recomputes the price from the stored
   catalog row and discount, atomically debits the authoritative wallet, and is idempotent on
   transport retry. Repeated trial acceptance or permanent redemption returns the existing

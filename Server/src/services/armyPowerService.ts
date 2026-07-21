@@ -8,6 +8,7 @@ import {
 } from "./itemInventoryService";
 import { progressionForPlayer, unixNow } from "./playerStateService";
 import { equippedUnitPower } from "./unitInventoryService";
+import { hasActiveRentalItem } from "./rentalEntitlementService";
 
 interface WeaponPowerDefinition {
   name: string;
@@ -106,11 +107,7 @@ export function equippedWeaponPower(state: PlayerProgressionState, now?: number)
       throw new ApiError(ApiErrorCode.UnknownAction, `Equipped weapon ${slot.name} is not authoritative.`);
     }
     if (saved.borrowed) {
-      const activeRental = Number.isInteger(now)
-        && state.rental?.status === "trial"
-        && state.rental.type === 1
-        && state.rental.id === slot.name
-        && state.rental.trialExpiresAt > now!;
+      const activeRental = now !== undefined && hasActiveRentalItem(state, 1, slot.name, now);
       if (!activeRental) {
         throw new ApiError(ApiErrorCode.UnknownAction, `Weapon ${slot.name} has expired rental authority.`);
       }

@@ -27,6 +27,7 @@ import {
 } from "./itemInventoryService";
 import { subscriptionUpgradeDeliverySeconds } from "./subscriptionBenefitService";
 import { checkedRewardBalance } from "./rewardMathService";
+import { hasActiveRentalItem } from "./rentalEntitlementService";
 
 /** IJEAJGCCHEF.CantEquipUnit, consumed by UpdateEquippedUnits rollback logic. */
 export const UNIT_CANT_EQUIP = 11406;
@@ -1211,11 +1212,8 @@ export function equippedUnitPower(state: PlayerProgressionState, now?: number): 
     const upgrades = UNIT_UPGRADE_CATALOG[definition.name];
     if (!unit?.bought || !unit.equipped || !upgrades) continue;
     if (unit.borrowed && !(
-      Number.isInteger(now)
-      && state.rental?.status === "trial"
-      && state.rental.type === 0
-      && state.rental.id === definition.name
-      && state.rental.trialExpiresAt > now!
+      now !== undefined
+      && hasActiveRentalItem(state, 0, definition.name, now)
     )) continue;
     total = Math.fround(total + unitArmyPowerValue(definition, upgrades, unit));
   }
@@ -1271,11 +1269,8 @@ export function updateEquippedUnitsState(
     }
     const activeRental = Boolean(
       unit?.borrowed
-        && Number.isInteger(now)
-        && state.rental?.status === "trial"
-        && state.rental.type === 0
-        && state.rental.id === name
-        && state.rental.trialExpiresAt > now!,
+        && now !== undefined
+        && hasActiveRentalItem(state, 0, name, now),
     );
     if (!unit?.bought || (unit.borrowed && !activeRental)) {
       throw new ApiError(UNIT_CANT_EQUIP, "Only permanent units or the active rental trial can be equipped.");

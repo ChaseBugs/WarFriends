@@ -24,6 +24,10 @@ import {
   equippedUnitPower,
   updateEquippedUnitsState,
 } from "../services/unitInventoryService";
+import {
+  hasActiveRentalItem,
+  validatedRentalState,
+} from "../services/rentalEntitlementService";
 
 const NOW = 1_900_000_000;
 const SLOT_MASKS = [263, 1064, 592, 128] as const;
@@ -204,4 +208,50 @@ test("expired trial authority is removed while the daily replacement stays on co
   );
   assert.equal(next.rental?.status, "offered");
   assert.equal(next.rental?.generation, trial.rental!.generation + 1);
+});
+
+test("rental authority rejects corrupt deadlines and contradictory lifecycle intervals", () => {
+  const issued = issueType(1);
+  assert.throws(
+    () => ensureRentalOfferState({
+      ...issued.state,
+      rental: { ...issued.rental!, nextGenerate: Number.POSITIVE_INFINITY },
+    }, "corrupt-rental", 8, NOW),
+    /Rental replacement deadline is invalid/,
+  );
+  assert.throws(
+    () => acceptRentalOfferState({
+      ...issued.state,
+      rental: { ...issued.rental!, discount: Number.NaN },
+    }, false, NOW + 1),
+    /Rental discount is invalid/,
+  );
+
+  const trial = acceptRentalOfferState(issued.state, false, NOW + 1);
+  const permanentTrial = {
+    ...trial.state,
+    rental: { ...trial.rental!, trialExpiresAt: Number.POSITIVE_INFINITY },
+  };
+  // Borrowed inventory, loadout, and Army Power paths all call this same predicate. An imported
+  // infinite deadline must raise an authority error instead of becoming permanent access.
+  assert.throws(
+    () => hasActiveRentalItem(permanentTrial, 1, trial.rental!.id, NOW + 2),
+    /Rental trial expiry is invalid/,
+  );
+  assert.throws(
+    () => validatedRentalState({
+      ...trial.rental!,
+      trialExpiresAt: trial.rental!.nextGenerate + 1,
+    }),
+    /Rental trial timeline is invalid/,
+  );
+
+  const sale = advanceRentalAfterBattleState(trial.state, "rental-validation-battle", NOW + 2);
+  assert.throws(
+    () => validatedRentalState({
+      ...sale.rental!,
+      nextGenerate: sale.rental!.saleExpiresAt - 1,
+    }),
+    /Rental sale timeline is invalid/,
+  );
 });

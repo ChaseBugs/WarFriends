@@ -141,6 +141,9 @@ Arena run appear finished, make an achievement tier appear complete, or unlock a
   before boot projection, benefit comparison, purchase renewal, reversal, or provider reconciliation.
   Subscription authority must also remain an ordered start/lock/expiry interval; future or inverted
   provider timelines fail closed instead of activating early or producing contradictory benefits.
+- Rental state must pass one shared lifecycle validator before boot, equip, Army Power, acceptance,
+  settlement, or redemption. Non-finite deadlines, unsupported types/discounts, and trial or sale
+  intervals that contradict the replacement boundary fail closed instead of extending authority.
 - Client-provided serialized blobs may be round-tripped but must not be trusted for rewards.
 - Add tests for contract field names, authorization failures, duplicate requests, and concurrency.
 - Update this tracker in the same commit whenever a feature status changes.
