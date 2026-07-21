@@ -467,7 +467,14 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   transient row so it cannot block every healthy search behind it. MongoDB profile reload and the
   transactional two-player reservation remain final admission authority. `MatchFound`
   can be relayed to the opponent's node through a bounded pub/sub instruction, but that receiving
-  node re-reads MongoDB and proves active-match membership before sending anything to its socket.
+  node re-reads the complete validated match before sending anything to its socket. Redis notices
+  require exact root, envelope, and type-specific payload shapes; opponent name, room-start state,
+  terminal winner/reason, result-conflict reason, and disconnect status must reproduce MongoDB.
+  CardPlayed also must equal the authenticated source's durable sequence/card evidence, with a
+  bounded receiving-node receipt suppressing repeated pub/sub effects. Opaque non-card events remain
+  non-authoritative transport. A closing local socket is not counted as a successful delivery, and
+  committed join-timeout or initial-delivery cancellation reaches remote participants through this
+  same validated path.
   Without Redis, the same code retains the verified process-local queue and direct delivery path.
   Match rows record their coordinator node, whose renewable Redis heartbeat separates crashed-room
   orphans from live peer-owned matches. When Redis coordination is selected, startup must commit
@@ -479,7 +486,8 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   MongoDB-validated `MatchStart` to both nodes; late join-timeout callbacks cannot cancel it.
   In-match fan-out is source-bound and requires both durable joins. Card activations store ordered
   evidence separately from the successful live-delivery receipt, allowing a failed handoff retry
-  without duplicating an already delivered effect. Results use MongoDB's two-party consensus and
+  without duplicating an already delivered effect; receiving nodes independently require that same
+  durable sequence/card identity before delivery. Results use MongoDB's two-party consensus and
   terminal settlement before `MatchEnded` or `ResultConflict` is delivered across nodes.
   Every distributed socket also owns a renewable Redis route that an older/replaced socket cannot
   refresh or delete. `Identify` enters this mode only after the exact player/socket owner write

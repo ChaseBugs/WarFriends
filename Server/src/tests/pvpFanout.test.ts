@@ -1,6 +1,42 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildPvpFanoutNotice, parsePvpFanoutNotice } from "../services/pvpFanoutService";
+import {
+  buildPvpFanoutNotice,
+  parsePvpFanoutNotice,
+  pvpFanoutMatchesDurableAuthority,
+  type PvpFanoutMatchAuthority,
+} from "../services/pvpFanoutService";
+
+function activeAuthority(values: Partial<PvpFanoutMatchAuthority> = {}): PvpFanoutMatchAuthority {
+  return {
+    matchId: "match-authority",
+    players: [
+      { playerId: "player-a", name: "Player A", armyPower: 100, leagueTier: 2 },
+      { playerId: "player-b", name: "Player B", armyPower: 110, leagueTier: 2 },
+    ],
+    state: "active",
+    joinedPlayerIds: ["player-a", "player-b"],
+    roomStartedAt: new Date(1_000),
+    ...values,
+  };
+}
+
+function parsedNotice(
+  targetPlayerId: string,
+  authority: PvpFanoutMatchAuthority,
+  envelope: { Type: string; Payload: unknown },
+  sourcePlayerId?: string,
+) {
+  const parsed = parsePvpFanoutNotice(buildPvpFanoutNotice(
+    "node-a",
+    targetPlayerId,
+    authority.matchId,
+    envelope,
+    sourcePlayerId,
+  ));
+  assert.ok(parsed);
+  return parsed;
+}
 
 test("PvP fan-out accepts only bounded MatchFound delivery notices", () => {
   const encoded = buildPvpFanoutNotice("node-a", "player-b", "match-1", {
@@ -37,6 +73,14 @@ test("PvP fan-out rejects malformed identities and JSON", () => {
     matchId: "match-1",
     envelope: { Type: "MatchFound" },
   })), null);
+  assert.equal(parsePvpFanoutNotice(JSON.stringify({
+    version: 1,
+    originId: "node-a",
+    targetPlayerId: "player-b",
+    matchId: "match-1",
+    trusted: true,
+    envelope: { Type: "MatchStart", Payload: { MatchId: "match-1" } },
+  })), null, "unknown transport authority must not survive parsing");
 });
 
 test("PvP fan-out accepts a start instruction bound to the same durable match", () => {
@@ -60,6 +104,16 @@ test("PvP event fan-out requires an authenticated bounded source identity", () =
     "match-3",
     event,
   )), null);
+  assert.equal(parsePvpFanoutNotice(buildPvpFanoutNotice(
+    "node-a",
+    "player-b",
+    "match-3",
+    { Type: "MatchEvent", Payload: { MatchId: "match-3", Event: "CardPlayed", Data: {
+      Sequence: 6,
+      CardId: "card-1",
+    } } },
+    "player-a",
+  )), null, "CardPlayed must retain the recovered six-card sequence bound");
 });
 
 test("PvP terminal fan-out remains match-bound", () => {
@@ -77,4 +131,93 @@ test("PvP opponent presence notifications identify the other assigned player", (
     });
     assert.equal(parsePvpFanoutNotice(encoded)?.envelope.Type, type);
   }
+});
+
+test("MatchFound and MatchStart fan-out bind exact durable opponent and room authority", () => {
+  const match = activeAuthority();
+  const found = parsedNotice("player-b", match, {
+    Type: "MatchFound",
+    Payload: { MatchId: match.matchId, Opponent: "Player A" },
+  });
+  assert.equal(pvpFanoutMatchesDurableAuthority(found, match), true);
+
+  const forgedName = parsedNotice("player-b", match, {
+    Type: "MatchFound",
+    Payload: { MatchId: match.matchId, Opponent: "Forged Name" },
+  });
+  assert.equal(pvpFanoutMatchesDurableAuthority(forgedName, match), false);
+
+  const start = parsedNotice("player-b", match, {
+    Type: "MatchStart",
+    Payload: { MatchId: match.matchId },
+  });
+  assert.equal(pvpFanoutMatchesDurableAuthority(start, match), true);
+  assert.equal(pvpFanoutMatchesDurableAuthority(start, activeAuthority({ roomStartedAt: undefined })), false);
+});
+
+test("CardPlayed fan-out must reproduce the authenticated sender's durable sequence evidence", () => {
+  const match = activeAuthority({ relayedCardPlays: { "player-a": ["AMMOCRATE"] } });
+  const accepted = parsedNotice("player-b", match, {
+    Type: "MatchEvent",
+    Payload: {
+      MatchId: match.matchId,
+      Event: "CardPlayed",
+      Data: { Sequence: 0, CardId: "AMMOCRATE" },
+    },
+  }, "player-a");
+  assert.equal(pvpFanoutMatchesDurableAuthority(accepted, match), true);
+
+  const forgedCard = parsedNotice("player-b", match, {
+    Type: "MatchEvent",
+    Payload: {
+      MatchId: match.matchId,
+      Event: "CardPlayed",
+      Data: { Sequence: 0, CardId: "FREEZE" },
+    },
+  }, "player-a");
+  assert.equal(pvpFanoutMatchesDurableAuthority(forgedCard, match), false);
+  assert.equal(pvpFanoutMatchesDurableAuthority(accepted, activeAuthority({ joinedPlayerIds: ["player-a"] })), false);
+});
+
+test("terminal fan-out derives winner and visible reason from durable match state", () => {
+  const finished = activeAuthority({
+    state: "finished",
+    winnerId: "player-a",
+    resultReports: { "player-a": "player-a", "player-b": "player-a" },
+  });
+  const normal = parsedNotice("player-b", finished, {
+    Type: "MatchEnded",
+    Payload: { MatchId: finished.matchId, WinnerId: "player-a" },
+  });
+  assert.equal(pvpFanoutMatchesDurableAuthority(normal, finished), true);
+
+  const forgedWinner = parsedNotice("player-b", finished, {
+    Type: "MatchEnded",
+    Payload: { MatchId: finished.matchId, WinnerId: "player-b" },
+  });
+  assert.equal(pvpFanoutMatchesDurableAuthority(forgedWinner, finished), false);
+
+  const forfeit = activeAuthority({ state: "finished", winnerId: "player-a", resultReports: undefined });
+  const forfeitNotice = parsedNotice("player-b", forfeit, {
+    Type: "MatchEnded",
+    Payload: { MatchId: forfeit.matchId, WinnerId: "player-a", Reason: "OpponentForfeit" },
+  });
+  assert.equal(pvpFanoutMatchesDurableAuthority(forfeitNotice, forfeit), true);
+
+  const cancelled = activeAuthority({ state: "cancelled", cancelReason: "join_timeout" });
+  const cancellation = parsedNotice("player-b", cancelled, {
+    Type: "MatchEnded",
+    Payload: { MatchId: cancelled.matchId, Reason: "JoinTimeout" },
+  });
+  assert.equal(pvpFanoutMatchesDurableAuthority(cancellation, cancelled), true);
+});
+
+test("opponent presence fan-out follows the durable disconnect clock", () => {
+  const disconnected = activeAuthority({ disconnectedAt: { "player-a": new Date(2_000) } });
+  const notice = parsedNotice("player-b", disconnected, {
+    Type: "OpponentDisconnected",
+    Payload: { MatchId: disconnected.matchId, PlayerId: "player-a" },
+  });
+  assert.equal(pvpFanoutMatchesDurableAuthority(notice, disconnected), true);
+  assert.equal(pvpFanoutMatchesDurableAuthority(notice, activeAuthority()), false);
 });

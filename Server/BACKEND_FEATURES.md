@@ -95,7 +95,15 @@ unavailable deployments retain the same validated in-memory queue.
 
 `MatchFound` can cross backend nodes through a size/type-bounded pub/sub instruction. The receiving
 node never trusts that instruction as match authority: it reloads MongoDB and proves that the local
-target belongs to the named active match before delivering to the socket. Authenticated `JoinMatch`
+target belongs to the named active match before delivering to the socket. Fan-out now requires exact
+root/envelope/type-specific payload fields and re-derives every available client-visible fact from
+that complete validated match: opponent display name, joined/start state, terminal winner/reason,
+result-conflict reason, and disconnect clock. A relayed CardPlayed must equal the authenticated
+source's durable sequence/card evidence and a bounded receiving-node receipt suppresses repeated
+pub/sub effects. Opaque non-card combat events remain transport-only and non-authoritative. A
+closing local WebSocket no longer counts as successful delivery, while committed join-timeout and
+match-found-delivery cancellations use the cross-node fan-out path rather than notifying only local
+sockets. Authenticated `JoinMatch`
 is also durable and retry-safe: each assigned player is added once, the complete pair atomically
 claims one `roomStartedAt` transition, and only that compare-and-set winner fans `MatchStart` to
 both nodes. Started distributed rooms now authorize events from durable joined membership, bind

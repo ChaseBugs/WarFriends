@@ -52,6 +52,7 @@ import { isRedisAvailable, redisPublish, redisSubscribe } from "./redis";
 import {
   buildPvpFanoutNotice,
   parsePvpFanoutNotice,
+  pvpFanoutMatchesDurableAuthority,
   PVP_FANOUT_REDIS_CHANNEL,
 } from "./services/pvpFanoutService";
 import {
@@ -129,6 +130,10 @@ export const hubInstanceId = randomUUID();
 // Redis pub/sub is normally at-most-once, but reconnection or an operator bridge can repeat a
 // notice. Keep a bounded process-local delivery receipt so one message never appears twice.
 const deliveredSquadChatMessages = new Map<string, true>();
+// Redis pub/sub may be repeated by an operator bridge or reconnection edge. CardPlayed is a
+// client-visible gameplay effect, so retain a bounded receiving-node receipt in addition to the
+// durable source evidence. Active matches do not survive this coordinator's restart.
+const deliveredPvpCardFanout = new Map<string, true>();
 
 function clearMatchmakingTimer(playerId: string): void {
   const timer = matchmakingTimers.get(playerId);
@@ -214,7 +219,10 @@ function scheduleMatchJoinTimeout(matchId: string, playerIds: readonly string[])
         Type: "MatchEnded",
         Payload: { MatchId: matchId, Reason: "JoinTimeout" },
       };
-      for (const playerId of playerIds) sendToPlayer(playerId, ended);
+      // One or both assigned players may live on another hub node. Use the same MongoDB-bound
+      // fan-out path as other distributed lifecycle transitions instead of silently notifying
+      // only process-local sockets after the durable cancellation commits.
+      await broadcastDistributedMatch(matchId, playerIds, ended);
 
       clearMatchDisconnectTimers(matchId);
       roomManager.finish(matchId);
@@ -272,18 +280,23 @@ function scheduleDisconnectResolution(eviction: {
   disconnectTimers.set(disconnectKey(eviction.matchId, eviction.playerId), timer);
 }
 
-function send(client: Client, envelope: ClientEnvelope): void {
+function trySend(client: Client, envelope: ClientEnvelope): boolean {
   if (client.socket.readyState === WebSocket.OPEN) {
     client.socket.send(JSON.stringify(envelope));
+    return true;
   }
+  return false;
+}
+
+function send(client: Client, envelope: ClientEnvelope): void {
+  trySend(client, envelope);
 }
 
 function sendToPlayer(playerId: string, envelope: ClientEnvelope): boolean {
   const clientId = onlinePlayers.get(playerId);
   const client = clientId ? clients.get(clientId) : undefined;
   if (!client) return false;
-  send(client, envelope);
-  return true;
+  return trySend(client, envelope);
 }
 
 function sendToClientId(clientId: string, envelope: unknown): void {
@@ -308,6 +321,16 @@ function rememberSquadChatDelivery(messageId: string): boolean {
   if (deliveredSquadChatMessages.size > 10_000) {
     const oldest = deliveredSquadChatMessages.keys().next().value as string | undefined;
     if (oldest) deliveredSquadChatMessages.delete(oldest);
+  }
+  return true;
+}
+
+function rememberPvpCardFanoutDelivery(key: string): boolean {
+  if (deliveredPvpCardFanout.has(key)) return false;
+  deliveredPvpCardFanout.set(key, true);
+  if (deliveredPvpCardFanout.size > 10_000) {
+    const oldest = deliveredPvpCardFanout.keys().next().value as string | undefined;
+    if (oldest) deliveredPvpCardFanout.delete(oldest);
   }
   return true;
 }
@@ -338,33 +361,18 @@ async function receiveRemotePvpFanout(raw: string): Promise<void> {
   // MongoDB is the authority for both membership and lifecycle. Redis cannot make an arbitrary
   // local socket believe it owns a match merely by naming that player in a pub/sub payload.
   const match = await getMatch(notice.matchId);
-  if (!match || !match.players.some((participant) => participant.playerId === notice.targetPlayerId)) return;
-  const type = notice.envelope.Type;
-  if ([
-    "MatchFound",
-    "MatchStart",
-    "MatchEvent",
-    "OpponentDisconnected",
-    "OpponentReconnected",
-  ].includes(type) && match.state !== "active") return;
-  if ((type === "MatchStart" || type === "MatchEvent") && !(match.roomStartedAt instanceof Date)) return;
-  if (type === "MatchEvent") {
-    const joined = new Set(match.joinedPlayerIds ?? []);
-    if (!notice.sourcePlayerId
-      || notice.sourcePlayerId === notice.targetPlayerId
-      || !match.players.some((participant) => participant.playerId === notice.sourcePlayerId)
-      || !joined.has(notice.sourcePlayerId)
-      || !joined.has(notice.targetPlayerId)) return;
-  }
-  if (type === "MatchEnded" && match.state !== "finished" && match.state !== "cancelled") return;
-  if (type === "MatchError" && match.state !== "cancelled") return;
-  if (type === "OpponentDisconnected" || type === "OpponentReconnected") {
-    const payload = notice.envelope.Payload as { PlayerId?: unknown };
-    if (!match.players.some((participant) => participant.playerId === payload.PlayerId)
-      || payload.PlayerId === notice.targetPlayerId) return;
-    const disconnected = typeof payload.PlayerId === "string" && match.disconnectedAt?.[payload.PlayerId] instanceof Date;
-    if ((type === "OpponentDisconnected" && !disconnected)
-      || (type === "OpponentReconnected" && disconnected)) return;
+  if (!match || !pvpFanoutMatchesDurableAuthority(notice, match)) return;
+  if (notice.envelope.Type === "MatchEvent") {
+    const payload = notice.envelope.Payload as MatchEventPayload;
+    if (payload.Event === "CardPlayed") {
+      const sequence = Number((payload.Data as CardPlayedEventData).Sequence);
+      const receiptKey = `${notice.matchId}:${notice.sourcePlayerId}:${sequence}`;
+      if (deliveredPvpCardFanout.has(receiptKey)) return;
+      if (sendToPlayer(notice.targetPlayerId, notice.envelope)) {
+        rememberPvpCardFanoutDelivery(receiptKey);
+      }
+      return;
+    }
   }
   sendToPlayer(notice.targetPlayerId, notice.envelope);
 }
@@ -863,8 +871,10 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
           Type: "MatchError",
           Payload: { MatchId: matchId, Reason: "DeliveryFailed" },
         };
-        if (selfDelivered) sendToPlayer(self.playerId, failed);
-        if (opponentDelivered) sendToPlayer(opponent.id, failed);
+        await Promise.all([
+          ...(selfDelivered ? [deliverPvpEnvelope(self.playerId, matchId, failed)] : []),
+          ...(opponentDelivered ? [deliverPvpEnvelope(opponent.id, matchId, failed)] : []),
+        ]);
       }
       return;
     }
@@ -947,6 +957,25 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
     case "MatchEvent": {
       if (!client.playerId) return;
       const p = envelope.Payload as MatchEventPayload;
+      if (typeof p?.Event !== "string"
+        || p.Event.length === 0
+        || p.Event.length > 128
+        || /\p{Cc}/u.test(p.Event)) {
+        return send(client, {
+          Type: "MatchError",
+          Payload: { MatchId: p?.MatchId, Reason: "InvalidEvent" },
+        });
+      }
+      // Never relay attacker-supplied root/payload fields. Unknown event Data remains opaque until
+      // authoritative combat recovery, but the transport wrapper itself is canonical and bounded.
+      const relayedEnvelope: ClientEnvelope = {
+        Type: "MatchEvent",
+        Payload: {
+          MatchId: p.MatchId,
+          Event: p.Event,
+          ...(Object.prototype.hasOwnProperty.call(p, "Data") ? { Data: p.Data } : {}),
+        },
+      };
       if (client.presenceHeartbeat) {
         const opponentId = await distributedMatchOpponent(p?.MatchId, client.playerId);
         if (!opponentId) {
@@ -970,7 +999,14 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
             // handoff receipt exists, an acknowledgement retry cannot emit a second effect.
             const alreadyDelivered = await wasRelayedCardDelivered(p.MatchId, client.playerId, sequence);
             const delivered = alreadyDelivered
-              || await deliverPvpEnvelope(opponentId, p.MatchId, envelope, client.playerId);
+              || await deliverPvpEnvelope(opponentId, p.MatchId, {
+                Type: "MatchEvent",
+                Payload: {
+                  MatchId: p.MatchId,
+                  Event: "CardPlayed",
+                  Data: { Sequence: sequence, CardId: typeof data?.CardId === "string" ? data.CardId : "" },
+                },
+              }, client.playerId);
             if (!delivered) {
               return send(client, {
                 Type: "MatchError",
@@ -993,7 +1029,7 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
           }
           return;
         }
-        if (!await deliverPvpEnvelope(opponentId, p.MatchId, envelope, client.playerId)) {
+        if (!await deliverPvpEnvelope(opponentId, p.MatchId, relayedEnvelope, client.playerId)) {
           send(client, { Type: "MatchError", Payload: { MatchId: p.MatchId, Reason: "EventDeliveryFailed" } });
         }
         return;
@@ -1015,7 +1051,14 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
           // Room-local delivery tracking distinguishes a lost sender acknowledgement from
           // evidence that committed immediately before the opponent disconnected. The former is
           // suppressed; the latter may be delivered once after a valid room reconnection.
-          const delivery = roomManager.relayCardEvent(p.MatchId, client.playerId, sequence, envelope);
+          const delivery = roomManager.relayCardEvent(p.MatchId, client.playerId, sequence, {
+            Type: "MatchEvent",
+            Payload: {
+              MatchId: p.MatchId,
+              Event: "CardPlayed",
+              Data: { Sequence: sequence, CardId: typeof data?.CardId === "string" ? data.CardId : "" },
+            },
+          });
           if (delivery === "invalid") {
             return send(client, { Type: "MatchError", Payload: { MatchId: p.MatchId, Reason: "NotInActiveMatch" } });
           }
@@ -1034,7 +1077,7 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
         }
         return;
       }
-      if (!roomManager.relay(p?.MatchId, client.playerId, envelope)) {
+      if (!roomManager.relay(p?.MatchId, client.playerId, relayedEnvelope)) {
         send(client, { Type: "MatchError", Payload: { MatchId: p?.MatchId, Reason: "NotInActiveMatch" } });
       }
       return;
