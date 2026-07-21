@@ -1,9 +1,59 @@
 import { ApiError, ApiErrorCode } from "../apiErrors";
-import type { PlayerProgressionState } from "../db";
+import type { PlayerProgressionState, TutorialBattleState } from "../db";
 
 export interface TutorialCompletionAuthority {
   tutorialFinished: boolean;
   warcardsTutorialFinished: boolean;
+}
+
+export interface TutorialLifecycleAuthority extends TutorialCompletionAuthority {
+  tutorialBattle?: TutorialBattleState;
+  warcardsTutorialBattle?: TutorialBattleState;
+}
+
+const TUTORIAL_BATTLE_KEYS = new Set(["battleId", "startedAt"]);
+
+/** Validate one server-authored battle ID without accepting control characters or coercion. */
+export function validatedTutorialBattleId(
+  value: unknown,
+  errorCode: number = ApiErrorCode.UnknownAction,
+): string {
+  if (
+    typeof value !== "string"
+    || value.length < 1
+    || value.length > 128
+    || /[\u0000-\u001f\u007f]/.test(value)
+  ) {
+    throw new ApiError(errorCode, "Tutorial battle ID is invalid.");
+  }
+  return value;
+}
+
+function validatedTutorialTime(value: number, label: string): number {
+  if (!Number.isSafeInteger(value) || value < 0) {
+    throw new ApiError(ApiErrorCode.InternalServerError, `${label} is invalid.`);
+  }
+  return value;
+}
+
+function validatedTutorialBattle(
+  value: TutorialBattleState | undefined,
+  now: number,
+  label: string,
+): TutorialBattleState | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw new ApiError(ApiErrorCode.InternalServerError, `${label} is invalid.`);
+  }
+  const keys = Object.keys(value);
+  if (keys.length !== TUTORIAL_BATTLE_KEYS.size || keys.some((key) => !TUTORIAL_BATTLE_KEYS.has(key))) {
+    throw new ApiError(ApiErrorCode.InternalServerError, `${label} is invalid.`);
+  }
+  validatedTutorialBattleId(value.battleId, ApiErrorCode.InternalServerError);
+  if (!Number.isSafeInteger(value.startedAt) || value.startedAt < 0 || value.startedAt > now) {
+    throw new ApiError(ApiErrorCode.InternalServerError, `${label} is invalid.`);
+  }
+  return value;
 }
 
 /**
@@ -35,4 +85,35 @@ export function validatedTutorialRevision(revision: number): number {
     throw new ApiError(ApiErrorCode.InternalServerError, "Tutorial progression revision is invalid.");
   }
   return revision;
+}
+
+/**
+ * Validate completion markers and both private receipts as one ordered lifecycle snapshot.
+ * Terminal markers consume their corresponding receipt, and Play Warcards cannot start before
+ * bootcamp. Rejecting impossible combinations prevents a stale or malformed receipt from being
+ * replayed as server proof after the account has moved to a different onboarding phase.
+ */
+export function validatedTutorialLifecycle(
+  state: Pick<
+    PlayerProgressionState,
+    "tutorialFinished" | "warcardsTutorialFinished" | "tutorialBattle" | "warcardsTutorialBattle"
+  >,
+  now: number,
+): TutorialLifecycleAuthority {
+  const currentTime = validatedTutorialTime(now, "Tutorial lifecycle server time");
+  const completion = validatedTutorialCompletion(state);
+  const tutorialBattle = validatedTutorialBattle(state.tutorialBattle, currentTime, "Stored tutorial battle");
+  const warcardsTutorialBattle = validatedTutorialBattle(
+    state.warcardsTutorialBattle,
+    currentTime,
+    "Stored Play Warcards battle",
+  );
+  if (
+    (completion.tutorialFinished && tutorialBattle)
+    || (!completion.tutorialFinished && warcardsTutorialBattle)
+    || (completion.warcardsTutorialFinished && warcardsTutorialBattle)
+  ) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Stored tutorial lifecycle order is invalid.");
+  }
+  return { ...completion, tutorialBattle, warcardsTutorialBattle };
 }

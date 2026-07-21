@@ -3,7 +3,9 @@ import type { PlayerProgressionState } from "../db";
 import { CARD_CATALOG, CARD_UNLOCK_LEVEL, cardInventoryStateFor } from "./cardInventoryService";
 import { mutateProgression } from "./progressionMutationService";
 import {
+  validatedTutorialBattleId,
   validatedTutorialCompletion,
+  validatedTutorialLifecycle,
   validatedTutorialRevision,
 } from "./tutorialCompletionAuthorityService";
 
@@ -54,12 +56,6 @@ export function shouldStartWarcardsTutorial(state: PlayerProgressionState, playe
     && playerLevelIndex >= WARCARDS_TUTORIAL_MINIMUM_LEVEL_INDEX;
 }
 
-function validBattleId(value: string): void {
-  if (value.length < 1 || value.length > 128) {
-    throw new ApiError(ApiErrorCode.UnknownAction, "Play Warcards battle ID is invalid.");
-  }
-}
-
 /**
  * Record the eligible offline-bot action-64 start before GameEnded can pay the tutorial.
  *
@@ -73,21 +69,26 @@ export function startWarcardsTutorialState(
   battleId: string,
   now: number,
 ): WarcardsTutorialStartResult {
-  if (!shouldStartWarcardsTutorial(state, playerLevelIndex)) {
+  const lifecycle = validatedTutorialLifecycle(state, now);
+  const eligible = lifecycle.tutorialFinished
+    && !lifecycle.warcardsTutorialFinished
+    && Number.isSafeInteger(playerLevelIndex)
+    && playerLevelIndex >= WARCARDS_TUTORIAL_MINIMUM_LEVEL_INDEX;
+  if (!eligible) {
     return { state, battleId: "", started: false, replayed: true };
   }
-  validBattleId(battleId);
-  if (state.warcardsTutorialBattle?.battleId === battleId) {
-    return { state, battleId, started: true, replayed: true };
+  const validBattleId = validatedTutorialBattleId(battleId);
+  if (lifecycle.warcardsTutorialBattle?.battleId === validBattleId) {
+    return { state, battleId: validBattleId, started: true, replayed: true };
   }
   const revision = validatedTutorialRevision(state.revision);
   return {
     state: {
       ...state,
       revision: revision + 1,
-      warcardsTutorialBattle: { battleId, startedAt: Math.max(0, Math.floor(now)) },
+      warcardsTutorialBattle: { battleId: validBattleId, startedAt: now },
     },
-    battleId,
+    battleId: validBattleId,
     started: true,
     replayed: false,
   };
@@ -106,22 +107,27 @@ export function settleWarcardsTutorialState(
   playerLevelIndex: number,
   battleId: string,
   endReason: number,
+  now: number,
 ): WarcardsTutorialSettlementResult {
-  const completion = validatedTutorialCompletion(state);
-  if (completion.warcardsTutorialFinished) {
+  const lifecycle = validatedTutorialLifecycle(state, now);
+  if (lifecycle.warcardsTutorialFinished) {
     // No reward response field is required because the stock client added these fixed cards
     // locally before its original action 62. A terminal replay only needs a successful result.
     return { state, battleId, awarded: false, replayed: true, cards: [] };
   }
-  if (!shouldStartWarcardsTutorial(state, playerLevelIndex)) {
+  if (
+    !lifecycle.tutorialFinished
+    || !Number.isSafeInteger(playerLevelIndex)
+    || playerLevelIndex < WARCARDS_TUTORIAL_MINIMUM_LEVEL_INDEX
+  ) {
     throw new ApiError(ApiErrorCode.UnknownAction, "Play Warcards tutorial is not unlocked.");
   }
   if (!Number.isInteger(endReason) || !WARCARDS_TUTORIAL_END_REASONS.has(endReason)) {
     throw new ApiError(ApiErrorCode.UnknownAction, "Play Warcards end reason is invalid.");
   }
-  validBattleId(battleId);
-  const receipt = state.warcardsTutorialBattle;
-  if (!receipt || receipt.battleId !== battleId) {
+  const validBattleId = validatedTutorialBattleId(battleId);
+  const receipt = lifecycle.warcardsTutorialBattle;
+  if (!receipt || receipt.battleId !== validBattleId) {
     throw new ApiError(ApiErrorCode.UnknownAction, "Play Warcards battle has no matching start receipt.");
   }
 
@@ -130,7 +136,7 @@ export function settleWarcardsTutorialState(
   if (endReason === WARCARDS_TUTORIAL_FORFEIT_END_REASON) {
     return {
       state: { ...withoutBattle, revision: revision + 1 },
-      battleId,
+      battleId: validBattleId,
       awarded: false,
       replayed: false,
       cards: [],
@@ -155,7 +161,7 @@ export function settleWarcardsTutorialState(
       cardInventory,
       warcardsTutorialFinished: true,
     },
-    battleId,
+    battleId: validBattleId,
     awarded: true,
     replayed: false,
     cards: [...WARCARDS_TUTORIAL_REWARD_IDS],
@@ -178,7 +184,7 @@ export function settleWarcardsTutorial(
   battleId: string,
   endReason: number,
 ): Promise<WarcardsTutorialSettlementResult> {
-  return mutateProgression(playerId, (state) => (
-    settleWarcardsTutorialState(state, playerLevelIndex, battleId, endReason)
+  return mutateProgression(playerId, (state, now) => (
+    settleWarcardsTutorialState(state, playerLevelIndex, battleId, endReason, now)
   ));
 }

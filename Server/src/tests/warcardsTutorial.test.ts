@@ -107,6 +107,18 @@ test("Play Warcards rejects contradictory completion order and exhausted revisio
     ),
     /Tutorial progression revision is invalid/,
   );
+
+  const futureReceipt = eligibleState();
+  futureReceipt.warcardsTutorialBattle = { battleId: BATTLE_ID, startedAt: NOW + 1 };
+  assert.throws(
+    () => startWarcardsTutorialState(
+      futureReceipt,
+      WARCARDS_TUTORIAL_MINIMUM_LEVEL_INDEX,
+      BATTLE_ID,
+      NOW,
+    ),
+    /Stored Play Warcards battle is invalid/,
+  );
 });
 
 test("a restarted Play Warcards battle replaces an abandoned receipt", () => {
@@ -143,6 +155,7 @@ test("non-forfeit completion grants the exact fixed five cards once", () => {
     WARCARDS_TUTORIAL_MINIMUM_LEVEL_INDEX,
     BATTLE_ID,
     1,
+    NOW,
   );
   assert.equal(finished.awarded, true);
   assert.deepEqual(finished.cards, [...WARCARDS_TUTORIAL_REWARD_IDS]);
@@ -158,6 +171,7 @@ test("non-forfeit completion grants the exact fixed five cards once", () => {
     WARCARDS_TUTORIAL_MINIMUM_LEVEL_INDEX,
     BATTLE_ID,
     2,
+    NOW,
   );
   assert.equal(replay.state, finished.state);
   assert.equal(replay.awarded, false);
@@ -177,6 +191,7 @@ test("forfeit consumes the receipt without granting cards and permits a fresh st
     WARCARDS_TUTORIAL_MINIMUM_LEVEL_INDEX,
     BATTLE_ID,
     5,
+    NOW,
   );
   assert.equal(forfeited.awarded, false);
   assert.equal(forfeited.state.warcardsTutorialFinished, undefined);
@@ -200,6 +215,7 @@ test("Play Warcards settlement rejects missing receipts, forged IDs, and invalid
     WARCARDS_TUTORIAL_MINIMUM_LEVEL_INDEX,
     BATTLE_ID,
     2,
+    NOW,
   ));
   const started = startWarcardsTutorialState(
     state,
@@ -212,12 +228,14 @@ test("Play Warcards settlement rejects missing receipts, forged IDs, and invalid
     WARCARDS_TUTORIAL_MINIMUM_LEVEL_INDEX,
     "forged-battle",
     2,
+    NOW,
   ));
   assert.throws(() => settleWarcardsTutorialState(
     started.state,
     WARCARDS_TUTORIAL_MINIMUM_LEVEL_INDEX,
     BATTLE_ID,
     999,
+    NOW,
   ));
 });
 

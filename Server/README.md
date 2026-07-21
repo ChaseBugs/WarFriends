@@ -237,7 +237,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   ignored because the offline tutorial cannot prove them. Retries cannot refill spent currency;
   old no-receipt accounts may migrate once only with the stock empty `BattleId`. Bootcamp and
   Play-Warcards completion markers are validated together as exact ordered Booleans at every
-  tutorial, rental, and boot boundary, and real lifecycle writes reject revision overflow.
+  tutorial, rental, and boot boundary. Both optional receipts must contain exactly a bounded,
+  control-free battle ID and a safe non-future Unix start time; terminal phases cannot retain a
+  consumed receipt, and real lifecycle writes reject revision overflow.
 - **Play Warcards tutorial**: the later onboarding battle unlocks at the recovered display
   level 6 and runs through the ordinary offline-bot action `64`/`62` path. The server projects
   `PlayerAnalyticsData.cardTutState` from durable state, binds `TutorialWarcards=1` to the earlier

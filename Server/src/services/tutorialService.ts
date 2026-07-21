@@ -6,11 +6,12 @@ import {
   validatedPlayerLeagueRemainingMatches,
 } from "./playerLeagueContract";
 import { findById } from "./playerService";
-import { progressionForPlayer } from "./playerStateService";
+import { progressionForPlayer, unixNow } from "./playerStateService";
 import { mutateProgression } from "./progressionMutationService";
 import { checkedRewardBalance } from "./rewardMathService";
 import {
-  validatedTutorialCompletion,
+  validatedTutorialBattleId,
+  validatedTutorialLifecycle,
   validatedTutorialRevision,
 } from "./tutorialCompletionAuthorityService";
 
@@ -42,29 +43,27 @@ export function startTutorialState(
   now: number,
   newBattleId: string,
 ): TutorialMutationResult {
-  const completion = validatedTutorialCompletion(state);
-  if (completion.tutorialFinished) {
+  const lifecycle = validatedTutorialLifecycle(state, now);
+  if (lifecycle.tutorialFinished) {
     return { state, battleId: "", replayed: true, remainingMatches: PLAYER_LEAGUE_PLACEMENT_MATCHES };
   }
-  if (state.tutorialBattle) {
+  if (lifecycle.tutorialBattle) {
     return {
       state,
-      battleId: state.tutorialBattle.battleId,
+      battleId: lifecycle.tutorialBattle.battleId,
       replayed: true,
       remainingMatches: PLAYER_LEAGUE_PLACEMENT_MATCHES,
     };
   }
-  if (!newBattleId || newBattleId.length > 128) {
-    throw new ApiError(ApiErrorCode.InternalServerError, "Could not issue tutorial battle ID.");
-  }
+  const battleId = validatedTutorialBattleId(newBattleId, ApiErrorCode.InternalServerError);
   const revision = validatedTutorialRevision(state.revision);
   return {
     state: {
       ...state,
       revision: revision + 1,
-      tutorialBattle: { battleId: newBattleId, startedAt: Math.max(0, Math.floor(now)) },
+      tutorialBattle: { battleId, startedAt: now },
     },
-    battleId: newBattleId,
+    battleId,
     replayed: false,
     remainingMatches: PLAYER_LEAGUE_PLACEMENT_MATCHES,
   };
@@ -85,13 +84,14 @@ export function finishTutorialState(
   battleId: string,
   endReason: number,
   currentRemainingMatches: number,
+  now: number,
 ): TutorialMutationResult {
   const remainingMatches = validatedPlayerLeagueRemainingMatches(currentRemainingMatches);
-  const completion = validatedTutorialCompletion(state);
-  if (completion.tutorialFinished) {
+  const lifecycle = validatedTutorialLifecycle(state, now);
+  if (lifecycle.tutorialFinished) {
     return {
       state,
-      battleId: state.tutorialBattle?.battleId ?? battleId,
+      battleId,
       replayed: true,
       remainingMatches: Math.max(remainingMatches, PLAYER_LEAGUE_PLACEMENT_MATCHES),
     };
@@ -99,7 +99,7 @@ export function finishTutorialState(
   if (endReason !== TUTORIAL_WIN_END_REASON) {
     throw new ApiError(ApiErrorCode.UnknownAction, "Tutorial completion requires the recovered Win end reason.");
   }
-  const receipt = state.tutorialBattle;
+  const receipt = lifecycle.tutorialBattle;
   if (receipt && battleId !== receipt.battleId) {
     throw new ApiError(ApiErrorCode.UnknownAction, "Tutorial battle ID does not match the active receipt.");
   }
@@ -158,7 +158,13 @@ export async function finishTutorial(
     const player = await findById(playerId);
     if (!player) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
     const state = progressionForPlayer(player);
-    const result = finishTutorialState(state, battleId, endReason, player.player.remainingMatches);
+    const result = finishTutorialState(
+      state,
+      battleId,
+      endReason,
+      player.player.remainingMatches,
+      unixNow(),
+    );
     const profileNeedsUpdate = player.player.remainingMatches !== result.remainingMatches;
     if (result.state === state && !profileNeedsUpdate) return result;
 

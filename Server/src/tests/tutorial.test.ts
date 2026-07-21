@@ -50,7 +50,7 @@ test("tutorial start issues one server battle receipt and replays it exactly", (
 
 test("tutorial completion grants only recovered starter constants and one placement match", () => {
   const started = startTutorialState(createInitialProgression(NOW), NOW, BATTLE_ID);
-  const finished = finishTutorialState(started.state, BATTLE_ID, 2, 0);
+  const finished = finishTutorialState(started.state, BATTLE_ID, 2, 0, NOW);
   assert.equal(finished.state.tutorialFinished, true);
   assert.equal(finished.state.tutorialBattle, undefined);
   assert.equal(finished.state.gold, TUTORIAL_STARTING_GOLD);
@@ -60,14 +60,14 @@ test("tutorial completion grants only recovered starter constants and one placem
 
   // A terminal replay after spending never replenishes either currency.
   const spent = { ...finished.state, gold: 5, warBucks: 10 };
-  const replay = finishTutorialState(spent, BATTLE_ID, 2, 1);
+  const replay = finishTutorialState(spent, BATTLE_ID, 2, 1, NOW);
   assert.equal(replay.state, spent);
   assert.equal(replay.state.gold, 5);
   assert.equal(replay.state.warBucks, 10);
   assert.equal(replay.replayed, true);
 
   assert.throws(
-    () => finishTutorialState(spent, BATTLE_ID, 2, Number.POSITIVE_INFINITY),
+    () => finishTutorialState(spent, BATTLE_ID, 2, Number.POSITIVE_INFINITY, NOW),
     /Player league placement counter is invalid/,
   );
 });
@@ -78,7 +78,7 @@ test("tutorial starter grant pays chargeback debt instead of erasing it", () => 
     gold: -40,
     warBucks: -2_000,
   };
-  const finished = finishTutorialState(debt, "", 2, 0);
+  const finished = finishTutorialState(debt, "", 2, 0, NOW);
   assert.equal(finished.state.gold, TUTORIAL_STARTING_GOLD - 40);
   assert.equal(finished.state.warBucks, TUTORIAL_STARTING_WARBUCKS - 2_000);
 });
@@ -86,7 +86,7 @@ test("tutorial starter grant pays chargeback debt instead of erasing it", () => 
 test("tutorial completion rejects corrupt wallets before publishing its terminal marker", () => {
   const corrupt = { ...createInitialProgression(NOW), gold: Number.NaN };
   assert.throws(
-    () => finishTutorialState(corrupt, "", 2, 0),
+    () => finishTutorialState(corrupt, "", 2, 0, NOW),
     /reward balance is invalid/,
   );
   assert.equal(corrupt.tutorialFinished, false);
@@ -107,20 +107,31 @@ test("tutorial lifecycle rejects non-Boolean completion authority and revision o
     /Tutorial progression revision is invalid/,
   );
   assert.throws(
-    () => finishTutorialState(exhausted, "", 2, 0),
+    () => finishTutorialState(exhausted, "", 2, 0, NOW),
     /Tutorial progression revision is invalid/,
+  );
+
+  const corruptReceipt = createInitialProgression(NOW);
+  corruptReceipt.tutorialBattle = { battleId: BATTLE_ID, startedAt: Number.NaN };
+  assert.throws(
+    () => startTutorialState(corruptReceipt, NOW, "replacement"),
+    /Stored tutorial battle is invalid/,
+  );
+  assert.throws(
+    () => startTutorialState(createInitialProgression(NOW), Number.NaN, BATTLE_ID),
+    /Tutorial lifecycle server time is invalid/,
   );
 });
 
 test("tutorial completion rejects forged receipts and non-win results", () => {
   const started = startTutorialState(createInitialProgression(NOW), NOW, BATTLE_ID);
-  assert.throws(() => finishTutorialState(started.state, "forged", 2, 0));
-  assert.throws(() => finishTutorialState(started.state, BATTLE_ID, 1, 0));
+  assert.throws(() => finishTutorialState(started.state, "forged", 2, 0, NOW));
+  assert.throws(() => finishTutorialState(started.state, BATTLE_ID, 1, 0, NOW));
 
   // Compatibility is deliberately narrow: only an empty ID may migrate an old no-receipt run.
-  const migrated = finishTutorialState(createInitialProgression(NOW), "", 2, 0);
+  const migrated = finishTutorialState(createInitialProgression(NOW), "", 2, 0, NOW);
   assert.equal(migrated.state.tutorialFinished, true);
-  assert.throws(() => finishTutorialState(createInitialProgression(NOW), "forged", 2, 0));
+  assert.throws(() => finishTutorialState(createInitialProgression(NOW), "forged", 2, 0, NOW));
 });
 
 test("TutorialData appears in PlayerData only after durable completion", () => {
@@ -133,6 +144,10 @@ test("TutorialData appears in PlayerData only after durable completion", () => {
   const corrupt = playerDocument(false);
   corrupt.progression!.tutorialFinished = "true" as unknown as boolean;
   assert.throws(() => buildPlayerData(corrupt, NOW), /Stored tutorial completion state is invalid/);
+
+  const futureReceipt = playerDocument(false);
+  futureReceipt.progression!.tutorialBattle = { battleId: BATTLE_ID, startedAt: NOW + 1 };
+  assert.throws(() => buildPlayerData(futureReceipt, NOW), /Stored tutorial battle is invalid/);
   assert.equal(tutorialHandlers[DbAction.GameStartedTutorial]?.requiresAuth, true);
   assert.equal(tutorialHandlers[DbAction.TutorialEnded]?.requiresAuth, true);
 });
