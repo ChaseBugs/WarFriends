@@ -25,6 +25,7 @@ import { itemInventoryStateFor, weaponDefinitionFor } from "./itemInventoryServi
 import { visualInventoryStateFor } from "./visualInventoryService";
 import { validatedCardInventoryTime } from "./cardInventoryAuthorityService";
 import { validatedSquadDocument } from "./squadAuthorityService";
+import { checkedPlayerReputationIncrement } from "./playerPublicScalarAuthorityService";
 
 const MAX_CONCURRENCY_RETRIES = 4;
 const MAX_CHANGE_ENTRIES = 128;
@@ -504,7 +505,13 @@ export function withdrawSquadCardState(
     reputation = normalReputation(cardId);
   }
 
-  if (!Number.isSafeInteger(donorReputation) || donorReputation < 0 || donorReputation > Number.MAX_SAFE_INTEGER - reputation) {
+  // Reputation is a recovered C# int. JavaScript-safe arithmetic alone can publish a value that
+  // DatabasePlayer cannot deserialize and that the next shared account lookup correctly rejects.
+  // Compute the exact successor before either participant write enters the MongoDB transaction.
+  let donorReputationSuccessor: number;
+  try {
+    donorReputationSuccessor = checkedPlayerReputationIncrement(donorReputation, reputation);
+  } catch {
     throw new ApiError(ApiErrorCode.InternalServerError, "Donor reputation is invalid.");
   }
   const nextWithdraw = validatedCardInventoryTime(
@@ -520,7 +527,7 @@ export function withdrawSquadCardState(
     recipientState: nextRecipient,
     recipientInventory,
     donorDepositedCards: nextDonorCards,
-    donorReputation: donorReputation + reputation,
+    donorReputation: donorReputationSuccessor,
     nextWithdraw,
     buddy: entry.kind === "buddy",
   };

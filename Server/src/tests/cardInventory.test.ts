@@ -34,6 +34,7 @@ import {
 } from "../services/squadCardPoolService";
 import { buildPlayerData, createInitialProgression } from "../services/playerStateService";
 import { validatedProgressionSuccessor } from "../services/progressionPublicationAuthorityService";
+import { checkedPlayerReputationIncrement } from "../services/playerPublicScalarAuthorityService";
 
 const NOW = 1_700_000_000;
 
@@ -628,6 +629,30 @@ test("squad-card withdrawal grants once, rewards the donor, and starts the exact
       NOW + 2,
     ),
     (error: unknown) => (error as { code?: number }).code === CARD_ALREADY_WITHDRAWN,
+  );
+});
+
+test("squad-card donor Reputation cannot overflow the recovered signed-client field", () => {
+  for (const reward of [5, 15, 45, 30]) {
+    assert.equal(
+      checkedPlayerReputationIncrement(2_147_483_647 - reward, reward),
+      2_147_483_647,
+    );
+    assert.throws(
+      () => checkedPlayerReputationIncrement(2_147_483_648 - reward, reward),
+      /reputation increment is invalid/,
+    );
+  }
+
+  assert.throws(
+    () => withdrawSquadCardState(
+      createInitialProgression(NOW),
+      { AMMOCRATE: JSON.stringify({ amount: 1 }) },
+      2_147_483_643,
+      "AMMOCRATE",
+      NOW,
+    ),
+    /Donor reputation is invalid/,
   );
 });
 

@@ -987,7 +987,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   `AddedCards`/`RemovedCards` dictionaries, ownership, and the recovered 3-10 slot squad-level
   capacity before atomically exchanging inventory and `depositedCardsDic`. `WithdrawCard` verifies
   both players against the same squad roster, transfers one card in a MongoDB transaction, awards
-  the donor 5/15/45 rarity reputation, and starts the exact 240-minute recipient cooldown. Existing
+  the donor 5/15/45 rarity reputation, and starts the exact 240-minute recipient cooldown. Normal
+  and 30-point Buddy rewards share one checked signed-client Reputation increment before either
+  participant write, so a near-cap donor cannot publish a value Unity cannot deserialize. Existing
   New Buddy deposits reproduce `CreateDataForCurrentPlayer`: owner/timestamp identity, account
   name, zero-based level, Army Power, four visual slots, four owned weapon slots, unit-type-specific
   primary/secondary pair, one-pool limit, and the exact 480-minute cooldown are server-validated.

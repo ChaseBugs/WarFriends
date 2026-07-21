@@ -16,6 +16,19 @@ export function validatedPlayerLastAction(value: unknown): number {
   return Number(value);
 }
 
+/** Add a server-authored Reputation reward without overflowing DatabasePlayer's C# `int`. */
+export function checkedPlayerReputationIncrement(current: number, increment: number): number {
+  if (!Number.isSafeInteger(current)
+    || current < 0
+    || current > MAX_CLIENT_INT
+    || !Number.isSafeInteger(increment)
+    || increment < 0
+    || increment > MAX_CLIENT_INT - current) {
+    throw new Error("Player reputation increment is invalid.");
+  }
+  return current + increment;
+}
+
 /**
  * Validate public DatabasePlayer scalars that are not duplicated in MongoDB root indexes.
  *
@@ -29,11 +42,7 @@ export function validatePlayerPublicScalarAuthority(player: DatabasePlayerDTO): 
   // Reuse the same exact 4.9.5 row proof as settlement instead of maintaining a drifting bound.
   playerLevelDefinition(player.level);
 
-  if (!Number.isSafeInteger(player.reputation)
-    || player.reputation < 0
-    || player.reputation > MAX_CLIENT_INT) {
-    throw new Error("Stored player reputation is invalid.");
-  }
+  checkedPlayerReputationIncrement(player.reputation, 0);
   // DatabasePlayer.canPlayerSendLogs treats exactly one as enabled. Keeping this as a closed
   // integer Boolean prevents unknown operator/import values from becoming ambiguous consent.
   if (player.sendLogsValue !== 0 && player.sendLogsValue !== 1) {
