@@ -75,6 +75,20 @@ test("one-time rewards credit once and leave the caller snapshot immutable", () 
   });
 });
 
+test("one-time rewards pay chargeback debt and reject corrupt wallets before collecting", () => {
+  const debt = { ...createInitialProgression(1_700_000_000), gold: -15 };
+  const paidDown = applyOneTimeRewardState(debt, "FacebookLike");
+  assert.equal(paidDown.state.gold, -5);
+  assert.deepEqual(paidDown.state.collectedRewards, { FacebookLike: 1 });
+
+  const corrupt = { ...debt, gold: Number.NaN };
+  assert.throws(
+    () => applyOneTimeRewardState(corrupt, "FacebookLike"),
+    /reward balance is invalid/,
+  );
+  assert.deepEqual(corrupt.collectedRewards, {});
+});
+
 test("unknown and malformed one-time reward IDs fail closed", () => {
   for (const invalid of ["UnknownReward", " FacebookLike", "facebooklike", "", 10]) {
     assert.throws(

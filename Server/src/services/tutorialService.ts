@@ -5,6 +5,7 @@ import { PLAYER_LEAGUE_PLACEMENT_MATCHES } from "./playerLeagueContract";
 import { findById } from "./playerService";
 import { progressionForPlayer } from "./playerStateService";
 import { mutateProgression } from "./progressionMutationService";
+import { checkedRewardBalance } from "./rewardMathService";
 
 /** MainScene Constants.StartingGold, decoded from ObscuredFloat. */
 export const TUTORIAL_STARTING_GOLD = 75;
@@ -102,12 +103,21 @@ export function finishTutorialState(
   // Normally bootcamp raises a new account to the fixed starting balances. A chargeback debt is
   // different: using Math.max would erase it. In that case treat the same constants as the exact
   // one-time tutorial grant, allowing them to pay the debt before exposing spendable currency.
-  const tutorialGold = state.gold < 0
-    ? state.gold + TUTORIAL_STARTING_GOLD
-    : Math.max(state.gold, TUTORIAL_STARTING_GOLD);
-  const tutorialWarBucks = state.warBucks < 0
-    ? state.warBucks + TUTORIAL_STARTING_WARBUCKS
-    : Math.max(state.warBucks, TUTORIAL_STARTING_WARBUCKS);
+  // Express the source minimum as a nonnegative grant so the shared reward guard validates the
+  // persisted wallet before tutorialFinished is published. Debt receives the full starter grant;
+  // a nonnegative wallet receives only the amount needed to reach the recovered minimum.
+  const goldGranted = state.gold < 0
+    ? TUTORIAL_STARTING_GOLD
+    : Math.max(0, TUTORIAL_STARTING_GOLD - state.gold);
+  const warBucksGranted = state.warBucks < 0
+    ? TUTORIAL_STARTING_WARBUCKS
+    : Math.max(0, TUTORIAL_STARTING_WARBUCKS - state.warBucks);
+  const tutorialGold = checkedRewardBalance(state.gold, goldGranted, "Tutorial starter Gold");
+  const tutorialWarBucks = checkedRewardBalance(
+    state.warBucks,
+    warBucksGranted,
+    "Tutorial starter WarBucks",
+  );
   return {
     state: {
       ...withoutBattle,

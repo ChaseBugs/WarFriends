@@ -78,6 +78,15 @@ test("tutorial starter grant pays chargeback debt instead of erasing it", () => 
   assert.equal(finished.state.warBucks, TUTORIAL_STARTING_WARBUCKS - 2_000);
 });
 
+test("tutorial completion rejects corrupt wallets before publishing its terminal marker", () => {
+  const corrupt = { ...createInitialProgression(NOW), gold: Number.NaN };
+  assert.throws(
+    () => finishTutorialState(corrupt, "", 2, 0),
+    /reward balance is invalid/,
+  );
+  assert.equal(corrupt.tutorialFinished, false);
+});
+
 test("tutorial completion rejects forged receipts and non-win results", () => {
   const started = startTutorialState(createInitialProgression(NOW), NOW, BATTLE_ID);
   assert.throws(() => finishTutorialState(started.state, "forged", 2, 0));

@@ -609,7 +609,7 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   the cached response without a revision/write, and never roll an unrelated UTC cycle.
 - **Reward arithmetic boundary**: server-authored nonnegative currency rewards use one shared
   safe-integer addition guard before publishing their claim or receipt markers. Assignment,
-  achievement, inbox, conversion, level-up, lootbox, core-PvP, Elite-part, and War Arena rewards
+  achievement, inbox, one-time, tutorial, conversion, level-up, lootbox, core-PvP, Elite-part, and War Arena rewards
   therefore reject invalid or overflowing balances atomically while preserving legitimate negative
   Gold or WarBucks chargeback debt.
 - **Squad Events (reviewed seasons only)**: action `113` joins the authenticated current roster to

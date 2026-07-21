@@ -108,8 +108,9 @@ finished-match retries return the immutable receipt without applying any counter
 ### Current economy-safety increment
 
 Starter and daily assignments, assignment mega rewards, achievements, reward-bearing inbox
-messages, Gold conversion, level rewards, normal/VIP lootbox duplicates, core PvP settlement,
-Elite-parts conversion, and War Arena Scraps now share one checked reward-addition path.
+messages, one-time/tutorial grants, Gold conversion, level rewards, normal/VIP lootbox duplicates,
+core PvP settlement, Elite-parts conversion, and War Arena Scraps now share one checked
+reward-addition path.
 The check accepts authoritative chargeback debt in an existing wallet, rejects negative or
 non-integer rewards, and rejects any sum outside JavaScript's safe-integer range. Each caller
 calculates the final balance before consuming its claim marker or terminal receipt, so invalid

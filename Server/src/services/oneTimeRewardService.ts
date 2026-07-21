@@ -5,6 +5,7 @@ import {
   tutorialWeaponUpgradeFunding,
 } from "./itemInventoryService";
 import { mutateProgression } from "./progressionMutationService";
+import { checkedRewardBalance } from "./rewardMathService";
 import {
   assertTutorialUnitUpgradeEligible,
   tutorialUnitUpgradeFunding,
@@ -143,11 +144,14 @@ export function applyOneTimeRewardState(
     return { state, reward, wasAdded: false };
   }
 
-  const gold = state.gold + reward.gold;
-  const warBucks = state.warBucks + (reward.warBucks ?? 0);
-  if (!Number.isSafeInteger(gold) || !Number.isSafeInteger(warBucks)) {
-    throw new ApiError(ApiErrorCode.InternalServerError, "One-time reward currency overflowed.");
-  }
+  // Compute both wallets before publishing the collected marker. Otherwise a corrupt balance or
+  // unsafe sum could make the stock client believe this non-repeatable reward was already spent.
+  const gold = checkedRewardBalance(state.gold, reward.gold, `One-time reward ${reward.id} Gold`);
+  const warBucks = checkedRewardBalance(
+    state.warBucks,
+    reward.warBucks ?? 0,
+    `One-time reward ${reward.id} WarBucks`,
+  );
   return {
     state: {
       ...state,
