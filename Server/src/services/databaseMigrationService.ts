@@ -82,6 +82,21 @@ const migrations: readonly DatabaseMigration[] = [
       );
     },
   },
+  {
+    id: "20260722_005_client_error_retention",
+    checksum: "sha256:74feecf38e2cbd370e075869bf48d44e47ecfd52c220342902aada53cc3e1f15",
+    description: "Index bounded client error inspection and TTL retention.",
+    up: async (db) => {
+      await db.collection("clientErrorEvents").createIndex(
+        { playerId: 1, receivedAt: -1 },
+        { name: "client_error_player_time" },
+      );
+      await db.collection("clientErrorEvents").createIndex(
+        { expiresAt: 1 },
+        { name: "client_error_expiry", expireAfterSeconds: 0 },
+      );
+    },
+  },
 ];
 
 const receiptCollectionName = "schemaMigrations";

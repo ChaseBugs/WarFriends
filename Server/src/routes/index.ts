@@ -12,19 +12,35 @@ export const apiRouter = Router();
 
 export function normalizeEnvelope(body: unknown, routeAction?: string): RequestEnvelope {
   const fields = body && typeof body === "object" && !Array.isArray(body) ? (body as RequestEnvelope) : ({} as RequestEnvelope);
-  const bodyAction = fields.DbAction ?? fields.requestId;
   const parsedRouteAction = routeAction === undefined ? undefined : exactDatabaseAction(routeAction);
-  const parsedBodyAction = bodyAction === undefined ? undefined : exactDatabaseAction(bodyAction);
+  const parsedRequestIdAction = fields.requestId === undefined ? undefined : exactDatabaseAction(fields.requestId);
+  const parsedDbAction = fields.DbAction === undefined ? undefined : exactDatabaseAction(fields.DbAction);
+  // Action 92 has a recovered field-name collision: requestId carries the transport action while
+  // its diagnostic payload names the action that failed as a human-readable `DbAction` string.
+  // Preserve that text under a server-only alias before replacing DbAction with the route action.
+  const errorAction = parsedRouteAction === DbAction.ErrorMessage || parsedRequestIdAction === DbAction.ErrorMessage;
+  const reportedDbAction = errorAction
+    && typeof fields.DbAction === "string"
+    && parsedDbAction === undefined
+    ? fields.DbAction
+    : undefined;
+  const parsedActions = [parsedRouteAction, parsedRequestIdAction, parsedDbAction]
+    .filter((value): value is number => value !== undefined);
   // A present malformed copy is not equivalent to absence. Fail the whole envelope before the
   // raw-configuration fast path or normal dispatcher can mistake it for another action.
   if (
     (routeAction !== undefined && parsedRouteAction === undefined)
-    || (bodyAction !== undefined && parsedBodyAction === undefined)
-    || (parsedRouteAction !== undefined && parsedBodyAction !== undefined && parsedRouteAction !== parsedBodyAction)
+    || (fields.requestId !== undefined && parsedRequestIdAction === undefined)
+    || (fields.DbAction !== undefined && parsedDbAction === undefined && reportedDbAction === undefined)
+    || parsedActions.some((value) => value !== parsedActions[0])
   ) {
     return { ...fields, DbAction: Number.NaN };
   }
-  return { ...fields, DbAction: parsedRouteAction ?? parsedBodyAction ?? Number.NaN };
+  return {
+    ...fields,
+    ...(reportedDbAction === undefined ? {} : { ReportedDbAction: reportedDbAction }),
+    DbAction: parsedActions[0] ?? Number.NaN,
+  };
 }
 
 /** Build the special non-JSON response parsed by GameConfigurationManager. */

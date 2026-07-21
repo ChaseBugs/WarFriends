@@ -33,6 +33,7 @@ import { videoAdHandlers } from "./videoAds";
 import { videoFeedHandlers } from "./videoFeed";
 import { offerHandlers } from "./offers";
 import { clientLogHandlers } from "./clientLogs";
+import { clientErrorHandlers } from "./clientErrors";
 import type { HandlerEntry } from "./types";
 import logger from "../utils/logger";
 import { exactRequestedAccountType } from "../services/accountTypeRequestService";
@@ -47,7 +48,6 @@ import {
 const minimumClientVersion = exactMinimumClientVersion(config.minClientVersion);
 
 const benignNoOpActions = new Set<number>([
-  92, // client error report
   141, // crash telemetry has no trustworthy active payload call site
 ]);
 
@@ -123,6 +123,7 @@ const registry: Record<number, HandlerEntry> = {
   ...videoFeedHandlers,
   ...offerHandlers,
   ...clientLogHandlers,
+  ...clientErrorHandlers,
 };
 
 /** Read-only direct-handler inventory used by the recovered action coverage test. */

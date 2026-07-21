@@ -69,7 +69,7 @@ export function validatedOutgoingMessageRateLimit(
 /** Keep the operational collection from becoming a plaintext secondary player directory. */
 export function outgoingMessageRateLimitKey(
   playerId: string,
-  scope: "inbox" | "squad-chat" | "client-analytics" | "client-log" = "inbox",
+  scope: "inbox" | "squad-chat" | "client-analytics" | "client-log" | "client-error" = "inbox",
 ): string {
   return createHmac("sha256", config.authSecret).update(`${scope}:${playerId}`).digest("hex");
 }
@@ -84,7 +84,7 @@ export function outgoingMessageRateLimitKey(
  */
 async function reservePlayerAuthoredMessageSlot(
   playerId: string,
-  scope: "inbox" | "squad-chat" | "client-analytics" | "client-log",
+  scope: "inbox" | "squad-chat" | "client-analytics" | "client-log" | "client-error",
   maximum: number,
   now: Date,
   collisionRetry: number,
@@ -127,7 +127,8 @@ async function reservePlayerAuthoredMessageSlot(
     if (!outgoingMessageRateLimitAllows(state.attemptCount, maximum)) {
       const label = scope === "squad-chat"
         ? "Squad chat"
-        : scope === "client-analytics" ? "Analytics" : scope === "client-log" ? "Support log" : "Message";
+        : scope === "client-analytics" ? "Analytics"
+          : scope === "client-log" ? "Support log" : scope === "client-error" ? "Client error" : "Message";
       throw new ApiError(ApiErrorCode.UnknownAction, `${label} rate limit reached. Try again later.`);
     }
   } catch (error) {
@@ -210,6 +211,22 @@ export async function reserveClientLogSlot(
   return reservePlayerAuthoredMessageSlot(
     playerId,
     "client-log",
+    maximum,
+    now,
+    collisionRetry,
+  );
+}
+
+/** Reserve one automatic action-92 diagnostic without consuming any social or support quota. */
+export async function reserveClientErrorSlot(
+  playerId: string,
+  maximum: number,
+  now = new Date(),
+  collisionRetry = 0,
+): Promise<void> {
+  return reservePlayerAuthoredMessageSlot(
+    playerId,
+    "client-error",
     maximum,
     now,
     collisionRetry,

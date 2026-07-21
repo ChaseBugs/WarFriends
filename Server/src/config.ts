@@ -148,6 +148,17 @@ export const config = {
   clientLogMaximumPayloadBytes: Number(process.env.CLIENT_LOG_MAX_PAYLOAD_BYTES ?? 1_048_576),
   clientLogEventsPerMinute: Number(process.env.CLIENT_LOG_EVENTS_PER_MINUTE ?? 2),
 
+  // Action 92 is emitted automatically when the stock client cannot parse a server response.
+  // Retention is opt-in and additionally follows the player's existing SendLogs consent flag.
+  clientErrorEnabled: exactEnvironmentBoolean(
+    process.env.CLIENT_ERROR_ENABLED,
+    false,
+    "CLIENT_ERROR_ENABLED",
+  ),
+  clientErrorRetentionDays: Number(process.env.CLIENT_ERROR_RETENTION_DAYS ?? 14),
+  clientErrorMaximumPayloadBytes: Number(process.env.CLIENT_ERROR_MAX_PAYLOAD_BYTES ?? 32_768),
+  clientErrorEventsPerMinute: Number(process.env.CLIENT_ERROR_EVENTS_PER_MINUTE ?? 6),
+
   // Optional signed publication manifest for the stock GetConfigurations raw-text protocol.
   // Empty keeps bundled APK sheets active. The signing key is backend-only and protects the
   // operator file from accidental or unauthorized modification before any values are served.

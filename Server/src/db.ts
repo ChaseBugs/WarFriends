@@ -1228,6 +1228,28 @@ export interface ClientLogEntryDocument extends Document {
 
 let clientLogEntriesCollection: Collection<ClientLogEntryDocument> | null = null;
 
+/** Expiring, gameplay-inert copy of one authenticated stock action-92 diagnostic. */
+export interface ClientErrorEventDocument extends Document {
+  _id: string;
+  playerId: string;
+  playerName: string;
+  clientVersion: string;
+  kind: "server-response" | "message-parse";
+  exceptionMessage: string;
+  exceptionStacktrace: string;
+  sourceAction: string | null;
+  serverResponse: string | null;
+  postParameters: string | null;
+  messageToParse: string | null;
+  payloadSha256: string;
+  byteLength: number;
+  receivedAt: Date;
+  /** Storage cleanup only; error rows never authorize gameplay or account changes. */
+  expiresAt: Date;
+}
+
+let clientErrorEventsCollection: Collection<ClientErrorEventDocument> | null = null;
+
 export async function connectMongo(): Promise<void> {
   await client.connect();
   db = client.db(runtimeInfrastructure.mongoDatabaseName);
@@ -1263,6 +1285,7 @@ export async function connectMongo(): Promise<void> {
   firebasePushDeliveriesCollection = db.collection<FirebasePushDeliveryDocument>("firebasePushDeliveries");
   clientAnalyticsEventsCollection = db.collection<ClientAnalyticsEventDocument>("clientAnalyticsEvents");
   clientLogEntriesCollection = db.collection<ClientLogEntryDocument>("clientLogEntries");
+  clientErrorEventsCollection = db.collection<ClientErrorEventDocument>("clientErrorEvents");
 
   await playersCollection.createIndex({ id: 1 }, { unique: true });
   await playersCollection.createIndex({ authToken: 1 });
@@ -1483,6 +1506,7 @@ export async function disconnectMongo(): Promise<void> {
   firebasePushDeliveriesCollection = null;
   clientAnalyticsEventsCollection = null;
   clientLogEntriesCollection = null;
+  clientErrorEventsCollection = null;
 }
 
 /**
@@ -1577,6 +1601,10 @@ export function clientAnalyticsEvents(): Collection<ClientAnalyticsEventDocument
 
 export function clientLogEntries(): Collection<ClientLogEntryDocument> {
   return requireCollection("clientLogEntries", clientLogEntriesCollection);
+}
+
+export function clientErrorEvents(): Collection<ClientErrorEventDocument> {
+  return requireCollection("clientErrorEvents", clientErrorEventsCollection);
 }
 
 export function messages(): Collection<Document> {

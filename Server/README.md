@@ -1712,8 +1712,9 @@ actions `194` and `1007` are explicit authenticated no-ops, so their untrusted p
 change gameplay and an unauthenticated request cannot receive a false success. Action `179` is
 also authenticated and remains non-authoritative, but can optionally retain its exact recovered
 `PlayerAnalytics` JSON string for short-lived diagnostics. The narrow handler-less allowlist is
-reserved for bounded pre-login error/crash action `92`/`141` telemetry. The active action `166`
-support-log contract is authenticated and durable as described below.
+reserved for source-unproven crash action `141` telemetry. Action `92` now has a dedicated open
+acknowledgement and optional authenticated retention path; the active action `166` support-log
+contract is authenticated and durable as described below.
 `handlerlessActionDispositions` records every other intentional dispatcher exception: actions that
 run only inside the atomic RequestBuffer, client response/local-only values, retired contracts,
 disabled debug mutations, the raw configuration route, open non-authoritative telemetry, and the
@@ -1758,7 +1759,27 @@ versioned player/time and TTL indexes support direct support lookup and bounded 
 request has no operation UUID, so a lost response may produce another LogId rather than guessing
 that equal text is a replay. Stored logs never authorize gameplay. Action `141` remains an open
 non-authoritative acknowledgement because its only apparent sender is contradictory decompiler
-junk with no trustworthy payload; action `92` likewise remains a bounded error acknowledgement.
+junk with no trustworthy payload.
+
+### Client error diagnostics
+
+Action `92` implements both recovered `BeanstalkServerManager.SendErrorMessage` forms: failed
+server-response parsing (`DbAction`, `ServerResponse`, and `PostParameters`) and generic message
+parsing (`MessageToParse`). The stock wire contract reuses `DbAction` for the failed action's text
+while `requestId` carries numeric action 92. Envelope normalization now preserves that collision as
+`ReportedDbAction` before dispatch; contradictory numeric route/request copies still fail closed.
+
+The action remains an open success acknowledgement because it can fire while login or player boot
+is failing. Retention is stricter: `CLIENT_ERROR_ENABLED` is false by default, and a row is stored
+only when valid session credentials attach the current account and its durable `SendLogs` flag is
+exactly 1. Authenticated `PlayerName` must match the request echo. The two payload shapes are
+exclusive, client version is bounded, and the complete diagnostic is SHA-256/byte-length bound in
+an exact fixed-shape row. Defaults are 14 days, 32 KiB, and six retained events/player/minute;
+supported immutable ranges are 1-30 days, 1,024-65,536 bytes, and 1-60/minute. A separate
+HMAC-hidden atomic quota and versioned player/time plus TTL indexes bound concurrent-node abuse and
+retention without consuming inbox, Squad Chat, analytics, or explicit support-log capacity. Error
+rows are never read by gameplay services. Pre-login, disabled, and no-consent calls return the
+stock success shape without storing sensitive data or triggering an error-report feedback loop.
 
 ### Next
 
