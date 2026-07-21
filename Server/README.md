@@ -36,6 +36,10 @@ multi-document transactions, so enable a single-node replica set for local devel
 replicated/sharded managed deployment) and include `replicaSet` in `MONGO_URL`. Health check:
 `GET /health`.
 
+All enablement variables accept only complete case-insensitive `true`/`false` literals. Blank,
+whitespace-padded, numeric, or misspelled values stop startup instead of silently selecting
+`false`, which prevents one node from accidentally disabling Redis or a provider safety worker.
+
 ### Schema migration safety
 
 Startup applies the ordered registry in `services/databaseMigrationService.ts` under the singleton

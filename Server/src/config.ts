@@ -1,3 +1,25 @@
+/**
+ * Parse one deployment switch without silently changing operator intent.
+ *
+ * The previous `(value ?? default).toLowerCase() === "true"` pattern turned every typo, blank,
+ * numeric flag, and whitespace-padded value into `false`. For Redis coordination and purchase
+ * reconciliation that is not a harmless default: one misconfigured node could join a deployment
+ * with materially different safety behavior. Preserve the existing case-insensitive literals,
+ * but require the complete environment value to be exactly `true` or `false`.
+ */
+export function exactEnvironmentBoolean(
+  value: unknown,
+  fallback: boolean,
+  label: string,
+): boolean {
+  if (value === undefined) return fallback;
+  if (typeof value !== "string") throw new Error(`${label} must be exactly true or false.`);
+  const normalized = value.toLowerCase();
+  if (normalized === "true") return true;
+  if (normalized === "false") return false;
+  throw new Error(`${label} must be exactly true or false.`);
+}
+
 export const config = {
   port: Number(process.env.PORT ?? 8080),
   publicUrl: process.env.PUBLIC_URL ?? "http://localhost:8080",
@@ -6,7 +28,7 @@ export const config = {
   mongoDbName: process.env.MONGO_DB_NAME ?? "warfriends",
   mongoPoolSize: Number(process.env.MONGO_POOL_SIZE ?? 100),
 
-  redisEnabled: (process.env.REDIS_ENABLED ?? "true").toLowerCase() === "true",
+  redisEnabled: exactEnvironmentBoolean(process.env.REDIS_ENABLED, true, "REDIS_ENABLED"),
   redisUrl: process.env.REDIS_URL ?? "redis://127.0.0.1:6379",
   redisSessionTtl: Number(process.env.REDIS_SESSION_TTL ?? 1800),
   redisLeaderboardTtl: Number(process.env.REDIS_LEADERBOARD_TTL ?? 15),
@@ -51,7 +73,11 @@ export const config = {
 
   // Real-money delivery is fail-closed. When enabled, Google Application Default Credentials
   // must identify a Play Console service account that can read purchases for this exact app.
-  googlePlayPurchasesEnabled: (process.env.GOOGLE_PLAY_PURCHASES_ENABLED ?? "false").toLowerCase() === "true",
+  googlePlayPurchasesEnabled: exactEnvironmentBoolean(
+    process.env.GOOGLE_PLAY_PURCHASES_ENABLED,
+    false,
+    "GOOGLE_PLAY_PURCHASES_ENABLED",
+  ),
   googlePlayPackageName: (process.env.GOOGLE_PLAY_PACKAGE_NAME ?? "com.chillingo.warfriends.android.gplay").trim(),
   // Keep this stable across AUTH_SECRET/session-key rotation or migrate the receipt ledger first.
   purchaseTokenHashSecret: process.env.PURCHASE_TOKEN_HASH_SECRET ?? process.env.AUTH_SECRET ?? "change-me-in-production",
@@ -59,10 +85,12 @@ export const config = {
   // bearer token would turn a database read into a replayable purchase credential. A separate,
   // stable secret encrypts only subscription tokens with authenticated AES-GCM at rest.
   purchaseTokenEncryptionSecret: process.env.PURCHASE_TOKEN_ENCRYPTION_SECRET ?? "",
-  googlePlaySubscriptionRevalidationEnabled:
-    (process.env.GOOGLE_PLAY_SUBSCRIPTION_REVALIDATION_ENABLED
-      ?? process.env.GOOGLE_PLAY_PURCHASES_ENABLED
-      ?? "false").toLowerCase() === "true",
+  googlePlaySubscriptionRevalidationEnabled: exactEnvironmentBoolean(
+    process.env.GOOGLE_PLAY_SUBSCRIPTION_REVALIDATION_ENABLED
+      ?? process.env.GOOGLE_PLAY_PURCHASES_ENABLED,
+    false,
+    "GOOGLE_PLAY_SUBSCRIPTION_REVALIDATION_ENABLED",
+  ),
   googlePlaySubscriptionSchedulerIntervalSeconds:
     Number(process.env.GOOGLE_PLAY_SUBSCRIPTION_SCHEDULER_INTERVAL_SECONDS ?? 300),
   googlePlaySubscriptionRevalidationCadenceSeconds:
@@ -72,10 +100,12 @@ export const config = {
   // Voided Purchases is the delayed, authoritative backstop for refunded/charged-back one-time
   // products. It defaults to purchase enablement and keeps its own scheduler switch for staged
   // rollout or emergency suspension without disabling new purchase verification.
-  googlePlayVoidedPurchaseReconciliationEnabled:
-    (process.env.GOOGLE_PLAY_VOIDED_PURCHASE_RECONCILIATION_ENABLED
-      ?? process.env.GOOGLE_PLAY_PURCHASES_ENABLED
-      ?? "false").toLowerCase() === "true",
+  googlePlayVoidedPurchaseReconciliationEnabled: exactEnvironmentBoolean(
+    process.env.GOOGLE_PLAY_VOIDED_PURCHASE_RECONCILIATION_ENABLED
+      ?? process.env.GOOGLE_PLAY_PURCHASES_ENABLED,
+    false,
+    "GOOGLE_PLAY_VOIDED_PURCHASE_RECONCILIATION_ENABLED",
+  ),
   googlePlayVoidedPurchaseSchedulerIntervalSeconds:
     Number(process.env.GOOGLE_PLAY_VOIDED_PURCHASE_SCHEDULER_INTERVAL_SECONDS ?? 300),
 
@@ -113,7 +143,11 @@ export const config = {
   // complete ranking/reward tables are serialized in MainScene. The offline backend therefore
   // runs an explicit reconstruction-owned weekly calendar by default; operators may disable it
   // or change cadence without pretending the generated IDs are archived production seasons.
-  squadWarsEnabled: (process.env.SQUAD_WARS_ENABLED ?? "true").toLowerCase() === "true",
+  squadWarsEnabled: exactEnvironmentBoolean(
+    process.env.SQUAD_WARS_ENABLED,
+    true,
+    "SQUAD_WARS_ENABLED",
+  ),
   squadWarsSeasonDurationSeconds: Number(process.env.SQUAD_WARS_SEASON_DURATION_SECONDS ?? 604_800),
   squadWarsSchedulerIntervalSeconds: Number(process.env.SQUAD_WARS_SCHEDULER_INTERVAL_SECONDS ?? 60),
   // EventAssignmentManager is a different Christmas-style daily event system. Its archived

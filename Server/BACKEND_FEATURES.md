@@ -185,6 +185,12 @@ and disconnect decisions. The proxy hop count is an exact integer from zero thro
 values stop startup rather than being rounded, clamped, defaulted, or independently re-read by
 different transport boundaries.
 
+Redis coordination, Google Play purchase verification, subscription revalidation, voided-purchase
+reconciliation, and Squad Wars enablement now share exact startup Boolean parsing. Only complete
+case-insensitive `true`/`false` literals or a documented missing-value default are accepted; blank,
+padded, numeric, or misspelled settings stop startup instead of silently turning a safety worker
+off or allowing rolling-deployment nodes to run different coordination modes.
+
 Squad War maintenance now widens its round/season queries beyond ordinary due dates so malformed or
 missing BSON dates and unknown statuses enter validation instead of remaining permanently invisible.
 Both selected batches validate before the first settlement write; any non-settled round blocks its
