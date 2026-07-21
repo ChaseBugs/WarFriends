@@ -116,7 +116,8 @@ non-integer rewards, and rejects any sum outside JavaScript's safe-integer range
 calculates the final balance before consuming its claim marker or terminal receipt, so invalid
 persisted data or an operator-configured overflow fails closed without losing the reward on retry.
 
-Assignment, achievement, and War Arena eligibility counters are also validated before comparisons.
+Assignment, achievement, and War Arena eligibility counters are also validated before comparisons,
+and Arena lifetime increments reject safe-integer overflow before settlement.
 This explicitly closes JavaScript's non-finite comparison behavior: `NaN` can never make an active
 Arena run appear finished, make an achievement tier appear complete, or unlock a mega reward.
 

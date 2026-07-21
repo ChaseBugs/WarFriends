@@ -746,7 +746,8 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   recovered response without a false revision increment or MongoDB replacement. Expired receipt
   cleanup remains durable because it unblocks a future battle. Arena achievement progress shares this receipt authority; combat outcomes
   and reward gates first validate persisted run counters, flags, collections, and receipt timestamps,
-  so malformed state cannot make an active run appear finished.
+  so malformed state cannot make an active run appear finished. Lifetime run/match/loss/flawless
+  increments also reject safe-integer overflow before the Arena receipt is published.
   remain client-reported pending authoritative validation. The retired remote price/lootbox tables are absent from both APKs,
   so entry/heart/scraps values are environment-tunable and final lootboxes currently use a
   documented scraps fallback rather than fabricated inventory objects.

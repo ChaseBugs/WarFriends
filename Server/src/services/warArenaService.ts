@@ -84,6 +84,14 @@ function nonNegative(value: number, fallback: number): number {
   return Number.isFinite(value) ? Math.max(0, Math.floor(value)) : fallback;
 }
 
+/** Increment a persisted Arena lifetime counter without crossing JavaScript's exact range. */
+export function incrementWarArenaCounter(value: number, label: string): number {
+  if (!Number.isSafeInteger(value) || value < 0 || value === Number.MAX_SAFE_INTEGER) {
+    throw new ApiError(ApiErrorCode.InternalServerError, `War Arena ${label} counter overflowed.`);
+  }
+  return value + 1;
+}
+
 function cloneResponse(value: Record<string, unknown>): Record<string, unknown> {
   return JSON.parse(JSON.stringify(value)) as Record<string, unknown>;
 }
@@ -279,7 +287,7 @@ export function enterWarArenaState(
   arena.lives = values.startingLives;
   arena.opponents = [...new Set(input.opponents.filter(Boolean))].slice(0, values.maxBattles);
   arena.arenaId = arenaId;
-  arena.runs = sameArena ? arena.runs + 1 : 1;
+  arena.runs = sameArena ? incrementWarArenaCounter(arena.runs, "runs") : 1;
   arena.played = true;
   arena.heartDialogShown = false;
   arena.runLosses = 0;
@@ -372,19 +380,19 @@ export function settleWarArenaBattleState(
   }
 
   arena.activeBattle = undefined;
-  arena.matches += 1;
+  arena.matches = incrementWarArenaCounter(arena.matches, "matches");
   const won = ARENA_WIN.has(input.endReason);
   let completedFlawlessRun = false;
   if (won) {
     arena.wins = Math.min(arenaPolicy().maxBattles, arena.wins + 1);
     arena.topRun = Math.max(arena.topRun, arena.wins);
     if (arena.wins === arenaPolicy().maxBattles && arena.runLosses === 0) {
-      arena.flawless += 1;
+      arena.flawless = incrementWarArenaCounter(arena.flawless, "flawless runs");
       completedFlawlessRun = true;
     }
   } else {
     arena.lives = Math.max(0, arena.lives - 1);
-    arena.runLosses += 1;
+    arena.runLosses = incrementWarArenaCounter(arena.runLosses, "run losses");
   }
 
   const response: Record<string, unknown> = {
@@ -509,7 +517,7 @@ export function takeWarArenaLifeState(
   if (consumedReceipt) {
     arena.activeBattle = undefined;
     arena.lives = Math.max(0, arena.lives - 1);
-    arena.runLosses += 1;
+    arena.runLosses = incrementWarArenaCounter(arena.runLosses, "run losses");
   } else if (arena.activeBattle) {
     // Expired proof cannot cost a life, but it also must not block every future start.
     arena.activeBattle = undefined;

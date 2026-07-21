@@ -17,6 +17,7 @@ import {
   claimWarArenaScrapsState,
   endWarArenaState,
   enterWarArenaState,
+  incrementWarArenaCounter,
   initialWarArenaState,
   markWarArenaShownState,
   settleWarArenaBattleState,
@@ -94,6 +95,18 @@ test("Arena reward gates reject corrupt counters and receipt timestamps", () => 
   assert.throws(
     () => warArenaStateFor(corruptReceipt),
     /Stored War Arena battle receipt is invalid/,
+  );
+});
+
+test("Arena lifetime counters reject unsafe increments before persistence", () => {
+  assert.equal(incrementWarArenaCounter(0, "matches"), 1);
+  assert.throws(
+    () => incrementWarArenaCounter(Number.MAX_SAFE_INTEGER, "matches"),
+    /matches counter overflowed/,
+  );
+  assert.throws(
+    () => incrementWarArenaCounter(Number.NaN, "matches"),
+    /matches counter overflowed/,
   );
 });
 
