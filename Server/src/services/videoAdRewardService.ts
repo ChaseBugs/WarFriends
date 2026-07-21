@@ -11,9 +11,11 @@ import {
   VIDEO_AD_LIMITS,
   VideoAdRewardKind,
   validatedVideoAdRewardState,
+  validatedVideoAdRewardUnixSeconds,
 } from "./videoAdRewardAuthorityService";
 
 export {
+  MAX_VIDEO_AD_REWARD_UNIX_SECONDS,
   VIDEO_AD_LIMITS,
   VideoAdRewardKind,
   validatedVideoAdRewardTimes,
@@ -158,9 +160,11 @@ export function grantVideoAdRewardState(
   reward: VideoAdRewardKind,
   pick: PickIndex = (exclusiveMaximum) => randomInt(exclusiveMaximum),
 ): VideoAdRewardTransition {
-  const currentTime = Math.floor(now);
+  // State helpers are also called by RequestBuffer and replacement-client paths, so validate the
+  // runtime number here instead of relying on unixNow() at the ordinary HTTP wrapper.
+  const currentTime = validatedVideoAdRewardUnixSeconds(now, "Video ad reward request time");
   const limit = VIDEO_AD_LIMITS[reward];
-  if (!limit || !Number.isSafeInteger(currentTime) || currentTime <= 0) {
+  if (!limit) {
     throw new ApiError(ApiErrorCode.UnknownAction, "Video ad reward request is invalid.");
   }
 

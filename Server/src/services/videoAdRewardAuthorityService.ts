@@ -59,6 +59,8 @@ const VIDEO_AD_TIME_KEYS = new Set(["warcards", "dogtags", "goldenSuitcase", "lo
 const VIDEO_AD_STATE_KEYS = new Set(["times", "lastReceipt"]);
 const VIDEO_AD_RECEIPT_KEYS = new Set(["reward", "settledAt", "progressionRevision", "response"]);
 const MAX_REPLAY_RESPONSE_BYTES = 64 * 1_024;
+/** Largest Unix second that can be projected through JavaScript and BSON Date values. */
+export const MAX_VIDEO_AD_REWARD_UNIX_SECONDS = 8_640_000_000_000;
 
 export function emptyVideoAdRewardTimes(): VideoAdRewardTimesState {
   return { warcards: [], dogtags: [], goldenSuitcase: [], lootboxes: [] };
@@ -66,6 +68,20 @@ export function emptyVideoAdRewardTimes(): VideoAdRewardTimesState {
 
 function safeInteger(value: number, label: string, positive = false): number {
   if (!Number.isSafeInteger(value) || value < (positive ? 1 : 0)) {
+    throw new ApiError(ApiErrorCode.InternalServerError, `${label} is invalid.`);
+  }
+  return value;
+}
+
+/**
+ * Prove a server clock or durable ledger value before it participates in rolling-limit logic.
+ *
+ * A generic safe integer is not enough for a Unix timestamp: values above the Date ceiling cannot
+ * be represented by the runtime or BSON date types used around player authority. Callers must not
+ * floor fractions first, because doing so turns a malformed application clock into a valid grant.
+ */
+export function validatedVideoAdRewardUnixSeconds(value: number, label: string): number {
+  if (!Number.isSafeInteger(value) || value <= 0 || value > MAX_VIDEO_AD_REWARD_UNIX_SECONDS) {
     throw new ApiError(ApiErrorCode.InternalServerError, `${label} is invalid.`);
   }
   return value;
@@ -122,9 +138,10 @@ export function validatedVideoAdRewardTimesShape(value: VideoAdRewardTimesState)
     if (!Array.isArray(ledger) || ledger.length > limit.count) {
       throw new ApiError(ApiErrorCode.InternalServerError, "Video ad reward ledger is invalid.");
     }
-    if (ledger.some((timestamp) => !Number.isSafeInteger(timestamp) || timestamp <= 0)) {
-      throw new ApiError(ApiErrorCode.InternalServerError, "Video ad reward timestamp is invalid.");
-    }
+    ledger.forEach((timestamp) => validatedVideoAdRewardUnixSeconds(
+      timestamp,
+      "Video ad reward timestamp",
+    ));
     result[limit.key] = [...ledger];
   }
   return result;
@@ -145,7 +162,10 @@ function validatedVideoAdRewardReceipt(
   }
   const reward = value.reward;
   const limit = VIDEO_AD_LIMITS[reward];
-  const settledAt = safeInteger(value.settledAt, "Video ad reward receipt time", true);
+  const settledAt = validatedVideoAdRewardUnixSeconds(
+    value.settledAt,
+    "Video ad reward receipt time",
+  );
   const receiptRevision = safeInteger(value.progressionRevision, "Video ad reward receipt revision", true);
   if (!limit || (progressionRevision !== undefined && receiptRevision > progressionRevision)) {
     throw new ApiError(ApiErrorCode.InternalServerError, "Video ad reward receipt is inconsistent.");
@@ -212,14 +232,12 @@ export function validatedVideoAdRewardTimes(
   value: VideoAdRewardTimesState,
   now: number,
 ): VideoAdRewardTimesState {
-  if (!Number.isSafeInteger(now) || now <= 0) {
-    throw new ApiError(ApiErrorCode.InternalServerError, "Video ad reward ledger is invalid.");
-  }
+  const currentTime = validatedVideoAdRewardUnixSeconds(now, "Video ad reward comparison time");
   const current = validatedVideoAdRewardTimesShape(value);
   const result = emptyVideoAdRewardTimes();
   for (const limit of Object.values(VIDEO_AD_LIMITS)) {
     const ledger = current[limit.key];
-    const cutoff = now - limit.intervalSeconds;
+    const cutoff = currentTime - limit.intervalSeconds;
     result[limit.key] = ledger
       .filter((timestamp) => timestamp >= cutoff)
       .sort((left, right) => left - right);

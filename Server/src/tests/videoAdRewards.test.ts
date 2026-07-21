@@ -13,6 +13,7 @@ import { validatedProgressionSuccessor } from "../services/progressionPublicatio
 import { VIP_LOOTBOX_ELIGIBLE_VISUAL_IDS } from "../services/vipLootboxService";
 import {
   grantVideoAdRewardState,
+  MAX_VIDEO_AD_REWARD_UNIX_SECONDS,
   OFFLINE_GOLDEN_SUITCASE_REWARDS,
   VIDEO_AD_LIMITS,
   validatedVideoAdRewardTimes,
@@ -219,7 +220,14 @@ test("persisted video-ad ledgers reject malformed authority instead of reopening
   const valid = { warcards: [NOW], dogtags: [], goldenSuitcase: [], lootboxes: [] };
   assert.deepEqual(validatedVideoAdRewardTimes(valid, NOW), valid);
 
-  for (const timestamp of [Number.NaN, Number.POSITIVE_INFINITY, 0, -1, 1.5]) {
+  for (const timestamp of [
+    Number.NaN,
+    Number.POSITIVE_INFINITY,
+    0,
+    -1,
+    1.5,
+    MAX_VIDEO_AD_REWARD_UNIX_SECONDS + 1,
+  ]) {
     assert.throws(
       () => validatedVideoAdRewardTimes({ ...valid, warcards: [timestamp] }, NOW),
       /Video ad reward timestamp is invalid/,
@@ -243,6 +251,24 @@ test("persisted video-ad ledgers reject malformed authority instead of reopening
     () => grantVideoAdRewardState(poisoned, NOW, 5, VideoAdRewardKind.RandomCard, picker(0)),
     /Video ad reward timestamp is invalid/,
   );
+
+  for (const invalidTime of [
+    Number.NaN,
+    Number.POSITIVE_INFINITY,
+    0,
+    -1,
+    1.5,
+    MAX_VIDEO_AD_REWARD_UNIX_SECONDS + 1,
+  ]) {
+    assert.throws(
+      () => grantVideoAdRewardState(state(), invalidTime, 5, VideoAdRewardKind.RandomCard, picker(0)),
+      /Video ad reward request time is invalid/,
+    );
+    assert.throws(
+      () => validatedVideoAdRewardTimes(valid, invalidTime),
+      /Video ad reward comparison time is invalid/,
+    );
+  }
 });
 
 test("same-revision HTTP replay returns the immutable receipt without a second grant", () => {

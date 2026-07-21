@@ -1258,8 +1258,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   client; JavaScript-coercible Booleans, arrays, padded/signed/leading-zero/fractional/exponent text,
   zero, and out-of-range values cannot choose a reward branch. XOR-decoded 4.9.5 limits are enforced server-side as 24 claims per
   rolling 5/12/15/100-hour window, with the exact one-minute Golden Suitcase spacing. A shared
-  validator rejects malformed/non-finite/oversized durable ledgers at progression read/publication
-  and before grant or boot. Its exact private replay receipt must bind a supported reward, safe
+  validator requires the grant/comparison clock and every durable ledger entry to be a positive
+  safe Unix second inside JavaScript/BSON Date support at progression read/publication and before
+  grant or boot. It validates the runtime number directly; a fractional, non-finite, negative, or
+  oversized clock cannot be floored or clamped into a valid reward receipt. Its exact private replay
+  receipt must bind a supported reward, bounded safe
   timestamp, non-future progression revision, matching ledger grant, and bounded immutable JSON
   response containing the same ledger snapshot;
   only valid timestamps provably older than their reward window are removed, while future entries
