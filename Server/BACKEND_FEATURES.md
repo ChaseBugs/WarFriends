@@ -635,6 +635,9 @@ immutable module-startup policy. Both must be exact nonnegative safe integers an
 cannot be lower than the ordinary value, so malformed policy stops startup instead of failing only
 when a player requests a calendar. Direct policy selection additionally accepts only days 1-31;
 fractions, `NaN`, infinity, and out-of-calendar indexes cannot choose an ordinary or weekly row.
+Daily Reward check, claim, and wire-countdown entry points now consume the shared Date-bounded
+application clock directly. A fractional, non-finite, negative, or oversized time cannot be floored
+into a valid UTC login day, claim calendar, or client countdown.
 One shared application-clock boundary now protects initial progression creation, persisted
 progression reads, successor publication, `PlayerData`, and the top-level player-state response.
 It requires a nonnegative safe Unix second inside JavaScript/BSON Date support and passes that same

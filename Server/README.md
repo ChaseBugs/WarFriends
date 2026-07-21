@@ -1610,7 +1610,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   One time-aware authority validates the exact five-field snapshot at shared persisted reads and
   full-progression publication as well as before check, claim, or wire projection. Current-month
   year/month/date markers and ordered claim cursors must be valid, future calendars fail closed,
-  and both sides of one publication use the same captured server time. An expired prior-month
+  and both sides of one publication use the same captured server time. Check, claim, and client
+  countdown generation require that exact clock inside JavaScript/BSON Date support; malformed or
+  fractional time is rejected instead of being floored into a believable UTC day. An expired prior-month
   snapshot is discarded before cursor validation because its rewards cannot carry into the new
   calendar; this narrow rollover rule does not repair damaged active authority.
 - **One-time rewards**: action `161` accepts only the three source-backed Facebook Like, Twitter

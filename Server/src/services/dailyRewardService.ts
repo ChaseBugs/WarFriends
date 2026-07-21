@@ -8,6 +8,7 @@ import {
 } from "./cardInventoryService";
 import { mutateProgression } from "./progressionMutationService";
 import { checkedRewardBalance } from "./rewardMathService";
+import { validatedApplicationUnixSeconds } from "./applicationTimeAuthorityService";
 import {
   grantDailyVipCardsState,
   type VipDailyCardReward,
@@ -119,8 +120,8 @@ export function dailyRewardGoldPolicy(
     : exactDailyRewardGoldPolicy(policy);
 }
 
-function utcDate(now: number): Date {
-  return new Date(Math.floor(now) * 1000);
+function utcDate(now: number, label: string): Date {
+  return new Date(validatedApplicationUnixSeconds(now, label) * 1_000);
 }
 
 function utcDayKey(date: Date): string {
@@ -237,7 +238,7 @@ function calendarFor(state: PlayerProgressionState, date: Date): DailyRewardStat
  * `canClaim` and `claimReward` counters and allowing a returning player to continue in order.
  */
 export function checkDailyRewardState(state: PlayerProgressionState, now: number): DailyRewardMutationResult {
-  const date = utcDate(now);
+  const date = utcDate(now, "Daily reward check time");
   const calendar = calendarFor(state, date);
   const today = utcDayKey(date);
   if (calendar.lastCheckDay === today) {
@@ -270,7 +271,8 @@ export function claimDailyRewardState(
   chooseRandom?: VipRandomIndex,
   playerLevelIndex = 1,
 ): DailyRewardMutationResult {
-  const calendar = calendarFor(state, utcDate(now));
+  const currentTime = validatedApplicationUnixSeconds(now, "Daily reward claim time");
+  const calendar = calendarFor(state, utcDate(currentTime, "Daily reward claim time"));
   const expectedDay = calendar.claimReward + 1;
   if (requestedDay <= calendar.claimReward) {
     throw new ApiError(ApiErrorCode.DailyRewardAlreadyClaimed, "Daily reward was already claimed.");
@@ -349,8 +351,8 @@ export function claimDailyRewardState(
   // and adds both identities locally. Compose the independent paid-VIP benefit before MongoDB's
   // revision guard so Gold, achievement progress, cards, and both cursors commit or retry together.
   const vipResult = chooseRandom
-    ? grantDailyVipCardsState(achievementResult.state, now, chooseRandom)
-    : grantDailyVipCardsState(achievementResult.state, now);
+    ? grantDailyVipCardsState(achievementResult.state, currentTime, chooseRandom)
+    : grantDailyVipCardsState(achievementResult.state, currentTime);
   return {
     // Card, currency, achievement, optional VIP pair, and claim cursor are one logical write.
     // Composition helpers may increment their local revision, so normalize the final document
@@ -375,7 +377,7 @@ export function buildDailyRewardWireData(calendar: DailyRewardState, now: number
     year: validated.year,
     canClaim: validated.canClaim,
     claimReward: validated.claimReward,
-    nextDay: secondsUntilNextUtcDay(utcDate(now)),
+    nextDay: secondsUntilNextUtcDay(utcDate(now, "Daily reward wire time")),
     config: buildDailyRewardConfig(validated.year, validated.month),
   };
 }

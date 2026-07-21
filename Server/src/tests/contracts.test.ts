@@ -385,6 +385,32 @@ test("shared progression creation, read, publication, and boot reject malformed 
   }
 });
 
+test("Daily Reward check, claim, and wire projection reject malformed application time", () => {
+  const now = Date.UTC(2026, 6, 15, 12, 0, 0) / 1_000;
+  const available = checkDailyRewardState(createInitialProgression(now), now).state;
+  const calendar = available.dailyReward!;
+  for (const invalidTime of [
+    Number.NaN,
+    Number.POSITIVE_INFINITY,
+    -1,
+    0.5,
+    MAX_APPLICATION_UNIX_SECONDS + 1,
+  ]) {
+    assert.throws(
+      () => checkDailyRewardState(createInitialProgression(now), invalidTime),
+      /Daily reward check time is invalid/,
+    );
+    assert.throws(
+      () => claimDailyRewardState(available, invalidTime, 1),
+      /Daily reward claim time is invalid/,
+    );
+    assert.throws(
+      () => buildDailyRewardWireData(calendar, invalidTime),
+      /Daily reward wire time is invalid/,
+    );
+  }
+});
+
 test("player data rejects corrupt core balances while preserving chargeback debt", () => {
   const debt = contractPlayer();
   debt.progression!.gold = -25;
