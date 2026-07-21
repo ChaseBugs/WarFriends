@@ -13,7 +13,9 @@ import {
   requireSquadWarSettlementAvailability,
   requireSquadWarScoringEntryIndex,
   squadWarRewardEligiblePlayerIds,
+  validatedSquadWarSeason,
 } from "../services/squadWarService";
+import type { SquadWarSeasonDocument } from "../db";
 import {
   claimableMessageReward,
   toClientMessage,
@@ -124,6 +126,36 @@ test("Squad Wars reconstructed schedule emits client-parseable stable round IDs"
   assert.match(window.seasonId, /^sw[0-9a-z]+$/u);
   assert.match(squadWarRoundId(4, window, 3), /^4-[0-9a-z]+$/u);
   assert.equal(squadWarRoundId(4, window, 3), squadWarRoundId(4, window, 3));
+});
+
+test("durable Squad War season authority binds window identity, state, and timestamps", () => {
+  const window = squadWarWindowAt(new Date("2026-07-21T12:34:56.000Z"));
+  const createdAt = new Date(window.startsAt.getTime() + 1_000);
+  const active: SquadWarSeasonDocument = {
+    ...window,
+    status: "active",
+    createdAt,
+  };
+  assert.equal(validatedSquadWarSeason(active, createdAt), active);
+  const settledAt = new Date(window.endsAt.getTime() + 1_000);
+  const settled: SquadWarSeasonDocument = { ...active, status: "settled", settledAt };
+  assert.equal(validatedSquadWarSeason(settled, settledAt), settled);
+  assert.throws(
+    () => validatedSquadWarSeason({ ...active, seasonId: "swwrong" }, createdAt),
+    /season authority is invalid/,
+  );
+  assert.throws(
+    () => validatedSquadWarSeason({ ...active, settledAt }, settledAt),
+    /season authority is invalid/,
+  );
+  assert.throws(
+    () => validatedSquadWarSeason({ ...settled, settledAt: new Date(window.endsAt.getTime() - 1) }),
+    /season authority is invalid/,
+  );
+  assert.throws(
+    () => validatedSquadWarSeason(active, new Date(createdAt.getTime() - 1)),
+    /season authority is invalid/,
+  );
 });
 
 test("Squad War settlement skips only disabled or terminal windows and retries maintenance", () => {

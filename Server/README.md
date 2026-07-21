@@ -328,7 +328,12 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
 - **Squad Wars**: the backend creates deterministic weekly UTC seasons and persistent divisions
   for all eight recovered levels, with at most 50 squads per division. `GetSquadWarsDivision`
   derives the caller's division from authenticated membership, rejects stale or foreign round
-  IDs, and returns the exact recovered `LeagueId`/`SquadWarsId`/`Items` contract. Only a confirmed
+  IDs, and returns the exact recovered `LeagueId`/`SquadWarsId`/`Items` contract. Every season row
+  is validated before allocation, retry classification, division reads, and scheduler closure:
+  exact fields, an ID bound to its UTC start second, a safe window of at least one hour, creation
+  inside that window, and an exact active or terminal timestamp shape. Future durable timestamps
+  fail on live paths, and settled windows cannot reopen after a configuration-duration change.
+  Only a confirmed
   ranked PvP win adds server-derived Squad Points, and that score commits in the same transaction
   as the terminal match receipt. Participant squads created after the season snapshot are assigned
   before rewards begin, without requiring the War UI to be opened first; stale round pointers are
@@ -340,10 +345,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   round-start member who remains in the squad an exact type-9 `SquadWarEnd` message whose Gold is
   claimed once through action `91`. Leaving or being kicked irrevocably forfeits that round's
   personal reward, while late joiners may add confirmed placement score but receive no first-week
-  reward. Settlement
-  validates every squad/member score and addition as a nonnegative safe integer before the terminal
-  PvP receipt commits, and placement rejects non-finite or overflowing totals before sorting.
-  also completes the exact 4.9.5 group-19 first-Squad-War achievement for each eligible result
+  reward. Settlement validates every squad/member score and addition as a nonnegative safe integer
+  before the terminal PvP receipt commits, and placement rejects non-finite or overflowing totals
+  before sorting. It also completes the exact 4.9.5 group-19 first-Squad-War achievement for each eligible result
   recipient in the same transaction. Its single 5,000-WarBucks tier is replay-idempotent. The
   weekly Monday calendar is explicit reconstruction policy because neither recovered APK contains the
   retired production schedule; no client-supplied score, placement, reward, or squad ID is trusted.

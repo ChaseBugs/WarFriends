@@ -32,6 +32,61 @@ import {
 } from "./squadWarContract";
 import { integerNumberAttribute } from "./dynamoNumberAttributeService";
 
+const MAX_UNIX_SECONDS = 2_147_483_647;
+const SQUAD_WAR_SEASON_KEYS = new Set([
+  "_id", "seasonId", "startsAt", "endsAt", "status", "createdAt", "settledAt",
+]);
+
+function safeWarDate(value: unknown): value is Date {
+  return value instanceof Date
+    && Number.isSafeInteger(value.getTime())
+    && value.getTime() >= 0
+    && value.getTime() <= MAX_UNIX_SECONDS * 1_000;
+}
+
+/**
+ * Prove one immutable Squad War scheduling row before it selects a division or settlement path.
+ *
+ * The reconstructed season ID encodes its exact UTC start second. Requiring that binding prevents
+ * a damaged row from aliasing another window, while the status-specific timestamp shape keeps an
+ * active season from carrying a terminal marker or a settled season from reopening after an
+ * operator changes the configured duration. Application time is optional for historical audits;
+ * live callers provide it so future creation or settlement timestamps fail closed.
+ */
+export function validatedSquadWarSeason(
+  season: SquadWarSeasonDocument,
+  now?: Date,
+): SquadWarSeasonDocument {
+  const raw = season as unknown as Record<string, unknown>;
+  const keysValid = !!season
+    && typeof season === "object"
+    && !Array.isArray(season)
+    && Object.keys(raw).every((key) => SQUAD_WAR_SEASON_KEYS.has(key));
+  const datesValid = keysValid
+    && safeWarDate(season.startsAt)
+    && safeWarDate(season.endsAt)
+    && safeWarDate(season.createdAt)
+    && season.startsAt.getMilliseconds() === 0
+    && season.endsAt.getMilliseconds() === 0
+    && season.startsAt.getTime() < season.endsAt.getTime()
+    && season.endsAt.getTime() - season.startsAt.getTime() >= 3_600_000
+    && season.createdAt.getTime() >= season.startsAt.getTime()
+    && season.createdAt.getTime() < season.endsAt.getTime()
+    && (now === undefined || (safeWarDate(now) && season.createdAt.getTime() <= now.getTime()));
+  const expectedId = datesValid
+    ? `sw${Math.floor(season.startsAt.getTime() / 1_000).toString(36)}`
+    : "";
+  const activeValid = season?.status === "active" && season.settledAt === undefined;
+  const settledValid = season?.status === "settled"
+    && safeWarDate(season.settledAt)
+    && season.settledAt.getTime() >= season.endsAt.getTime()
+    && (now === undefined || season.settledAt.getTime() <= now.getTime());
+  if (!datesValid || season.seasonId !== expectedId || (!activeValid && !settledValid)) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Stored Squad Wars season authority is invalid.");
+  }
+  return season;
+}
+
 export type SquadWarProgressStatus =
   | "recorded"
   | "disabled"
@@ -118,7 +173,10 @@ export async function ensureActiveSquadWarSeason(now = new Date()): Promise<Squa
   const existing = await squadWarSeasons().findOne({ seasonId: window.seasonId });
   // A settled row is terminal. It must never be reopened merely because an operator shortened
   // the configured duration and the reconstructed window calculation happens to reuse its ID.
-  if (existing) return existing.status === "active" ? existing : null;
+  if (existing) {
+    validatedSquadWarSeason(existing, now);
+    return existing.status === "active" ? existing : null;
+  }
   // Never allocate the new window on stale levels. The scheduler first settles every expired
   // round and only then calls this allocator. A request that lands in that short processing gap
   // receives no active season and retries after maintenance instead of overwriting old pointers
@@ -132,7 +190,7 @@ export async function ensureActiveSquadWarSeason(now = new Date()): Promise<Squa
   try {
     return await withMongoTransaction(async (session) => {
       const winner = await squadWarSeasons().findOne({ seasonId: window.seasonId }, { session });
-      if (winner) return winner;
+      if (winner) return validatedSquadWarSeason(winner, now);
 
       const allSquads = await squads().find({}, { session }).sort({ squadWarLevel: 1, squadPoints: -1, name: 1 }).toArray();
       const rounds: SquadWarRoundDocument[] = [];
@@ -182,6 +240,7 @@ export async function ensureActiveSquadWarSeason(now = new Date()): Promise<Squa
         status: "active",
         createdAt: now,
       };
+      validatedSquadWarSeason(season, now);
       await squadWarSeasons().insertOne(season, { session });
       return season;
     });
@@ -189,7 +248,7 @@ export async function ensureActiveSquadWarSeason(now = new Date()): Promise<Squa
     if (!duplicateKey(error)) throw error;
     const committed = await squadWarSeasons().findOne({ seasonId: window.seasonId });
     if (!committed) throw error;
-    return committed;
+    return validatedSquadWarSeason(committed, now);
   }
 }
 
@@ -206,6 +265,7 @@ export async function prepareSquadWarSettlement(now = new Date()): Promise<boole
   // first check and this classification. A settled row is an intentional no-event window;
   // absence means expired rounds are still being finalized and must be retried.
   const current = await squadWarSeasons().findOne({ seasonId: window.seasonId });
+  if (current) validatedSquadWarSeason(current, now);
   return requireSquadWarSettlementAvailability(
     true,
     current?.status === "active",
@@ -376,9 +436,13 @@ export interface SquadWarReadModel {
 }
 
 /** Resolve action 124 from authenticated membership, never from a client-selected score set. */
-export async function getSquadWarDivision(player: PlayerDocument, requestedRoundId: string): Promise<SquadWarReadModel> {
+export async function getSquadWarDivision(
+  player: PlayerDocument,
+  requestedRoundId: string,
+  now = new Date(),
+): Promise<SquadWarReadModel> {
   if (!player.player.squadName) throw new ApiError(ApiErrorCode.SquadNoLongerExists, "Player is not in a squad.");
-  const round = await ensureSquadWarAssignment(player.player.squadName);
+  const round = await ensureSquadWarAssignment(player.player.squadName, now);
   if (!round) throw new ApiError(ApiErrorCode.UnknownAction, "Squad Wars is disabled.");
   // A stale cached RoundId is rejected instead of returning another division under the caller's
   // requested cache key. Refreshing GetSquadDetails supplies the current server-owned pointer.
@@ -387,6 +451,7 @@ export async function getSquadWarDivision(player: PlayerDocument, requestedRound
   }
   const season = await squadWarSeasons().findOne({ seasonId: round.seasonId });
   if (!season) throw new Error(`Squad Wars season ${round.seasonId} is missing.`);
+  validatedSquadWarSeason(season, now);
   const docs = await squads().find({ name: { $in: round.entries.map((entry) => entry.squadId) } }).toArray();
   const byName = new Map(docs.map((doc) => [doc.name, doc]));
   const orderedSquads: SquadDocument[] = [];
@@ -741,11 +806,13 @@ export async function maintainSquadWars(now = new Date()): Promise<{ rounds: num
   const endedSeasons = await squadWarSeasons().find(
     { status: "active", endsAt: { $lte: now } },
   ).sort({ endsAt: 1 }).limit(100).toArray();
-  for (const seasonId of endedSeasons.map((season) => season.seasonId)) {
-    const remaining = await squadWarRounds().countDocuments({ seasonId, status: "active" }, { limit: 1 });
+  for (const season of endedSeasons) {
+    validatedSquadWarSeason(season, now);
+    const remaining = await squadWarRounds().countDocuments({ seasonId: season.seasonId, status: "active" }, { limit: 1 });
     if (remaining === 0) {
+      validatedSquadWarSeason({ ...season, status: "settled", settledAt: now }, now);
       await squadWarSeasons().updateOne(
-        { seasonId, status: "active" },
+        { seasonId: season.seasonId, status: "active" },
         { $set: { status: "settled", settledAt: now } },
       );
     }
