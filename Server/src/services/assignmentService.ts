@@ -149,6 +149,23 @@ export interface BufferedRequestInput {
   data: string;
 }
 
+/**
+ * Parse the action-193 data produced by `PlayerAnalytics.lastSeenSquadChatTimeStamp.ToString()`.
+ * RequestBuffer has already proved that data is a string, but JavaScript Number would still accept
+ * whitespace, plus signs, leading zeros, fractions, and exponent text that the C# setter never
+ * emits. The cursor service performs the separate request-time/future validation.
+ */
+export function exactBufferedSquadChatTimestamp(data: string): number {
+  if (!/^(?:0|[1-9]\d*)$/.test(data)) {
+    throw new ApiError(ApiErrorCode.UnknownAction, "Squad chat timestamp transport is invalid.");
+  }
+  const timestamp = Number(data);
+  if (!Number.isInteger(timestamp) || timestamp > 2_147_483_647) {
+    throw new ApiError(ApiErrorCode.UnknownAction, "Squad chat timestamp transport is invalid.");
+  }
+  return timestamp;
+}
+
 export interface AssignmentBufferResult extends AssignmentMutationResult {
   requestsResults: string;
   replayed: boolean;
@@ -942,10 +959,7 @@ export function processAssignmentBufferState(
 
     if (request.action === DbAction.SaveLastSeenSquadChatTimeStamp) {
       try {
-        // JavaScript converts an empty string to zero. The recovered setter never queues its
-        // default zero value, so preserve an empty/missing payload as invalid instead of silently
-        // normalizing a modified RequestBuffer item into a successful no-op.
-        const timestamp = request.data.trim() === "" ? Number.NaN : Number(request.data);
+        const timestamp = exactBufferedSquadChatTimestamp(request.data);
         working = advanceSquadChatCursorState(working, now, timestamp).state;
         responses.push({ ActionId: request.action, Result: SUCCESS });
       } catch (error) {

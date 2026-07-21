@@ -5,7 +5,10 @@ import { AccountType } from "../constants";
 import { DbAction } from "../dbActions";
 import type { PlayerDocument, SquadDocument } from "../db";
 import { newPlayer, newSquad } from "../dtos";
-import { processAssignmentBufferState } from "../services/assignmentService";
+import {
+  exactBufferedSquadChatTimestamp,
+  processAssignmentBufferState,
+} from "../services/assignmentService";
 import {
   createInitialProgression,
   buildPlayerData,
@@ -102,6 +105,24 @@ test("stock RequestBuffer persists and idempotently replays squad chat cursor ac
   assert.deepEqual(JSON.parse(malformed.requestsResults), [
     { ActionId: 193, Result: ApiErrorCode.UnknownAction },
   ]);
+});
+
+test("action-193 RequestBuffer timestamps require canonical C# integer transport", () => {
+  assert.equal(exactBufferedSquadChatTimestamp("0"), 0);
+  assert.equal(exactBufferedSquadChatTimestamp("2147483647"), 2_147_483_647);
+  for (const value of ["", " 1", "1 ", "01", "+1", "-0", "-1", "1.0", "1e0", "2147483648"]) {
+    assert.throws(() => exactBufferedSquadChatTimestamp(value), /transport is invalid/);
+  }
+
+  for (const [index, data] of [" 1", "01", "+1", "1.0", "1e0"].entries()) {
+    const rejected = processAssignmentBufferState(createInitialProgression(NOW), NOW, `cursor-malformed-${index}`, [
+      { action: DbAction.SaveLastSeenSquadChatTimeStamp, data },
+    ]);
+    assert.equal(rejected.state.lastSeenSquadChatTimestamp, undefined);
+    assert.deepEqual(JSON.parse(rejected.requestsResults), [
+      { ActionId: 193, Result: ApiErrorCode.UnknownAction },
+    ]);
+  }
 });
 
 test("GetPlayerData restores squad analytics through the recovered PlayerAnalyticsData key", () => {
