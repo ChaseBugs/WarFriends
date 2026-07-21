@@ -407,7 +407,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   confirmed active-VIP PvP, resets after four battles, grants two independently selected visual
   parts, preserves duplicate `_#n-VIP` wire entries, and restores its countdown through
   `PlayerAnalyticsData`. Nonzero VIP discounts stay rejected until retired Fusebox offer
-  definitions are recovered into a server allowlist.
+  definitions are recovered into a server allowlist. Actions `135` and `136` are authenticated
+  fail-closed routes: without that allowlist they return recovered `13501`/`13601` errors and
+  never persist client-echoed finish times, discounts, keys, or offer names.
 - **Verified Google Play purchases, packs, restore, and revocation**: Android actions `142`,
   `9999999`, and `130` validate the
   recovered `ProductId`/`PurchaseToken`/`PackageName`/`OrderId` proof through Google Play Developer
