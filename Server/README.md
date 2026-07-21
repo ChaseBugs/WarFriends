@@ -333,6 +333,12 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   exact fields, an ID bound to its UTC start second, a safe window of at least one hour, creation
   inside that window, and an exact active or terminal timestamp shape. Future durable timestamps
   fail on live paths, and settled windows cannot reopen after a configuration-duration change.
+  Every complete division row is likewise proved before creation, assignment/pointer repair,
+  scoring, eligibility mutation, reads, placement, or settlement. Its exact round ID, season
+  window, level/division, bounded unique squads and members, safe counters, revision and dates,
+  active/settled shape, and one-to-50 entry/member bounds must agree; each shared score must equal
+  the sum of its member contributions. Post-window leave/kick eligibility may retain an audit
+  update during scheduler delay, but the separate half-open scoring proof still blocks points.
   Only a confirmed
   ranked PvP win adds server-derived Squad Points, and that score commits in the same transaction
   as the terminal match receipt. Participant squads created after the season snapshot are assigned

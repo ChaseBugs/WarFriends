@@ -36,6 +36,12 @@ const MAX_UNIX_SECONDS = 2_147_483_647;
 const SQUAD_WAR_SEASON_KEYS = new Set([
   "_id", "seasonId", "startsAt", "endsAt", "status", "createdAt", "settledAt",
 ]);
+const SQUAD_WAR_ROUND_KEYS = new Set([
+  "_id", "roundId", "seasonId", "level", "division", "startsAt", "endsAt", "status",
+  "entries", "revision", "createdAt", "updatedAt", "settledAt",
+]);
+const SQUAD_WAR_ENTRY_KEYS = new Set(["squadId", "squadIcon", "baseScore", "score", "wins", "members"]);
+const SQUAD_WAR_MEMBER_KEYS = new Set(["playerId", "name", "score", "rewardEligible"]);
 
 function safeWarDate(value: unknown): value is Date {
   return value instanceof Date
@@ -85,6 +91,108 @@ export function validatedSquadWarSeason(
     throw new ApiError(ApiErrorCode.InternalServerError, "Stored Squad Wars season authority is invalid.");
   }
   return season;
+}
+
+function boundedWarText(value: unknown, minimum: number, maximum: number): value is string {
+  return typeof value === "string"
+    && value.length >= minimum
+    && value.length <= maximum
+    && value.trim() === value
+    && !/[\u0000-\u001f\u007f]/u.test(value);
+}
+
+/**
+ * Validate one complete Squad War division before it can affect score, placement, or rewards.
+ *
+ * Entry score is deliberately required to equal the sum of its member contributions. Both are
+ * incremented by the same confirmed match transition, so a mismatch is damaged authority rather
+ * than a legacy representation. Proving every entry—not only the participant being updated—also
+ * prevents unrelated corruption from influencing deterministic placement at final settlement.
+ */
+export function validatedSquadWarRound(
+  round: SquadWarRoundDocument,
+  season?: SquadWarSeasonDocument,
+  now?: Date,
+): SquadWarRoundDocument {
+  const raw = round as unknown as Record<string, unknown>;
+  const outerValid = !!round
+    && typeof round === "object"
+    && !Array.isArray(round)
+    && Object.keys(raw).every((key) => SQUAD_WAR_ROUND_KEYS.has(key))
+    && /^sw[0-9a-z]+$/u.test(round.seasonId)
+    && Number.isSafeInteger(round.level)
+    && round.level >= SQUAD_WAR_MIN_LEVEL
+    && round.level <= SQUAD_WAR_MAX_LEVEL
+    && Number.isSafeInteger(round.division)
+    && round.division >= 0
+    && round.division <= MAX_UNIX_SECONDS
+    && round.roundId === squadWarRoundId(round.level, { seasonId: round.seasonId }, round.division)
+    && safeWarDate(round.startsAt)
+    && safeWarDate(round.endsAt)
+    && safeWarDate(round.createdAt)
+    && safeWarDate(round.updatedAt)
+    && round.startsAt.getMilliseconds() === 0
+    && round.endsAt.getMilliseconds() === 0
+    && round.startsAt.getTime() < round.endsAt.getTime()
+    && round.createdAt.getTime() >= round.startsAt.getTime()
+    && round.createdAt.getTime() < round.endsAt.getTime()
+    && round.updatedAt.getTime() >= round.createdAt.getTime()
+    && Number.isSafeInteger(round.revision)
+    && round.revision >= 0
+    && round.revision < Number.MAX_SAFE_INTEGER
+    && Array.isArray(round.entries)
+    && round.entries.length >= 1
+    && round.entries.length <= SQUAD_WAR_MAX_DIVISION_SIZE
+    && (now === undefined || (safeWarDate(now) && round.updatedAt.getTime() <= now.getTime()));
+  const stateValid = outerValid && ((round.status === "active"
+    // Roster leave/kick can revoke eligibility after the score window closes but before the
+    // leased scheduler settles the round. Scoring has its own strict half-open window proof, so
+    // retaining this audit update does not reopen points while avoiding a blocked squad mutation.
+    && round.settledAt === undefined)
+    || (round.status === "settled"
+      && safeWarDate(round.settledAt)
+      && round.settledAt.getTime() >= round.endsAt.getTime()
+      && round.updatedAt.getTime() === round.settledAt.getTime()
+      && (now === undefined || round.settledAt.getTime() <= now.getTime())));
+  const entriesValid = stateValid && round.entries.every((entry) => {
+    const entryRaw = entry as unknown as Record<string, unknown>;
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)
+      || !Object.keys(entryRaw).every((key) => SQUAD_WAR_ENTRY_KEYS.has(key))
+      || !boundedWarText(entry.squadId, 3, 24)
+      || typeof entry.squadIcon !== "string"
+      || entry.squadIcon.length > 4_096
+      || /[\u0000-\u001f\u007f]/u.test(entry.squadIcon)
+      || !Number.isSafeInteger(entry.baseScore) || entry.baseScore < 0
+      || !Number.isSafeInteger(entry.score) || entry.score < 0
+      || !Number.isSafeInteger(entry.wins) || entry.wins < 0 || entry.wins > entry.score
+      || entry.baseScore > Number.MAX_SAFE_INTEGER - entry.score
+      || !Array.isArray(entry.members) || entry.members.length < 1 || entry.members.length > 50) return false;
+    let memberScore = 0;
+    const memberIds = new Set<string>();
+    for (const member of entry.members) {
+      const memberRaw = member as unknown as Record<string, unknown>;
+      if (!member || typeof member !== "object" || Array.isArray(member)
+        || !Object.keys(memberRaw).every((key) => SQUAD_WAR_MEMBER_KEYS.has(key))
+        || !boundedWarText(member.playerId, 1, 160)
+        || !boundedWarText(member.name, 1, 64)
+        || !Number.isSafeInteger(member.score) || member.score < 0
+        || (member.rewardEligible !== undefined && typeof member.rewardEligible !== "boolean")
+        || memberIds.has(member.playerId)
+        || memberScore > Number.MAX_SAFE_INTEGER - member.score) return false;
+      memberIds.add(member.playerId);
+      memberScore += member.score;
+    }
+    return memberScore === entry.score;
+  });
+  const squadIds = entriesValid ? round.entries.map((entry) => entry.squadId) : [];
+  const seasonValid = !season || (validatedSquadWarSeason(season, now)
+    && round.seasonId === season.seasonId
+    && round.startsAt.getTime() === season.startsAt.getTime()
+    && round.endsAt.getTime() === season.endsAt.getTime());
+  if (!entriesValid || new Set(squadIds).size !== squadIds.length || !seasonValid) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Stored Squad Wars round authority is invalid.");
+  }
+  return round;
 }
 
 export type SquadWarProgressStatus =
@@ -192,6 +300,13 @@ export async function ensureActiveSquadWarSeason(now = new Date()): Promise<Squa
       const winner = await squadWarSeasons().findOne({ seasonId: window.seasonId }, { session });
       if (winner) return validatedSquadWarSeason(winner, now);
 
+      const season: SquadWarSeasonDocument = validatedSquadWarSeason({
+        seasonId: window.seasonId,
+        startsAt: window.startsAt,
+        endsAt: window.endsAt,
+        status: "active",
+        createdAt: now,
+      }, now);
       const allSquads = await squads().find({}, { session }).sort({ squadWarLevel: 1, squadPoints: -1, name: 1 }).toArray();
       const rounds: SquadWarRoundDocument[] = [];
       for (let level = SQUAD_WAR_MIN_LEVEL; level <= SQUAD_WAR_MAX_LEVEL; level += 1) {
@@ -200,7 +315,7 @@ export async function ensureActiveSquadWarSeason(now = new Date()): Promise<Squa
           const division = Math.floor(offset / SQUAD_WAR_MAX_DIVISION_SIZE);
           const members = atLevel.slice(offset, offset + SQUAD_WAR_MAX_DIVISION_SIZE);
           const roundId = squadWarRoundId(level, window, division);
-          rounds.push({
+          const round: SquadWarRoundDocument = {
             roundId,
             seasonId: window.seasonId,
             level,
@@ -212,7 +327,9 @@ export async function ensureActiveSquadWarSeason(now = new Date()): Promise<Squa
             revision: 0,
             createdAt: now,
             updatedAt: now,
-          });
+          };
+          validatedSquadWarRound(round, season, now);
+          rounds.push(round);
           for (const squad of members) {
             await squads().updateOne(
               { name: squad.name },
@@ -233,14 +350,6 @@ export async function ensureActiveSquadWarSeason(now = new Date()): Promise<Squa
         }
       }
       if (rounds.length > 0) await squadWarRounds().insertMany(rounds, { session });
-      const season: SquadWarSeasonDocument = {
-        seasonId: window.seasonId,
-        startsAt: window.startsAt,
-        endsAt: window.endsAt,
-        status: "active",
-        createdAt: now,
-      };
-      validatedSquadWarSeason(season, now);
       await squadWarSeasons().insertOne(season, { session });
       return season;
     });
@@ -288,6 +397,7 @@ export async function ensureSquadWarAssignment(squadId: string, now = new Date()
       { seasonId: season.seasonId, status: "active", "entries.squadId": squadId },
       { session },
     ).limit(2).toArray();
+    existingAssignments.forEach((round) => validatedSquadWarRound(round, season, now));
     if (existingAssignments.length > 1) {
       throw new ApiError(
         ApiErrorCode.InternalServerError,
@@ -323,6 +433,7 @@ export async function ensureSquadWarAssignment(squadId: string, now = new Date()
       { seasonId: season.seasonId, level: SQUAD_WAR_MIN_LEVEL, status: "active" },
       { session },
     ).sort({ division: 1 }).toArray();
+    current.forEach((round) => validatedSquadWarRound(round, season, now));
     let round: SquadWarRoundDocument | null = current.find(
       (candidate) => candidate.entries.length < SQUAD_WAR_MAX_DIVISION_SIZE,
     ) ?? null;
@@ -337,7 +448,7 @@ export async function ensureSquadWarAssignment(squadId: string, now = new Date()
         { session, returnDocument: "after" },
       );
       if (!updated) throw new Error(`Concurrent Squad Wars assignment rejected ${squadId}.`);
-      round = updated;
+      round = validatedSquadWarRound(updated, season, now);
     } else {
       const division = current.reduce((maximum, candidate) => Math.max(maximum, candidate.division), -1) + 1;
       const roundId = squadWarRoundId(SQUAD_WAR_MIN_LEVEL, season, division);
@@ -354,6 +465,7 @@ export async function ensureSquadWarAssignment(squadId: string, now = new Date()
         createdAt: now,
         updatedAt: now,
       };
+      validatedSquadWarRound(round, season, now);
       await squadWarRounds().insertOne(round, { session });
     }
     if (!round) throw new Error(`Squad Wars assignment did not create a round for ${squadId}.`);
@@ -523,6 +635,7 @@ export async function recordConfirmedSquadWarProgress(
       `Squad ${squadId} has no active Squad Wars assignment; retry match settlement.`,
     );
   }
+  validatedSquadWarRound(round, undefined, settledAt);
   const entryIndex = requireSquadWarScoringEntryIndex(round, squadId, settledAt);
   const entry = round.entries[entryIndex]!;
   const rosterMember = squad.members.find((member) => member.playerId === playerId);
@@ -535,6 +648,12 @@ export async function recordConfirmedSquadWarProgress(
   const entries = round.entries.map((candidate, index) => index === entryIndex
     ? updatedEntry
     : candidate);
+  validatedSquadWarRound({
+    ...round,
+    entries,
+    revision: round.revision + 1,
+    updatedAt: settledAt,
+  }, undefined, settledAt);
   const update = await squadWarRounds().updateOne(
     { roundId, status: "active", revision: round.revision },
     { $set: { entries, updatedAt: settledAt }, $inc: { revision: 1 } },
@@ -620,6 +739,7 @@ export async function invalidateSquadWarRewardEligibility(
   if (!roundId || !squadId || !playerId) return false;
   const round = await squadWarRounds().findOne({ roundId, status: "active" }, { session });
   if (!round) return false;
+  validatedSquadWarRound(round, undefined, changedAt);
   const entryIndex = round.entries.findIndex((entry) => entry.squadId === squadId);
   if (entryIndex < 0) return false;
   const memberIndex = round.entries[entryIndex]!.members.findIndex((member) => member.playerId === playerId);
@@ -633,6 +753,12 @@ export async function invalidateSquadWarRewardEligibility(
         : { ...member }),
     }
     : entry);
+  validatedSquadWarRound({
+    ...round,
+    entries,
+    revision: round.revision + 1,
+    updatedAt: changedAt,
+  }, undefined, changedAt);
   const update = await squadWarRounds().updateOne(
     { roundId, status: "active", revision: round.revision },
     { $set: { entries, updatedAt: changedAt }, $inc: { revision: 1 } },
@@ -703,7 +829,11 @@ async function completeFirstSquadWarAchievement(
 export async function settleSquadWarRound(roundId: string, now = new Date()): Promise<{ settled: boolean; messages: number }> {
   return withMongoTransaction(async (session) => {
     const round = await squadWarRounds().findOne({ roundId }, { session });
-    if (!round || round.status === "settled") return { settled: false, messages: 0 };
+    if (!round) return { settled: false, messages: 0 };
+    const season = await squadWarSeasons().findOne({ seasonId: round.seasonId }, { session });
+    if (!season) throw new Error(`Squad Wars season ${round.seasonId} is missing.`);
+    validatedSquadWarRound(round, season, now);
+    if (round.status === "settled") return { settled: false, messages: 0 };
     if (round.endsAt > now) return { settled: false, messages: 0 };
 
     const placements = rankSquadWarDivision(round.entries, round.level);
@@ -779,6 +909,13 @@ export async function settleSquadWarRound(roundId: string, now = new Date()): Pr
         { session },
       );
     }
+    validatedSquadWarRound({
+      ...round,
+      status: "settled",
+      settledAt: now,
+      updatedAt: now,
+      revision: round.revision + 1,
+    }, season, now);
     const finish = await squadWarRounds().updateOne(
       { roundId, status: "active", revision: round.revision },
       { $set: { status: "settled", settledAt: now, updatedAt: now }, $inc: { revision: 1 } },
@@ -793,6 +930,7 @@ export async function settleSquadWarRound(roundId: string, now = new Date()): Pr
 export async function maintainSquadWars(now = new Date()): Promise<{ rounds: number; messages: number }> {
   if (!config.squadWarsEnabled) return { rounds: 0, messages: 0 };
   const expired = await squadWarRounds().find({ status: "active", endsAt: { $lte: now } }).sort({ endsAt: 1 }).limit(100).toArray();
+  expired.forEach((round) => validatedSquadWarRound(round, undefined, now));
   let rounds = 0;
   let messageCount = 0;
   for (const round of expired) {

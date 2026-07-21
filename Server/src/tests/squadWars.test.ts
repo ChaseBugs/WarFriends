@@ -13,9 +13,10 @@ import {
   requireSquadWarSettlementAvailability,
   requireSquadWarScoringEntryIndex,
   squadWarRewardEligiblePlayerIds,
+  validatedSquadWarRound,
   validatedSquadWarSeason,
 } from "../services/squadWarService";
-import type { SquadWarSeasonDocument } from "../db";
+import type { SquadWarRoundDocument, SquadWarSeasonDocument } from "../db";
 import {
   claimableMessageReward,
   toClientMessage,
@@ -155,6 +156,53 @@ test("durable Squad War season authority binds window identity, state, and times
   assert.throws(
     () => validatedSquadWarSeason(active, new Date(createdAt.getTime() - 1)),
     /season authority is invalid/,
+  );
+});
+
+test("durable Squad War round authority binds division shape and score conservation", () => {
+  const window = squadWarWindowAt(new Date("2026-07-21T12:34:56.000Z"));
+  const createdAt = new Date(window.startsAt.getTime() + 1_000);
+  const season: SquadWarSeasonDocument = { ...window, status: "active", createdAt };
+  const round: SquadWarRoundDocument = {
+    roundId: squadWarRoundId(4, window, 2),
+    seasonId: window.seasonId,
+    level: 4,
+    division: 2,
+    startsAt: window.startsAt,
+    endsAt: window.endsAt,
+    status: "active",
+    entries: [{
+      squadId: "Alpha",
+      squadIcon: "menu-squad-1",
+      baseScore: 100,
+      score: 9,
+      wins: 2,
+      members: [
+        { playerId: "player-1", name: "Player One", score: 4, rewardEligible: true },
+        { playerId: "player-2", name: "Player Two", score: 5 },
+      ],
+    }],
+    revision: 2,
+    createdAt,
+    updatedAt: createdAt,
+  };
+  assert.equal(validatedSquadWarRound(round, season, createdAt), round);
+  assert.throws(
+    () => validatedSquadWarRound({ ...round, entries: [{ ...round.entries[0]!, score: 10 }] }, season, createdAt),
+    /round authority is invalid/,
+  );
+  assert.throws(
+    () => validatedSquadWarRound({ ...round, entries: [round.entries[0]!, round.entries[0]!] }, season, createdAt),
+    /round authority is invalid/,
+  );
+  assert.throws(
+    () => validatedSquadWarRound({ ...round, revision: Number.MAX_SAFE_INTEGER }, season, createdAt),
+    /round authority is invalid/,
+  );
+  const settledAt = new Date(window.endsAt.getTime() + 1_000);
+  assert.throws(
+    () => validatedSquadWarRound({ ...round, status: "settled", settledAt }, season, settledAt),
+    /round authority is invalid/,
   );
 });
 
