@@ -24,6 +24,11 @@ export interface SquadChatHistoryPayload {
   BeforeCursor?: string;
 }
 
+/** Server-pushed direct/challenge row in the same Dynamo attribute shape as GetAllMessages. */
+export interface InboxMessagePayload {
+  [field: string]: unknown;
+}
+
 export interface JoinMatchPayload {
   MatchId: string;
 }

@@ -84,6 +84,13 @@ import {
   matchDisconnectGraceSeconds,
   matchJoinTimeoutSeconds,
 } from "./services/multiplayerTimeoutPolicyService";
+import {
+  getLiveInboxFanout,
+  inboxFanoutOriginId,
+  INBOX_FANOUT_REDIS_CHANNEL,
+  parseInboxFanoutNotice,
+  registerLocalInboxDelivery,
+} from "./services/inboxFanoutService";
 
 /**
  * WebSocket coordinator for reconstructed PvP and Squad Chat transport.
@@ -103,7 +110,8 @@ import {
  * Match event payloads other than the validated CardPlayed event remain opaque until the original
  * Photon RPC/event schema is fully recovered. The current authority boundary validates
  * authentication, assigned membership, room lifecycle, and two-party result consensus, but does
- * not simulate combat. Squad Chat uses MongoDB authority plus optional Redis live fan-out.
+ * not simulate combat. Squad Chat and direct/challenge inbox notifications use MongoDB authority
+ * plus optional Redis live fan-out.
  */
 
 interface Client {
@@ -141,6 +149,10 @@ export const hubInstanceId = randomUUID();
 // Redis pub/sub is normally at-most-once, but reconnection or an operator bridge can repeat a
 // notice. Keep a bounded process-local delivery receipt so one message never appears twice.
 const deliveredSquadChatMessages = new Map<string, true>();
+// Direct/challenge notifications are hints for rows already committed to MongoDB. Retain a
+// bounded process-local receipt so local delivery and a repeated remote notice cannot display the
+// same inbox card twice on one connected replacement client.
+const deliveredInboxMessages = new Map<string, true>();
 // Redis pub/sub may be repeated by an operator bridge or reconnection edge. CardPlayed is a
 // client-visible gameplay effect, so retain a bounded receiving-node receipt in addition to the
 // durable source evidence. Active matches do not survive this coordinator's restart.
@@ -372,6 +384,17 @@ function rememberSquadChatDelivery(messageId: string): boolean {
   return true;
 }
 
+function rememberInboxDelivery(recipientPlayerId: string, messageId: string): boolean {
+  const key = `${recipientPlayerId}:${messageId}`;
+  if (deliveredInboxMessages.has(key)) return false;
+  deliveredInboxMessages.set(key, true);
+  if (deliveredInboxMessages.size > 10_000) {
+    const oldest = deliveredInboxMessages.keys().next().value as string | undefined;
+    if (oldest) deliveredInboxMessages.delete(oldest);
+  }
+  return true;
+}
+
 function rememberPvpCardFanoutDelivery(key: string): boolean {
   if (deliveredPvpCardFanout.has(key)) return false;
   deliveredPvpCardFanout.set(key, true);
@@ -400,6 +423,23 @@ async function receiveRemoteSquadChat(raw: string): Promise<void> {
   // applies immediate expiry, and refreshes the recipient roster on this receiving node.
   const fanout = await getSquadChatFanout(notice.messageId);
   if (fanout) deliverSquadChatMessage(fanout.message, fanout.memberPlayerIds);
+}
+
+async function deliverInboxMessage(recipientPlayerId: string, messageId: string): Promise<void> {
+  if (!onlinePlayers.has(recipientPlayerId)) return;
+  const fanout = await getLiveInboxFanout(recipientPlayerId, messageId);
+  if (!fanout) return;
+  const key = `${recipientPlayerId}:${messageId}`;
+  if (deliveredInboxMessages.has(key)) return;
+  if (sendToPlayer(recipientPlayerId, { Type: "InboxMessage", Payload: fanout.message })) {
+    rememberInboxDelivery(recipientPlayerId, messageId);
+  }
+}
+
+async function receiveRemoteInboxFanout(raw: string): Promise<void> {
+  const notice = parseInboxFanoutNotice(raw);
+  if (!notice || notice.originId === inboxFanoutOriginId) return;
+  await deliverInboxMessage(notice.recipientPlayerId, notice.messageId);
 }
 
 async function receiveRemotePvpFanout(raw: string): Promise<void> {
@@ -605,6 +645,7 @@ async function startClientPresenceHeartbeat(client: Client, playerId: string): P
 
 export async function createGameHub(httpServer: HttpServer): Promise<WebSocketServer> {
   roomManager.setSender(sendToClientId);
+  registerLocalInboxDelivery(deliverInboxMessage);
 
   await redisSubscribe(SQUAD_CHAT_REDIS_CHANNEL, (raw) => {
     void receiveRemoteSquadChat(raw).catch((error: unknown) => {
@@ -616,6 +657,13 @@ export async function createGameHub(httpServer: HttpServer): Promise<WebSocketSe
   await redisSubscribe(PVP_FANOUT_REDIS_CHANNEL, (raw) => {
     void receiveRemotePvpFanout(raw).catch((error: unknown) => {
       logger.websocket.error("Remote PvP fan-out failed", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    });
+  });
+  await redisSubscribe(INBOX_FANOUT_REDIS_CHANNEL, (raw) => {
+    void receiveRemoteInboxFanout(raw).catch((error: unknown) => {
+      logger.websocket.error("Remote inbox fan-out failed", {
         error: error instanceof Error ? error.message : String(error),
       });
     });

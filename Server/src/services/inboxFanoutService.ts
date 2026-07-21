@@ -1,0 +1,153 @@
+import { randomUUID } from "crypto";
+import { messages } from "../db";
+import { redisPublish } from "../redis";
+import {
+  challengeIsExpired,
+  toClientMessage,
+  type MessageDoc,
+} from "./socialService";
+import { validatedInboxMessageDocument } from "./inboxMessageAuthorityService";
+
+/** Transient wake-up channel; MongoDB remains the complete inbox authority. */
+export const INBOX_FANOUT_REDIS_CHANNEL = "warfriends:inbox:fanout:v1";
+
+/** Distinguishes this process's Redis echo from a notice published by another hub node. */
+export const inboxFanoutOriginId = randomUUID();
+
+export interface InboxFanoutNotice {
+  originId: string;
+  recipientPlayerId: string;
+  messageId: string;
+}
+
+export interface InboxFanoutMessage {
+  recipientPlayerId: string;
+  messageId: string;
+  message: ReturnType<typeof toClientMessage>;
+}
+
+type LocalDelivery = (recipientPlayerId: string, messageId: string) => void | Promise<void>;
+let localDelivery: LocalDelivery | null = null;
+
+function boundedIdentity(value: unknown, maximumLength: number): value is string {
+  return typeof value === "string"
+    && value.length > 0
+    && value.length <= maximumLength
+    && value.trim() === value
+    && !/\p{Cc}/u.test(value);
+}
+
+/**
+ * Register the one process-local WebSocket handoff owned by `gameHub`.
+ *
+ * HTTP handlers can persist inbox messages before or after the hub starts in tests. Keeping the
+ * callback optional means persistence never depends on a live socket coordinator; an offline
+ * client still retrieves the same row through `GetAllMessages`.
+ */
+export function registerLocalInboxDelivery(delivery: LocalDelivery): void {
+  localDelivery = delivery;
+}
+
+/** Build a bounded, versioned-by-channel Redis hint containing no message content. */
+export function buildInboxFanoutNotice(
+  originId: string,
+  recipientPlayerId: string,
+  messageId: string,
+): string {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(originId)
+    || !boundedIdentity(recipientPlayerId, 256)
+    || !boundedIdentity(messageId, 256)) {
+    throw new Error("Inbox fan-out notice is invalid.");
+  }
+  return JSON.stringify({ originId, recipientPlayerId, messageId });
+}
+
+/** Reject extra fields and malformed identities before a Redis hint can trigger a database read. */
+export function parseInboxFanoutNotice(raw: string): InboxFanoutNotice | null {
+  if (typeof raw !== "string" || raw.length < 1 || raw.length > 1_024) return null;
+  try {
+    const value = JSON.parse(raw) as Record<string, unknown> | null;
+    if (!value || Array.isArray(value)
+      || Object.keys(value).sort().join(",") !== "messageId,originId,recipientPlayerId"
+      || typeof value.originId !== "string"
+      || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(value.originId)
+      || !boundedIdentity(value.recipientPlayerId, 256)
+      || !boundedIdentity(value.messageId, 256)) return null;
+    return {
+      originId: value.originId,
+      recipientPlayerId: value.recipientPlayerId,
+      messageId: value.messageId,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Re-bind one transient hint to a complete durable direct/challenge message.
+ *
+ * Only the two player-authored families are pushed. Economy/result messages retain their normal
+ * ordered inbox fetch and claim lifecycle. Validation runs before ignored/expiry filtering so a
+ * malformed MongoDB row cannot become harmless-looking absence merely because Redis named it.
+ */
+export function liveInboxMessageFor(
+  raw: MessageDoc,
+  recipientPlayerId: string,
+  now = new Date(),
+): InboxFanoutMessage | null {
+  // Challenge expiry is an expected delivery race, not durable corruption. Validate its complete
+  // stored shape without application time, then apply the future/expiry checks explicitly. Other
+  // message families retain their normal time-aware validator.
+  const message = raw.messageType === 0
+    ? validatedInboxMessageDocument(raw)
+    : validatedInboxMessageDocument(raw, now);
+  if (!(now instanceof Date) || !Number.isSafeInteger(now.getTime()) || now.getTime() <= 0) {
+    throw new Error("Inbox fan-out time is invalid.");
+  }
+  if (message.createdAt.getTime() > now.getTime()) {
+    throw new Error("Stored inbox message is from the future.");
+  }
+  if (message.toPlayerId !== recipientPlayerId
+    || (message.messageType !== 0 && message.messageType !== 27)
+    || message.read
+    || message.ignored
+    || message.accepted
+    || challengeIsExpired(message, now)) return null;
+  return {
+    recipientPlayerId,
+    messageId: message.messageId,
+    message: toClientMessage(message),
+  };
+}
+
+/** Reload a Redis/local hint through recipient ownership and complete message authority. */
+export async function getLiveInboxFanout(
+  recipientPlayerId: string,
+  messageId: string,
+  now = new Date(),
+): Promise<InboxFanoutMessage | null> {
+  if (!boundedIdentity(recipientPlayerId, 256) || !boundedIdentity(messageId, 256)) return null;
+  const message = await messages().findOne({
+    toPlayerId: recipientPlayerId,
+    messageId,
+    messageType: { $in: [0, 27] },
+  }) as unknown as MessageDoc | null;
+  return message ? liveInboxMessageFor(message, recipientPlayerId, now) : null;
+}
+
+/**
+ * Notify local sockets, then publish only a wake-up hint for other nodes.
+ *
+ * Both paths are best-effort after the MongoDB insert. A socket or Redis outage must never roll
+ * back, duplicate, or falsely acknowledge the durable message; `GetAllMessages` remains the
+ * recovery path and the receiving node reloads the row instead of trusting notice content.
+ */
+export async function publishInboxFanout(recipientPlayerId: string, messageId: string): Promise<void> {
+  try {
+    await localDelivery?.(recipientPlayerId, messageId);
+  } catch {
+    // Delivery failure cannot invalidate the already committed inbox row.
+  }
+  const notice = buildInboxFanoutNotice(inboxFanoutOriginId, recipientPlayerId, messageId);
+  await redisPublish(INBOX_FANOUT_REDIS_CHANNEL, notice);
+}

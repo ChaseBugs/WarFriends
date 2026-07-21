@@ -16,6 +16,7 @@ import { getFriendsInfo } from "../services/friendService";
 import { authed, type HandlerEntry } from "./types";
 import { parseChallengeMessageRequest } from "./socialRequestParsing";
 import { requestedInboxPageLimit } from "../services/socialRequestCountService";
+import { publishInboxFanout } from "../services/inboxFanoutService";
 
 // Player discovery and inbox handlers. Hit-list mutations remain rejected because their
 // recovered capacity semantics are ambiguous; normal/challenge messages use exact client
@@ -40,6 +41,7 @@ export const socialHandlers: Record<number, HandlerEntry> = {
   [DbAction.MessageSent]: authed(async ({ player, req }) => {
     if (req.ChallengedPlayerId !== undefined) {
       const message = await sendChallenge(player!, parseChallengeMessageRequest(req));
+      await publishInboxFanout(message.toPlayerId, message.messageId);
       return ok(DbAction.MessageSent, { Delivered: true, MessageId: message.messageId });
     }
 
@@ -47,6 +49,7 @@ export const socialHandlers: Record<number, HandlerEntry> = {
     const body = str(req.Message) || str(req.Body) || str(req.Text);
     const delivered = Boolean(to && body.trim());
     const message = delivered ? await sendMessage(player!.id, player!.player.accountName, to, body) : null;
+    if (message) await publishInboxFanout(message.toPlayerId, message.messageId);
     return ok(DbAction.MessageSent, { Delivered: delivered, ...(message ? { MessageId: message.messageId } : {}) });
   }),
 

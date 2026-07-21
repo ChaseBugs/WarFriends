@@ -768,6 +768,14 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   storage margin. The
   complete recipient account is validated before a message targets it, rather than trusting an
   ID-only index projection.
+  Once a direct message or challenge is durable, the `/hub` transport pushes an `InboxMessage`
+  envelope to an authenticated recipient on the same node and publishes a bounded identity-only
+  Redis hint for other nodes. The receiving node reloads the exact recipient/message row from
+  MongoDB, runs the shared type-specific authority, excludes already-read/accepted/ignored rows or
+  expired challenges, emits
+  the same Dynamo attribute projection as `GetAllMessages`, and keeps a bounded duplicate receipt.
+  Redis and socket delivery remain best-effort after persistence; neither can invent content or
+  turn delivery failure into message loss because the normal inbox read remains the recovery path.
   Acceptance records its first durable timestamp and is idempotent after a lost response, while
   wrong-recipient, ignored, expired, and non-challenge rows remain rejected.
   The complete type-0 row is validated before insertion, duplicate replay, inbox publication,
