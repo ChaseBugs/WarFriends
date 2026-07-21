@@ -1,5 +1,5 @@
 import { ApiError, ApiErrorCode } from "../apiErrors";
-import { parsePvpUsedCards } from "../services/cardInventoryService";
+import { parseOptionalPvpUsedCards } from "../services/cardInventoryService";
 
 const CSHARP_INT32_MAX = 2_147_483_647;
 
@@ -51,7 +51,7 @@ export function assertedPvpWinnerId(
  * empty authoritative consumption report through nullish-coalescing or other broad defaults.
  */
 export function exactGameEndedUsedCards(value: unknown): string[] {
-  return parsePvpUsedCards(value === undefined ? [] : value);
+  return parseOptionalPvpUsedCards(value);
 }
 
 /**

@@ -26,7 +26,7 @@ import {
   validatedRelayedCardSequence,
   wasRelayedCardDelivered,
 } from "./services/matchService";
-import { parsePvpUsedCards } from "./services/cardInventoryService";
+import { parseOptionalPvpUsedCards } from "./services/cardInventoryService";
 import { resolveMatchReportStatus, roomManager } from "./gameRooms/roomManager";
 import type {
   ClientEnvelope,
@@ -1414,7 +1414,7 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
             p.MatchId,
             client.playerId,
             p.WinnerId,
-            parsePvpUsedCards(p.UsedCards ?? []),
+            parseOptionalPvpUsedCards(p.UsedCards),
             true,
           );
         } catch {
@@ -1475,7 +1475,7 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
           p.MatchId,
           client.playerId,
           p.WinnerId,
-          parsePvpUsedCards(p.UsedCards ?? []),
+          parseOptionalPvpUsedCards(p.UsedCards),
           true,
         );
       } catch {

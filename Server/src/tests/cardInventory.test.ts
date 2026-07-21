@@ -23,6 +23,7 @@ import {
   craftAndClaimSubscribedCardState,
   parseCardPackPurchaseData,
   parsePvpUsedCards,
+  parseOptionalPvpUsedCards,
   purchaseCardPackState,
   startCardCraftingState,
 } from "../services/cardInventoryService";
@@ -197,6 +198,8 @@ test("PvP settlement parses, validates, and consumes normal and Buddy War Cards 
   assert.deepEqual(parsePvpUsedCards([]), []);
   assert.deepEqual(parsePvpUsedCards('["AMMOCRATE","AMMOCRATE"]'), ["AMMOCRATE", "AMMOCRATE"]);
   assert.throws(() => parsePvpUsedCards(JSON.stringify(Array.from({ length: 7 }, (_, index) => `card-${index}`))));
+  assert.deepEqual(parseOptionalPvpUsedCards(undefined), []);
+  assert.throws(() => parseOptionalPvpUsedCards(null));
 
   const initial = createInitialProgression(NOW);
   initial.cardInventory = {

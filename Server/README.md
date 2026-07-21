@@ -749,10 +749,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   outside the client width fail before settlement. Optional replacement `WinnerId` is only an exact
   assertion of the participant derived from a supported recovered `EndReason`; explicit malformed,
   contradictory, or unsupported-outcome aliases fail before a durable result report is written.
-  Stock `UsedCards` JSON strings and replacement native arrays share one strict parser. Only an
-  actually omitted replacement field means an empty list; explicit null, Boolean, number, object,
-  malformed JSON, oversized, or invalid list input fails before result consensus rather than being
-  nullish-defaulted into a zero-consumption report.
+  Stock `UsedCards` JSON strings and replacement native arrays share one strict parser across REST
+  `GameEnded` and both local/distributed WebSocket `MatchResult` paths. Only an actually omitted
+  replacement field means an empty list; explicit null, Boolean, number, object, malformed JSON,
+  oversized, or invalid list input fails before result consensus rather than being nullish-defaulted
+  into a zero-consumption report.
   The stock `BattleId` and replacement `MatchId` fields likewise identify one lifecycle without
   precedence: every present alias must be a string and two present aliases must be identical.
   True total absence and the legacy empty BattleId still reach feature-specific tutorial migration,

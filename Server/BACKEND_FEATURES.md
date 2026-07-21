@@ -224,10 +224,11 @@ the alias cannot bypass the mandatory recovered `EndReason` field. When present,
 exactly equal the participant derived from a supported PvP end reason; malformed, contradictory,
 or unsupported-outcome aliases fail before either consensus report is persisted.
 
-`GameEnded.UsedCards` now preserves transport presence at the REST boundary. Stock JSON strings and
-replacement native arrays use the same bounded card parser, while only true field absence selects
-the replacement empty-list shorthand. Explicit null, Boolean, numeric, object, malformed JSON, or
-invalid list values fail before result consensus instead of becoming a zero-consumption report.
+REST `GameEnded.UsedCards` and local/distributed WebSocket `MatchResult.UsedCards` now preserve
+transport presence through one shared bounded parser. Stock JSON strings and replacement native
+arrays are accepted, while only true field absence selects the replacement empty-list shorthand.
+Explicit null, Boolean, numeric, object, malformed JSON, or invalid list values fail before result
+consensus instead of becoming a zero-consumption report.
 
 Stock `BattleId` and replacement `MatchId` now share one exact alias boundary for start and result
 routes. Every present alias must be a string and simultaneous aliases must be identical; explicit

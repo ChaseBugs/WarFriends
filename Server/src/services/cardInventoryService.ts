@@ -166,6 +166,15 @@ export function parsePvpUsedCards(value: unknown): string[] {
   return [...parsed as string[]];
 }
 
+/**
+ * Preserve the replacement transports' optional empty-list shorthand without accepting null.
+ * Both REST GameEnded and WebSocket MatchResult may omit UsedCards when no card was played, but a
+ * present malformed value is still a consumption claim and must pass the exact shared parser.
+ */
+export function parseOptionalPvpUsedCards(value: unknown): string[] {
+  return parsePvpUsedCards(value === undefined ? [] : value);
+}
+
 export interface PvpCardConsumptionResult {
   state: PlayerProgressionState;
   cardInventory: CardInventoryState;
