@@ -9,10 +9,16 @@ import {
 import { unixNow } from "../services/playerStateService";
 import { authed, type HandlerEntry } from "./types";
 
-function requestedRewardDay(value: unknown): number {
+export function requestedRewardDay(value: unknown): number {
   // `claimRweard` is the original client's misspelled form key and therefore part of the
-  // protocol. Accepting a corrected alias helps tools, but the server never infers a day.
-  const parsed = Number(value);
+  // protocol. BeanstalkServerManager serializes its int through ToString; replacement JSON clients
+  // may send the same value as a number. Do not let Number() turn null, booleans, arrays, padded
+  // text, or alternate number syntax into a reward-bearing calendar index.
+  const parsed = typeof value === "number"
+    ? value
+    : typeof value === "string" && /^(?:[1-9]|[12]\d|3[01])$/.test(value)
+      ? Number(value)
+      : Number.NaN;
   if (!Number.isInteger(parsed) || parsed < 1 || parsed > 31) {
     throw new ApiError(ApiErrorCode.DailyRewardWrongIndex, "Invalid daily reward index.");
   }

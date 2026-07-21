@@ -1236,7 +1236,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   assemblies.
 - **Daily rewards**: `CheckDailyReward` and `ClaimDailyReward` provide the recovered monthly
   `dailyRewardData` calendar contract, one UTC-day unlock, ordered replay-safe claim cursors,
-  and exact parser payloads for Gold, WarBucks, Arena Tickets, loose Bronze/Silver/Gold cards,
+  and a canonical action-1002 `claimRweard` day boundary: only the recovered `int.ToString()`
+  decimal from 1 through 31 or the same replacement-client JSON integer is accepted, so coercible
+  nulls, Booleans, arrays, and alternate numeric text cannot choose a reward day. Claims return
+  exact parser payloads for Gold, WarBucks, Arena Tickets, loose Bronze/Silver/Gold cards,
   and Bronze/Silver/Gold packs. All three currency branches use the shared nonnegative safe-reward
   balance guard before advancing the claim cursor, so invalid amounts, damaged wallets, or overflow
   leave the day retryable. Wallets, inventory, achievement progress, the optional VIP pair,

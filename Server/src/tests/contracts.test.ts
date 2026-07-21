@@ -107,7 +107,7 @@ import {
   dailyRewardGoldForDay,
   validatedDailyRewardState,
 } from "../services/dailyRewardService";
-import { dailyRewardHandlers } from "../handlers/dailyRewards";
+import { dailyRewardHandlers, requestedRewardDay } from "../handlers/dailyRewards";
 import {
   assignmentStateFor,
   claimAssignmentState,
@@ -1039,6 +1039,40 @@ test("daily reward claims reject replays and locked future indexes", () => {
     () => claimDailyRewardState(claimed.state, now, 2),
     (error: unknown) => error instanceof Error && "code" in error && error.code === 1000001,
   );
+});
+
+test("daily reward claims require the recovered canonical day transport", () => {
+  assert.equal(requestedRewardDay(1), 1);
+  assert.equal(requestedRewardDay(31), 31);
+  assert.equal(requestedRewardDay("1"), 1);
+  assert.equal(requestedRewardDay("31"), 31);
+
+  for (const value of [
+    undefined,
+    null,
+    false,
+    true,
+    [],
+    [1],
+    "",
+    " 1",
+    "1 ",
+    "+1",
+    "01",
+    "1.0",
+    "1e0",
+    0,
+    32,
+    "0",
+    "32",
+  ]) {
+    assert.throws(
+      () => requestedRewardDay(value),
+      (error: unknown) => error instanceof Error
+        && "code" in error
+        && error.code === ApiErrorCode.DailyRewardWrongIndex,
+    );
+  }
 });
 
 test("daily reward authority rejects corrupt current-month cursors and date markers", () => {
