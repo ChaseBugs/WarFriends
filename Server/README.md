@@ -409,6 +409,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   The stock buffered `IgnoreMessage` path records a durable progression outbox entry beside
   `BufferId`, performs the recipient-filtered inbox update, and clears the entry afterward, so
   a process interruption is recoverable without allowing one player to hide another's message.
+  Reward action `91` accepts only server-generated type-9/11/23 Gold payloads. Its pure transition
+  validates the wallet and monotonic revision, then a progression-revision-filtered player update
+  commits in the same retry-safe transaction as the terminal message marker. A lost-response retry
+  returns the stored immutable delta without performing a second wallet write.
 - **Moderation reports and sanctions**: authenticated player/cheater reports are validated, rate-limited,
   deduplicated for safe retries, and stored with review status and evidence metadata. The
   configurable five-per-hour default is reserved by one atomic MongoDB counter per reporter, so

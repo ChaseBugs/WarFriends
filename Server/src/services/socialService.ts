@@ -12,6 +12,11 @@ import { buildDatabasePlayer, progressionForPlayer } from "./playerStateService"
 import { config } from "../config";
 import { requireModeratedText } from "./textModerationService";
 import { checkedRewardBalance } from "./rewardMathService";
+import { validatedCoreProgressionBalances } from "./coreProgressionAuthorityService";
+import {
+  progressionRevisionForRead,
+  validateProgressionRevisionAdvance,
+} from "./progressionRevisionAuthorityService";
 
 // Player discovery + messaging (BACKEND.md §2.3 "Social / messaging / hit list"). Search
 // and directory reads project players to the client's summary shape; messages are stored
@@ -339,6 +344,14 @@ function canonicalProgression(state: PlayerProgressionState): PlayerProgressionS
   return canonical;
 }
 
+function progressionRevisionFilter(player: PlayerDocument): Filter<PlayerDocument> {
+  const rawRevision = player.progression?.revision;
+  if (!player.progression) return { id: player.id, progression: { $exists: false } };
+  return rawRevision === undefined
+    ? { id: player.id, "progression.revision": { $exists: false } }
+    : { id: player.id, "progression.revision": rawRevision };
+}
+
 export interface ClaimedMessageReward {
   Gold: number;
   Warbucks: number;
@@ -356,6 +369,34 @@ export function claimableMessageReward(
       : 0;
   if (!Number.isSafeInteger(rewardGold) || rewardGold <= 0) return null;
   return { Gold: rewardGold, Warbucks: 0 };
+}
+
+/**
+ * Apply one server-authored inbox Gold reward without publishing its message receipt yet.
+ *
+ * Keeping this transition pure makes the two authorities independently testable: the caller owns
+ * the MongoDB transaction that marks the message terminal, while this function proves the wallet
+ * and optimistic revision successor. The transaction retries the complete read/transition/write
+ * callback after a write conflict, and its revision filter prevents a stale snapshot from being
+ * accepted as an ordinary successful update.
+ */
+export function applyInboxGoldRewardState(
+  state: PlayerProgressionState,
+  rewardGold: number,
+): PlayerProgressionState {
+  validatedCoreProgressionBalances(state);
+  const revision = progressionRevisionForRead(state.revision);
+  if (!Number.isSafeInteger(rewardGold) || rewardGold <= 0) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Stored inbox Gold reward is invalid.");
+  }
+  const next: PlayerProgressionState = {
+    ...state,
+    revision: revision + 1,
+    gold: checkedRewardBalance(state.gold, rewardGold, "Inbox Gold"),
+  };
+  validateProgressionRevisionAdvance(revision, next.revision);
+  validatedCoreProgressionBalances(next);
+  return next;
 }
 
 /**
@@ -388,16 +429,11 @@ export async function claimMessageReward(playerId: string, messageId: string): P
     const player = await players().findOne({ id: playerId }, { session });
     if (!player) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
     const progression = progressionForPlayer(player);
-    const gold = checkedRewardBalance(progression.gold, reward.Gold, "Inbox Gold");
-    const nextProgression = canonicalProgression({
-      ...progression,
-      revision: progression.revision + 1,
-      gold,
-    });
+    const nextProgression = canonicalProgression(applyInboxGoldRewardState(progression, reward.Gold));
     const response = reward;
 
     const playerUpdate = await players().updateOne(
-      { id: playerId },
+      progressionRevisionFilter(player),
       { $set: { progression: nextProgression, updatedAt: new Date() } },
       { session },
     );
