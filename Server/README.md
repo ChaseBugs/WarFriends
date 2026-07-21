@@ -739,7 +739,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   and ignored. Canonical safe-integer strings remain the explicit legacy DynamoDB-number migration,
   and only an absent older idempotency key is optional; malformed or extra authority fails closed.
 - **Moderation reports and sanctions**: authenticated player/cheater reports are validated, rate-limited,
-  deduplicated for safe retries, and stored with review status and evidence metadata. The
+  deduplicated for safe retries, and stored with review status and evidence metadata. Mandatory
+  `ReportType` accepts only canonical recovered decimal text or an exact JSON integer in the bounded
+  compatibility range; missing or coercible JavaScript values cannot silently become category zero. The
   configurable five-per-hour default is reserved by one atomic MongoDB counter per reporter, so
   simultaneous requests across backend processes cannot overrun it. Each complete throttle row is
   validated before its count is trusted: exact fields, the expected HMAC-hidden reporter key, a

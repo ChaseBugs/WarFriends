@@ -98,6 +98,12 @@ oversized values cannot become combat or mission authority through JavaScript co
 settlement applies the same boundary before its optional replacement-transport `WinnerId` alias, so
 the alias cannot bypass the mandatory recovered `EndReason` field.
 
+Both recovered moderation-report actions now parse mandatory `ReportType` as canonical nonnegative
+decimal text or an exact JSON integer in the existing bounded compatibility range. Missing, null,
+Boolean, array, blank, signed or space-padded, leading-zero, fractional, exponent, non-finite, and
+out-of-range forms cannot silently enter category zero or alter report deduplication identity through
+JavaScript coercion.
+
 Moderation-retention retry receipts now validate exact identity fields, safe nonnegative report/appeal
 deletion counts, safe preview/creation chronology, and exact whole-day cutoffs within the global
 30-3650-day bounds before replay. Historical receipts remain valid across deploy-time policy changes.

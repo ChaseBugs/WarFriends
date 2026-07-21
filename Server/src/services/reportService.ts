@@ -328,7 +328,14 @@ function boundedString(value: unknown, maxLength: number): string {
 export function normalizeReportInput(req: Record<string, unknown>, requiresMessage: boolean): PlayerReportInput {
   const reportedPlayerId = boundedString(req.ReportedPlayerId, 128);
   const message = boundedString(req.Message, 1000);
-  const reportType = Number(req.ReportType);
+  // Both recovered report actions serialize an `int` with ToString(). Keep the existing bounded
+  // 0-100 compatibility range, but require canonical decimal transport so missing/null/Boolean/
+  // array input cannot silently become report category zero through JavaScript coercion.
+  const reportType = typeof req.ReportType === "number"
+    ? req.ReportType
+    : typeof req.ReportType === "string" && /^(?:0|[1-9]\d*)$/.test(req.ReportType)
+      ? Number(req.ReportType)
+      : Number.NaN;
   if (!reportedPlayerId) throw new ApiError(ApiErrorCode.PlayerNotFound, "Reported player is required.");
   if (!Number.isInteger(reportType) || reportType < 0 || reportType > 100) {
     throw new ApiError(ApiErrorCode.UnknownAction, "Invalid report type.");

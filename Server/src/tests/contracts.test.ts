@@ -1711,6 +1711,16 @@ test("moderation report contract preserves recovered fields and requires authent
   assert.equal(reportHandlers[DbAction.SendPlayerReport]?.requiresAuth, true);
   assert.equal(reportHandlers[DbAction.ReportCheater]?.requiresAuth, true);
   assert.throws(() => normalizeReportInput({ ReportedPlayerId: "target-1", ReportType: 2 }, true));
+  for (const reportType of [
+    undefined, null, true, false, [], ["2"], {}, "", " 2", "02", "+2", "2.0", "2e0", -1, 101,
+    Number.NaN, Number.POSITIVE_INFINITY,
+  ]) {
+    assert.throws(() => normalizeReportInput({
+      ReportedPlayerId: "target-1",
+      ReportType: reportType,
+      Message: "review this report",
+    }, true));
+  }
 });
 
 test("challenge inbox adapter emits the DynamoDB attribute wrappers parsed by Unity", () => {
