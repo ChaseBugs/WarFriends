@@ -407,8 +407,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   squad/debit write. Create and update treat admission settings as exact assertions at both
   the HTTP adapter and service boundary: join policy accepts only integers 0 through 2,
   required medals accepts only a nonnegative C# signed `int`, and the legacy `IsPublic`
-  projection accepts only exact Boolean representations. Malformed, fractional, blank, or
-  oversized input is rejected instead of floored, broadly coerced, silently ignored, or
+  projection accepts only exact Boolean representations. Decimal form values are canonical and
+  client-width-bound; padding, plus signs, leading zeros, alternate negative zero, fractions,
+  exponents, and oversized values fail, while Boolean text is neither trimmed nor case-folded.
+  Malformed or blank input is rejected instead of floored, broadly coerced, silently ignored, or
   replaced by a default. Every core membership, settings, invitation, join-request, PvP Squad
   Point, and Squad War write advances `updatedAt` through one shared strictly monotonic helper,
   including operations in the same wall-clock millisecond. Single-document replacements also

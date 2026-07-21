@@ -41,7 +41,9 @@ test("single-document squad writes bind the exact authorizing revision", () => {
 });
 
 test("squad admission settings reject coercion and preserve exact recovered integers", () => {
-  assert.equal(exactSquadInteger(" 2 ", "JoinPolicy"), 2);
+  assert.equal(exactSquadInteger("2", "JoinPolicy"), 2);
+  assert.equal(exactSquadInteger("-2147483648", "RequiredMedals"), -2_147_483_648);
+  assert.equal(exactSquadInteger(2_147_483_647, "RequiredMedals"), 2_147_483_647);
   assert.equal(exactSquadInteger(undefined, "RequiredMedals", 0), 0);
   assert.equal(requestedSquadJoinPolicy({ JoinPolicy: "2" }), 2);
   assert.equal(requestedSquadJoinPolicy({ IsPublic: "true" }), 0);
@@ -57,10 +59,13 @@ test("squad admission settings reject coercion and preserve exact recovered inte
   for (const value of [-1, 1.5, 2_147_483_648, Number.NaN, Number.POSITIVE_INFINITY]) {
     assert.throws(() => validatedSquadRequiredMedals(value), /Squad medal requirement is invalid/);
   }
-  for (const value of [null, true, [], {}, "", "1.5", "1e0"]) {
+  for (const value of [
+    null, true, [], {}, "", " 2 ", "02", "-0", "+2", "1.5", "1e0", -2_147_483_649,
+    2_147_483_648,
+  ]) {
     assert.throws(() => exactSquadInteger(value, "RequiredMedals"), /must be an exact integer/);
   }
-  for (const value of [null, "", "yes", 2, {}, []]) {
+  for (const value of [null, "", "yes", " true ", "TRUE", 2, {}, []]) {
     assert.throws(() => requestedSquadJoinPolicy({ IsPublic: value }), /exact Boolean value/);
   }
 });

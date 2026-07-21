@@ -53,8 +53,10 @@ Status legend:
 Core squad creation and update now parse admission settings exactly at the HTTP boundary and validate
 them again in the authoritative service. Join policy is limited to recovered integers 0 through 2,
 required medals is a nonnegative C# signed `int`, and the legacy `IsPublic` projection accepts only
-exact Boolean representations. Fractional, blank, broadly coerced, oversized, or explicitly
-malformed inputs fail instead of being floored, silently ignored, or replaced by a default.
+exact Boolean representations. Form integers require canonical C# decimal spelling and signed-`int`
+width, while Boolean text is neither whitespace-trimmed nor case-folded. Padding, plus signs,
+leading zeros, alternate negative zero, fractions, exponents, oversized values, blank values, and
+other broadly coerced inputs fail instead of being silently normalized or replaced by a default.
 Every core membership, settings, invitation, join-request, PvP Squad Point, and Squad War write now
 advances `SquadDocument.updatedAt` through one shared strictly monotonic helper, including writes in
 the same wall-clock millisecond. Single-document replacements also bind the exact validated prior
