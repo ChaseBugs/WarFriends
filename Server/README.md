@@ -506,7 +506,12 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
 - **Moderation reports and sanctions**: authenticated player/cheater reports are validated, rate-limited,
   deduplicated for safe retries, and stored with review status and evidence metadata. The
   configurable five-per-hour default is reserved by one atomic MongoDB counter per reporter, so
-  simultaneous requests across backend processes cannot overrun it. The submitted
+  simultaneous requests across backend processes cannot overrun it. Each complete throttle row is
+  validated before its count is trusted: exact fields, the expected HMAC-hidden reporter key, a
+  bounded safe counter, ordered safe dates, a non-future update, and the exact two-hour storage
+  interval are required. Rejected traffic saturates at one global denial sentinel while the original
+  one-hour window start remains unchanged, preventing both unsafe counter growth and a spam-extended
+  logical lock. The submitted
   evidence remains a claim until authoritative combat validation exists. Independently authenticated
   admin routes can issue, inspect, and revoke durable permanent or temporary account bans. Issue and
   revoke operations are idempotent, one active-ban index is race-safe across processes, expired bans
