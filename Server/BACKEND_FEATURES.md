@@ -466,6 +466,11 @@ must not survive authentication/gameplay use or unrelated writes.
 Any present subscription revalidation owner must be the exact 64-character lowercase hexadecimal
 HMAC-SHA256 purchase-receipt key. Absence remains valid for legacy subscription rows; arbitrary or
 malformed durable IDs fail before stale-event comparison or publication.
+Google Play subscription cadence, subscription sweep interval/batch size, and voided-purchase sweep
+interval now resolve together once during module startup as one immutable exact provider schedule.
+Receipt creation and later revalidation therefore cannot publish and consume cursors under
+different process-local cadence values; fractional, non-finite, or out-of-range policy stops
+startup rather than being rounded, clamped, substituted, or independently re-read by either worker.
 Direct delivery, subscription revalidation, voided-purchase reversal, and post-delivery boot reloads
 also validate the complete private player account and duplicated profile envelope. Existing damaged
 players abort the surrounding transaction before grants, reversals, or terminal receipt markers;

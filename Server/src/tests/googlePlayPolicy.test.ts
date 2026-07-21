@@ -1,11 +1,26 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  googlePlaySchedulingPolicy,
   googlePlaySubscriptionRevalidationBatchSize,
   googlePlaySubscriptionRevalidationCadenceSeconds,
   googlePlaySubscriptionSchedulerIntervalSeconds,
   googlePlayVoidedPurchaseSchedulerIntervalSeconds,
 } from "../services/googlePlayPolicyService";
+
+test("Google Play scheduling is one immutable startup policy", () => {
+  assert.equal(Object.isFrozen(googlePlaySchedulingPolicy()), true);
+  assert.deepEqual(googlePlaySchedulingPolicy(), {
+    subscriptionRevalidationCadenceSeconds: 21_600,
+    subscriptionSchedulerIntervalSeconds: 300,
+    subscriptionRevalidationBatchSize: 100,
+    voidedPurchaseSchedulerIntervalSeconds: 300,
+  });
+  assert.equal(googlePlaySubscriptionRevalidationCadenceSeconds(), 21_600);
+  assert.equal(googlePlaySubscriptionSchedulerIntervalSeconds(), 300);
+  assert.equal(googlePlaySubscriptionRevalidationBatchSize(), 100);
+  assert.equal(googlePlayVoidedPurchaseSchedulerIntervalSeconds(), 300);
+});
 
 test("Google Play policy preserves exact supported provider scheduling values", () => {
   assert.equal(googlePlaySubscriptionRevalidationCadenceSeconds(300), 300);
