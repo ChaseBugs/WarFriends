@@ -26,6 +26,7 @@ import { withScheduledJobLease } from "./scheduledJobLeaseService";
 import { cardInventoryStateFor } from "./cardInventoryService";
 import { createInitialVisualInventory, visualInventoryStateFor } from "./visualInventoryService";
 import { validatedVipExpiration } from "./vipEntitlementService";
+import { validatedPurchaseReceipt } from "./purchaseReceiptAuthorityService";
 
 const jobId = "google-play-voided-products";
 const cursorId = "google-play-voided-products" as const;
@@ -177,7 +178,9 @@ async function reconcileVoidedPurchase(event: GooglePlayVoidedPurchase, now: num
   const receiptId = receiptIdForToken(event.purchaseToken);
   return withMongoTransaction(async (session) => {
     const receipt = await purchaseReceipts().findOne({ _id: receiptId }, { session });
-    if (!receipt || receipt.kind === "subscription") return "unmatched";
+    if (!receipt) return "unmatched";
+    validatedPurchaseReceipt(receipt);
+    if (receipt.kind === "subscription") return "unmatched";
     // A token and order must identify the same immutable product purchase. Treat disagreement as
     // unmatched evidence rather than revoking a potentially unrelated account benefit.
     if (receipt.orderId !== event.orderId) return "unmatched";
@@ -194,6 +197,9 @@ async function reconcileVoidedPurchase(event: GooglePlayVoidedPurchase, now: num
         { playerId: receipt.playerId, kind: "pack" },
         { session },
       ).toArray();
+      // Overlap decisions preserve paid inventory only when every contributing receipt is valid;
+      // one corrupt row must abort instead of making a benefit permanent or revoking it too early.
+      for (const packReceipt of allPackReceipts) validatedPurchaseReceipt(packReceipt);
       const activeOtherReceipts = allPackReceipts.filter((other) => other._id !== receipt._id && !other.revokedAt);
       const currentProgression = progressionForPlayer(player);
       const reversedProgression = applyVoidedOneTimePurchaseState(

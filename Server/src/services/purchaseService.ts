@@ -22,6 +22,7 @@ import { progressionForPlayer, unixNow } from "./playerStateService";
 import { validatedPlayerAccountEnvelope } from "./playerProfileMirrorAuthorityService";
 import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
 import { encryptPurchaseToken } from "./purchaseTokenCryptoService";
+import { validatedPurchaseReceipt } from "./purchaseReceiptAuthorityService";
 import { applyPackEntitlementState } from "./packPurchaseService";
 import {
   validatedSubscription,
@@ -281,6 +282,7 @@ export async function deliverGooglePlayPurchase(
   try {
     return await withMongoTransaction(async (session) => {
       const existing = await purchaseReceipts().findOne({ _id: receiptId }, { session });
+      if (existing) validatedPurchaseReceipt(existing);
       if (existing && (existing.playerId !== playerId || existing.productId !== input.productId)) {
         throw new ApiError(ApiErrorCode.InvalidInapp, "Purchase token is already bound to another entitlement.");
       }
@@ -333,6 +335,10 @@ export async function deliverGooglePlayPurchase(
           revalidationFailures: 0,
         } : {}),
       };
+      // Prove that the exact provider/catalog transition can be read back as durable authority
+      // before publishing its token marker. This keeps a future catalog or response-shape drift
+      // from consuming a valid store purchase with a receipt that replay/reconciliation rejects.
+      validatedPurchaseReceipt(receipt);
       if (existing) {
         const replacement = await purchaseReceipts().replaceOne({ _id: receiptId, playerId }, receipt, { session });
         if (replacement.matchedCount !== 1) {

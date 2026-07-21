@@ -18,6 +18,10 @@ import { progressionForPlayer, unixNow } from "./playerStateService";
 import { validatedPlayerAccountEnvelope } from "./playerProfileMirrorAuthorityService";
 import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
 import { decryptPurchaseToken } from "./purchaseTokenCryptoService";
+import {
+  nextPurchaseRevalidationFailureCount,
+  validatedPurchaseReceipt,
+} from "./purchaseReceiptAuthorityService";
 import { withScheduledJobLease } from "./scheduledJobLeaseService";
 import {
   validatedSubscription,
@@ -111,14 +115,29 @@ function retrySeconds(failures: number): number {
 }
 
 async function recordRetry(receipt: PurchaseReceiptDocument, now: number): Promise<void> {
-  const failures = Math.max(0, Math.floor(receipt.revalidationFailures ?? 0)) + 1;
-  await purchaseReceipts().updateOne(
-    { _id: receipt._id, playerId: receipt.playerId, kind: "subscription" },
+  const previousFailures = receipt.revalidationFailures;
+  const failures = nextPurchaseRevalidationFailureCount(receipt);
+  const retry = await purchaseReceipts().updateOne(
     {
-      $set: { revalidateAfter: new Date((now + retrySeconds(failures)) * 1_000) },
-      $inc: { revalidationFailures: 1 },
+      _id: receipt._id,
+      playerId: receipt.playerId,
+      kind: "subscription",
+      // Older valid receipts omitted the counter. Preserve that migration distinction instead of
+      // matching a concurrently initialized or already advanced value as though it were still zero.
+      ...(previousFailures === undefined
+        ? { revalidationFailures: { $exists: false } }
+        : { revalidationFailures: previousFailures }),
+    },
+    {
+      $set: {
+        revalidateAfter: new Date((now + retrySeconds(failures)) * 1_000),
+        revalidationFailures: failures,
+      },
     },
   );
+  if (retry.modifiedCount !== 1) {
+    throw new Error("Concurrent subscription retry scheduling could not be committed.");
+  }
 }
 
 async function commitSuccessfulStatus(
@@ -132,6 +151,7 @@ async function commitSuccessfulStatus(
       { session },
     );
     if (!liveReceipt) return false;
+    validatedPurchaseReceipt(liveReceipt);
     const player = await players().findOne({ id: receipt.playerId }, { session });
     if (!player) {
       await purchaseReceipts().updateOne(
@@ -200,6 +220,7 @@ async function revalidateReceipt(
   verifier: GooglePlaySubscriptionStatusVerifier,
   now: number,
 ): Promise<{ checked: boolean; changed: boolean; failed: boolean }> {
+  validatedPurchaseReceipt(receipt);
   if (!receipt.encryptedPurchaseToken) return { checked: false, changed: false, failed: false };
   try {
     const purchaseToken = decryptPurchaseToken(

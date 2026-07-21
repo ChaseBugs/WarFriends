@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { AccountType } from "../constants";
-import type { PlayerDocument, PlayerSubscriptionState } from "../db";
+import type { PlayerDocument, PlayerSubscriptionState, PurchaseReceiptDocument } from "../db";
 import { DbAction } from "../dbActions";
 import { newPlayer } from "../dtos";
 import { DIRECT_PURCHASE_KINDS, purchaseHandlers } from "../handlers/purchases";
@@ -22,6 +22,10 @@ import {
   validatedSubscriptionAuthorityReceiptId,
 } from "../services/subscriptionBenefitService";
 import { validatedProgressionSuccessor } from "../services/progressionPublicationAuthorityService";
+import {
+  nextPurchaseRevalidationFailureCount,
+  validatedPurchaseReceipt,
+} from "../services/purchaseReceiptAuthorityService";
 
 const PACKAGE = "com.chillingo.warfriends.android.gplay";
 const NOW = 1_800_000_000;
@@ -338,6 +342,88 @@ test("subscription purchase tokens are authenticated, receipt-bound ciphertext",
   assert.equal(decryptPurchaseToken(encrypted, "receipt-a", secret), "opaque-google-play-token");
   assert.throws(() => decryptPurchaseToken(encrypted, "receipt-b", secret));
   assert.throws(() => decryptPurchaseToken(encrypted, "receipt-a", `${secret}-wrong`));
+});
+
+test("durable purchase receipts validate their complete catalog, response, grant, and lifecycle authority", () => {
+  const currencyId = "a".repeat(64);
+  const currency: PurchaseReceiptDocument = {
+    _id: currencyId,
+    platform: "google-play",
+    playerId: "receipt-player",
+    productId: "afgold1",
+    storeProductId: `${PACKAGE}.afgold1`,
+    orderId: "GPA.currency-authority",
+    kind: "currency",
+    purchasedAt: new Date((NOW - 10) * 1_000),
+    verifiedAt: new Date(NOW * 1_000),
+    response: { Id: "afgold1", Gold: 100 },
+    reversibleGrant: {
+      gold: 100,
+      warBucks: 0,
+      vipSeconds: 0,
+      weapons: [],
+      visuals: [],
+      extraCardSlot: false,
+      introducedExtraCardSlot: false,
+    },
+  };
+  assert.equal(validatedPurchaseReceipt(currency), currency);
+  assert.throws(
+    () => validatedPurchaseReceipt({ ...currency, response: { Id: "afgold1", Gold: 101 } }),
+    /Stored purchase receipt is invalid/,
+  );
+  assert.throws(
+    () => validatedPurchaseReceipt({
+      ...currency,
+      reversibleGrant: { ...currency.reversibleGrant!, gold: 101 },
+    }),
+    /Stored purchase receipt is invalid/,
+  );
+
+  const subscriptionId = "b".repeat(64);
+  const subscription: PurchaseReceiptDocument = {
+    _id: subscriptionId,
+    platform: "google-play",
+    playerId: "receipt-player",
+    productId: "subscription1",
+    storeProductId: `${PACKAGE}.subscription1`,
+    orderId: "GPA.subscription-authority",
+    kind: "subscription",
+    purchasedAt: new Date((NOW - 10) * 1_000),
+    verifiedAt: new Date(NOW * 1_000),
+    response: {
+      Id: "subscription1",
+      SubscriptionBought: true,
+      ExpireTime: NOW + 1_000,
+      dogTagTimerLock: NOW,
+    },
+    encryptedPurchaseToken: encryptPurchaseToken(
+      "opaque-google-play-token",
+      subscriptionId,
+      "test-only-high-entropy-secret-with-more-than-32-characters",
+    ),
+    subscriptionState: "SUBSCRIPTION_STATE_ACTIVE",
+    subscriptionExpiresAt: new Date((NOW + 1_000) * 1_000),
+    revalidateAfter: new Date((NOW + 300) * 1_000),
+    revalidationFailures: 0,
+  };
+  assert.equal(validatedPurchaseReceipt(subscription), subscription);
+  assert.equal(nextPurchaseRevalidationFailureCount(subscription), 1);
+  assert.throws(
+    () => validatedPurchaseReceipt({ ...subscription, revalidationFailures: Number.NaN }),
+    /Stored purchase receipt is invalid/,
+  );
+  assert.throws(
+    () => nextPurchaseRevalidationFailureCount({ ...subscription, revalidationFailures: 1_000_000 }),
+    /Stored purchase receipt is invalid/,
+  );
+  assert.throws(
+    () => validatedPurchaseReceipt({
+      ...subscription,
+      encryptedPurchaseToken: { ...subscription.encryptedPurchaseToken!, iv: "not-base64" },
+    }),
+    /Stored purchase receipt is invalid/,
+  );
 });
 
 test("verified currency and subscription transitions expose exact stock response fields", () => {

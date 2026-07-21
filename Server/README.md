@@ -703,6 +703,15 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   transaction before any entitlement, reversal, or terminal receipt marker is written, preserving
   the provider event for retry after repair.
 
+  Every durable Google Play receipt is also validated as one complete authority snapshot before
+  replay, replacement, subscription revalidation, void reconciliation, overlap preservation, or
+  insertion. Its HMAC identity, owner/order, catalog kind/store product/exact response, ordered safe
+  dates, reversible grant, encrypted subscription lifecycle, bounded retry counter, and all-or-none
+  void metadata must agree. Only old currency receipts may derive an omitted reversible wallet grant
+  from their exact catalog-bound response; pack ownership history has no such migration. Failed
+  subscription checks advance the bounded counter with compare-and-set ownership, so concurrent
+  workers cannot overwrite each other's provider evidence or retry schedule.
+
   A second Mongo-leased scheduler queries Google Play Voided Purchases for one-time products with
   a durable successful-window cursor, ten-minute overlap, complete token pagination, and Google's
   30-day first-run boundary. It matches the HMAC token plus exact order ID, reverses each receipt
