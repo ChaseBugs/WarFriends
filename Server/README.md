@@ -1789,6 +1789,11 @@ exactly `analytics`, `support-logs`, or `client-errors`. Optional `playerId`, `l
 granting gameplay sessions access to sensitive diagnostics. Cursors are canonical Base64URL JSON,
 bound to the exact kind and player filter, and cannot carry a future timestamp.
 
+`GET /admin/diagnostics/:kind/:id` performs an exact unexpired UUID lookup under the same admin
+boundary. In particular, support can resolve the `LogId` displayed by the stock action-166 upload
+without walking global pages. Missing or expired references return 404; malformed IDs return 400;
+and a selected damaged row fails closed before any diagnostic bytes are returned.
+
 Each selected row is revalidated through its complete family authority before serialization, and
 one damaged row aborts the whole page rather than returning partial believable diagnostics.
 Application-time expiry prevents TTL-monitor delay from extending operator visibility. Dedicated

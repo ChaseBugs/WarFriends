@@ -49,6 +49,13 @@ function exactKind(value: unknown): AdminDiagnosticKind {
   throw new AdminDiagnosticInputError("Diagnostic kind is invalid.");
 }
 
+export function normalizeAdminDiagnosticId(value: unknown): string {
+  if (typeof value !== "string" || !UUID_V4.test(value)) {
+    throw new AdminDiagnosticInputError("Diagnostic id must be a canonical UUIDv4.");
+  }
+  return value.toLowerCase();
+}
+
 function exactPlayerId(value: unknown): string | null {
   if (value === undefined || value === null || value === "") return null;
   if (typeof value !== "string"
@@ -206,6 +213,25 @@ export async function listAdminDiagnostics(
       id: last._id,
     }) : null,
   };
+}
+
+/** Resolve one operator reference, including the exact LogId returned by stock action 166. */
+export async function findAdminDiagnostic(
+  kindValue: unknown,
+  idValue: unknown,
+  now = new Date(),
+  collection?: Collection<AdminDiagnosticDocument>,
+): Promise<AdminDiagnosticDocument | null> {
+  const kind = exactKind(kindValue);
+  const id = normalizeAdminDiagnosticId(idValue);
+  if (!(now instanceof Date) || !Number.isSafeInteger(now.getTime()) || now.getTime() < 0) {
+    throw new Error("Diagnostic lookup time is invalid.");
+  }
+  const row = await (collection ?? collectionFor(kind)).findOne({
+    _id: id,
+    expiresAt: { $gt: now },
+  });
+  return row ? validateSelected(kind, row, now) : null;
 }
 
 export function wireAdminDiagnostic(

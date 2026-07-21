@@ -11,7 +11,9 @@ import type {
 import { newPlayer } from "../dtos";
 import {
   listAdminDiagnostics,
+  findAdminDiagnostic,
   normalizeAdminDiagnosticListInput,
+  normalizeAdminDiagnosticId,
   wireAdminDiagnostic,
   type AdminDiagnosticDocument,
 } from "../services/adminDiagnosticService";
@@ -110,6 +112,37 @@ test("admin diagnostic query input is exact, bounded, and kind-specific", () => 
   assert.throws(
     () => normalizeAdminDiagnosticListInput({ kind: "client-errors", playerId: " padded " }, NOW),
     /playerId is invalid/,
+  );
+});
+
+test("admin diagnostic detail lookup resolves the exact action-166 LogId", async () => {
+  const event = supportLog();
+  let captured: Filter<AdminDiagnosticDocument> | undefined;
+  const collection = {
+    findOne: async (filter: Filter<AdminDiagnosticDocument>) => {
+      captured = filter;
+      return event;
+    },
+  } as unknown as Collection<AdminDiagnosticDocument>;
+  assert.equal(normalizeAdminDiagnosticId(event._id.toUpperCase()), event._id);
+  assert.equal(await findAdminDiagnostic("support-logs", event._id, NOW, collection), event);
+  assert.deepEqual(captured, { _id: event._id, expiresAt: { $gt: NOW } });
+  assert.throws(() => normalizeAdminDiagnosticId("not-a-log-id"), /canonical UUIDv4/);
+
+  const missing = {
+    findOne: async () => null,
+  } as unknown as Collection<AdminDiagnosticDocument>;
+  assert.equal(await findAdminDiagnostic("client-errors", event._id, NOW, missing), null);
+});
+
+test("admin diagnostic detail lookup rejects damaged selected authority", async () => {
+  const event = clientError();
+  const collection = {
+    findOne: async () => ({ ...event, payloadSha256: "0".repeat(64) }),
+  } as unknown as Collection<AdminDiagnosticDocument>;
+  await assert.rejects(
+    findAdminDiagnostic("client-errors", event._id, NOW, collection),
+    /client error authority is invalid/,
   );
 });
 

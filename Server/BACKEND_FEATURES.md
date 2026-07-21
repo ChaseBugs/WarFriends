@@ -25,6 +25,10 @@ Status legend:
   slots plus VIP, paid-extra, and Buddy candidates, so PvP's six-card bound already covers it.
   The remaining Squad-card gap is only the unmodified client's lack of a nonce/adapter for a
   server-selected Buddy identity.
+- **The diagnostic operator consumer is implemented.** Admin-Bearer-only list endpoints cover
+  analytics, support logs, and client errors with bounded query-bound cursors and complete row
+  validation. Exact UUID detail lookup resolves the `LogId` returned by stock action 166 without
+  scanning global pages; application-time expiry and family validation run before any bytes leave.
 
 ## Feature inventory
 
