@@ -1,5 +1,6 @@
 import { config } from "../config";
 import type { WarArenaState } from "../db";
+import { integerNumberAttribute } from "./dynamoNumberAttributeService";
 
 export interface ArenaPolicy {
   maxBattles: number;
@@ -52,6 +53,11 @@ export function serializeWarArenaData(value: WarArenaState): string {
 }
 
 function monthBounds(now: number): { start: number; end: number; suffix: string } {
+  // Arena IDs and windows are server time authority. Invalid time used to flow through Date as
+  // NaN and produce a superficially shaped `prefix-NaN-NaN` event plus invalid N attributes.
+  if (!Number.isSafeInteger(now) || now < 0 || now > 2_147_483_647) {
+    throw new Error("War Arena configuration time authority is invalid.");
+  }
   const date = new Date(Math.floor(now) * 1_000);
   const year = date.getUTCFullYear();
   const month = date.getUTCMonth();
@@ -86,18 +92,18 @@ export function warArenaConfiguration(now: number): ArenaConfiguration {
     // "no special Arena rules" and is the smallest safe recovered-client value.
     Rules: { S: "{}" },
     ExtraLifeEnabled: { N: "1" },
-    LifeCount: { N: String(values.startingLives) },
+    LifeCount: integerNumberAttribute(values.startingLives),
     PauseDuration: { N: "0" },
     PlayWindowCount: { N: "1" },
-    MaxBattles: { N: String(values.maxBattles) },
-    GuaranteedScraps: { N: String(values.guaranteedScraps) },
-    StartTime: { N: String(bounds.start) },
+    MaxBattles: integerNumberAttribute(values.maxBattles),
+    GuaranteedScraps: integerNumberAttribute(values.guaranteedScraps),
+    StartTime: integerNumberAttribute(bounds.start),
     // IKPLPPFFDNI treats WindowDuration as minutes and derives EndTime from its final window.
-    WindowDuration: { N: String(Math.ceil((bounds.end - bounds.start + 1) / 60)) },
+    WindowDuration: integerNumberAttribute(Math.ceil((bounds.end - bounds.start + 1) / 60)),
     ArenaPrice: { S: Array(values.maxBattles).fill(values.entryTickets).join(",") },
   };
   for (let index = 1; index <= values.maxBattles; index += 1) {
-    result[`HeartPrice${index}`] = { N: String(values.heartTickets) };
+    result[`HeartPrice${index}`] = integerNumberAttribute(values.heartTickets);
   }
   return result;
 }

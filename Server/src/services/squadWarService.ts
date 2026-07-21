@@ -29,6 +29,7 @@ import {
   squadWarRoundId,
   squadWarWindowAt,
 } from "./squadWarContract";
+import { integerNumberAttribute } from "./dynamoNumberAttributeService";
 
 export type SquadWarProgressStatus =
   | "recorded"
@@ -591,7 +592,7 @@ function memberSnapshot(player: PlayerDocument, roundScore: number): Record<stri
   const wire = buildDatabasePlayer(player);
   // DatabasePlayer.CreateFromDatabase accepts this DynamoDB attribute and SquadWarManager sorts
   // the message dialog by it. Use round contribution, not the player's lifetime squadPoints.
-  wire.SquadPoints = { N: String(roundScore) };
+  wire.SquadPoints = integerNumberAttribute(roundScore);
   return wire;
 }
 

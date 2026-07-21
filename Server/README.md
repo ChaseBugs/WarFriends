@@ -207,9 +207,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   `GetPlayerData`/`GetPlayerInfo`, and player settings (name/country/status/device token).
   Login/profile snapshots and private progression use the exact DynamoDB-style attribute
   wrappers parsed by the recovered 1.6.0 client. Boot, public profile, experience/Arena leaderboard,
-  and durable inbox responses share one integer-projection numeric adapter. Squad Event progress
-  uses its paired finite decimal-preserving adapter. Both reject non-finite or unsafe numeric
-  authority instead of publishing a believable zero or raw `NaN`/`Infinity` string. Human
+  durable inbox responses, Squad War member snapshots, and War Arena configuration share one
+  integer-projection numeric adapter. Squad Event progress uses its paired finite decimal-preserving
+  adapter. Both reject non-finite or unsafe numeric authority instead of publishing a believable
+  zero or raw `NaN`/`Infinity` string; War Arena also validates its monthly derivation clock. Human
   passwords use versioned salted scrypt with
   automatic legacy-HMAC migration; provider credentials remain separate from the rotated internal
   gameplay session token. Durable login guesses use an

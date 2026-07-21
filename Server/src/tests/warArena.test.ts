@@ -57,6 +57,12 @@ test("War Arena config and persisted wire use the recovered client field names",
     Array(arenaPolicy().maxBattles).fill(arenaPolicy().entryTickets).join(","),
   );
   assert.equal((configuration.HeartPrice1 as { N: string }).N, String(arenaPolicy().heartTickets));
+  for (const corruptNow of [Number.NaN, Number.POSITIVE_INFINITY, -1, 1.5]) {
+    assert.throws(
+      () => warArenaConfiguration(corruptNow),
+      /War Arena configuration time authority is invalid/,
+    );
+  }
 
   const initial = createInitialProgression(NOW);
   const entered = enterWarArenaState(initial, NOW, { usedGold: 0, opponents: ["p2", "p3", "p2"] });
