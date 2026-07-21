@@ -13,6 +13,7 @@ import {
 } from "../db";
 import { PLAYER_LEVELS, playerLevelDefinition } from "./levelProgressionService";
 import type { MessageDoc } from "./socialService";
+import { decimalNumberAttribute } from "./dynamoNumberAttributeService";
 
 const MAX_UNIX_SECONDS = 2_147_483_647;
 const MAX_SEASONS = 128;
@@ -183,10 +184,6 @@ export async function getActiveConfiguredSquadEvent(now = new Date()): Promise<S
   return selectActiveSquadEvent(await configuredSeasons(), Math.floor(now.getTime() / 1000));
 }
 
-function numberAttribute(value: number): { N: string } {
-  return { N: String(value) };
-}
-
 /** Reproduce LevelManager.GetPlayerLevelProgress with the client's binary32 result. */
 export function squadEventPlayerLevelProgress(levelIndex: number): number {
   playerLevelDefinition(levelIndex);
@@ -218,16 +215,16 @@ export function buildSquadEventProgress(
   const result: Record<string, unknown> = {
     SquadId: { S: progress.squadId },
     EventId: { S: progress.eventId },
-    ActiveTier: numberAttribute(progress.activeTier),
+    ActiveTier: decimalNumberAttribute(progress.activeTier),
     // This is viewer-specific reward scaling, not shared Squad Event completion. Persisting the
     // first member's value would make every other member see rewards calculated for that level.
-    LevelProgress: numberAttribute(playerLevelProgress),
+    LevelProgress: decimalNumberAttribute(playerLevelProgress),
   };
   progress.tiers.forEach((tier, tierIndex) => {
-    result[`T${tierIndex}Reward`] = numberAttribute(tier.reward);
+    result[`T${tierIndex}Reward`] = decimalNumberAttribute(tier.reward);
     tier.assignments.forEach((assignment, assignmentIndex) => {
-      result[`T${tierIndex}A${assignmentIndex}`] = numberAttribute(assignment.value);
-      result[`T${tierIndex}A${assignmentIndex}Target`] = numberAttribute(assignment.target);
+      result[`T${tierIndex}A${assignmentIndex}`] = decimalNumberAttribute(assignment.value);
+      result[`T${tierIndex}A${assignmentIndex}Target`] = decimalNumberAttribute(assignment.target);
       if (assignment.param !== undefined) {
         // The recovered parser unusually reads Param from a DynamoDB N wrapper as a string.
         result[`T${tierIndex}A${assignmentIndex}Param`] = { N: assignment.param };

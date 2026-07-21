@@ -61,6 +61,7 @@ import { validatedAchievementState } from "./achievementAuthorityService";
 import { validatedWarArenaState } from "./warArenaAuthorityService";
 import { validatedDailyMissionsState } from "./dailyMissionAuthorityService";
 import { validatedEventAssignmentState } from "./eventAssignmentAuthorityService";
+import { integerNumberAttribute as numberAttribute } from "./dynamoNumberAttributeService";
 
 /** Unix seconds are used throughout the recovered Beanstalk protocol. */
 export function unixNow(): number {
@@ -257,24 +258,9 @@ export function progressionForPlayer(player: PlayerDocument, now?: number): Play
   };
 }
 
-type NumberAttribute = { N: string };
 type StringAttribute = { S: string };
-export type PlayerDataAttribute = NumberAttribute | StringAttribute;
+export type PlayerDataAttribute = ReturnType<typeof numberAttribute> | StringAttribute;
 export type PlayerDataMap = Record<string, PlayerDataAttribute>;
-
-export function numberAttribute(value: number): NumberAttribute {
-  // The old Unity parser expects the DynamoDB wire representation, where even numbers are
-  // JSON strings inside an `N` property. Returning a bare JSON number makes GetPlayerData
-  // parse as zero or throw, depending on which KHJJFPPACBP overload is used.
-  // Preserve the recovered adapter's integer projection for legitimate fractional inputs such
-  // as calculated Army Power, but never turn corrupt authority into a believable zero. The
-  // projected integer must also remain exactly representable before it crosses the JSON/C# wire.
-  const projected = Math.trunc(value);
-  if (!Number.isFinite(value) || !Number.isSafeInteger(projected)) {
-    throw new Error("DynamoDB numeric attribute authority is invalid.");
-  }
-  return { N: String(projected) };
-}
 
 function stringAttribute(value: unknown): StringAttribute {
   return { S: JSON.stringify(value) };

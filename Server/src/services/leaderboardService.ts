@@ -2,7 +2,8 @@ import { players, squads, type PlayerDocument } from "../db";
 import { RedisKeys } from "../constants";
 import { config } from "../config";
 import { redisZRevRange, redisZAdd } from "../redis";
-import { numberAttribute, progressionForPlayer } from "./playerStateService";
+import { progressionForPlayer } from "./playerStateService";
+import { integerNumberAttribute as numberAttribute } from "./dynamoNumberAttributeService";
 import { buildDatabaseSquad } from "./squadWireService";
 import { serializeWarArenaData } from "./warArenaContract";
 

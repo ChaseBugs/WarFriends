@@ -10,9 +10,9 @@ import {
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import {
   buildDatabasePlayer,
-  numberAttribute,
   progressionForPlayer,
 } from "./playerStateService";
+import { integerNumberAttribute as numberAttribute } from "./dynamoNumberAttributeService";
 import { config } from "../config";
 import { requireModeratedText } from "./textModerationService";
 import { checkedRewardBalance } from "./rewardMathService";

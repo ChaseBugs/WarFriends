@@ -127,6 +127,17 @@ test("SquadEventProgress uses exact DynamoDB S/N wrappers and zero-based tier ke
     T0A1Target: { N: "3" },
     T0A1Param: { N: "2.5" },
   });
+
+  const corruptProgress = structuredClone(progress);
+  corruptProgress.tiers[0]!.assignments[0]!.value = Number.NaN;
+  assert.throws(
+    () => buildSquadEventProgress(corruptProgress, 0.25),
+    /DynamoDB numeric attribute authority is invalid/,
+  );
+  assert.throws(
+    () => buildSquadEventProgress(progress, Number.POSITIVE_INFINITY),
+    /DynamoDB numeric attribute authority is invalid/,
+  );
 });
 
 test("confirmed PvP facts advance only recovered win and play assignment fractions", () => {
