@@ -89,6 +89,42 @@ function daysInMonth(year: number, month: number): number {
   return new Date(Date.UTC(year, month, 0)).getUTCDate();
 }
 
+/**
+ * Validate the complete current-month calendar before it can unlock or consume a reward.
+ *
+ * A raw comparison is not sufficient for durable MongoDB state: `claimReward = Infinity` makes
+ * every finite request look already claimed forever, while `NaN` bypasses both replay and future
+ * index comparisons. The claim cursor must be an ordered prefix of the login-unlocked cursor, and
+ * the last-check marker must identify one real UTC day in the same calendar month. Stale calendars
+ * are discarded on month rollover before this validator runs because none of their claims can be
+ * carried into the new source contract.
+ */
+export function validatedDailyRewardState(value: DailyRewardState): DailyRewardState {
+  if (!Number.isSafeInteger(value.year) || value.year < 1970 || value.year > 9_999
+    || !Number.isSafeInteger(value.month) || value.month < 1 || value.month > 12) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Daily reward calendar date is invalid.");
+  }
+  const maximumDay = daysInMonth(value.year, value.month);
+  if (!Number.isSafeInteger(value.canClaim) || value.canClaim < 0 || value.canClaim > maximumDay
+    || !Number.isSafeInteger(value.claimReward) || value.claimReward < 0
+    || value.claimReward > value.canClaim) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Daily reward cursors are invalid.");
+  }
+  if (value.lastCheckDay !== "") {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.lastCheckDay);
+    const day = Number(match?.[3]);
+    if (!match
+      || Number(match[1]) !== value.year
+      || Number(match[2]) !== value.month
+      || !Number.isSafeInteger(day)
+      || day < 1
+      || day > maximumDay) {
+      throw new ApiError(ApiErrorCode.InternalServerError, "Daily reward last-check day is invalid.");
+    }
+  }
+  return { ...value };
+}
+
 function secondsUntilNextUtcDay(date: Date): number {
   const next = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + 1);
   return Math.max(1, Math.floor((next - date.getTime()) / 1000));
@@ -183,7 +219,7 @@ function calendarFor(state: PlayerProgressionState, date: Date): DailyRewardStat
   const year = date.getUTCFullYear();
   const month = date.getUTCMonth() + 1;
   const existing = state.dailyReward;
-  if (existing?.year === year && existing.month === month) return { ...existing };
+  if (existing?.year === year && existing.month === month) return validatedDailyRewardState(existing);
 
   // A new month starts a new ordered calendar. We intentionally do not carry unclaimed
   // rewards across months because the Unity model contains only one month/year/config.
@@ -324,13 +360,14 @@ export function claimDailyRewardState(
 }
 
 export function buildDailyRewardWireData(calendar: DailyRewardState, now: number): DailyRewardWireData {
+  const validated = validatedDailyRewardState(calendar);
   return {
-    month: calendar.month,
-    year: calendar.year,
-    canClaim: calendar.canClaim,
-    claimReward: calendar.claimReward,
+    month: validated.month,
+    year: validated.year,
+    canClaim: validated.canClaim,
+    claimReward: validated.claimReward,
     nextDay: secondsUntilNextUtcDay(utcDate(now)),
-    config: buildDailyRewardConfig(calendar.year, calendar.month),
+    config: buildDailyRewardConfig(validated.year, validated.month),
   };
 }
 

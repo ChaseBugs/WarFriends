@@ -80,6 +80,7 @@ import {
   claimDailyRewardState,
   dailyRewardDefinitionForDay,
   dailyRewardGoldForDay,
+  validatedDailyRewardState,
 } from "../services/dailyRewardService";
 import { dailyRewardHandlers } from "../handlers/dailyRewards";
 import {
@@ -451,6 +452,59 @@ test("daily reward claims reject replays and locked future indexes", () => {
     () => claimDailyRewardState(claimed.state, now, 2),
     (error: unknown) => error instanceof Error && "code" in error && error.code === 1000001,
   );
+});
+
+test("daily reward authority rejects corrupt current-month cursors and date markers", () => {
+  const now = Date.parse("2026-07-19T12:00:00Z") / 1000;
+  const valid = {
+    year: 2026,
+    month: 7,
+    canClaim: 2,
+    claimReward: 1,
+    lastCheckDay: "2026-07-19",
+  };
+  assert.deepEqual(validatedDailyRewardState(valid), valid);
+  for (const canClaim of [Number.NaN, Number.POSITIVE_INFINITY, -1, 1.5, 32]) {
+    assert.throws(
+      () => checkDailyRewardState({ ...createInitialProgression(now), dailyReward: { ...valid, canClaim } }, now),
+      /Daily reward cursors are invalid/,
+    );
+  }
+  for (const claimReward of [Number.NaN, Number.POSITIVE_INFINITY, -1, 1.5, 3]) {
+    assert.throws(
+      () => claimDailyRewardState({
+        ...createInitialProgression(now),
+        dailyReward: { ...valid, claimReward },
+      }, now, 2),
+      /Daily reward cursors are invalid/,
+    );
+  }
+  for (const lastCheckDay of ["2026-07-00", "2026-07-32", "2026-08-01", "not-a-date"]) {
+    assert.throws(
+      () => buildDailyRewardWireData({ ...valid, lastCheckDay }, now),
+      /Daily reward last-check day is invalid/,
+    );
+  }
+
+  // An expired calendar has no claim authority in the new month. Discard it rather than making a
+  // repaired player wait for an operator migration of data that can no longer grant anything.
+  const rollover = checkDailyRewardState({
+    ...createInitialProgression(now),
+    dailyReward: {
+      year: 2026,
+      month: 6,
+      canClaim: Number.POSITIVE_INFINITY,
+      claimReward: Number.POSITIVE_INFINITY,
+      lastCheckDay: "broken",
+    },
+  }, now);
+  assert.deepEqual(rollover.calendar, {
+    year: 2026,
+    month: 7,
+    canClaim: 1,
+    claimReward: 0,
+    lastCheckDay: "2026-07-19",
+  });
 });
 
 test("offline daily calendar exposes every implemented currency and card parser branch", () => {
