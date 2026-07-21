@@ -664,6 +664,11 @@ Normal weapon and unit purchase mutations now resolve that same exact source row
 zero-based catalog unlock comparisons. Direct or replacement callers can no longer floor a
 fractional rank or use a finite integer beyond the 58 recovered rows to authorize ownership; Black
 Market redemption continues to use its validated durable offer instead of a later rank argument.
+Unit promotion now derives its one-based warning/gate value only from that exact row, and malformed
+rank failures remain contained in the corresponding RequestBuffer result without fabricated 11405
+diagnostics. Heroic elite-part target selection also validates the exact row before bought-first or
+unlocked-pool selection, preventing direct callers from persisting reward authority beside a
+normalized corrupt rank.
 One shared application-clock boundary now protects initial progression creation, persisted
 progression reads, successor publication, `PlayerData`, and the top-level player-state response.
 It requires a nonnegative safe Unix second inside JavaScript/BSON Date support and passes that same

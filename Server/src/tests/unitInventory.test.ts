@@ -44,6 +44,7 @@ import {
   parseUnitUpgradePurchaseData,
   purchaseUnitState,
   promoteUnitState,
+  selectMissionElitePartUnit,
   startUnitUpgradeState,
   UNIT_CANT_EQUIP,
   UNIT_CATALOG,
@@ -56,6 +57,7 @@ import {
   UNIT_PART_TO_SCRAPS_SELL_RATE,
   UNIT_SCRAPS_TO_PART_UPGRADE_RATE,
   unitArmyPower,
+  unitPromotionErrorFields,
   upgradeUnitEliteState,
   updateEquippedUnitsState,
 } from "../services/unitInventoryService";
@@ -665,6 +667,13 @@ test("unit promotion requires tier completion and the recovered display-level ga
 
   // Shotgunner tier 1 ends at normal cursor 5 and UNLOCKTIER2 is display level 11.
   owned.unit.boughtIndex = 5;
+  for (const playerLevel of [Number.NaN, Number.POSITIVE_INFINITY, -1, 10.5, PLAYER_LEVELS.length]) {
+    assert.throws(
+      () => promoteUnitState(owned.state, playerLevel, parseUnitPromoteData(promoteData())),
+      (error: unknown) => error instanceof ApiError && error.code === ApiErrorCode.InternalServerError,
+    );
+    assert.deepEqual(unitPromotionErrorFields(owned.state, playerLevel, SHOTGUNNER), {});
+  }
   assert.throws(
     () => promoteUnitState(owned.state, 9, parseUnitPromoteData(promoteData())),
     (error: unknown) => (
@@ -677,10 +686,36 @@ test("unit promotion requires tier completion and the recovered display-level ga
   assert.equal(promoted.unit.specialSlot, 0);
 });
 
+test("Heroic elite-part selection requires one exact recovered player-level row", () => {
+  const owned = purchaseUnitState(createInitialProgression(NOW), 0, parseUnitPurchaseData(buyData()));
+
+  for (const playerLevel of [Number.NaN, Number.NEGATIVE_INFINITY, -1, 0.5, PLAYER_LEVELS.length]) {
+    assert.throws(
+      () => selectMissionElitePartUnit(owned.state, playerLevel, () => 0),
+      (error: unknown) => error instanceof ApiError && error.code === ApiErrorCode.InternalServerError,
+    );
+  }
+  assert.equal(selectMissionElitePartUnit(owned.state, 0, () => 0), SHOTGUNNER);
+});
+
 test("buffered promotion returns exact level diagnostics and is replay-safe", () => {
   const owned = purchaseUnitState(createInitialProgression(NOW), 0, parseUnitPurchaseData(buyData()));
   owned.unit.boughtIndex = 5;
   const request = [{ action: DbAction.PromoteUnit, data: promoteData() }];
+  const corrupt = processAssignmentBufferState(
+    owned.state,
+    NOW,
+    "unit-promote-corrupt-level",
+    request,
+    Number.NaN,
+  );
+  const [corruptFailure] = JSON.parse(corrupt.requestsResults) as Array<Record<string, unknown>>;
+  assert.equal(corruptFailure.Result, ApiErrorCode.InternalServerError);
+  assert.equal(corruptFailure.playerLevel, undefined);
+  assert.equal(corruptFailure.requiredLevel, undefined);
+  assert.equal(JSON.parse(String(corruptFailure.Unit)).tier, 1);
+  assert.equal(corrupt.state.itemInventory?.levelManagerData.savedArmies[SHOTGUNNER]?.tier, 1);
+
   const blocked = processAssignmentBufferState(
     owned.state,
     NOW,

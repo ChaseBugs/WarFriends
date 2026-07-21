@@ -1019,11 +1019,20 @@ export function unitPromotionErrorFields(
   playerLevel: number,
   requestedName: string,
 ): Record<string, unknown> {
+  let displayLevel: number;
+  try {
+    displayLevel = playerLevelDefinition(playerLevel).displayLevel;
+  } catch {
+    // This helper runs inside RequestBuffer's failure handler. A damaged authoritative rank
+    // produces InternalServerError before promotion and must not escape that per-action result
+    // while constructing fields consumed only by the separate NotEnoughLevelForPromote parser.
+    return {};
+  }
   const definition = PLAYER_UNIT_CATALOG[requestedName];
   const unit = itemInventoryStateFor(state).levelManagerData.savedArmies[requestedName];
   const actualTier = unit?.tier || definition?.startingTier || 0;
   return {
-    playerLevel: String(Math.max(0, Math.floor(playerLevel)) + 1),
+    playerLevel: String(displayLevel),
     requiredLevel: String(definition ? unitPromotionRequiredLevel(definition, actualTier) : 999),
   };
 }
@@ -1058,8 +1067,11 @@ export function promoteUnitState(
   }
 
   const requiredLevel = unitPromotionRequiredLevel(definition, actualTier);
-  const displayLevel = Math.max(0, Math.floor(playerLevel)) + 1;
-  if (!Number.isInteger(playerLevel) || displayLevel < requiredLevel) {
+  // Promotion compares the one-based GameLevel display number with UNLOCKTIERn, but the stored
+  // profile value must first identify one exact zero-based recovered row. Accepting an arbitrary
+  // large integer would otherwise bypass every tier gate in direct or replacement callers.
+  const displayLevel = playerLevelDefinition(playerLevel).displayLevel;
+  if (displayLevel < requiredLevel) {
     throw new ApiError(
       UNIT_NOT_ENOUGH_LEVEL_FOR_PROMOTE,
       `Player display level ${displayLevel} is below promotion requirement ${requiredLevel}.`,
@@ -1457,12 +1469,16 @@ export function selectMissionElitePartUnit(
   playerLevelIndex: number,
   choose: (upperBound: number) => number = (upperBound) => randomInt(upperBound),
 ): string {
+  // Bought-first selection still belongs to a rank-bound Heroic cycle. Validate the exact source
+  // row even when permanent ownership makes the fallback pool unnecessary, so a direct caller
+  // cannot persist a credible reward target beside corrupt profile-level authority.
+  const sourcePlayerLevel = playerLevelDefinition(playerLevelIndex).index;
   const saved = itemInventoryStateFor(state).levelManagerData.savedArmies;
   const bought = Object.keys(saved)
     .filter((name) => saved[name]?.bought && PLAYER_UNIT_CATALOG[name])
     .sort();
   const unlocked = Object.values(PLAYER_UNIT_CATALOG)
-    .filter((definition) => definition.canBuyLevelIndex <= Math.max(0, Math.floor(playerLevelIndex)))
+    .filter((definition) => definition.canBuyLevelIndex <= sourcePlayerLevel)
     .map((definition) => definition.name)
     .sort();
   const candidates = bought.length > 0 ? bought : unlocked;

@@ -1597,7 +1597,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   `PromoteUnit` then validates normal-tier completion, the
   recovered one-based `UNLOCKTIER2`-`UNLOCKTIER6` level gates, maximum tier 6, ownership, and an
   empty delivery receipt before advancing only `tier`; the exact 11405 level error includes the
-  diagnostics consumed by the client warning handler. `UpgradeEliteSlot` action `209` now validates
+  diagnostics consumed by the client warning handler. The one-based value is derived only after
+  the stored zero-based index selects an exact recovered rank row. A malformed rank therefore
+  cannot pass a promotion gate, and its InternalServerError remains isolated to the buffered action
+  without emitting misleading 11405-only fields. `UpgradeEliteSlot` action `209` now validates
   the relative Elite cursor and exact source parts/WarBucks cost, performs the immediate atomic
   debit/increment, returns the recovered `104`/`20902`/`20903` failures, and is replay-safe. Unit
   ArmyPower reproduces Unity float32 addition for normal, promoted-special, and bought-Elite rows
@@ -1717,7 +1720,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   binds the exact three daily and five ordered Heroic mission/config/unit shapes, completion and
   reward flags, level/reward/point bounds, derived UTC reset tuple, source-backed Heroic target,
   and bounded unique active/terminal receipts with valid modes, indexes, results, timestamps, and
-  cached JSON. Expired cycles still validate because Heroic progress and replay history carry over;
+  cached JSON. Fresh Heroic unit-target selection validates one exact recovered player-level row
+  before applying the documented bought-first/unlocked fallback, even when an already-bought unit
+  makes the unlock pool unnecessary. Expired cycles still validate because Heroic progress and replay history carry over;
   malformed receipt history is never trimmed into new replay capacity. Cycle materialization,
   mission start, and settlement require one exact Date-bounded application time. Settlement reuses
   it for receipt expiry, VIP benefits, rank-up dog-tag refill, rental cleanup, and the terminal
