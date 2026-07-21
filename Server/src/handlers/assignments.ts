@@ -23,11 +23,15 @@ import {
   claimEventMilestone,
 } from "../services/eventAssignmentService";
 import { validatedRequestBufferId } from "../services/requestBufferAuthorityService";
+import { exactMatchInteger } from "./matchRequestParsing";
 
-function integer(value: unknown, field: string): number {
-  const parsed = Number(value);
-  if (!Number.isInteger(parsed)) throw new ApiError(ApiErrorCode.UnknownAction, `${field} must be an integer.`);
-  return parsed;
+/**
+ * Assignment form fields and RequestBuffer integer members originate from C# `int` values.
+ * Reuse the exact invariant decimal/JSON-number boundary so JavaScript coercion cannot turn null,
+ * booleans, arrays, blanks, signs, fractions, or exponents into reward or sequence authority.
+ */
+export function requestedAssignmentInteger(value: unknown, field: string): number {
+  return exactMatchInteger(value, field);
 }
 
 function starterAssignmentIds(value: unknown): string[] {
@@ -64,7 +68,7 @@ function starterAssignmentId(value: unknown): string {
  * client's submission order; Count is checked separately by the handler so truncated or
  * injected entries cannot be silently processed.
  */
-function bufferedRequests(value: unknown): BufferedRequestInput[] {
+export function bufferedRequests(value: unknown): BufferedRequestInput[] {
   if (typeof value !== "string" || value.length > 256_000) {
     throw new ApiError(ApiErrorCode.UnknownAction, "Requests payload is invalid.");
   }
@@ -78,20 +82,35 @@ function bufferedRequests(value: unknown): BufferedRequestInput[] {
     throw new ApiError(ApiErrorCode.UnknownAction, "Requests payload must be an object.");
   }
 
-  return Object.entries(parsed as Record<string, unknown>)
-    .sort(([left], [right]) => Number(left) - Number(right))
-    .map(([, item]) => {
-      if (!item || typeof item !== "object" || Array.isArray(item)) {
-        throw new ApiError(ApiErrorCode.UnknownAction, "Buffered request entry is invalid.");
-      }
-      const request = item as Record<string, unknown>;
-      const action = integer(request.action ?? request.Action, "Buffered action");
-      const data = request.data ?? request.Data;
-      if (typeof data !== "string" || data.length > 64_000) {
-        throw new ApiError(ApiErrorCode.UnknownAction, "Buffered request data is invalid.");
-      }
-      return { action, data };
-    });
+  const entries = Object.entries(parsed as Record<string, unknown>).map(([key, item]) => {
+    if (!/^(?:0|[1-9]\d*)$/.test(key)) {
+      throw new ApiError(ApiErrorCode.UnknownAction, "Buffered request sequence is invalid.");
+    }
+    const sequence = Number(key);
+    if (!Number.isSafeInteger(sequence) || sequence > 99) {
+      throw new ApiError(ApiErrorCode.UnknownAction, "Buffered request sequence is invalid.");
+    }
+    return { sequence, item };
+  }).sort((left, right) => left.sequence - right.sequence);
+  // RequestBuffer.AddRequest uses `requests.Add(requestCount++, value)`. Requiring that exact
+  // contiguous key set prevents arbitrary object names or gaps from being silently reordered and
+  // accepted merely because the outer Count happens to equal the number of properties.
+  if (entries.some((entry, index) => entry.sequence !== index)) {
+    throw new ApiError(ApiErrorCode.UnknownAction, "Buffered request sequence is invalid.");
+  }
+
+  return entries.map(({ item }) => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) {
+      throw new ApiError(ApiErrorCode.UnknownAction, "Buffered request entry is invalid.");
+    }
+    const request = item as Record<string, unknown>;
+    const action = requestedAssignmentInteger(request.action ?? request.Action, "Buffered action");
+    const data = request.data ?? request.Data;
+    if (typeof data !== "string" || data.length > 64_000) {
+      throw new ApiError(ApiErrorCode.UnknownAction, "Buffered request data is invalid.");
+    }
+    return { action, data };
+  });
 }
 
 export const assignmentHandlers: Record<number, HandlerEntry> = {
@@ -111,8 +130,8 @@ export const assignmentHandlers: Record<number, HandlerEntry> = {
     const result = await claimStarterAssignment(
       player!.id,
       starterAssignmentId(req.AssignmentId),
-      integer(req.Gold, "Gold"),
-      integer(req.WarBucks, "WarBucks"),
+      requestedAssignmentInteger(req.Gold, "Gold"),
+      requestedAssignmentInteger(req.WarBucks, "WarBucks"),
     );
     return ok(DbAction.ClaimStarterAssignment, {
       StarterAssignmentsData: serializeStarterAssignmentsData(result.starterAssignments),
@@ -131,13 +150,13 @@ export const assignmentHandlers: Record<number, HandlerEntry> = {
   // Action 214 is the path called by AssignmentsManager in the recovered 1.6.0 build. The
   // older action 112 remains compatible and includes its historic zero-price response field.
   [DbAction.SkipDailyAssignment]: authed(async ({ player, req }) => {
-    const result = await skipAssignment(player!.id, integer(req.AssignmentIndex, "AssignmentIndex"));
+    const result = await skipAssignment(player!.id, requestedAssignmentInteger(req.AssignmentIndex, "AssignmentIndex"));
     return ok(DbAction.SkipDailyAssignment, {
       AssignmentData: serializeAssignmentData(result.assignments),
     });
   }),
   [DbAction.SkipAssignment]: authed(async ({ player, req }) => {
-    const result = await skipAssignment(player!.id, integer(req.AssignmentIndex, "AssignmentIndex"));
+    const result = await skipAssignment(player!.id, requestedAssignmentInteger(req.AssignmentIndex, "AssignmentIndex"));
     return ok(DbAction.SkipAssignment, {
       AssignmentData: serializeAssignmentData(result.assignments),
       WarBucksSkipPrice: 0,
@@ -149,8 +168,8 @@ export const assignmentHandlers: Record<number, HandlerEntry> = {
   [DbAction.ClaimAssignment]: authed(async ({ player, req }) => {
     const result = await claimAssignment(
       player!.id,
-      integer(req.AssignmentId, "AssignmentId"),
-      integer(req.Reward, "Reward"),
+      requestedAssignmentInteger(req.AssignmentId, "AssignmentId"),
+      requestedAssignmentInteger(req.Reward, "Reward"),
     );
     return ok(DbAction.ClaimAssignment, {
       AssignmentData: serializeAssignmentData(result.assignments),
@@ -172,8 +191,8 @@ export const assignmentHandlers: Record<number, HandlerEntry> = {
   // same server-owned validation for diagnostic/older builds without trusting echoed rewards.
   [DbAction.ClaimEventAssignment]: authed(async ({ player, req }) => {
     const result = await claimEventAssignment(player!.id, {
-      rewardType: integer(req.RewardType, "RewardType"),
-      rewardValue: integer(req.RewardValue, "RewardValue"),
+      rewardType: requestedAssignmentInteger(req.RewardType, "RewardType"),
+      rewardValue: requestedAssignmentInteger(req.RewardValue, "RewardValue"),
     });
     return ok(DbAction.ClaimEventAssignment, {
       EventAssignmentData: JSON.stringify({
@@ -190,7 +209,7 @@ export const assignmentHandlers: Record<number, HandlerEntry> = {
       throw new ApiError(ApiErrorCode.UnknownAction, "RewardValue is invalid.");
     }
     const result = await claimEventMilestone(player!.id, {
-      milestoneId: integer(req.MilestoneId, "MilestoneId"),
+      milestoneId: requestedAssignmentInteger(req.MilestoneId, "MilestoneId"),
       rewardValue: req.RewardValue,
     });
     return ok(DbAction.ClaimEventMilestone, {
@@ -206,7 +225,7 @@ export const assignmentHandlers: Record<number, HandlerEntry> = {
   [DbAction.SendRequestBuffer]: authed(async ({ player, req }) => {
     const id = validatedRequestBufferId(req.BufferId);
     const requests = bufferedRequests(req.Requests);
-    const expectedCount = integer(req.Count, "Count");
+    const expectedCount = requestedAssignmentInteger(req.Count, "Count");
     if (expectedCount !== requests.length || expectedCount < 0 || expectedCount > 100) {
       throw new ApiError(ApiErrorCode.UnknownAction, "Request buffer count does not match its payload.");
     }

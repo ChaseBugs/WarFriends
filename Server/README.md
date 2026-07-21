@@ -1272,8 +1272,12 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   stock `SendRequestBuffer` path use a persistent UTC cycle. Only objectives derived from
   confirmed PvP settlement advance. Same-day `GetNewAssignments` reads preserve progression
   identity while the UTC rollover persists once; buffered claim retries are idempotent by `BufferId`, return
-  the cached response without a revision/write, and never roll an unrelated UTC cycle. Daily
-  assignment authority is now validated completely at shared persisted reads and progression
+  the cached response without a revision/write, and never roll an unrelated UTC cycle. All
+  assignment and buffer-envelope integers use the exact nonnegative C# signed-int boundary rather
+  than JavaScript coercion. The `Requests` object must contain the exact contiguous decimal keys
+  `0..Count-1` emitted by `requests.Add(requestCount++, value)`; arbitrary, padded, negative,
+  gapped, oversized, or nonnumeric keys reject the complete envelope before any action or mutation.
+  Persisted daily-assignment authority is now validated completely at shared reads and progression
   publication as well as action/serialization boundaries: the exact three supported records must
   retain their recovered order, IDs and targets; progress fractions and done/claimed flags must
   agree; `completed` must equal claimed records; skip and mega counters must be typed and bounded;

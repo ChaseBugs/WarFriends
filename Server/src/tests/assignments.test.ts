@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { DbAction } from "../dbActions";
+import { bufferedRequests, requestedAssignmentInteger } from "../handlers/assignments";
 import {
   assignmentStateFor,
   claimAssignmentState,
@@ -19,6 +20,31 @@ import { validatedAssignmentState } from "../services/assignmentAuthorityService
 import { validatedProgressionSuccessor } from "../services/progressionPublicationAuthorityService";
 
 const NOW = Date.UTC(2026, 6, 19, 12, 0, 0) / 1_000;
+
+test("assignment requests require canonical integers and contiguous RequestBuffer keys", () => {
+  assert.equal(requestedAssignmentInteger(0, "Count"), 0);
+  assert.equal(requestedAssignmentInteger("0", "Count"), 0);
+  assert.equal(requestedAssignmentInteger("2147483647", "Count"), 2_147_483_647);
+  for (const value of [undefined, null, false, true, [], [1], "", " 1", "1 ", "+1", "01", "1.0", "1e0", -1, "2147483648"]) {
+    assert.throws(() => requestedAssignmentInteger(value, "Count"), /exact nonnegative C# integer/);
+  }
+
+  assert.deepEqual(bufferedRequests(JSON.stringify({
+    1: { action: DbAction.ClaimAssignmentMegaReward, data: "" },
+    0: { action: DbAction.ClaimAssignment, data: "{}" },
+  })), [
+    { action: DbAction.ClaimAssignment, data: "{}" },
+    { action: DbAction.ClaimAssignmentMegaReward, data: "" },
+  ]);
+  for (const payload of [
+    { x: { action: 171, data: "{}" } },
+    { "00": { action: 171, data: "{}" } },
+    { 1: { action: 171, data: "{}" } },
+    { 0: { action: 171, data: "{}" }, 2: { action: 172, data: "" } },
+  ]) {
+    assert.throws(() => bufferedRequests(JSON.stringify(payload)), /sequence is invalid/);
+  }
+});
 
 test("assignment cycle is stable for one UTC day and rolls at midnight", () => {
   const initial = createInitialProgression(NOW);

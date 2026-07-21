@@ -143,6 +143,13 @@ identities, safe chronology, exact optional duration/expiry equality, and status
 resolution/revocation evidence are mandatory. Active lookup deliberately has no expiry predicate, so
 malformed Dates reach validation and cannot silently reopen access through database comparison.
 
+Assignment and RequestBuffer transport now preserves the recovered C# envelope contract before
+gameplay logic begins. Every direct or buffered assignment integer must be an exact nonnegative
+signed-int value, and the `Requests` object must have the contiguous decimal keys `0..Count-1`
+created by `requests.Add(requestCount++, value)`. JavaScript-coercible values and arbitrary, padded,
+negative, gapped, oversized, or nonnumeric keys reject the complete envelope before its first
+per-action result or progression mutation; valid envelopes retain the recovered per-action isolation.
+
 ### Current PvP relay increment
 
 Redis-enabled deployments now use one atomic Lua operation for cross-node queue deduplication,
