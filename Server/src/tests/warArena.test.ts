@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { config } from "../config";
 import { claimAchievementState } from "../services/achievementService";
 import { DbAction } from "../dbActions";
 import type { PlayerProgressionState } from "../db";
@@ -76,6 +75,17 @@ test("War Arena request fields require recovered integer and Boolean transports"
 });
 
 test("War Arena config and persisted wire use the recovered client field names", () => {
+  assert.equal(Object.isFrozen(arenaPolicy()), true);
+  assert.deepEqual(arenaPolicy(), {
+    idPrefix: "offline-arena",
+    maxBattles: 12,
+    startingLives: 3,
+    entryTickets: 1,
+    entryGold: 30,
+    heartTickets: 1,
+    heartGold: 30,
+    guaranteedScraps: 10,
+  });
   const configuration = warArenaConfiguration(NOW);
   assert.equal((configuration.Id as { S: string }).S, currentArenaId(NOW));
   assert.equal((configuration.Rules as { S: string }).S, "{}");
@@ -116,34 +126,26 @@ test("War Arena config and persisted wire use the recovered client field names",
   assert.deepEqual(wire.opponents, ["p2", "p3"]);
 });
 
-test("War Arena rejects malformed deployment policy instead of rounding or substituting it", () => {
-  const previous = {
-    arenaMaxBattles: config.arenaMaxBattles,
-    arenaLives: config.arenaLives,
-    arenaEntryTickets: config.arenaEntryTickets,
-    arenaEntryGold: config.arenaEntryGold,
-    arenaHeartTickets: config.arenaHeartTickets,
-    arenaHeartGold: config.arenaHeartGold,
-    arenaGuaranteedScraps: config.arenaGuaranteedScraps,
-  };
-  const invalid: Array<[keyof typeof previous, number]> = [
-    ["arenaMaxBattles", 0],
-    ["arenaMaxBattles", 13],
-    ["arenaLives", 0],
-    ["arenaEntryTickets", -1],
-    ["arenaEntryGold", 1.5],
-    ["arenaHeartTickets", Number.NaN],
-    ["arenaHeartGold", Number.POSITIVE_INFINITY],
-    ["arenaGuaranteedScraps", MAX_WAR_ARENA_CLIENT_INT + 1],
+test("War Arena rejects malformed explicit policy instead of rounding or substituting it", () => {
+  const configured = arenaPolicy();
+  const invalid: Array<[keyof typeof configured, string | number]> = [
+    ["idPrefix", ""],
+    ["idPrefix", "invalid prefix"],
+    ["idPrefix", "x".repeat(121)],
+    ["maxBattles", 0],
+    ["maxBattles", 13],
+    ["startingLives", 0],
+    ["entryTickets", -1],
+    ["entryGold", 1.5],
+    ["heartTickets", Number.NaN],
+    ["heartGold", Number.POSITIVE_INFINITY],
+    ["guaranteedScraps", MAX_WAR_ARENA_CLIENT_INT + 1],
   ];
-  try {
-    for (const [field, value] of invalid) {
-      Object.assign(config, previous, { [field]: value });
-      assert.throws(() => arenaPolicy(), /War Arena .* policy is invalid/);
-      assert.throws(() => warArenaConfiguration(NOW), /War Arena .* policy is invalid/);
-    }
-  } finally {
-    Object.assign(config, previous);
+  for (const [field, value] of invalid) {
+    assert.throws(
+      () => arenaPolicy({ ...configured, [field]: value } as typeof configured),
+      /War Arena .* policy is invalid/,
+    );
   }
 });
 
@@ -430,25 +432,25 @@ test("expired Arena settlement grants fallback scraps once and supplies NewArena
 });
 
 test("zero-value expired Arena settlement still closes the run exactly once", () => {
-  const previousScraps = config.arenaGuaranteedScraps;
-  config.arenaGuaranteedScraps = 0;
-  try {
-    const previousMonth = Date.UTC(2026, 5, 30, 12, 0, 0) / 1_000;
-    const active = enterWarArenaState(
-      createInitialProgression(previousMonth),
-      previousMonth,
-      { usedGold: 0, opponents: [] },
-    ).state;
-    const ended = endWarArenaState(active, NOW, active.warArena!.arenaId);
-    assert.equal(ended.replayed, false);
-    assert.equal(ended.response.Scraps, undefined);
-    assert.equal(ended.state.revision, active.revision + 1);
-    assert.equal(ended.state.warArena?.runRewardClaimed, true);
+  const zeroScrapsPolicy = arenaPolicy({ ...arenaPolicy(), guaranteedScraps: 0 });
+  const previousMonth = Date.UTC(2026, 5, 30, 12, 0, 0) / 1_000;
+  const active = enterWarArenaState(
+    createInitialProgression(previousMonth),
+    previousMonth,
+    { usedGold: 0, opponents: [] },
+  ).state;
+  const ended = endWarArenaState(active, NOW, active.warArena!.arenaId, zeroScrapsPolicy);
+  assert.equal(ended.replayed, false);
+  assert.equal(ended.response.Scraps, undefined);
+  assert.equal(ended.state.revision, active.revision + 1);
+  assert.equal(ended.state.warArena?.runRewardClaimed, true);
 
-    const replay = endWarArenaState(ended.state, NOW + 1, active.warArena!.arenaId);
-    assert.equal(replay.replayed, true);
-    assert.equal(replay.state, ended.state);
-  } finally {
-    config.arenaGuaranteedScraps = previousScraps;
-  }
+  const replay = endWarArenaState(
+    ended.state,
+    NOW + 1,
+    active.warArena!.arenaId,
+    zeroScrapsPolicy,
+  );
+  assert.equal(replay.replayed, true);
+  assert.equal(replay.state, ended.state);
 });

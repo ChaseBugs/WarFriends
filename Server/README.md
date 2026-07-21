@@ -1600,11 +1600,13 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   `ToString()` calls or the same safe JSON integers; only absent optional `UsedGold` selects zero.
   `HeartDialogShown` accepts only exact C# `True`/`False` text or a JSON Boolean. JavaScript-coercible
   nulls, arrays, blanks, alternate number syntax, lowercase Boolean text, and numeric Boolean
-  substitutes therefore cannot select entry, heart, or scraps behavior. Runs and prices are server-owned,
-  and every configured battle limit, life count, Ticket/Gold price, and guaranteed-Scraps fallback
-  must be an exact nonnegative C# `int` (with positive lives and one-to-twelve battles). Invalid
-  policy is rejected instead of being floored, clamped, or replaced by a hidden default.
-  battle IDs are receipt-bound, and entry/start/result/heart/life/reward/end retries return their
+  substitutes therefore cannot select entry, heart, or scraps behavior. Runs and prices are
+  server-owned. The safe Arena ID prefix, battle limit, life count, Ticket/Gold prices, and
+  guaranteed-Scraps fallback resolve together during module startup as one immutable policy. The
+  prefix leaves room for the monthly suffix; numeric values must be exact nonnegative C# `int`
+  values, with positive lives and one-to-twelve battles. Invalid policy stops startup instead of
+  being floored, clamped, replaced by a hidden default, or re-read midway through a run. Battle IDs
+  are receipt-bound, and entry/start/result/heart/life/reward/end retries return their
   recovered response without a false revision increment or MongoDB replacement. Expired receipt
   cleanup remains durable because it unblocks a future battle. One complete lifecycle authority
   protects shared persisted reads/publication plus every Arena action and boot boundary. It

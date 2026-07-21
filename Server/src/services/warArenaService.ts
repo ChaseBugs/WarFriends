@@ -10,6 +10,7 @@ import {
   serializeWarArenaData,
   warArenaConfiguration,
 } from "./warArenaContract";
+import type { ArenaPolicy } from "./warArenaContract";
 import { validatedWarArenaState } from "./warArenaAuthorityService";
 
 /**
@@ -514,20 +515,25 @@ export function endWarArenaState(
   state: PlayerProgressionState,
   now: number,
   requestedArenaId: string,
+  policy?: ArenaPolicy,
 ): ArenaMutationResult {
+  // The optional policy keeps pure-state tests able to cover valid deployment variants without
+  // mutating live process configuration. Production callers omit it and always receive the frozen
+  // startup snapshot from arenaPolicy().
+  const values = arenaPolicy(policy);
   const arena = warArenaStateFor(state);
-  if (!requestedArenaId || requestedArenaId === currentArenaId(now)) {
+  if (!requestedArenaId || requestedArenaId === currentArenaId(now, values)) {
     throw new ApiError(ApiErrorCode.UnknownAction, "ArenaId is not an expired event.");
   }
 
   let scraps = 0;
   let settledExpiredRun = false;
   if (arena.arenaId === requestedArenaId && !arena.runRewardClaimed) {
-    scraps = arenaPolicy().guaranteedScraps;
+    scraps = values.guaranteedScraps;
     arena.runRewardClaimed = true;
     settledExpiredRun = true;
   }
-  const response: Record<string, unknown> = { NewArena: warArenaConfiguration(now) };
+  const response: Record<string, unknown> = { NewArena: warArenaConfiguration(now, values) };
   if (scraps > 0) response.Scraps = scraps;
   const nextScraps = settledExpiredRun
     ? checkedRewardBalance(state.scraps, scraps, "Expired War Arena Scraps")
