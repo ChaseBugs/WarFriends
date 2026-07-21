@@ -470,8 +470,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   node re-reads MongoDB and proves active-match membership before sending anything to its socket.
   Without Redis, the same code retains the verified process-local queue and direct delivery path.
   Match rows record their coordinator node, whose renewable Redis heartbeat separates crashed-room
-  orphans from live peer-owned matches. Startup and periodic recovery cancel confirmed orphans and
-  repair only unprotected `InGame` profiles; an unknown Redis observation is conservatively retried.
+  orphans from live peer-owned matches. When Redis coordination is selected, startup must commit
+  that node's first heartbeat before it may create any durable match naming the owner. Startup and
+  periodic recovery cancel confirmed orphans and repair only unprotected `InGame` profiles; an
+  unknown Redis observation is conservatively retried.
   Distributed `JoinMatch` writes authenticated participant membership idempotently to MongoDB. The
   request that atomically completes the assigned pair writes `roomStartedAt` once and fans a
   MongoDB-validated `MatchStart` to both nodes; late join-timeout callbacks cannot cancel it.

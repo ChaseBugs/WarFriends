@@ -116,7 +116,9 @@ at a transport that has switched identity.
 Each new match also stores its backend coordinator UUID. Redis carries a renewable crash-expiring
 heartbeat for that UUID, and startup plus periodic orphan recovery cancels only matches whose owner
 is confirmed dead. Live peer-owned matches survive rolling node starts; an unavailable Redis
-liveness read is treated as unknown and never as permission to cancel gameplay. Presence repair
+liveness read is treated as unknown and never as permission to cancel gameplay. A Redis-selected
+node must now commit its first coordinator heartbeat before startup can proceed, so it cannot create
+durable matches naming an owner that peers have never observed. Presence repair
 excludes every participant still protected by any active or settling match.
 
 `SetPlayerStatus` now preserves mode compatibility while protecting ranked admission: the active

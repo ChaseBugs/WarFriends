@@ -9,6 +9,11 @@ export interface PvpCoordinatorHeartbeat {
   stop: () => Promise<void>;
 }
 
+/** A Redis-selected node must publish its owner lease before it can create durable match rows. */
+export function requireInitialPvpCoordinatorHeartbeat(written: boolean): void {
+  if (!written) throw new Error("Initial PvP coordinator heartbeat could not be established.");
+}
+
 /**
  * Advertise this node's transient PvP ownership with a renewable, crash-expiring key. Match rows
  * keep the coordinator UUID, allowing startup recovery to distinguish a real orphan from a live
@@ -17,11 +22,16 @@ export interface PvpCoordinatorHeartbeat {
 export async function startPvpCoordinatorHeartbeat(instanceId: string): Promise<PvpCoordinatorHeartbeat> {
   if (!isRedisAvailable()) return { stop: async () => undefined };
   const key = RedisKeys.pvpCoordinator(instanceId);
-  const renew = async (): Promise<void> => {
+  const renew = async (): Promise<boolean> => {
     const written = await redisSet(key, instanceId, heartbeatTtlSeconds);
     if (!written) logger.match.error("PvP coordinator heartbeat failed", { instanceId });
+    return written;
   };
-  await renew();
+  // Match rows immediately persist this instance ID as their transient room/timer owner. Starting
+  // the server without the first lease would let a healthy peer classify those new matches as
+  // orphaned before this node had ever proved ownership. Runtime renewal failures remain logged;
+  // Redis reads become unknown during an outage and the recovery path conservatively waits.
+  requireInitialPvpCoordinatorHeartbeat(await renew());
   const timer = setInterval(() => void renew(), heartbeatIntervalMs);
   timer.unref();
   return {

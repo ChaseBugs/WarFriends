@@ -1,6 +1,15 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { selectOrphanMatchIds } from "../services/matchService";
+import { requireInitialPvpCoordinatorHeartbeat } from "../services/pvpCoordinatorService";
+
+test("distributed PvP startup requires its first coordinator ownership heartbeat", () => {
+  assert.doesNotThrow(() => requireInitialPvpCoordinatorHeartbeat(true));
+  assert.throws(
+    () => requireInitialPvpCoordinatorHeartbeat(false),
+    /heartbeat could not be established/i,
+  );
+});
 
 test("orphan recovery preserves live and unknown peer coordinators", async () => {
   const observations = new Map<string, boolean | null>([
