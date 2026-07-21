@@ -7,6 +7,7 @@ import { configurationResponse, normalizeEnvelope } from "../routes";
 import { squadRankAuthority } from "../services/squadService";
 import {
   accountTypeAfterIdentityRemoval,
+  normalizeIdentityExternalId,
   providerForAccountType,
   validatedIdentityOwner,
 } from "../services/identityService";
@@ -208,6 +209,21 @@ test("identity mutations require auth while pre-login existence checks remain op
 });
 
 test("platform identity authority must match the exact connected player mirror", () => {
+  assert.equal(
+    normalizeIdentityExternalId("facebook", "9223372036854775807"),
+    "9223372036854775807",
+  );
+  assert.equal(
+    normalizeIdentityExternalId("facebook", "-9223372036854775808"),
+    "-9223372036854775808",
+  );
+  for (const invalid of ["-1", "01", "-0", "1.5", "facebook-id", "9223372036854775808"]) {
+    assert.throws(
+      () => normalizeIdentityExternalId("facebook", invalid),
+      /Facebook account id is invalid/,
+    );
+  }
+
   const player = contractPlayer();
   const identity: IdentityDocument = {
     provider: "facebook",

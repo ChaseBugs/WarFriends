@@ -75,15 +75,49 @@ function normalize(value: string, label: string, maxLength: number): string {
   return normalized;
 }
 
+const signedLongMinimum = -(1n << 63n);
+const signedLongMaximum = (1n << 63n) - 1n;
+
+/**
+ * Normalize the provider id without losing the recovered Facebook `long` representation.
+ *
+ * Facebook ids cross the 1.6.0 client as `long.ToString(InvariantCulture)` and are parsed back as
+ * a signed 64-bit integer. Keep large values as strings in Node, require the exact canonical text
+ * that C# would emit, and reserve -1 for the client's disconnected state. Google Play and Game
+ * Center are native string fields, so their existing bounded non-empty contract remains intact.
+ */
+export function normalizeIdentityExternalId(provider: IdentityProvider, value: string): string {
+  const externalId = normalize(value, "External account id", 256);
+  if (provider !== "facebook") return externalId;
+  if (!/^-?(?:0|[1-9][0-9]{0,18})$/u.test(externalId)) {
+    throw new ApiError(ApiErrorCode.RequestNotAuthorized, "Facebook account id is invalid.");
+  }
+  const parsed = BigInt(externalId);
+  if (
+    parsed < signedLongMinimum
+    || parsed > signedLongMaximum
+    || parsed === -1n
+    || parsed.toString() !== externalId
+  ) {
+    throw new ApiError(ApiErrorCode.RequestNotAuthorized, "Facebook account id is invalid.");
+  }
+  return externalId;
+}
+
 export async function findIdentity(
   provider: IdentityProvider,
   externalId: string,
   session?: ClientSession,
 ): Promise<IdentityDocument | null> {
-  const normalized = externalId.trim();
-  return normalized
-    ? identities().findOne({ provider, externalId: normalized }, session ? { session } : undefined)
-    : null;
+  let normalized: string;
+  try {
+    normalized = normalizeIdentityExternalId(provider, externalId);
+  } catch {
+    // Login and public existence checks treat an unrepresentable provider id as no match. Link
+    // mutations call the same strict normalizer directly and retain its stable authorization error.
+    return null;
+  }
+  return identities().findOne({ provider, externalId: normalized }, session ? { session } : undefined);
 }
 
 export interface ValidatedIdentityOwner {
@@ -178,7 +212,7 @@ export async function insertIdentityForNewPlayer(
   session: ClientSession,
   displayName = "",
 ): Promise<{ externalId: string }> {
-  const externalId = normalize(externalIdValue, "External account id", 256);
+  const externalId = normalizeIdentityExternalId(provider, externalIdValue);
   const credential = normalize(credentialValue, "External account credential", 4096);
   const now = new Date();
   try {
@@ -207,7 +241,7 @@ export async function linkIdentity(
   credentialValue: string,
   displayName = "",
 ): Promise<PlayerDocument> {
-  const externalId = normalize(externalIdValue, "External account id", 256);
+  const externalId = normalizeIdentityExternalId(provider, externalIdValue);
   // OAuth/platform tokens can be substantially longer than traditional passwords. Bound
   // the input to control request cost while storing only its fixed-length HMAC digest.
   const credential = normalize(credentialValue, "External account credential", 4096);
