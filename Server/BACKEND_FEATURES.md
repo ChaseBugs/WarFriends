@@ -676,6 +676,10 @@ Squad Buddy deposit authority now serializes that exact zero-based row index dir
 `CardBuddy.CreateDataForCurrentPlayer` and `LevelManager.LoadData`. The former subtract-one path no
 longer makes every Buddy above rank zero advertise one level too low, and malformed rank state
 cannot be normalized into a durable cross-player loadout.
+Normal visual purchases now resolve the same exact recovered rank row before comparing the
+catalog's zero-based unlock gate. `NaN` can no longer pass because JavaScript's raw `<` comparison
+returns false, and fractional or out-of-catalog values cannot authorize a cosmetic transition in a
+direct or replacement caller.
 One shared application-clock boundary now protects initial progression creation, persisted
 progression reads, successor publication, `PlayerData`, and the top-level player-state response.
 It requires a nonnegative safe Unix second inside JavaScript/BSON Date support and passes that same

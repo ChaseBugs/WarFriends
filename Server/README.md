@@ -1221,7 +1221,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   customization categories to the 4.9.5 PlayerVisuals sheet, producing 146 playable and one
   unresolved row. `DecalManagerData` is server-owned and boot-safe; buffered `BuyDecal`,
   `EquipDecal`, `DecalWasShown`, and `VisualWasShown` validate source, price, category, VIP,
-  ownership, expiry, and shop eligibility. Gold/WarBucks debit, permanent or timed ownership,
+  ownership, expiry, and shop eligibility. BuyDecal resolves the authenticated zero-based level
+  through the exact recovered 58-row catalog before its unlock comparison, so `NaN`, fractions,
+  negative indexes, and oversized integers cannot bypass or invent rank eligibility in direct
+  mutation callers. Gold/WarBucks debit, permanent or timed ownership,
   four-slot equipment, notification state, rollback data, and `BufferId` replay protection are
   atomic. Re-equipping the current category item and replaying an already-cleared visual badge
   acknowledgement preserve exact state identity instead of creating false inventory revisions.

@@ -12,6 +12,7 @@ import {
   validatedVisualUnixSeconds,
 } from "./visualEntitlementService";
 import { exactRequestJsonInteger } from "./requestJsonNumberService";
+import { playerLevelDefinition } from "./levelProgressionService";
 
 // Exact IJEAJGCCHEF values handled by the recovered BuyDecal/EquipDecal response branches.
 export const VISUAL_NOT_ENOUGH_WARBUCKS = 100;
@@ -235,7 +236,12 @@ export function purchaseVisualState(
     throw new ApiError(VISUAL_NO_DISCOUNT_FOUND, "Visual discount has no server-owned entitlement.");
   }
   if (payload.startTime < 0) throw new ApiError(ApiErrorCode.UnknownAction, "Visual start time is invalid.");
-  if (playerLevelIndex < definition.unlockLevel - 1) {
+  // DatabasePlayer.Level is one exact zero-based recovered row. A raw JavaScript comparison is
+  // unsafe because NaN makes the `<` gate false, while a fraction or oversized integer can claim
+  // eligibility that no client GameLevel owns. Revalidate at this exported economy mutation even
+  // though the normal authenticated handler has already proved the shared player profile.
+  const sourcePlayerLevel = playerLevelDefinition(playerLevelIndex).index;
+  if (sourcePlayerLevel < definition.unlockLevel - 1) {
     throw new ApiError(VISUAL_NOT_ENOUGH_LEVEL, "Player level is below the visual unlock level.");
   }
   if (definition.vipOnly && !isVipActiveAt(vipExpiration, currentTime)) {

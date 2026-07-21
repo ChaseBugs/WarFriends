@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { ApiError, ApiErrorCode } from "../apiErrors";
 import generatedVisualCatalog from "../data/visualCatalog.generated.json";
 import { DbAction } from "../dbActions";
 import { processAssignmentBufferState } from "../services/assignmentService";
@@ -19,6 +20,7 @@ import { AccountType } from "../constants";
 import type { PlayerDocument } from "../db";
 import { newPlayer } from "../dtos";
 import { validatedVisualInventoryState } from "../services/visualEntitlementService";
+import { PLAYER_LEVELS } from "../services/levelProgressionService";
 
 const NOW = 1_700_000_000;
 
@@ -187,6 +189,21 @@ test("WarBucks visual purchase and equip use the source row and owned category",
   publicPlayer.progression = equipped.state;
   const publicWire = buildDatabasePlayer(publicPlayer);
   assert.deepEqual(JSON.parse((publicWire.PlayerVisuals as { S: string }).S), equipped.visualInventory.slots);
+});
+
+test("normal visual purchase requires one exact recovered player-level row", () => {
+  const state = { ...createInitialProgression(NOW), warBucks: 10_000 };
+  const payload = { name: "HEAD_CIGAR", warBucks: 7_500, gold: 0, discount: 0, startTime: NOW };
+
+  for (const playerLevel of [Number.NaN, Number.POSITIVE_INFINITY, -1, 0.5, PLAYER_LEVELS.length]) {
+    assert.throws(
+      () => purchaseVisualState(state, NOW, playerLevel, 0, payload),
+      (error: unknown) => error instanceof ApiError && error.code === ApiErrorCode.InternalServerError,
+    );
+  }
+  assert.equal(state.warBucks, 10_000);
+  assert.equal(state.revision, 0);
+  assert.equal(state.visualInventory?.visuals.HEAD_CIGAR, undefined);
 });
 
 test("temporary power bands expire and VIP-only bands require live entitlement", () => {
