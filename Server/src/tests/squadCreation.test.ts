@@ -3,9 +3,11 @@ import test from "node:test";
 import { ApiErrorCode } from "../apiErrors";
 import {
   exactSquadInteger,
+  requestedAcceptSquadJoinRequest,
   requestedDirectSquadChatTimestamp,
   requestedDeclineSquadJoinRequest,
   requestedGlobalSquadDirectory,
+  requestedSquadInvitation,
   requestedSquadNamePrefix,
   requestedSquadJoinPolicy,
   requestedSuggestedSquadSkill,
@@ -113,6 +115,39 @@ test("action 181 decodes applicant MessageId and squad Id without generic alias 
     assert.throws(
       () => requestedDeclineSquadJoinRequest(request),
       /decline fields are invalid/,
+    );
+  }
+});
+
+test("Squad invitation and approval parse only their recovered identity fields", () => {
+  assert.equal(
+    requestedSquadInvitation({ PlayerToInviteId: "invitee-id" }),
+    "invitee-id",
+  );
+  assert.deepEqual(
+    requestedAcceptSquadJoinRequest({ SquadId: "Alpha Squad", PlayerToJoin: "applicant-id" }),
+    { playerId: "applicant-id", squadId: "Alpha Squad" },
+  );
+
+  for (const request of [
+    {},
+    { TargetPlayerId: "invitee-id" },
+    { PlayerToInviteId: " invitee-id" },
+    { PlayerToInviteId: "invitee\nid" },
+    { PlayerToInviteId: [] },
+  ]) {
+    assert.throws(() => requestedSquadInvitation(request), /invitation player field is invalid/);
+  }
+  for (const request of [
+    {},
+    { SquadId: "Alpha Squad", TargetPlayerId: "applicant-id" },
+    { SquadName: "Alpha Squad", PlayerToJoin: "applicant-id" },
+    { SquadId: " Alpha Squad", PlayerToJoin: "applicant-id" },
+    { SquadId: "Alpha Squad", PlayerToJoin: "applicant\nid" },
+  ]) {
+    assert.throws(
+      () => requestedAcceptSquadJoinRequest(request),
+      /Squad join-request approval.*field is invalid/,
     );
   }
 });

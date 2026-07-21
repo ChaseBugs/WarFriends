@@ -96,6 +96,48 @@ export interface DeclineSquadJoinRequestInput {
   squadId: string;
 }
 
+function requestedSquadPlayerId(value: unknown, action: string): string {
+  if (typeof value !== "string"
+    || value.length < 1
+    || value.length > 256
+    || value.trim() !== value
+    || /\p{Cc}/u.test(value)) {
+    throw new ApiError(ApiErrorCode.UnknownAction, `${action} player field is invalid.`);
+  }
+  return value;
+}
+
+function requestedExistingSquadId(value: unknown, action: string): string {
+  if (typeof value !== "string"
+    || value.length < 3
+    || value.length > 24
+    || value.trim().replace(/\s+/gu, " ") !== value
+    || /\p{Cc}/u.test(value)) {
+    throw new ApiError(ApiErrorCode.UnknownAction, `${action} squad field is invalid.`);
+  }
+  return value;
+}
+
+/** Parse action 59's sole recovered gameplay field without accepting another action's aliases. */
+export function requestedSquadInvitation(req: Record<string, unknown>): string {
+  return requestedSquadPlayerId(req.PlayerToInviteId, "Squad invitation");
+}
+
+export interface AcceptSquadJoinRequestInput {
+  playerId: string;
+  squadId: string;
+}
+
+/** Parse the exact `SquadId` and `PlayerToJoin` pair emitted by recovered action 133. */
+export function requestedAcceptSquadJoinRequest(
+  req: Record<string, unknown>,
+): AcceptSquadJoinRequestInput {
+  return {
+    playerId: requestedSquadPlayerId(req.PlayerToJoin, "Squad join-request approval"),
+    squadId: requestedExistingSquadId(req.SquadId, "Squad join-request approval"),
+  };
+}
+
 /**
  * Decode action 181's misleading recovered field names exactly.
  *
@@ -107,17 +149,13 @@ export interface DeclineSquadJoinRequestInput {
 export function requestedDeclineSquadJoinRequest(
   req: Record<string, unknown>,
 ): DeclineSquadJoinRequestInput {
-  if (typeof req.MessageId !== "string"
-    || req.MessageId.length < 1
-    || req.MessageId.length > 256
-    || req.MessageId.trim() !== req.MessageId
-    || /\p{Cc}/u.test(req.MessageId)
-    || typeof req.Id !== "string"
-    || req.Id.length < 3
-    || req.Id.length > 24
-    || req.Id.trim().replace(/\s+/gu, " ") !== req.Id
-    || /\p{Cc}/u.test(req.Id)) {
+  try {
+    return {
+      playerId: requestedSquadPlayerId(req.MessageId, "Squad join-request decline"),
+      squadId: requestedExistingSquadId(req.Id, "Squad join-request decline"),
+    };
+  } catch (error) {
+    if (!(error instanceof ApiError)) throw error;
     throw new ApiError(ApiErrorCode.UnknownAction, "Squad join-request decline fields are invalid.");
   }
-  return { playerId: req.MessageId, squadId: req.Id };
 }

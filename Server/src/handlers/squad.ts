@@ -41,9 +41,11 @@ import { rankSquadWarDivision } from "../services/squadWarContract";
 import { publishInboxFanout } from "../services/inboxFanoutService";
 import {
   exactSquadInteger,
+  requestedAcceptSquadJoinRequest,
   requestedGlobalSquadDirectory,
   requestedDirectSquadChatTimestamp,
   requestedDeclineSquadJoinRequest,
+  requestedSquadInvitation,
   requestedSquadNamePrefix,
   requestedSuggestedSquadSkill,
   requestedSquadJoinPolicy,
@@ -175,8 +177,9 @@ export const squadHandlers: Record<number, HandlerEntry> = {
   }),
 
   [DbAction.AcceptSquadJoinRequest]: authed(async ({ player, req }) => {
-    const name = squadName(req) || player!.player.squadName;
-    const target = targetId(req);
+    const input = requestedAcceptSquadJoinRequest(req);
+    const name = input.squadId;
+    const target = input.playerId;
     try {
       const squad = await acceptJoinRequest(player!.id, target, name);
       const joined = await findById(target);
@@ -198,7 +201,7 @@ export const squadHandlers: Record<number, HandlerEntry> = {
         // additionally displays the target's current squad name in its conflict dialog.
         PlayerId: target,
         ...(error.code === ApiErrorCode.PlayerAlreadyInSquad
-          ? { Name: targetPlayer?.player.squadName ?? "" }
+          ? { Name: targetPlayer?.squadName || targetPlayer?.player.squadName || "" }
           : {}),
       };
     }
@@ -214,9 +217,11 @@ export const squadHandlers: Record<number, HandlerEntry> = {
   }),
 
   [DbAction.InvitePlayerToSquad]: authed(async ({ player, req }) => {
-    const target = targetId(req);
+    const target = requestedSquadInvitation(req);
     try {
-      const squad = await invitePlayer(player!.id, target, squadName(req) || player!.player.squadName);
+      // The recovered action-59 request has no Squad field. Derive ownership only from the
+      // authenticated profile so a cross-action alias cannot select another mutable document.
+      const squad = await invitePlayer(player!.id, target, player!.player.squadName);
       return ok(DbAction.InvitePlayerToSquad, { Squad: buildDatabaseSquad(squad) });
     } catch (error) {
       if (!(error instanceof ApiError) || error.code !== ApiErrorCode.PlayerAlreadyInSquad) throw error;

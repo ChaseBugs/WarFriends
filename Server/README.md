@@ -504,7 +504,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   Action `59` proves manager authority before looking up the requested player, then creates only a
   bounded future-admission capability. A target already owned by any Squad is rejected through the
   recovered `13301` callback with its `PlayerId` and current Squad `Name`; an exact retry for an
-  already pending target returns the same Squad snapshot without advancing `updatedAt`.
+  already pending target returns the same Squad snapshot without advancing `updatedAt`. Its request
+  accepts only recovered `PlayerToInviteId` and derives the mutable Squad from authenticated
+  membership. Action `133` likewise requires its exact recovered `SquadId` and `PlayerToJoin` pair;
+  neither boundary accepts generic aliases belonging to promotion, kick, decline, or another action.
   Action `181` follows its recovered misleading form names exactly: `MessageId` is the applicant
   player ID and `Id` is the manager's current Squad name. The handler binds that Squad assertion to
   authenticated membership before removing only the named pending row. Replaying an already
