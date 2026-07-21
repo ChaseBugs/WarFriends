@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { AccountType } from "../constants";
-import type { PlayerDocument } from "../db";
+import type { PlayerDocument, PlayerFeatureIntroductionState } from "../db";
 import { DbAction } from "../dbActions";
 import { newPlayer } from "../dtos";
 import { analyticsHandlers } from "../handlers/analytics";
@@ -57,6 +57,29 @@ test("feature introduction acknowledgements are monotonic and replay safe", () =
   assert.equal(replay.featureIntroductions.chatShown, true);
 });
 
+test("feature introduction mutations reject corrupt snapshots and revision overflow", () => {
+  const wrongType = createInitialProgression(NOW);
+  wrongType.featureIntroductions = { chatShown: "false" } as unknown as PlayerFeatureIntroductionState;
+  assert.throws(
+    () => markFeatureIntroductionState(wrongType, "elitesShown"),
+    /Stored feature introduction state is invalid/,
+  );
+
+  const unknownKey = createInitialProgression(NOW);
+  unknownKey.featureIntroductions = { retiredFeatureShown: true } as unknown as PlayerFeatureIntroductionState;
+  assert.throws(
+    () => markFeatureIntroductionState(unknownKey, "chatShown"),
+    /Stored feature introduction state is invalid/,
+  );
+
+  const exhaustedRevision = createInitialProgression(NOW);
+  exhaustedRevision.revision = Number.MAX_SAFE_INTEGER;
+  assert.throws(
+    () => markFeatureIntroductionState(exhaustedRevision, "chatShown"),
+    /Feature introduction progression revision is invalid/,
+  );
+});
+
 test("PlayerAnalyticsData restores all durable introduction flags", () => {
   const player = playerDocument();
   player.progression!.featureIntroductions = Object.fromEntries(
@@ -69,6 +92,9 @@ test("PlayerAnalyticsData restores all durable introduction flags", () => {
   const empty = buildPlayerData(playerDocument(), NOW);
   const emptyAnalytics = JSON.parse((empty.PlayerAnalyticsData as { S: string }).S) as Record<string, boolean>;
   for (const feature of FEATURES) assert.equal(emptyAnalytics[feature], false, feature);
+
+  player.progression!.featureIntroductions = { chatShown: 1 } as unknown as PlayerFeatureIntroductionState;
+  assert.throws(() => buildPlayerData(player, NOW), /Stored feature introduction state is invalid/);
 });
 
 test("all seven dedicated shown actions now require authentication", () => {

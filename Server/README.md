@@ -257,7 +257,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   `182`, `183`, and `213` now require authentication and monotonically persist the recovered
   chat, customization, Warpath, card-pool, league-leaderboard, crafting, and Elites booleans.
   `GetPlayerData` restores all seven through `PlayerAnalyticsData`, preventing onboarding UI
-  from repeating after reconnect or reinstall. Action `182` was corrected from an unrelated
+  from repeating after reconnect or reinstall. The complete stored snapshot permits only those
+  seven keys and Boolean values before mutation or boot; missing legacy flags default to false,
+  and a real false-to-true write validates progression revision before incrementing it. Action
+  `182` was corrected from an unrelated
   top-Squads response to its real `leagueLeaderboardsShown` write. The broad action `179` blob
   remains ignored because it also contains client-controlled economy and progression counters.
 - **Squads (core membership)**: create / unique-name check / public or requested join /

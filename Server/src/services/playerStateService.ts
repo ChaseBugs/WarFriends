@@ -29,6 +29,7 @@ import { validatedSquadCreationsCount } from "./squadCreationAuthorityService";
 import { validatedRenameCount } from "./playerRenameAuthorityService";
 import { validatedCollectedRewards } from "./oneTimeRewardAuthorityService";
 import { validatedSquadChatCursor } from "./squadChatCursorAuthorityService";
+import { validatedFeatureIntroductions } from "./featureIntroductionAuthorityService";
 
 /** Unix seconds are used throughout the recovered Beanstalk protocol. */
 export function unixNow(): number {
@@ -367,6 +368,7 @@ export function buildPlayerData(player: PlayerDocument, now = unixNow()): Player
       ?? createInitialStarterAssignmentState(Math.floor(player.createdAt.getTime() / 1_000)),
   );
   const instantBattle = validatedInstantBattleState(state.instantBattle, Math.floor(now));
+  const featureIntroductions = validatedFeatureIntroductions(state.featureIntroductions);
 
   // PlayerAnalytics derives from DatabaseSerializedObjectGeneric<PlayerAnalyticsData>, so
   // this exact nested type name is the boot lookup key. The real chat channel is Photon
@@ -406,13 +408,13 @@ export function buildPlayerData(player: PlayerDocument, now = unixNow()): Player
         : 0,
     // These one-way booleans are written only by their parameterless recovered actions. They
     // must cross the boot boundary or feature-introduction dialogs can repeat after reinstall.
-    chatShown: state.featureIntroductions?.chatShown ?? false,
-    elitesShown: state.featureIntroductions?.elitesShown ?? false,
-    customizationShown: state.featureIntroductions?.customizationShown ?? false,
-    warpathShown: state.featureIntroductions?.warpathShown ?? false,
-    cardpoolShown: state.featureIntroductions?.cardpoolShown ?? false,
-    craftingShown: state.featureIntroductions?.craftingShown ?? false,
-    leagueLeaderboardsShown: state.featureIntroductions?.leagueLeaderboardsShown ?? false,
+    chatShown: featureIntroductions.chatShown ?? false,
+    elitesShown: featureIntroductions.elitesShown ?? false,
+    customizationShown: featureIntroductions.customizationShown ?? false,
+    warpathShown: featureIntroductions.warpathShown ?? false,
+    cardpoolShown: featureIntroductions.cardpoolShown ?? false,
+    craftingShown: featureIntroductions.craftingShown ?? false,
+    leagueLeaderboardsShown: featureIntroductions.leagueLeaderboardsShown ?? false,
   });
 
   if (state.tutorialFinished) {
