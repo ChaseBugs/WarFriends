@@ -114,7 +114,13 @@ claims one `roomStartedAt` transition, and only that compare-and-set winner fans
 both nodes. Started distributed rooms now authorize events from durable joined membership, bind
 fan-out to the authenticated source and assigned opponent, persist CardPlayed evidence plus a
 separate successful-delivery receipt for safe transport retries, and settle two durable matching
-result reports before broadcasting the terminal row to both nodes. Cross-node reconnect,
+result reports before broadcasting the terminal row to both nodes. MongoDB is also the sole
+terminal decision for the no-Redis room path: the in-memory report map validates only current
+socket membership and cannot override a concurrent durable pending, conflict, or finished result.
+Every conditional report write replays a finished receipt or result-conflict cancellation observed
+on reload, and cancellation-versus-settlement races re-read the committed terminal row before any
+client notification. This prevents both sockets from receiving only `ResultPending` after the
+opponent's concurrent handler has already completed the match. Cross-node reconnect,
 disconnect-grace, and forfeit coordination now uses renewable compare-owned Redis socket routes,
 durable per-participant disconnect clocks, MongoDB-validated opponent notifications, retry-safe
 rejoin clearing, and grace-expiry forfeit or both-offline cancellation. Unknown Redis liveness

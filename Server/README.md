@@ -493,7 +493,12 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   evidence separately from the successful live-delivery receipt, allowing a failed handoff retry
   without duplicating an already delivered effect; receiving nodes independently require that same
   durable sequence/card identity before delivery. Results use MongoDB's two-party consensus and
-  terminal settlement before `MatchEnded` or `ResultConflict` is delivered across nodes.
+  terminal settlement before `MatchEnded` or `ResultConflict` is delivered across nodes. The same
+  durable decision controls the process-local room path: its report map proves only current socket
+  membership, while every post-write reload recognizes finished receipts and conflict
+  cancellations. A concurrent local pending/conflict observation therefore cannot suppress a
+  committed terminal event, and cancellation-versus-settlement races notify clients from the row
+  that actually won the MongoDB transition.
   Every distributed socket also owns a renewable Redis route that an older/replaced socket cannot
   refresh or delete. `Identify` enters this mode only after the exact player/socket owner write
   succeeds. Deliberate Redis-unavailable operation stays on the local-room path, while an attempted

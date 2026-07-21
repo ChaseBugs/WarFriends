@@ -1414,6 +1414,36 @@ export interface MatchReportResult {
 }
 
 /**
+ * Convert a validated durable terminal row into the result-report contract.
+ *
+ * This is deliberately shared by the pre-write and post-write paths. Two participants can
+ * report concurrently, so the row may become finished or result-conflict-cancelled between this
+ * request's conditional update and its reload. In that case the terminal MongoDB row is the sole
+ * authority: returning stale "invalid"/"pending" state would make both live sockets miss the
+ * terminal notification even though settlement or cancellation already committed.
+ */
+export function terminalMatchReportResult(
+  match: MatchDoc,
+  fallbackWinnerId: string,
+): MatchReportResult | null {
+  if (match.state === "finished") {
+    return {
+      status: "finished",
+      settlement: {
+        matchId: match.matchId,
+        winnerId: match.winnerId ?? fallbackWinnerId,
+        rewarded: false,
+        rewards: match.rewardReceipts,
+      },
+    };
+  }
+  if (match.state === "cancelled") {
+    return { status: match.cancelReason === "result_conflict" ? "conflict" : "invalid" };
+  }
+  return null;
+}
+
+/**
  * Interpret the local EndReason enum sent by the recovered GameEnded request.
  *
  * Win (2) and WinByForfeit (3) identify the authenticated reporter as winner. Killed (1),
@@ -1452,17 +1482,8 @@ export async function reportMatchResult(
   const match = await getMatch(matchId);
   if (!match || !match.players.some((player) => player.playerId === reporterId)) return { status: "invalid" };
   if (!match.players.some((player) => player.playerId === winnerId)) return { status: "invalid" };
-  if (match.state === "finished") {
-    return {
-      status: "finished",
-      settlement: {
-        matchId,
-        winnerId: match.winnerId ?? winnerId,
-        rewarded: false,
-        rewards: match.rewardReceipts,
-      },
-    };
-  }
+  const existingTerminal = terminalMatchReportResult(match, winnerId);
+  if (existingTerminal) return existingTerminal;
   if (match.state !== "active") return { status: "invalid" };
 
   const authoritativeCards = requireRelayedCardEvidence
@@ -1492,7 +1513,10 @@ export async function reportMatchResult(
     },
   );
   const updated = await getMatch(matchId);
-  if (!updated || updated.state !== "active") return { status: "invalid" };
+  if (!updated) return { status: "invalid" };
+  const postWriteTerminal = terminalMatchReportResult(updated, winnerId);
+  if (postWriteTerminal) return postWriteTerminal;
+  if (updated.state !== "active") return { status: "invalid" };
   const reports = updated.resultReports ?? {};
   const reportedWinners = updated.players
     .map((player) => reports[player.playerId])
@@ -1500,11 +1524,20 @@ export async function reportMatchResult(
   if (reportedWinners.length < updated.players.length) return { status: "pending" };
   if (new Set(reportedWinners).size !== 1) {
     await cancelMatch(matchId, "result_conflict");
-    return { status: "conflict" };
+    // Cancellation may lose its compare-and-set to a concurrent settlement after a participant
+    // corrected their own report. Re-read instead of publishing the stale conflict observation.
+    const terminal = await getMatch(matchId);
+    return terminalMatchReportResult(terminal ?? updated, winnerId) ?? { status: "invalid" };
   }
 
   const settlement = await settleResult(matchId, reportedWinners[0], reporterId);
-  return { status: "confirmed", settlement };
+  // A conflicting cancellation can win immediately before settleResult opens its transaction.
+  // Confirm success only from the resulting durable row, never from the helper's no-reward shape.
+  const terminal = await getMatch(matchId);
+  const resolved = terminal ? terminalMatchReportResult(terminal, winnerId) : null;
+  return resolved?.status === "finished"
+    ? { status: "confirmed", settlement: resolved.settlement ?? settlement }
+    : resolved ?? { status: "invalid" };
 }
 
 /**
@@ -1528,20 +1561,8 @@ export async function waitForMatchResolution(
   do {
     const match = await getMatch(matchId);
     if (!match) return { status: "invalid" };
-    if (match.state === "finished") {
-      return {
-        status: "finished",
-        settlement: {
-          matchId,
-          winnerId: match.winnerId ?? "",
-          rewarded: false,
-          rewards: match.rewardReceipts,
-        },
-      };
-    }
-    if (match.state === "cancelled") {
-      return { status: match.cancelReason === "result_conflict" ? "conflict" : "invalid" };
-    }
+    const terminal = terminalMatchReportResult(match, "");
+    if (terminal) return terminal;
     if (Date.now() >= deadline) break;
     await new Promise<void>((resolve) => setTimeout(resolve, Math.min(100, deadline - Date.now())));
   } while (Date.now() <= deadline);

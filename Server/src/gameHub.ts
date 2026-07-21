@@ -24,7 +24,7 @@ import {
   wasRelayedCardDelivered,
 } from "./services/matchService";
 import { parsePvpUsedCards } from "./services/cardInventoryService";
-import { roomManager } from "./gameRooms/roomManager";
+import { resolveMatchReportStatus, roomManager } from "./gameRooms/roomManager";
 import type {
   ClientEnvelope,
   CardPlayedEventData,
@@ -1157,12 +1157,20 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
       } catch {
         return send(client, { Type: "MatchError", Payload: { MatchId: p?.MatchId, Reason: "InvalidUsedCards" } });
       }
-      if (report === "conflict" || durable.status === "conflict") {
+      // The local room report proves only that this socket currently belongs to the room. MongoDB
+      // owns cross-handler consensus and may already be terminal when the local mirror says
+      // pending, so only the durable decision may select pending/conflict/finished behavior.
+      const resolvedStatus = resolveMatchReportStatus(report, durable.status);
+      if (resolvedStatus === "conflict") {
         roomManager.broadcast(p.MatchId, { Type: "MatchError", Payload: { MatchId: p.MatchId, Reason: "ResultConflict" } });
         return;
       }
-      if (report === "pending" || durable.status === "pending") {
+      if (resolvedStatus === "pending") {
         return send(client, { Type: "ResultPending", Payload: { MatchId: p.MatchId } });
+      }
+
+      if (resolvedStatus === "invalid") {
+        return send(client, { Type: "MatchError", Payload: { MatchId: p.MatchId, Reason: "InvalidResult" } });
       }
 
       const settlement = durable.settlement;

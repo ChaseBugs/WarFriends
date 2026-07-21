@@ -3,9 +3,27 @@ import logger from "../utils/logger";
 
 // In-memory registry for live PvP rooms. Persistent match ownership and rewards live in
 // matchService; this class owns only the socket-facing state: which of the two assigned
-// players are connected, whether both have joined, event relay, and result-report consensus.
+// players are connected, whether both have joined, event relay, and a local result-report mirror.
 // It is intentionally process-local for now. Horizontal scaling will require a shared room
 // coordinator (for example Redis pub/sub) so players connected to different nodes can meet.
+
+export type LocalMatchReportStatus = "pending" | "confirmed" | "conflict" | "invalid";
+export type DurableMatchReportStatus = LocalMatchReportStatus | "finished";
+
+/**
+ * Resolve the live-room observation against the durable result-report decision.
+ *
+ * The local map exists only to reject a socket that is not in this process's current room. It can
+ * lag MongoDB when two socket handlers report concurrently, so local pending/conflict must never
+ * override a terminal or newer durable decision. Invalid local membership still fails before the
+ * database result is accepted because that socket has no authority to report through this room.
+ */
+export function resolveMatchReportStatus(
+  local: LocalMatchReportStatus,
+  durable: DurableMatchReportStatus,
+): DurableMatchReportStatus {
+  return local === "invalid" ? "invalid" : durable;
+}
 
 export interface Participant {
   /** Authenticated database player ID used as the stable room key. */
@@ -23,7 +41,7 @@ export interface MatchRoom {
   participants: Map<string, Participant>; // keyed by playerId
   /** Immutable pair copied from the persistent match and used as the admission allowlist. */
   allowedPlayerIds: Set<string>;
-  /** Per-participant winner reports used to detect agreement or conflict. */
+  /** Best-effort local mirror; MongoDB remains the sole result-consensus authority. */
   resultReports: Map<string, string>; // reporter playerId -> winner playerId
   /** CardPlayed sequences already delivered to the opponent on this process-local room. */
   deliveredCardSequences: Map<string, Set<number>>;
@@ -157,9 +175,9 @@ export class RoomManager {
     return this.rooms.get(matchId)?.participants.has(playerId) ?? false;
   }
 
-  recordResult(matchId: string, reporterId: string, winnerId: string): "pending" | "confirmed" | "conflict" | "invalid" {
+  recordResult(matchId: string, reporterId: string, winnerId: string): LocalMatchReportStatus {
     // Both the reporter and proposed winner must belong to the immutable assigned pair.
-    // Rewards are not settled until every assigned player reports the same winner.
+    // This transient mirror never authorizes rewards; durable reports decide consensus.
     const room = this.rooms.get(matchId);
     if (!room || !room.participants.has(reporterId) || !room.allowedPlayerIds.has(winnerId)) return "invalid";
     room.resultReports.set(reporterId, winnerId);

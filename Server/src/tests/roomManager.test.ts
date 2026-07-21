@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { RoomManager } from "../gameRooms/roomManager";
+import { resolveMatchReportStatus, RoomManager } from "../gameRooms/roomManager";
 
 test("rooms reject nonparticipants and only relay active participant traffic", () => {
   const manager = new RoomManager();
@@ -34,6 +34,14 @@ test("match results require matching reports from both participants", () => {
   manager.join("m3", "p2", "c2", ["p1", "p2"]);
   assert.equal(manager.recordResult("m3", "p1", "p1"), "pending");
   assert.equal(manager.recordResult("m3", "p2", "p2"), "conflict");
+});
+
+test("durable result consensus overrides a stale process-local report mirror", () => {
+  assert.equal(resolveMatchReportStatus("pending", "confirmed"), "confirmed");
+  assert.equal(resolveMatchReportStatus("pending", "finished"), "finished");
+  assert.equal(resolveMatchReportStatus("confirmed", "pending"), "pending");
+  assert.equal(resolveMatchReportStatus("conflict", "pending"), "pending");
+  assert.equal(resolveMatchReportStatus("invalid", "finished"), "invalid");
 });
 
 test("disconnect keeps the authorized room available for a legitimate reconnect", () => {

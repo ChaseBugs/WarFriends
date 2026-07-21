@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import type { MatchDoc, MatchPlayerReward } from "../services/matchService";
+import { terminalMatchReportResult, type MatchDoc, type MatchPlayerReward } from "../services/matchService";
 import { validatedMatchDocument } from "../services/matchAuthorityService";
 
 const CREATED_AT = new Date("2026-07-21T10:00:00.000Z");
@@ -88,6 +88,37 @@ test("complete ranked-match authority binds room, card, terminal, and reward sta
       "player-b": reward({ baseExperience: 10, experience: 10 }),
     },
   }, NOW));
+});
+
+test("terminal result replay follows finished and conflict-cancelled durable rows", () => {
+  const rewards = { "player-a": reward(), "player-b": reward({ baseExperience: 10, experience: 10 }) };
+  const finished = activeMatch({
+    state: "finished",
+    winnerId: "player-a",
+    resultReports: { "player-a": "player-a", "player-b": "player-a" },
+    rewardReceipts: rewards,
+    endedAt: ENDED_AT,
+  });
+  assert.deepEqual(terminalMatchReportResult(finished, "player-b"), {
+    status: "finished",
+    settlement: {
+      matchId: MATCH_ID,
+      winnerId: "player-a",
+      rewarded: false,
+      rewards,
+    },
+  });
+  assert.deepEqual(terminalMatchReportResult(activeMatch({
+    state: "cancelled",
+    cancelReason: "result_conflict",
+    endedAt: ENDED_AT,
+  }), "player-a"), { status: "conflict" });
+  assert.deepEqual(terminalMatchReportResult(activeMatch({
+    state: "cancelled",
+    cancelReason: "server_restart",
+    endedAt: ENDED_AT,
+  }), "player-a"), { status: "invalid" });
+  assert.equal(terminalMatchReportResult(activeMatch(), "player-a"), null);
 });
 
 test("ranked-match authority rejects unsafe dynamic identities and contradictory lifecycle state", () => {
