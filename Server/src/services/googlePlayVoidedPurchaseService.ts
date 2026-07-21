@@ -278,7 +278,8 @@ export async function runGooglePlayVoidedPurchaseSweep(
     return { revoked: 0, replayed: 0, unmatched: 0, skipped: true };
   }
   const interval = Math.min(3_600, Math.max(60, Math.floor(config.googlePlayVoidedPurchaseSchedulerIntervalSeconds)));
-  const leased = await withScheduledJobLease(jobId, Math.max(300_000, interval * 2_000), async () => {
+  const leased = await withScheduledJobLease(jobId, Math.max(300_000, interval * 2_000), async (lease) => {
+    await lease.assertOwned();
     const nowMillis = now * 1_000;
     const cursor = await purchaseReconciliationCursors().findOne({ _id: cursorId });
     if (cursor) validatedPurchaseReconciliationCursor(cursor, new Date(nowMillis));
@@ -299,7 +300,9 @@ export async function runGooglePlayVoidedPurchaseSweep(
         nowMillis,
         pageToken,
       );
+      await lease.assertOwned();
       for (const event of page.purchases) {
+        await lease.assertOwned();
         const result = await reconcileVoidedPurchase(event, now);
         if (result === "revoked") revoked += 1;
         else if (result === "replayed") replayed += 1;
@@ -312,6 +315,7 @@ export async function runGooglePlayVoidedPurchaseSweep(
       lastSuccessfulEndTime: new Date(nowMillis),
       updatedAt: new Date(nowMillis),
     }, new Date(nowMillis));
+    await lease.assertOwned();
     await purchaseReconciliationCursors().updateOne(
       { _id: cursorId },
       {

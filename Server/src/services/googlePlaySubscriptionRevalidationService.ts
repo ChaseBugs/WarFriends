@@ -219,6 +219,7 @@ async function revalidateReceipt(
   receipt: PurchaseReceiptDocument,
   verifier: GooglePlaySubscriptionStatusVerifier,
   now: number,
+  assertLeaseOwned: () => Promise<void>,
 ): Promise<{ checked: boolean; changed: boolean; failed: boolean }> {
   validatedPurchaseReceipt(receipt);
   if (!receipt.encryptedPurchaseToken) return { checked: false, changed: false, failed: false };
@@ -233,8 +234,14 @@ async function revalidateReceipt(
       productId: receipt.productId,
       purchaseToken,
     }, now);
+    // Provider latency can outlive a lease heartbeat failure. Fence the durable entitlement write
+    // after the response rather than letting an ex-owner commit provider evidence.
+    await assertLeaseOwned();
     return { checked: true, changed: await commitSuccessfulStatus(receipt, status, now), failed: false };
   } catch (error) {
+    // Retry scheduling is also durable authority. Prove ownership again before changing it; if the
+    // lease was lost this assertion escapes the catch and aborts the entire sweep.
+    await assertLeaseOwned();
     await recordRetry(receipt, now);
     logger.errorWithEmoji("PURCHASE", "Google Play subscription revalidation failed", "SCHEDULER", {
       receiptId: receipt._id,
@@ -253,7 +260,8 @@ export async function runGooglePlaySubscriptionRevalidationSweep(
     return { checked: 0, changed: 0, failed: 0, skipped: true };
   }
   const interval = Math.min(3_600, Math.max(30, Math.floor(config.googlePlaySubscriptionSchedulerIntervalSeconds)));
-  const leased = await withScheduledJobLease(jobId, Math.max(300_000, interval * 2_000), async () => {
+  const leased = await withScheduledJobLease(jobId, Math.max(300_000, interval * 2_000), async (lease) => {
+    await lease.assertOwned();
     const batchSize = Math.min(1_000, Math.max(1, Math.floor(config.googlePlaySubscriptionRevalidationBatchSize)));
     const due = await purchaseReceipts().find({
       kind: "subscription",
@@ -266,7 +274,7 @@ export async function runGooglePlaySubscriptionRevalidationSweep(
     // Status checks are deliberately sequential. This bounds Play API pressure and makes the
     // configured batch size an honest worst-case request count for each leased sweep.
     for (const receipt of due) {
-      const result = await revalidateReceipt(receipt, verifier, now);
+      const result = await revalidateReceipt(receipt, verifier, now, lease.assertOwned);
       if (result.checked) checked += 1;
       if (result.changed) changed += 1;
       if (result.failed) failed += 1;

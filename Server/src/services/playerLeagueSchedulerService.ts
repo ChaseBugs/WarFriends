@@ -27,11 +27,13 @@ export async function runPlayerLeagueSettlementSweep(now = Math.floor(Date.now()
   const intervalSeconds = Math.min(3_600, Math.max(10, Math.floor(config.playerLeagueSchedulerIntervalSeconds)));
   // A sweep can settle up to 100 divisions and therefore outlive a short polling interval. Keep
   // the lease comfortably longer than one normal sweep; a crashed owner becomes retryable later.
-  const leased = await withScheduledJobLease(jobId, Math.max(900_000, intervalSeconds * 2_000), async () => {
+  const leased = await withScheduledJobLease(jobId, Math.max(900_000, intervalSeconds * 2_000), async (lease) => {
+    await lease.assertOwned();
     const leagueIds = expiredManagedLeagueIds(await players().distinct("player.leagueId"), now);
     let settledDivisions = 0;
     let settledPlayers = 0;
     for (const leagueId of leagueIds) {
+      await lease.assertOwned();
       // The scheduler owns no authenticated handler snapshot. Prove the full account selected as
       // its division representative before that row can trigger the all-member settlement.
       const requester = validatedPlayerProfileLookup(await players().findOne({ "player.leagueId": leagueId }));

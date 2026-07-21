@@ -12,9 +12,11 @@ export async function runSquadWarMaintenanceSweep(now = new Date()): Promise<{
 }> {
   if (!config.squadWarsEnabled) return { rounds: 0, messages: 0, skipped: true };
   const seconds = Math.min(3_600, Math.max(10, Math.floor(config.squadWarsSchedulerIntervalSeconds)));
-  // Only the lease owner may allocate/settle. MongoDB's unique indexes and transaction guards
-  // remain the final correctness boundary if a lease expires while a slow sweep is finishing.
-  const leased = await withScheduledJobLease(jobId, Math.max(900_000, seconds * 2_000), () => maintainSquadWars(now));
+  // `maintainSquadWars` fences every round/season mutation through this renewable lease in addition
+  // to its transaction and unique-index guards.
+  const leased = await withScheduledJobLease(jobId, Math.max(900_000, seconds * 2_000), (lease) => (
+    maintainSquadWars(now, lease.assertOwned)
+  ));
   if (!leased.ran) return { rounds: 0, messages: 0, skipped: true };
   return { ...(leased.result ?? { rounds: 0, messages: 0 }), skipped: false };
 }

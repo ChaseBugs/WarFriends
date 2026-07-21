@@ -52,6 +52,22 @@ deadline, even if no other node has acquired the lease yet; it must stop and let
 re-evaluate migration history. Invalid lease clocks fail closed for operator repair rather than
 being guessed expired.
 
+### Cross-node scheduled-job leases
+
+Player League settlement, Squad War maintenance, Google Play subscription revalidation, and Voided
+Purchases reconciliation share renewable rows in `scheduledJobLeases`. A new row records its exact
+`leaseMs`, `renewedAt`, and derived expiry. The older four-field row is an explicit read-only legacy
+shape: it may finish naturally, then the first exact expired takeover replaces it with the renewable
+schema. Absence is acquired by singleton insert, and takeover compare-and-sets every prior field plus
+the exact document size so a concurrently changed or damaged row cannot be silently normalized.
+
+The owner heartbeats at one-third of the lease interval and renewal matches only an unexpired row
+with the same owner and duration. Explicit fences are serialized with that heartbeat before each
+batched or post-provider durable transition. A successful sweep is fenced once more, pending renewal
+is drained, and release deletes only the current owner/duration tuple. If a heartbeat is delayed past
+expiry or any fence loses its compare-and-set, the old worker fails instead of resurrecting itself or
+continuing into the next mutation.
+
 ### Rotate `AUTH_SECRET` without invalidating accounts
 
 Production requires `AUTH_SECRET` and every comma-separated `AUTH_SECRET_FALLBACKS` entry to be

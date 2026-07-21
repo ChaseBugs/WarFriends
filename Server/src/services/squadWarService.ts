@@ -966,13 +966,18 @@ export async function settleSquadWarRound(roundId: string, now = new Date()): Pr
 }
 
 /** Settle every expired round, close complete seasons, and allocate the current window. */
-export async function maintainSquadWars(now = new Date()): Promise<{ rounds: number; messages: number }> {
+export async function maintainSquadWars(
+  now = new Date(),
+  assertLeaseOwned: () => Promise<void> = async () => undefined,
+): Promise<{ rounds: number; messages: number }> {
   if (!config.squadWarsEnabled) return { rounds: 0, messages: 0 };
+  await assertLeaseOwned();
   const expired = await squadWarRounds().find({ status: "active", endsAt: { $lte: now } }).sort({ endsAt: 1 }).limit(100).toArray();
   expired.forEach((round) => validatedSquadWarRound(round, undefined, now));
   let rounds = 0;
   let messageCount = 0;
   for (const round of expired) {
+    await assertLeaseOwned();
     const result = await settleSquadWarRound(round.roundId, now);
     if (result.settled) rounds += 1;
     messageCount += result.messages;
@@ -984,16 +989,19 @@ export async function maintainSquadWars(now = new Date()): Promise<{ rounds: num
     { status: "active", endsAt: { $lte: now } },
   ).sort({ endsAt: 1 }).limit(100).toArray();
   for (const season of endedSeasons) {
+    await assertLeaseOwned();
     validatedSquadWarSeason(season, now);
     const remaining = await squadWarRounds().countDocuments({ seasonId: season.seasonId, status: "active" }, { limit: 1 });
     if (remaining === 0) {
       validatedSquadWarSeason({ ...season, status: "settled", settledAt: now }, now);
+      await assertLeaseOwned();
       await squadWarSeasons().updateOne(
         { seasonId: season.seasonId, status: "active" },
         { $set: { status: "settled", settledAt: now } },
       );
     }
   }
+  await assertLeaseOwned();
   await ensureActiveSquadWarSeason(now);
   return { rounds, messages: messageCount };
 }
