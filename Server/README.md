@@ -781,7 +781,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   ID_7, and a server-granted Gold craft for ID_8 are checked against server state. Every numeric
   proof is validated as a nonnegative safe integer before a permanent completion marker is
   published, and both timed and subscription Gold-card crafts reject proof-counter overflow before
-  clearing their receipt. Buffered claims are ordered, atomic, reward-validated, and replay safe.
+  clearing their receipt. One shared snapshot boundary validates the bounded Unix deadline, exact
+  ten-ID namespace, Boolean completion/claim flags, and the rule that a claimed record must already
+  be completed before creation, boot, completion, claim, or serialization. Non-finite deadlines
+  therefore fail closed instead of making a pre-completed onboarding reward permanently claimable.
+  Buffered claims are ordered, atomic, reward-validated, and replay safe.
   Unit deployment remains disabled until that event source exists.
 - **VIP entitlement integrity**: every paid-VIP consumer uses one validated nonnegative,
   safe-integer Unix deadline. PvP/mission multipliers, virtual dog-tag capacity, daily cards,

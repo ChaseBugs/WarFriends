@@ -11,6 +11,10 @@ import { validatedSubscription } from "./subscriptionBenefitService";
 import { validatedRentalState } from "./rentalEntitlementService";
 import { validatedBlackMarketOfferState } from "./blackMarketEntitlementService";
 import { validatedVisualInventoryState } from "./visualEntitlementService";
+import {
+  createInitialStarterAssignmentState,
+  validatedStarterAssignmentState,
+} from "./starterAssignmentAuthorityService";
 
 /** Unix seconds are used throughout the recovered Beanstalk protocol. */
 export function unixNow(): number {
@@ -58,10 +62,7 @@ export function createInitialProgression(
     visualInventory: createInitialVisualInventory(),
     cardInventory: createInitialCardInventory(),
     cardCrafting: createInitialCardCrafting(),
-    starterAssignments: {
-      deadline: now + Math.max(0, Math.floor(config.starterAssignmentDurationSeconds)),
-      assignments: {},
-    },
+    starterAssignments: createInitialStarterAssignmentState(now),
   };
 }
 
@@ -345,11 +346,8 @@ export function buildPlayerData(player: PlayerDocument, now = unixNow()): Player
   // onboarding chain even for a brand-new account. Legacy accounts derive an expired (not
   // renewed) deadline from their original creation timestamp.
   data.StarterAssignmentsData = stringAttribute(
-    state.starterAssignments ?? {
-      deadline: Math.floor(player.createdAt.getTime() / 1_000)
-        + Math.max(0, Math.floor(config.starterAssignmentDurationSeconds)),
-      assignments: {},
-    },
+    validatedStarterAssignmentState(state.starterAssignments)
+      ?? createInitialStarterAssignmentState(Math.floor(player.createdAt.getTime() / 1_000)),
   );
 
   // PlayerAnalytics derives from DatabaseSerializedObjectGeneric<PlayerAnalyticsData>, so

@@ -8,6 +8,7 @@ import {
   STARTER_ASSIGNMENT_DEFINITIONS,
   claimStarterAssignmentState,
   completeStarterAssignmentsState,
+  starterAssignmentWireData,
 } from "../services/starterAssignmentService";
 
 const NOW = Date.UTC(2026, 6, 19, 12, 0, 0) / 1_000;
@@ -160,6 +161,45 @@ test("starter completion rejects corrupt authority before publishing a reward ma
       `${scenario.id} must not publish a completion marker`,
     );
   }
+});
+
+test("starter assignment deadlines and records fail closed before completion, claims, or serialization", () => {
+  const corruptDeadline = createInitialProgression(NOW);
+  corruptDeadline.starterAssignments = {
+    deadline: Number.POSITIVE_INFINITY,
+    assignments: { ID_1: { completed: true, claimed: false } },
+  };
+
+  // Raw comparisons against Infinity or NaN do not provide an expiry boundary. Reject the
+  // snapshot itself so a pre-completed imported record cannot remain claimable forever.
+  assert.throws(
+    () => completeStarterAssignmentsState(corruptDeadline, NOW + 10, NOW, FACTS, ["ID_1"]),
+    (error: unknown) => (error as { code?: number }).code === 18501,
+  );
+  assert.throws(
+    () => claimStarterAssignmentState(corruptDeadline, NOW + 10, "ID_1", 2, 0),
+    (error: unknown) => (error as { code?: number }).code === 18501,
+  );
+  assert.throws(
+    () => starterAssignmentWireData(corruptDeadline.starterAssignments!),
+    (error: unknown) => (error as { code?: number }).code === 18501,
+  );
+
+  const impossibleClaim = {
+    deadline: NOW + 1_000,
+    assignments: { ID_1: { completed: false, claimed: true } },
+  };
+  assert.throws(
+    () => starterAssignmentWireData(impossibleClaim),
+    (error: unknown) => (error as { code?: number }).code === 18501,
+  );
+  assert.throws(
+    () => starterAssignmentWireData({
+      deadline: NOW + 1_000,
+      assignments: { ID_99: { completed: true, claimed: false } },
+    }),
+    (error: unknown) => (error as { code?: number }).code === 18501,
+  );
 });
 
 test("starter claims enforce order and server balancing before crediting currency", () => {

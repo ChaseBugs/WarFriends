@@ -234,6 +234,13 @@ test("player data uses the recovered DynamoDB attribute wire format", () => {
   const starter = JSON.parse((data.StarterAssignmentsData as { S: string }).S);
   assert.equal(starter.deadline, 1_700_604_800);
   assert.deepEqual(starter.assignments, {});
+
+  const corruptStarter = contractPlayer();
+  corruptStarter.progression!.starterAssignments!.deadline = Number.POSITIVE_INFINITY;
+  assert.throws(
+    () => buildPlayerData(corruptStarter),
+    /Starter assignment deadline is invalid/,
+  );
 });
 
 test("dog-tag state uses accumulated seconds and recovered 900-second balancing", () => {

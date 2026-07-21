@@ -1,5 +1,4 @@
 import { ApiError } from "../apiErrors";
-import { config } from "../config";
 import type {
   PlayerProgressionState,
   StarterAssignmentRecordState,
@@ -9,9 +8,15 @@ import { findById } from "./playerService";
 import { mutateProgression } from "./progressionMutationService";
 import { createInitialItemInventory } from "./itemInventoryService";
 import { checkedRewardBalance } from "./rewardMathService";
+import {
+  createInitialStarterAssignmentState,
+  STARTER_ASSIGNMENTS_INCORRECT,
+  validatedStarterAssignmentState,
+  validatedStarterAssignmentUnixSeconds,
+} from "./starterAssignmentAuthorityService";
 
 /** Exact IJEAJGCCHEF values handled by the recovered RequestBuffer response parser. */
-export const STARTER_ASSIGNMENTS_INCORRECT = 18501;
+export { STARTER_ASSIGNMENTS_INCORRECT };
 export const STARTER_ASSIGNMENT_REWARD_INCORRECT = 18502;
 
 export interface StarterAssignmentDefinition {
@@ -82,16 +87,16 @@ export function starterAssignmentStateFor(
   state: PlayerProgressionState,
   issuedAt: number,
 ): StarterAssignmentState {
-  if (state.starterAssignments) return cloneAssignments(state.starterAssignments);
-  const duration = Math.max(0, Math.floor(config.starterAssignmentDurationSeconds));
-  return { deadline: Math.floor(issuedAt) + duration, assignments: {} };
+  const persisted = validatedStarterAssignmentState(state.starterAssignments);
+  if (persisted) return cloneAssignments(persisted);
+  return createInitialStarterAssignmentState(issuedAt);
 }
 
 export function starterAssignmentWireData(value: StarterAssignmentState): StarterAssignmentState {
   // The persisted shape already uses the exact lower-camel-case fields expected by
   // Newtonsoft.Json, but returning a clone prevents response construction from exposing a
   // mutable reference to the optimistic-concurrency transition.
-  return cloneAssignments(value);
+  return cloneAssignments(validatedStarterAssignmentState(value)!);
 }
 
 export function serializeStarterAssignmentsData(value: StarterAssignmentState): string {
@@ -189,8 +194,9 @@ export function completeStarterAssignmentsState(
   facts: StarterAssignmentFacts,
   requestedIds: readonly string[],
 ): StarterAssignmentMutationResult {
+  const currentTime = validatedStarterAssignmentUnixSeconds(now, "Starter assignment completion time");
   const starterAssignments = starterAssignmentStateFor(state, issuedAt);
-  if (now > starterAssignments.deadline) {
+  if (currentTime > starterAssignments.deadline) {
     throw new ApiError(STARTER_ASSIGNMENTS_INCORRECT, "Starter assignments have expired.");
   }
   if (requestedIds.length < 1 || new Set(requestedIds).size !== requestedIds.length) {
@@ -240,10 +246,11 @@ export function claimStarterAssignmentState(
   requestedGold: number,
   requestedWarBucks: number,
 ): StarterAssignmentMutationResult {
-  const starterAssignments = starterAssignmentStateFor(state, now);
+  const currentTime = validatedStarterAssignmentUnixSeconds(now, "Starter assignment claim time");
+  const starterAssignments = starterAssignmentStateFor(state, currentTime);
   const definition = definitionFor(assignmentId);
   const record = starterAssignments.assignments[assignmentId];
-  if (now > starterAssignments.deadline || !record?.completed || record.claimed) {
+  if (currentTime > starterAssignments.deadline || !record?.completed || record.claimed) {
     throw new ApiError(STARTER_ASSIGNMENTS_INCORRECT, "Starter assignment is not completed, is expired, or was claimed.");
   }
   if (requestedGold !== definition.gold || requestedWarBucks !== definition.warBucks) {
