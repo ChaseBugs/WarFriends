@@ -230,7 +230,12 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   credentials remain separate from the rotated internal
   gameplay session token. Durable login guesses use an
   atomic MongoDB throttle keyed by an HMAC of the presented identity; active gameplay sessions
-  remain usable and provider credentials are never accepted by ordinary gameplay actions.
+  remain usable and provider credentials are never accepted by ordinary gameplay actions. The
+  complete throttle row is proved after reservation and before collision replay: exact fields and
+  lower-case HMAC key, bounded positive attempt/revision counters, ordered safe dates, non-future
+  audit time, and a bounded lock contained by expiry. Validation uses the globally supported policy
+  range so configuration changes remain compatible without allowing malformed rows to lock forever
+  or silently reopen credential work.
   Raw full-document reloads inside Army Power refresh, Daily Missions, Instant Battle, PvP
   settlement, inbox reward claims, and Player League allocation/settlement repeat the same account
   proof before calculating or publishing economy and indexed-profile changes. Authentication proves

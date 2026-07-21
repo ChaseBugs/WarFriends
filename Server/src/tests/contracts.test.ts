@@ -131,6 +131,7 @@ import {
   loginRateLimitBlocked,
   loginRateLimitKey,
   loginRateLimitPolicy,
+  validatedAuthRateLimit,
 } from "../services/authRateLimitService";
 import { containsProhibitedLanguage, moderationForms } from "../services/textModerationService";
 import { buildFriendsInfoWire, requestedFacebookFriendIds } from "../services/friendService";
@@ -1380,6 +1381,24 @@ test("durable login throttling hides identity keys and enforces a real cooldown"
   assert.equal(policy.maxAttempts >= 2, true);
   assert.equal(policy.windowMilliseconds >= 60_000, true);
   assert.equal(policy.lockoutMilliseconds >= 60_000, true);
+  const state = {
+    key,
+    attemptCount: 1,
+    revision: 1,
+    windowStartedAt: now,
+    lockedUntil: null,
+    updatedAt: now,
+    expiresAt: new Date(now.getTime() + policy.windowMilliseconds + policy.lockoutMilliseconds),
+  };
+  assert.equal(validatedAuthRateLimit(state, now, key), state);
+  assert.throws(
+    () => validatedAuthRateLimit({ ...state, revision: Number.MAX_SAFE_INTEGER }, now, key),
+    /rate-limit authority is invalid/,
+  );
+  assert.throws(
+    () => validatedAuthRateLimit({ ...state, updatedAt: new Date(now.getTime() + 1) }, now, key),
+    /rate-limit authority is invalid/,
+  );
 });
 
 test("GetFriendsInfo preserves signed Int64 hashes and exact recovered result groups", () => {

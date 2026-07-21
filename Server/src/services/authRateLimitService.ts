@@ -14,6 +14,62 @@ export interface LoginAttemptReservation {
   revision: number;
 }
 
+const AUTH_RATE_LIMIT_KEYS = new Set([
+  "_id", "key", "attemptCount", "revision", "windowStartedAt", "lockedUntil", "updatedAt", "expiresAt",
+]);
+const MAXIMUM_WINDOW_MS = 86_400_000;
+const MAXIMUM_LOCKOUT_MS = 604_800_000;
+
+function safeDate(value: unknown): value is Date {
+  return value instanceof Date && Number.isSafeInteger(value.getTime()) && value.getTime() >= 0;
+}
+
+/**
+ * Validate a complete login-throttle row without assuming today's deploy-time policy created it.
+ *
+ * Window and lockout settings may legitimately change between attempts, so durable authority uses
+ * the globally supported bounds rather than demanding equality with the current configuration.
+ * The atomic update still writes the current exact policy. This preserves rotation compatibility
+ * while preventing malformed dates/counters from becoming either a permanent lock or a bypass.
+ */
+export function validatedAuthRateLimit(
+  state: AuthRateLimitDocument,
+  now: Date,
+  expectedKey?: string,
+): AuthRateLimitDocument {
+  const raw = state as unknown as Record<string, unknown>;
+  const lockedUntil = state?.lockedUntil;
+  if (!state
+    || typeof state !== "object"
+    || Array.isArray(state)
+    || Object.keys(raw).some((key) => !AUTH_RATE_LIMIT_KEYS.has(key))
+    || typeof state.key !== "string"
+    || !/^[0-9a-f]{64}$/u.test(state.key)
+    || (expectedKey !== undefined && state.key !== expectedKey)
+    || !Number.isSafeInteger(state.attemptCount)
+    || state.attemptCount < 1
+    || state.attemptCount > 100
+    || !Number.isSafeInteger(state.revision)
+    || state.revision < 1
+    || state.revision >= Number.MAX_SAFE_INTEGER
+    || !safeDate(state.windowStartedAt)
+    || !safeDate(state.updatedAt)
+    || !safeDate(state.expiresAt)
+    || !safeDate(now)
+    || state.windowStartedAt.getTime() > state.updatedAt.getTime()
+    || state.updatedAt.getTime() - state.windowStartedAt.getTime() >= MAXIMUM_WINDOW_MS
+    || state.updatedAt.getTime() > now.getTime()
+    || state.expiresAt.getTime() <= state.updatedAt.getTime()
+    || state.expiresAt.getTime() - state.updatedAt.getTime() > MAXIMUM_WINDOW_MS + MAXIMUM_LOCKOUT_MS
+    || (lockedUntil !== null && (!safeDate(lockedUntil)
+      || lockedUntil.getTime() <= state.updatedAt.getTime()
+      || lockedUntil.getTime() - state.updatedAt.getTime() > MAXIMUM_LOCKOUT_MS
+      || lockedUntil.getTime() > state.expiresAt.getTime()))) {
+    throw new Error("Stored login rate-limit authority is invalid.");
+  }
+  return state;
+}
+
 /** Clamp deploy-time values so a malformed environment cannot silently disable protection. */
 export function loginRateLimitPolicy(): LoginRateLimitPolicy {
   const boundedInteger = (value: number, fallback: number, minimum: number, maximum: number): number =>
@@ -120,12 +176,14 @@ async function reserveLoginAttemptInternal(
       { upsert: true, returnDocument: "after" },
     );
     if (!updated) throw new Error("Login attempt reservation was not persisted.");
+    validatedAuthRateLimit(updated, now, key);
     return { key, revision: updated.revision };
   } catch (error) {
     // A duplicate key means the row existed but was locked (or another process created it
     // between match and upsert). Re-read once to distinguish a harmless creation race.
     if ((error as { code?: number }).code !== 11000) throw error;
     const existing = await authRateLimits().findOne({ key });
+    if (existing) validatedAuthRateLimit(existing, now, key);
     if (loginRateLimitBlocked(existing, now)) throw invalidCredentials();
     // The concurrent creator has consumed the first attempt. Reserve again against that row.
     // Bound collision retries so pathological delete/create churn cannot grow the call stack.
