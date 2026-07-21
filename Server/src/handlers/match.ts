@@ -34,7 +34,7 @@ import {
   settleFriendlyBattle,
   startFriendlyBattle,
 } from "../services/friendlyBattleService";
-import { exactMatchInteger } from "./matchRequestParsing";
+import { assertedPvpWinnerId, exactMatchInteger } from "./matchRequestParsing";
 import { exactBinaryBoolean } from "./requestBooleanParsing";
 
 // PvP match lifecycle reported to the meta server. Live event traffic runs over /hub, while
@@ -278,14 +278,13 @@ export const matchHandlers: Record<number, HandlerEntry> = {
     // result contract merely by naming a participant explicitly.
     const endReason = exactMatchInteger(req.EndReason, "EndReason");
 
-    // The stock 1.6.0 request sends EndReason, not WinnerId. A WinnerId alias remains useful
-    // for the replacement transport, but it is accepted only when it names a real match
-    // participant and still goes through two-party durable consensus.
-    const explicitWinner = typeof req.WinnerId === "string" ? req.WinnerId : "";
+    // The stock 1.6.0 request sends EndReason, not WinnerId. A replacement transport may echo
+    // WinnerId only as an exact assertion of that recovered enum meaning; it must never override
+    // an unsupported outcome or contradict which participant won before two-party consensus.
     const inferredWinner = match
       ? winnerFromEndReason(match.players.map((participant) => participant.playerId), player!.id, endReason)
       : null;
-    const winnerId = explicitWinner || inferredWinner || "";
+    const winnerId = assertedPvpWinnerId(inferredWinner, req.WinnerId) ?? "";
     // Stock 1.6.0 always sends a JSON-string UsedCards field. An omitted field is accepted as
     // the replacement transport's empty-list shorthand; malformed, over-limit,
     // unknown, or unowned IDs are rejected by the card inventory service before consensus.

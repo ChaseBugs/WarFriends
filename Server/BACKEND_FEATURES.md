@@ -220,7 +220,9 @@ Every `GameEnded` branch now shares one exact nonnegative C# signed-`int` parser
 Boolean, array, blank, signed or space-padded, leading-zero, fractional, exponent, unsafe, and
 oversized values cannot become combat or mission authority through JavaScript coercion. Ranked
 settlement applies the same boundary before its optional replacement-transport `WinnerId` alias, so
-the alias cannot bypass the mandatory recovered `EndReason` field.
+the alias cannot bypass the mandatory recovered `EndReason` field. When present, `WinnerId` must
+exactly equal the participant derived from a supported PvP end reason; malformed, contradictory,
+or unsupported-outcome aliases fail before either consensus report is persisted.
 
 Both recovered moderation-report actions now parse mandatory `ReportType` as canonical nonnegative
 decimal text or an exact JSON integer in the existing bounded compatibility range. Missing, null,

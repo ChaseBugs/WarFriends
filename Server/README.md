@@ -746,7 +746,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   enum and require matching durable reports from both assigned participants before rewards. One
   exact nonnegative C# signed-`int` parser now protects `EndReason` and `MissionIndex` across every
   tutorial, Arena, mission, friendly, and ranked branch; coercible JavaScript values and values
-  outside the client width fail before settlement, and `WinnerId` cannot bypass that required field.
+  outside the client width fail before settlement. Optional replacement `WinnerId` is only an exact
+  assertion of the participant derived from a supported recovered `EndReason`; explicit malformed,
+  contradictory, or unsupported-outcome aliases fail before a durable result report is written.
   Action `29` remains the presence heartbeat for non-ranked modes, but its active-match read and
   profile write share a MongoDB transaction. An active/settling ranked reservation always wins
   over a forged or early `Online`/`Offline` report. The same transaction validates the full durable
