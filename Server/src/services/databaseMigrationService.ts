@@ -133,6 +133,19 @@ const migrations: readonly DatabaseMigration[] = [
       );
     },
   },
+  {
+    id: "20260722_008_current_arena_leaderboard_index",
+    checksum: "sha256:fa929652c94c4ab61a2e64498924ecf352bbb64219888d0d5b24a87bed7962e1",
+    description: "Index current-event War Arena leaderboard admission.",
+    up: async (db) => {
+      // Ranking uses conditional recovered comparison keys and therefore completes in the
+      // aggregation pipeline. This prefix index first limits that work to one exact monthly event.
+      await db.collection("players").createIndex(
+        { "progression.warArena.arenaId": 1, "progression.warArena.played": 1 },
+        { name: "war_arena_current_event_players" },
+      );
+    },
+  },
 ];
 
 const receiptCollectionName = "schemaMigrations";

@@ -1,3 +1,4 @@
+import type { Collection, Document } from "mongodb";
 import { players, squads, type PlayerDocument } from "../db";
 import { RedisKeys } from "../constants";
 import { redisReplaceSortedSet, redisZRevRange } from "../redis";
@@ -8,7 +9,7 @@ import {
   validatedPlayerProfileMirrors,
 } from "./playerProfileMirrorAuthorityService";
 import { buildDatabaseSquad } from "./squadWireService";
-import { serializeWarArenaData } from "./warArenaContract";
+import { currentArenaId, serializeWarArenaData } from "./warArenaContract";
 import { validatedSquadDocument } from "./squadAuthorityService";
 import { leaderboardCachePolicy } from "./leaderboardCachePolicyService";
 
@@ -74,25 +75,105 @@ export async function topPlayersByExperience(limit = 100, country?: string): Pro
  * The parser reuses normal player fields and additionally deserializes the exact string
  * attribute `WarArenaData`; a bare object or different key silently loses crown/run data.
  */
-export function buildArenaLeaderboardItem(doc: PlayerDocument, position: number): PlayerLeaderboardItem {
+export function buildArenaLeaderboardItem(
+  doc: PlayerDocument,
+  position: number,
+  expectedArenaId?: string,
+): PlayerLeaderboardItem {
   const item = buildPlayerLeaderboardItem(doc, position);
   const arena = progressionForPlayer(doc).warArena;
+  // A MongoDB match is not authority by itself. Re-prove the selected snapshot before returning
+  // it so a damaged/misprojected row cannot leak an old event into the current leaderboard.
+  if (expectedArenaId !== undefined
+    && (!arena || arena.arenaId !== expectedArenaId || arena.played !== true)) {
+    throw new Error("Selected War Arena leaderboard row is not from the current event.");
+  }
   if (arena) item.WarArenaData = s(serializeWarArenaData(arena));
   return item;
 }
 
-export async function topArenaPlayers(limit = 100): Promise<PlayerLeaderboardItem[]> {
-  const docs = await players()
-    .find({ "progression.warArena.played": true })
-    .sort({
-      "progression.warArena.topRun": -1,
-      "progression.warArena.flawless": -1,
-      "progression.warArena.wins": -1,
-      updatedAt: 1,
-    })
-    .limit(limit)
-    .toArray();
-  return docs.map((doc, index) => buildArenaLeaderboardItem(doc, index + 1));
+interface ArenaLeaderboardRankKey {
+  readonly flawlessClass: number;
+  readonly score: number;
+  readonly playerName: string;
+  readonly playerId: string;
+}
+
+function arenaLeaderboardRankKey(doc: PlayerDocument, expectedArenaId: string): ArenaLeaderboardRankKey {
+  // progressionForPlayer includes the complete shared progression and War Arena authority proof.
+  // Do not trust the aggregation's computed fields: derive the comparison tuple again from the
+  // selected durable document before its order or Position can become client-visible.
+  validatedPlayerAccountEnvelope(doc);
+  const arena = progressionForPlayer(doc).warArena;
+  if (!arena || arena.arenaId !== expectedArenaId || arena.played !== true) {
+    throw new Error("Selected War Arena leaderboard row is not from the current event.");
+  }
+  const flawlessClass = arena.flawless > 0 ? 1 : 0;
+  return {
+    flawlessClass,
+    score: flawlessClass ? arena.flawless : arena.topRun,
+    playerName: doc.player.accountName,
+    playerId: doc.id,
+  };
+}
+
+function compareArenaLeaderboardRank(left: ArenaLeaderboardRankKey, right: ArenaLeaderboardRankKey): number {
+  if (left.flawlessClass !== right.flawlessClass) return right.flawlessClass - left.flawlessClass;
+  if (left.score !== right.score) return right.score - left.score;
+  // Unity uses the device culture for this final presentation tie. MongoDB cannot reproduce every
+  // client locale simultaneously, so the backend freezes one binary string order and player ID as
+  // the deterministic authority for Position; Unity remains free to re-sort equal scores locally.
+  if (left.playerName !== right.playerName) return left.playerName < right.playerName ? -1 : 1;
+  if (left.playerId !== right.playerId) return left.playerId < right.playerId ? -1 : 1;
+  return 0;
+}
+
+export async function topArenaPlayers(
+  limit = 100,
+  nowSeconds = Math.floor(Date.now() / 1_000),
+  collection?: Collection<PlayerDocument>,
+): Promise<PlayerLeaderboardItem[]> {
+  if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100) {
+    throw new Error("War Arena leaderboard limit is invalid.");
+  }
+  const arenaId = currentArenaId(nowSeconds);
+  const flawless = "$progression.warArena.flawless";
+  const topRun = "$progression.warArena.topRun";
+  const pipeline: Document[] = [
+    {
+      $match: {
+        "progression.warArena.arenaId": arenaId,
+        "progression.warArena.played": true,
+      },
+    },
+    {
+      // The recovered FHIPGDADNFG comparator puts every flawless run before a non-flawless run,
+      // then compares `flawless` inside that group or `topRun` otherwise. Computing those two
+      // keys in MongoDB keeps Position consistent with the order Unity derives after parsing.
+      $set: {
+        __arenaLeaderboardFlawless: { $cond: [{ $gt: [flawless, 0] }, 1, 0] },
+        __arenaLeaderboardScore: { $cond: [{ $gt: [flawless, 0] }, flawless, topRun] },
+      },
+    },
+    {
+      $sort: {
+        __arenaLeaderboardFlawless: -1,
+        __arenaLeaderboardScore: -1,
+        "player.accountName": 1,
+        id: 1,
+      },
+    },
+    { $limit: limit },
+    { $unset: ["__arenaLeaderboardFlawless", "__arenaLeaderboardScore"] },
+  ];
+  const docs = await (collection ?? players()).aggregate<PlayerDocument>(pipeline).toArray();
+  const rankKeys = docs.map((doc) => arenaLeaderboardRankKey(doc, arenaId));
+  for (let index = 1; index < rankKeys.length; index += 1) {
+    if (compareArenaLeaderboardRank(rankKeys[index - 1]!, rankKeys[index]!) > 0) {
+      throw new Error("Selected War Arena leaderboard rows are not in authoritative rank order.");
+    }
+  }
+  return docs.map((doc, index) => buildArenaLeaderboardItem(doc, index + 1, arenaId));
 }
 
 /** 1-based global rank by experience (players strictly ahead plus one). */

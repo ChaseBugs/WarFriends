@@ -1711,7 +1711,15 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   shown-event list normalizes empty; malformed durable history fails closed instead of being
   truncated into replay capacity or satisfying a reward gate. Arena achievement progress shares
   this receipt authority, and lifetime run/match/loss/flawless increments reject safe-integer
-  overflow before publication. Combat outcomes remain client-reported pending authoritative
+  overflow before publication. `GetArenaLeaderboards` has no request fields in the recovered
+  client and parses one current `Items` array. Its query therefore requires both `played=true` and
+  the exact current server-generated monthly Arena ID, preventing an unrolled prior-month profile
+  from retaining a rank. The aggregation reproduces the client's flawless-first comparison:
+  positive `flawless` values rank before non-flawless `topRun` values, followed by deterministic
+  binary name and player-ID ties. Every selected full account, Arena snapshot, event identity, and
+  final ordering is revalidated before `Position` and `WarArenaData` are returned; a dedicated
+  current-event prefix index bounds the ranking scan. Historical boards are not added to action
+  206 because the stock request has no season selector or history parser. Combat outcomes remain client-reported pending authoritative
   validation. The retired remote price/lootbox tables are absent from both APKs,
   so entry/heart/scraps values are environment-tunable and final lootboxes currently use a
   documented scraps fallback rather than fabricated inventory objects.
