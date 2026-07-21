@@ -151,6 +151,8 @@ Process-local active-room closes now persist the same participant markers. Both 
 distributed both-offline cancellation require the complete exact two-player timestamp snapshot
 again inside the MongoDB cancellation transaction; a missing, cleared, or replaced peer marker
 waits another grace window instead of turning a stale transport observation into cancellation.
+Reconnect clearing on both transports is now bound to the exact marker returned by that durable
+join snapshot, so a second close racing the reconnect handler keeps its newer offline generation.
 
 Each new match also stores its backend coordinator UUID. Redis carries a renewable crash-expiring
 heartbeat for that UUID, and startup plus periodic orphan recovery cancels only matches whose owner

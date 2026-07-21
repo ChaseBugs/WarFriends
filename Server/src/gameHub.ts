@@ -992,7 +992,10 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
             Participants: joined.joinedCount,
           },
         });
-        const reconnected = await clearMatchParticipantDisconnected(p.MatchId, client.playerId);
+        const observedDisconnect = joined.match.disconnectedAt?.[client.playerId];
+        const reconnected = observedDisconnect instanceof Date
+          ? await clearMatchParticipantDisconnected(p.MatchId, client.playerId, observedDisconnect)
+          : false;
         if (reconnected) {
           clearDisconnectTimer(p.MatchId, client.playerId);
           const opponentId = joined.match.players
@@ -1047,7 +1050,10 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
         roomManager.finish(p?.MatchId);
         return send(client, { Type: "MatchError", Payload: { MatchId: p?.MatchId, Reason: "NotParticipantOrFull" } });
       }
-      const durableReconnected = await clearMatchParticipantDisconnected(p.MatchId, client.playerId);
+      const observedDisconnect = joined.match.disconnectedAt?.[client.playerId];
+      const durableReconnected = observedDisconnect instanceof Date
+        ? await clearMatchParticipantDisconnected(p.MatchId, client.playerId, observedDisconnect)
+        : false;
       const reconnected = clearDisconnectTimer(p.MatchId, client.playerId) || durableReconnected;
       if (reconnected) {
         roomManager.broadcast(p.MatchId, {

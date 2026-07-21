@@ -4,6 +4,7 @@ import {
   completeBothPlayersDisconnectedAuthority,
   matchesBothPlayersDisconnectedAuthority,
   matchesDisconnectForfeitAuthority,
+  matchesParticipantDisconnectMarker,
   terminalMatchReportResult,
   type MatchDoc,
   type MatchPlayerReward,
@@ -147,6 +148,15 @@ test("disconnect forfeit authority binds the exact loser marker", () => {
     disconnectedPlayerId: "player-b",
     disconnectedAt,
   }), false);
+});
+
+test("reconnect clearing binds the disconnect generation observed by durable join", () => {
+  const observed = new Date("2026-07-21T10:01:00.000Z");
+  const disconnected = activeMatch({ disconnectedAt: { "player-b": observed } });
+  assert.equal(matchesParticipantDisconnectMarker(disconnected, "player-b", new Date(observed)), true);
+  assert.equal(matchesParticipantDisconnectMarker(disconnected, "player-b", new Date(observed.getTime() + 1)), false);
+  assert.equal(matchesParticipantDisconnectMarker(disconnected, "player-a", observed), false);
+  assert.equal(matchesParticipantDisconnectMarker(activeMatch(), "player-b", observed), false);
 });
 
 test("both-offline cancellation requires both exact durable disconnect markers", () => {

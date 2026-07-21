@@ -528,7 +528,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   The no-Redis active-room close path persists the same markers. Both transport modes require one
   exact marker per assigned participant and recheck the complete timestamp snapshot inside the
   cancellation transaction before a both-offline result can release presence; missing or changed
-  authority waits another grace window.
+  authority waits another grace window. Reconnect clearing requires the exact marker returned by
+  its durable join snapshot and compares it after reload plus in the update filter, preserving a
+  newer marker when the same socket closes again while `JoinMatch` is still in flight.
   Cancellation likewise commits the terminal match and both presence releases together. On a
   single-node restart, active/settling matches are cancelled and all residual `InGame` profiles
   are repaired in the same transaction, including legacy partial cancellations. Before those

@@ -1318,18 +1318,32 @@ export async function markMatchParticipantDisconnected(matchId: string, playerId
   return updated ? validatedMatchDocument(updated as unknown as MatchDoc, disconnectedAt) : null;
 }
 
+/** Prove one reconnect is clearing only the disconnect generation it originally observed. */
+export function matchesParticipantDisconnectMarker(
+  match: MatchDoc,
+  playerId: string,
+  expectedDisconnectedAt: Date,
+): boolean {
+  const current = match.disconnectedAt?.[playerId];
+  return match.state === "active"
+    && match.players.some((participant) => participant.playerId === playerId)
+    && expectedDisconnectedAt instanceof Date
+    && Number.isFinite(expectedDisconnectedAt.getTime())
+    && current instanceof Date
+    && current.getTime() === expectedDisconnectedAt.getTime();
+}
+
 export async function clearMatchParticipantDisconnected(
   matchId: string,
   playerId: string,
-  expectedDisconnectedAt?: Date,
+  expectedDisconnectedAt: Date,
 ): Promise<boolean> {
   const path = `disconnectedAt.${playerId}`;
   const current = await getMatch(matchId);
   const observedDisconnectedAt = current?.disconnectedAt?.[playerId];
-  if (!current || !(observedDisconnectedAt instanceof Date)) return false;
-  if (expectedDisconnectedAt
-    && (!(expectedDisconnectedAt instanceof Date)
-      || observedDisconnectedAt.getTime() !== expectedDisconnectedAt.getTime())) return false;
+  if (!current
+    || !(observedDisconnectedAt instanceof Date)
+    || !matchesParticipantDisconnectMarker(current, playerId, expectedDisconnectedAt)) return false;
   const disconnectedAt = { ...current.disconnectedAt };
   delete disconnectedAt[playerId];
   validatedMatchDocument({
