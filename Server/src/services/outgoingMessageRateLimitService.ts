@@ -69,7 +69,7 @@ export function validatedOutgoingMessageRateLimit(
 /** Keep the operational collection from becoming a plaintext secondary player directory. */
 export function outgoingMessageRateLimitKey(
   playerId: string,
-  scope: "inbox" | "squad-chat" | "client-analytics" = "inbox",
+  scope: "inbox" | "squad-chat" | "client-analytics" | "client-log" = "inbox",
 ): string {
   return createHmac("sha256", config.authSecret).update(`${scope}:${playerId}`).digest("hex");
 }
@@ -84,7 +84,7 @@ export function outgoingMessageRateLimitKey(
  */
 async function reservePlayerAuthoredMessageSlot(
   playerId: string,
-  scope: "inbox" | "squad-chat" | "client-analytics",
+  scope: "inbox" | "squad-chat" | "client-analytics" | "client-log",
   maximum: number,
   now: Date,
   collisionRetry: number,
@@ -127,7 +127,7 @@ async function reservePlayerAuthoredMessageSlot(
     if (!outgoingMessageRateLimitAllows(state.attemptCount, maximum)) {
       const label = scope === "squad-chat"
         ? "Squad chat"
-        : scope === "client-analytics" ? "Analytics" : "Message";
+        : scope === "client-analytics" ? "Analytics" : scope === "client-log" ? "Support log" : "Message";
       throw new ApiError(ApiErrorCode.UnknownAction, `${label} rate limit reached. Try again later.`);
     }
   } catch (error) {
@@ -194,6 +194,22 @@ export async function reserveClientAnalyticsSlot(
   return reservePlayerAuthoredMessageSlot(
     playerId,
     "client-analytics",
+    maximum,
+    now,
+    collisionRetry,
+  );
+}
+
+/** Reserve one large support-log upload without consuming chat, inbox, or analytics capacity. */
+export async function reserveClientLogSlot(
+  playerId: string,
+  maximum: number,
+  now = new Date(),
+  collisionRetry = 0,
+): Promise<void> {
+  return reservePlayerAuthoredMessageSlot(
+    playerId,
+    "client-log",
     maximum,
     now,
     collisionRetry,

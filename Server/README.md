@@ -1712,7 +1712,8 @@ actions `194` and `1007` are explicit authenticated no-ops, so their untrusted p
 change gameplay and an unauthenticated request cannot receive a false success. Action `179` is
 also authenticated and remains non-authoritative, but can optionally retain its exact recovered
 `PlayerAnalytics` JSON string for short-lived diagnostics. The narrow handler-less allowlist is
-reserved for bounded pre-login crash/error telemetry.
+reserved for bounded pre-login error/crash action `92`/`141` telemetry. The active action `166`
+support-log contract is authenticated and durable as described below.
 `handlerlessActionDispositions` records every other intentional dispatcher exception: actions that
 run only inside the atomic RequestBuffer, client response/local-only values, retired contracts,
 disabled debug mutations, the raw configuration route, open non-authoritative telemetry, and the
@@ -1738,6 +1739,26 @@ guessing deduplication from equal JSON would collapse legitimate equal submissio
 importantly, no gameplay service reads this collection: client Gold, inventory, achievement,
 progression, or match values remain assertions even when preserved for operator analysis. Actions
 `194` and `1007` remain authenticated no-ops until their original retention semantics are recovered.
+
+### Client support logs
+
+Action `166` now implements the active `BeanstalkServerManager.SendLogs` contract. It requires the
+normal gameplay session, exact request `PlayerId`/`PlayerName` echoes, and the durable recovered
+`SendLogs == 1` consent. The server stores only its authenticated ID/name snapshot, the exact opaque
+`Logs` bytes, a strict bounded client-version string, SHA-256, byte length, receipt time, and expiry.
+It then returns the server UUID as mandatory `LogId`; the stock success parser reads this field
+unconditionally and displays it as the player's support reference.
+
+`CLIENT_LOG_RETENTION_DAYS`, `CLIENT_LOG_MAX_PAYLOAD_BYTES`, and
+`CLIENT_LOG_EVENTS_PER_MINUTE` resolve together once at startup. Exact supported ranges are 1-30
+whole days, 1,024-1,048,576 UTF-8 bytes, and 1-20 uploads per player/minute; defaults are 14 days,
+1 MiB, and two/minute. An independent HMAC-hidden atomic rate domain prevents simultaneous nodes
+from admitting an upload burst without consuming inbox, Squad Chat, or action-179 capacity. The
+versioned player/time and TTL indexes support direct support lookup and bounded retention. The
+request has no operation UUID, so a lost response may produce another LogId rather than guessing
+that equal text is a replay. Stored logs never authorize gameplay. Action `141` remains an open
+non-authoritative acknowledgement because its only apparent sender is contradictory decompiler
+junk with no trustworthy payload; action `92` likewise remains a bounded error acknowledgement.
 
 ### Next
 

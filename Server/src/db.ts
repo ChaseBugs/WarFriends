@@ -1211,6 +1211,23 @@ export interface ClientAnalyticsEventDocument extends Document {
 
 let clientAnalyticsEventsCollection: Collection<ClientAnalyticsEventDocument> | null = null;
 
+/** Expiring support-log upload created only for an authenticated player with SendLogs consent. */
+export interface ClientLogEntryDocument extends Document {
+  /** Also returned as the stock client's required `LogId` support reference. */
+  _id: string;
+  playerId: string;
+  playerName: string;
+  clientVersion: string;
+  logs: string;
+  logsSha256: string;
+  byteLength: number;
+  receivedAt: Date;
+  /** Storage cleanup only; support rows never authorize gameplay. */
+  expiresAt: Date;
+}
+
+let clientLogEntriesCollection: Collection<ClientLogEntryDocument> | null = null;
+
 export async function connectMongo(): Promise<void> {
   await client.connect();
   db = client.db(runtimeInfrastructure.mongoDatabaseName);
@@ -1245,6 +1262,7 @@ export async function connectMongo(): Promise<void> {
   scheduledJobLeasesCollection = db.collection<ScheduledJobLeaseDocument>("scheduledJobLeases");
   firebasePushDeliveriesCollection = db.collection<FirebasePushDeliveryDocument>("firebasePushDeliveries");
   clientAnalyticsEventsCollection = db.collection<ClientAnalyticsEventDocument>("clientAnalyticsEvents");
+  clientLogEntriesCollection = db.collection<ClientLogEntryDocument>("clientLogEntries");
 
   await playersCollection.createIndex({ id: 1 }, { unique: true });
   await playersCollection.createIndex({ authToken: 1 });
@@ -1464,6 +1482,7 @@ export async function disconnectMongo(): Promise<void> {
   scheduledJobLeasesCollection = null;
   firebasePushDeliveriesCollection = null;
   clientAnalyticsEventsCollection = null;
+  clientLogEntriesCollection = null;
 }
 
 /**
@@ -1554,6 +1573,10 @@ export function firebasePushDeliveries(): Collection<FirebasePushDeliveryDocumen
 
 export function clientAnalyticsEvents(): Collection<ClientAnalyticsEventDocument> {
   return requireCollection("clientAnalyticsEvents", clientAnalyticsEventsCollection);
+}
+
+export function clientLogEntries(): Collection<ClientLogEntryDocument> {
+  return requireCollection("clientLogEntries", clientLogEntriesCollection);
 }
 
 export function messages(): Collection<Document> {

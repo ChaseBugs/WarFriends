@@ -142,6 +142,12 @@ export const config = {
   clientAnalyticsMaximumPayloadBytes: Number(process.env.CLIENT_ANALYTICS_MAX_PAYLOAD_BYTES ?? 32_768),
   clientAnalyticsEventsPerMinute: Number(process.env.CLIENT_ANALYTICS_EVENTS_PER_MINUTE ?? 12),
 
+  // Action 166 is an explicit player support upload guarded by DatabasePlayer.SendLogs. The
+  // operator-owned bounds limit sensitive diagnostic retention and large-request amplification.
+  clientLogRetentionDays: Number(process.env.CLIENT_LOG_RETENTION_DAYS ?? 14),
+  clientLogMaximumPayloadBytes: Number(process.env.CLIENT_LOG_MAX_PAYLOAD_BYTES ?? 1_048_576),
+  clientLogEventsPerMinute: Number(process.env.CLIENT_LOG_EVENTS_PER_MINUTE ?? 2),
+
   // Optional signed publication manifest for the stock GetConfigurations raw-text protocol.
   // Empty keeps bundled APK sheets active. The signing key is backend-only and protects the
   // operator file from accidental or unauthorized modification before any values are served.

@@ -67,6 +67,21 @@ const migrations: readonly DatabaseMigration[] = [
       );
     },
   },
+  {
+    id: "20260722_004_client_support_log_retention",
+    checksum: "sha256:8b8d7d88eea1d93c1285719823284261b52c7d6a81dcff4e35b0c8e10e7f7d44",
+    description: "Index player support-log lookup and TTL retention.",
+    up: async (db) => {
+      await db.collection("clientLogEntries").createIndex(
+        { playerId: 1, receivedAt: -1 },
+        { name: "client_log_player_time" },
+      );
+      await db.collection("clientLogEntries").createIndex(
+        { expiresAt: 1 },
+        { name: "client_log_expiry", expireAfterSeconds: 0 },
+      );
+    },
+  },
 ];
 
 const receiptCollectionName = "schemaMigrations";
