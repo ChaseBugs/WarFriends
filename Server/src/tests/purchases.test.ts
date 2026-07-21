@@ -2,7 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { AccountType } from "../constants";
 import type { PlayerDocument } from "../db";
+import { DbAction } from "../dbActions";
 import { newPlayer } from "../dtos";
+import { DIRECT_PURCHASE_KINDS, purchaseHandlers } from "../handlers/purchases";
 import {
   GooglePlayVerificationError,
   parseGoogleProductPurchase,
@@ -42,6 +44,13 @@ test("paid catalog uses recovered 4.9.5 currency amounts and fails closed for un
   assert.equal(inAppEntitlement("starterpack"), null);
   assert.equal(inAppEntitlement("afgold7daily1"), null);
   assert.equal(googlePlayStoreProductId(PACKAGE, "AfGold1"), `${PACKAGE}.afgold1`);
+});
+
+test("explicit subscription action is authenticated and cannot deliver currency products", () => {
+  assert.equal(purchaseHandlers[DbAction.BuyInApp]?.requiresAuth, true);
+  assert.equal(purchaseHandlers[DbAction.BuySubscription]?.requiresAuth, true);
+  assert.deepEqual(DIRECT_PURCHASE_KINDS[DbAction.BuyInApp], ["currency", "subscription"]);
+  assert.deepEqual(DIRECT_PURCHASE_KINDS[DbAction.BuySubscription], ["subscription"]);
 });
 
 test("purchase request reads store proof and ignores client-authored currency hints", () => {

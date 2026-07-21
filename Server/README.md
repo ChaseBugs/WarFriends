@@ -408,14 +408,16 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   parts, preserves duplicate `_#n-VIP` wire entries, and restores its countdown through
   `PlayerAnalyticsData`. Nonzero VIP discounts stay rejected until retired Fusebox offer
   definitions are recovered into a server allowlist.
-- **Verified Google Play purchases, packs, restore, and revocation**: Android actions `142` and
-  `130` validate the
+- **Verified Google Play purchases, packs, restore, and revocation**: Android actions `142`,
+  `9999999`, and `130` validate the
   recovered `ProductId`/`PurchaseToken`/`PackageName`/`OrderId` proof through Google Play Developer
   API `products.get` or `subscriptionsv2.get`. A global HMAC-keyed token ledger and the progression
   grant commit in one MongoDB transaction, so one store token cannot fund two accounts and a lost
   response retry cannot grant twice. The server owns the recovered 4.9.5 `afgold1`-`afgold6`,
   `bgold1`-`bgold6`, `warbucks1`-`warbucks6`, and `bwarbucks1`-`bwarbucks6` amounts; completed
-  single-quantity purchases are accepted even after client-side consumption. `subscription1`
+  single-quantity purchases are accepted even after client-side consumption. The stock action
+  `142` retains its shared currency/subscription parser, while explicit subscription alias
+  `9999999` accepts only the subscription entitlement family. `subscription1`
   accepts only active, grace-period, or canceled-but-unexpired Play state, advances its verified
   expiry monotonically, and restores the exact `PlayerData.Subscription` object at boot. A
   cross-node Mongo-leased scheduler decrypts only due subscription tokens, rechecks

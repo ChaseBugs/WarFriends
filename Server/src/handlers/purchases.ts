@@ -9,9 +9,42 @@ import {
   parseGooglePlayPurchaseInput,
   type GooglePlayPurchaseInput,
 } from "../services/purchaseService";
+import type { InAppEntitlement } from "../services/inAppCatalogService";
 import { authed, type HandlerEntry } from "./types";
 
 const MAX_RESTORE_PACKS = 50;
+
+type DirectPurchaseKind = Extract<InAppEntitlement["kind"], "currency" | "subscription">;
+
+/**
+ * Bind every paid endpoint to the entitlement families its recovered response parser can apply.
+ *
+ * The stock 1.6.0 billing bridge normally sends both currency and `subscription1` through action
+ * 142 (`BuyInApp`), whose shared parser handles Gold, Warbucks, and SubscriptionBought fields.
+ * The enum also contains the explicit action 9999999 alias. Some platform/replacement builds use
+ * that alias, so register it without letting a currency token cross through the subscription-only
+ * route. The Google proof and globally idempotent receipt ledger remain identical for both paths.
+ */
+export const DIRECT_PURCHASE_KINDS: Readonly<Record<number, readonly DirectPurchaseKind[]>> = Object.freeze({
+  [DbAction.BuyInApp]: Object.freeze(["currency", "subscription"] as const),
+  [DbAction.BuySubscription]: Object.freeze(["subscription"] as const),
+});
+
+function verifiedPurchaseHandler(action: DbAction.BuyInApp | DbAction.BuySubscription): HandlerEntry {
+  return authed(async ({ player, req }) => {
+    // GoldBase, WarbucksBase, and all other client-authored benefit hints are deliberately ignored
+    // by the shared proof parser. Only the verified store product selects the server allowlist row.
+    const input = parseGooglePlayPurchaseInput(req);
+    const delivered = await deliverGooglePlayPurchase(
+      player!.id,
+      input,
+      undefined,
+      undefined,
+      DIRECT_PURCHASE_KINDS[action],
+    );
+    return ok(action, delivered.response);
+  });
+}
 
 function restoreEntry(value: unknown): GooglePlayPurchaseInput {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -70,14 +103,8 @@ async function currentPlayerData(playerId: string, now: number): Promise<Record<
 }
 
 export const purchaseHandlers: Record<number, HandlerEntry> = {
-  [DbAction.BuyInApp]: authed(async ({ player, req }) => {
-    // The Android billing bridge sends store proof plus untrusted GoldBase/WarbucksBase hints.
-    // deliverGooglePlayPurchase ignores those hints, verifies the proof with Google, and selects
-    // the grant from the recovered server-side catalog under a global exactly-once token ledger.
-    const input = parseGooglePlayPurchaseInput(req);
-    const delivered = await deliverGooglePlayPurchase(player!.id, input);
-    return ok(DbAction.BuyInApp, delivered.response);
-  }),
+  [DbAction.BuyInApp]: verifiedPurchaseHandler(DbAction.BuyInApp),
+  [DbAction.BuySubscription]: verifiedPurchaseHandler(DbAction.BuySubscription),
 
   [DbAction.BuyPack]: authed(async ({ player, req }) => {
     const now = unixNow();
