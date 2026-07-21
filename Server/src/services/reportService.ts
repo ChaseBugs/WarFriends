@@ -9,7 +9,7 @@ import { ApiError, ApiErrorCode } from "../apiErrors";
 import { config } from "../config";
 import { League } from "../constants";
 import { findById } from "./playerService";
-import type { MatchDoc, MatchPlayer } from "./matchService";
+import { validatedMatchDocument, type MatchDoc, type MatchPlayer } from "./matchService";
 import { reserveReportSubmission } from "./reportRateLimitService";
 
 const DUPLICATE_WINDOW_MS = 10 * 60 * 1000;
@@ -411,7 +411,14 @@ async function recentAuthoritativeMatchEvidence(
     },
     { sort: { createdAt: -1 } },
   ) as unknown as MatchDoc | null;
-  return match ? buildAuthoritativeMatchEvidence(match, reporterPlayerId, reportedPlayerId) : null;
+  const evidenceReadAt = new Date();
+  return match
+    ? buildAuthoritativeMatchEvidence(
+      validatedMatchDocument(match, evidenceReadAt),
+      reporterPlayerId,
+      reportedPlayerId,
+    )
+    : null;
 }
 
 /**

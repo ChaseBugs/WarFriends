@@ -1,6 +1,7 @@
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import { PlayerStatus } from "../constants";
 import { matches, players, withMongoTransaction } from "../db";
+import { validatedMatchDocument, type MatchDoc } from "./matchService";
 
 /** Ranked reservations override client presence; other modes retain their recovered heartbeat. */
 export function effectivePlayerStatus(requested: PlayerStatus, hasActiveRankedMatch: boolean): PlayerStatus {
@@ -24,8 +25,9 @@ export async function setPlayerPresence(playerId: string, requested: PlayerStatu
     if (!player) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
     const activeMatch = await matches().findOne(
       { "players.playerId": playerId, state: { $in: ["active", "settling"] } },
-      { session, projection: { _id: 1 } },
+      { session },
     );
+    if (activeMatch) validatedMatchDocument(activeMatch as unknown as MatchDoc);
     const effective = effectivePlayerStatus(requested, Boolean(activeMatch));
     if (player.player.status !== effective) {
       const update = await players().updateOne(

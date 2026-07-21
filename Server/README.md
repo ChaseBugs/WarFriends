@@ -414,6 +414,18 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   Action `29` remains the presence heartbeat for non-ranked modes, but its active-match read and
   profile write share a MongoDB transaction. An active/settling ranked reservation always wins
   over a forged or early `Online`/`Offline` report.
+  One complete durable match validator now guards creation and every read, transition, projection,
+  or replay used by room admission/start, disconnect and presence authority, card relay/delivery,
+  result consensus, moderation correlation, restart recovery, cancellation, and settlement. It
+  requires one UUID, exactly two distinct bounded server snapshots, participant-only unique joined/
+  disconnect/report/card maps, safe ordered dates, and mutually consistent active, cancelled, or
+  finished fields. A finished row must retain two exact participant reward receipts whose safe
+  counters, VIP component multipliers, streak/league/level/lootbox/rental state, winner, reports,
+  and optional participant-complete Squad Event/War projections agree. Projected successors are
+  validated before writes. Only an absent legacy `rentalSettled` marker may enter the existing
+  idempotent repair path; false markers and rental payloads without the marker fail closed.
+  Participant IDs containing MongoDB `.` or `$` path syntax are rejected
+  before admission because disconnect, result, and card evidence use participant-keyed subpaths.
 - **Offline bot fallback (stock action `64`/`62`)**: `GameControllerDeathMatchOffline` sends
   `IsMatchMaking=1`, `BotId`, `BotName`, and zero-based `BotLevel`, which previously collided with
   the Play Warcards tutorial's bot-shaped start. The server first derives tutorial eligibility

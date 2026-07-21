@@ -35,6 +35,7 @@ test("match admission rejects duplicate, corrupt, and out-of-range participants"
   const valid = participant("player-a");
   for (const invalid of [
     { ...participant("player-b"), playerId: "" },
+    { ...participant("player-b"), playerId: "unsafe.path" },
     { ...participant("player-b"), name: "bad\nname" },
     { ...participant("player-b"), armyPower: Number.NaN },
     { ...participant("player-b"), armyPower: -1 },

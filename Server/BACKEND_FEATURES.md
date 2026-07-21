@@ -115,6 +115,18 @@ re-read from the squad roster in that transaction instead of trusting the profil
 removes the former best-effort post-commit window in which a crash could permanently lose progress;
 finished-match retries return the immutable receipt without applying any counter again.
 
+The complete durable ranked-match row is now validated before room admission/start, disconnect and
+presence decisions, relayed-card mutation/delivery, result consensus, moderation correlation,
+cancellation/restart recovery, settlement, and terminal replay. The shared proof binds one UUID to
+exactly two distinct bounded server snapshots; participant-only unique joined/disconnect/report/card
+maps; ordered safe lifecycle dates; mutually consistent active, cancelled, and finished fields; two
+exact terminal reward receipts with safe counters plus internally consistent VIP multipliers,
+win-streak, league, level, lootbox, and rental data; and participant-complete bounded Squad Event/War
+projections. Only an absent legacy rental-settlement marker reaches the existing idempotent repair;
+false markers or rental payloads without the marker fail closed. Every reviewed mutation validates its projected successor first. Dynamic participant
+IDs reject MongoDB `.`/`$` path syntax, so a stored or admitted identity cannot redirect a card,
+disconnect, or result update into another field.
+
 The complete durable squad document is now one shared authority boundary across membership,
 leadership, admission, chat, card-pool transfers, Squad Events, confirmed-PvP squad rewards,
 leaderboards, and Squad Wars. It requires exact fields, bounded normalized identities and text,

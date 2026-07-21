@@ -62,6 +62,9 @@ import {
   type SquadWarProgressStatus,
 } from "./squadWarService";
 import { allocatePlayerLeagueDivision } from "./playerLeagueService";
+import { validatedMatchDocument } from "./matchAuthorityService";
+
+export { validatedMatchDocument } from "./matchAuthorityService";
 
 export {
   PVP_WIN_STREAK_INTERVAL_SECONDS,
@@ -108,6 +111,7 @@ export function validateMatchParticipants(a: MatchPlayer, b: MatchPlayer): void 
     participant.playerId
     && participant.playerId.length <= 128
     && !/\p{Cc}/u.test(participant.playerId)
+    && !/[.$]/u.test(participant.playerId)
     && participant.name
     && participant.name.length <= 64
     && !/\p{Cc}/u.test(participant.name)
@@ -182,6 +186,7 @@ export function normalizeMatchCancelReason(reason: string): string {
  */
 export async function cancelMatch(matchId: string, reason: string): Promise<boolean> {
   const cancelReason = normalizeMatchCancelReason(reason);
+  const transitionAt = new Date();
   // A late join-timeout callback must never cancel a distributed room whose second participant
   // already committed the start transition on another node.
   const cancellationGuard = cancelReason === "join_timeout"
@@ -193,9 +198,16 @@ export async function cancelMatch(matchId: string, reason: string): Promise<bool
       { session },
     ) as unknown as MatchDoc | null;
     if (!match) return false;
+    validatedMatchDocument(match, transitionAt);
+    validatedMatchDocument({
+      ...match,
+      state: "cancelled",
+      cancelReason,
+      endedAt: transitionAt,
+    }, transitionAt);
     const claim = await matches().updateOne(
       { matchId, state: "active", ...cancellationGuard },
-      { $set: { state: "cancelled", cancelReason, endedAt: new Date() } },
+      { $set: { state: "cancelled", cancelReason, endedAt: transitionAt } },
       { session },
     );
     if (claim.modifiedCount !== 1) return false;
@@ -241,26 +253,37 @@ export async function recoverInterruptedMatches(
   const candidates = await matches()
     .find(
       { state: { $in: ["active", "settling"] } },
-      { projection: { matchId: 1, coordinatorId: 1 } },
     )
     .toArray();
+  const candidateReadAt = new Date();
+  candidates.forEach((candidate) => validatedMatchDocument(candidate as unknown as MatchDoc, candidateReadAt));
   const orphanIds = await selectOrphanMatchIds(
     candidates.map((candidate) => ({ matchId: candidate.matchId, coordinatorId: candidate.coordinatorId })),
     isCoordinatorAlive,
   );
 
   const recovered = await withMongoTransaction(async (session) => {
+    const transitionAt = new Date();
     const interrupted = await matches()
       .find(
         { matchId: { $in: orphanIds }, state: { $in: ["active", "settling"] } },
-        { session, projection: { matchId: 1, "players.playerId": 1 } },
+        { session },
       )
       .toArray();
+    interrupted.forEach((match) => {
+      const current = validatedMatchDocument(match as unknown as MatchDoc, transitionAt);
+      validatedMatchDocument({
+        ...current,
+        state: "cancelled",
+        cancelReason: "server_restart",
+        endedAt: transitionAt,
+      }, transitionAt);
+    });
     const matchIds = interrupted.map((match) => String(match.matchId));
     if (matchIds.length > 0) {
       await matches().updateMany(
         { matchId: { $in: matchIds }, state: { $in: ["active", "settling"] } },
-        { $set: { state: "cancelled", cancelReason: "server_restart", endedAt: new Date() } },
+        { $set: { state: "cancelled", cancelReason: "server_restart", endedAt: transitionAt } },
         { session },
       );
     }
@@ -270,9 +293,10 @@ export async function recoverInterruptedMatches(
     const liveMatches = await matches()
       .find(
         { state: { $in: ["active", "settling"] } },
-        { session, projection: { "players.playerId": 1 } },
+        { session },
       )
       .toArray();
+    liveMatches.forEach((match) => validatedMatchDocument(match as unknown as MatchDoc, transitionAt));
     const protectedPlayerIds = liveMatches.flatMap((match) =>
       Array.isArray(match.players)
         ? match.players.map((participant: { playerId?: unknown }) => String(participant.playerId ?? "")).filter(Boolean)
@@ -580,13 +604,14 @@ export async function createMatch(a: MatchPlayer, b: MatchPlayer, coordinatorId?
   if (normalizedCoordinatorId && (normalizedCoordinatorId.length > 128 || /\p{Cc}/u.test(normalizedCoordinatorId))) {
     throw new MatchAdmissionError("Match coordinator identity is invalid.");
   }
-  const doc: MatchDoc = {
+  const createdAt = new Date();
+  const doc: MatchDoc = validatedMatchDocument({
     matchId,
     ...(normalizedCoordinatorId ? { coordinatorId: normalizedCoordinatorId } : {}),
     players: [a, b],
     state: "active",
-    createdAt: new Date(),
-  };
+    createdAt,
+  }, createdAt);
 
   await withMongoTransaction(async (session) => {
     const playerIds = [a.playerId, b.playerId];
@@ -1017,7 +1042,8 @@ async function settlePlayerCore(
 }
 
 export async function getMatch(matchId: string): Promise<MatchDoc | null> {
-  return (await matches().findOne({ matchId })) as unknown as MatchDoc | null;
+  const match = (await matches().findOne({ matchId })) as unknown as MatchDoc | null;
+  return match ? validatedMatchDocument(match) : null;
 }
 
 export interface JoinActiveMatchResult {
@@ -1052,6 +1078,12 @@ export function distributedRoomJoinState(match: MatchDoc): {
  */
 export async function joinActiveMatch(matchId: string, playerId: string): Promise<JoinActiveMatchResult | null> {
   if (!matchId || !playerId || matchId.length > 128 || playerId.length > 128) return null;
+  const beforeAdmission = await getMatch(matchId);
+  if (!beforeAdmission
+    || beforeAdmission.state !== "active"
+    || !beforeAdmission.players.some((participant) => participant.playerId === playerId)) return null;
+  const projectedJoined = [...new Set([...(beforeAdmission.joinedPlayerIds ?? []), playerId])];
+  validatedMatchDocument({ ...beforeAdmission, joinedPlayerIds: projectedJoined });
   const admitted = await matches().updateOne(
     { matchId, state: "active", "players.playerId": playerId },
     { $addToSet: { joinedPlayerIds: playerId } },
@@ -1063,6 +1095,8 @@ export async function joinActiveMatch(matchId: string, playerId: string): Promis
   const { allowedPlayerIds, joinedPlayerIds, ready } = distributedRoomJoinState(match);
   let activatedByCaller = false;
   if (ready) {
+    const roomStartedAt = new Date();
+    validatedMatchDocument({ ...match, roomStartedAt }, roomStartedAt);
     const activation = await matches().updateOne(
       {
         matchId,
@@ -1070,7 +1104,7 @@ export async function joinActiveMatch(matchId: string, playerId: string): Promis
         roomStartedAt: { $exists: false },
         joinedPlayerIds: { $all: allowedPlayerIds },
       },
-      { $set: { roomStartedAt: new Date() } },
+      { $set: { roomStartedAt } },
     );
     activatedByCaller = activation.modifiedCount === 1;
     match = await getMatch(matchId);
@@ -1085,16 +1119,26 @@ export async function joinActiveMatch(matchId: string, playerId: string): Promis
 }
 
 export async function findStartedMatchForPlayer(playerId: string): Promise<MatchDoc | null> {
-  return await matches().findOne({
+  const match = await matches().findOne({
     state: "active",
     roomStartedAt: { $exists: true },
     "players.playerId": playerId,
     joinedPlayerIds: playerId,
   }) as unknown as MatchDoc | null;
+  return match ? validatedMatchDocument(match) : null;
 }
 
 export async function markMatchParticipantDisconnected(matchId: string, playerId: string): Promise<MatchDoc | null> {
   const path = `disconnectedAt.${playerId}`;
+  const current = await getMatch(matchId);
+  if (!current || current.state !== "active" || !current.players.some((player) => player.playerId === playerId)) {
+    return null;
+  }
+  const disconnectedAt = new Date();
+  validatedMatchDocument({
+    ...current,
+    disconnectedAt: { ...(current.disconnectedAt ?? {}), [playerId]: disconnectedAt },
+  }, disconnectedAt);
   const updated = await matches().findOneAndUpdate(
     {
       matchId,
@@ -1103,14 +1147,22 @@ export async function markMatchParticipantDisconnected(matchId: string, playerId
       "players.playerId": playerId,
       joinedPlayerIds: playerId,
     },
-    { $set: { [path]: new Date() } },
+    { $set: { [path]: disconnectedAt } },
     { returnDocument: "after" },
   );
-  return updated as unknown as MatchDoc | null;
+  return updated ? validatedMatchDocument(updated as unknown as MatchDoc, disconnectedAt) : null;
 }
 
 export async function clearMatchParticipantDisconnected(matchId: string, playerId: string): Promise<boolean> {
   const path = `disconnectedAt.${playerId}`;
+  const current = await getMatch(matchId);
+  if (!current || !current.disconnectedAt?.[playerId]) return false;
+  const disconnectedAt = { ...current.disconnectedAt };
+  delete disconnectedAt[playerId];
+  validatedMatchDocument({
+    ...current,
+    ...(Object.keys(disconnectedAt).length > 0 ? { disconnectedAt } : { disconnectedAt: undefined }),
+  });
   const cleared = await matches().updateOne(
     { matchId, state: "active", [path]: { $exists: true } },
     { $unset: { [path]: "" } },
@@ -1119,7 +1171,8 @@ export async function clearMatchParticipantDisconnected(matchId: string, playerI
 }
 
 export async function isMatchParticipant(matchId: string, playerId: string): Promise<boolean> {
-  return (await matches().countDocuments({ matchId, "players.playerId": playerId }, { limit: 1 })) === 1;
+  const match = await getMatch(matchId);
+  return Boolean(match?.players.some((participant) => participant.playerId === playerId));
 }
 
 export interface RelayedCardPlayResult {
@@ -1193,6 +1246,10 @@ export async function recordRelayedCardPlay(
     const existing = match.relayedCardPlays?.[playerId] ?? [];
     const result = applyRelayedCardPlay(existing, sequence, cardId);
     if (result.replayed) return result;
+    validatedMatchDocument({
+      ...match,
+      relayedCardPlays: { ...(match.relayedCardPlays ?? {}), [playerId]: result.cards },
+    });
 
     const player = await findById(playerId);
     if (!player) throw new ApiError(CARD_NOT_FOUND, "CardPlayed owner was not found.");
@@ -1217,11 +1274,8 @@ export async function wasRelayedCardDelivered(
   playerId: string,
   sequence: number,
 ): Promise<boolean> {
-  return (await matches().countDocuments({
-    matchId,
-    "players.playerId": playerId,
-    [`relayedCardDeliveries.${playerId}`]: sequence,
-  }, { limit: 1 })) === 1;
+  const match = await getMatch(matchId);
+  return Boolean(match?.relayedCardDeliveries?.[playerId]?.includes(sequence));
 }
 
 /** Persist transport handoff only after local send or Redis publish succeeds. */
@@ -1230,6 +1284,15 @@ export async function markRelayedCardDelivered(
   playerId: string,
   sequence: number,
 ): Promise<void> {
+  const match = await getMatch(matchId);
+  if (!match || match.state !== "active" || !match.players.some((participant) => participant.playerId === playerId)) {
+    return;
+  }
+  const deliveries = [...new Set([...(match.relayedCardDeliveries?.[playerId] ?? []), sequence])];
+  validatedMatchDocument({
+    ...match,
+    relayedCardDeliveries: { ...(match.relayedCardDeliveries ?? {}), [playerId]: deliveries },
+  });
   await matches().updateOne(
     { matchId, state: "active", "players.playerId": playerId },
     { $addToSet: { [`relayedCardDeliveries.${playerId}`]: sequence } },
@@ -1306,6 +1369,11 @@ export async function reportMatchResult(
   const reporter = await findById(reporterId);
   if (!reporter) return { status: "invalid" };
   consumePvpUsedCardsState(progressionForPlayer(reporter), authoritativeCards);
+  validatedMatchDocument({
+    ...match,
+    resultReports: { ...(match.resultReports ?? {}), [reporterId]: winnerId },
+    usedCardsReports: { ...(match.usedCardsReports ?? {}), [reporterId]: authoritativeCards },
+  });
 
   await matches().updateOne(
     { matchId, state: "active", "players.playerId": reporterId },
@@ -1436,6 +1504,7 @@ export async function settleResult(matchId: string, winnerId: string, reportedBy
   const transaction = await withMongoTransaction(async (session) => {
     const match = await matches().findOne({ matchId }, { session }) as unknown as MatchDoc | null;
     if (!match) return { result: { matchId, winnerId, rewarded: false }, grants: [] as CoreGrant[], unknown: true };
+    validatedMatchDocument(match, settlementTime);
     if (match.state === "finished") {
       return {
         result: {
@@ -1511,6 +1580,21 @@ export async function settleResult(matchId: string, winnerId: string, reportedBy
         squadWarParticipants.push({ playerId: grant.playerId, squadId: grant.squadName, status });
       }
     }
+    validatedMatchDocument({
+      ...match,
+      state: "finished",
+      winnerId,
+      rewardReceipts,
+      endedAt: settlementTime,
+      ...(squadEventSeason ? {
+        squadEventProjection: {
+          eventId: squadEventSeason.id,
+          configHash: squadEventConfigHash(squadEventSeason),
+          participants: eventParticipants,
+        },
+      } : {}),
+      ...(squadWarsAvailable ? { squadWarProjection: squadWarParticipants } : {}),
+    }, settlementTime);
     const finish = await matches().updateOne(
       { matchId, state: "active" },
       {
