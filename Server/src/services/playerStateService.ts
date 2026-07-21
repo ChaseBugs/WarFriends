@@ -20,6 +20,7 @@ import {
   validatedStarterAssignmentState,
 } from "./starterAssignmentAuthorityService";
 import { videoAdRewardTimesForState } from "./videoAdRewardAuthorityService";
+import { validatedPvpWinStreak } from "./pvpWinStreakAuthorityService";
 
 /** Unix seconds are used throughout the recovered Beanstalk protocol. */
 export function unixNow(): number {
@@ -281,9 +282,10 @@ export function buildPlayerData(player: PlayerDocument, now = unixNow()): Player
   // WinStreakManager derives from DatabaseSerializedObjectGeneric<WinStreak>. Restore the
   // server-owned streak on every boot; otherwise LoadEmpty silently resets the lobby timer
   // after reconnect even though subsequent settlement still sees the durable streak.
+  const winStreak = validatedPvpWinStreak(state.pvpWinStreak, Math.floor(now));
   addSerializedObject(data, "WinStreak", {
-    WinCount: state.pvpWinStreak?.winCount ?? 0,
-    TimeStamp: state.pvpWinStreak?.timestamp ?? 0,
+    WinCount: winStreak.winCount,
+    TimeStamp: winStreak.timestamp,
   });
   const blackMarket = validatedBlackMarketOfferState(state.blackMarket);
   if (blackMarket) {

@@ -912,7 +912,10 @@ allowlist of analytics/impression actions is safely ignored.
   the first stock `GameEnded` request receive the receipt committed by the second agreeing report.
 - **Win-streak fidelity** — the 200-second interval and nine valid WarBucks tiers are decoded from
   MainScene and persisted authoritatively. The corrupted/unusable tenth value is capped at tier nine
-  until archived live balancing is available.
+  until archived live balancing is available. Settlement and boot share exact pair validation:
+  count is limited to 0-9, zero requires timestamp zero, and positive streaks require a non-future
+  signed-client-int Unix second. Corrupt counts are rejected rather than clamped into tier nine,
+  and future timestamps cannot enter the recovered client's permanent `isInfinite` display path.
 - **League win rewards** — the three beginner and 16 normal MainScene WarBucks/squad-point rows
   now settle from authenticated player state, use the exact lower-case `squadPoints` response key,
   and apply VIP independently without trusting client reward echoes.

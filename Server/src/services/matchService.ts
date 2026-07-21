@@ -43,6 +43,11 @@ import { applyVipBattleLootboxState } from "./vipLootboxService";
 import { checkedRewardBalance } from "./rewardMathService";
 import { isVipActiveAt } from "./vipEntitlementService";
 import {
+  PVP_WIN_STREAK_INTERVAL_SECONDS,
+  PVP_WIN_STREAK_WARBUCKS,
+  validatedPvpWinStreak,
+} from "./pvpWinStreakAuthorityService";
+import {
   advanceRentalAfterBattleState,
   type RentalWireOffer,
 } from "./rentalService";
@@ -54,6 +59,12 @@ import {
   type SquadWarProgressStatus,
 } from "./squadWarService";
 import { allocatePlayerLeagueDivision } from "./playerLeagueService";
+
+export {
+  PVP_WIN_STREAK_INTERVAL_SECONDS,
+  PVP_WIN_STREAK_WARBUCKS,
+  validatedPvpWinStreak,
+} from "./pvpWinStreakAuthorityService";
 
 /**
  * Persistent PvP match lifecycle and reward settlement.
@@ -302,31 +313,6 @@ export const VIP_LEVEL_GOLD_MULTIPLIER = 2;
 /** `VipWarbucksMultiplier` decoded from the 4.9.5 MainScene Constants component. */
 export const VIP_BATTLE_WARBUCKS_MULTIPLIER = 1.5;
 
-/** `WinstreakInterval` decoded from the 4.9.5 MainScene Constants component. */
-export const PVP_WIN_STREAK_INTERVAL_SECONDS = 200;
-
-/**
- * Source-decoded WarBucks tiers for consecutive ranked wins.
- *
- * MainScene contains exact currency values for WinstreakReward1..9. Its nominal tenth row
- * decodes to 1.5 (the same value as VipWarbucksMultiplier), which is not a plausible currency
- * grant and indicates retired/live-data drift in this recovered scene. The offline backend
- * therefore caps both count and payout at the ninth verified tier instead of inventing a
- * tenth amount or paying one WarBuck. Replace this explicit cap only if the archived live
- * reward document is recovered.
- */
-export const PVP_WIN_STREAK_WARBUCKS = Object.freeze([
-  400,
-  700,
-  1_000,
-  1_400,
-  1_800,
-  2_200,
-  2_600,
-  3_000,
-  3_600,
-] as const);
-
 export interface PvpWinStreakTransition {
   state: PvpWinStreakState;
   baseWarBucks: number;
@@ -352,14 +338,11 @@ export function advancePvpWinStreak(
   if (!Number.isSafeInteger(settledAtUnix) || settledAtUnix < 0) {
     throw new Error("PvP win-streak settlement time is invalid.");
   }
+  const previous = validatedPvpWinStreak(current, settledAtUnix);
   if (!won) return { state: { winCount: 0, timestamp: 0 }, baseWarBucks: 0, warBucks: 0 };
 
-  const previousCount = Number.isSafeInteger(current?.winCount) && current!.winCount > 0
-    ? Math.min(current!.winCount, PVP_WIN_STREAK_WARBUCKS.length)
-    : 0;
-  const previousTimestamp = Number.isSafeInteger(current?.timestamp) && current!.timestamp >= 0
-    ? current!.timestamp
-    : 0;
+  const previousCount = previous.winCount;
+  const previousTimestamp = previous.timestamp;
   const continues = previousCount > 0
     && previousTimestamp <= settledAtUnix
     && previousTimestamp + PVP_WIN_STREAK_INTERVAL_SECONDS > settledAtUnix;

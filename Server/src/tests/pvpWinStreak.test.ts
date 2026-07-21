@@ -4,6 +4,7 @@ import {
   advancePvpWinStreak,
   PVP_WIN_STREAK_INTERVAL_SECONDS,
   PVP_WIN_STREAK_WARBUCKS,
+  validatedPvpWinStreak,
 } from "../services/matchService";
 import { buildPlayerData, createInitialProgression } from "../services/playerStateService";
 import { newPlayer } from "../dtos";
@@ -48,6 +49,35 @@ test("losses clear streaks and VIP multiplies the streak component independently
   assert.throws(() => advancePvpWinStreak(undefined, true, false, -1), /invalid/);
 });
 
+test("ranked settlement rejects corrupt streak authority instead of clamping or restarting it", () => {
+  assert.deepEqual(validatedPvpWinStreak(undefined, 40_000), { winCount: 0, timestamp: 0 });
+  assert.deepEqual(
+    validatedPvpWinStreak({ winCount: 9, timestamp: 39_999 }, 40_000),
+    { winCount: 9, timestamp: 39_999 },
+  );
+
+  for (const winCount of [Number.NaN, Number.POSITIVE_INFINITY, -1, 1.5, 10, 100]) {
+    assert.throws(
+      () => advancePvpWinStreak({ winCount, timestamp: 39_999 }, true, false, 40_000),
+      /Stored PvP win-streak authority is invalid/,
+    );
+  }
+  for (const timestamp of [Number.NaN, Number.POSITIVE_INFINITY, -1, 40_001, 2_147_483_648]) {
+    assert.throws(
+      () => advancePvpWinStreak({ winCount: 1, timestamp }, true, false, 40_000),
+      /Stored PvP win-streak authority is invalid/,
+    );
+  }
+  assert.throws(
+    () => advancePvpWinStreak({ winCount: 0, timestamp: 39_999 }, false, false, 40_000),
+    /Stored PvP win-streak authority is invalid/,
+  );
+  assert.throws(
+    () => advancePvpWinStreak({ winCount: 1, timestamp: 0 }, false, false, 40_000),
+    /Stored PvP win-streak authority is invalid/,
+  );
+});
+
 test("GetPlayerData restores WinStreakManager through its exact nested type name", () => {
   const dto = newPlayer("streak-player", "StreakPlayer", AccountType.Guest);
   const now = new Date(40_000_000);
@@ -71,4 +101,12 @@ test("GetPlayerData restores WinStreakManager through its exact nested type name
   assert.deepEqual(buildPlayerData(player).WinStreak, {
     S: JSON.stringify({ WinCount: 4, TimeStamp: 40_000 }),
   });
+
+  player.progression!.pvpWinStreak = { winCount: 10, timestamp: 40_000 };
+  assert.throws(() => buildPlayerData(player), /Stored PvP win-streak authority is invalid/);
+  player.progression!.pvpWinStreak = { winCount: 1, timestamp: 40_001 };
+  assert.throws(
+    () => buildPlayerData(player, 40_000),
+    /Stored PvP win-streak authority is invalid/,
+  );
 });

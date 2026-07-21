@@ -142,6 +142,9 @@ Arena run appear finished, make an achievement tier appear complete, or unlock a
 - Player League `MedalsBalance` and `Skill` values must be nonnegative safe integers before a
   division is returned or settled; beginner/normal tiers and the zero-or-one placement counter are
   validated before boot/admission/progress, and the complete member set before the first reward write.
+- Ranked-PvP win-streak authority must be an exact 0-9 count/timestamp pair before settlement or
+  boot; future or non-client-int timestamps and inconsistent zero states fail closed instead of
+  selecting the maximum reward or entering the recovered client's permanent-streak branch.
 - A current daily-reward calendar must have a real UTC year/month/last-check date and ordered,
   month-bounded unlock/claim cursors before any check, claim, or wire projection.
   Subscription authority must also remain an ordered start/lock/expiry interval; future or inverted
