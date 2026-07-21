@@ -9,6 +9,9 @@ import { buildDatabasePlayer, createInitialProgression } from "../services/playe
 import {
   parseInternetConnection,
   parseRegionPings,
+  validatedInternetConnection,
+  validatedPhotonRoutingSnapshot,
+  validatedRegionPings,
 } from "../services/regionPingService";
 
 const NOW = 1_900_000_000;
@@ -52,6 +55,41 @@ test("connection parsing follows the recovered enum names exactly", () => {
   assert.equal(parseInternetConnection("Wifi"), 2);
   assert.throws(() => parseInternetConnection("Cellular"));
   assert.throws(() => parseInternetConnection(2));
+});
+
+test("durable routing hints allow only exact recovered values or total legacy absence", () => {
+  assert.deepEqual(validatedRegionPings(undefined), {});
+  assert.deepEqual(validatedRegionPings({ in: 205, eu: 42 }), { eu: 42, in: 205 });
+  assert.throws(() => validatedRegionPings({ moon: 1 }), /Stored Region moon is not supported/);
+  for (const ping of [-1, 60_001, 12.5, Number.NaN, Number.POSITIVE_INFINITY, "42"]) {
+    assert.throws(() => validatedRegionPings({ eu: ping }), /Stored Region eu has an invalid ping/);
+  }
+  assert.throws(() => validatedRegionPings([]), /Stored Regions must be an object/);
+  assert.throws(() => validatedRegionPings(new Date()), /Stored Regions must be a plain object/);
+
+  assert.equal(validatedInternetConnection(undefined), 0);
+  assert.equal(validatedInternetConnection(0), 0);
+  assert.equal(validatedInternetConnection(1), 1);
+  assert.equal(validatedInternetConnection(2), 2);
+  for (const connection of [3, -1, 1.5, Number.NaN, Number.POSITIVE_INFINITY, "Wifi"]) {
+    assert.throws(
+      () => validatedInternetConnection(connection),
+      /Stored Connection is not a recovered InternetConnection value/,
+    );
+  }
+
+  assert.deepEqual(validatedPhotonRoutingSnapshot(undefined, undefined), {
+    bestRegions: {},
+    connectionType: 0,
+  });
+  assert.throws(
+    () => validatedPhotonRoutingSnapshot({ eu: 42 }, undefined),
+    /Stored Photon routing snapshot is incomplete/,
+  );
+  assert.throws(
+    () => validatedPhotonRoutingSnapshot(undefined, 2),
+    /Stored Photon routing snapshot is incomplete/,
+  );
 });
 
 test("public player snapshots restore the exact Regions string contract", () => {

@@ -225,6 +225,7 @@ test("PlayerAnalyticsData restores authoritative timer, lifetime, and paid count
       visualTimestamp: 0,
       influencerLink: "",
       influencerAlias: "",
+      bestRegions: {},
       connectionType: 0,
       deviceToken: "",
       sendLogsValue: 0,

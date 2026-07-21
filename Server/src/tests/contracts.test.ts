@@ -461,6 +461,27 @@ test("indexed player profile mirrors must match before client-visible projection
     );
   }
 
+  const invalidStoredRegion = contractPlayer();
+  invalidStoredRegion.player.bestRegions = { eu: 30, retired: 40 };
+  assert.throws(
+    () => validatedPlayerProfileLookup(invalidStoredRegion),
+    /Stored player public identity is invalid/,
+  );
+
+  const invalidStoredConnection = contractPlayer();
+  invalidStoredConnection.player.connectionType = Number.NaN;
+  assert.throws(
+    () => buildDatabasePlayer(invalidStoredConnection),
+    /Stored player public identity is invalid/,
+  );
+
+  const incompleteStoredRouting = contractPlayer();
+  delete (incompleteStoredRouting.player as { bestRegions?: unknown }).bestRegions;
+  assert.throws(
+    () => validatedPlayerProfileLookup(incompleteStoredRouting),
+    /Stored player public identity is invalid/,
+  );
+
   const indexedDisconnectedSentinel = contractPlayer();
   indexedDisconnectedSentinel.facebookId = "-1";
   indexedDisconnectedSentinel.player.facebookId = -1;

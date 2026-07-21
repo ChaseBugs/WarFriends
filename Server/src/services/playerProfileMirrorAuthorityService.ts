@@ -8,6 +8,9 @@ import { isSupportedAuthenticationScryptCost } from "./authSecretService";
 import { validatePlayerLeagueIdentity } from "./playerLeagueContract";
 import { isCanonicalStoredPlayerName } from "./playerNameContract";
 import { validatedNotificationSettings } from "./playerSettingsService";
+import {
+  validatedPhotonRoutingSnapshot,
+} from "./regionPingService";
 
 /**
  * Validate the public identity fields that are not duplicated at MongoDB's document root.
@@ -30,6 +33,10 @@ function validatePlayerPublicIdentityFields(player: PlayerDocument): void {
     // profile boundary is the earliest point that can prevent corrupt consent from reaching push
     // selection or being normalized by an unrelated settings update.
     validatedNotificationSettings(dto.notificationSettings);
+    // Action 140 validates new measurements, but legacy imports and bypassed writers can still
+    // place malformed routing hints in MongoDB. Prove the entire stored snapshot here so an
+    // unrelated heartbeat cannot overwrite connection metadata and hide pre-existing damage.
+    validatedPhotonRoutingSnapshot(dto.bestRegions, dto.connectionType);
   } catch {
     throw new Error("Stored player public identity is invalid.");
   }

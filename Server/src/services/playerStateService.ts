@@ -67,6 +67,7 @@ import {
   validatedPlayerProfileMirrors,
 } from "./playerProfileMirrorAuthorityService";
 import { settingsForPlayer } from "./playerSettingsService";
+import { validatedRegionPings } from "./regionPingService";
 
 /** Unix seconds are used throughout the recovered Beanstalk protocol. */
 export function unixNow(): number {
@@ -336,12 +337,13 @@ export function buildDatabasePlayer(document: PlayerDocument): Record<string, un
   if (dto.facebookId !== -1) wire.FacebookId = { S: String(dto.facebookId) };
   if (dto.gameCenterId) wire.GameCenterId = { S: dto.gameCenterId };
   if (dto.googlePlayId) wire.GooglePlayId = { S: dto.googlePlayId };
-  if (dto.bestRegions && Object.keys(dto.bestRegions).length > 0) {
+  const bestRegions = validatedRegionPings(dto.bestRegions);
+  if (Object.keys(bestRegions).length > 0) {
     // DatabasePlayer.CreateFromDatabase reads this exact Dynamo-style string and deserializes
     // it into Dictionary<CloudRegionCode,int>. Challenge setup then chooses the region with
     // the lowest combined local/opponent ping. Connection type is local-only in the stock
     // parser, so it is persisted for diagnostics but deliberately not invented on this wire.
-    wire.Regions = stringAttribute(dto.bestRegions);
+    wire.Regions = stringAttribute(bestRegions);
   }
   if (itemInventory) {
     // Public player snapshots use the same server-owned objects as private PlayerData. This

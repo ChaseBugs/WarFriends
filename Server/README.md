@@ -353,7 +353,12 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   recovered ten-region latency dictionary plus `None`/`Cellural`/`Wifi` connection type.
   Public `DatabasePlayer` snapshots restore the exact `Regions: { S: "..." }` contract used by
   stock challenge/PvP code to choose the lowest combined-latency region. These client-measured
-  values remain routing hints and never authorize a match result or gameplay reward.
+  values remain routing hints and never authorize a match result or gameplay reward. The shared
+  stored-profile boundary revalidates every key, integer 0-60000 ms latency, and exact numeric
+  connection enum before authentication, presence mutation, or publication, then rebuilds public
+  JSON in recovered region order. Only total field absence on a pre-recovery account maps to an
+  empty region dictionary and `None`; partial or malformed durable metadata fails closed rather
+  than being dropped or overwritten by an unrelated heartbeat.
 - **Feature-introduction persistence**: parameterless actions `163`, `168`, `169`, `180`,
   `182`, `183`, and `213` now require authentication and monotonically persist the recovered
   chat, customization, Warpath, card-pool, league-leaderboard, crafting, and Elites booleans.
