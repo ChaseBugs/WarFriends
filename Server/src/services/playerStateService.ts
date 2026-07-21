@@ -116,6 +116,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
   const cardCrafting = cardCraftingAuthorityFor(state.cardCrafting);
   const pvpWinStreak = validatedPvpWinStreakShape(state.pvpWinStreak);
   const tutorialLifecycle = validatedTutorialLifecycleShape(state);
+  const featureIntroductions = validatedFeatureIntroductions(state.featureIntroductions);
   // This is the shared persisted-progression read boundary, not only a boot serializer. Validate
   // wallet/rank balances here so cross-player transactions and ordinary economy actions cannot
   // let NaN/Infinity bypass a `< price` check before reaching a narrower service validator.
@@ -151,6 +152,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
       cardCrafting,
       pvpWinStreak,
       ...tutorialLifecycle,
+      featureIntroductions,
     };
   }
 
@@ -184,6 +186,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
     cardCrafting,
     pvpWinStreak,
     ...tutorialLifecycle,
+    featureIntroductions,
   };
 }
 

@@ -20,6 +20,7 @@ import { validatedPvpWinStreakShape } from "./pvpWinStreakAuthorityService";
 import { validatedVipLootboxCountdown } from "./vipLootboxService";
 import { validatedCollectedRewards } from "./oneTimeRewardAuthorityService";
 import { validatedTutorialLifecycleShape } from "./tutorialCompletionAuthorityService";
+import { validatedFeatureIntroductions } from "./featureIntroductionAuthorityService";
 
 /**
  * Validate the common authority shared by every full progression-document replacement.
@@ -61,6 +62,8 @@ export function validatedProgressionSuccessor(
   validatedCollectedRewards(next.collectedRewards);
   validatedTutorialLifecycleShape(current);
   validatedTutorialLifecycleShape(next);
+  validatedFeatureIntroductions(current.featureIntroductions);
+  validatedFeatureIntroductions(next.featureIntroductions);
   validatedCoreProgressionBalances(current);
   validateProgressionRevisionAdvance(progressionRevisionForRead(current.revision), next.revision);
   validatedCoreProgressionBalances(next);

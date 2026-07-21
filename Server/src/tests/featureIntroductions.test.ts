@@ -9,7 +9,12 @@ import {
   type FeatureIntroductionKey,
   markFeatureIntroductionState,
 } from "../services/featureIntroductionService";
-import { buildPlayerData, createInitialProgression } from "../services/playerStateService";
+import {
+  buildPlayerData,
+  createInitialProgression,
+  progressionForPlayer,
+} from "../services/playerStateService";
+import { validatedProgressionSuccessor } from "../services/progressionPublicationAuthorityService";
 
 const NOW = 1_900_000_000;
 const FEATURES: readonly FeatureIntroductionKey[] = [
@@ -78,6 +83,31 @@ test("feature introduction mutations reject corrupt snapshots and revision overf
     () => markFeatureIntroductionState(exhaustedRevision, "chatShown"),
     /Feature introduction progression revision is invalid/,
   );
+});
+
+test("shared progression boundaries reject malformed feature introduction snapshots", () => {
+  const corruptRead = playerDocument();
+  corruptRead.progression!.featureIntroductions = {
+    chatShown: "false",
+  } as unknown as PlayerFeatureIntroductionState;
+  assert.throws(
+    () => progressionForPlayer(corruptRead),
+    /Stored feature introduction state is invalid/,
+  );
+
+  const current = createInitialProgression(NOW);
+  const corruptSuccessor = {
+    ...current,
+    revision: 1,
+    featureIntroductions: { retiredFeatureShown: true } as unknown as PlayerFeatureIntroductionState,
+  };
+  assert.throws(
+    () => validatedProgressionSuccessor(current, corruptSuccessor),
+    /Stored feature introduction state is invalid/,
+  );
+
+  // A wholly absent legacy snapshot remains the exact empty object consumed as seven false flags.
+  assert.deepEqual(progressionForPlayer(playerDocument()).featureIntroductions, {});
 });
 
 test("PlayerAnalyticsData restores all durable introduction flags", () => {

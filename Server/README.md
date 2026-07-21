@@ -264,6 +264,8 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
 - **Feature-introduction persistence**: parameterless actions `163`, `168`, `169`, `180`,
   `182`, `183`, and `213` now require authentication and monotonically persist the recovered
   chat, customization, Warpath, card-pool, league-leaderboard, crafting, and Elites booleans.
+  The complete snapshot is validated at shared progression read/publication as well as mutation
+  and boot, so malformed truthy values cannot survive an unrelated economy replacement.
   `GetPlayerData` restores all seven through `PlayerAnalyticsData`, preventing onboarding UI
   from repeating after reconnect or reinstall. The complete stored snapshot permits only those
   seven keys and Boolean values before mutation or boot; missing legacy flags default to false,
