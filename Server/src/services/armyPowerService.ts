@@ -7,6 +7,7 @@ import {
   weaponDefinitionFor,
 } from "./itemInventoryService";
 import { progressionForPlayer, unixNow } from "./playerStateService";
+import { validatedPlayerAccountEnvelope } from "./playerProfileMirrorAuthorityService";
 import { equippedUnitPower } from "./unitInventoryService";
 import { hasActiveRentalItem } from "./rentalEntitlementService";
 
@@ -163,6 +164,9 @@ export async function recomputePlayerArmyPower(playerId: string): Promise<ArmyPo
   for (let attempt = 0; attempt < 4; attempt++) {
     const document = await players().findOne({ id: playerId });
     if (!document) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
+    // UpdateArmyPower is authenticated, but this retry loop reloads outside the handler snapshot.
+    // Re-prove the complete account before deriving or publishing indexed profile authority.
+    validatedPlayerAccountEnvelope(document);
     const breakdown = calculateArmyPower(document);
     const revision = document.progression?.revision;
     const revisionFilter = revision === undefined

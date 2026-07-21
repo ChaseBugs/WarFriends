@@ -231,6 +231,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   gameplay session token. Durable login guesses use an
   atomic MongoDB throttle keyed by an HMAC of the presented identity; active gameplay sessions
   remain usable and provider credentials are never accepted by ordinary gameplay actions.
+  Raw full-document reloads inside Army Power refresh, Daily Missions, Instant Battle, PvP
+  settlement, inbox reward claims, and Player League allocation/settlement repeat the same account
+  proof before calculating or publishing economy and indexed-profile changes. Authentication proves
+  only its earlier snapshot; a newly damaged row aborts the retry or whole transaction, and one
+  corrupt league member aborts the complete division before its first rank or reward write.
   Full-account creation hashes before its single insert, while the recovered action 121 publishes
   name, password digest, and rotated session atomically with a stale-session guard.
   Repeated status, country, language, device-registration, and notification-setting values are

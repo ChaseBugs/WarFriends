@@ -19,6 +19,7 @@ import { checkedRewardBalance } from "./rewardMathService";
 import { validatedCoreProgressionBalances } from "./coreProgressionAuthorityService";
 import { progressionRevisionForRead } from "./progressionRevisionAuthorityService";
 import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
+import { validatedPlayerAccountEnvelope } from "./playerProfileMirrorAuthorityService";
 
 // Player discovery + messaging (BACKEND.md §2.3 "Social / messaging / hit list"). Search
 // and directory reads project players to the client's summary shape; messages are stored
@@ -428,6 +429,9 @@ export async function claimMessageReward(playerId: string, messageId: string): P
 
     const player = await players().findOne({ id: playerId }, { session });
     if (!player) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
+    // The inbox message and wallet marker commit together. Reject a damaged current account before
+    // either write so repair can safely retry the still-unclaimed server-authored reward.
+    validatedPlayerAccountEnvelope(player);
     const progression = progressionForPlayer(player);
     const nextProgression = canonicalProgression(applyInboxGoldRewardState(progression, reward.Gold));
     const response = reward;

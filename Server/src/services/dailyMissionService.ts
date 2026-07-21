@@ -25,6 +25,7 @@ import {
 } from "./matchService";
 import { mutateProgression } from "./progressionMutationService";
 import { progressionForPlayer, unixNow } from "./playerStateService";
+import { validatedPlayerAccountEnvelope } from "./playerProfileMirrorAuthorityService";
 import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
 import { advanceRentalAfterBattleState } from "./rentalService";
 import { grantMissionElitePartsState, selectMissionElitePartUnit } from "./unitInventoryService";
@@ -961,6 +962,9 @@ export async function settleDailyMission(
   for (let attempt = 0; attempt < MAX_CONCURRENCY_RETRIES; attempt += 1) {
     const player = await players().findOne({ id: playerId });
     if (!player) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
+    // Every optimistic retry is a new durable authority snapshot. Validate the account/profile
+    // envelope before mission rewards, rank mirrors, or the progression successor are calculated.
+    validatedPlayerAccountEnvelope(player);
 
     const state = progressionForPlayer(player);
     const result = settleDailyMissionState(

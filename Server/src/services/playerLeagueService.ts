@@ -9,6 +9,10 @@ import {
 } from "../db";
 import { synchronizeLeagueAchievementState } from "./achievementService";
 import { progressionForPlayer } from "./playerStateService";
+import {
+  validatedPlayerAccountEnvelope,
+  validatedPlayerProfileLookup,
+} from "./playerProfileMirrorAuthorityService";
 import type { MessageDoc } from "./socialService";
 import {
   managedPlayerLeagueId,
@@ -91,7 +95,7 @@ export async function ensureActivePlayerLeague(player: PlayerDocument, now: numb
   return withMongoTransaction(async (session) => {
     // Re-read under the transaction instead of trusting the handler snapshot. This makes a
     // concurrent PvP placement win and leaderboard recovery converge on one membership write.
-    const current = await players().findOne({ id: player.id }, { session });
+    const current = validatedPlayerProfileLookup(await players().findOne({ id: player.id }, { session }));
     if (!current) return player;
     validatePlayerLeagueProgression(current.player);
     if (current.player.beginnersLeague > 0) return current;
@@ -122,7 +126,7 @@ export async function ensureActivePlayerLeague(player: PlayerDocument, now: numb
       // Throwing aborts the capacity increment. The caller can retry and observe the winner.
       throw new Error(`Concurrent player league allocation rejected ${current.id}.`);
     }
-    return (await players().findOne({ id: current.id }, { session })) ?? current;
+    return validatedPlayerProfileLookup(await players().findOne({ id: current.id }, { session })) ?? current;
   });
 }
 
@@ -144,6 +148,10 @@ export async function playersInPlayerLeague(
   if (limit > 0) cursor.limit(Math.min(100, Math.floor(limit)));
   const members = await cursor.toArray();
   for (const member of members) {
+    // One corrupt division member must abort ranking before any player update or reward message.
+    // Competition settlement is atomic, so validating the complete population here preserves that
+    // all-or-nothing boundary instead of silently ranking a split or damaged profile.
+    validatedPlayerAccountEnvelope(member);
     validatePlayerLeagueCompetitionScore(
       member.player.medalsBalance,
       member.player.skill,

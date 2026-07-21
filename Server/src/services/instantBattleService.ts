@@ -10,6 +10,7 @@ import {
 import { calculateArmyPower } from "./armyPowerService";
 import { applyLevelExperienceState, playerLevelDefinition } from "./levelProgressionService";
 import { progressionForPlayer, unixNow } from "./playerStateService";
+import { validatedPlayerAccountEnvelope } from "./playerProfileMirrorAuthorityService";
 import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
 import {
   INSTANT_BATTLE_MAX_CHARGES,
@@ -312,6 +313,9 @@ export async function playInstantBattle(
   for (let attempt = 0; attempt < MAX_CONCURRENCY_RETRIES; attempt += 1) {
     const player = await players().findOne({ id: playerId });
     if (!player) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
+    // The retry snapshot independently authorizes wallet, rank, timer, and Army Power changes; a
+    // damaged existing account must not be normalized by an otherwise valid Instant Battle write.
+    validatedPlayerAccountEnvelope(player);
     const state = progressionForPlayer(player);
     const transition = playInstantBattleState(state, player.player.level, unixNow(), paidCost, policy);
 

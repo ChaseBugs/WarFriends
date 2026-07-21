@@ -25,6 +25,7 @@ import {
 } from "./cardInventoryService";
 import { ApiError } from "../apiErrors";
 import { progressionForPlayer } from "./playerStateService";
+import { validatedPlayerAccountEnvelope } from "./playerProfileMirrorAuthorityService";
 import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
 import { applyLevelExperienceState } from "./levelProgressionService";
 import { calculateArmyPower } from "./armyPowerService";
@@ -781,6 +782,9 @@ async function settlePlayerCore(
 ): Promise<CoreGrant> {
   const player = await players().findOne({ id: playerId }, { session });
   if (!player) throw new Error(`Match participant ${playerId} was not found.`);
+  // Authentication happened before matchmaking, but terminal settlement re-reads both players in
+  // a later transaction. Re-prove each complete account before the first irreversible PvP reward.
+  validatedPlayerAccountEnvelope(player);
   const initialState = progressionForPlayer(player);
   const settlementUnix = Math.floor(settledAt.getTime() / 1_000);
   // A corrupt non-finite deadline must abort the complete terminal transaction. Treating

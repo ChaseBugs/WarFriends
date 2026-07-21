@@ -145,6 +145,10 @@ only a genuine missing-player result follows an operation's explicit reconciliat
 Authentication's intentionally narrow session compare-and-set projection reuses the exact session
 HMAC and supported password-digest validator on both its successful result and concurrent-winner
 reload; a malformed durable credential cannot escape through a projection that omits the profile.
+Economy/profile retry and transaction reloads independently revalidate the full account before Army
+Power refresh, Daily Mission or Instant Battle settlement, PvP settlement, inbox reward claim, and
+Player League allocation or population ranking. One corrupt league member aborts the atomic season
+settlement before the first player or reward-message write.
 Action `221` validates its entire narrow lost-response receipt before replay, read, or publication:
 only the twelve recovered A/B IDs and matching Gold prices are accepted, the historical grant and
 timestamp must be safe, and its receipt revision cannot exceed current progression. Corruption is
