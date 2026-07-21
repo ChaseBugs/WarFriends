@@ -464,6 +464,16 @@ they can select ranked, friendly, tutorial, Arena, free-trial, or permanent-purc
 Legacy Squad create/update `IsPublic` uses the same exact `"0"`/`"1"`-or-JSON-Boolean parser
 before its inverse mapping to `JoinPolicy`; malformed aliases cannot change admission policy.
 
+### Request routing authority
+
+The URL action and repeated body `requestId`/diagnostic `DbAction` now independently require one
+canonical nonnegative C# `int` before they are compared or routed. JSON adapters may use the exact
+integer number. Missing, null, Boolean, array, blank, signed, padded, leading-zero, fractional,
+exponent, non-finite, and out-of-range values fail before the raw action-157 configuration path or
+normal handler registry. When `MIN_CLIENT_VERSION` enables the numeric replacement-client gate, a
+present malformed `ClientVersion` also fails as invalid/old instead of bypassing the comparison via
+JavaScript `NaN`; the stock dotted `Version` remains the separately documented BestHTTP field.
+
 ## Implementation order
 
 1. Extend server-owned economy transactions to remaining combat-proven card consumption/rewards, Black Market selection/feature-weight/discount fidelity, and special/VIP offers; connect action 156 to provider-signed ad completion when a replacement ad SDK is selected.

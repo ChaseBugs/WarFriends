@@ -21,8 +21,8 @@ export interface RequestEnvelope {
   SheetConfiguraton?: string;
   SheetConfiguration?: string;
   /** Client build version, gated against config.minClientVersion. */
-  ClientVersion?: number;
-  clientVersion?: number;
+  ClientVersion?: number | string;
+  clientVersion?: number | string;
   /** Device identifiers seen in the client. */
   DeviceToken?: string;
   AndroidID?: string;

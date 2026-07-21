@@ -35,6 +35,7 @@ import { offerHandlers } from "./offers";
 import type { HandlerEntry } from "./types";
 import logger from "../utils/logger";
 import { exactRequestedAccountType } from "../services/accountTypeRequestService";
+import { exactDatabaseAction, exactNumericClientVersion } from "./requestEnvelopeParsing";
 
 const benignNoOpActions = new Set<number>([
   92, // client error report
@@ -75,8 +76,9 @@ const registry: Record<number, HandlerEntry> = {
   ...offerHandlers,
 };
 
-function clientVersion(req: RequestEnvelope): number {
-  return Number(req.ClientVersion ?? req.clientVersion ?? 0);
+function clientVersion(req: RequestEnvelope): number | undefined {
+  const value = req.ClientVersion ?? req.clientVersion;
+  return value === undefined ? 0 : exactNumericClientVersion(value);
 }
 
 /**
@@ -84,14 +86,18 @@ function clientVersion(req: RequestEnvelope): number {
  * Never throws — all failures become a `{ Code, Message }` error envelope.
  */
 export async function dispatch(req: RequestEnvelope): Promise<ResponseEnvelope> {
-  const action = Number(req.DbAction);
-  if (!Number.isInteger(action)) {
+  const action = exactDatabaseAction(req.DbAction);
+  if (action === undefined) {
     return { DbAction: -1, ...apiError(90, "Missing or invalid request action.") };
   }
   logger.api.action(dbActionName(action), action);
 
-  if (config.minClientVersion > 0 && clientVersion(req) < config.minClientVersion) {
-    return { DbAction: action, ...apiError(ApiErrorCode.InvalidClientVersion, "Client version too old.") };
+  const requestedClientVersion = clientVersion(req);
+  if (
+    config.minClientVersion > 0
+    && (requestedClientVersion === undefined || requestedClientVersion < config.minClientVersion)
+  ) {
+    return { DbAction: action, ...apiError(ApiErrorCode.InvalidClientVersion, "Client version is missing, invalid, or too old.") };
   }
 
   const entry = registry[action];

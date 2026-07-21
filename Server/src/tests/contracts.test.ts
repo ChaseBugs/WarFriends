@@ -167,6 +167,15 @@ test("request normalization accepts JSON envelopes and BestHTTP form fields", ()
   assert.equal(normalizeEnvelope({ requestId: "38", PlayerId: "p1", Token: "t1" }).DbAction, 38);
   assert.equal(normalizeEnvelope({}, "124").DbAction, 124);
   assert.ok(Number.isNaN(normalizeEnvelope({ requestId: "38" }, "124").DbAction));
+
+  for (const action of [
+    undefined, null, true, false, [], ["38"], {}, "", " 38", "38 ", "038", "+38",
+    "38.0", "38e0", -1, 2_147_483_648, Number.NaN, Number.POSITIVE_INFINITY,
+  ]) {
+    assert.ok(Number.isNaN(normalizeEnvelope({ requestId: action }).DbAction));
+  }
+  assert.ok(Number.isNaN(normalizeEnvelope({ requestId: "038" }, "38").DbAction));
+  assert.ok(Number.isNaN(normalizeEnvelope({ requestId: "38" }, "038").DbAction));
 });
 
 test("configuration response matches the recovered raw client parser", () => {

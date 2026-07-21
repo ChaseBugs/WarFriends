@@ -206,6 +206,14 @@ recovered parser and ends after its sheet-version JSON object without an empty t
 other implemented actions return JSON. The replacement realtime layer connects to
 `ws://<host>/hub`.
 
+Both action copies are parsed independently as canonical nonnegative C# `int` decimals before
+equality or routing; JSON adapters may use an exact integer number. JavaScript-coercible nulls,
+Booleans, arrays, whitespace, leading zeros, fractions, exponents, non-finite numbers, and values
+above `Int32.MaxValue` are rejected before action 157's raw-response shortcut as well as ordinary
+handlers. `MIN_CLIENT_VERSION`, when nonzero, gates the optional numeric replacement-client
+`ClientVersion` field with the same exact grammar. The stock client continues to send its dotted
+build in `Version`; a malformed numeric adapter value cannot exploit `NaN` to bypass the gate.
+
 ```bash
 # Create a guest account (DatabaseAction 118) using the recovered BestHTTP shape
 curl -X POST localhost:8080/PC/8b004c04-6921-4613-9815-e63b42db4a7c/118/1-6-0 \
