@@ -4,7 +4,7 @@ import { AccountType } from "../constants";
 import type { PlayerDocument } from "../db";
 import { newPlayer } from "../dtos";
 import { DbAction } from "../dbActions";
-import { tutorialHandlers } from "../handlers/tutorial";
+import { requestedTutorialEndReason, tutorialHandlers } from "../handlers/tutorial";
 import {
   buildPlayerData,
   createInitialProgression,
@@ -20,6 +20,14 @@ import {
 
 const NOW = 1_900_000_000;
 const BATTLE_ID = "tutorial-battle-1";
+
+test("tutorial completion requires the recovered canonical EndReason transport", () => {
+  assert.equal(requestedTutorialEndReason(2), 2);
+  assert.equal(requestedTutorialEndReason("2"), 2);
+  for (const value of [undefined, null, false, true, [], [2], "", " 2", "2 ", "+2", "02", "2.0", "2e0", -1]) {
+    assert.throws(() => requestedTutorialEndReason(value), /exact nonnegative C# integer/);
+  }
+});
 
 function playerDocument(tutorialFinished: boolean): PlayerDocument {
   const player = newPlayer("tutorial-player", "TutorialPlayer", AccountType.Guest);

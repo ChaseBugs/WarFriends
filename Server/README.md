@@ -351,6 +351,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   unsafe environment value is supplied.
 - **Bootcamp/tutorial lifecycle**: authenticated actions `119` and `120` persist one
   server-issued tutorial battle receipt and consume it only for the recovered Win end reason.
+  Action `120` parses `EndReason` through the same exact nonnegative invariant-culture C# `int`
+  decimal boundary as `GameEnded`; coercible nulls, Booleans, arrays, blanks, alternate numeric text,
+  and oversized values fail before the Win gate or any starter mutation. Replacement JSON clients
+  may send the same integer value as a number.
   Completion establishes the XOR-decoded MainScene minimums of 75 Gold and 15,000 WarBucks,
   starts the single placement match, and restores the presence-sensitive `TutorialData` marker
   on every later `GetPlayerData`. Client-echoed score, boxes, cards, wallet, and Army Power are

@@ -3,12 +3,16 @@ import { DbAction } from "../dbActions";
 import { ok } from "../dtos";
 import { finishTutorial, startTutorial } from "../services/tutorialService";
 import { unixNow } from "../services/playerStateService";
+import { exactMatchInteger } from "./matchRequestParsing";
 import { authed, type HandlerEntry } from "./types";
 
-function integer(value: unknown, field: string): number {
-  const parsed = Number(value);
-  if (!Number.isInteger(parsed)) throw new ApiError(ApiErrorCode.UnknownAction, `${field} must be an integer.`);
-  return parsed;
+/**
+ * Bootcamp completion uses the same invariant-culture C# EndReason transport as GameEnded.
+ * Keep this named adapter at the tutorial boundary so future handler changes cannot reintroduce
+ * JavaScript coercion before the Win-only service gate and its currency/progression mutation.
+ */
+export function requestedTutorialEndReason(value: unknown): number {
+  return exactMatchInteger(value, "EndReason");
 }
 
 function battleId(value: unknown): string {
@@ -35,7 +39,7 @@ export const tutorialHandlers: Record<number, HandlerEntry> = {
     const result = await finishTutorial(
       player!.id,
       battleId(req.BattleId),
-      integer(req.EndReason, "EndReason"),
+      requestedTutorialEndReason(req.EndReason),
     );
     return ok(DbAction.TutorialEnded, {
       // The recovered end parser uses key presence as the terminal tutorial signal.
