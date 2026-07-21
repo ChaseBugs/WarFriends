@@ -14,6 +14,7 @@ import {
   normalizeModerationExportLimit,
   normalizeModerationPreviewedAt,
   previewModerationRetention,
+  validatedModerationRetentionRun,
   type ModerationRetentionPolicy,
 } from "../services/moderationLifecycleService";
 import type { PlayerReportDocument } from "../services/reportService";
@@ -161,6 +162,31 @@ test("retention timestamps and export limits reject unsafe operator input", () =
     ModerationLifecycleInputError,
   );
   assert.throws(() => normalizeModerationExportLimit(501), ModerationLifecycleInputError);
+});
+
+test("retention receipts bind safe counts and globally bounded exact cutoffs", () => {
+  const previewedAt = new Date("2026-07-21T00:00:00Z");
+  const createdAt = new Date("2026-07-21T01:00:00Z");
+  const run: ModerationRetentionRunDocument = {
+    _id: "423e4567-e89b-42d3-a456-426614174000",
+    operationId: "moderation-retention:receipt:001",
+    actor: "privacy-operator@example.test",
+    previewedAt,
+    reportBefore: new Date(previewedAt.getTime() - 30 * 86_400_000),
+    appealBefore: new Date(previewedAt.getTime() - 60 * 86_400_000),
+    deletedReports: 4,
+    deletedAppeals: 2,
+    createdAt,
+  };
+  assert.equal(validatedModerationRetentionRun(run, createdAt), run);
+  assert.throws(
+    () => validatedModerationRetentionRun({ ...run, deletedReports: Number.NaN }, createdAt),
+    /retention receipt authority is invalid/,
+  );
+  assert.throws(
+    () => validatedModerationRetentionRun({ ...run, reportBefore: new Date(previewedAt.getTime() - 1) }, createdAt),
+    /retention receipt authority is invalid/,
+  );
 });
 
 test("preview counts only terminal records older than each configured cutoff", async () => {

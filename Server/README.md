@@ -547,6 +547,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   complete sets before its first delete, then deletes only validated IDs that still satisfy each
   frozen terminal/date filter inside the transaction. A forged terminal status therefore aborts
   before either collection changes, and a concurrent record change cannot broaden destructive authority.
+  The immutable retry receipt is validated before its counts are returned: exact identity fields,
+  safe nonnegative deletion counts, safe preview/creation chronology, and exact whole-day report and
+  appeal cutoffs within the global 30-3650-day bounds are required. Global bounds preserve older
+  receipts when the current deployment retention policy changes.
   Army Power/rank/time fields remain explicitly untrusted claims. When both accounts occur in a
   recent replacement-backend ranked match, the report also captures the exact server match ID,
   participant snapshots, state, terminal winner/cancellation, authenticated result claims, and

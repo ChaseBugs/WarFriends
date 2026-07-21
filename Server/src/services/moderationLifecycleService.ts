@@ -19,6 +19,64 @@ const DEFAULT_EXPORT_PAGE_SIZE = 100;
 const MAXIMUM_EXPORT_PAGE_SIZE = 500;
 const OPERATION_ID_PATTERN = /^[A-Za-z0-9._:-]{8,128}$/u;
 const UUID_V4_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
+const RETENTION_RUN_KEYS = new Set([
+  "_id", "operationId", "actor", "previewedAt", "reportBefore", "appealBefore", "deletedReports",
+  "deletedAppeals", "createdAt",
+]);
+
+function safeDate(value: unknown): value is Date {
+  return value instanceof Date && Number.isSafeInteger(value.getTime()) && value.getTime() >= 0;
+}
+
+/**
+ * Validate the immutable destructive-operation receipt before any retry returns its counts.
+ *
+ * Retention days can change between runs, so the receipt proves each stored cutoff as an exact
+ * whole-day interval within globally supported bounds instead of comparing it with today's policy.
+ * This preserves legitimate historical receipts without allowing arbitrary or reversed cutoffs.
+ */
+export function validatedModerationRetentionRun(
+  run: ModerationRetentionRunDocument,
+  now: Date,
+): ModerationRetentionRunDocument {
+  const raw = run as unknown as Record<string, unknown>;
+  const reportInterval = run?.previewedAt instanceof Date && run.reportBefore instanceof Date
+    ? run.previewedAt.getTime() - run.reportBefore.getTime()
+    : Number.NaN;
+  const appealInterval = run?.previewedAt instanceof Date && run.appealBefore instanceof Date
+    ? run.previewedAt.getTime() - run.appealBefore.getTime()
+    : Number.NaN;
+  const validInterval = (milliseconds: number): boolean => Number.isSafeInteger(milliseconds)
+    && milliseconds % MILLISECONDS_PER_DAY === 0
+    && milliseconds / MILLISECONDS_PER_DAY >= MINIMUM_RETENTION_DAYS
+    && milliseconds / MILLISECONDS_PER_DAY <= MAXIMUM_RETENTION_DAYS;
+  if (!run
+    || typeof run !== "object"
+    || Array.isArray(run)
+    || Object.keys(raw).some((key) => !RETENTION_RUN_KEYS.has(key))
+    || !UUID_V4_PATTERN.test(run._id)
+    || !OPERATION_ID_PATTERN.test(run.operationId)
+    || typeof run.actor !== "string"
+    || run.actor.length < 1
+    || run.actor.length > 100
+    || run.actor.trim().replace(/\s+/gu, " ") !== run.actor
+    || !safeDate(run.previewedAt)
+    || !safeDate(run.reportBefore)
+    || !safeDate(run.appealBefore)
+    || !safeDate(run.createdAt)
+    || !safeDate(now)
+    || !validInterval(reportInterval)
+    || !validInterval(appealInterval)
+    || run.previewedAt.getTime() > run.createdAt.getTime() + 60_000
+    || run.createdAt.getTime() > now.getTime()
+    || !Number.isSafeInteger(run.deletedReports)
+    || run.deletedReports < 0
+    || !Number.isSafeInteger(run.deletedAppeals)
+    || run.deletedAppeals < 0) {
+    throw new Error("Stored moderation retention receipt authority is invalid.");
+  }
+  return run;
+}
 
 export type ModerationRetentionKind = "reports" | "appeals";
 
@@ -361,6 +419,7 @@ export async function applyModerationRetentionInCollections(
   const options = sessionOptions(session);
   const existing = await runCollection.findOne({ operationId: input.operationId }, options);
   if (existing) {
+    validatedModerationRetentionRun(existing, now);
     if (!retentionRunMatches(existing, input)) {
       throw new ModerationLifecycleInputError("Idempotency-Key was already used for another retention run.", 409);
     }
@@ -398,6 +457,7 @@ export async function applyModerationRetentionInCollections(
     deletedAppeals: appealResult.deletedCount,
     createdAt: now,
   };
+  validatedModerationRetentionRun(run, now);
   await runCollection.insertOne(run, options);
   return { run, replayed: false };
 }
@@ -419,6 +479,7 @@ export async function applyModerationRetention(
   } catch (error) {
     if ((error as { code?: number }).code !== 11000) throw error;
     const winner = await moderationRetentionRuns().findOne({ operationId: input.operationId });
+    if (winner) validatedModerationRetentionRun(winner, now);
     if (winner && retentionRunMatches(winner, input)) return { run: winner, replayed: true };
     throw new ModerationLifecycleInputError("Idempotency-Key was already used for another retention run.", 409);
   }
