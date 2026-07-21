@@ -635,6 +635,12 @@ immutable module-startup policy. Both must be exact nonnegative safe integers an
 cannot be lower than the ordinary value, so malformed policy stops startup instead of failing only
 when a player requests a calendar. Direct policy selection additionally accepts only days 1-31;
 fractions, `NaN`, infinity, and out-of-calendar indexes cannot choose an ordinary or weekly row.
+One shared application-clock boundary now protects initial progression creation, persisted
+progression reads, successor publication, `PlayerData`, and the top-level player-state response.
+It requires a nonnegative safe Unix second inside JavaScript/BSON Date support and passes that same
+captured value to dog-tag, subscription, Daily Reward, video-ad, win-streak, Instant Battle,
+tutorial, chat, league, and War Arena projections. Fractions and malformed clocks can no longer be
+floored into different valid values at nested boot boundaries.
 The shared progression read/mutation boundary now treats only an absent legacy revision as zero.
 Present and produced revisions must be nonnegative safe integers, and every state-changing write
 must advance monotonically before its MongoDB compare-and-swap filter or replacement is built;

@@ -1108,6 +1108,12 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   safe integer; fractions, negative values, and non-finite counts cannot be rounded into energy.
   New accounts and legacy migration share the one startup-resolved policy. Malformed present fields
   fail closed instead of being rebuilt or surviving an unrelated full-document replacement.
+- **Application-clock authority**: initial progression creation, shared progression reads,
+  successor publication, `PlayerData`, and the top-level player-state response first require one
+  nonnegative safe Unix second inside JavaScript/BSON Date support. The exact captured value is
+  reused across nested dog-tag, subscription, calendar, video-ad, win-streak, Instant Battle,
+  tutorial, chat, league, and War Arena decisions. Fractional, non-finite, negative, or oversized
+  clocks fail before they can be floored into inconsistent valid boot or entitlement state.
 - **Progression revision authority**: the central progression read boundary migrates only an
   absent pre-revision field to zero. Present and produced values must be nonnegative safe integers,
   and every non-no-op transition must advance monotonically before MongoDB builds its revision

@@ -36,6 +36,7 @@ import {
 } from "../services/progressionRevisionAuthorityService";
 import { validatedProgressionSuccessor } from "../services/progressionPublicationAuthorityService";
 import { validatedProgressionSchemaVersion } from "../services/progressionSchemaAuthorityService";
+import { MAX_APPLICATION_UNIX_SECONDS } from "../services/applicationTimeAuthorityService";
 import {
   checkedPlayerLifetimeExperience,
   checkedPlayerLifetimeSquadPoints,
@@ -349,6 +350,39 @@ test("player data uses the recovered DynamoDB attribute wire format", () => {
     () => buildPlayerData(corruptStarter),
     /Starter assignment deadline is invalid/,
   );
+});
+
+test("shared progression creation, read, publication, and boot reject malformed application time", () => {
+  const current = createInitialProgression(1_700_000_000);
+  const successor = { ...current, revision: current.revision + 1 };
+  for (const invalidTime of [
+    Number.NaN,
+    Number.POSITIVE_INFINITY,
+    -1,
+    0.5,
+    MAX_APPLICATION_UNIX_SECONDS + 1,
+  ]) {
+    assert.throws(
+      () => createInitialProgression(invalidTime),
+      /Initial progression time is invalid/,
+    );
+    assert.throws(
+      () => progressionForPlayer(contractPlayer(), invalidTime),
+      /Progression read time is invalid/,
+    );
+    assert.throws(
+      () => validatedProgressionSuccessor(current, successor, invalidTime),
+      /Progression publication time is invalid/,
+    );
+    assert.throws(
+      () => buildPlayerData(contractPlayer(), invalidTime),
+      /PlayerData projection time is invalid/,
+    );
+    assert.throws(
+      () => buildPlayerStateResponse(contractPlayer(), invalidTime),
+      /Player state response time is invalid/,
+    );
+  }
 });
 
 test("player data rejects corrupt core balances while preserving chargeback debt", () => {

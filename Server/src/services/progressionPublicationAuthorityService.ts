@@ -36,6 +36,7 @@ import { validatedWarArenaState } from "./warArenaAuthorityService";
 import { validatedDailyMissionsState } from "./dailyMissionAuthorityService";
 import { validatedEventAssignmentState } from "./eventAssignmentAuthorityService";
 import { validatedDogTagAuthority } from "./dogTagAuthorityService";
+import { validatedApplicationUnixSeconds } from "./applicationTimeAuthorityService";
 
 /**
  * Validate the common authority shared by every full progression-document replacement.
@@ -53,7 +54,13 @@ export function validatedProgressionSuccessor(
   // Calendar and chat authority always need a comparison clock. Dog tags use the optional raw
   // value below: mutation flows with an authoritative request time prove non-future cursors,
   // while context-free publishers still prove the complete tuple shape deterministically.
-  const authorityNow = now ?? Math.floor(Date.now() / 1000);
+  const comparisonTime = now === undefined
+    ? undefined
+    : validatedApplicationUnixSeconds(now, "Progression publication time");
+  const authorityNow = comparisonTime ?? validatedApplicationUnixSeconds(
+    Math.floor(Date.now() / 1000),
+    "Progression publication time",
+  );
   validatedProgressionSchemaVersion(current.schemaVersion);
   validatedProgressionSchemaVersion(next.schemaVersion);
   validatedVipTimeline(current.vipStart, current.vipExpiration);
@@ -112,8 +119,8 @@ export function validatedProgressionSuccessor(
   validatedDailyMissionsState(next.dailyMissions);
   validatedEventAssignmentState(current.eventAssignment);
   validatedEventAssignmentState(next.eventAssignment);
-  validatedDogTagAuthority(current, now);
-  validatedDogTagAuthority(next, now);
+  validatedDogTagAuthority(current, comparisonTime);
+  validatedDogTagAuthority(next, comparisonTime);
   validatedCoreProgressionBalances(current);
   validateProgressionRevisionAdvance(progressionRevisionForRead(current.revision), next.revision);
   validatedCoreProgressionBalances(next);

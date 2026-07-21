@@ -74,6 +74,7 @@ import {
 } from "./playerProfileMirrorAuthorityService";
 import { settingsForPlayer } from "./playerSettingsService";
 import { validatedRegionPings } from "./regionPingService";
+import { validatedApplicationUnixSeconds } from "./applicationTimeAuthorityService";
 
 /** Unix seconds are used throughout the recovered Beanstalk protocol. */
 export function unixNow(): number {
@@ -137,6 +138,7 @@ export function createInitialProgression(
   refillSeconds = CONFIGURED_DOG_TAG_POLICY.refillSeconds,
   cap = CONFIGURED_DOG_TAG_POLICY.cap,
 ): PlayerProgressionState {
+  const initialTime = validatedApplicationUnixSeconds(now, "Initial progression time");
   const dogTags = exactInitialDogTagPolicy(refillSeconds, cap);
   return {
     schemaVersion: 1,
@@ -147,7 +149,7 @@ export function createInitialProgression(
     scraps: 0,
     levelExperience: 0,
     dogTagSeconds: dogTags.maximumSeconds,
-    dogTagLastUpdate: now,
+    dogTagLastUpdate: initialTime,
     dogTagMax: dogTags.maximumSeconds,
     dogTagRefillSeconds: dogTags.refillSeconds,
     vipStart: 0,
@@ -159,7 +161,7 @@ export function createInitialProgression(
     visualInventory: createInitialVisualInventory(),
     cardInventory: createInitialCardInventory(),
     cardCrafting: createInitialCardCrafting(),
-    starterAssignments: createInitialStarterAssignmentState(now),
+    starterAssignments: createInitialStarterAssignmentState(initialTime),
   };
 }
 
@@ -169,9 +171,13 @@ export function createInitialProgression(
  * responses may safely use this deterministic fallback.
  */
 export function progressionForPlayer(player: PlayerDocument, now?: number): PlayerProgressionState {
+  const comparisonTime = now === undefined
+    ? undefined
+    : validatedApplicationUnixSeconds(now, "Progression read time");
   if (!player.progression) return createInitialProgression(Math.floor(player.createdAt.getTime() / 1000));
   const state = player.progression;
-  const authorityNow = now ?? unixNow();
+  const authorityNow = comparisonTime
+    ?? validatedApplicationUnixSeconds(unixNow(), "Progression read time");
   validatedProgressionSchemaVersion(state.schemaVersion);
   validatedRequestBufferAuthority(state);
   validatedWarBucksConversionReceipt(state.warBucksConversion, progressionRevisionForRead(state.revision));
@@ -226,7 +232,7 @@ export function progressionForPlayer(player: PlayerDocument, now?: number): Play
     // Every shared read proves the complete tuple shape. A caller that owns a captured request or
     // boot time supplies it so the same proof also rejects a future regeneration cursor. Keeping
     // the parameter optional avoids making context-free publishers depend on wall-clock time.
-    const dogTags = validatedDogTagAuthority(state, now);
+    const dogTags = validatedDogTagAuthority(state, comparisonTime);
     return {
       ...state,
       revision: progressionRevisionForRead(state.revision),
@@ -278,7 +284,7 @@ export function progressionForPlayer(player: PlayerDocument, now?: number): Play
     dogTagLastUpdate: state.dogTagLastUpdate || Math.floor(player.createdAt.getTime() / 1000),
     dogTagMax: policy.maximumSeconds,
     dogTagRefillSeconds: policy.refillSeconds,
-  }, now);
+  }, comparisonTime);
   return {
     ...state,
     revision: progressionRevisionForRead(state.revision),
@@ -423,11 +429,12 @@ export function buildDatabasePlayer(document: PlayerDocument): Record<string, un
  */
 export function buildPlayerData(player: PlayerDocument, now = unixNow()): PlayerDataMap {
   validatedPlayerProfileMirrors(player);
-  const state = progressionForPlayer(player, Math.floor(now));
+  const currentTime = validatedApplicationUnixSeconds(now, "PlayerData projection time");
+  const state = progressionForPlayer(player, currentTime);
   const dto = player.player;
   const balances = validatedCoreProgressionBalances(state);
-  const dogTags = validatedDogTagAuthority(state, Math.floor(now));
-  const subscription = validatedSubscriptionAt(state.subscription, Math.floor(now));
+  const dogTags = validatedDogTagAuthority(state, currentTime);
+  const subscription = validatedSubscriptionAt(state.subscription, currentTime);
   const data: PlayerDataMap = {
     Gold: numberAttribute(balances.gold),
     WarBucks: numberAttribute(balances.warBucks),
@@ -448,7 +455,7 @@ export function buildPlayerData(player: PlayerDocument, now = unixNow()): Player
     Settings: stringAttribute(settingsForPlayer(player)),
     // EventAssignmentManager computes its zero-based calendar day from this server boundary.
     // Send the current UTC midnight (not the next reset) so day zero begins at startTime.
-    Midnight: numberAttribute(currentUtcMidnight(now)),
+    Midnight: numberAttribute(currentUtcMidnight(currentTime)),
   };
 
   // These names are the nested C# type names used as lookup keys by
@@ -467,13 +474,13 @@ export function buildPlayerData(player: PlayerDocument, now = unixNow()): Player
     // Unlike the manager-backed objects above, EventTrackingManager reads this exact lower-case
     // PlayerData key and manually deserializes its Dynamo `S` value. Expose only the four public
     // timestamp arrays; the same-revision replay receipt remains private backend authority.
-    data.videoAdRewardTimes = stringAttribute(videoAdRewardTimesForState(state, Math.floor(now)));
+    data.videoAdRewardTimes = stringAttribute(videoAdRewardTimesForState(state, currentTime));
   }
   addSerializedObject(data, "StatisticsData", dto.statisticsData);
   // WinStreakManager derives from DatabaseSerializedObjectGeneric<WinStreak>. Restore the
   // server-owned streak on every boot; otherwise LoadEmpty silently resets the lobby timer
   // after reconnect even though subsequent settlement still sees the durable streak.
-  const winStreak = validatedPvpWinStreak(state.pvpWinStreak, Math.floor(now));
+  const winStreak = validatedPvpWinStreak(state.pvpWinStreak, currentTime);
   addSerializedObject(data, "WinStreak", {
     WinCount: winStreak.winCount,
     TimeStamp: winStreak.timestamp,
@@ -551,11 +558,11 @@ export function buildPlayerData(player: PlayerDocument, now = unixNow()): Player
   );
   const instantBattle = validatedInstantBattleState(
     state.instantBattle,
-    Math.floor(now),
+    currentTime,
     state.revision,
   );
   const featureIntroductions = validatedFeatureIntroductions(state.featureIntroductions);
-  const tutorialLifecycle = validatedTutorialLifecycle(state, Math.floor(now));
+  const tutorialLifecycle = validatedTutorialLifecycle(state, currentTime);
 
   // PlayerAnalytics derives from DatabaseSerializedObjectGeneric<PlayerAnalyticsData>, so
   // this exact nested type name is the boot lookup key. The real chat channel is Photon
@@ -564,7 +571,7 @@ export function buildPlayerData(player: PlayerDocument, now = unixNow()): Player
   // behavior for the remaining analytics fields. The creation counter must also cross this
   // boot boundary: PlayerAnalytics derives the next squad price from it after every restart.
   addSerializedObject(data, "PlayerAnalyticsData", {
-    lastSeenSquadChatTimeStampDB: validatedSquadChatCursor(state.lastSeenSquadChatTimestamp, Math.floor(now)),
+    lastSeenSquadChatTimeStampDB: validatedSquadChatCursor(state.lastSeenSquadChatTimestamp, currentTime),
     squadCreationsCount: validatedSquadCreationsCount(state.squadCreationsCount),
     // PlayerAnalytics.renameGoldPrice is profile-owned even though most fields in this object
     // live in progression. Restore the validated count so reconnecting cannot display a free
@@ -617,6 +624,7 @@ export function buildPlayerData(player: PlayerDocument, now = unixNow()): Player
 /** Fields common to CreateAccount and the mandatory post-login GetPlayerData refresh. */
 export function buildPlayerStateResponse(player: PlayerDocument, now = unixNow()): Record<string, unknown> {
   validatedPlayerProfileMirrors(player);
+  const currentTime = validatedApplicationUnixSeconds(now, "Player state response time");
   validatePlayerLeagueProgression(player.player);
   validatePlayerLeagueCompetitionScore(
     player.player.medalsBalance,
@@ -624,7 +632,7 @@ export function buildPlayerStateResponse(player: PlayerDocument, now = unixNow()
     player.id,
   );
   return {
-    Time: now,
+    Time: currentTime,
     BeginnersLeague: player.player.beginnersLeague,
     LeagueId: player.player.leagueId,
     Skill: player.player.skill,
@@ -634,12 +642,12 @@ export function buildPlayerStateResponse(player: PlayerDocument, now = unixNow()
     // uses the mere presence of PlayerLeagueProcessing to disable stale division UI. Only
     // locally managed IDs expose these fields; unknown production-era IDs fail closed until
     // an explicit migration can preserve their original deadline.
-    ...playerLeagueBootFields(player.player.leagueId, now),
+    ...playerLeagueBootFields(player.player.leagueId, currentTime),
     UtcOffset: 0,
     DeviceToken: player.player.deviceToken,
-    PlayerData: buildPlayerData(player, now),
+    PlayerData: buildPlayerData(player, currentTime),
     // JLMICAJOHIK/EGPLNLMMADN both log an error and leave the Arena closed when this key is
     // absent. The value is the Dynamo-style document consumed by IKPLPPFFDNI, not a string.
-    WarArenaConfig: warArenaConfiguration(now),
+    WarArenaConfig: warArenaConfiguration(currentTime),
   };
 }
