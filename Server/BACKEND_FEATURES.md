@@ -89,7 +89,10 @@ excludes every participant still protected by any active or settling match.
 
 `SetPlayerStatus` now preserves mode compatibility while protecting ranked admission: the active
 or settling match lookup and profile write share one MongoDB transaction, so a client heartbeat
-cannot clear the server-owned `InGame` reservation during admission, play, or settlement.
+cannot clear the server-owned `InGame` reservation during admission, play, or settlement. The
+transaction loads and validates the complete durable account before writing status or `updatedAt`;
+a narrow heartbeat projection cannot bypass malformed credential, profile, or progression state
+and then normalize that damaged row.
 
 Moderation duplicate suppression is also cross-process: one HMAC-keyed atomic winner stores the
 complete first report payload for ten minutes, and every racing process upserts that same report

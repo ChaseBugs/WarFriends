@@ -617,17 +617,12 @@ export async function createMatch(a: MatchPlayer, b: MatchPlayer, coordinatorId?
     const playerIds = [a.playerId, b.playerId];
     const participants = await players().find(
       { id: { $in: playerIds } },
-      {
-        session,
-        projection: {
-          id: 1,
-          accountName: 1,
-          armyPower: 1,
-          leagueTier: 1,
-          "player.status": 1,
-        },
-      },
+      { session },
     ).toArray();
+    // Admission reserves status on the full durable account. A narrow projection could prove the
+    // five queue fields while silently bypassing malformed credential/profile/progression
+    // authority, then normalize that damaged row through the status write below.
+    participants.forEach((participant) => validatedPlayerAccountEnvelope(participant));
     if (participants.length !== 2
       || participants.some((participant) => participant.player?.status === PlayerStatus.InGame)) {
       throw new MatchAdmissionError("A match participant no longer exists or is already in battle.");

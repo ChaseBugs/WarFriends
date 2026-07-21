@@ -410,6 +410,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   durable row and reserves both current profiles as `InGame` in one MongoDB transaction; duplicate
   participants, corrupt snapshots, missing accounts, and concurrent active-match claims fail
   without partial state, and still-eligible connected players are restored to the bounded queue.
+  Admission loads and validates each complete durable account before it trusts queue snapshots or
+  writes status, so a narrow projection cannot conceal malformed credential, profile, or progression
+  authority and then normalize the damaged account through the `InGame` reservation.
   With Redis available, queue deduplication, stale cleanup, bounded candidate selection, pairing,
   removal, and failed-admission restoration execute atomically across backend nodes. `MatchFound`
   can be relayed to the opponent's node through a bounded pub/sub instruction, but that receiving
@@ -445,7 +448,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   enum and require matching durable reports from both assigned participants before rewards.
   Action `29` remains the presence heartbeat for non-ranked modes, but its active-match read and
   profile write share a MongoDB transaction. An active/settling ranked reservation always wins
-  over a forged or early `Online`/`Offline` report.
+  over a forged or early `Online`/`Offline` report. The same transaction validates the full durable
+  account before changing status or `updatedAt`; a heartbeat cannot repair or overwrite around
+  malformed account authority through an ID/status-only projection.
   One complete durable match validator now guards creation and every read, transition, projection,
   or replay used by room admission/start, disconnect and presence authority, card relay/delivery,
   result consensus, moderation correlation, restart recovery, cancellation, and settlement. It
