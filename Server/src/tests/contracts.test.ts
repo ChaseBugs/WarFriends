@@ -700,6 +700,55 @@ test("daily reward authority rejects corrupt current-month cursors and date mark
   });
 });
 
+test("shared progression boundaries discard expired calendars and reject active or future corruption", () => {
+  const now = Date.parse("2026-07-19T12:00:00Z") / 1000;
+  const corruptCurrent = contractPlayer();
+  corruptCurrent.progression!.dailyReward = {
+    year: 2026,
+    month: 7,
+    canClaim: Number.POSITIVE_INFINITY,
+    claimReward: 0,
+    lastCheckDay: "2026-07-19",
+  };
+  assert.throws(
+    () => progressionForPlayer(corruptCurrent, now),
+    /Daily reward cursors are invalid/,
+  );
+
+  const expired = contractPlayer();
+  expired.progression!.dailyReward = {
+    year: 2026,
+    month: 6,
+    canClaim: Number.POSITIVE_INFINITY,
+    claimReward: Number.POSITIVE_INFINITY,
+    lastCheckDay: "broken",
+  };
+  assert.equal(progressionForPlayer(expired, now).dailyReward, undefined);
+
+  const future = contractPlayer();
+  future.progression!.dailyReward = {
+    year: 2026,
+    month: 8,
+    canClaim: 0,
+    claimReward: 0,
+    lastCheckDay: "",
+  };
+  assert.throws(
+    () => progressionForPlayer(future, now),
+    /Daily reward calendar is from the future/,
+  );
+
+  const current = createInitialProgression(now);
+  assert.throws(
+    () => validatedProgressionSuccessor(current, {
+      ...current,
+      revision: 1,
+      dailyReward: corruptCurrent.progression!.dailyReward,
+    }, now),
+    /Daily reward cursors are invalid/,
+  );
+});
+
 test("offline daily calendar exposes every implemented currency and card parser branch", () => {
   assert.equal(dailyRewardDefinitionForDay(1).Type, 1);
   assert.deepEqual(dailyRewardDefinitionForDay(2), { Type: 0, Double: 0, Count: 1_000, Param: "" });

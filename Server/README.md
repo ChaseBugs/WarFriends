@@ -820,9 +820,12 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   and Bronze/Silver/Gold packs. Wallets, inventory, achievement progress, the optional VIP pair,
   and the claim cursor commit atomically. The deterministic seven-position schedule and amounts
   are an explicit conservative replacement because the original remote live-ops sheet is absent.
-  Current-month year/month/date markers and ordered claim cursors are validated before check,
-  claim, or wire projection; an expired prior-month snapshot is safely replaced because its
-  rewards cannot carry into the new calendar.
+  One time-aware authority validates the exact five-field snapshot at shared persisted reads and
+  full-progression publication as well as before check, claim, or wire projection. Current-month
+  year/month/date markers and ordered claim cursors must be valid, future calendars fail closed,
+  and both sides of one publication use the same captured server time. An expired prior-month
+  snapshot is discarded before cursor validation because its rewards cannot carry into the new
+  calendar; this narrow rollover rule does not repair damaged active authority.
 - **One-time rewards**: action `161` accepts only the three source-backed Facebook Like, Twitter
   Follow, and notification-permission DBKEYs; the separate Facebook-login reward requires a
   successful authenticated provider link. The server credits their exact decoded Gold values once,

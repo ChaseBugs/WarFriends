@@ -55,6 +55,7 @@ import { validatedCardLifecycleCounters } from "./cardLifecycleCounterAuthorityS
 import { cardCraftingAuthorityFor } from "./cardCraftingAuthorityService";
 import { cardInventoryAuthorityFor } from "./cardInventoryAuthorityService";
 import { itemInventoryAuthorityFor } from "./itemInventoryAuthorityService";
+import { dailyRewardAuthorityFor } from "./dailyRewardAuthorityService";
 
 /** Unix seconds are used throughout the recovered Beanstalk protocol. */
 export function unixNow(): number {
@@ -111,7 +112,7 @@ export function createInitialProgression(
  * Callers that mutate balances must first migrate the document atomically; read-only boot
  * responses may safely use this deterministic fallback.
  */
-export function progressionForPlayer(player: PlayerDocument): PlayerProgressionState {
+export function progressionForPlayer(player: PlayerDocument, now = unixNow()): PlayerProgressionState {
   if (!player.progression) return createInitialProgression(Math.floor(player.createdAt.getTime() / 1000));
   const state = player.progression;
   validatedProgressionSchemaVersion(state.schemaVersion);
@@ -134,6 +135,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
     progressionRevisionForRead(state.revision),
   );
   const itemInventory = itemInventoryAuthorityFor(state.itemInventory);
+  const dailyReward = dailyRewardAuthorityFor(state.dailyReward, now);
   const rental = validatedRentalState(state.rental);
   const blackMarket = validatedBlackMarketOfferState(state.blackMarket);
   const visualInventory = validatedVisualInventoryState(
@@ -178,6 +180,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
       squadCreationsCount,
       instantBattle,
       videoAdRewards,
+      dailyReward,
     };
   }
 
@@ -215,6 +218,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
     squadCreationsCount,
     instantBattle,
     videoAdRewards,
+    dailyReward,
   };
 }
 

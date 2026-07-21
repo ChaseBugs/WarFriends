@@ -12,6 +12,11 @@ import {
   type VipDailyCardReward,
   type VipRandomIndex,
 } from "./vipService";
+import {
+  dailyRewardAuthorityFor,
+  validatedDailyRewardState,
+} from "./dailyRewardAuthorityService";
+export { validatedDailyRewardState } from "./dailyRewardAuthorityService";
 
 // Exact MDNLFMNBNEG values read by DailyRewardManager.ParseReward in the 1.6.0 client.
 const WARBUCKS_REWARD_TYPE = 0;
@@ -87,42 +92,6 @@ function daysInMonth(year: number, month: number): number {
   // Date.UTC uses a zero-based month. Passing the one-based current month as the next
   // month's index and asking for day zero returns the final day of the current month.
   return new Date(Date.UTC(year, month, 0)).getUTCDate();
-}
-
-/**
- * Validate the complete current-month calendar before it can unlock or consume a reward.
- *
- * A raw comparison is not sufficient for durable MongoDB state: `claimReward = Infinity` makes
- * every finite request look already claimed forever, while `NaN` bypasses both replay and future
- * index comparisons. The claim cursor must be an ordered prefix of the login-unlocked cursor, and
- * the last-check marker must identify one real UTC day in the same calendar month. Stale calendars
- * are discarded on month rollover before this validator runs because none of their claims can be
- * carried into the new source contract.
- */
-export function validatedDailyRewardState(value: DailyRewardState): DailyRewardState {
-  if (!Number.isSafeInteger(value.year) || value.year < 1970 || value.year > 9_999
-    || !Number.isSafeInteger(value.month) || value.month < 1 || value.month > 12) {
-    throw new ApiError(ApiErrorCode.InternalServerError, "Daily reward calendar date is invalid.");
-  }
-  const maximumDay = daysInMonth(value.year, value.month);
-  if (!Number.isSafeInteger(value.canClaim) || value.canClaim < 0 || value.canClaim > maximumDay
-    || !Number.isSafeInteger(value.claimReward) || value.claimReward < 0
-    || value.claimReward > value.canClaim) {
-    throw new ApiError(ApiErrorCode.InternalServerError, "Daily reward cursors are invalid.");
-  }
-  if (value.lastCheckDay !== "") {
-    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.lastCheckDay);
-    const day = Number(match?.[3]);
-    if (!match
-      || Number(match[1]) !== value.year
-      || Number(match[2]) !== value.month
-      || !Number.isSafeInteger(day)
-      || day < 1
-      || day > maximumDay) {
-      throw new ApiError(ApiErrorCode.InternalServerError, "Daily reward last-check day is invalid.");
-    }
-  }
-  return { ...value };
 }
 
 function secondsUntilNextUtcDay(date: Date): number {
@@ -218,8 +187,8 @@ function rarityForLooseReward(type: number): number | undefined {
 function calendarFor(state: PlayerProgressionState, date: Date): DailyRewardState {
   const year = date.getUTCFullYear();
   const month = date.getUTCMonth() + 1;
-  const existing = state.dailyReward;
-  if (existing?.year === year && existing.month === month) return validatedDailyRewardState(existing);
+  const existing = dailyRewardAuthorityFor(state.dailyReward, Math.floor(date.getTime() / 1000));
+  if (existing) return existing;
 
   // A new month starts a new ordered calendar. We intentionally do not carry unclaimed
   // rewards across months because the Unity model contains only one month/year/config.

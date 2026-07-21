@@ -28,6 +28,7 @@ import { validatedRentalState } from "./rentalEntitlementService";
 import { validatedBlackMarketOfferState } from "./blackMarketEntitlementService";
 import { validatedVisualInventoryState } from "./visualEntitlementService";
 import { itemInventoryAuthorityFor } from "./itemInventoryAuthorityService";
+import { dailyRewardAuthorityFor } from "./dailyRewardAuthorityService";
 
 /**
  * Validate the common authority shared by every full progression-document replacement.
@@ -40,6 +41,7 @@ import { itemInventoryAuthorityFor } from "./itemInventoryAuthorityService";
 export function validatedProgressionSuccessor(
   current: PlayerProgressionState,
   next: PlayerProgressionState,
+  now = Math.floor(Date.now() / 1000),
 ): PlayerProgressionState {
   validatedProgressionSchemaVersion(current.schemaVersion);
   validatedProgressionSchemaVersion(next.schemaVersion);
@@ -85,6 +87,8 @@ export function validatedProgressionSuccessor(
   validatedVisualInventoryState(next.visualInventory);
   itemInventoryAuthorityFor(current.itemInventory);
   itemInventoryAuthorityFor(next.itemInventory);
+  dailyRewardAuthorityFor(current.dailyReward, now);
+  dailyRewardAuthorityFor(next.dailyReward, now);
   validatedCoreProgressionBalances(current);
   validateProgressionRevisionAdvance(progressionRevisionForRead(current.revision), next.revision);
   validatedCoreProgressionBalances(next);
