@@ -3,9 +3,11 @@ import type { Document, Filter } from "mongodb";
 import {
   messages,
   players,
+  squads,
   withMongoTransaction,
   type PlayerDocument,
   type PlayerProgressionState,
+  type SquadDocument,
 } from "../db";
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import {
@@ -24,6 +26,8 @@ import { validatedChallengeMessage } from "./challengeMessageAuthorityService";
 import { challengeTtlSeconds } from "./challengePolicyService";
 import { validatedInboxMessageDocument } from "./inboxMessageAuthorityService";
 import { reserveOutgoingMessageSlot } from "./outgoingMessageRateLimitService";
+import { buildDatabaseSquad } from "./squadWireService";
+import { nextSquadUpdatedAt, validatedSquadDocument } from "./squadAuthorityService";
 
 // Player discovery + messaging (BACKEND.md §2.3 "Social / messaging / hit list"). Search
 // and directory reads project players to the client's summary shape; messages are stored
@@ -56,10 +60,10 @@ export interface MessageDoc {
   body: string;
   /**
    * Recovered inbox enum values currently emitted by this backend:
-   * Challenge(0), SquadDemotion/kick(3), SquadWarEnd(9), SquadEventTierReward(11), InformSquadLeaderAboutEvent(21),
+   * Challenge(0), SquadInvitation(1), SquadDemotion/kick(3), SquadWarEnd(9), SquadEventTierReward(11), InformSquadLeaderAboutEvent(21),
    * PlayerLeagueFinished(23), InGameMessage(27), and DepositWarcards(28).
    */
-  messageType: 0 | 3 | 9 | 11 | 21 | 23 | 27 | 28;
+  messageType: 0 | 1 | 3 | 9 | 11 | 21 | 23 | 27 | 28;
   payload: Record<string, string | number>;
   otherPlayerJson: string;
   read: boolean;
@@ -85,6 +89,39 @@ interface InboxCursor {
 }
 
 const CHALLENGE_RETRY_WINDOW_MS = 10_000;
+
+/** Build the exact type-1 row parsed by HLHBMMCBHJF in the recovered message center. */
+export function buildSquadInvitationMessage(
+  actor: PlayerDocument,
+  target: PlayerDocument,
+  squad: SquadDocument,
+  createdAt: Date,
+  operationId = randomUUID(),
+): MessageDoc {
+  const unixTimestamp = Math.floor(createdAt.getTime() / 1_000);
+  const message: MessageDoc = {
+    // HHFHFANGCEJ parses the final dash-separated segment as a C# int timestamp. The UUID makes
+    // separate invitation generations unique while leaving that mandatory numeric suffix intact.
+    messageId: `SquadInvitation-${operationId}-${unixTimestamp}`,
+    toPlayerId: target.id,
+    fromPlayerId: actor.id,
+    fromName: actor.player.accountName,
+    body: "You were invited to a squad.",
+    messageType: 1,
+    payload: {
+      SquadId: squad.name,
+      Squad: JSON.stringify(buildDatabaseSquad(squad)),
+    },
+    // HLHBMMCBHJF passes this exact DynamoDB-style player object to
+    // DatabasePlayer.CreateFromDatabase and displays the inviter name in FightDialog.
+    otherPlayerJson: JSON.stringify(buildDatabasePlayer(actor)),
+    read: false,
+    ignored: false,
+    accepted: false,
+    createdAt,
+  };
+  return validatedInboxMessageDocument(message, createdAt);
+}
 
 /**
  * Build the exact persisted message consumed by MBACFNICJPL after a squad kick.
@@ -388,10 +425,41 @@ export async function ignoreMessage(playerId: string, messageId: string): Promis
     const message = await messages().findOne({ messageId, toPlayerId: playerId }, { session }) as unknown as MessageDoc | null;
     if (!message) return false;
     validatedInboxMessageDocument(message, now);
-    validatedInboxMessageDocument({ ...message, ignored: true, read: true }, now);
+    const ignoredMessage = validatedInboxMessageDocument({ ...message, ignored: true, read: true }, now);
+
+    if (message.messageType === 1 && !message.ignored && !message.accepted) {
+      // FightDialog declines a Squad invitation through the generic IgnoreMessage action. The
+      // inbox row and invitedPlayerIds are two halves of one admission capability, so revoke both
+      // inside this transaction; hiding only the row would leave a declined private-Squad join
+      // silently authorized through the durable queue.
+      const squadId = String(message.payload.SquadId ?? "");
+      const squad = await squads().findOne({ name: squadId }, { session });
+      if (squad) {
+        validatedSquadDocument(squad, now);
+        const invitedPlayerIds = squad.invitedPlayerIds.filter((id) => id !== playerId);
+        if (invitedPlayerIds.length !== squad.invitedPlayerIds.length) {
+          const updatedAt = nextSquadUpdatedAt(squad, now);
+          validatedSquadDocument({ ...squad, invitedPlayerIds, updatedAt }, updatedAt);
+          const squadUpdate = await squads().updateOne(
+            { name: squad.name, updatedAt: squad.updatedAt },
+            { $set: { invitedPlayerIds, updatedAt } },
+            { session },
+          );
+          if (squadUpdate.modifiedCount !== 1) {
+            throw new ApiError(ApiErrorCode.InternalServerError, "Squad invitation decline changed concurrently.");
+          }
+        }
+      }
+    }
     const result = await messages().updateOne(
-      { messageId, toPlayerId: playerId },
-      { $set: { ignored: true, read: true } },
+      {
+        messageId,
+        toPlayerId: playerId,
+        read: message.read,
+        ignored: message.ignored,
+        accepted: message.accepted,
+      },
+      { $set: { ignored: ignoredMessage.ignored, read: ignoredMessage.read } },
       { session },
     );
     return result.matchedCount === 1;
@@ -596,6 +664,11 @@ export function toClientMessage(doc: MessageDoc): Record<string, DynamoValue> {
         ? messageNumberAttribute(value, 0)
         : { S: String(value) };
     }
+  } else if (doc.messageType === 1) {
+    // HLHBMMCBHJF deserializes both strings before opening FightDialog. Squad is the invitation-
+    // time public snapshot; OtherPlayer is the manager snapshot used for inviter presentation.
+    wire.Squad = { S: String(doc.payload.Squad ?? "") };
+    wire.OtherPlayer = { S: doc.otherPlayerJson };
   } else if (doc.messageType === 3) {
     // MBACFNICJPL treats a missing SquadRank as -1 (kick) and parses the returned-card list
     // from a JSON string. Numeric player levels remain DynamoDB N attributes.

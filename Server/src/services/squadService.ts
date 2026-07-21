@@ -8,6 +8,7 @@ import {
   type SquadDocument,
 } from "../db";
 import type { Collection } from "mongodb";
+import { randomUUID } from "crypto";
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import { SquadRank } from "../constants";
 import { newSquad, type SquadDTO, type SquadMemberDTO } from "../dtos";
@@ -16,8 +17,13 @@ import { progressionForPlayer } from "./playerStateService";
 import { validatedPlayerAccountEnvelope } from "./playerProfileMirrorAuthorityService";
 import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
 import { reclaimDepositedCardsForDepartureState } from "./squadCardPoolService";
-import { buildSquadKickMessage } from "./socialService";
+import {
+  buildSquadInvitationMessage,
+  buildSquadKickMessage,
+  type MessageDoc,
+} from "./socialService";
 import { publishInboxFanout } from "./inboxFanoutService";
+import { validatedSquadInvitationMessage } from "./squadInvitationMessageAuthorityService";
 import logger from "../utils/logger";
 import { requireModeratedText } from "./textModerationService";
 import { invalidateSquadWarRewardEligibility } from "./squadWarService";
@@ -323,6 +329,38 @@ export interface SquadJoinPlan {
   playerMirrorChanged: boolean;
 }
 
+export type SquadInvitationJoinDisposition = "consume" | "replay";
+
+/**
+ * Bind one validated type-1 inbox row to both halves of current admission authority.
+ *
+ * The durable message proves which recipient and Squad the UI accepted; invitedPlayerIds proves
+ * that the current Squad still grants the capability. A terminal accepted row is replayable only
+ * while that recipient is already present in the same roster.
+ */
+export function squadInvitationJoinDisposition(
+  squad: Pick<SquadDTO, "name" | "members" | "invitedPlayerIds">,
+  playerId: string,
+  message: MessageDoc,
+): SquadInvitationJoinDisposition {
+  if (message.messageType !== 1
+    || message.toPlayerId !== playerId
+    || message.payload.SquadId !== squad.name) {
+    throw new ApiError(ApiErrorCode.SquadIsNotPublic, "Squad invitation identity does not match.");
+  }
+  const alreadyMember = squad.members.some((candidate) => candidate.playerId === playerId);
+  if (message.accepted) {
+    if (!alreadyMember) {
+      throw new ApiError(ApiErrorCode.InternalServerError, "Accepted Squad invitation has no member.");
+    }
+    return "replay";
+  }
+  if (message.ignored || !squad.invitedPlayerIds.includes(playerId)) {
+    throw new ApiError(ApiErrorCode.SquadIsNotPublic, "Squad invitation is no longer active.");
+  }
+  return "consume";
+}
+
 /**
  * Validate and calculate a squad admission without writing either MongoDB document.
  *
@@ -414,7 +452,12 @@ export function planSquadJoin(
   };
 }
 
-async function joinSquadTransaction(playerId: string, requestedName: string, approvedBy?: string): Promise<SquadDTO> {
+async function joinSquadTransaction(
+  playerId: string,
+  requestedName: string,
+  approvedBy?: string,
+  requestedInvitationMessageId?: string,
+): Promise<SquadDTO> {
   const name = cleanName(requestedName);
   const result = await withMongoTransaction(async (session) => {
     const [squad, player] = await Promise.all([
@@ -426,8 +469,39 @@ async function joinSquadTransaction(playerId: string, requestedName: string, app
     validatedSquadDocument(squad);
     validatedPlayerAccountEnvelope(player);
 
+    const transactionTime = new Date();
+    const queueContainsPlayer = squad.invitedPlayerIds.includes(player.id);
+    let invitationMessage: MessageDoc | null = null;
+    if (requestedInvitationMessageId) {
+      invitationMessage = await messages().findOne(
+        { messageId: requestedInvitationMessageId, toPlayerId: player.id },
+        { session },
+      ) as unknown as MessageDoc | null;
+      if (!invitationMessage) {
+        throw new ApiError(ApiErrorCode.SquadIsNotPublic, "Squad invitation was not found.");
+      }
+    } else if (queueContainsPlayer) {
+      // Action 132 has no MessageId. If its admission is backed by a new type-1 row, consume that
+      // row too; a missing row is the bounded legacy migration for invitations created before
+      // durable message delivery existed.
+      invitationMessage = await messages().findOne(
+        {
+          toPlayerId: player.id,
+          messageType: 1,
+          "payload.SquadId": squad.name,
+          ignored: false,
+          accepted: false,
+        },
+        { session },
+      ) as unknown as MessageDoc | null;
+    }
+    if (invitationMessage) {
+      validatedSquadInvitationMessage(invitationMessage, transactionTime);
+      squadInvitationJoinDisposition(squad, player.id, invitationMessage);
+    }
+
     const plan = planSquadJoin(squad, player, approvedBy);
-    const now = nextSquadUpdatedAt(squad);
+    const now = nextSquadUpdatedAt(squad, transactionTime);
     validatedSquadDocument({ ...plan.squad, createdAt: squad.createdAt, updatedAt: now }, now);
     if (plan.rosterChanged || plan.admissionStateChanged) {
       const squadUpdate = await squads().updateOne(
@@ -470,6 +544,38 @@ async function joinSquadTransaction(playerId: string, requestedName: string, app
         throw new ApiError(ApiErrorCode.InternalServerError, "Player squad state changed concurrently.");
       }
     }
+    if (invitationMessage && !invitationMessage.accepted) {
+      const acceptedMessage = validatedSquadInvitationMessage({
+        ...invitationMessage,
+        read: true,
+        ignored: true,
+        accepted: true,
+        acceptedAt: transactionTime,
+      }, transactionTime)!;
+      const messageUpdate = await messages().updateOne(
+        {
+          messageId: invitationMessage.messageId,
+          toPlayerId: player.id,
+          messageType: 1,
+          read: invitationMessage.read,
+          ignored: false,
+          accepted: false,
+          acceptedAt: { $exists: false },
+        },
+        {
+          $set: {
+            read: acceptedMessage.read,
+            ignored: acceptedMessage.ignored,
+            accepted: acceptedMessage.accepted,
+            acceptedAt: acceptedMessage.acceptedAt,
+          },
+        },
+        { session },
+      );
+      if (messageUpdate.modifiedCount !== 1) {
+        throw new ApiError(ApiErrorCode.InternalServerError, "Squad invitation changed concurrently.");
+      }
+    }
     return { squad: plan.squad, joined: plan.rosterChanged };
   });
 
@@ -478,8 +584,8 @@ async function joinSquadTransaction(playerId: string, requestedName: string, app
 }
 
 /** Public join path: privacy can be satisfied only by an open policy or stored invitation. */
-export async function joinSquad(playerId: string, name: string): Promise<SquadDTO> {
-  return joinSquadTransaction(playerId, name);
+export async function joinSquad(playerId: string, name: string, invitationMessageId?: string): Promise<SquadDTO> {
+  return joinSquadTransaction(playerId, name, undefined, invitationMessageId);
 }
 
 export type SquadJoinRequestDisposition = "join" | "request" | "reject";
@@ -620,20 +726,107 @@ export function planSquadInvitation(
   };
 }
 
-export async function invitePlayer(actorId: string, targetId: string, name: string): Promise<SquadDTO> {
-  const squad = await getByName(name);
-  if (!squad) throw new ApiError(ApiErrorCode.SquadNoLongerExists, "Squad not found.");
-  // Prove manager authority before resolving the target account. Besides matching the recovered
-  // 5901 permission failure, this prevents an unauthorized caller from probing whether a player
-  // identifier exists through the action's distinct PlayerNotFound response.
-  requireInvitationManager(squad, actorId);
-  const target = await findById(targetId);
-  if (!target) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
-  const plan = planSquadInvitation(squad, actorId, target);
-  if (!plan.changed) return plan.squad;
-  const successor: SquadDocument = { ...squad, invitedPlayerIds: plan.squad.invitedPlayerIds };
-  await persist(successor);
-  return successor;
+export interface InvitePlayerResult {
+  squad: SquadDTO;
+  message: MessageDoc;
+  created: boolean;
+}
+
+export async function invitePlayer(actorId: string, targetId: string, name: string): Promise<InvitePlayerResult> {
+  const cleanSquadName = cleanName(name);
+  const operationId = randomUUID();
+  try {
+    const committed = await withMongoTransaction(async (session) => {
+      const [squad, actor, target] = await Promise.all([
+        squads().findOne({ name: cleanSquadName }, { session }),
+        players().findOne({ id: actorId }, { session }),
+        players().findOne({ id: targetId }, { session }),
+      ]);
+      if (!squad) throw new ApiError(ApiErrorCode.SquadNoLongerExists, "Squad not found.");
+      validatedSquadDocument(squad);
+      if (!actor) throw new ApiError(ApiErrorCode.PlayerNotFound, "Squad manager not found.");
+      validatedPlayerAccountEnvelope(actor);
+      requireCompatiblePlayerSquad(actor, squad.name);
+      // Prove manager authority before reporting whether the requested target exists. This keeps
+      // the recovered 5901 failure from becoming an account-enumeration side channel.
+      requireInvitationManager(squad, actorId);
+      if (!target) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
+      validatedPlayerAccountEnvelope(target);
+
+      const plan = planSquadInvitation(squad, actorId, target);
+      if (!plan.changed) {
+        const existing = await messages().findOne({
+          toPlayerId: target.id,
+          messageType: 1,
+          "payload.SquadId": squad.name,
+          ignored: false,
+          accepted: false,
+        }, { session }) as unknown as MessageDoc | null;
+        if (existing) {
+          return {
+            squad: plan.squad,
+            message: validatedSquadInvitationMessage(existing, new Date())!,
+            created: false,
+          };
+        }
+        // A pending player without a message is an invitation created by an older server build.
+        // Materialize its missing presentation/capability row without advancing the Squad revision.
+      }
+
+      const transactionTime = new Date();
+      const now = nextSquadUpdatedAt(squad, transactionTime);
+      const successor = validatedSquadDocument({
+        ...squad,
+        invitedPlayerIds: plan.squad.invitedPlayerIds,
+        updatedAt: plan.changed ? now : squad.updatedAt,
+      }, plan.changed ? now : transactionTime);
+      if (plan.changed) {
+        const squadUpdate = await squads().updateOne(
+          squadSnapshotWriteFilter(squad),
+          { $set: { invitedPlayerIds: successor.invitedPlayerIds, updatedAt: successor.updatedAt } },
+          { session },
+        );
+        if (squadUpdate.modifiedCount !== 1) {
+          throw new ApiError(ApiErrorCode.InternalServerError, "Squad invitation changed concurrently.");
+        }
+      }
+      const message = buildSquadInvitationMessage(actor, target, successor, transactionTime, operationId);
+      await messages().insertOne(message, { session });
+      return { squad: successor, message, created: true };
+    });
+    if (committed.created) {
+      await publishInboxFanout(committed.message.toPlayerId, committed.message.messageId);
+    }
+    return committed;
+  } catch (error) {
+    if ((error as { code?: number }).code !== 11000) throw error;
+    // A legacy pending invitation can make two nodes race without a Squad revision write. The
+    // partial unique active-invitation index elects one row; the loser returns that exact result.
+    const [squad, actor, target, existing] = await Promise.all([
+      getByName(cleanSquadName),
+      findById(actorId),
+      findById(targetId),
+      messages().findOne({
+        toPlayerId: targetId,
+        messageType: 1,
+        "payload.SquadId": cleanSquadName,
+        ignored: false,
+        accepted: false,
+      }) as unknown as Promise<MessageDoc | null>,
+    ]);
+    if (!squad || !actor || !target || !existing) {
+      throw new ApiError(ApiErrorCode.InternalServerError, "Squad invitation race could not be resolved.");
+    }
+    validatedPlayerAccountEnvelope(actor);
+    validatedPlayerAccountEnvelope(target);
+    requireCompatiblePlayerSquad(actor, squad.name);
+    planSquadInvitation(squad, actorId, target);
+    return {
+      squad,
+      message: validatedSquadInvitationMessage(existing, new Date())!,
+      created: false,
+    };
+  }
 }
 
 export interface SquadLeavePlan {

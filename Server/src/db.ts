@@ -1372,6 +1372,18 @@ export async function connectMongo(): Promise<void> {
   // prevents simultaneous retries from inserting duplicate message-center entries while
   // remaining compatible with all legacy message rows, which do not have this field.
   await messagesCollection.createIndex({ idempotencyKey: 1 }, { unique: true, sparse: true });
+  // One recipient can hold only one live invitation to the same Squad. Decline/accept make the
+  // row terminal and release this partial key, allowing a later manager to send a new generation.
+  // The Squad revision normally serializes creation; this index also closes legacy pending-row
+  // races where materializing a missing message requires no Squad write.
+  await messagesCollection.createIndex(
+    { toPlayerId: 1, messageType: 1, "payload.SquadId": 1 },
+    {
+      name: "unique_active_squad_invitation",
+      unique: true,
+      partialFilterExpression: { messageType: 1, ignored: false, accepted: false },
+    },
+  );
   // The Firebase outbox reconciler closes the post-commit crash window by discovering supported
   // unread messages that do not yet have a delivery ledger row. This index bounds that scan.
   await messagesCollection.createIndex(

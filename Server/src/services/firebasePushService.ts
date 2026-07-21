@@ -131,6 +131,7 @@ export function firebaseWakeActionFor(
 ): { id: "2" | "90"; consent: ConsentKey } | null {
   switch (messageType) {
     case 0: return { id: "2", consent: "challenge" };
+    case 1:
     case 3: return { id: "90", consent: "squadStatus" };
     case 9:
     case 11:

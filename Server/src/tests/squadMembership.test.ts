@@ -10,12 +10,14 @@ import {
   planLeadershipTransfer,
   planDeclineSquadJoinRequest,
   planSquadInvitation,
+  squadInvitationJoinDisposition,
   planSquadJoin,
   planSquadKick,
   planSquadLeave,
   planSquadRankChange,
   squadJoinRequestDisposition,
 } from "../services/squadService";
+import type { MessageDoc } from "../services/socialService";
 import {
   validatedSquadDocument,
   validatedSquadEmblem,
@@ -223,6 +225,73 @@ test("squad invitations are membership-aware capabilities with no-write exact re
   assert.throws(
     () => planSquadInvitation(squad, "outsider", target),
     (error: unknown) => (error as { code?: number }).code === ApiErrorCode.OnlyLeaderCanSendInvites,
+  );
+});
+
+test("type-1 invitation identity requires both the inbox row and current Squad capability", () => {
+  const squad = squadDocument(2);
+  squad.invitedPlayerIds.push("member");
+  const message: MessageDoc = {
+    messageId: "SquadInvitation-11111111-1111-4111-8111-111111111111-1784548800",
+    toPlayerId: "member",
+    fromPlayerId: "leader",
+    fromName: "Player-leader",
+    body: "You were invited to a squad.",
+    messageType: 1,
+    payload: { SquadId: squad.name, Squad: "{}" },
+    otherPlayerJson: "{}",
+    read: false,
+    ignored: false,
+    accepted: false,
+    createdAt: new Date(NOW),
+  };
+
+  assert.equal(squadInvitationJoinDisposition(squad, "member", message), "consume");
+  assert.throws(
+    () => squadInvitationJoinDisposition(
+      { ...squad, invitedPlayerIds: [] },
+      "member",
+      message,
+    ),
+    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.SquadIsNotPublic,
+  );
+  assert.throws(
+    () => squadInvitationJoinDisposition(squad, "other-player", message),
+    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.SquadIsNotPublic,
+  );
+  assert.throws(
+    () => squadInvitationJoinDisposition(squad, "member", { ...message, ignored: true, read: true }),
+    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.SquadIsNotPublic,
+  );
+
+  const joined = {
+    ...squad,
+    invitedPlayerIds: [],
+    members: [...squad.members, {
+      playerId: "member",
+      name: "Player-member",
+      rank: SquadRank.Member,
+      squadPoints: 0,
+      joinedAt: NOW,
+      lastSeenChatTimestamp: 0,
+    }],
+  };
+  assert.equal(squadInvitationJoinDisposition(joined, "member", {
+    ...message,
+    read: true,
+    ignored: true,
+    accepted: true,
+    acceptedAt: new Date(NOW + 1_000),
+  }), "replay");
+  assert.throws(
+    () => squadInvitationJoinDisposition(squad, "member", {
+      ...message,
+      read: true,
+      ignored: true,
+      accepted: true,
+      acceptedAt: new Date(NOW + 1_000),
+    }),
+    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.InternalServerError,
   );
 });
 

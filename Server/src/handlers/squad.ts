@@ -175,10 +175,9 @@ export const squadHandlers: Record<number, HandlerEntry> = {
 
   [DbAction.JoinSquad]: authed(async ({ player, req }) => {
     const input = requestedDirectSquadJoin(req);
-    // MessageId is retained by the parser because invitation-backed admission must eventually
-    // consume that exact inbox capability. The current invitation queue remains the authority;
-    // never reinterpret MessageId as a Squad name while that migration is pending.
-    const squad = await joinSquad(player!.id, input.squadId);
+    // The optional MessageId is a recipient/Squad-bound type-1 capability identity, never a
+    // fallback Squad selector. The service consumes it with the queue and membership atomically.
+    const squad = await joinSquad(player!.id, input.squadId, input.messageId);
     return ok(DbAction.JoinSquad, { Squad: buildDatabaseSquad(squad), SquadId: squad.name, PlayerRank: 0 });
   }),
 
@@ -232,8 +231,8 @@ export const squadHandlers: Record<number, HandlerEntry> = {
     try {
       // The recovered action-59 request has no Squad field. Derive ownership only from the
       // authenticated profile so a cross-action alias cannot select another mutable document.
-      const squad = await invitePlayer(player!.id, target, player!.player.squadName);
-      return ok(DbAction.InvitePlayerToSquad, { Squad: buildDatabaseSquad(squad) });
+      const result = await invitePlayer(player!.id, target, player!.player.squadName);
+      return ok(DbAction.InvitePlayerToSquad, { Squad: buildDatabaseSquad(result.squad) });
     } catch (error) {
       if (!(error instanceof ApiError) || error.code !== ApiErrorCode.PlayerAlreadyInSquad) throw error;
       const targetPlayer = await findById(target);

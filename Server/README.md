@@ -518,11 +518,18 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   `132` requires `SquadId`; actions `45`, `151`, and `44` require `SquadId`, with action `44` also
   validating the recovered `CheckMessages` value as exact `0`/`1`. Leave (`49`), settings (`131`),
   and emblem (`63`) requests carry no Squad identity, so those mutations derive the only writable
-  Squad from authenticated membership; emblem accepts only the recovered `Icon` field. The current
-  durable admission queue still authorizes invitation-backed joins. Persisting a type-1
-  `SquadInvitation` inbox row and atomically binding/consuming action `38`'s `MessageId` remains an
-  explicit parity gap; the server does not pretend the validated-but-unused message field is
-  already a capability receipt.
+  Squad from authenticated membership; emblem accepts only the recovered `Icon` field.
+  Action `59` now commits its pending player and exact recovered type-1 `SquadInvitation` inbox row
+  together, returning the existing active message on retry. The row serializes the `Squad` and
+  `OtherPlayer` DynamoDB-style JSON strings consumed by `HLHBMMCBHJF`, uses the Squad-status Firebase
+  consent, and is published locally/cross-node only after commit. One partial unique index permits
+  only one active recipient/Squad generation. FightDialog's generic decline atomically marks that
+  row read/ignored and removes the pending capability. Action `38` binds optional `MessageId` to the
+  authenticated recipient and requested Squad; acceptance commits membership, queue consumption,
+  and a read/ignored/accepted terminal marker in one transaction. A lost response can replay only
+  when that terminal message and current roster membership agree. Action `132` has no MessageId, so
+  it consumes a matching active type-1 row when present while retaining a bounded legacy migration
+  for pending invitations created before durable message delivery existed.
   Rank and removal mutations are equally action-specific: promote/demote accept only their recovered
   target field and canonical `OldSquadRank`, leadership transfer accepts only `PlayerToPromoteId`,
   and kick accepts only `PlayerToKickId`; all derive the mutable Squad from authenticated membership.

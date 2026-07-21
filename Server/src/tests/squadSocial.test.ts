@@ -20,7 +20,12 @@ import {
   buildDepositWarcardsMessage,
   buildSquadEventMessage,
 } from "../services/squadSocialService";
-import { buildSquadKickMessage, toClientMessage } from "../services/socialService";
+import {
+  buildSquadInvitationMessage,
+  buildSquadKickMessage,
+  toClientMessage,
+} from "../services/socialService";
+import { validatedSquadInvitationMessage } from "../services/squadInvitationMessageAuthorityService";
 
 const NOW = Date.UTC(2026, 6, 19, 12, 0, 0) / 1_000;
 
@@ -30,7 +35,7 @@ function playerDocument(id: string): PlayerDocument {
   return {
     id,
     accountName: player.accountName,
-    authToken: "token",
+    authToken: "a".repeat(64),
     accountType: player.accountType,
     leagueTier: player.leagueTier,
     armyPower: player.armyPower,
@@ -198,6 +203,65 @@ test("squad event notification uses the message type and numeric suffix parsed b
   assert.match(message.messageId, new RegExp(`-${NOW}$`));
   assert.deepEqual(wire.MessageType, { N: "21" });
   assert.deepEqual(wire.PlayerId, { S: "leader-1" });
+});
+
+test("Squad invitation emits the exact HLHBMMCBHJF message-center contract", () => {
+  const actor = playerDocument("leader-1");
+  const target = playerDocument("invitee-1");
+  target.squadName = "";
+  target.player.squadName = "";
+  const squad = {
+    ...newSquad("Test Squad", actor.id),
+    members: [{
+      playerId: actor.id,
+      name: actor.player.accountName,
+      rank: 2,
+      squadPoints: 0,
+      joinedAt: NOW,
+      lastSeenChatTimestamp: 0,
+    }],
+    createdAt: new Date(NOW * 1_000),
+    updatedAt: new Date(NOW * 1_000),
+  } as SquadDocument;
+  const operationId = "11111111-1111-4111-8111-111111111111";
+  const message = buildSquadInvitationMessage(
+    actor,
+    target,
+    squad,
+    new Date(NOW * 1_000),
+    operationId,
+  );
+  const wire = toClientMessage(message);
+
+  assert.equal(message.messageId, `SquadInvitation-${operationId}-${NOW}`);
+  assert.deepEqual(wire.MessageType, { N: "1" });
+  assert.deepEqual(wire.PlayerId, { S: target.id });
+  assert.equal(JSON.parse((wire.Squad as { S: string }).S).Id, "Test Squad");
+  const inviter = JSON.parse((wire.OtherPlayer as { S: string }).S) as Record<string, { S?: string }>;
+  assert.equal(inviter.Id.S, actor.id);
+  assert.equal(inviter.Name.S, actor.player.accountName);
+  assert.equal(inviter.SquadId.S, "Test Squad");
+  assert.equal(validatedSquadInvitationMessage(message, new Date(NOW * 1_000)), message);
+
+  const acceptedAt = new Date(NOW * 1_000 + 1_000);
+  assert.equal(validatedSquadInvitationMessage({
+    ...message,
+    read: true,
+    ignored: true,
+    accepted: true,
+    acceptedAt,
+  }, acceptedAt)?.accepted, true);
+  assert.throws(
+    () => validatedSquadInvitationMessage({
+      ...message,
+      payload: { ...message.payload, SquadId: "Other Squad" },
+    }, new Date(NOW * 1_000)),
+    /Squad invitation message is invalid/,
+  );
+  assert.throws(
+    () => validatedSquadInvitationMessage({ ...message, accepted: true }, new Date(NOW * 1_000)),
+    /Squad invitation message is invalid/,
+  );
 });
 
 test("War Card deposit reminder emits the exact BOAFLMMKCGB player snapshot", () => {
