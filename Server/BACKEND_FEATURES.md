@@ -137,6 +137,10 @@ Arena run appear finished, make an achievement tier appear complete, or unlock a
 - Calculate server-authored rewards with checked safe-integer arithmetic before consuming the
   corresponding claim marker or receipt; chargeback debt is valid existing state, not reward input.
 - The server must validate ownership, rank, match participation, price, capacity, and expiry.
+- Paid VIP and subscription timestamps must pass their shared nonnegative-safe-integer validators
+  before boot projection, benefit comparison, purchase renewal, reversal, or provider reconciliation.
+  Subscription authority must also remain an ordered start/lock/expiry interval; future or inverted
+  provider timelines fail closed instead of activating early or producing contradictory benefits.
 - Client-provided serialized blobs may be round-tripped but must not be trusted for rewards.
 - Add tests for contract field names, authorization failures, duplicate requests, and concurrency.
 - Update this tracker in the same commit whenever a feature status changes.

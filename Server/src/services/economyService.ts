@@ -5,6 +5,7 @@ import { config } from "../config";
 import { playerLevelDefinition } from "./levelProgressionService";
 import { checkedRewardBalance } from "./rewardMathService";
 import { isVipActiveAt } from "./vipEntitlementService";
+import { validatedSubscription } from "./subscriptionBenefitService";
 
 export interface DogTagMutationResult {
   state: PlayerProgressionState;
@@ -149,17 +150,15 @@ function subscriptionDogTagBonusSeconds(
   from: number,
   to: number,
 ): number {
-  const subscription = state.subscription;
-  if (!subscription || subscription.type !== "subscription1") return 0;
+  const subscription = validatedSubscription(state.subscription);
+  if (!subscription) return 0;
   const normalRefillSeconds = Math.max(1, Math.floor(state.dogTagRefillSeconds));
   const accelerationFactor = Math.floor(normalRefillSeconds / SUBSCRIPTION_DOG_TAG_REFILL_SECONDS);
   if (accelerationFactor <= 1) return 0;
 
-  const lock = Number.isFinite(subscription.dogTagTimerLock)
-    ? Math.floor(subscription.dogTagTimerLock)
-    : 0;
+  const lock = subscription.dogTagTimerLock;
   const acceleratedFrom = Math.max(Math.floor(from), lock);
-  const acceleratedTo = Math.min(Math.floor(to), Math.floor(subscription.expireTime));
+  const acceleratedTo = Math.min(Math.floor(to), subscription.expireTime);
   const acceleratedWallSeconds = Math.max(0, acceleratedTo - acceleratedFrom);
   return acceleratedWallSeconds * (accelerationFactor - 1);
 }

@@ -7,6 +7,7 @@ import { warArenaConfiguration, warArenaWireData } from "./warArenaContract";
 import { playerLeagueBootFields } from "./playerLeagueContract";
 import { VIP_LOOTBOX_MATCH_INTERVAL } from "./vipLootboxService";
 import { validatedVipExpiration } from "./vipEntitlementService";
+import { validatedSubscription } from "./subscriptionBenefitService";
 
 /** Unix seconds are used throughout the recovered Beanstalk protocol. */
 export function unixNow(): number {
@@ -76,6 +77,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
     return {
       ...state,
       vipExpiration: validatedVipExpiration(state.vipExpiration ?? player.player.vipExpiration),
+      subscription: validatedSubscription(state.subscription),
       matchesToNextLootboxes: state.matchesToNextLootboxes ?? VIP_LOOTBOX_MATCH_INTERVAL,
       collectedRewards: state.collectedRewards ?? {},
       itemInventory: state.itemInventory ?? createInitialItemInventory(),
@@ -99,6 +101,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
     dogTagMax: cap * refillSeconds,
     dogTagRefillSeconds: refillSeconds,
     vipExpiration: validatedVipExpiration(state.vipExpiration ?? player.player.vipExpiration),
+    subscription: validatedSubscription(state.subscription),
     matchesToNextLootboxes: state.matchesToNextLootboxes ?? VIP_LOOTBOX_MATCH_INTERVAL,
     collectedRewards: state.collectedRewards ?? {},
     itemInventory: state.itemInventory ?? createInitialItemInventory(),

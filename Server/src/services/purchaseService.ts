@@ -21,6 +21,10 @@ import {
 import { progressionForPlayer, unixNow } from "./playerStateService";
 import { encryptPurchaseToken } from "./purchaseTokenCryptoService";
 import { applyPackEntitlementState } from "./packPurchaseService";
+import {
+  validatedSubscription,
+  validatedSubscriptionUnixSeconds,
+} from "./subscriptionBenefitService";
 
 const defaultVerifier = new GooglePlayDeveloperApiVerifier();
 
@@ -127,9 +131,28 @@ export function applyPurchaseEntitlementState(
     };
   }
 
-  const expiresAt = Math.floor(purchase.expiresAt ?? 0);
-  if (expiresAt <= now) throw new ApiError(ApiErrorCode.InvalidInapp, "Verified subscription is expired.");
-  const current = state.subscription;
+  // The production verifier emits whole Unix seconds, but this pure transition is also the last
+  // boundary before mocked/custom verifiers reach durable state. Validate rather than flooring so
+  // NaN, Infinity, fractions, or a timestamp outside JavaScript Date's range cannot become a
+  // malformed receipt or outrank every later legitimate renewal.
+  const currentTime = validatedSubscriptionUnixSeconds(now, "Subscription purchase time");
+  const expiresAt = validatedSubscriptionUnixSeconds(
+    purchase.expiresAt ?? 0,
+    "Verified subscription expiry",
+  );
+  const purchasedAt = validatedSubscriptionUnixSeconds(
+    purchase.purchasedAt,
+    "Verified subscription start",
+  );
+  if (expiresAt <= currentTime) {
+    throw new ApiError(ApiErrorCode.InvalidInapp, "Verified subscription is expired.");
+  }
+  if (purchasedAt > currentTime || purchasedAt > expiresAt) {
+    // The verified start is the subscription's first entitlement boundary. A future start must not
+    // activate benefits early, and an inverted provider interval cannot create durable authority.
+    throw new ApiError(ApiErrorCode.InvalidInapp, "Verified subscription timeline is invalid.");
+  }
+  const current = validatedSubscription(state.subscription);
   if (current && current.expireTime >= expiresAt) {
     // A replacement/re-signup token can represent the same current expiry. Bind only an equal
     // entitlement to the latest successfully verified token; a shorter stale token must never
@@ -153,14 +176,14 @@ export function applyPurchaseEntitlementState(
       },
     };
   }
-  const subscription = {
+  const subscription = validatedSubscription({
     type: "subscription1" as const,
     expireTime: expiresAt,
-    subscribeSince: current?.subscribeSince ?? purchase.purchasedAt,
+    subscribeSince: current?.subscribeSince ?? purchasedAt,
     // This timestamp is the stock client's boundary between normal and subscription dog-tag
     // refill timing. Preserve the original boundary on renewal so elapsed time is not lost.
-    dogTagTimerLock: current?.dogTagTimerLock ?? now,
-  };
+    dogTagTimerLock: current?.dogTagTimerLock ?? currentTime,
+  })!;
   return {
     state: {
       ...state,

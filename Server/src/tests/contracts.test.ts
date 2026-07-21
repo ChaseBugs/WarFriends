@@ -287,6 +287,21 @@ test("subscription refills dog tags every recovered 450 seconds between lock and
   const afterExpiry = materializeDogTags(initial, 2_450);
   assert.equal(afterExpiry.dogTagSeconds, 2_450);
   assert.equal(currentDogTagCount(afterExpiry), 2);
+
+  assert.throws(
+    () => materializeDogTags({
+      ...initial,
+      subscription: { ...initial.subscription, expireTime: Number.POSITIVE_INFINITY },
+    }, 1_450),
+    /Subscription expiry is invalid/,
+  );
+  assert.throws(
+    () => materializeDogTags({
+      ...initial,
+      subscription: { ...initial.subscription, dogTagTimerLock: Number.NaN },
+    }, 1_450),
+    /Subscription dog-tag lock is invalid/,
+  );
 });
 
 test("dog-tag spend and refill transitions preserve partial time and charge server price", () => {

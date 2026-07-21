@@ -203,6 +203,72 @@ test("stale subscription receipt cannot shorten a newer token's entitlement", ()
   assert.equal(stale.state, state);
 });
 
+test("subscription lifecycle rejects corrupt stored and observed deadlines", () => {
+  const entitlement = inAppEntitlement("subscription1");
+  assert.ok(entitlement);
+  const corrupt = {
+    ...createInitialProgression(NOW),
+    subscription: {
+      type: "subscription1" as const,
+      expireTime: Number.POSITIVE_INFINITY,
+      subscribeSince: NOW - 100,
+      dogTagTimerLock: NOW,
+    },
+    subscriptionAuthorityReceiptId: "receipt-current",
+  };
+  assert.throws(
+    () => applyPurchaseEntitlementState(corrupt, entitlement, {
+      kind: "subscription",
+      productId: "subscription1",
+      storeProductId: `${PACKAGE}.subscription1`,
+      orderId: "GPA.repair",
+      purchasedAt: NOW,
+      expiresAt: NOW + 2_000,
+    }, NOW, "receipt-repair"),
+    /Subscription expiry is invalid/,
+  );
+  assert.throws(
+    () => applySubscriptionRevalidationState(corrupt, "receipt-current", {
+      subscriptionState: "SUBSCRIPTION_STATE_ACTIVE",
+      entitled: true,
+      storeProductId: `${PACKAGE}.subscription1`,
+      expiresAt: Number.POSITIVE_INFINITY,
+    }, NOW),
+    /Observed subscription expiry is invalid/,
+  );
+
+  const clean = createInitialProgression(NOW);
+  assert.throws(
+    () => applyPurchaseEntitlementState(clean, entitlement, {
+      kind: "subscription",
+      productId: "subscription1",
+      storeProductId: `${PACKAGE}.subscription1`,
+      orderId: "GPA.future",
+      purchasedAt: NOW + 1,
+      expiresAt: NOW + 2_000,
+    }, NOW, "receipt-future"),
+    /Verified subscription timeline is invalid/,
+  );
+  assert.throws(
+    () => applySubscriptionRevalidationState({
+      ...clean,
+      subscription: {
+        type: "subscription1",
+        expireTime: NOW + 1_000,
+        subscribeSince: NOW - 100,
+        dogTagTimerLock: NOW,
+      },
+      subscriptionAuthorityReceiptId: "receipt-current",
+    }, "receipt-current", {
+      subscriptionState: "SUBSCRIPTION_STATE_EXPIRED",
+      entitled: false,
+      storeProductId: `${PACKAGE}.subscription1`,
+      expiresAt: NOW - 200,
+    }, NOW),
+    /Subscription timeline is invalid/,
+  );
+});
+
 test("subscription purchase tokens are authenticated, receipt-bound ciphertext", () => {
   const secret = "test-only-high-entropy-secret-with-more-than-32-characters";
   const encrypted = encryptPurchaseToken("opaque-google-play-token", "receipt-a", secret);
@@ -282,4 +348,15 @@ test("subscription persists through the exact PlayerData serialized-object key",
   };
   const wire = buildPlayerData(document, NOW).Subscription as { S: string };
   assert.deepEqual(JSON.parse(wire.S), progression.subscription);
+
+  assert.throws(
+    () => buildPlayerData({
+      ...document,
+      progression: {
+        ...progression,
+        subscription: { ...progression.subscription, subscribeSince: Number.NaN },
+      },
+    }, NOW),
+    /Subscription start is invalid/,
+  );
 });

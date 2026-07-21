@@ -17,6 +17,10 @@ import {
 import { progressionForPlayer, unixNow } from "./playerStateService";
 import { decryptPurchaseToken } from "./purchaseTokenCryptoService";
 import { withScheduledJobLease } from "./scheduledJobLeaseService";
+import {
+  validatedSubscription,
+  validatedSubscriptionUnixSeconds,
+} from "./subscriptionBenefitService";
 
 const jobId = "google-play-subscription-revalidation";
 const defaultVerifier = new GooglePlayDeveloperApiVerifier();
@@ -42,23 +46,33 @@ export function applySubscriptionRevalidationState(
   status: GooglePlaySubscriptionStatus,
   now: number,
 ): SubscriptionRevalidationTransition {
-  const current = state.subscription;
+  // Validate the provider observation even for a stale receipt. The receipt audit fields and
+  // next-check cursor are updated after this transition, so accepting Infinity here could still
+  // create an invalid BSON Date even when ownership correctly prevents a player-state mutation.
+  const currentTime = validatedSubscriptionUnixSeconds(now, "Subscription revalidation time");
+  const observedExpiry = status.expiresAt === undefined
+    ? 0
+    : validatedSubscriptionUnixSeconds(status.expiresAt, "Observed subscription expiry");
+  const current = validatedSubscription(state.subscription);
   if (!current || state.subscriptionAuthorityReceiptId !== authorityReceiptId) {
     return { state, changed: false, effectiveExpiry: null };
   }
 
-  const observedExpiry = Math.floor(status.expiresAt ?? 0);
-  const effectiveExpiry = status.entitled && observedExpiry > now
+  const effectiveExpiry = status.entitled && observedExpiry > currentTime
     ? observedExpiry
-    : Math.min(current.expireTime, observedExpiry > 0 && observedExpiry <= now ? observedExpiry : now);
+    : Math.min(
+      current.expireTime,
+      observedExpiry > 0 && observedExpiry <= currentTime ? observedExpiry : currentTime,
+    );
   if (effectiveExpiry === current.expireTime) {
     return { state, changed: false, effectiveExpiry };
   }
+  const subscription = validatedSubscription({ ...current, expireTime: effectiveExpiry })!;
   return {
     state: {
       ...state,
       revision: state.revision + 1,
-      subscription: { ...current, expireTime: effectiveExpiry },
+      subscription,
     },
     changed: true,
     effectiveExpiry,

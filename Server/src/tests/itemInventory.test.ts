@@ -276,6 +276,16 @@ test("active subscription applies the recovered float32 0.8 weapon delivery mult
     (error: unknown) => (error as { code?: number }).code === ITEM_PRICE_MISMATCH,
   );
   assert.equal(subscriptionUpgradeDeliverySeconds(initial, NOW + 3_600, 60), 60);
+
+  // A corrupt imported deadline must fail closed instead of turning the 20% paid speed benefit
+  // into permanent access through JavaScript's `Infinity > now` comparison behavior.
+  assert.throws(
+    () => subscriptionUpgradeDeliverySeconds({
+      ...initial,
+      subscription: { ...initial.subscription, expireTime: Number.POSITIVE_INFINITY },
+    }, NOW, 60),
+    /Subscription expiry is invalid/,
+  );
 });
 
 test("weapon upgrade rejects stale indexes and a second shared delivery", () => {

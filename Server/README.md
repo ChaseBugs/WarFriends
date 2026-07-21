@@ -775,6 +775,12 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   safe-integer Unix deadline. PvP/mission multipliers, virtual dog-tag capacity, daily cards,
   VIP-only visuals, pack extension, purchase renewal, voided-purchase reversal, and boot migration
   reject corrupt or overflowing deadlines instead of treating `Infinity` as permanent access.
+- **Subscription entitlement integrity**: one shared validator owns expiry, subscription-start,
+  and dog-tag timer-lock timestamps. Boot projection, Google Play delivery/revalidation, upgrade
+  timing, instant card crafting, and accelerated dog-tag regeneration reject non-integer,
+  non-finite, negative, or non-`Date`-representable authority instead of granting permanent access.
+  The same boundary enforces `subscribeSince <= dogTagTimerLock <= expireTime`; future starts and
+  provider expiries that invert this interval fail closed rather than activating or corrupting it.
 - **Achievements (authoritative subset)**: actions `218`-`220` use the recovered
   `AchievementsData`/RequestBuffer contract. Solo missions, ranked wins, assignment completion,
   squad points, and daily-reward claims advance only from accepted server settlements. Purchased

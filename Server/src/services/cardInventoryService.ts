@@ -1,4 +1,5 @@
 import { randomInt } from "node:crypto";
+import { hasActiveSubscription } from "./subscriptionBenefitService";
 import generatedCardCatalog from "../data/cardCatalog.generated.json";
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import type { CardCraftingState, CardInventoryState, PlayerProgressionState } from "../db";
@@ -406,7 +407,7 @@ export function craftAndClaimSubscribedCardState(
   cards: readonly string[],
   choose: (upperBound: number) => number = (upperBound) => randomInt(upperBound),
 ): CardCraftingMutationResult {
-  if (state.subscription?.type !== "subscription1" || state.subscription.expireTime <= now) {
+  if (!hasActiveSubscription(state, now)) {
     throw new ApiError(CARD_NOT_FOUND, "An active subscription is required for instant crafting.");
   }
   const existing = cardCraftingStateFor(state);

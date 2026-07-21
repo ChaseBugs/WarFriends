@@ -319,6 +319,13 @@ test("active subscription crafts and claims immediately in one atomic state tran
     () => craftAndClaimSubscribedCardState(expired, NOW, ["AMMOCRATE", "AMMOCRATE", "AMMOCRATE"]),
     (error: unknown) => (error as { code?: number }).code === CARD_NOT_FOUND,
   );
+  assert.throws(
+    () => craftAndClaimSubscribedCardState({
+      ...initial,
+      subscription: { ...initial.subscription!, expireTime: Number.POSITIVE_INFINITY },
+    }, NOW, ["AMMOCRATE", "AMMOCRATE", "AMMOCRATE"]),
+    /Subscription expiry is invalid/,
+  );
 
   const activeCraft = startCardCraftingState(initial, NOW, ["AMMOCRATE", "AMMOCRATE", "AMMOCRATE"]);
   assert.throws(

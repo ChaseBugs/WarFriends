@@ -70,7 +70,11 @@ export class GooglePlayVerificationError extends Error {
 function unixSeconds(value: string | undefined, field: string): number {
   const milliseconds = value ? Date.parse(value) : Number.NaN;
   if (!Number.isFinite(milliseconds)) throw new GooglePlayVerificationError(`Google Play ${field} is invalid.`);
-  return Math.floor(milliseconds / 1_000);
+  const seconds = Math.floor(milliseconds / 1_000);
+  if (!Number.isSafeInteger(seconds) || seconds < 0) {
+    throw new GooglePlayVerificationError(`Google Play ${field} is invalid.`);
+  }
+  return seconds;
 }
 
 function verifiedOrderId(serverOrderId: string | undefined, clientOrderId: string): string {
