@@ -30,6 +30,7 @@ import { validatedRenameCount } from "./playerRenameAuthorityService";
 import { validatedCollectedRewards } from "./oneTimeRewardAuthorityService";
 import { validatedSquadChatCursor } from "./squadChatCursorAuthorityService";
 import { validatedFeatureIntroductions } from "./featureIntroductionAuthorityService";
+import { validatedTutorialCompletion } from "./tutorialCompletionAuthorityService";
 
 /** Unix seconds are used throughout the recovered Beanstalk protocol. */
 export function unixNow(): number {
@@ -369,6 +370,7 @@ export function buildPlayerData(player: PlayerDocument, now = unixNow()): Player
   );
   const instantBattle = validatedInstantBattleState(state.instantBattle, Math.floor(now));
   const featureIntroductions = validatedFeatureIntroductions(state.featureIntroductions);
+  const tutorialCompletion = validatedTutorialCompletion(state);
 
   // PlayerAnalytics derives from DatabaseSerializedObjectGeneric<PlayerAnalyticsData>, so
   // this exact nested type name is the boot lookup key. The real chat channel is Photon
@@ -401,9 +403,9 @@ export function buildPlayerData(player: PlayerDocument, now = unixNow()): Player
     // level-six War Card lock is already open. Value 2 is its durable terminal state. Derive
     // both values from server-owned progression instead of accepting the client's analytics
     // blob, otherwise reconnecting after the fixed reward would launch and pay it again.
-    cardTutState: state.warcardsTutorialFinished
+    cardTutState: tutorialCompletion.warcardsTutorialFinished
       ? 2
-      : state.tutorialFinished && dto.level >= CARD_UNLOCK_LEVEL - 1
+      : tutorialCompletion.tutorialFinished && dto.level >= CARD_UNLOCK_LEVEL - 1
         ? 1
         : 0,
     // These one-way booleans are written only by their parameterless recovered actions. They
@@ -417,7 +419,7 @@ export function buildPlayerData(player: PlayerDocument, now = unixNow()): Player
     leagueLeaderboardsShown: featureIntroductions.leagueLeaderboardsShown ?? false,
   });
 
-  if (state.tutorialFinished) {
+  if (tutorialCompletion.tutorialFinished) {
     // NCNNKGNJNOH uses only the presence of this Dynamo-style key to leave tutorial mode,
     // stop all bootcamp managers, and unlock nonlocal asset bundles after a reconnect.
     data.TutorialData = stringAttribute({});

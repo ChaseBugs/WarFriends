@@ -88,6 +88,27 @@ test("Play Warcards starts only after bootcamp and the recovered display-level-s
   assert.equal(replay.replayed, true);
 });
 
+test("Play Warcards rejects contradictory completion order and exhausted revisions", () => {
+  const contradictory = createInitialProgression(NOW);
+  contradictory.warcardsTutorialFinished = true;
+  assert.throws(
+    () => shouldStartWarcardsTutorial(contradictory, WARCARDS_TUTORIAL_MINIMUM_LEVEL_INDEX),
+    /Stored tutorial completion order is invalid/,
+  );
+
+  const exhausted = eligibleState();
+  exhausted.revision = Number.MAX_SAFE_INTEGER;
+  assert.throws(
+    () => startWarcardsTutorialState(
+      exhausted,
+      WARCARDS_TUTORIAL_MINIMUM_LEVEL_INDEX,
+      BATTLE_ID,
+      NOW,
+    ),
+    /Tutorial progression revision is invalid/,
+  );
+});
+
 test("a restarted Play Warcards battle replaces an abandoned receipt", () => {
   const first = startWarcardsTutorialState(
     eligibleState(),
@@ -205,6 +226,8 @@ test("PlayerAnalyticsData restores cardTutState 0, 1, and 2 from durable authori
   assert.equal(cardTutState(playerDocument(WARCARDS_TUTORIAL_MINIMUM_LEVEL_INDEX - 1, true, false)), 0);
   assert.equal(cardTutState(playerDocument(WARCARDS_TUTORIAL_MINIMUM_LEVEL_INDEX, true, false)), 1);
   assert.equal(cardTutState(playerDocument(WARCARDS_TUTORIAL_MINIMUM_LEVEL_INDEX, true, true)), 2);
+  const contradictory = playerDocument(WARCARDS_TUTORIAL_MINIMUM_LEVEL_INDEX, false, true);
+  assert.throws(() => cardTutState(contradictory), /Stored tutorial completion order is invalid/);
   assert.equal(matchHandlers[DbAction.GameStartedMaster]?.requiresAuth, true);
   assert.equal(matchHandlers[DbAction.GameEnded]?.requiresAuth, true);
 });

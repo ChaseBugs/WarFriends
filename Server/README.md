@@ -235,7 +235,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   starts the single placement match, and restores the presence-sensitive `TutorialData` marker
   on every later `GetPlayerData`. Client-echoed score, boxes, cards, wallet, and Army Power are
   ignored because the offline tutorial cannot prove them. Retries cannot refill spent currency;
-  old no-receipt accounts may migrate once only with the stock empty `BattleId`.
+  old no-receipt accounts may migrate once only with the stock empty `BattleId`. Bootcamp and
+  Play-Warcards completion markers are validated together as exact ordered Booleans at every
+  tutorial, rental, and boot boundary, and real lifecycle writes reject revision overflow.
 - **Play Warcards tutorial**: the later onboarding battle unlocks at the recovered display
   level 6 and runs through the ordinary offline-bot action `64`/`62` path. The server projects
   `PlayerAnalyticsData.cardTutState` from durable state, binds `TutorialWarcards=1` to the earlier
@@ -243,6 +245,8 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   `TutorialRewardCards` list once: `CLUSTERGRENADE`, `ELITEPARA`, `HEAVYTURRET`,
   `ELECTRICTRAPS`, and `SABOTAGE`. Losses complete it just like the recovered client; explicit
   Forfeit grants nothing, clears the attempt receipt, and leaves the tutorial available to retry.
+  A terminal Play-Warcards marker without a completed bootcamp fails closed instead of projecting
+  the otherwise contradictory `cardTutState = 2`.
 - **HTTP abuse boundary**: every non-health API request passes through a continuously refilled
   token bucket keyed by an HMAC-hidden client address. Redis provides bounded-TTL cross-process
   enforcement, while the memory-bounded limiter remains the explicit outage fallback. Proxy

@@ -92,6 +92,26 @@ test("tutorial completion rejects corrupt wallets before publishing its terminal
   assert.equal(corrupt.tutorialFinished, false);
 });
 
+test("tutorial lifecycle rejects non-Boolean completion authority and revision overflow", () => {
+  const corrupt = createInitialProgression(NOW);
+  corrupt.tutorialFinished = "false" as unknown as boolean;
+  assert.throws(
+    () => startTutorialState(corrupt, NOW, BATTLE_ID),
+    /Stored tutorial completion state is invalid/,
+  );
+
+  const exhausted = createInitialProgression(NOW);
+  exhausted.revision = Number.MAX_SAFE_INTEGER;
+  assert.throws(
+    () => startTutorialState(exhausted, NOW, BATTLE_ID),
+    /Tutorial progression revision is invalid/,
+  );
+  assert.throws(
+    () => finishTutorialState(exhausted, "", 2, 0),
+    /Tutorial progression revision is invalid/,
+  );
+});
+
 test("tutorial completion rejects forged receipts and non-win results", () => {
   const started = startTutorialState(createInitialProgression(NOW), NOW, BATTLE_ID);
   assert.throws(() => finishTutorialState(started.state, "forged", 2, 0));
@@ -109,6 +129,10 @@ test("TutorialData appears in PlayerData only after durable completion", () => {
 
   const finished = buildPlayerData(playerDocument(true), NOW);
   assert.deepEqual(finished.TutorialData, { S: "{}" });
+
+  const corrupt = playerDocument(false);
+  corrupt.progression!.tutorialFinished = "true" as unknown as boolean;
+  assert.throws(() => buildPlayerData(corrupt, NOW), /Stored tutorial completion state is invalid/);
   assert.equal(tutorialHandlers[DbAction.GameStartedTutorial]?.requiresAuth, true);
   assert.equal(tutorialHandlers[DbAction.TutorialEnded]?.requiresAuth, true);
 });

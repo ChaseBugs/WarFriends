@@ -2,6 +2,10 @@ import { ApiError, ApiErrorCode } from "../apiErrors";
 import type { PlayerProgressionState } from "../db";
 import { CARD_CATALOG, CARD_UNLOCK_LEVEL, cardInventoryStateFor } from "./cardInventoryService";
 import { mutateProgression } from "./progressionMutationService";
+import {
+  validatedTutorialCompletion,
+  validatedTutorialRevision,
+} from "./tutorialCompletionAuthorityService";
 
 /**
  * Exact StringConstants.TutorialRewardCards row from the recovered 4.9.5 MainScene.
@@ -43,8 +47,9 @@ export interface WarcardsTutorialSettlementResult {
 
 /** Reproduce TutorialManagerPlayWarcards.shouldStartTutorial using server-owned fields. */
 export function shouldStartWarcardsTutorial(state: PlayerProgressionState, playerLevelIndex: number): boolean {
-  return state.tutorialFinished === true
-    && state.warcardsTutorialFinished !== true
+  const completion = validatedTutorialCompletion(state);
+  return completion.tutorialFinished
+    && !completion.warcardsTutorialFinished
     && Number.isSafeInteger(playerLevelIndex)
     && playerLevelIndex >= WARCARDS_TUTORIAL_MINIMUM_LEVEL_INDEX;
 }
@@ -75,10 +80,11 @@ export function startWarcardsTutorialState(
   if (state.warcardsTutorialBattle?.battleId === battleId) {
     return { state, battleId, started: true, replayed: true };
   }
+  const revision = validatedTutorialRevision(state.revision);
   return {
     state: {
       ...state,
-      revision: state.revision + 1,
+      revision: revision + 1,
       warcardsTutorialBattle: { battleId, startedAt: Math.max(0, Math.floor(now)) },
     },
     battleId,
@@ -101,7 +107,8 @@ export function settleWarcardsTutorialState(
   battleId: string,
   endReason: number,
 ): WarcardsTutorialSettlementResult {
-  if (state.warcardsTutorialFinished) {
+  const completion = validatedTutorialCompletion(state);
+  if (completion.warcardsTutorialFinished) {
     // No reward response field is required because the stock client added these fixed cards
     // locally before its original action 62. A terminal replay only needs a successful result.
     return { state, battleId, awarded: false, replayed: true, cards: [] };
@@ -119,9 +126,10 @@ export function settleWarcardsTutorialState(
   }
 
   const { warcardsTutorialBattle: _battle, ...withoutBattle } = state;
+  const revision = validatedTutorialRevision(state.revision);
   if (endReason === WARCARDS_TUTORIAL_FORFEIT_END_REASON) {
     return {
-      state: { ...withoutBattle, revision: state.revision + 1 },
+      state: { ...withoutBattle, revision: revision + 1 },
       battleId,
       awarded: false,
       replayed: false,
@@ -143,7 +151,7 @@ export function settleWarcardsTutorialState(
   return {
     state: {
       ...withoutBattle,
-      revision: state.revision + 1,
+      revision: revision + 1,
       cardInventory,
       warcardsTutorialFinished: true,
     },

@@ -9,6 +9,10 @@ import { findById } from "./playerService";
 import { progressionForPlayer } from "./playerStateService";
 import { mutateProgression } from "./progressionMutationService";
 import { checkedRewardBalance } from "./rewardMathService";
+import {
+  validatedTutorialCompletion,
+  validatedTutorialRevision,
+} from "./tutorialCompletionAuthorityService";
 
 /** MainScene Constants.StartingGold, decoded from ObscuredFloat. */
 export const TUTORIAL_STARTING_GOLD = 75;
@@ -38,7 +42,8 @@ export function startTutorialState(
   now: number,
   newBattleId: string,
 ): TutorialMutationResult {
-  if (state.tutorialFinished) {
+  const completion = validatedTutorialCompletion(state);
+  if (completion.tutorialFinished) {
     return { state, battleId: "", replayed: true, remainingMatches: PLAYER_LEAGUE_PLACEMENT_MATCHES };
   }
   if (state.tutorialBattle) {
@@ -52,10 +57,11 @@ export function startTutorialState(
   if (!newBattleId || newBattleId.length > 128) {
     throw new ApiError(ApiErrorCode.InternalServerError, "Could not issue tutorial battle ID.");
   }
+  const revision = validatedTutorialRevision(state.revision);
   return {
     state: {
       ...state,
-      revision: state.revision + 1,
+      revision: revision + 1,
       tutorialBattle: { battleId: newBattleId, startedAt: Math.max(0, Math.floor(now)) },
     },
     battleId: newBattleId,
@@ -81,7 +87,8 @@ export function finishTutorialState(
   currentRemainingMatches: number,
 ): TutorialMutationResult {
   const remainingMatches = validatedPlayerLeagueRemainingMatches(currentRemainingMatches);
-  if (state.tutorialFinished) {
+  const completion = validatedTutorialCompletion(state);
+  if (completion.tutorialFinished) {
     return {
       state,
       battleId: state.tutorialBattle?.battleId ?? battleId,
@@ -122,10 +129,11 @@ export function finishTutorialState(
     warBucksGranted,
     "Tutorial starter WarBucks",
   );
+  const revision = validatedTutorialRevision(state.revision);
   return {
     state: {
       ...withoutBattle,
-      revision: state.revision + 1,
+      revision: revision + 1,
       gold: tutorialGold,
       warBucks: tutorialWarBucks,
       tutorialFinished: true,

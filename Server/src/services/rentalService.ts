@@ -22,6 +22,7 @@ import {
   validatedRentalState,
   validatedRentalUnixSeconds,
 } from "./rentalEntitlementService";
+import { validatedTutorialCompletion } from "./tutorialCompletionAuthorityService";
 
 /** IJEAJGCCHEF.NoRentalFound, handled explicitly by action 138's nested parser. */
 export const RENTAL_NOT_FOUND = 13_602;
@@ -202,7 +203,8 @@ export function ensureRentalOfferState(
 ): RentalMutationResult {
   const currentTime = validatedRentalUnixSeconds(now, "Rental offer time");
   const current = validatedRentalState(state.rental);
-  if (!state.tutorialFinished) {
+  const tutorialCompletion = validatedTutorialCompletion(state);
+  if (!tutorialCompletion.tutorialFinished) {
     // The recovered rental gate explicitly requires both level 4 and a finished tutorial.
     // GetPlayerData must not issue a valuable free trial to an unfinished account even if a
     // modified/debug client has raised its visible level. Remove any legacy borrowed row too.

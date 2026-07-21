@@ -76,6 +76,13 @@ test("rental generation requires durable tutorial completion even at an eligible
   assert.equal(result.state, unfinished);
   assert.equal(result.rental, undefined);
   assert.equal(result.bootOffer, undefined);
+
+  const corrupt = fundedState();
+  corrupt.tutorialFinished = "false" as unknown as boolean;
+  assert.throws(
+    () => ensureRentalOfferState(corrupt, "corrupt-rental", 50, NOW),
+    /Stored tutorial completion state is invalid/,
+  );
 });
 
 test("ineligible account without a rental remains a no-write boot path", () => {
