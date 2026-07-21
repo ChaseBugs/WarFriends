@@ -10,6 +10,7 @@ import {
   type PlayerDocument,
   type SquadDocument,
   type SquadWarEntry,
+  type SquadWarMemberScore,
   type SquadWarRoundDocument,
   type SquadWarSeasonDocument,
 } from "../db";
@@ -458,22 +459,13 @@ export async function recordConfirmedSquadWarProgress(
   const entry = round.entries[entryIndex]!;
   const rosterMember = squad.members.find((member) => member.playerId === playerId);
   if (!rosterMember) return "not_member";
-  const memberIndex = entry.members.findIndex((member) => member.playerId === playerId);
-  const members = entry.members.map((member) => ({ ...member }));
-  if (memberIndex >= 0) members[memberIndex]!.score += confirmedPoints;
-  else {
-    // The recovered leave/join warning states that a player receives no first-week Squad War
-    // reward in the new squad. Their confirmed win still helps the squad's shared placement, but
-    // the durable false flag prevents settlement from sending a personal type-9 reward.
-    members.push({ playerId, name: rosterMember.name, score: confirmedPoints, rewardEligible: false });
-  }
+  const updatedEntry = addConfirmedSquadWarScoreState(
+    entry,
+    { playerId, name: rosterMember.name },
+    confirmedPoints,
+  );
   const entries = round.entries.map((candidate, index) => index === entryIndex
-    ? {
-      ...candidate,
-      score: candidate.score + confirmedPoints,
-      wins: candidate.wins + 1,
-      members,
-    }
+    ? updatedEntry
     : candidate);
   const update = await squadWarRounds().updateOne(
     { roundId, status: "active", revision: round.revision },
@@ -482,6 +474,63 @@ export async function recordConfirmedSquadWarProgress(
   );
   if (update.modifiedCount !== 1) throw new Error(`Concurrent Squad Wars score rejected ${roundId}.`);
   return "recorded";
+}
+
+/**
+ * Add one server-confirmed ranked win to a Squad War entry without mutating the round snapshot.
+ *
+ * Squad and member totals later determine placement, personal ordering, Gold, and promotion. All
+ * persisted counters therefore have to be safe before the enclosing match transaction publishes
+ * its terminal receipt. A damaged counter fails the entire transaction and remains retryable; it
+ * is never repaired by dropping points or clamping an unknown historical value.
+ */
+export function addConfirmedSquadWarScoreState(
+  entry: SquadWarEntry,
+  player: Pick<SquadWarMemberScore, "playerId" | "name">,
+  confirmedPoints: number,
+): SquadWarEntry {
+  if (!Number.isSafeInteger(confirmedPoints) || confirmedPoints <= 0
+    || !Number.isSafeInteger(entry.baseScore) || entry.baseScore < 0
+    || !Number.isSafeInteger(entry.score) || entry.score < 0
+    || !Number.isSafeInteger(entry.wins) || entry.wins < 0
+    || entry.baseScore > Number.MAX_SAFE_INTEGER - entry.score
+    || entry.baseScore + entry.score > Number.MAX_SAFE_INTEGER - confirmedPoints
+    || entry.score > Number.MAX_SAFE_INTEGER - confirmedPoints
+    || entry.wins === Number.MAX_SAFE_INTEGER
+    || !Array.isArray(entry.members)) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Stored Squad Wars score is invalid.");
+  }
+  const members = entry.members.map((member) => {
+    if (!member.playerId || typeof member.name !== "string"
+      || !Number.isSafeInteger(member.score) || member.score < 0
+      || (member.rewardEligible !== undefined && typeof member.rewardEligible !== "boolean")) {
+      throw new ApiError(ApiErrorCode.InternalServerError, "Stored Squad Wars member score is invalid.");
+    }
+    return { ...member };
+  });
+  if (new Set(members.map((member) => member.playerId)).size !== members.length) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Stored Squad Wars member roster is duplicated.");
+  }
+
+  const memberIndex = members.findIndex((member) => member.playerId === player.playerId);
+  if (memberIndex >= 0) {
+    const member = members[memberIndex]!;
+    if (member.score > Number.MAX_SAFE_INTEGER - confirmedPoints) {
+      throw new ApiError(ApiErrorCode.InternalServerError, "Stored Squad Wars member score overflowed.");
+    }
+    member.score += confirmedPoints;
+  } else {
+    // The recovered leave/join warning states that a player receives no first-week Squad War
+    // reward in the new squad. Their confirmed win still helps the squad's shared placement, but
+    // the durable false flag prevents settlement from sending a personal type-9 reward.
+    members.push({ ...player, score: confirmedPoints, rewardEligible: false });
+  }
+  return {
+    ...entry,
+    score: entry.score + confirmedPoints,
+    wins: entry.wins + 1,
+    members,
+  };
 }
 
 /**

@@ -117,6 +117,18 @@ export function rankSquadWarDivision(
   values: readonly SquadWarRankedValue[],
   level: number,
 ): SquadWarPlacement[] {
+  // Placement determines both currency and promotion. A NaN score makes Array.sort treat the
+  // comparator result as zero, silently turning MongoDB input order into reward authority. Reject
+  // malformed totals before sorting rather than fabricating a deterministic but incorrect rank.
+  if (values.some((value) => (
+    !Number.isSafeInteger(value.baseScore)
+    || value.baseScore < 0
+    || !Number.isSafeInteger(value.score)
+    || value.score < 0
+    || value.baseScore > Number.MAX_SAFE_INTEGER - value.score
+  ))) {
+    throw new Error("Stored Squad Wars placement score is invalid.");
+  }
   const ranked = [...values].sort((left, right) =>
     (right.baseScore + right.score) - (left.baseScore + left.score)
     || left.squadId.localeCompare(right.squadId, "en"));

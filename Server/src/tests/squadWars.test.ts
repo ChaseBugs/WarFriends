@@ -9,6 +9,7 @@ import {
   squadWarWindowAt,
 } from "../services/squadWarContract";
 import {
+  addConfirmedSquadWarScoreState,
   requireSquadWarSettlementAvailability,
   requireSquadWarScoringEntryIndex,
   squadWarRewardEligiblePlayerIds,
@@ -65,6 +66,55 @@ test("Squad Wars placement is deterministic and applies promotion or demotion", 
   assert.equal(squadWarNextLevel(1, 7, 4), 4, "small divisions never change level");
   assert.equal(squadWarNextLevel(1, 50, 8), 8, "top level cannot promote");
   assert.equal(squadWarNextLevel(50, 50, 1), 1, "bottom level cannot demote");
+});
+
+test("Squad Wars placement rejects non-finite or overflowing totals", () => {
+  assert.throws(
+    () => rankSquadWarDivision([{ squadId: "Alpha", baseScore: 0, score: Number.NaN }], 1),
+    /placement score is invalid/,
+  );
+  assert.throws(
+    () => rankSquadWarDivision([{
+      squadId: "Alpha",
+      baseScore: Number.MAX_SAFE_INTEGER,
+      score: 1,
+    }], 1),
+    /placement score is invalid/,
+  );
+});
+
+test("confirmed Squad War scoring validates squad and member counters before addition", () => {
+  const entry = {
+    squadId: "Alpha",
+    squadIcon: "menu-squad-1",
+    baseScore: 10,
+    score: 5,
+    wins: 1,
+    members: [{ playerId: "player-1", name: "Player", score: 5, rewardEligible: true }],
+  };
+  const updated = addConfirmedSquadWarScoreState(entry, { playerId: "player-1", name: "Player" }, 3);
+  assert.equal(updated.score, 8);
+  assert.equal(updated.wins, 2);
+  assert.equal(updated.members[0]!.score, 8);
+  assert.equal(entry.score, 5);
+  assert.equal(entry.members[0]!.score, 5);
+
+  assert.throws(
+    () => addConfirmedSquadWarScoreState(
+      { ...entry, members: [{ ...entry.members[0]!, score: Number.NaN }] },
+      { playerId: "player-1", name: "Player" },
+      3,
+    ),
+    /member score is invalid/,
+  );
+  assert.throws(
+    () => addConfirmedSquadWarScoreState(
+      { ...entry, baseScore: Number.MAX_SAFE_INTEGER, score: 0 },
+      { playerId: "player-1", name: "Player" },
+      1,
+    ),
+    /score is invalid/,
+  );
 });
 
 test("Squad Wars reconstructed schedule emits client-parseable stable round IDs", () => {

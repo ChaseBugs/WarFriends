@@ -233,6 +233,8 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   claimed once through action `91`. Leaving or being kicked irrevocably forfeits that round's
   personal reward, while late joiners may add confirmed placement score but receive no first-week
   reward. Settlement
+  validates every squad/member score and addition as a nonnegative safe integer before the terminal
+  PvP receipt commits, and placement rejects non-finite or overflowing totals before sorting.
   also completes the exact 4.9.5 group-19 first-Squad-War achievement for each eligible result
   recipient in the same transaction. Its single 5,000-WarBucks tier is replay-idempotent. The
   weekly Monday calendar is explicit reconstruction policy because neither recovered APK contains the
