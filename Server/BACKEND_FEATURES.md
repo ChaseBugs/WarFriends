@@ -84,7 +84,14 @@ malformed Dates reach validation and cannot silently reopen access through datab
 Redis-enabled deployments now use one atomic Lua operation for cross-node queue deduplication,
 timeout-based stale cleanup, a bounded widening-league candidate scan, pairing, and removal. Failed
 MongoDB admission restores the whole candidate batch atomically without immediately re-pairing the
-same two accounts. Redis-disabled or unavailable deployments retain the tested in-memory queue.
+same two accounts. Every enqueue and complete restoration batch now proves the exact four-field
+queue snapshot before its first mutation: a bounded player ID, finite nonnegative Army Power whose
+recovered signed-client projection fits, one real Bronze3-through-Champion tier, and a positive safe
+millisecond enqueue clock. The Lua candidate reader repeats that proof, binds hash identity/time to
+the sorted-set member/score, uses protected JSON decoding, and atomically removes a malformed hash
+and score instead of letting one transient row abort matching for healthy players. MongoDB profile
+reload and transactional admission remain the final gameplay authority. Redis-disabled or
+unavailable deployments retain the same validated in-memory queue.
 
 `MatchFound` can cross backend nodes through a size/type-bounded pub/sub instruction. The receiving
 node never trusts that instruction as match authority: it reloads MongoDB and proves that the local

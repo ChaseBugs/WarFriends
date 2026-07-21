@@ -1,5 +1,5 @@
 import logger from "../utils/logger";
-import { RedisKeys } from "../constants";
+import { League, RedisKeys } from "../constants";
 import { isRedisAvailable, redisEval } from "../redis";
 import { config } from "../config";
 
@@ -18,6 +18,8 @@ export interface QueueEntry {
 }
 
 const queue: QueueEntry[] = [];
+const QUEUE_ENTRY_KEYS = new Set(["playerId", "armyPower", "leagueTier", "enqueuedAt"]);
+const MAX_CLIENT_INTEGER = 2_147_483_647;
 
 /** How far apart two players' league tiers may be; widens with wait time. */
 function leagueWindow(waitedMs: number): number {
@@ -46,8 +48,10 @@ function bestOpponent(entry: QueueEntry, now: number): number {
  * opponent's id is returned (the caller creates the match). Otherwise returns null (queued).
  */
 export function enqueue(entry: Omit<QueueEntry, "enqueuedAt">): string | null {
-  remove(entry.playerId); // dedupe re-queues
-  const full: QueueEntry = { ...entry, enqueuedAt: Date.now() };
+  // Validate before deduplication: an invalid retry must not remove an already valid search owned
+  // by the same player ID and thereby turn malformed transport input into queue mutation.
+  const full = validatedQueueEntry({ ...entry, enqueuedAt: Date.now() });
+  remove(full.playerId); // dedupe re-queues
   const opponentIndex = bestOpponent(full, full.enqueuedAt);
   if (opponentIndex >= 0) {
     const opponent = queue.splice(opponentIndex, 1)[0]!;
@@ -75,9 +79,12 @@ export function remove(playerId: string): boolean {
  * ordinary selection, while normal queue timers continue to bound the restored wait.
  */
 export function restoreWaiting(entries: ReadonlyArray<Omit<QueueEntry, "enqueuedAt">>, now = Date.now()): number {
-  const unique = [...new Map(entries.map((entry) => [entry.playerId, entry])).values()];
+  // Build and prove the complete batch before removing any current searches. Durable admission can
+  // fail after two candidates were removed; restoration must be all-or-nothing at this boundary.
+  const validated = entries.map((entry) => validatedQueueEntry({ ...entry, enqueuedAt: now }));
+  const unique = [...new Map(validated.map((entry) => [entry.playerId, entry])).values()];
   for (const entry of unique) remove(entry.playerId);
-  for (const entry of unique) queue.push({ ...entry, enqueuedAt: now });
+  for (const entry of unique) queue.push(entry);
   if (unique.length > 0) {
     logger.match.event("Matchmaking entries restored after admission failure", {
       playerIds: unique.map((entry) => entry.playerId),
@@ -124,16 +131,61 @@ for index = 1, #waiting, 2 do
   if not candidateJson then
     redis.call('ZREM', queueKey, candidateId)
   else
-    local candidate = cjson.decode(candidateJson)
-    local candidateWindow = 1 + math.floor(math.max(0, now - enqueuedAt) / 10000)
-    if math.abs(tonumber(candidate.leagueTier) - leagueTier) <= candidateWindow then
-      local powerDifference = math.abs(tonumber(candidate.armyPower) - armyPower)
-      if not bestId or powerDifference < bestPower
-        or (powerDifference == bestPower and enqueuedAt < bestTime)
-        or (powerDifference == bestPower and enqueuedAt == bestTime and candidateId < bestId) then
-        bestId = candidateId
-        bestPower = powerDifference
-        bestTime = enqueuedAt
+    -- Redis is transient coordination, not gameplay authority, but one damaged hash value must not
+    -- abort this atomic script and deny matching to every healthy row behind it. Mirror Node's exact
+    -- four-field QueueEntry proof here because the candidate is consumed before control returns to
+    -- Node. Invalid rows are removed from both structures and require their owner to enqueue again.
+    local decoded, candidate = pcall(cjson.decode, candidateJson)
+    local candidateValid = decoded and type(candidate) == 'table'
+    local fieldCount = 0
+    if candidateValid then
+      for key, _ in pairs(candidate) do
+        fieldCount = fieldCount + 1
+        if key ~= 'playerId' and key ~= 'armyPower' and key ~= 'leagueTier' and key ~= 'enqueuedAt' then
+          candidateValid = false
+        end
+      end
+    end
+    local candidatePower = candidateValid and tonumber(candidate.armyPower) or nil
+    local candidateTier = candidateValid and tonumber(candidate.leagueTier) or nil
+    local candidateTime = candidateValid and tonumber(candidate.enqueuedAt) or nil
+    candidateValid = candidateValid
+      and fieldCount == 4
+      and type(candidate.playerId) == 'string'
+      and candidate.playerId == candidateId
+      and string.len(candidate.playerId) > 0
+      and string.len(candidate.playerId) <= 128
+      and type(candidate.armyPower) == 'number'
+      and candidatePower ~= nil
+      and candidatePower == candidatePower
+      and candidatePower >= 0
+      and candidatePower < math.huge
+      and math.floor(candidatePower) <= 2147483647
+      and type(candidate.leagueTier) == 'number'
+      and candidateTier ~= nil
+      and candidateTier == math.floor(candidateTier)
+      and candidateTier >= 1
+      and candidateTier <= 16
+      and type(candidate.enqueuedAt) == 'number'
+      and candidateTime ~= nil
+      and candidateTime == math.floor(candidateTime)
+      and candidateTime > 0
+      and candidateTime <= 9007199254740991
+      and candidateTime == enqueuedAt
+    if not candidateValid then
+      redis.call('ZREM', queueKey, candidateId)
+      redis.call('HDEL', entriesKey, candidateId)
+    else
+      local candidateWindow = 1 + math.floor(math.max(0, now - enqueuedAt) / 10000)
+      if math.abs(candidateTier - leagueTier) <= candidateWindow then
+        local powerDifference = math.abs(candidatePower - armyPower)
+        if not bestId or powerDifference < bestPower
+          or (powerDifference == bestPower and enqueuedAt < bestTime)
+          or (powerDifference == bestPower and enqueuedAt == bestTime and candidateId < bestId) then
+          bestId = candidateId
+          bestPower = powerDifference
+          bestTime = enqueuedAt
+        end
       end
     end
   end
@@ -170,16 +222,27 @@ return #entries
 export function validQueueEntry(value: unknown): value is QueueEntry {
   if (!value || typeof value !== "object") return false;
   const entry = value as Partial<QueueEntry>;
-  return typeof entry.playerId === "string"
+  const keys = Object.keys(entry);
+  const armyPowerProjection = Math.trunc(Number(entry.armyPower));
+  return keys.length === QUEUE_ENTRY_KEYS.size
+    && keys.every((key) => QUEUE_ENTRY_KEYS.has(key))
+    && typeof entry.playerId === "string"
     && entry.playerId.length > 0
     && entry.playerId.length <= 128
     && Number.isFinite(entry.armyPower)
     && Number(entry.armyPower) >= 0
+    && Number.isSafeInteger(armyPowerProjection)
+    && armyPowerProjection <= MAX_CLIENT_INTEGER
     && Number.isInteger(entry.leagueTier)
-    && Number(entry.leagueTier) >= 0
-    && Number(entry.leagueTier) <= 100
-    && Number.isFinite(entry.enqueuedAt)
+    && Number(entry.leagueTier) >= League.Bronze3
+    && Number(entry.leagueTier) <= League.Champion
+    && Number.isSafeInteger(entry.enqueuedAt)
     && Number(entry.enqueuedAt) > 0;
+}
+
+function validatedQueueEntry(value: unknown): QueueEntry {
+  if (!validQueueEntry(value)) throw new Error("Matchmaking queue entry is invalid.");
+  return value;
 }
 
 /** Build the complete Redis hash payload; restored snapshots must retain a valid enqueue clock. */
@@ -187,8 +250,8 @@ export function buildRestoredQueueEntries(
   entries: ReadonlyArray<Omit<QueueEntry, "enqueuedAt">>,
   now: number,
 ): QueueEntry[] {
-  return [...new Map(entries.map((entry) => [entry.playerId, entry])).values()]
-    .map((entry) => ({ ...entry, enqueuedAt: now }));
+  const validated = entries.map((entry) => validatedQueueEntry({ ...entry, enqueuedAt: now }));
+  return [...new Map(validated.map((entry) => [entry.playerId, entry])).values()];
 }
 
 /**
@@ -199,14 +262,15 @@ export function buildRestoredQueueEntries(
 export async function enqueueForHub(entry: Omit<QueueEntry, "enqueuedAt">): Promise<string | null> {
   if (!isRedisAvailable()) return enqueue(entry);
   const now = Date.now();
-  const encoded = JSON.stringify({ ...entry, enqueuedAt: now });
+  const full = validatedQueueEntry({ ...entry, enqueuedAt: now });
+  const encoded = JSON.stringify(full);
   const result = await redisEval(
     enqueueScript,
     [RedisKeys.matchmakingQueue, RedisKeys.matchmakingEntries],
     [
-      entry.playerId,
-      entry.armyPower,
-      entry.leagueTier,
+      full.playerId,
+      full.armyPower,
+      full.leagueTier,
       now,
       encoded,
       500,
@@ -219,8 +283,8 @@ export async function enqueueForHub(entry: Omit<QueueEntry, "enqueuedAt">): Prom
   if (typeof result !== "string") return null;
   try {
     const opponent = JSON.parse(result) as unknown;
-    if (!validQueueEntry(opponent) || opponent.playerId === entry.playerId) return null;
-    logger.match.event("Distributed matchmaking paired", { a: entry.playerId, b: opponent.playerId });
+    if (!validQueueEntry(opponent) || opponent.playerId === full.playerId) return null;
+    logger.match.event("Distributed matchmaking paired", { a: full.playerId, b: opponent.playerId });
     return opponent.playerId;
   } catch {
     return null;
@@ -247,14 +311,15 @@ export async function restoreWaitingForHub(
   entries: ReadonlyArray<Omit<QueueEntry, "enqueuedAt">>,
   now = Date.now(),
 ): Promise<number> {
-  const unique = [...new Map(entries.map((entry) => [entry.playerId, entry])).values()];
-  if (!isRedisAvailable()) return restoreWaiting(unique, now);
-  const distributedEntries = buildRestoredQueueEntries(unique, now);
+  // Validate every submitted snapshot before deduplicating. Otherwise an invalid earlier duplicate
+  // could be hidden by a later valid value and partially trusted at a recovery boundary.
+  if (!isRedisAvailable()) return restoreWaiting(entries, now);
+  const distributedEntries = buildRestoredQueueEntries(entries, now);
   const result = await redisEval(
     restoreScript,
     [RedisKeys.matchmakingQueue, RedisKeys.matchmakingEntries],
     [JSON.stringify(distributedEntries), now],
   );
-  if (result === undefined) return restoreWaiting(unique, now);
+  if (result === undefined) return restoreWaiting(distributedEntries, now);
   return Number.isInteger(Number(result)) ? Number(result) : 0;
 }

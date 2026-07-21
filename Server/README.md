@@ -458,7 +458,14 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   writes status, so a narrow projection cannot conceal malformed credential, profile, or progression
   authority and then normalize the damaged account through the `InGame` reservation.
   With Redis available, queue deduplication, stale cleanup, bounded candidate selection, pairing,
-  removal, and failed-admission restoration execute atomically across backend nodes. `MatchFound`
+  removal, and failed-admission restoration execute atomically across backend nodes. Queue writes
+  first validate the exact four-field snapshot, including bounded identity, finite nonnegative
+  signed-client-safe Army Power projection, a real Bronze3-through-Champion tier, and a positive
+  safe enqueue clock; complete recovery batches validate before deduplication or mutation. The Lua
+  reader uses protected JSON decoding, proves the same field/type/range contract, binds the payload
+  identity and timestamp to its sorted-set member and score, and removes both halves of a malformed
+  transient row so it cannot block every healthy search behind it. MongoDB profile reload and the
+  transactional two-player reservation remain final admission authority. `MatchFound`
   can be relayed to the opponent's node through a bounded pub/sub instruction, but that receiving
   node re-reads MongoDB and proves active-match membership before sending anything to its socket.
   Without Redis, the same code retains the verified process-local queue and direct delivery path.
