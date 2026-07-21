@@ -79,6 +79,21 @@ test("disconnect keeps the authorized room available for a legitimate reconnect"
   assert.equal(manager.relay("m4", "p1", { Type: "after-reconnect" }), true);
 });
 
+test("a pre-start disconnect cannot make the remaining local socket look like a live pair", () => {
+  const manager = new RoomManager();
+  assert.ok(manager.join("stale-join", "p1", "c1", ["p1", "p2"]));
+  assert.deepEqual(manager.evictClient("c1"), {
+    matchId: "stale-join",
+    playerId: "p1",
+    opponentId: "p2",
+    wasActive: false,
+  });
+
+  const remaining = manager.join("stale-join", "p2", "c2", ["p1", "p2"]);
+  assert.equal(remaining?.state, "waiting");
+  assert.equal(remaining?.participants.size, 1);
+});
+
 test("CardPlayed delivery retries only when durable evidence was not delivered before reconnect", () => {
   const manager = new RoomManager();
   const sent: Array<{ clientId: string; envelope: unknown }> = [];

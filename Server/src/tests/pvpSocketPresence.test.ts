@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   claimPvpSocket,
+  combinePvpParticipantLiveness,
   isUnidentifiedPvpSocket,
   parsePvpSocketLivenessObservation,
   pvpSocketOwner,
@@ -56,4 +57,12 @@ test("disconnect settlement accepts only an exact expiring socket-owner observat
       "malformed or non-expiring liveness must remain unknown",
     );
   }
+});
+
+test("room activation requires one definite live observation for each assigned socket", () => {
+  assert.equal(combinePvpParticipantLiveness([true, true]), true);
+  assert.equal(combinePvpParticipantLiveness([true, false]), false);
+  assert.equal(combinePvpParticipantLiveness([null, false]), false);
+  assert.equal(combinePvpParticipantLiveness([true, null]), null);
+  assert.equal(combinePvpParticipantLiveness([]), null);
 });

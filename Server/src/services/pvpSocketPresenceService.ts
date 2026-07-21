@@ -107,3 +107,32 @@ export async function isPvpPlayerConnected(playerId: string): Promise<boolean | 
   const result = await redisEval(observePresenceScript, [RedisKeys.socketOfPlayer(playerId)], []);
   return parsePvpSocketLivenessObservation(result);
 }
+
+/**
+ * Combine one complete set of participant-route observations without converting uncertainty into
+ * authority. A definite missing route is enough to prove that the pair is not currently live;
+ * otherwise any malformed/unavailable observation keeps the result unknown.
+ */
+export function combinePvpParticipantLiveness(
+  observations: readonly (boolean | null)[],
+): boolean | null {
+  if (observations.length === 0) return null;
+  if (observations.some((observation) => observation === false)) return false;
+  if (observations.some((observation) => observation === null)) return null;
+  return true;
+}
+
+/**
+ * Prove that every assigned participant still owns an expiring Redis socket route immediately
+ * before MatchStart fan-out. Durable joinedPlayerIds records admission attempts, not current
+ * transport presence, so it cannot by itself authorize gameplay after a pre-start disconnect.
+ */
+export async function arePvpParticipantsConnected(
+  playerIds: readonly string[],
+): Promise<boolean | null> {
+  const uniquePlayerIds = [...new Set(playerIds)];
+  if (uniquePlayerIds.length !== 2 || uniquePlayerIds.length !== playerIds.length) return null;
+  return combinePvpParticipantLiveness(
+    await Promise.all(uniquePlayerIds.map((playerId) => isPvpPlayerConnected(playerId))),
+  );
+}

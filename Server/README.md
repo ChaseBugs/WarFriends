@@ -486,7 +486,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   only then attaches the socket. A contradictory post-write local interleaving cancels and releases
   the pair rather than preserving a durable started room with no matching transient authority. The
   activating handler sends `MatchJoined` before local `MatchStart` fan-out, matching the distributed
-  transport and preventing gameplay from starting ahead of its own admission acknowledgement.
+  transport and preventing gameplay from starting ahead of its own admission acknowledgement. A
+  pre-start disconnect may leave an idempotent durable join entry, so the activation winner also
+  requires both exact local room participants before fan-out; a one-socket activation is cancelled
+  atomically and both profiles are released.
   Match rows record their coordinator node, whose renewable Redis heartbeat separates crashed-room
   orphans from live peer-owned matches. When Redis coordination is selected, startup must commit
   that node's first heartbeat before it may create any durable match naming the owner. Startup and
@@ -496,7 +499,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   missing tuple is dead, and malformed, non-expiring, overlong, or incoherent state is unknown.
   Distributed `JoinMatch` writes authenticated participant membership idempotently to MongoDB. The
   request that atomically completes the assigned pair writes `roomStartedAt` once and fans a
-  MongoDB-validated `MatchStart` to both nodes; late join-timeout callbacks cannot cancel it.
+  MongoDB-validated `MatchStart` to both nodes only after both assigned expiring Redis socket routes
+  are definitely present. A missing or unknown route cancels that unproven activation without
+  rewards, preventing stale pre-start `joinedPlayerIds` from starting one client; late join-timeout
+  callbacks cannot cancel a separately proven live activation.
   In-match fan-out is source-bound and requires both durable joins. Card activations store ordered
   evidence separately from the successful live-delivery receipt, allowing a failed handoff retry
   without duplicating an already delivered effect; receiving nodes independently require that same

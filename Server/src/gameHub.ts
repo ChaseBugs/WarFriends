@@ -57,6 +57,7 @@ import {
   PVP_FANOUT_REDIS_CHANNEL,
 } from "./services/pvpFanoutService";
 import {
+  arePvpParticipantsConnected,
   claimPvpSocket,
   isUnidentifiedPvpSocket,
   isPvpPlayerConnected,
@@ -1008,6 +1009,24 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
           }
         }
         if (joined.activatedByCaller) {
+          const assignedPlayerIds = joined.match.players.map((participant) => participant.playerId);
+          const activationPresence = await arePvpParticipantsConnected(assignedPlayerIds);
+          if (activationPresence !== true) {
+            // joinedPlayerIds is intentionally durable so a normal reconnect is idempotent, but a
+            // pre-start close can leave an old join behind. The request that wins roomStartedAt
+            // must therefore prove both renewable Redis routes before it tells either client to
+            // begin gameplay. Unknown coordinator state fails closed just like a missing route.
+            const cancelled = await cancelMatch(p.MatchId, "room_activation_presence_unproven");
+            if (cancelled) {
+              await broadcastDistributedMatch(p.MatchId, assignedPlayerIds, {
+                Type: "MatchEnded",
+                Payload: { MatchId: p.MatchId, Reason: "ActivationPresenceUnproven" },
+              });
+            }
+            clearMatchJoinTimer(p.MatchId);
+            clearMatchDisconnectTimers(p.MatchId);
+            return;
+          }
           const started: ClientEnvelope = { Type: "MatchStart", Payload: { MatchId: p.MatchId } };
           // The compare-and-set winner emits exactly one start instruction per assigned player.
           // Same-node sockets receive it directly; remote nodes revalidate roomStartedAt from
@@ -1069,6 +1088,23 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
         Payload: { MatchId: p.MatchId, State: room.state, Participants: joined.joinedCount },
       });
       if (joined.activatedByCaller) {
+        if (room.state !== "active") {
+          // A player may have joined durably and then closed before the opponent arrived. That old
+          // joinedPlayerIds entry can win roomStartedAt, while the process-local registry correctly
+          // contains only the remaining socket. Cancel the unproven activation instead of sending
+          // MatchStart to one player and leaving both profiles trapped in an unusable active row.
+          const cancelled = await cancelMatch(p.MatchId, "room_activation_presence_unproven");
+          if (cancelled) {
+            roomManager.broadcast(p.MatchId, {
+              Type: "MatchEnded",
+              Payload: { MatchId: p.MatchId, Reason: "ActivationPresenceUnproven" },
+            });
+          }
+          clearMatchJoinTimer(p.MatchId);
+          clearMatchDisconnectTimers(p.MatchId);
+          roomManager.finish(p.MatchId);
+          return;
+        }
         // Keep the same ordering as distributed rooms: the socket that completed durable
         // admission receives MatchJoined first, then both assigned sockets receive MatchStart.
         roomManager.broadcast(p.MatchId, { Type: "MatchStart", Payload: { MatchId: p.MatchId } });
