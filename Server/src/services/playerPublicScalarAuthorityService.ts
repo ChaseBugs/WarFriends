@@ -1,5 +1,6 @@
 import type { DatabasePlayerDTO } from "../dtos";
 import { playerLevelDefinition } from "./levelProgressionService";
+import { validatedRenameCount } from "./playerRenameAuthorityService";
 
 const MAX_CLIENT_INT = 2_147_483_647;
 const WAR_ARENA_CROWN_TYPES = new Set(["", "bronze", "silver", "gold", "flawless"]);
@@ -40,6 +41,11 @@ export function validatePlayerPublicScalarAuthority(player: DatabasePlayerDTO): 
   if (typeof player.awaitingSquadMember !== "boolean") {
     throw new Error("Stored awaiting-squad-member state is invalid.");
   }
+  // RenameCount is private PlayerAnalytics data, but it lives inside the same durable DTO and its
+  // signed shift/multiply result selects the next Gold debit. Prove it on every shared account
+  // read so an unrelated heartbeat, device update, or gameplay write cannot carry malformed price
+  // authority forward until the narrower rename or boot handler finally notices it.
+  validatedRenameCount(player.renameCount);
   // `GetRealStatus` subtracts this recovered signed-int Unix second from server time. A negative,
   // fractional, non-finite, or wider value can keep a stale player online through overflow-like
   // JavaScript behavior even though the stock client could never represent the durable value.

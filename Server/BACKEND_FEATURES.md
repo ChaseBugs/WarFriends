@@ -305,9 +305,10 @@ Arena run appear finished, make an achievement tier appear complete, or unlock a
 - Squad-creation history must keep its linear `(count + 1) * 25` WarBucks price inside the
   recovered client's signed integer before mutation or boot; wallet, revision, and the next count
   are validated before the transactional squad/debit write.
-- Profile-owned rename count must remain 0-29 for price, recovery, mutation, and PlayerAnalytics
-  boot. The next count, Gold wallet, and progression revision validate before the atomic rename so
-  count 29 cannot publish count 30 and enter the client's signed shift/multiply overflow.
+- Profile-owned rename count must remain 0-29 at the shared account boundary before authentication,
+  gameplay use, unrelated profile writes, price, recovery, mutation, or PlayerAnalytics boot. The
+  next count, Gold wallet, and progression revision validate before the atomic rename so count 29
+  cannot publish count 30 and enter the client's signed shift/multiply overflow.
 - One-time `collectedRewards` markers must be a bounded dictionary whose present values are exactly
   integer `1` before migration, grant/replay, boot, or shared progression publication. Legacy IDs remain preserved, but malformed
   values cannot split the client's key-presence decision from backend eligibility.

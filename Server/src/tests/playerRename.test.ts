@@ -115,5 +115,8 @@ test("PlayerAnalyticsData restores validated rename count for the doubling price
   assert.equal(analytics.renameCount, 2);
 
   player.player.renameCount = 30;
-  assert.throws(() => buildPlayerData(player, NOW), /Stored rename count is invalid/);
+  // Full boot projection now crosses the shared account boundary first. Keep this assertion on
+  // the public failure contract while the narrower price/mutation tests above retain the exact
+  // rename-authority diagnostic.
+  assert.throws(() => buildPlayerData(player, NOW), /Stored player public identity is invalid/);
 });

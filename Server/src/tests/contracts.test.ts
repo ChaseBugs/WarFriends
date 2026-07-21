@@ -452,6 +452,17 @@ test("shared profile authority rejects corrupt Player League counters before adm
   }
 });
 
+test("shared profile authority rejects corrupt rename price authority before unrelated writes", () => {
+  for (const renameCount of [Number.NaN, Number.POSITIVE_INFINITY, -1, 1.5, 30]) {
+    const corrupt = contractPlayer();
+    corrupt.player.renameCount = renameCount;
+    assert.throws(
+      () => validatedPlayerProfileLookup(corrupt),
+      /Stored player public identity is invalid/,
+    );
+  }
+});
+
 test("indexed player profile mirrors must match before client-visible projection", () => {
   assert.equal(validatedPlayerProfileLookup(null), null);
   assert.equal(validatedPlayerProfileLookup(contractPlayer())?.id, "player-contract");

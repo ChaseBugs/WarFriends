@@ -704,8 +704,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   intentionally preserved verbatim for review.
 - **Player rename economy**: the first rename remains free and later attempts use the exact
   decoded 4-Gold doubling curve. The profile-owned count is restored through `PlayerAnalyticsData`
-  and validated for price, recovery, mutation, and boot; Gold, revision, and the next count validate
-  before the atomic profile/debit write, so count 29 cannot publish signed-overflowing count 30.
+  and validated at shared account lookup before authentication, gameplay, unrelated profile writes,
+  price, recovery, mutation, and boot; Gold, revision, and the next count validate before the atomic
+  profile/debit write, so count 29 cannot publish signed-overflowing count 30.
 - **Energy economy**: server-owned dog-tag seconds, passive regeneration, atomic
   `PayOneDogTag`, and gold-validated `RefillDogtags` using the recovered 900-second/5-tag
   balancing and refill-price formula. A verified subscription accelerates only the interval
