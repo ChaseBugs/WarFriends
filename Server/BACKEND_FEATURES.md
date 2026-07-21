@@ -129,6 +129,9 @@ monotonic revision before their transaction can publish progression.
 The embedded progression envelope must carry exact schema version 1 at both read and publication
 boundaries. A wholly absent progression may use the deterministic account fallback; a missing,
 malformed, or future version in a present document fails closed until an explicit migration exists.
+The paid-VIP timeline is also validated at those boundaries. Expiry remains the exact recovered
+active-benefit predicate, while its display start must be a nonnegative safe Unix second, equal zero
+when expiry is zero, and never later than a nonzero expiry.
 
 Starter and daily assignments, assignment mega rewards, achievements, reward-bearing inbox
 messages, one-time/tutorial grants, Gold conversion, level rewards, normal/VIP lootbox duplicates,

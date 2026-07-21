@@ -10,7 +10,11 @@ import {
   purchaseVipState,
 } from "../services/vipService";
 import { CARD_CATALOG } from "../services/cardInventoryService";
-import { isVipActiveAt, validatedVipExpiration } from "../services/vipEntitlementService";
+import {
+  isVipActiveAt,
+  validatedVipExpiration,
+  validatedVipTimeline,
+} from "../services/vipEntitlementService";
 
 const NOW = 1_700_000_000;
 
@@ -144,4 +148,23 @@ test("every VIP benefit rejects corrupt or overflowing entitlement deadlines", (
     () => purchaseVipState(overflow, NOW, "VIP_4", 0, 0, () => 0),
     /VIP expiration overflowed/,
   );
+});
+
+test("VIP timeline authority validates display metadata without changing expiry-owned activity", () => {
+  assert.deepEqual(validatedVipTimeline(0, 0), { vipStart: 0, vipExpiration: 0 });
+  assert.deepEqual(validatedVipTimeline(NOW - 10, NOW + 10), {
+    vipStart: NOW - 10,
+    vipExpiration: NOW + 10,
+  });
+  assert.equal(isVipActiveAt(NOW + 10, NOW), true);
+
+  for (const [start, expiration] of [
+    [1, 0],
+    [-1, NOW],
+    [NOW + 1, NOW],
+    [Number.NaN, NOW],
+    [Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY],
+  ]) {
+    assert.throws(() => validatedVipTimeline(start, expiration), /Stored VIP/);
+  }
 });

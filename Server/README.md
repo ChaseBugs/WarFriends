@@ -474,6 +474,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   supported schema version `1` at read and publication boundaries. Only a wholly absent progression
   uses the deterministic account fallback; a missing, malformed, or future embedded version fails
   closed until a versioned migration explicitly understands it.
+- **Paid-VIP timeline authority**: `Vip` expiry remains the recovered active-benefit predicate;
+  `VipStart` is display/reminder metadata. Both are nonnegative safe Unix seconds at shared read and
+  publication boundaries, with exact `0/0` for no entitlement and `VipStart <= Vip` otherwise, so
+  corrupt or inverted duration metadata cannot reach client progress calculations or later writes.
 - **Core progression balance authority**: every persisted progression read and every produced
   mutation state validates Gold, WarBucks, Tickets, Scraps, and level XP before price comparison or
   publication. Safe-integer Gold/WarBucks chargeback debt remains legitimate; Tickets, Scraps, and

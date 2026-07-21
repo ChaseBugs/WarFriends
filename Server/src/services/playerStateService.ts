@@ -13,7 +13,7 @@ import {
   validatedVipLootboxCountdown,
   VIP_LOOTBOX_MATCH_INTERVAL,
 } from "./vipLootboxService";
-import { validatedVipExpiration } from "./vipEntitlementService";
+import { validatedVipTimeline } from "./vipEntitlementService";
 import { validatedSubscription } from "./subscriptionBenefitService";
 import { validatedRentalState } from "./rentalEntitlementService";
 import { validatedBlackMarketOfferState } from "./blackMarketEntitlementService";
@@ -110,10 +110,12 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
     // schema by field presence rather than numeric validity: a canonical NaN/Infinity/partial
     // tuple is damaged authority that downstream boot/economy validators must reject, not a
     // count-only legacy account that this read boundary is allowed to reconstruct.
+    const vip = validatedVipTimeline(state.vipStart, state.vipExpiration ?? player.player.vipExpiration);
     return {
       ...state,
       revision: progressionRevisionForRead(state.revision),
-      vipExpiration: validatedVipExpiration(state.vipExpiration ?? player.player.vipExpiration),
+      vipStart: vip.vipStart,
+      vipExpiration: vip.vipExpiration,
       subscription: validatedSubscription(state.subscription),
       rental: validatedRentalState(state.rental),
       blackMarket: validatedBlackMarketOfferState(state.blackMarket),
@@ -132,6 +134,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
   const refillSeconds = Math.max(1, Math.floor(config.dogTagRefillSeconds));
   const cap = Math.max(1, Math.floor(config.dogTagCap));
   const legacyCount = Math.max(0, Math.floor(state.dogTags ?? cap));
+  const vip = validatedVipTimeline(state.vipStart, state.vipExpiration ?? player.player.vipExpiration);
   return {
     ...state,
     revision: progressionRevisionForRead(state.revision),
@@ -139,7 +142,8 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
     dogTagLastUpdate: state.dogTagLastUpdate || Math.floor(player.createdAt.getTime() / 1000),
     dogTagMax: cap * refillSeconds,
     dogTagRefillSeconds: refillSeconds,
-    vipExpiration: validatedVipExpiration(state.vipExpiration ?? player.player.vipExpiration),
+    vipStart: vip.vipStart,
+    vipExpiration: vip.vipExpiration,
     subscription: validatedSubscription(state.subscription),
     rental: validatedRentalState(state.rental),
     blackMarket: validatedBlackMarketOfferState(state.blackMarket),
