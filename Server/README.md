@@ -933,8 +933,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
 - **Gold-to-WarBucks exchange**: action `221` validates `WarbucksId` against the deployment-owned
   MainScene A/B prefix, debits the exact 50/200/500/1000/3500/7000 Gold row, and multiplies the
   exact row units by the authenticated player's source `CONVERTGOLDTOWARBUCKS` rank value. The
-  wallet and a narrow transport-replay receipt commit atomically. `WARBUCKS_GOLD_VARIANT` defaults
-  to the conservative standard curve because the retired remote experiment selector is absent.
+  wallet and a narrow transport-replay receipt commit atomically. `WARBUCKS_GOLD_VARIANT` is
+  resolved once during module startup as one immutable exact case-sensitive `standard` or `b`
+  literal. Whitespace, alternate case, unknown values, and invalid injected service arguments fail
+  closed rather than being normalized or falling through to the standard curve. It defaults to the
+  conservative standard curve because the retired remote experiment selector is absent.
   Its two-second lost-response receipt is complete private authority: both recovered A/B prefixes
   remain valid across deployment changes, but the ID must map to its exact source Gold price, grant
   and timestamp must be safe, and receipt revision cannot exceed current progression. A malformed

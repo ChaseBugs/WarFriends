@@ -3,6 +3,7 @@ import test from "node:test";
 import { ApiErrorCode } from "../apiErrors";
 import {
   convertGoldToWarBucksState,
+  warBucksGoldVariantPolicy,
 } from "../services/economyService";
 import { playerLevelDefinition } from "../services/levelProgressionService";
 import { createInitialProgression } from "../services/playerStateService";
@@ -11,6 +12,28 @@ import { validatedWarBucksConversionReceipt } from "../services/warBucksConversi
 function funded(gold = 20_000) {
   return { ...createInitialProgression(1_700_000_000), gold };
 }
+
+test("deployment A/B selector is immutable exact startup authority", () => {
+  assert.equal(Object.isFrozen(warBucksGoldVariantPolicy()), true);
+  assert.deepEqual(warBucksGoldVariantPolicy(), { variant: "standard" });
+  assert.deepEqual(warBucksGoldVariantPolicy({ variant: "b" }), { variant: "b" });
+  for (const variant of ["", "Standard", " standard", "b ", "warbucks", null, 0]) {
+    assert.throws(
+      () => warBucksGoldVariantPolicy({ variant }),
+      /WARBUCKS_GOLD_VARIANT must be standard or b/,
+    );
+  }
+  assert.throws(
+    () => convertGoldToWarBucksState(
+      funded(),
+      1_700_000_100,
+      0,
+      "warbucks1",
+      "invalid" as "standard",
+    ),
+    /WARBUCKS_GOLD_VARIANT must be standard or b/,
+  );
+});
 
 test("action 221 uses exact MainScene Gold price and level conversion multiplier", () => {
   assert.equal(playerLevelDefinition(0).convertGoldToWarBucks, 150);

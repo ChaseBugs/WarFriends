@@ -46,11 +46,40 @@ const WARBUCKS_CONVERSIONS: readonly WarBucksConversionDefinition[] = [
 
 const CONVERSION_REPLAY_SECONDS = 2;
 
-function configuredWarBucksVariant(): "standard" | "b" {
-  if (config.warBucksGoldVariant === "standard" || config.warBucksGoldVariant === "b") {
-    return config.warBucksGoldVariant;
+export type WarBucksGoldVariant = "standard" | "b";
+
+export interface WarBucksGoldVariantPolicy {
+  readonly variant: WarBucksGoldVariant;
+}
+
+/**
+ * Validate the deployment replacement for the retired remote A/B assignment.
+ *
+ * Both conversion tables are recovered from MainScene, but the service that assigned a player to
+ * one prefix is gone. The offline server therefore chooses one process-wide variant. Accepting a
+ * trimmed or case-folded value would silently turn malformed operator input into economy authority,
+ * while reading mutable config per request could expose different prices after a process-local
+ * change. Resolve and freeze the exact literal once during module startup.
+ */
+function exactWarBucksGoldVariantPolicy(
+  policy: { readonly variant: unknown },
+): WarBucksGoldVariantPolicy {
+  if (policy.variant === "standard" || policy.variant === "b") {
+    return { variant: policy.variant };
   }
   throw new ApiError(ApiErrorCode.InternalServerError, "WARBUCKS_GOLD_VARIANT must be standard or b.");
+}
+
+const CONFIGURED_WARBUCKS_GOLD_VARIANT_POLICY = Object.freeze(
+  exactWarBucksGoldVariantPolicy({ variant: config.warBucksGoldVariant }),
+);
+
+export function warBucksGoldVariantPolicy(
+  policy?: { readonly variant: unknown },
+): WarBucksGoldVariantPolicy {
+  return policy === undefined
+    ? CONFIGURED_WARBUCKS_GOLD_VARIANT_POLICY
+    : exactWarBucksGoldVariantPolicy(policy);
 }
 
 /**
@@ -66,8 +95,12 @@ export function convertGoldToWarBucksState(
   now: number,
   playerLevelIndex: number,
   requestedId: string,
-  variant = configuredWarBucksVariant(),
+  variant: WarBucksGoldVariant = CONFIGURED_WARBUCKS_GOLD_VARIANT_POLICY.variant,
 ): WarBucksConversionResult {
+  // Validate injected service calls as well as the startup configuration. TypeScript types are not
+  // a runtime boundary, and an unknown string must not fall through the `variant === "b"` branches
+  // and silently receive the standard curve.
+  const selectedVariant = exactWarBucksGoldVariantPolicy({ variant }).variant;
   const currentTime = validatedWarBucksConversionTime(now);
   const prior = validatedWarBucksConversionReceipt(state.warBucksConversion, state.revision);
   if (
@@ -85,13 +118,13 @@ export function convertGoldToWarBucksState(
     };
   }
   const definition = WARBUCKS_CONVERSIONS.find((row) =>
-    requestedId === (variant === "b" ? row.variantId : row.standardId));
+    requestedId === (selectedVariant === "b" ? row.variantId : row.standardId));
   if (!definition) throw new ApiError(ApiErrorCode.UnknownAction, "WarbucksId is not active in the server A/B variant.");
   if (!Number.isSafeInteger(state.gold) || state.gold < definition.goldPrice) {
     throw new ApiError(ApiErrorCode.NotEnoughGoldForWarbucks, "Not enough Gold for this WarBucks conversion.");
   }
   const level = playerLevelDefinition(playerLevelIndex);
-  const units = variant === "b" ? definition.variantUnits : definition.standardUnits;
+  const units = selectedVariant === "b" ? definition.variantUnits : definition.standardUnits;
   const warBucksAdded = units * level.convertGoldToWarBucks;
   if (!Number.isSafeInteger(warBucksAdded) || warBucksAdded <= 0) {
     throw new ApiError(ApiErrorCode.InternalServerError, "WarBucks conversion overflowed.");

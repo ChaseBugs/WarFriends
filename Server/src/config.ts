@@ -101,9 +101,9 @@ export const config = {
   // reconstruction default, while thresholds and rewards below come from MainScene itself.
   starterAssignmentDurationSeconds: Number(process.env.STARTER_ASSIGNMENT_DURATION_SECONDS ?? 604_800),
   // Both MainScene A/B tables are source-exact, but the retired remote experiment chose which
-  // prefix the client displayed. Default to the conservative standard curve; never let the
-  // request choose the more generous variant.
-  warBucksGoldVariant: (process.env.WARBUCKS_GOLD_VARIANT ?? "standard").trim().toLowerCase(),
+  // prefix the client displayed. Preserve the exact operator literal for startup validation;
+  // trimming or case-folding malformed input would silently create different economy authority.
+  warBucksGoldVariant: process.env.WARBUCKS_GOLD_VARIANT ?? "standard",
 
   // Squad events were scheduled by retired live-ops data that is not present in either
   // recovered APK. An empty path keeps action 113 deliberately disabled. Deployments may
