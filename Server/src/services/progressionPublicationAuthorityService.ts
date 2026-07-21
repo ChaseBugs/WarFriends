@@ -21,6 +21,7 @@ import { validatedVipLootboxCountdown } from "./vipLootboxService";
 import { validatedCollectedRewards } from "./oneTimeRewardAuthorityService";
 import { validatedTutorialLifecycleShape } from "./tutorialCompletionAuthorityService";
 import { validatedFeatureIntroductions } from "./featureIntroductionAuthorityService";
+import { validatedSquadCreationsCount } from "./squadCreationAuthorityService";
 
 /**
  * Validate the common authority shared by every full progression-document replacement.
@@ -64,6 +65,8 @@ export function validatedProgressionSuccessor(
   validatedTutorialLifecycleShape(next);
   validatedFeatureIntroductions(current.featureIntroductions);
   validatedFeatureIntroductions(next.featureIntroductions);
+  validatedSquadCreationsCount(current.squadCreationsCount);
+  validatedSquadCreationsCount(next.squadCreationsCount);
   validatedCoreProgressionBalances(current);
   validateProgressionRevisionAdvance(progressionRevisionForRead(current.revision), next.revision);
   validatedCoreProgressionBalances(next);

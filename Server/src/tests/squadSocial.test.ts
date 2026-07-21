@@ -6,7 +6,12 @@ import { DbAction } from "../dbActions";
 import type { PlayerDocument, SquadDocument } from "../db";
 import { newPlayer, newSquad } from "../dtos";
 import { processAssignmentBufferState } from "../services/assignmentService";
-import { createInitialProgression, buildPlayerData } from "../services/playerStateService";
+import {
+  createInitialProgression,
+  buildPlayerData,
+  progressionForPlayer,
+} from "../services/playerStateService";
+import { validatedProgressionSuccessor } from "../services/progressionPublicationAuthorityService";
 import {
   advanceSquadChatCursorState,
   buildDepositWarcardsMessage,
@@ -114,6 +119,28 @@ test("GetPlayerData restores squad analytics through the recovered PlayerAnalyti
 
   player.progression!.squadCreationsCount = Number.POSITIVE_INFINITY;
   assert.throws(() => buildPlayerData(player), /Stored squad creation count is invalid/);
+});
+
+test("shared progression boundaries validate the squad creation price counter", () => {
+  const corruptRead = playerDocument("corrupt-creation-read");
+  corruptRead.progression!.squadCreationsCount = Number.POSITIVE_INFINITY;
+  assert.throws(
+    () => progressionForPlayer(corruptRead),
+    /Stored squad creation count is invalid/,
+  );
+
+  const current = createInitialProgression(NOW);
+  assert.throws(
+    () => validatedProgressionSuccessor(current, {
+      ...current,
+      revision: 1,
+      squadCreationsCount: Number.MAX_SAFE_INTEGER,
+    }),
+    /Stored squad creation count is invalid/,
+  );
+
+  // Missing legacy history is the first-squad state and materializes as zero on every read.
+  assert.equal(progressionForPlayer(playerDocument("legacy-creation-read")).squadCreationsCount, 0);
 });
 
 test("squad event notification uses the message type and numeric suffix parsed by Unity", () => {

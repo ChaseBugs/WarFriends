@@ -117,6 +117,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
   const pvpWinStreak = validatedPvpWinStreakShape(state.pvpWinStreak);
   const tutorialLifecycle = validatedTutorialLifecycleShape(state);
   const featureIntroductions = validatedFeatureIntroductions(state.featureIntroductions);
+  const squadCreationsCount = validatedSquadCreationsCount(state.squadCreationsCount);
   // This is the shared persisted-progression read boundary, not only a boot serializer. Validate
   // wallet/rank balances here so cross-player transactions and ordinary economy actions cannot
   // let NaN/Infinity bypass a `< price` check before reaching a narrower service validator.
@@ -153,6 +154,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
       pvpWinStreak,
       ...tutorialLifecycle,
       featureIntroductions,
+      squadCreationsCount,
     };
   }
 
@@ -187,6 +189,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
     pvpWinStreak,
     ...tutorialLifecycle,
     featureIntroductions,
+    squadCreationsCount,
   };
 }
 
