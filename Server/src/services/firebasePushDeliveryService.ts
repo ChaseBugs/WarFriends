@@ -7,6 +7,7 @@ import {
   type FirebasePushDeliveryDocument,
 } from "../db";
 import logger from "../utils/logger";
+import { serverMetrics } from "./metricsService";
 import {
   attemptOfflineInboxPush,
   invalidFirebaseTokenRetirement,
@@ -201,6 +202,12 @@ async function processDelivery(
     transport,
     pushPolicy,
   );
+  if (result.outcome === "sent") serverMetrics.firebasePushAttempt("delivered");
+  else if (result.outcome === "failed") {
+    serverMetrics.firebasePushAttempt(
+      result.disposition === "invalidToken" ? "invalid_token" : result.disposition,
+    );
+  }
   // The provider call may outlive a lease renewal failure. Fence every durable result after the
   // response so a former worker cannot race the node that has taken over the next sweep.
   await assertOwned();
@@ -215,6 +222,7 @@ async function processDelivery(
       lastDisposition: null,
       terminalReason: null,
     });
+    serverMetrics.firebasePushSuppressed("not_eligible");
     return "delivered";
   }
   if (result.outcome === "not-eligible") {
@@ -227,6 +235,7 @@ async function processDelivery(
       lastDisposition: null,
       terminalReason: "not-eligible",
     });
+    serverMetrics.firebasePushSuppressed("invalid_token");
     return "suppressed";
   }
 
@@ -368,6 +377,7 @@ export async function runFirebasePushDeliverySweep(
       deliveryCollection,
       pushPolicy,
     );
+    serverMetrics.firebasePushRecoveredIntents(recovered);
     await lease.assertOwned();
     const due = await deliveryCollection.find({
       $or: [
@@ -427,6 +437,7 @@ export function startFirebasePushDeliveryScheduler(): NodeJS.Timeout | null {
         });
       }
     }).catch((error: unknown) => {
+      serverMetrics.firebasePushSweepFailed();
       logger.errorWithEmoji("PUSH", "Firebase inbox delivery sweep failed", "SCHEDULER", {
         error: error instanceof Error ? error.message : String(error),
       });

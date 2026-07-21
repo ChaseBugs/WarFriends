@@ -2,6 +2,15 @@ const startedAtSeconds = Math.floor(Date.now() / 1_000);
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "OPTIONS" | "OTHER";
 type StatusClass = "1xx" | "2xx" | "3xx" | "4xx" | "5xx";
+export type FirebasePushAttemptOutcome = "delivered" | "invalid_token" | "transient" | "configuration";
+export type FirebasePushSuppressionReason = "not_eligible" | "invalid_token";
+
+const FIREBASE_PUSH_ATTEMPT_OUTCOMES: readonly FirebasePushAttemptOutcome[] = [
+  "delivered", "invalid_token", "transient", "configuration",
+];
+const FIREBASE_PUSH_SUPPRESSION_REASONS: readonly FirebasePushSuppressionReason[] = [
+  "not_eligible", "invalid_token",
+];
 
 function boundedMethod(method: string): HttpMethod {
   const normalized = method.toUpperCase();
@@ -30,6 +39,14 @@ export class ServerMetrics {
   private websocketConnections = 0;
   private websocketMessages = 0;
   private websocketRateLimited = 0;
+  private readonly firebasePushAttempts = new Map<FirebasePushAttemptOutcome, number>(
+    FIREBASE_PUSH_ATTEMPT_OUTCOMES.map((outcome) => [outcome, 0]),
+  );
+  private readonly firebasePushSuppressions = new Map<FirebasePushSuppressionReason, number>(
+    FIREBASE_PUSH_SUPPRESSION_REASONS.map((reason) => [reason, 0]),
+  );
+  private firebasePushRecovered = 0;
+  private firebasePushSweepFailures = 0;
 
   beginHttp(): void {
     this.httpInFlight += 1;
@@ -57,6 +74,23 @@ export class ServerMetrics {
 
   websocketRejectedByRateLimit(): void {
     this.websocketRateLimited += 1;
+  }
+
+  firebasePushAttempt(outcome: FirebasePushAttemptOutcome): void {
+    this.firebasePushAttempts.set(outcome, (this.firebasePushAttempts.get(outcome) ?? 0) + 1);
+  }
+
+  firebasePushSuppressed(reason: FirebasePushSuppressionReason): void {
+    this.firebasePushSuppressions.set(reason, (this.firebasePushSuppressions.get(reason) ?? 0) + 1);
+  }
+
+  firebasePushRecoveredIntents(count: number): void {
+    if (!Number.isSafeInteger(count) || count < 0) throw new Error("Firebase push recovery count is invalid.");
+    this.firebasePushRecovered += count;
+  }
+
+  firebasePushSweepFailed(): void {
+    this.firebasePushSweepFailures += 1;
   }
 
   render(redisAvailable: boolean): string {
@@ -88,6 +122,20 @@ export class ServerMetrics {
       "# HELP warfriends_websocket_rate_limited_total WebSocket frames rejected by rate policy.",
       "# TYPE warfriends_websocket_rate_limited_total counter",
       `warfriends_websocket_rate_limited_total ${this.websocketRateLimited}`,
+      "# HELP warfriends_firebase_push_attempts_total Firebase provider attempts by bounded outcome.",
+      "# TYPE warfriends_firebase_push_attempts_total counter",
+      ...FIREBASE_PUSH_ATTEMPT_OUTCOMES.map((outcome) =>
+        `warfriends_firebase_push_attempts_total{outcome="${outcome}"} ${this.firebasePushAttempts.get(outcome) ?? 0}`),
+      "# HELP warfriends_firebase_push_suppressed_total Durable push intents suppressed by bounded reason.",
+      "# TYPE warfriends_firebase_push_suppressed_total counter",
+      ...FIREBASE_PUSH_SUPPRESSION_REASONS.map((reason) =>
+        `warfriends_firebase_push_suppressed_total{reason="${reason}"} ${this.firebasePushSuppressions.get(reason) ?? 0}`),
+      "# HELP warfriends_firebase_push_recovered_total Missing post-commit delivery intents recovered from inbox authority.",
+      "# TYPE warfriends_firebase_push_recovered_total counter",
+      `warfriends_firebase_push_recovered_total ${this.firebasePushRecovered}`,
+      "# HELP warfriends_firebase_push_sweep_failures_total Leased Firebase delivery sweeps that failed.",
+      "# TYPE warfriends_firebase_push_sweep_failures_total counter",
+      `warfriends_firebase_push_sweep_failures_total ${this.firebasePushSweepFailures}`,
       "# HELP warfriends_redis_available Whether Redis is currently available to this process.",
       "# TYPE warfriends_redis_available gauge",
       `warfriends_redis_available ${redisAvailable ? 1 : 0}`,

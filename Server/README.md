@@ -164,8 +164,11 @@ same ID while logging only the query-free request path. Async-local context auto
 ID to downstream authentication, database, economy, and gameplay logger helpers across awaited work.
 Deployable Prometheus scrape/rule examples and a Grafana overview live under `ops/`. Alerts cover
 target loss, sustained 5xx/latency/rate-limit pressure, explicitly required Redis loss, repeated
-restarts, and high concurrency; contract tests reject monitoring expressions that reference metrics
-the server does not export.
+restarts, high concurrency, sustained meaningful-volume Firebase retry pressure, and repeated
+Firebase worker failures. Fixed push metrics expose only delivered/invalid-token/transient/configuration
+attempt outcomes, not-eligible/invalid-token suppression reasons, recovered-intent count, and sweep
+failure count; they contain no player, message, or token identity. Contract tests reject monitoring
+expressions that reference metrics the server does not export.
 
 Production MongoDB backups can use `npm run backup:mongodb:offhost`. The command creates plaintext
 only in a unique OS temporary directory, validates the existing dump manifest, and sends an

@@ -81,3 +81,28 @@ groups:
         annotations:
           summary: WarFriends has more than 100 in-flight HTTP requests
           description: One backend target has sustained unusually high request concurrency for ten minutes.
+
+      - alert: WarFriendsFirebasePushRetryPressure
+        expr: |
+          (
+            sum(rate(warfriends_firebase_push_attempts_total{outcome=~"transient|configuration"}[15m]))
+            /
+            clamp_min(sum(rate(warfriends_firebase_push_attempts_total[15m])), 0.001)
+          ) > 0.25
+          and
+          sum(increase(warfriends_firebase_push_attempts_total[15m])) >= 5
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: WarFriends Firebase push retries exceed 25 percent
+          description: At least five provider attempts occurred and retryable or configuration failures remained above 25 percent for fifteen minutes.
+
+      - alert: WarFriendsFirebasePushSweepFailures
+        expr: sum(increase(warfriends_firebase_push_sweep_failures_total[15m])) >= 3
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: WarFriends Firebase delivery worker is repeatedly failing
+          description: Durable Firebase delivery sweeps failed at least three times in fifteen minutes and the signal remained active for five minutes.
