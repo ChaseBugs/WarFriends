@@ -10,6 +10,9 @@ import {
   assertTutorialUnitUpgradeEligible,
   tutorialUnitUpgradeFunding,
 } from "./unitInventoryService";
+import { validatedCollectedRewards } from "./oneTimeRewardAuthorityService";
+
+export { validatedCollectedRewards } from "./oneTimeRewardAuthorityService";
 
 export type OneTimeRewardTrigger = "direct" | "facebook-link";
 
@@ -129,8 +132,8 @@ export function applyOneTimeRewardState(
   parameter?: unknown,
 ): OneTimeRewardResult {
   const id = rewardIdString(rewardId);
-  const collectedRewards = state.collectedRewards ?? {};
-  const collected = collectedRewards[id] === 1;
+  const collectedRewards = validatedCollectedRewards(state.collectedRewards);
+  const collected = Object.prototype.hasOwnProperty.call(collectedRewards, id);
 
   // Tutorial rewards are direct action-161 requests only. Keeping the trigger check here makes
   // it impossible for a future identity-provider path to grant onboarding currency by accident.
@@ -152,6 +155,9 @@ export function applyOneTimeRewardState(
     reward.warBucks ?? 0,
     `One-time reward ${reward.id} WarBucks`,
   );
+  if (!Number.isSafeInteger(state.revision) || state.revision < 0 || state.revision === Number.MAX_SAFE_INTEGER) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "One-time reward progression revision is invalid.");
+  }
   return {
     state: {
       ...state,

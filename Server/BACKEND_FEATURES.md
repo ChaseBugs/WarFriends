@@ -157,6 +157,9 @@ Arena run appear finished, make an achievement tier appear complete, or unlock a
 - Profile-owned rename count must remain 0-29 for price, recovery, mutation, and PlayerAnalytics
   boot. The next count, Gold wallet, and progression revision validate before the atomic rename so
   count 29 cannot publish count 30 and enter the client's signed shift/multiply overflow.
+- One-time `collectedRewards` markers must be a bounded dictionary whose present values are exactly
+  integer `1` before migration, grant/replay, or boot. Legacy IDs remain preserved, but malformed
+  values cannot split the client's key-presence decision from backend eligibility.
 - A current daily-reward calendar must have a real UTC year/month/last-check date and ordered,
   month-bounded unlock/claim cursors before any check, claim, or wire projection.
   Subscription authority must also remain an ordered start/lock/expiry interval; future or inverted

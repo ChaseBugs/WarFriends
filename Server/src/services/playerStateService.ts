@@ -27,6 +27,7 @@ import { validatedPvpWinStreak } from "./pvpWinStreakAuthorityService";
 import { validatedInstantBattleState } from "./instantBattleAuthorityService";
 import { validatedSquadCreationsCount } from "./squadCreationAuthorityService";
 import { validatedRenameCount } from "./playerRenameAuthorityService";
+import { validatedCollectedRewards } from "./oneTimeRewardAuthorityService";
 
 /** Unix seconds are used throughout the recovered Beanstalk protocol. */
 export function unixNow(): number {
@@ -97,7 +98,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
       rental: validatedRentalState(state.rental),
       blackMarket: validatedBlackMarketOfferState(state.blackMarket),
       matchesToNextLootboxes: validatedVipLootboxCountdown(state.matchesToNextLootboxes),
-      collectedRewards: state.collectedRewards ?? {},
+      collectedRewards: validatedCollectedRewards(state.collectedRewards),
       itemInventory: state.itemInventory ?? createInitialItemInventory(),
       visualInventory: state.visualInventory ?? createInitialVisualInventory(),
       cardInventory: state.cardInventory ?? createInitialCardInventory(),
@@ -123,7 +124,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
     rental: validatedRentalState(state.rental),
     blackMarket: validatedBlackMarketOfferState(state.blackMarket),
     matchesToNextLootboxes: validatedVipLootboxCountdown(state.matchesToNextLootboxes),
-    collectedRewards: state.collectedRewards ?? {},
+    collectedRewards: validatedCollectedRewards(state.collectedRewards),
     itemInventory: state.itemInventory ?? createInitialItemInventory(),
     visualInventory: state.visualInventory ?? createInitialVisualInventory(),
     cardInventory: state.cardInventory ?? createInitialCardInventory(),
@@ -382,7 +383,7 @@ export function buildPlayerData(player: PlayerDocument, now = unixNow()): Player
     // The stock UI checks this recovered dictionary before showing an already collected
     // one-time reward. Restoring the server-owned markers prevents a reconnect/reinstall from
     // presenting the button again even though a repeated action 161 would not pay twice.
-    collectedRewards: state.collectedRewards ?? {},
+    collectedRewards: validatedCollectedRewards(state.collectedRewards),
     // PlayerAnalytics.remainingMatchesToNextLootbox renders this countdown before the next
     // match. Sending the server-owned value on boot prevents reconnecting from restoring the
     // client's local zero/default and accidentally desynchronizing the four-battle cycle.

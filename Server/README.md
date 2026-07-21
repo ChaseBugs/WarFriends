@@ -738,9 +738,12 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   rewards cannot carry into the new calendar.
 - **One-time rewards**: action `161` accepts only the three source-backed Facebook Like, Twitter
   Follow, and notification-permission DBKEYs; the separate Facebook-login reward requires a
-  successful authenticated provider link. The server credits their exact decoded Gold values once
-  and restores claim markers through `PlayerAnalyticsData.collectedRewards`. The
-  response omits the presence-sensitive `WasAdded` property on replay so the stock parser cannot
+  successful authenticated provider link. The server credits their exact decoded Gold values once,
+  restores them through `PlayerAnalyticsData.collectedRewards`, and shares one bounded marker
+  validator across migration, grant/replay, and boot.
+  Legacy IDs are preserved, but every present value must be exact integer `1`, matching Unity's
+  key-presence collection check so malformed markers cannot reopen an already hidden reward.
+  The response omits the presence-sensitive `WasAdded` property on replay so the stock parser cannot
   add local currency twice. The recovered `WeaponTutorial` and `UnitTutorial` paths are restricted
   to the exact AK47 and Assaulter parameters, require cursor zero and an empty delivery slot, and
   derive their 500/375 WarBucks plus 1 Gold funding from the same generated first-upgrade rows used

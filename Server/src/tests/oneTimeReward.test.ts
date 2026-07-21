@@ -17,6 +17,7 @@ import {
   ONE_TIME_REWARD_RULES,
   oneTimeRewardRule,
   oneTimeRewardWire,
+  validatedCollectedRewards,
 } from "../services/oneTimeRewardService";
 import {
   TUTORIAL_UNIT_NAME,
@@ -87,6 +88,39 @@ test("one-time rewards pay chargeback debt and reject corrupt wallets before col
     /reward balance is invalid/,
   );
   assert.deepEqual(corrupt.collectedRewards, {});
+});
+
+test("collected reward markers use exact key-presence authority and reject split client state", () => {
+  assert.deepEqual(
+    validatedCollectedRewards({ FacebookLike: 1, RetiredLiveOpsReward: 1 }),
+    { FacebookLike: 1, RetiredLiveOpsReward: 1 },
+  );
+  for (const marker of [0, 2, -1, 1.5, Number.NaN, Number.POSITIVE_INFINITY]) {
+    assert.throws(
+      () => validatedCollectedRewards({ FacebookLike: marker }),
+      /Collected reward marker is invalid/,
+    );
+    assert.throws(
+      () => applyOneTimeRewardState({
+        ...createInitialProgression(1_700_000_000),
+        collectedRewards: { FacebookLike: marker },
+      }, "FacebookLike"),
+      /Collected reward marker is invalid/,
+    );
+  }
+  assert.throws(
+    () => validatedCollectedRewards(Object.fromEntries(
+      Array.from({ length: 257 }, (_, index) => [`LegacyReward${index}`, 1]),
+    )),
+    /Collected reward markers are oversized/,
+  );
+  assert.throws(
+    () => applyOneTimeRewardState({
+      ...createInitialProgression(1_700_000_000),
+      revision: Number.MAX_SAFE_INTEGER,
+    }, "FacebookLike"),
+    /One-time reward progression revision is invalid/,
+  );
 });
 
 test("unknown and malformed one-time reward IDs fail closed", () => {
@@ -221,4 +255,7 @@ test("PlayerAnalyticsData restores authoritative collected reward markers", () =
     FacebookLike: 1,
     NotificationAllowReward: 1,
   });
+
+  player.progression!.collectedRewards = { FacebookLike: 2 };
+  assert.throws(() => buildPlayerData(player), /Collected reward marker is invalid/);
 });
