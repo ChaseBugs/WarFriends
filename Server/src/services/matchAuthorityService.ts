@@ -286,11 +286,24 @@ export function validatedMatchDocument(match: MatchDoc, now = new Date()): Match
     const cards = match.relayedCardPlays?.[playerId] ?? [];
     if (!Array.isArray(value)
       || value.length > MAX_PVP_CARDS_PER_MATCH
-      || new Set(value).size !== value.length
-      || value.some((sequence) => !Number.isSafeInteger(sequence) || sequence < 0 || sequence >= cards.length)) {
+      || value.length > cards.length
+      // Delivery is append-only and serialized per authenticated sender. Requiring [0..n) rather
+      // than merely unique in-range indexes prevents a later delivered card from hiding an
+      // earlier failed handoff while still authorizing inventory consumption.
+      || value.some((sequence, index) => sequence !== index)) {
       invalid("Stored match card-delivery evidence is invalid.");
     }
   }, "relayed-card delivery");
+  for (const playerId of participantIds) {
+    const report = match.usedCardsReports?.[playerId];
+    const relayed = match.relayedCardPlays?.[playerId];
+    if (report === undefined || relayed === undefined) continue;
+    const deliveredCount = match.relayedCardDeliveries?.[playerId]?.length ?? 0;
+    if (report.length !== deliveredCount
+      || report.some((cardId, index) => cardId !== relayed[index])) {
+      invalid("Stored match used-card report exceeds delivered relay evidence.");
+    }
+  }
 
   const terminal = match.state === "finished" || match.state === "cancelled";
   if (terminal) {

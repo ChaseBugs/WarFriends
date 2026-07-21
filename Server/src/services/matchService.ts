@@ -1495,6 +1495,27 @@ export function validateRelayedCardReport(
 }
 
 /**
+ * Return only CardPlayed effects proven handed to the opponent transport.
+ *
+ * Card evidence is stored before socket delivery so a lost publish can be retried safely. That
+ * pre-delivery row is not inventory-consumption authority: only a contiguous zero-based delivery
+ * prefix represents effects the opponent could have observed. Gaps or reordered markers indicate
+ * damaged durable authority and must not be normalized into a cheaper terminal card report.
+ */
+export function deliveredRelayedCards(
+  relayedCards: readonly string[],
+  deliveredSequences: readonly number[],
+): string[] {
+  const cards = parsePvpUsedCards([...relayedCards]);
+  if (!Array.isArray(deliveredSequences)
+    || deliveredSequences.length > cards.length
+    || deliveredSequences.some((sequence, index) => sequence !== index)) {
+    throw new ApiError(CARD_NOT_FOUND, "CardPlayed delivery evidence is not a contiguous prefix.");
+  }
+  return cards.slice(0, deliveredSequences.length);
+}
+
+/**
  * Persist one validated replacement-room card activation with optimistic list sequencing.
  *
  * Ownership is checked against the complete candidate list before the match row advances. The
@@ -1565,8 +1586,14 @@ export async function markRelayedCardDelivered(
     return false;
   }
   if (match.relayedCardPlays?.[playerId]?.[sequence] !== cardId) return false;
-  if (match.relayedCardDeliveries?.[playerId]?.includes(sequence)) return true;
-  const deliveries = [...new Set([...(match.relayedCardDeliveries?.[playerId] ?? []), sequence])];
+  const path = `relayedCardDeliveries.${playerId}`;
+  const existing = match.relayedCardDeliveries?.[playerId];
+  if (existing?.includes(sequence)) return true;
+  // Delivery is serialized per sender, but the database boundary still proves the complete prior
+  // prefix. Sequence 1 can never become durable while sequence 0 is merely recorded/undelivered.
+  const checkedExisting = deliveredRelayedCards(match.relayedCardPlays?.[playerId] ?? [], existing ?? []);
+  if (sequence !== checkedExisting.length) return false;
+  const deliveries = [...(existing ?? []), sequence];
   validatedMatchDocument({
     ...match,
     relayedCardDeliveries: { ...(match.relayedCardDeliveries ?? {}), [playerId]: deliveries },
@@ -1577,10 +1604,14 @@ export async function markRelayedCardDelivered(
       state: "active",
       "players.playerId": playerId,
       [`relayedCardPlays.${playerId}.${sequence}`]: cardId,
+      [path]: existing === undefined ? { $exists: false } : existing,
     },
-    { $addToSet: { [`relayedCardDeliveries.${playerId}`]: sequence } },
+    { $set: { [path]: deliveries } },
   );
-  return delivered.modifiedCount === 1;
+  // A concurrent retry may have committed the identical next marker after our read. Re-read only
+  // on compare-and-set loss so exact idempotent delivery is accepted without permitting a gap.
+  return delivered.modifiedCount === 1
+    || await wasRelayedCardDelivered(matchId, playerId, sequence);
 }
 
 export type MatchReportStatus = "pending" | "confirmed" | "conflict" | "invalid" | "finished";
@@ -1664,7 +1695,13 @@ export async function reportMatchResult(
   if (match.state !== "active") return { status: "invalid" };
 
   const authoritativeCards = requireRelayedCardEvidence
-    ? validateRelayedCardReport(match.relayedCardPlays?.[reporterId] ?? [], usedCards)
+    ? validateRelayedCardReport(
+      deliveredRelayedCards(
+        match.relayedCardPlays?.[reporterId] ?? [],
+        match.relayedCardDeliveries?.[reporterId] ?? [],
+      ),
+      usedCards,
+    )
     : parsePvpUsedCards([...usedCards]);
 
   // Validate only the authenticated reporter's own list before persisting it. Replaying a
@@ -1873,12 +1910,15 @@ export async function settleResult(
 
     const grants: CoreGrant[] = [];
     for (const participant of match.players) {
-      // A disconnect-forfeit may settle before the disconnected player submits MatchResult.
-      // Durable CardPlayed evidence still represents effects already relayed to the opponent and
-      // must therefore be consumed. A normal terminal report stores the exact same list above.
+      // A disconnect-forfeit may settle before the disconnected player submits MatchResult. Only
+      // the contiguous delivered prefix represents effects handed to the opponent; a CardPlayed
+      // row persisted before a failed socket handoff must not debit inventory. A normal terminal
+      // report stores the exact same delivered list above.
       const cards = match.usedCardsReports?.[participant.playerId]
-        ?? match.relayedCardPlays?.[participant.playerId]
-        ?? [];
+        ?? deliveredRelayedCards(
+          match.relayedCardPlays?.[participant.playerId] ?? [],
+          match.relayedCardDeliveries?.[participant.playerId] ?? [],
+        );
       grants.push(await settlePlayerCore(
         session,
         matchId,

@@ -630,10 +630,13 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   CardId } }`. `Sequence` must remain an exact JSON integer number from zero through five; null,
   Boolean, blank text, numeric text, arrays, fractions, and non-finite numbers cannot coerce to
   sequence zero. The server validates the authenticated owner's complete candidate list, durably
-  appends contiguous evidence before relaying the effect, acknowledges exact retries without
-  relaying twice, and requires terminal `UsedCards` order and multiplicity to match. Per-socket
-  message serialization prevents a sender's result from overtaking its last card event; durable
-  evidence is also consumed when a disconnect forfeit settles before MatchResult. Players move from
+  appends contiguous evidence before relaying the effect and acknowledges exact retries without
+  relaying twice. After the opponent socket send, both local and cross-node paths append the same
+  contiguous durable delivery prefix. Terminal `UsedCards`, ordinary settlement, and disconnect
+  forfeits reproduce and consume only that prefix; evidence persisted before a failed handoff is
+  not inventory authority. The shared match validator rejects delivery gaps, reordering, and
+  reports exceeding proof. Per-socket serialization prevents a sender's result from overtaking its
+  last card event. Players move from
   `InGame` back to `Online`. Disconnects allow a configurable reconnect grace period,
   then resolve as a forfeit or no-reward cancellation; interrupted matches are recovered
   on server restart. Photon-era `GameEnded` reports interpret the recovered `EndReason`

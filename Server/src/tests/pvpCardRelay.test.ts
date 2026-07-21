@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   applyRelayedCardPlay,
+  deliveredRelayedCards,
   validatedRelayedCardSequence,
   validateRelayedCardReport,
 } from "../services/matchService";
@@ -38,4 +39,18 @@ test("terminal UsedCards must exactly reproduce durable CardPlayed order and mul
   assert.throws(() => validateRelayedCardReport(evidence, ["AMMOCRATE", "AIRSTRIKE"]));
   assert.throws(() => validateRelayedCardReport(evidence, ["AIRSTRIKE", "AMMOCRATE", "AMMOCRATE"]));
   assert.throws(() => validateRelayedCardReport(evidence, [...evidence, "SABOTAGE"]));
+});
+
+test("only the contiguous delivered CardPlayed prefix can authorize inventory consumption", () => {
+  const recorded = ["AMMOCRATE", "AIRSTRIKE", "SABOTAGE"];
+  assert.deepEqual(deliveredRelayedCards(recorded, []), []);
+  assert.deepEqual(deliveredRelayedCards(recorded, [0]), ["AMMOCRATE"]);
+  assert.deepEqual(deliveredRelayedCards(recorded, [0, 1]), ["AMMOCRATE", "AIRSTRIKE"]);
+  assert.deepEqual(deliveredRelayedCards(recorded, [0, 1, 2]), recorded);
+  for (const corrupt of [[1], [0, 2], [0, 1, 1], [0, 1, 2, 3]]) {
+    assert.throws(
+      () => deliveredRelayedCards(recorded, corrupt),
+      /delivery evidence is not a contiguous prefix/,
+    );
+  }
 });

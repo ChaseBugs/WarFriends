@@ -1308,6 +1308,21 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
           if (delivery === "invalid") {
             return send(client, { Type: "MatchError", Payload: { MatchId: p.MatchId, Reason: "NotInActiveMatch" } });
           }
+          const cardId = typeof data?.CardId === "string" ? data.CardId : "";
+          // Process-local socket handoff needs the same durable receipt as cross-node delivery.
+          // If only this marker write loses its compare-and-set, relayCardEvent suppresses a
+          // duplicate visible effect and the sender retry can safely finish the receipt.
+          if (!await markRelayedCardDelivered(
+            p.MatchId,
+            client.playerId,
+            sequence,
+            cardId,
+          )) {
+            return send(client, {
+              Type: "MatchError",
+              Payload: { MatchId: p.MatchId, Reason: "EventDeliveryFailed" },
+            });
+          }
           send(client, {
             Type: "MatchEventAccepted",
             Payload: {

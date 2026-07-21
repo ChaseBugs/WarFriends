@@ -202,6 +202,20 @@ test("ranked-match authority rejects unsafe dynamic identities and contradictory
   );
   assert.throws(
     () => validatedMatchDocument(activeMatch({
+      relayedCardPlays: { "player-a": ["CARD_A", "CARD_B"] },
+      relayedCardDeliveries: { "player-a": [0, 0] },
+    }), NOW),
+    /card-delivery evidence/,
+  );
+  assert.throws(
+    () => validatedMatchDocument(activeMatch({
+      usedCardsReports: { "player-a": ["CARD_A"] },
+      relayedCardDeliveries: { "player-a": [] },
+    }), NOW),
+    /used-card report exceeds delivered relay evidence/,
+  );
+  assert.throws(
+    () => validatedMatchDocument(activeMatch({
       rewardReceipts: { "player-a": reward(), "player-b": reward() },
     }), NOW),
     /terminal authority/,
