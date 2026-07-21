@@ -146,6 +146,10 @@ The reconstructed calendar now validates its inputs before deriving persistent i
 time must be a nonnegative client-width Unix date, duration must be an exact safe integer of at least
 one hour, and the resulting window end must remain client-representable. Fractional, negative,
 non-finite, or overflowing policy cannot be silently normalized or create an `swNaN` season.
+Player League and Squad War settlement polling now share one exact 10-through-3,600-second policy
+boundary. Each validated value owns both its scheduler timer and renewable lease sizing; fractional,
+non-finite, negative, and out-of-range settings fail closed instead of being silently floored or
+clamped into a different competition-settlement cadence.
 
 Account-sanction rows now have complete durable authority before authentication, issue/revoke replay,
 admin publication, appeal intake, and accepted-appeal mutation. Exact known fields, normalized

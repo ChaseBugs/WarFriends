@@ -66,13 +66,19 @@ season IDs and settled rows are terminal and are never rewritten or reopened. Th
 an exact safe integer of at least 3600 seconds and must keep every generated window inside the
 recovered signed-client Unix range; invalid values fail closed instead of being rounded or clamped.
 
-`SQUAD_WARS_SCHEDULER_INTERVAL_SECONDS` controls the maintenance polling interval. One backend node
+`SQUAD_WARS_SCHEDULER_INTERVAL_SECONDS` controls the maintenance polling interval and must be an
+exact safe integer from 10 through 3,600 seconds. One backend node
 holds a MongoDB lease while it settles expired divisions, creates deterministic type-9 result
 messages, closes ended seasons (including empty seasons), and allocates the current window. Match
 settlement itself adds points only for a confirmed ranked win, inside the terminal match
 transaction. Action 124 and Squad detail reads derive their round from authenticated membership;
 request fields cannot select another division or provide scores. During the short rollover window,
 `GetPlayerData` exposes the recovered presence-only `SquadWarsProcessing` flag.
+
+`PLAYER_LEAGUE_SCHEDULER_INTERVAL_SECONDS` uses the same exact 10-through-3,600-second boundary for
+expired Player League settlement. Both competition values size their scheduler and renewable lease
+from the same validated interval. Fractional, non-finite, negative, or out-of-range values fail
+closed rather than being floored or clamped into a different operator policy.
 
 # Google Play provider scheduling
 

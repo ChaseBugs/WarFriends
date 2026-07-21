@@ -1,5 +1,6 @@
 import { config } from "../config";
 import logger from "../utils/logger";
+import { squadWarSchedulerIntervalSeconds } from "./competitionSchedulerPolicyService";
 import { withScheduledJobLease } from "./scheduledJobLeaseService";
 import { maintainSquadWars } from "./squadWarService";
 
@@ -11,7 +12,7 @@ export async function runSquadWarMaintenanceSweep(now = new Date()): Promise<{
   skipped: boolean;
 }> {
   if (!config.squadWarsEnabled) return { rounds: 0, messages: 0, skipped: true };
-  const seconds = Math.min(3_600, Math.max(10, Math.floor(config.squadWarsSchedulerIntervalSeconds)));
+  const seconds = squadWarSchedulerIntervalSeconds();
   // `maintainSquadWars` fences every round/season mutation through this renewable lease in addition
   // to its transaction and unique-index guards.
   const leased = await withScheduledJobLease(jobId, Math.max(900_000, seconds * 2_000), (lease) => (
@@ -22,7 +23,7 @@ export async function runSquadWarMaintenanceSweep(now = new Date()): Promise<{
 }
 
 export function startSquadWarScheduler(): NodeJS.Timeout {
-  const seconds = Math.min(3_600, Math.max(10, Math.floor(config.squadWarsSchedulerIntervalSeconds)));
+  const seconds = squadWarSchedulerIntervalSeconds();
   const run = (): void => {
     void runSquadWarMaintenanceSweep().then((result) => {
       if (!result.skipped && (result.rounds > 0 || result.messages > 0)) {

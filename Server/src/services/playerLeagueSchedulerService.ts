@@ -1,6 +1,6 @@
-import { config } from "../config";
 import { players } from "../db";
 import logger from "../utils/logger";
+import { playerLeagueSchedulerIntervalSeconds } from "./competitionSchedulerPolicyService";
 import {
   MANAGED_PLAYER_LEAGUE_ID_PATTERN,
   MANAGED_PLAYER_LEAGUE_NAMESPACE_PATTERN,
@@ -88,7 +88,7 @@ export async function runPlayerLeagueSettlementSweep(now = Math.floor(Date.now()
   players: number;
   skipped: boolean;
 }> {
-  const intervalSeconds = Math.min(3_600, Math.max(10, Math.floor(config.playerLeagueSchedulerIntervalSeconds)));
+  const intervalSeconds = playerLeagueSchedulerIntervalSeconds();
   // A sweep can settle up to 100 divisions and therefore outlive a short polling interval. Keep
   // the lease comfortably longer than one normal sweep; a crashed owner becomes retryable later.
   const leased = await withScheduledJobLease(jobId, Math.max(900_000, intervalSeconds * 2_000), async (lease) => {
@@ -117,7 +117,7 @@ export async function runPlayerLeagueSettlementSweep(now = Math.floor(Date.now()
 }
 
 export function startPlayerLeagueSettlementScheduler(): NodeJS.Timeout {
-  const seconds = Math.min(3_600, Math.max(10, Math.floor(config.playerLeagueSchedulerIntervalSeconds)));
+  const seconds = playerLeagueSchedulerIntervalSeconds();
   const run = (): void => {
     void runPlayerLeagueSettlementSweep().then((result) => {
       if (!result.skipped && (result.divisions > 0 || result.players > 0)) {

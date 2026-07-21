@@ -68,6 +68,11 @@ is drained, and release deletes only the current owner/duration tuple. If a hear
 expiry or any fence loses its compare-and-set, the old worker fails instead of resurrecting itself or
 continuing into the next mutation.
 
+Player League and Squad War polling intervals share an exact 10-through-3,600-second competition
+policy. The same validated interval drives the local scheduler and renewable lease sizing.
+Fractional, non-finite, negative, or out-of-range deployment values fail closed rather than being
+floored or clamped into settlement timing the operator did not configure.
+
 ### Rotate `AUTH_SECRET` without invalidating accounts
 
 Production requires `AUTH_SECRET` and every comma-separated `AUTH_SECRET_FALLBACKS` entry to be
