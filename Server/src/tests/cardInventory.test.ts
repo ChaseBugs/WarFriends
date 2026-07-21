@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { ApiError, ApiErrorCode } from "../apiErrors";
 import generatedCardCatalog from "../data/cardCatalog.generated.json";
 import { AccountType } from "../constants";
 import type { CardCraftingState, CardInventoryState, PlayerDocument } from "../db";
@@ -573,6 +574,7 @@ test("Buddy deposit reproduces the current loadout and starts the exact cooldown
   document.player.level = 9;
   const initial = document.progression!;
   const authority = buddyDepositAuthorityFor(document, initial, NOW);
+  assert.equal(authority.levelIndex, 9);
   const id = `${document.id}${NOW}`;
   const buddy = JSON.stringify({
     amount: 1,
@@ -584,7 +586,7 @@ test("Buddy deposit reproduces the current loadout and starts the exact cooldown
     primaryWeapon: 13,
     secondaryWeapon: 6,
     armypower: 1_234,
-    level: 8,
+    level: 9,
   });
   const result = applyDepositCardChangesState(
     initial,
@@ -609,6 +611,15 @@ test("Buddy deposit reproduces the current loadout and starts the exact cooldown
     ),
     (error: unknown) => (error as { code?: number }).code === BUDDY_CARD_NOT_READY,
   );
+
+  for (const playerLevel of [Number.NaN, Number.POSITIVE_INFINITY, -1, 9.5, PLAYER_LEVELS.length]) {
+    const damaged = playerDocument();
+    damaged.player.level = playerLevel;
+    assert.throws(
+      () => buddyDepositAuthorityFor(damaged, damaged.progression!, NOW),
+      (error: unknown) => error instanceof ApiError && error.code === ApiErrorCode.InternalServerError,
+    );
+  }
 
   const withoutExistingBuddy = { ...result.depositedCards };
   delete withoutExistingBuddy[id];

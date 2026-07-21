@@ -24,6 +24,7 @@ import { validatedPlayerAccountEnvelope } from "./playerProfileMirrorAuthoritySe
 import { itemInventoryStateFor, weaponDefinitionFor } from "./itemInventoryService";
 import { visualInventoryStateFor } from "./visualInventoryService";
 import { validatedCardInventoryTime } from "./cardInventoryAuthorityService";
+import { playerLevelDefinition } from "./levelProgressionService";
 import { validatedSquadDocument } from "./squadAuthorityService";
 import { checkedPlayerReputationIncrement } from "./playerPublicScalarAuthorityService";
 
@@ -263,8 +264,12 @@ export function buddyDepositAuthorityFor(
   return {
     playerId: player.id,
     accountName: player.player.accountName,
-    // DatabasePlayer.level is GameLevel.displayNumber; BuddyCardData.level stores GameLevel.index.
-    levelIndex: Math.max(0, player.player.level - 1),
+    // LevelManager.LoadData assigns DatabasePlayer.Level directly to its zero-based levelNumber,
+    // and CardBuddy.CreateDataForCurrentPlayer serializes currentLevel.index. Subtracting one here
+    // was therefore an off-by-one for every profile above the first row. Resolve the exact source
+    // definition as well, so direct/replacement callers cannot put normalized rank corruption into
+    // a durable Buddy loadout that another player will later deploy.
+    levelIndex: playerLevelDefinition(player.player.level).index,
     armyPower: player.player.armyPower,
     equippedVisuals: visualInventoryStateFor(state).slots,
     weapons,

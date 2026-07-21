@@ -1446,6 +1446,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   New Buddy deposits reproduce `CreateDataForCurrentPlayer`: owner/timestamp identity, account
   name, zero-based level, Army Power, four visual slots, four owned weapon slots, unit-type-specific
   primary/secondary pair, one-pool limit, and the exact 480-minute cooldown are server-validated.
+  `DatabasePlayer.Level` is already the zero-based `LevelManager.currentLevel.index`, so the Buddy
+  snapshot stores that exact recovered row without a display-level subtraction. Malformed or
+  out-of-catalog ranks fail before another player can receive the durable loadout.
   Existing Buddy deposits transfer with their full loadout and a ten-card cap.
   `NotifyPlayerToDeposit` validates both players against the same roster and persists the exact
   type-28 sender snapshot with one actor/target reminder per UTC day. Types 3, 21, and 28 use the

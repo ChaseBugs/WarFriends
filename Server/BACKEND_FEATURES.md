@@ -672,6 +672,10 @@ normalized corrupt rank.
 Rank Army Power derivation now consumes the same exact row instead of copying the client's
 post-load presentation clamp. A negative, fractional, non-finite, or oversized stored level cannot
 be normalized into the first/final rank contribution and published as a believable indexed total.
+Squad Buddy deposit authority now serializes that exact zero-based row index directly, matching
+`CardBuddy.CreateDataForCurrentPlayer` and `LevelManager.LoadData`. The former subtract-one path no
+longer makes every Buddy above rank zero advertise one level too low, and malformed rank state
+cannot be normalized into a durable cross-player loadout.
 One shared application-clock boundary now protects initial progression creation, persisted
 progression reads, successor publication, `PlayerData`, and the top-level player-state response.
 It requires a nonnegative safe Unix second inside JavaScript/BSON Date support and passes that same
