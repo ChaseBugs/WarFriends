@@ -8,7 +8,11 @@ import {
   type PlayerProgressionState,
 } from "../db";
 import { ApiError, ApiErrorCode } from "../apiErrors";
-import { buildDatabasePlayer, progressionForPlayer } from "./playerStateService";
+import {
+  buildDatabasePlayer,
+  numberAttribute,
+  progressionForPlayer,
+} from "./playerStateService";
 import { config } from "../config";
 import { requireModeratedText } from "./textModerationService";
 import { checkedRewardBalance } from "./rewardMathService";
@@ -492,6 +496,18 @@ export async function acceptChallenge(playerId: string, messageId: string): Prom
 type DynamoValue = { S: string } | { N: string } | { BOOL: boolean };
 
 /**
+ * Durable message payloads are untyped MongoDB evidence at runtime even though MessageDoc gives
+ * producers a compile-time contract. Convert numeric strings used by older rows, then delegate to
+ * the shared fail-closed adapter so NaN/Infinity/unsafe values can never become inbox reward zero.
+ */
+function messageNumberAttribute(
+  value: string | number | undefined,
+  fallback: number,
+): { N: string } {
+  return numberAttribute(Number(value ?? fallback));
+}
+
+/**
  * Adapt an internal message document to the DynamoDB attribute shape parsed by the 1.6.0
  * Unity client. This boundary is intentionally explicit; leaking the Mongo document directly
  * produces syntactically valid JSON that the client cannot deserialize.
@@ -504,7 +520,7 @@ export function toClientMessage(doc: MessageDoc): Record<string, DynamoValue> {
     // OpponentId, AdminPlayerId, or OtherPlayer. Emitting fromPlayerId caused read/ignore requests
     // from an unmodified client to carry the wrong DynamoDB partition owner.
     PlayerId: { S: doc.toPlayerId },
-    MessageType: { N: String(doc.messageType) },
+    MessageType: messageNumberAttribute(doc.messageType, 0),
   };
   if (doc.read) wire.WasShown = { BOOL: true };
 
@@ -513,19 +529,21 @@ export function toClientMessage(doc: MessageDoc): Record<string, DynamoValue> {
     wire.OtherPlayer = { S: doc.otherPlayerJson };
     for (const [key, value] of Object.entries(doc.payload)) {
       // Challenge parser expects GameType/Region as N and optional NumberOfMission as S.
-      wire[key] = key === "GameType" || key === "Region" ? { N: String(value) } : { S: String(value) };
+      wire[key] = key === "GameType" || key === "Region"
+        ? messageNumberAttribute(value, 0)
+        : { S: String(value) };
     }
   } else if (doc.messageType === 3) {
     // MBACFNICJPL treats a missing SquadRank as -1 (kick) and parses the returned-card list
     // from a JSON string. Numeric player levels remain DynamoDB N attributes.
     wire.PlayerName = { S: String(doc.payload.PlayerName ?? "") };
-    wire.Level = { N: String(doc.payload.Level ?? 0) };
+    wire.Level = messageNumberAttribute(doc.payload.Level, 0);
     wire.SquadId = { S: String(doc.payload.SquadId ?? "") };
     wire.KickedPlayerId = { S: String(doc.payload.KickedPlayerId ?? doc.toPlayerId) };
     wire.SquadKickedFrom = { S: String(doc.payload.SquadKickedFrom ?? "") };
     wire.AdminName = { S: String(doc.payload.AdminName ?? doc.fromName) };
     wire.AdminId = { S: String(doc.payload.AdminId ?? doc.fromPlayerId) };
-    wire.AdminLevel = { N: String(doc.payload.AdminLevel ?? 0) };
+    wire.AdminLevel = messageNumberAttribute(doc.payload.AdminLevel, 0);
     wire.KickedPlayerDepositedCards = {
       S: String(doc.payload.KickedPlayerDepositedCards ?? "[]"),
     };
@@ -535,50 +553,56 @@ export function toClientMessage(doc: MessageDoc): Record<string, DynamoValue> {
     // card-pool reminder row. Keep this adapter explicit so a harmless-looking refactor to the
     // generic message shape cannot silently produce an empty sender name or a broken profile.
     wire.PlayerName = { S: String(doc.payload.PlayerName ?? doc.fromName) };
-    wire.Level = { N: String(doc.payload.Level ?? 0) };
+    wire.Level = messageNumberAttribute(doc.payload.Level, 0);
     wire.SquadId = { S: String(doc.payload.SquadId ?? "") };
-    wire.SquadRank = { N: String(doc.payload.SquadRank ?? 0) };
+    wire.SquadRank = messageNumberAttribute(doc.payload.SquadRank, 0);
     wire.AdminPlayerId = { S: String(doc.payload.AdminPlayerId ?? doc.fromPlayerId) };
   } else if (doc.messageType === 9) {
     // LDDEMALIBBK requires these exact DynamoDB wrappers. SquadMembers is itself a JSON string
     // containing DatabasePlayer DynamoDB objects; keeping it as S matches its constructor's
     // JsonConvert.DeserializeObject<JArray> path. The claim request later sends only MessageId.
-    wire.Position = { N: String(doc.payload.Position ?? 0) };
+    wire.Position = messageNumberAttribute(doc.payload.Position, 0);
     wire.SquadId = { S: String(doc.payload.SquadId ?? "") };
     wire.SquadIcon = { S: String(doc.payload.SquadIcon ?? "") };
-    wire.RewardGold = { N: String(doc.payload.RewardGold ?? 0) };
-    wire.PrevLevelId = { N: String(doc.payload.PrevLevelId ?? 1) };
-    wire.NewLevelId = { N: String(doc.payload.NewLevelId ?? 1) };
+    wire.RewardGold = messageNumberAttribute(doc.payload.RewardGold, 0);
+    wire.PrevLevelId = messageNumberAttribute(doc.payload.PrevLevelId, 1);
+    wire.NewLevelId = messageNumberAttribute(doc.payload.NewLevelId, 1);
     wire.SquadMembers = { S: String(doc.payload.SquadMembers ?? "[]") };
   } else if (doc.messageType === 11) {
     // OKLNJJBHAIH requires these exact wrappers, then sends only MessageId to action 91. The
     // reward remains server-authored in this durable message and is never echoed by the claim.
-    wire.Tier = { N: String(doc.payload.Tier ?? 0) };
+    wire.Tier = messageNumberAttribute(doc.payload.Tier, 0);
     wire.SquadId = { S: String(doc.payload.SquadId ?? "") };
-    wire.Reward = { N: String(doc.payload.Reward ?? 0) };
+    wire.Reward = messageNumberAttribute(doc.payload.Reward, 0);
   } else if (doc.messageType === 23) {
     // MMKFEEGDFKN parses this type-23 document before it performs any UI work. LeagueId is
     // mandatory and numeric; the remaining values are optional DynamoDB attributes. The
     // stock client compares FormerFullLeagueId with its current ID before moving locally to
     // the new tier's placement division, which prevents a delayed old result from replacing
     // a newer season.
-    wire.LeagueId = { N: String(doc.payload.LeagueId ?? 0) };
+    wire.LeagueId = messageNumberAttribute(doc.payload.LeagueId, 0);
     if (doc.payload.BeforeLeagueId !== undefined) {
-      wire.BeforeLeagueId = { N: String(doc.payload.BeforeLeagueId) };
+      wire.BeforeLeagueId = messageNumberAttribute(doc.payload.BeforeLeagueId, 0);
     }
-    if (doc.payload.Medals !== undefined) wire.Medals = { N: String(doc.payload.Medals) };
+    if (doc.payload.Medals !== undefined) {
+      wire.Medals = messageNumberAttribute(doc.payload.Medals, 0);
+    }
     if (doc.payload.FormerFullLeagueId !== undefined) {
       wire.FormerFullLeagueId = { S: String(doc.payload.FormerFullLeagueId) };
     }
-    if (doc.payload.RewardGold !== undefined) wire.RewardGold = { N: String(doc.payload.RewardGold) };
-    if (doc.payload.Position !== undefined) wire.Position = { N: String(doc.payload.Position) };
+    if (doc.payload.RewardGold !== undefined) {
+      wire.RewardGold = messageNumberAttribute(doc.payload.RewardGold, 0);
+    }
+    if (doc.payload.Position !== undefined) {
+      wire.Position = messageNumberAttribute(doc.payload.Position, 0);
+    }
     // MMKFEEGDFKN only checks whether this attribute exists. BOOL expresses that semantic
     // directly and avoids suggesting that its numeric value is part of the reward formula.
     if (doc.payload.NotEnoughPlayers !== undefined) wire.NotEnoughPlayers = { BOOL: true };
   } else {
     wire.Title = { S: doc.fromName };
     wire.Text = { S: doc.body };
-    wire.CreationTime = { N: String(Math.floor(doc.createdAt.getTime() / 1000)) };
+    wire.CreationTime = numberAttribute(Math.floor(doc.createdAt.getTime() / 1000));
   }
   return wire;
 }

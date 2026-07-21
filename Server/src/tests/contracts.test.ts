@@ -1279,6 +1279,21 @@ test("challenge inbox adapter emits the DynamoDB attribute wrappers parsed by Un
   assert.deepEqual(wire.MapName, { S: "map_1" });
   assert.deepEqual(wire.GameType, { N: "2" });
   assert.deepEqual(wire.OtherPlayer, { S: message.otherPlayerJson });
+
+  const corruptPayload = {
+    ...message,
+    payload: { ...message.payload, GameType: Number.NaN },
+  };
+  assert.throws(
+    () => toClientMessage(corruptPayload),
+    /DynamoDB numeric attribute authority is invalid/,
+  );
+
+  const corruptType = { ...message, messageType: Number.POSITIVE_INFINITY } as unknown as MessageDoc;
+  assert.throws(
+    () => toClientMessage(corruptType),
+    /DynamoDB numeric attribute authority is invalid/,
+  );
 });
 
 test("challenge expiry is enforced independently of MongoDB TTL cleanup timing", () => {
