@@ -119,7 +119,10 @@ only after the exact player/socket owner is stored, a failed new claim preserves
 login, and uncertain cleanup compare-deletes only the prospective owner before the new socket is
 closed with a retryable coordination error. A live socket's authenticated player binding is now
 immutable, preventing a second `Identify` from leaving the first account's local/Redis route aimed
-at a transport that has switched identity.
+at a transport that has switched identity. Disconnect settlement reads owner value and remaining
+TTL in one Lua operation and accepts “connected” only for the exact instance/client UUID pair with
+one to 30,000 milliseconds left; malformed, non-expiring, overlong, or incoherent observations are
+unknown and cannot manufacture a forfeit reward.
 
 Each new match also stores its backend coordinator UUID. Redis carries a renewable crash-expiring
 heartbeat for that UUID, and startup plus periodic orphan recovery cancels only matches whose owner

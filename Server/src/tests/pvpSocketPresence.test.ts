@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   claimPvpSocket,
   isUnidentifiedPvpSocket,
+  parsePvpSocketLivenessObservation,
   pvpSocketOwner,
   usesDistributedPvpSocket,
 } from "../services/pvpSocketPresenceService";
@@ -33,4 +34,26 @@ test("an unavailable Redis coordinator is distinguished from a failed ownership 
     null,
     "the test process has no connected Redis coordinator and must retain explicit local mode",
   );
+});
+
+test("disconnect settlement accepts only an exact expiring socket-owner observation", () => {
+  const owner = "ce5a282d-fbb2-45ad-8df2-99a1b9568a15:441086ee-6d4a-4af2-91a2-5ae55c243f97";
+  assert.equal(parsePvpSocketLivenessObservation([1, owner, 30_000]), true);
+  assert.equal(parsePvpSocketLivenessObservation([0, "", -2]), false);
+
+  for (const malformed of [
+    undefined,
+    [1, "not-an-owner", 30_000],
+    [1, owner, -1],
+    [1, owner, 0],
+    [1, owner, 30_001],
+    [0, owner, -2],
+    [0, "", -1],
+  ]) {
+    assert.equal(
+      parsePvpSocketLivenessObservation(malformed),
+      null,
+      "malformed or non-expiring liveness must remain unknown",
+    );
+  }
 });

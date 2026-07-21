@@ -499,6 +499,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   real close writes a durable disconnect clock and notifies the opponent;
   `JoinMatch` clears it on re-entry. Grace expiry grants a forfeit only while the opponent remains
   connected, cancels when both are offline, and waits rather than guessing when Redis is unknown.
+  The liveness decision atomically reads the route and its PTTL, accepting only the exact
+  instance/client UUID pair with a remaining one-to-30-second lease. A malformed, non-expiring,
+  overlong, or incoherent Redis value is unknown and cannot become proof for a forfeit reward.
   Cancellation likewise commits the terminal match and both presence releases together. On a
   single-node restart, active/settling matches are cancelled and all residual `InGame` profiles
   are repaired in the same transaction, including legacy partial cancellations. Before those

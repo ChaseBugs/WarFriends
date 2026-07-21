@@ -3,6 +3,7 @@ import { isRedisAvailable, redisEval, redisGet, redisSet } from "../redis";
 
 const socketPresenceTtlSeconds = 30;
 export const socketPresenceHeartbeatMs = 10_000;
+const UUID_PAIR_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}:[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
 const compareExpireScript = `
 if redis.call('GET', KEYS[1]) == ARGV[1] then
@@ -16,6 +17,14 @@ if redis.call('GET', KEYS[1]) == ARGV[1] then
   return redis.call('DEL', KEYS[1])
 end
 return 0
+`;
+
+const observePresenceScript = `
+local value = redis.call('GET', KEYS[1])
+if not value then
+  return {0, '', -2}
+end
+return {1, value, redis.call('PTTL', KEYS[1])}
 `;
 
 export function pvpSocketOwner(instanceId: string, clientId: string): string {
@@ -47,6 +56,29 @@ export function usesDistributedPvpSocket(claimed: boolean | null): boolean {
   return claimed === true;
 }
 
+/**
+ * Interpret one atomic Redis GET/PTTL observation. A malformed value or missing expiry is unknown,
+ * never connected: only this process's exact UUID-pair owner written with the bounded lease can
+ * authorize a disconnect forfeit. Unknown observations make the caller wait for operator cleanup
+ * or a later valid/expired observation rather than manufacturing a reward.
+ */
+export function parsePvpSocketLivenessObservation(result: unknown): boolean | null {
+  if (!Array.isArray(result) || result.length !== 3) return null;
+  const present = Number(result[0]);
+  const value = result[1];
+  const ttlMilliseconds = Number(result[2]);
+  if (present === 0) {
+    return value === "" && ttlMilliseconds === -2 ? false : null;
+  }
+  if (present !== 1
+    || typeof value !== "string"
+    || !UUID_PAIR_PATTERN.test(value)
+    || !Number.isInteger(ttlMilliseconds)
+    || ttlMilliseconds < 1
+    || ttlMilliseconds > socketPresenceTtlSeconds * 1_000) return null;
+  return true;
+}
+
 /** Refresh only if this exact socket still owns the player route. */
 export async function refreshPvpSocket(playerId: string, owner: string): Promise<boolean | null> {
   const result = await redisEval(
@@ -72,7 +104,6 @@ export async function releasePvpSocket(playerId: string, owner: string): Promise
 
 /** True/false is authoritative; null means Redis could not answer and forfeiture must wait. */
 export async function isPvpPlayerConnected(playerId: string): Promise<boolean | null> {
-  const value = await redisGet(RedisKeys.socketOfPlayer(playerId));
-  if (value === undefined) return null;
-  return value !== null;
+  const result = await redisEval(observePresenceScript, [RedisKeys.socketOfPlayer(playerId)], []);
+  return parsePvpSocketLivenessObservation(result);
 }
