@@ -7,8 +7,17 @@ import {
 } from "../services/videoAdRewardService";
 import { authed, type HandlerEntry } from "./types";
 
-function rewardKind(value: unknown): VideoAdRewardKind {
-  const parsed = typeof value === "number" ? value : Number(value);
+/**
+ * Parse the enum integer emitted by `BeanstalkServerManager.AHOMAGJIGKM` as `num.ToString()`.
+ * Replacement JSON clients may send the same integer as a number, but JavaScript coercions such
+ * as `true`, `[1]`, `"+1"`, or `"1e0"` must not select a reward-bearing branch.
+ */
+export function requestedVideoAdRewardKind(value: unknown): VideoAdRewardKind {
+  const parsed = typeof value === "number"
+    ? value
+    : typeof value === "string" && /^(?:0|[1-9]\d*)$/.test(value)
+      ? Number(value)
+      : Number.NaN;
   if (
     !Number.isInteger(parsed)
     || (
@@ -31,7 +40,7 @@ export const videoAdHandlers: Record<number, HandlerEntry> = {
     const result = await grantVideoAdReward(
       player!.id,
       player!.player.level,
-      rewardKind(req.Reward),
+      requestedVideoAdRewardKind(req.Reward),
     );
     return ok(DbAction.AddVideoReward, result.response);
   }),

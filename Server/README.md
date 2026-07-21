@@ -966,7 +966,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   and cap values, atomically persists every card/energy/currency/visual-part grant, applies exact
   duplicate-WarBucks conversion, returns the parser's `AddedCards`, `DogTagSeconds`,
   `DogTagLastUpdate`, `Gold`, `WarBucks`, `NewVisuals`, and `videoAdRewardTimes` fields, and restores
-  all four ledgers at boot. XOR-decoded 4.9.5 limits are enforced server-side as 24 claims per
+  all four ledgers at boot. Action `156` accepts only the four canonical positive enum decimals
+  emitted through the recovered `num.ToString()` call, or the same integer from a replacement JSON
+  client; JavaScript-coercible Booleans, arrays, padded/signed/leading-zero/fractional/exponent text,
+  zero, and out-of-range values cannot choose a reward branch. XOR-decoded 4.9.5 limits are enforced server-side as 24 claims per
   rolling 5/12/15/100-hour window, with the exact one-minute Golden Suitcase spacing. A shared
   validator rejects malformed/non-finite/oversized durable ledgers at progression read/publication
   and before grant or boot. Its exact private replay receipt must bind a supported reward, safe

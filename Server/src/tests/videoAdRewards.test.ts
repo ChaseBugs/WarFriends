@@ -3,6 +3,7 @@ import test from "node:test";
 import type { PlayerDocument, PlayerProgressionState } from "../db";
 import { AccountType } from "../constants";
 import { newPlayer } from "../dtos";
+import { requestedVideoAdRewardKind } from "../handlers/videoAds";
 import {
   buildPlayerData,
   createInitialProgression,
@@ -41,6 +42,38 @@ test("source-decoded rolling limits preserve every 4.9.5 ad policy", () => {
     3: { key: "goldenSuitcase", count: 24, intervalSeconds: 54_000, minimumSpacingSeconds: 60 },
     4: { key: "lootboxes", count: 24, intervalSeconds: 360_000, minimumSpacingSeconds: 0 },
   });
+});
+
+test("video-ad reward selection accepts only the recovered canonical enum transport", () => {
+  for (const kind of [
+    VideoAdRewardKind.RandomCard,
+    VideoAdRewardKind.Dogtag,
+    VideoAdRewardKind.GoldenSuitcase,
+    VideoAdRewardKind.LootBox,
+  ]) {
+    assert.equal(requestedVideoAdRewardKind(kind), kind);
+    assert.equal(requestedVideoAdRewardKind(String(kind)), kind);
+  }
+
+  for (const value of [
+    undefined,
+    null,
+    false,
+    true,
+    [],
+    [1],
+    "",
+    " 1",
+    "1 ",
+    "+1",
+    "01",
+    "1.0",
+    "1e0",
+    "0",
+    "5",
+  ]) {
+    assert.throws(() => requestedVideoAdRewardKind(value), /supported video ad prize/);
+  }
 });
 
 test("RandomCard grants one server-selected visible Bronze card and records its ledger", () => {
