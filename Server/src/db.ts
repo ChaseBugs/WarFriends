@@ -947,6 +947,16 @@ export interface ReportRateLimitDocument {
   expiresAt: Date;
 }
 
+/** Atomic cross-node throttle for player-authored challenge and direct inbox traffic. */
+export interface OutgoingMessageRateLimitDocument extends Document {
+  _id: string;
+  key: string;
+  attemptCount: number;
+  windowStartedAt: Date;
+  updatedAt: Date;
+  expiresAt: Date;
+}
+
 export interface ReportDeduplicationDocument {
   key: string;
   report: Document;
@@ -1069,6 +1079,7 @@ let identitiesCollection: Collection<IdentityDocument> | null = null;
 let reportsCollection: Collection<Document> | null = null;
 let authRateLimitsCollection: Collection<AuthRateLimitDocument> | null = null;
 let reportRateLimitsCollection: Collection<ReportRateLimitDocument> | null = null;
+let outgoingMessageRateLimitsCollection: Collection<OutgoingMessageRateLimitDocument> | null = null;
 let reportDeduplicationsCollection: Collection<ReportDeduplicationDocument> | null = null;
 let playerSanctionsCollection: Collection<PlayerSanctionDocument> | null = null;
 let playerAppealsCollection: Collection<PlayerAppealDocument> | null = null;
@@ -1163,6 +1174,7 @@ export async function connectMongo(): Promise<void> {
   reportsCollection = db.collection("playerReports");
   authRateLimitsCollection = db.collection<AuthRateLimitDocument>("authRateLimits");
   reportRateLimitsCollection = db.collection<ReportRateLimitDocument>("reportRateLimits");
+  outgoingMessageRateLimitsCollection = db.collection<OutgoingMessageRateLimitDocument>("outgoingMessageRateLimits");
   reportDeduplicationsCollection = db.collection<ReportDeduplicationDocument>("reportDeduplications");
   playerSanctionsCollection = db.collection<PlayerSanctionDocument>("playerSanctions");
   playerAppealsCollection = db.collection<PlayerAppealDocument>("playerAppeals");
@@ -1239,7 +1251,8 @@ export async function connectMongo(): Promise<void> {
   // concurrent same-second collision into a recoverable duplicate-key result rather than leaving
   // two rows that one Accept/Read/Ignore request could mutate ambiguously.
   await messagesCollection.createIndex({ toPlayerId: 1, messageId: 1 }, { unique: true });
-  // Outgoing-message rate limits use this index for a bounded rolling-window count.
+  // Retain sender/time ordering for moderation and operational inspection. The admission limit is
+  // enforced by the separate atomic counter below rather than a racy count-then-insert query.
   await messagesCollection.createIndex({ fromPlayerId: 1, createdAt: -1 });
   // Only expiring message types carry expiresAt. MongoDB's TTL monitor removes stale
   // challenges asynchronously; read/accept filters enforce expiry immediately meanwhile.
@@ -1273,6 +1286,8 @@ export async function connectMongo(): Promise<void> {
   await authRateLimitsCollection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
   await reportRateLimitsCollection.createIndex({ key: 1 }, { unique: true });
   await reportRateLimitsCollection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+  await outgoingMessageRateLimitsCollection.createIndex({ key: 1 }, { unique: true });
+  await outgoingMessageRateLimitsCollection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
   await reportDeduplicationsCollection.createIndex({ key: 1 }, { unique: true });
   await reportDeduplicationsCollection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
   // The active-state uniqueness boundary is race-safe across every backend and admin process.
@@ -1359,6 +1374,7 @@ export async function disconnectMongo(): Promise<void> {
   reportsCollection = null;
   authRateLimitsCollection = null;
   reportRateLimitsCollection = null;
+  outgoingMessageRateLimitsCollection = null;
   reportDeduplicationsCollection = null;
   playerSanctionsCollection = null;
   playerAppealsCollection = null;
@@ -1467,6 +1483,10 @@ export function authRateLimits(): Collection<AuthRateLimitDocument> {
 
 export function reportRateLimits(): Collection<ReportRateLimitDocument> {
   return requireCollection("reportRateLimits", reportRateLimitsCollection);
+}
+
+export function outgoingMessageRateLimits(): Collection<OutgoingMessageRateLimitDocument> {
+  return requireCollection("outgoingMessageRateLimits", outgoingMessageRateLimitsCollection);
 }
 
 export function reportDeduplications(): Collection<ReportDeduplicationDocument> {

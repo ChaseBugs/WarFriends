@@ -27,6 +27,7 @@ import {
   validatedChallengeMessage,
 } from "./challengeMessageAuthorityService";
 import { validatedInboxMessageDocument } from "./inboxMessageAuthorityService";
+import { reserveOutgoingMessageSlot } from "./outgoingMessageRateLimitService";
 
 // Player discovery + messaging (BACKEND.md §2.3 "Social / messaging / hit list"). Search
 // and directory reads project players to the client's summary shape; messages are stored
@@ -145,33 +146,15 @@ export function challengeIsExpired(message: Pick<MessageDoc, "messageType" | "ex
   return message.messageType === 0 && (!message.expiresAt || message.expiresAt.getTime() <= now.getTime());
 }
 
-/**
- * Bound player-generated inbox traffic with a persistent rolling window.
- *
- * The limit is checked in MongoDB rather than process memory so a restart does not reset it.
- * The current count-then-insert sequence can exceed the cap by one under a multi-node race;
- * a production cluster should move this counter to an atomic Redis script. It still blocks
- * sustained abuse and never drops server-generated moderation or squad-system messages.
- */
-async function enforceOutgoingMessageLimit(fromPlayerId: string, now: Date): Promise<void> {
-  const maximum = Math.max(1, Math.floor(config.outgoingMessagesPerMinute));
-  const since = new Date(now.getTime() - 60_000);
-  const count = await messages().countDocuments({
-    fromPlayerId,
-    messageType: { $in: [0, 27] },
-    createdAt: { $gte: since },
-  });
-  if (count >= maximum) {
-    throw new ApiError(ApiErrorCode.UnknownAction, "Message rate limit reached. Try again later.");
-  }
-}
-
 export async function sendMessage(fromPlayerId: string, fromName: string, toPlayerId: string, body: string): Promise<MessageDoc> {
-  const recipient = await players().findOne({ id: toPlayerId }, { projection: { id: 1 } });
+  const recipient = await players().findOne({ id: toPlayerId });
   if (!recipient) throw new ApiError(ApiErrorCode.PlayerNotFound, "Recipient not found.");
+  // A durable inbox row targets the complete account, not merely an indexed ID. Refuse damaged
+  // profile/credential mirrors rather than publishing messages to an unusable recipient.
+  validatedPlayerAccountEnvelope(recipient);
   if (toPlayerId === fromPlayerId) throw new ApiError(ApiErrorCode.UnknownAction, "A player cannot message themselves.");
   const createdAt = new Date();
-  await enforceOutgoingMessageLimit(fromPlayerId, createdAt);
+  await reserveOutgoingMessageSlot(fromPlayerId, createdAt);
   const normalizedBody = body.trim().slice(0, 500);
   requireModeratedText(normalizedBody, "Message");
   const doc = buildDirectMessage(fromPlayerId, fromName, toPlayerId, normalizedBody, createdAt);
@@ -240,8 +223,9 @@ function sameChallenge(message: MessageDoc, fromPlayerId: string, input: Challen
  * directly from OtherPlayer rather than making a second profile request.
  */
 export async function sendChallenge(from: PlayerDocument, input: ChallengeMessageInput): Promise<MessageDoc> {
-  const recipient = await players().findOne({ id: input.challengedPlayerId }, { projection: { id: 1 } });
+  const recipient = await players().findOne({ id: input.challengedPlayerId });
   if (!recipient) throw new ApiError(ApiErrorCode.PlayerNotFound, "Challenged player not found.");
+  validatedPlayerAccountEnvelope(recipient);
   if (input.challengedPlayerId === from.id) throw new ApiError(ApiErrorCode.UnknownAction, "A player cannot challenge themselves.");
 
   const createdAt = new Date();
@@ -257,7 +241,7 @@ export async function sendChallenge(from: PlayerDocument, input: ChallengeMessag
     expiresAt: { $gt: createdAt },
   });
   if (duplicate) return validatedChallengeMessage(duplicate as unknown as MessageDoc, createdAt)!;
-  await enforceOutgoingMessageLimit(from.id, createdAt);
+  await reserveOutgoingMessageSlot(from.id, createdAt);
   const doc: MessageDoc = {
     // The recovered client strips the trailing numeric segment to recover challenger ID.
     messageId: `${from.id}-${Math.floor(createdAt.getTime() / 1_000)}`,

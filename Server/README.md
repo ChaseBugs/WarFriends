@@ -506,7 +506,12 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   authoritative squad-mate resolution through `GetFriendsInfo`, challenge and normal
   `MessageSent`, `GetAllMessages`, `ReadMessage`, `IgnoreMessage`, and `AcceptChallenge`
   (recipient-owned persistent inbox). Challenges expire logically and through MongoDB TTL;
-  identical send retries are deduplicated and player-generated traffic has a rolling sender limit.
+  identical challenge retries are deduplicated before admission. New direct/challenge attempts use
+  one HMAC-hidden MongoDB fixed-window counter per sender, so concurrent backend nodes cannot all
+  pass the former count-then-insert race. `OUTGOING_MESSAGES_PER_MINUTE` is clamped to 1-1000
+  (default 20); rejected traffic saturates one bounded sentinel without extending the original
+  minute, and inactive rows expire after a separate storage margin. The complete recipient account
+  is validated before a message targets it, rather than trusting an ID-only index projection.
   Acceptance records its first durable timestamp and is idempotent after a lost response, while
   wrong-recipient, ignored, expired, and non-challenge rows remain rejected.
   The complete type-0 row is validated before insertion, duplicate replay, inbox publication,
