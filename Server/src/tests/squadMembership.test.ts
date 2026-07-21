@@ -11,6 +11,7 @@ import {
   planDeclineSquadJoinRequest,
   planSquadInvitation,
   planSquadInvitationRevocation,
+  planSquadJoinRequest,
   planSquadJoinRequestRevocation,
   squadInvitationJoinDisposition,
   planSquadJoin,
@@ -160,6 +161,33 @@ test("join-request action preserves request-required and invite-only policy", ()
   assert.throws(
     () => squadJoinRequestDisposition({ joinPolicy: 3, invitedPlayerIds: [] }, "member"),
     (error: unknown) => (error as { code?: number }).code === ApiErrorCode.InternalServerError,
+  );
+});
+
+test("join-request planning is immutable, bounded, and membership-aware", () => {
+  const squad = squadDocument(1);
+  const player = playerDocument("member");
+  const planned = planSquadJoinRequest(squad, player, NOW);
+
+  assert.equal(planned.changed, true);
+  assert.deepEqual(planned.squad.joinRequests, [
+    { playerId: "member", name: "Player-member", createdAt: NOW },
+  ]);
+  assert.deepEqual(squad.joinRequests, []);
+
+  const replay = planSquadJoinRequest(planned.squad, player, NOW + 1_000);
+  assert.equal(replay.changed, false);
+  assert.equal(replay.squad, planned.squad);
+
+  assert.throws(
+    () => planSquadJoinRequest(squad, playerDocument("member", "Other Squad", SquadRank.Member), NOW),
+    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.PlayerAlreadyInSquadCantJoin,
+  );
+  const full = squadDocument(1);
+  full.maxMembers = full.members.length;
+  assert.throws(
+    () => planSquadJoinRequest(full, player, NOW),
+    (error: unknown) => (error as { code?: number }).code === ApiErrorCode.SquadIsFull,
   );
 });
 

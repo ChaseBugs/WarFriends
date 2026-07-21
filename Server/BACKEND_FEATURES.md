@@ -86,6 +86,12 @@ transaction, while active type-1 invitation messages are terminalized. This prev
 invitation or a later manager approval from becoming reusable after the player leaves the Squad
 they actually joined; damaged selected rows or an excessive cross-Squad set abort before writing.
 
+New policy-1 join requests now commit the Squad queue and a strictly monotonic player-account
+revision in one transaction. That player write is a serialization fence against concurrent joins,
+which also write the membership mirrors: whichever operation loses must re-read authoritative
+membership and either reject the request or include it in cross-Squad cleanup. Exact already-pending
+replays remain read-only, so a row removed after their snapshot cannot be recreated.
+
 Actions 55 and 58 now require their exact recovered target field and canonical `OldSquadRank`; the
 asserted rank is compared to the same authoritative roster snapshot used for permission and the
 transactional write. A stale/lost-response retry therefore returns the stock `5501`/`5801` full-roster

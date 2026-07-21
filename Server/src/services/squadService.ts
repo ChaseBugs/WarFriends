@@ -54,7 +54,9 @@ export { nextSquadUpdatedAt } from "./squadAuthorityService";
  * DatabasePlayer response. Every cross-document membership mutation now commits the roster and
  * player mirrors in one MongoDB transaction. Creation includes its WarBucks debit, while leave
  * and kick also return normal card deposits and clear the pool mirror in that same boundary.
- * Squad-only settings, invitations, and pending-request edits remain single-document writes.
+ * Squad-only settings and invitations remain single-document writes. A newly created pending
+ * request also advances the player's account revision in the same transaction; that player write
+ * serializes it against a concurrent join so stale approval authority cannot appear after cleanup.
  *
  * Admission capabilities are created only inside this service. A public join request cannot
  * set `allowPrivate`; only an already-authorized manager acceptance can pass it to `joinSquad`.
@@ -685,17 +687,19 @@ export function squadJoinRequestDisposition(
   throw new ApiError(ApiErrorCode.InternalServerError, "Stored squad join policy is invalid.");
 }
 
-export async function requestToJoin(playerId: string, name: string): Promise<SquadDTO> {
-  const squad = await getByName(name);
-  if (!squad) throw new ApiError(ApiErrorCode.SquadNoLongerExists, "Squad not found.");
-  const disposition = squadJoinRequestDisposition(squad, playerId);
-  if (disposition === "join") return joinSquad(playerId, name);
-  if (disposition === "reject") {
-    throw new ApiError(ApiErrorCode.SquadIsNotPublic, "This squad accepts invited players only.");
-  }
-  const player = await findById(playerId);
-  if (!player) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
-  if (player.player.squadName) {
+export interface SquadJoinRequestPlan {
+  squad: SquadDTO;
+  changed: boolean;
+}
+
+/** Calculate one bounded action-132 manager request without mutating either authority snapshot. */
+export function planSquadJoinRequest(
+  squad: SquadDTO,
+  player: PlayerDocument,
+  createdAt: number,
+): SquadJoinRequestPlan {
+  if (player.squadName || player.player.squadName
+    || squad.members.some((candidate) => candidate.playerId === player.id)) {
     throw new ApiError(ApiErrorCode.PlayerAlreadyInSquadCantJoin, "Player already belongs to a squad.");
   }
   if (squad.members.length >= squad.maxMembers) {
@@ -704,16 +708,87 @@ export async function requestToJoin(playerId: string, name: string): Promise<Squ
   if (player.player.skill < (squad.requiredMedals || 0)) {
     throw new ApiError(ApiErrorCode.NotEnoughSquadSkill, "Player does not meet the squad medal requirement.");
   }
-  // A player has at most one pending request per squad. Repeated taps are idempotent and do
-  // not grow the embedded request list or reset its original creation time.
-  if (!squad.joinRequests.some((request) => request.playerId === playerId)) {
-    if (squad.joinRequests.length >= SQUAD_MAX_PENDING_ADMISSIONS) {
-      throw new ApiError(ApiErrorCode.UnknownAction, "Squad join-request queue is full.");
-    }
-    squad.joinRequests.push({ playerId, name: player.player.accountName, createdAt: Date.now() });
-    await persist(squad);
+  if (squad.joinRequests.some((request) => request.playerId === player.id)) {
+    return { squad, changed: false };
   }
-  return squad;
+  if (squad.joinRequests.length >= SQUAD_MAX_PENDING_ADMISSIONS) {
+    throw new ApiError(ApiErrorCode.UnknownAction, "Squad join-request queue is full.");
+  }
+  return {
+    squad: {
+      ...squad,
+      joinRequests: [
+        ...squad.joinRequests,
+        { playerId: player.id, name: player.player.accountName, createdAt },
+      ],
+    },
+    changed: true,
+  };
+}
+
+export async function requestToJoin(playerId: string, name: string): Promise<SquadDTO> {
+  const cleanSquadName = cleanName(name);
+  const outcome = await withMongoTransaction(async (session) => {
+    const [squad, player] = await Promise.all([
+      squads().findOne({ name: cleanSquadName }, { session }),
+      players().findOne({ id: playerId }, { session }),
+    ]);
+    if (!squad) throw new ApiError(ApiErrorCode.SquadNoLongerExists, "Squad not found.");
+    if (!player) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
+    const transactionTime = new Date();
+    validatedSquadDocument(squad, transactionTime);
+    validatedPlayerAccountEnvelope(player);
+
+    const disposition = squadJoinRequestDisposition(squad, player.id);
+    if (disposition === "join") return { join: true as const, squad };
+    if (disposition === "reject") {
+      throw new ApiError(ApiErrorCode.SquadIsNotPublic, "This squad accepts invited players only.");
+    }
+
+    const plan = planSquadJoinRequest(squad, player, transactionTime.getTime());
+    // A repeated tap against the same still-pending row is a read-only replay. If a concurrent
+    // join removes that row after this snapshot, returning it cannot recreate authorization.
+    if (!plan.changed) return { join: false as const, squad: plan.squad };
+
+    const squadUpdatedAt = nextSquadUpdatedAt(squad, transactionTime);
+    const successor = validatedSquadDocument({
+      ...squad,
+      joinRequests: plan.squad.joinRequests,
+      updatedAt: squadUpdatedAt,
+    }, squadUpdatedAt);
+    // Force a real, strictly monotonic write to the player document. MongoDB write conflicts then
+    // serialize this request against every join, which also writes the membership mirrors. If the
+    // join wins, withTransaction retries and the fresh player snapshot rejects this stale request;
+    // if the request wins, the join retries and its cross-Squad cleanup removes the new row.
+    const playerUpdatedAt = new Date(Math.max(transactionTime.getTime(), player.updatedAt.getTime() + 1));
+    validatedPlayerAccountEnvelope({ ...player, updatedAt: playerUpdatedAt });
+    const playerFence = await players().updateOne(
+      {
+        id: player.id,
+        updatedAt: player.updatedAt,
+        squadName: player.squadName,
+        "player.squadName": player.player.squadName,
+      },
+      { $set: { updatedAt: playerUpdatedAt } },
+      { session },
+    );
+    if (playerFence.modifiedCount !== 1) {
+      throw new ApiError(ApiErrorCode.InternalServerError, "Player Squad admission state changed concurrently.");
+    }
+    const squadUpdate = await squads().updateOne(
+      squadSnapshotWriteFilter(squad),
+      { $set: { joinRequests: successor.joinRequests, updatedAt: successor.updatedAt } },
+      { session },
+    );
+    if (squadUpdate.modifiedCount !== 1) {
+      throw new ApiError(ApiErrorCode.InternalServerError, "Squad join-request state changed concurrently.");
+    }
+    return { join: false as const, squad: successor };
+  });
+  // Open or already-invited admission re-enters the full membership transaction after this
+  // read-only classification, where policy, capacity, invitation, and player authority are read
+  // again. Never try to nest the membership transaction inside the classification transaction.
+  return outcome.join ? joinSquad(playerId, cleanSquadName) : outcome.squad;
 }
 
 export async function acceptJoinRequest(actorId: string, targetId: string, name: string): Promise<SquadDTO> {

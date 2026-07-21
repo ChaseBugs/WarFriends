@@ -501,6 +501,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   2 rejects an uninvited request, and an already invited player is routed through the atomic join
   transaction so the invitation is consumed exactly once. Capacity always uses the validated
   stored `maxMembers`; no missing/falsey default can alter an admission decision.
+  A new policy-1 request transaction advances both the exact Squad revision and a strictly
+  monotonic player-account revision. That player write serializes request creation against every
+  membership transaction: a winning join makes the retried request observe membership and fail,
+  while a winning request is visible to the retried join's cross-Squad cleanup. An identical
+  already-pending request remains a read-only replay and cannot recreate a concurrently removed row.
   Action `59` proves manager authority before looking up the requested player, then creates only a
   bounded future-admission capability. A target already owned by any Squad is rejected through the
   recovered `13301` callback with its `PlayerId` and current Squad `Name`; an exact retry for an
