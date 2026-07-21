@@ -1077,11 +1077,22 @@ export function processAssignmentBufferState(
         responses.push(response);
       } catch (error) {
         const code = error instanceof ApiError ? error.code : ApiErrorCode.InternalServerError;
-        const starterAssignments = working.starterAssignments ?? { deadline: now, assignments: {} };
+        let starterAssignmentsData: string;
+        try {
+          const starterAssignments = working.starterAssignments ?? { deadline: now, assignments: {} };
+          starterAssignmentsData = serializeStarterAssignmentsData(starterAssignments);
+        } catch {
+          // A validation failure can originate in the persisted StarterAssignmentsData itself.
+          // Re-serializing that same snapshot would throw from inside this error adapter and reject
+          // the complete RequestBuffer transport. Return an explicitly expired empty client view
+          // instead: it grants nothing, does not repair or overwrite the durable evidence, and lets
+          // the stock parser consume the recovered per-action error code for operator recovery.
+          starterAssignmentsData = serializeStarterAssignmentsData({ deadline: 0, assignments: {} });
+        }
         responses.push({
           ActionId: request.action,
           Result: code,
-          StarterAssignmentsData: serializeStarterAssignmentsData(starterAssignments),
+          StarterAssignmentsData: starterAssignmentsData,
           Gold: working.gold,
           WarBucks: working.warBucks,
         });

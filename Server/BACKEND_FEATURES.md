@@ -155,6 +155,8 @@ Arena run appear finished, make an achievement tier appear complete, or unlock a
   completion, claim, or serialization. Deadlines must be bounded safe Unix seconds, only the ten
   recovered IDs may exist, record flags must be Boolean, and claimed-but-incomplete state is invalid;
   non-finite deadlines fail closed instead of creating permanently claimable onboarding rewards.
+  Buffered rejection returns an expired empty client view without rewriting or reserializing the
+  corrupt durable evidence, so the recovered per-action error remains transport-safe.
 - Client-provided serialized blobs may be round-tripped but must not be trusted for rewards.
 - Add tests for contract field names, authorization failures, duplicate requests, and concurrency.
 - Update this tracker in the same commit whenever a feature status changes.

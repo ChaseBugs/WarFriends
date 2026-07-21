@@ -785,6 +785,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   ten-ID namespace, Boolean completion/claim flags, and the rule that a claimed record must already
   be completed before creation, boot, completion, claim, or serialization. Non-finite deadlines
   therefore fail closed instead of making a pre-completed onboarding reward permanently claimable.
+  If a buffered claim encounters corrupt durable state, its error adapter returns an expired empty
+  client view while preserving the damaged database snapshot for operator repair; it never retries
+  serialization of the rejected object or aborts unrelated RequestBuffer results.
   Buffered claims are ordered, atomic, reward-validated, and replay safe.
   Unit deployment remains disabled until that event source exists.
 - **VIP entitlement integrity**: every paid-VIP consumer uses one validated nonnegative,

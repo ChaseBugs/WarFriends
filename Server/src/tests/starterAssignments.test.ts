@@ -248,3 +248,26 @@ test("starter RequestBuffer replay returns the cached result without granting tw
   assert.equal(replay.requestsResults, first.requestsResults);
   assert.equal(replay.replayed, true);
 });
+
+test("starter RequestBuffer returns a safe error snapshot when durable onboarding state is corrupt", () => {
+  const initial = createInitialProgression(NOW);
+  initial.starterAssignments = {
+    deadline: Number.POSITIVE_INFINITY,
+    assignments: { ID_1: { completed: true, claimed: false } },
+  };
+  const result = processAssignmentBufferState(initial, NOW + 20, "corrupt-starter-buffer", [{
+    action: DbAction.ClaimStarterAssignment,
+    data: JSON.stringify({ AssignmentId: "ID_1", Gold: 2, WarBucks: 0 }),
+  }]);
+  const wire = JSON.parse(result.requestsResults) as Array<{
+    Result: number;
+    StarterAssignmentsData: string;
+  }>;
+
+  assert.equal(wire[0]?.Result, 18501);
+  assert.deepEqual(JSON.parse(wire[0]!.StarterAssignmentsData), { deadline: 0, assignments: {} });
+  // RequestBuffer still owns its normal daily-assignment normalization and replay receipt, but
+  // the rejected onboarding authority is retained byte-for-byte for explicit operator repair.
+  assert.equal(result.state.starterAssignments, initial.starterAssignments);
+  assert.equal(result.state.starterAssignments!.deadline, Number.POSITIVE_INFINITY);
+});
