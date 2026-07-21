@@ -1,15 +1,43 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { ApiErrorCode } from "../apiErrors";
+import { exactSquadInteger, requestedSquadJoinPolicy } from "../handlers/squadAdmissionParsing";
 import {
   SQUAD_CREATE_BASE_WARBUCKS_COST,
   SQUAD_CREATE_NOT_ENOUGH_WARBUCKS,
   applySquadCreationEconomyState,
   squadCreationWarBucksPrice,
+  validatedSquadJoinPolicy,
+  validatedSquadRequiredMedals,
 } from "../services/squadService";
 import { createInitialProgression } from "../services/playerStateService";
 
 const NOW = Date.UTC(2026, 6, 20, 12, 0, 0) / 1_000;
+
+test("squad admission settings reject coercion and preserve exact recovered integers", () => {
+  assert.equal(exactSquadInteger(" 2 ", "JoinPolicy"), 2);
+  assert.equal(exactSquadInteger(undefined, "RequiredMedals", 0), 0);
+  assert.equal(requestedSquadJoinPolicy({ JoinPolicy: "2" }), 2);
+  assert.equal(requestedSquadJoinPolicy({ IsPublic: "true" }), 0);
+  assert.equal(requestedSquadJoinPolicy({ IsPublic: false }), 1);
+  assert.equal(validatedSquadJoinPolicy(undefined, 0), 0);
+  assert.equal(validatedSquadJoinPolicy(2), 2);
+  assert.equal(validatedSquadRequiredMedals(undefined, 0), 0);
+  assert.equal(validatedSquadRequiredMedals(2_147_483_647), 2_147_483_647);
+
+  for (const value of [-1, 3, 1.5, Number.NaN, Number.POSITIVE_INFINITY]) {
+    assert.throws(() => validatedSquadJoinPolicy(value), /Squad join policy is invalid/);
+  }
+  for (const value of [-1, 1.5, 2_147_483_648, Number.NaN, Number.POSITIVE_INFINITY]) {
+    assert.throws(() => validatedSquadRequiredMedals(value), /Squad medal requirement is invalid/);
+  }
+  for (const value of [null, true, [], {}, "", "1.5", "1e0"]) {
+    assert.throws(() => exactSquadInteger(value, "RequiredMedals"), /must be an exact integer/);
+  }
+  for (const value of [null, "", "yes", 2, {}, []]) {
+    assert.throws(() => requestedSquadJoinPolicy({ IsPublic: value }), /exact Boolean value/);
+  }
+});
 
 test("squad creation price reproduces the recovered linear WarBucks schedule", () => {
   assert.equal(SQUAD_CREATE_BASE_WARBUCKS_COST, 25);

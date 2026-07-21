@@ -398,7 +398,12 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   `Member`, `Veteran`, `Leader`, and `Coleader`. Creation uses the exact decoded linear
   `25 * (count + 1)` WarBucks price; a shared signed-client count/price validator runs at
   progression read/publication, mutation, and boot, and wallet, revision, and the next count validate before the atomic
-  squad/debit write. Kick persists the exact type-3 offline
+  squad/debit write. Create and update treat admission settings as exact assertions at both
+  the HTTP adapter and service boundary: join policy accepts only integers 0 through 2,
+  required medals accepts only a nonnegative C# signed `int`, and the legacy `IsPublic`
+  projection accepts only exact Boolean representations. Malformed, fractional, blank, or
+  oversized input is rejected instead of floored, broadly coerced, silently ignored, or
+  replaced by a default. Kick persists the exact type-3 offline
   notification in the membership transaction. The operational integrity audit reports duplicate
   rosters, broken founders/leaders, and missing accounts; repair mode changes only unambiguous
   player mirrors and safely returns orphaned normal card deposits.

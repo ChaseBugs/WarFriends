@@ -36,6 +36,7 @@ import {
   getSquadWarDivision,
 } from "../services/squadWarService";
 import { rankSquadWarDivision } from "../services/squadWarContract";
+import { exactSquadInteger, requestedSquadJoinPolicy } from "./squadAdmissionParsing";
 
 // Squad system — BACKEND.md §2.5. Every handler is authenticated; rank checks live in the
 // service layer.
@@ -64,20 +65,6 @@ function squadWarsRoundId(req: Record<string, unknown>): string {
     throw new ApiError(ApiErrorCode.UnknownAction, "RoundId is invalid.");
   }
   return value;
-}
-
-function integer(value: unknown, fallback = 0): number {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? Math.floor(parsed) : fallback;
-}
-
-function joinPolicy(req: Record<string, unknown>): number | undefined {
-  if (req.JoinPolicy !== undefined) return integer(req.JoinPolicy);
-  if (req.IsPublic !== undefined) {
-    const value = String(req.IsPublic).toLowerCase();
-    return value === "1" || value === "true" ? 0 : 1;
-  }
-  return undefined;
 }
 
 function emblem(req: Record<string, unknown>): Record<string, unknown> | undefined {
@@ -140,8 +127,12 @@ export const squadHandlers: Record<number, HandlerEntry> = {
       const result = await createSquad(player!.id, squadName(req), {
         description: typeof req.Message === "string" ? req.Message : undefined,
         emblem: emblem(req),
-        joinPolicy: joinPolicy(req),
-        requiredMedals: integer(req.RequiredMedals ?? req.SkillRequirement),
+        joinPolicy: requestedSquadJoinPolicy(req),
+        requiredMedals: exactSquadInteger(
+          req.RequiredMedals !== undefined ? req.RequiredMedals : req.SkillRequirement,
+          "RequiredMedals",
+          0,
+        ),
       });
       return ok(DbAction.CreateSquad, {
         Squad: buildDatabaseSquad(result.squad),
@@ -366,8 +357,10 @@ export const squadHandlers: Record<number, HandlerEntry> = {
   [DbAction.UpdateSquad]: authed(async ({ player, req }) => {
     const squad = await updateSquad(player!.id, squadName(req) || player!.player.squadName, {
       description: typeof req.Message === "string" ? req.Message : undefined,
-      joinPolicy: joinPolicy(req),
-      requiredMedals: req.RequiredMedals === undefined ? undefined : integer(req.RequiredMedals),
+      joinPolicy: requestedSquadJoinPolicy(req),
+      requiredMedals: req.RequiredMedals === undefined
+        ? undefined
+        : exactSquadInteger(req.RequiredMedals, "RequiredMedals"),
     });
     return ok(DbAction.UpdateSquad, { Squad: buildDatabaseSquad(squad) });
   }),

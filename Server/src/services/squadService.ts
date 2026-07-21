@@ -127,6 +127,28 @@ export interface CreateSquadOptions {
   requiredMedals?: number;
 }
 
+const MAX_SQUAD_CLIENT_INT = 2_147_483_647;
+
+/** Validate the exact three-state join-policy integer consumed by DatabaseSquad. */
+export function validatedSquadJoinPolicy(value: number | undefined, fallback?: number): number | undefined {
+  const candidate = value ?? fallback;
+  if (candidate === undefined) return undefined;
+  if (!Number.isSafeInteger(candidate) || candidate < 0 || candidate > 2) {
+    throw new ApiError(ApiErrorCode.UnknownAction, "Squad join policy is invalid.");
+  }
+  return candidate;
+}
+
+/** Validate the nonnegative C# int medal gate before it can affect squad admission. */
+export function validatedSquadRequiredMedals(value: number | undefined, fallback?: number): number | undefined {
+  const candidate = value ?? fallback;
+  if (candidate === undefined) return undefined;
+  if (!Number.isSafeInteger(candidate) || candidate < 0 || candidate > MAX_SQUAD_CLIENT_INT) {
+    throw new ApiError(ApiErrorCode.UnknownAction, "Squad medal requirement is invalid.");
+  }
+  return candidate;
+}
+
 /** IJEAJGCCHEF.NotEnoughWarBucksForCreateSquad; its parser restores count and wallet. */
 export const SQUAD_CREATE_NOT_ENOUGH_WARBUCKS = 11403;
 
@@ -210,8 +232,11 @@ export async function createSquad(
         ? requireModeratedText(description, "Squad description")
         : "";
       squad.emblem = requestedSquadEmblem(options.emblem ?? {});
-      squad.joinPolicy = options.joinPolicy === 1 || options.joinPolicy === 2 ? options.joinPolicy : 0;
-      squad.requiredMedals = Math.max(0, Math.floor(options.requiredMedals ?? 0));
+      // These client settings are assertions, not values to normalize. Silently flooring a
+      // fractional or oversized requirement would publish a different admission policy than the
+      // player requested and could accidentally open a squad that was meant to be restricted.
+      squad.joinPolicy = validatedSquadJoinPolicy(options.joinPolicy, 0)!;
+      squad.requiredMedals = validatedSquadRequiredMedals(options.requiredMedals, 0)!;
       squad.members.push({
         playerId: founderId,
         name: founder.player.accountName,
@@ -1058,8 +1083,10 @@ export async function updateSquad(actorId: string, name: string, values: UpdateS
     }
     squad.description = description ? requireModeratedText(description, "Squad description") : "";
   }
-  if (values.joinPolicy === 0 || values.joinPolicy === 1 || values.joinPolicy === 2) squad.joinPolicy = values.joinPolicy;
-  if (values.requiredMedals !== undefined) squad.requiredMedals = Math.max(0, Math.floor(values.requiredMedals));
+  if (values.joinPolicy !== undefined) squad.joinPolicy = validatedSquadJoinPolicy(values.joinPolicy)!;
+  if (values.requiredMedals !== undefined) {
+    squad.requiredMedals = validatedSquadRequiredMedals(values.requiredMedals)!;
+  }
   if (values.emblem !== undefined) squad.emblem = requestedSquadEmblem(values.emblem);
   await persist(squad);
   return squad;
