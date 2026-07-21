@@ -11,8 +11,8 @@ import {
 // document.player (DatabasePlayerDTO); a few dimensions are denormalized to the top level
 // for indexed lookup/matchmaking and kept in sync on every save.
 
-export async function findById(id: string): Promise<PlayerDocument | null> {
-  return validatedPlayerProfileLookup(await players().findOne({ id }));
+export async function findById(id: string, session?: ClientSession): Promise<PlayerDocument | null> {
+  return validatedPlayerProfileLookup(await players().findOne({ id }, session ? { session } : undefined));
 }
 
 export async function findByAuthToken(id: string, authToken: string): Promise<PlayerDocument | null> {
@@ -166,7 +166,11 @@ export async function savePlayer(id: string, player: DatabasePlayerDTO): Promise
 }
 
 /** Update only the supplied player fields so concurrent match/squad writes are not lost. */
-export async function updatePlayerFields(id: string, fields: Partial<DatabasePlayerDTO>): Promise<void> {
+export async function updatePlayerFields(
+  id: string,
+  fields: Partial<DatabasePlayerDTO>,
+  session?: ClientSession,
+): Promise<void> {
   const set: Record<string, unknown> = { updatedAt: new Date() };
   for (const [key, value] of Object.entries(fields)) set[`player.${key}`] = value;
 
@@ -198,5 +202,9 @@ export async function updatePlayerFields(id: string, fields: Partial<DatabasePla
   if (fields.squadName !== undefined) set.squadName = fields.squadName;
   if (fields.deviceToken !== undefined) set.deviceToken = fields.deviceToken;
 
-  await players().updateOne({ id }, { $set: set, ...(Object.keys(unset).length ? { $unset: unset } : {}) });
+  await players().updateOne(
+    { id },
+    { $set: set, ...(Object.keys(unset).length ? { $unset: unset } : {}) },
+    session ? { session } : undefined,
+  );
 }

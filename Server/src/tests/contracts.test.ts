@@ -5,7 +5,10 @@ import { config } from "../config";
 import { AccountType, League, PlayerStatus, SquadRank } from "../constants";
 import { configurationResponse, normalizeEnvelope } from "../routes";
 import { squadRankAuthority } from "../services/squadService";
-import { providerForAccountType } from "../services/identityService";
+import {
+  accountTypeAfterIdentityRemoval,
+  providerForAccountType,
+} from "../services/identityService";
 import {
   buildExistingGameCenterPayload,
   buildGameCenterAccountPayload,
@@ -179,6 +182,16 @@ test("account types map only to their matching external identity provider", () =
   assert.equal(providerForAccountType(AccountType.Facebook), "facebook");
   assert.equal(providerForAccountType(AccountType.GooglePlay), "googlePlay");
   assert.equal(providerForAccountType(AccountType.GameCenter), "gameCenter");
+
+  assert.equal(
+    accountTypeAfterIdentityRemoval(AccountType.GooglePlay, ["facebook", "googlePlay"]),
+    AccountType.GooglePlay,
+  );
+  assert.equal(
+    accountTypeAfterIdentityRemoval(AccountType.GameCenter, ["facebook", "googlePlay"]),
+    AccountType.Facebook,
+  );
+  assert.equal(accountTypeAfterIdentityRemoval(AccountType.Facebook, []), AccountType.Guest);
 });
 
 test("identity mutations require auth while pre-login existence checks remain open", () => {

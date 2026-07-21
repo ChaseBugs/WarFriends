@@ -3,7 +3,7 @@ import type { ClientSession } from "mongodb";
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import { config } from "../config";
 import { AccountType } from "../constants";
-import { identities, type IdentityDocument, type PlayerDocument } from "../db";
+import { identities, withMongoTransaction, type IdentityDocument, type PlayerDocument } from "../db";
 import { findById, updatePlayerFields } from "./playerService";
 import { authenticationCredentialSecrets } from "./authSecretService";
 
@@ -74,9 +74,37 @@ function normalize(value: string, label: string, maxLength: number): string {
   return normalized;
 }
 
-export async function findIdentity(provider: IdentityProvider, externalId: string): Promise<IdentityDocument | null> {
+export async function findIdentity(
+  provider: IdentityProvider,
+  externalId: string,
+  session?: ClientSession,
+): Promise<IdentityDocument | null> {
   const normalized = externalId.trim();
-  return normalized ? identities().findOne({ provider, externalId: normalized }) : null;
+  return normalized
+    ? identities().findOne({ provider, externalId: normalized }, session ? { session } : undefined)
+    : null;
+}
+
+/**
+ * Select the client-visible AccountType after one provider has been removed.
+ *
+ * The recovered DTO exposes only one active AccountType even though a player may link several
+ * providers. Preserve that current provider when it still has a durable identity row. Otherwise
+ * use the first row from the caller's stable oldest-first order, and enter Guest only when no
+ * external login remains. This makes unlink replay deterministic instead of depending on
+ * MongoDB's unspecified natural find order.
+ */
+export function accountTypeAfterIdentityRemoval(
+  currentAccountType: number,
+  remainingProviders: readonly IdentityProvider[],
+): AccountType {
+  const currentProvider = providerForAccountType(currentAccountType);
+  if (currentProvider && remainingProviders.includes(currentProvider)) {
+    return accountTypeForProvider(currentProvider);
+  }
+  return remainingProviders.length > 0
+    ? accountTypeForProvider(remainingProviders[0]!)
+    : AccountType.Guest;
 }
 
 /**
@@ -129,69 +157,97 @@ export async function linkIdentity(
   // OAuth/platform tokens can be substantially longer than traditional passwords. Bound
   // the input to control request cost while storing only its fixed-length HMAC digest.
   const credential = normalize(credentialValue, "External account credential", 4096);
-  // Validate the owner before inserting the identity. Without this guard a malformed
-  // internal call could leave an orphan identity that authenticates to no player.
-  if (!(await findById(playerId))) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
-
-  // A provider identity may own exactly one WarFriends player. This check gives the client
-  // a deterministic error before MongoDB's unique index handles a concurrent collision.
-  const owner = await findIdentity(provider, externalId);
-  if (owner && owner.playerId !== playerId) {
-    throw new ApiError(ApiErrorCode.RequestNotAuthorized, "External account is already linked to another player.");
-  }
-
   const now = new Date();
   try {
-    // The second unique index is (provider, playerId), so relinking the same provider
-    // updates that player's identity instead of accumulating stale external accounts.
-    await identities().updateOne(
-      { provider, playerId },
-      {
-        $set: {
-          externalId,
-          credentialHash: hashIdentityCredential(provider, externalId, credential),
-          displayName: displayName.trim().slice(0, 100),
-          updatedAt: now,
+    return await withMongoTransaction(async (session) => {
+      // Validate the owner inside the same snapshot that will publish the credential. Without
+      // this guard a malformed internal call could leave an orphan login targeting no player.
+      if (!(await findById(playerId, session))) {
+        throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
+      }
+
+      // A provider identity may own exactly one WarFriends player. This check gives the client
+      // a deterministic error; the unique index remains the final authority for concurrent links.
+      const owner = await findIdentity(provider, externalId, session);
+      if (owner && owner.playerId !== playerId) {
+        throw new ApiError(ApiErrorCode.RequestNotAuthorized, "External account is already linked to another player.");
+      }
+
+      // The second unique index is (provider, playerId), so relinking the same provider replaces
+      // its old external credential. The player mirror update shares this transaction: neither
+      // the login row nor Unity's connected-account state can commit without the other.
+      await identities().updateOne(
+        { provider, playerId },
+        {
+          $set: {
+            externalId,
+            credentialHash: hashIdentityCredential(provider, externalId, credential),
+            displayName: displayName.trim().slice(0, 100),
+            updatedAt: now,
+          },
+          $setOnInsert: { provider, playerId, createdAt: now },
         },
-        $setOnInsert: { provider, playerId, createdAt: now },
-      },
-      { upsert: true },
-    );
+        { upsert: true, session },
+      );
+
+      const accountType = accountTypeForProvider(provider);
+      // Membership in the identity collection is authoritative. The mirrored DatabasePlayer
+      // fields exist only because Unity renders connected-account UI and chooses its next login.
+      if (provider === "facebook") {
+        await updatePlayerFields(playerId, { accountType, facebookId: externalId }, session);
+      }
+      if (provider === "googlePlay") {
+        await updatePlayerFields(playerId, { accountType, googlePlayId: externalId }, session);
+      }
+      if (provider === "gameCenter") {
+        await updatePlayerFields(playerId, { accountType, gameCenterId: externalId }, session);
+      }
+      const player = await findById(playerId, session);
+      if (!player) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
+      return player;
+    });
   } catch (error) {
     if ((error as { code?: number }).code === 11000) {
       throw new ApiError(ApiErrorCode.RequestNotAuthorized, "External account is already linked to another player.");
     }
     throw error;
   }
-
-  const accountType = accountTypeForProvider(provider);
-  // Membership in the identity collection is authoritative. The mirrored DatabasePlayer
-  // fields exist only because the recovered Unity client uses them to render connected-
-  // account UI and choose its next login method.
-  if (provider === "facebook") await updatePlayerFields(playerId, { accountType, facebookId: externalId });
-  if (provider === "googlePlay") await updatePlayerFields(playerId, { accountType, googlePlayId: externalId });
-  if (provider === "gameCenter") await updatePlayerFields(playerId, { accountType, gameCenterId: externalId });
-  const player = await findById(playerId);
-  if (!player) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
-  return player;
 }
 
 export async function unlinkIdentity(playerId: string, provider: IdentityProvider): Promise<PlayerDocument> {
-  // Delete the login credential first, then clear the client-facing mirror. If a later
-  // player update fails, the removed credential still cannot be used to access the account.
-  await identities().deleteOne({ provider, playerId });
+  return withMongoTransaction(async (session) => {
+    const current = await findById(playerId, session);
+    if (!current) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
 
-  // Removing Facebook must not force guest mode when Google Play or Game Center remains
-  // linked (and likewise for the other providers). Prefer a remaining provider and use the
-  // permanent guest token only when no external login is left.
-  const remainingIdentity = await identities().findOne({ playerId });
-  const fallbackType = remainingIdentity ? accountTypeForProvider(remainingIdentity.provider) : AccountType.Guest;
-  if (provider === "facebook") await updatePlayerFields(playerId, { accountType: fallbackType, facebookId: -1 });
-  if (provider === "googlePlay") await updatePlayerFields(playerId, { accountType: fallbackType, googlePlayId: "" });
-  if (provider === "gameCenter") await updatePlayerFields(playerId, { accountType: fallbackType, gameCenterId: "" });
-  const player = await findById(playerId);
-  if (!player) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
-  return player;
+    await identities().deleteOne({ provider, playerId }, { session });
+
+    // At most three rows can remain because (provider, playerId) is unique. Sort oldest-first
+    // with provider as a tie-breaker so an unlink retry cannot oscillate AccountType.
+    const remainingIdentities = await identities()
+      .find({ playerId }, { session })
+      .sort({ createdAt: 1, provider: 1 })
+      .toArray();
+    const fallbackType = accountTypeAfterIdentityRemoval(
+      current.player.accountType,
+      remainingIdentities.map((identity) => identity.provider),
+    );
+
+    // Credential removal and the exact sparse player-mirror removal are one commit. A process
+    // stop therefore cannot leave a usable credential hidden from Unity or a displayed provider
+    // whose authoritative login row has already disappeared.
+    if (provider === "facebook") {
+      await updatePlayerFields(playerId, { accountType: fallbackType, facebookId: -1 }, session);
+    }
+    if (provider === "googlePlay") {
+      await updatePlayerFields(playerId, { accountType: fallbackType, googlePlayId: "" }, session);
+    }
+    if (provider === "gameCenter") {
+      await updatePlayerFields(playerId, { accountType: fallbackType, gameCenterId: "" }, session);
+    }
+    const player = await findById(playerId, session);
+    if (!player) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
+    return player;
+  });
 }
 
 export async function authenticateIdentity(

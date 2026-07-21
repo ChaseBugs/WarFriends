@@ -228,8 +228,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   exact no-ops; token and locale changes from one device-registration request publish together.
 - **Platform identities**: Facebook, Google Play, and Game Center identities have unique
   ownership, HMAC-protected credentials, provider login, collision-safe link/update, and
-  unlink behavior. First-time `CreateGcAccount` commits the player and identity in one transaction,
-  returns separate platform/session credentials, and supplies the recovered `15400` existing-account
+  unlink behavior. Every link, relink, and unlink transaction commits the authoritative identity
+  row together with its sparse player mirror and active AccountType; unlink preserves a surviving
+  active provider or selects the oldest remaining identity deterministically before falling back to
+  Guest. First-time `CreateGcAccount` commits the player and identity in one transaction, returns
+  separate platform/session credentials, and supplies the recovered `15400` existing-account
   profile contract. Remaining response-contract work is tracked in `BACKEND_FEATURES.md`.
 - **Transport abuse boundary**: Express requests use a bounded per-address token bucket and the
   `/hub` WebSocket uses an independent continuous-refill bucket before JSON parsing. With Redis,
