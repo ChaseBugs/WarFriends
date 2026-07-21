@@ -860,6 +860,19 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   announced sequentially through the same local/Redis inbox fan-out, avoiding both an uncommitted
   reward notice and an unbounded division-close burst. A live `InboxMessage` remains presentation
   only: action `91` is still the sole atomic Gold-claim boundary.
+  Optional Firebase Cloud Messaging HTTP v1 delivery adds a best-effort offline wake-up after the
+  same durable commit. `FIREBASE_PUSH_ENABLED=true` requires an exact Firebase project ID, Google
+  Application Default Credentials with messaging permission, and a bounded 1-30 second request
+  timeout. The sender re-reads the complete message and player, requires `PlayerStatus.Offline`, a
+  nonempty mirrored device token, and the matching recovered consent setting before calling FCM.
+  Its data-only payload contains exactly the client-consumed `id`: action `2` for challenges and
+  action `90` for supported system-inbox families. Challenge, Squad status, Squad Event, and Player
+  League switches gate their respective rows; type-28 uses Squad status because the recovered local
+  reminder uses `SQUAD_INFO`. Direct type-27 messages are not pushed because no distinct recovered
+  consent mapping exists. No title, body, reward, or ownership assertion crosses FCM, and provider
+  failure never rolls back or marks the MongoDB row. The normal inbox read remains recovery.
+  Visible notification copy, durable provider retry/deduplication, invalid-token retirement, and a
+  source-backed direct-message consent category remain explicit platform-integration gaps.
 - **Moderation reports and sanctions**: authenticated player/cheater reports are validated, rate-limited,
   deduplicated for safe retries, and stored with review status and evidence metadata. Mandatory
   `ReportType` accepts only canonical recovered decimal text or an exact JSON integer in the bounded
@@ -1687,7 +1700,8 @@ therefore update its executable disposition instead of silently falling through 
   Server-selected Buddy unit-type RNG and squad events/wars remain. Type-28 card-pool request
   notifications validate same-roster membership and use daily actor/target idempotency. Persistent
   Squad Chat delivery now exists on `/hub`, including optional Redis multi-node fan-out; add the
-  Unity Photon-to-WebSocket adapter and offline platform push notifications.
+  Unity Photon-to-WebSocket adapter. Source-backed FCM data wake-ups now cover durable Squad inbox
+  rows when enabled; visible platform notification copy and durable provider retry remain gaps.
 - **Item economy expansion** — unit Elite upgrades, normal shop visuals, Gold lootbox bundles,
   weapon/unit notification acknowledgements, normal card-pack
   purchase, dedicated Black Market weapons, daily weapon/unit rentals, and complete active-loadout

@@ -7,6 +7,7 @@ import {
   type MessageDoc,
 } from "./socialService";
 import { validatedInboxMessageDocument } from "./inboxMessageAuthorityService";
+import { publishOfflineInboxPush } from "./firebasePushService";
 
 /** Transient wake-up channel; MongoDB remains the complete inbox authority. */
 export const INBOX_FANOUT_REDIS_CHANNEL = "warfriends:inbox:fanout:v1";
@@ -159,6 +160,9 @@ export async function publishInboxFanout(recipientPlayerId: string, messageId: s
   }
   const notice = buildInboxFanoutNotice(inboxFanoutOriginId, recipientPlayerId, messageId);
   await redisPublish(INBOX_FANOUT_REDIS_CHANNEL, notice);
+  // Firebase is another post-commit presentation path. It re-reads MongoDB authority and may
+  // safely fail without changing the durable inbox or the socket/Redis recovery contract.
+  await publishOfflineInboxPush(recipientPlayerId, messageId);
 }
 
 /**

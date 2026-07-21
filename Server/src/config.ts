@@ -108,6 +108,18 @@ export const config = {
   googlePlayVoidedPurchaseSchedulerIntervalSeconds:
     Number(process.env.GOOGLE_PLAY_VOIDED_PURCHASE_SCHEDULER_INTERVAL_SECONDS ?? 300),
 
+  // The recovered Android client consumes Firebase data messages, not server-authored display
+  // copy. Keep delivery disabled until ADC identifies a service account allowed to send for the
+  // exact Firebase project; no project name is inferred from the old numeric sender ID.
+  firebasePushEnabled: exactEnvironmentBoolean(
+    process.env.FIREBASE_PUSH_ENABLED,
+    false,
+    "FIREBASE_PUSH_ENABLED",
+  ),
+  firebaseProjectId: process.env.FIREBASE_PROJECT_ID ?? "",
+  firebasePushRequestTimeoutMilliseconds:
+    Number(process.env.FIREBASE_PUSH_REQUEST_TIMEOUT_MS ?? 5_000),
+
   // Optional signed publication manifest for the stock GetConfigurations raw-text protocol.
   // Empty keeps bundled APK sheets active. The signing key is backend-only and protects the
   // operator file from accidental or unauthorized modification before any values are served.
