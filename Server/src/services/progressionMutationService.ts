@@ -2,11 +2,7 @@ import { ApiError, ApiErrorCode } from "../apiErrors";
 import { players, type PlayerProgressionState } from "../db";
 import { findById } from "./playerService";
 import { progressionForPlayer, unixNow } from "./playerStateService";
-import {
-  progressionRevisionForRead,
-  validateProgressionRevisionAdvance,
-} from "./progressionRevisionAuthorityService";
-import { validatedCoreProgressionBalances } from "./coreProgressionAuthorityService";
+import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
 
 const MAX_CONCURRENCY_RETRIES = 4;
 
@@ -36,7 +32,6 @@ export async function mutateProgression<T extends ProgressionMutation>(
     if (!player) throw new ApiError(ApiErrorCode.PlayerNotFound, "Player not found.");
 
     const state = progressionForPlayer(player);
-    const currentRevision = progressionRevisionForRead(state.revision);
     const result = transition(state, unixNow());
     // Pure transitions return the exact input object for an idempotent replay/no-op. Returning
     // immediately avoids an unnecessary replacement and, more importantly, avoids depending on
@@ -45,15 +40,10 @@ export async function mutateProgression<T extends ProgressionMutation>(
     // winner's committed receipt/marker before being acknowledged.
     if (result.state === state) return result;
     // The transition is still pure at this point, so reject a corrupt successor before it can
-    // enter either the MongoDB filter or replacement document. RequestBuffer may legitimately
-    // advance several internal steps, hence the shared authority requires monotonicity rather
-    // than an exact +1 delta.
-    validateProgressionRevisionAdvance(currentRevision, result.state.revision);
-    // A transition can compose many helpers, some of which use ordinary numeric comparison before
-    // subtracting a price. The persisted read was validated above; repeat the complete balance
-    // check on the produced state so no underflow, NaN, Infinity, fraction, or unsafe arithmetic
-    // can be published even if a future helper forgets its own narrower guard.
-    validatedCoreProgressionBalances(result.state);
+    // enter either the MongoDB filter or replacement document. The shared proof accepts a
+    // multi-step RequestBuffer revision while rejecting non-monotonic revisions and any produced
+    // core balance that underflowed, overflowed, or became non-integral/non-finite.
+    validatedProgressionSuccessor(state, result.state);
     const rawRevision = player.progression?.revision;
     const progressionFilter = player.progression
       ? rawRevision === undefined

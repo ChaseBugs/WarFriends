@@ -27,6 +27,7 @@ import {
   progressionRevisionForRead,
   validateProgressionRevisionAdvance,
 } from "../services/progressionRevisionAuthorityService";
+import { validatedProgressionSuccessor } from "../services/progressionPublicationAuthorityService";
 
 function contractPlayer(): PlayerDocument {
   const player = newPlayer("player-contract", "ContractPlayer", AccountType.Facebook);
@@ -293,6 +294,13 @@ test("progression revision authority migrates absence and rejects corrupt or non
   assert.throws(
     () => validateProgressionRevisionAdvance(Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER + 1),
     /Stored progression revision is invalid/,
+  );
+
+  const current = createInitialProgression(1_000);
+  assert.equal(validatedProgressionSuccessor(current, { ...current, revision: 2 }).revision, 2);
+  assert.throws(
+    () => validatedProgressionSuccessor(current, { ...current, revision: 1, gold: Number.NaN }),
+    /Stored Gold balance is invalid/,
   );
 });
 

@@ -121,6 +121,10 @@ The shared progression read/mutation boundary now treats only an absent legacy r
 Present and produced revisions must be nonnegative safe integers, and every state-changing write
 must advance monotonically before its MongoDB compare-and-swap filter or replacement is built;
 multi-action RequestBuffer writes may advance more than one internal step atomically.
+The same successor validator now guards custom reward and external-entitlement replacements:
+reward-bearing inbox claims, verified Play purchase delivery, subscription revalidation, and
+voided-purchase reversal all prove both core-balance snapshots plus the monotonic revision before
+their transaction can publish progression.
 
 Starter and daily assignments, assignment mega rewards, achievements, reward-bearing inbox
 messages, one-time/tutorial grants, Gold conversion, level rewards, normal/VIP lootbox duplicates,

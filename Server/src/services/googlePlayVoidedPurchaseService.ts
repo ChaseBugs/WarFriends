@@ -20,6 +20,7 @@ import {
 } from "./googlePlayPurchaseVerifier";
 import { createInitialItemInventory, itemInventoryStateFor } from "./itemInventoryService";
 import { progressionForPlayer, unixNow } from "./playerStateService";
+import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
 import { withScheduledJobLease } from "./scheduledJobLeaseService";
 import { cardInventoryStateFor } from "./cardInventoryService";
 import { createInitialVisualInventory, visualInventoryStateFor } from "./visualInventoryService";
@@ -189,13 +190,15 @@ async function reconcileVoidedPurchase(event: GooglePlayVoidedPurchase, now: num
         { session },
       ).toArray();
       const activeOtherReceipts = allPackReceipts.filter((other) => other._id !== receipt._id && !other.revokedAt);
-      const progression = applyVoidedOneTimePurchaseState(
-        progressionForPlayer(player),
+      const currentProgression = progressionForPlayer(player);
+      const reversedProgression = applyVoidedOneTimePurchaseState(
+        currentProgression,
         grant,
         activeOtherReceipts,
         allPackReceipts,
         now,
       );
+      const progression = validatedProgressionSuccessor(currentProgression, reversedProgression);
       const projected: PlayerDocument = { ...player, progression };
       const armyPower = calculateArmyPower(projected, now).total;
       const { dogTags: _legacyDogTags, ...canonicalState } = progression;

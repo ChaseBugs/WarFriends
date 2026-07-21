@@ -19,6 +19,7 @@ import {
   type VerifiedGooglePlayPurchase,
 } from "./googlePlayPurchaseVerifier";
 import { progressionForPlayer, unixNow } from "./playerStateService";
+import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
 import { encryptPurchaseToken } from "./purchaseTokenCryptoService";
 import { applyPackEntitlementState } from "./packPurchaseService";
 import {
@@ -222,7 +223,8 @@ async function persistTransition(
   session: ClientSession,
 ): Promise<void> {
   if (!transition.changed) return;
-  const { dogTags: _legacyDogTags, ...canonicalState } = transition.state;
+  const successor = validatedProgressionSuccessor(progressionForPlayer(player), transition.state);
+  const { dogTags: _legacyDogTags, ...canonicalState } = successor;
   const update = await players().updateOne(
     progressionFilter(player),
     { $set: { progression: canonicalState, updatedAt: new Date() } },

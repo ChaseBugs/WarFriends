@@ -13,10 +13,8 @@ import { config } from "../config";
 import { requireModeratedText } from "./textModerationService";
 import { checkedRewardBalance } from "./rewardMathService";
 import { validatedCoreProgressionBalances } from "./coreProgressionAuthorityService";
-import {
-  progressionRevisionForRead,
-  validateProgressionRevisionAdvance,
-} from "./progressionRevisionAuthorityService";
+import { progressionRevisionForRead } from "./progressionRevisionAuthorityService";
+import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
 
 // Player discovery + messaging (BACKEND.md §2.3 "Social / messaging / hit list"). Search
 // and directory reads project players to the client's summary shape; messages are stored
@@ -394,9 +392,7 @@ export function applyInboxGoldRewardState(
     revision: revision + 1,
     gold: checkedRewardBalance(state.gold, rewardGold, "Inbox Gold"),
   };
-  validateProgressionRevisionAdvance(revision, next.revision);
-  validatedCoreProgressionBalances(next);
-  return next;
+  return validatedProgressionSuccessor(state, next);
 }
 
 /**

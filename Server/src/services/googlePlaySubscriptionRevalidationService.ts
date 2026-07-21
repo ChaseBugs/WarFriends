@@ -15,6 +15,7 @@ import {
   type GooglePlaySubscriptionStatusVerifier,
 } from "./googlePlayPurchaseVerifier";
 import { progressionForPlayer, unixNow } from "./playerStateService";
+import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
 import { decryptPurchaseToken } from "./purchaseTokenCryptoService";
 import { withScheduledJobLease } from "./scheduledJobLeaseService";
 import {
@@ -143,14 +144,16 @@ async function commitSuccessfulStatus(
       return false;
     }
 
+    const currentProgression = progressionForPlayer(player);
     const transition = applySubscriptionRevalidationState(
-      progressionForPlayer(player),
+      currentProgression,
       receipt._id,
       status,
       now,
     );
     if (transition.changed) {
-      const { dogTags: _legacyDogTags, ...canonicalState } = transition.state;
+      const successor = validatedProgressionSuccessor(currentProgression, transition.state);
+      const { dogTags: _legacyDogTags, ...canonicalState } = successor;
       const update = await players().updateOne(
         progressionFilter(player),
         { $set: { progression: canonicalState, updatedAt: new Date(now * 1_000) } },
