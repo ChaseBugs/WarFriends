@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { terminalMatchReportResult, type MatchDoc, type MatchPlayerReward } from "../services/matchService";
+import {
+  matchesDisconnectForfeitAuthority,
+  terminalMatchReportResult,
+  type MatchDoc,
+  type MatchPlayerReward,
+} from "../services/matchService";
 import { validatedMatchDocument } from "../services/matchAuthorityService";
 
 const CREATED_AT = new Date("2026-07-21T10:00:00.000Z");
@@ -119,6 +124,27 @@ test("terminal result replay follows finished and conflict-cancelled durable row
     endedAt: ENDED_AT,
   }), "player-a"), { status: "invalid" });
   assert.equal(terminalMatchReportResult(activeMatch(), "player-a"), null);
+});
+
+test("disconnect forfeit authority binds the exact loser marker", () => {
+  const disconnectedAt = new Date("2026-07-21T10:01:00.000Z");
+  const disconnected = activeMatch({ disconnectedAt: { "player-b": disconnectedAt } });
+  assert.equal(matchesDisconnectForfeitAuthority(disconnected, "player-a", {
+    disconnectedPlayerId: "player-b",
+    disconnectedAt: new Date(disconnectedAt),
+  }), true);
+  assert.equal(matchesDisconnectForfeitAuthority(disconnected, "player-a", {
+    disconnectedPlayerId: "player-b",
+    disconnectedAt: new Date(disconnectedAt.getTime() + 1),
+  }), false);
+  assert.equal(matchesDisconnectForfeitAuthority(activeMatch(), "player-a", {
+    disconnectedPlayerId: "player-b",
+    disconnectedAt,
+  }), false);
+  assert.equal(matchesDisconnectForfeitAuthority(disconnected, "player-b", {
+    disconnectedPlayerId: "player-b",
+    disconnectedAt,
+  }), false);
 });
 
 test("ranked-match authority rejects unsafe dynamic identities and contradictory lifecycle state", () => {

@@ -1263,7 +1263,8 @@ export async function markMatchParticipantDisconnected(matchId: string, playerId
 export async function clearMatchParticipantDisconnected(matchId: string, playerId: string): Promise<boolean> {
   const path = `disconnectedAt.${playerId}`;
   const current = await getMatch(matchId);
-  if (!current || !current.disconnectedAt?.[playerId]) return false;
+  const observedDisconnectedAt = current?.disconnectedAt?.[playerId];
+  if (!current || !(observedDisconnectedAt instanceof Date)) return false;
   const disconnectedAt = { ...current.disconnectedAt };
   delete disconnectedAt[playerId];
   validatedMatchDocument({
@@ -1271,7 +1272,10 @@ export async function clearMatchParticipantDisconnected(matchId: string, playerI
     ...(Object.keys(disconnectedAt).length > 0 ? { disconnectedAt } : { disconnectedAt: undefined }),
   });
   const cleared = await matches().updateOne(
-    { matchId, state: "active", [path]: { $exists: true } },
+    // Compare the exact marker read above. A socket can reconnect and disconnect again while this
+    // request is awaiting MongoDB; an existence-only filter would erase that newer disconnect and
+    // prevent its own grace timer from ever resolving.
+    { matchId, state: "active", [path]: observedDisconnectedAt },
     { $unset: { [path]: "" } },
   );
   return cleared.modifiedCount === 1;
@@ -1576,6 +1580,37 @@ export interface SettlementResult {
   rewards?: Record<string, MatchPlayerReward>;
 }
 
+export interface DisconnectForfeitAuthority {
+  /** Assigned participant whose exact durable disconnect marker authorizes the forfeit. */
+  disconnectedPlayerId: string;
+  /** Marker captured by the grace timer; a reconnect or later disconnect changes authority. */
+  disconnectedAt: Date;
+}
+
+/**
+ * Prove that a disconnect-forfeit still owns the exact active match snapshot it observed.
+ *
+ * Redis answers whether the opponent route is live, but it cannot participate in the MongoDB
+ * reward transaction. Binding the loser's exact durable timestamp inside that transaction closes
+ * the reconnect race: clearing or replacing the marker makes the stale timer a no-op before any
+ * economy, progression, card, rental, league, event, or terminal write.
+ */
+export function matchesDisconnectForfeitAuthority(
+  match: MatchDoc,
+  winnerId: string,
+  authority: DisconnectForfeitAuthority,
+): boolean {
+  const observed = match.disconnectedAt?.[authority.disconnectedPlayerId];
+  return match.state === "active"
+    && winnerId !== authority.disconnectedPlayerId
+    && match.players.some((participant) => participant.playerId === winnerId)
+    && match.players.some((participant) => participant.playerId === authority.disconnectedPlayerId)
+    && observed instanceof Date
+    && authority.disconnectedAt instanceof Date
+    && Number.isFinite(authority.disconnectedAt.getTime())
+    && observed.getTime() === authority.disconnectedAt.getTime();
+}
+
 /**
  * Settle a finished match. Idempotent: a second call for an already-finished match is a
  * no-op. Core rewards, reported War Card consumption, supported Squad Event progress, and the
@@ -1583,7 +1618,12 @@ export interface SettlementResult {
  * aggregate/member contribution are part of that same transaction because they are durable
  * gameplay state, not disposable projections.
  */
-export async function settleResult(matchId: string, winnerId: string, reportedById?: string): Promise<SettlementResult> {
+export async function settleResult(
+  matchId: string,
+  winnerId: string,
+  reportedById?: string,
+  disconnectForfeitAuthority?: DisconnectForfeitAuthority,
+): Promise<SettlementResult> {
   // A completed match already contains every projection decision and immutable player receipt.
   // Return it before consulting current live-event configuration: an operator file problem must
   // block only a new atomic settlement, never prevent a client from recovering a response that
@@ -1596,6 +1636,10 @@ export async function settleResult(matchId: string, winnerId: string, reportedBy
       rewarded: false,
       rewards: completed.rewardReceipts,
     };
+  }
+  if (disconnectForfeitAuthority
+    && (!completed || !matchesDisconnectForfeitAuthority(completed, winnerId, disconnectForfeitAuthority))) {
+    return { matchId, winnerId, rewarded: false };
   }
   // Live-event configuration is resolved before opening the MongoDB transaction. No configured
   // or active season is a valid null result. A malformed operator file is logged and rethrown:
@@ -1649,6 +1693,10 @@ export async function settleResult(matchId: string, winnerId: string, reportedBy
       return { result: { matchId, winnerId, rewarded: false }, grants: [] as CoreGrant[], unknown: false };
     }
     if (reportedById && !match.players.some((participant) => participant.playerId === reportedById)) {
+      return { result: { matchId, winnerId, rewarded: false }, grants: [] as CoreGrant[], unknown: false };
+    }
+    if (disconnectForfeitAuthority
+      && !matchesDisconnectForfeitAuthority(match, winnerId, disconnectForfeitAuthority)) {
       return { result: { matchId, winnerId, rewarded: false }, grants: [] as CoreGrant[], unknown: false };
     }
 

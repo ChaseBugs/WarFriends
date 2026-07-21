@@ -510,11 +510,15 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   owner. One socket may complete `Identify` only once, so a second account cannot inherit a live
   transport while the first account's route still points to it; account switching reconnects. A
   real close writes a durable disconnect clock and notifies the opponent;
-  `JoinMatch` clears it on re-entry. Grace expiry grants a forfeit only while the opponent remains
+  `JoinMatch` compare-clears that exact clock on re-entry, so it cannot erase a newer disconnect.
+  Grace expiry grants a forfeit only while the opponent remains
   connected, cancels when both are offline, and waits rather than guessing when Redis is unknown.
   The liveness decision atomically reads the route and its PTTL, accepting only the exact
   instance/client UUID pair with a remaining one-to-30-second lease. A malformed, non-expiring,
   overlong, or incoherent Redis value is unknown and cannot become proof for a forfeit reward.
+  The grace callback also binds the loser's exact disconnect timestamp inside the MongoDB reward
+  transaction; a reconnect or replacement marker makes the stale callback a no-op without client
+  notification or timer cleanup.
   Cancellation likewise commits the terminal match and both presence releases together. On a
   single-node restart, active/settling matches are cancelled and all residual `InGame` profiles
   are repaired in the same transaction, including legacy partial cancellations. Before those

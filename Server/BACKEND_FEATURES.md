@@ -137,7 +137,10 @@ immutable, preventing a second `Identify` from leaving the first account's local
 at a transport that has switched identity. Disconnect settlement reads owner value and remaining
 TTL in one Lua operation and accepts “connected” only for the exact instance/client UUID pair with
 one to 30,000 milliseconds left; malformed, non-expiring, overlong, or incoherent observations are
-unknown and cannot manufacture a forfeit reward.
+unknown and cannot manufacture a forfeit reward. Reconnect clearing compare-unsets the exact
+disconnect timestamp it observed, and a forfeit repeats that same loser-marker proof inside the
+terminal reward transaction. A reconnect or later disconnect therefore invalidates an older grace
+callback before any reward, progression, card, rental, league, event, or terminal write.
 
 Each new match also stores its backend coordinator UUID. Redis carries a renewable crash-expiring
 heartbeat for that UUID, and startup plus periodic orphan recovery cancels only matches whose owner

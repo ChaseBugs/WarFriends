@@ -258,10 +258,14 @@ function scheduleDisconnectResolution(eviction: {
         // opponent is both reporter and winner, satisfying match participation checks while
         // the atomic settlement claim prevents a late result from paying rewards twice.
         const settlement = await settleResult(eviction.matchId, eviction.opponentId, eviction.opponentId);
-        roomManager.broadcast(eviction.matchId, {
-          Type: "MatchEnded",
-          Payload: { MatchId: eviction.matchId, WinnerId: settlement.winnerId, Reason: "OpponentForfeit" },
-        });
+        // rewarded=false means another terminal transition won while this timer was awaiting the
+        // transaction. That winning path owns its notification; do not relabel it as a forfeit.
+        if (settlement.rewarded) {
+          roomManager.broadcast(eviction.matchId, {
+            Type: "MatchEnded",
+            Payload: { MatchId: eviction.matchId, WinnerId: settlement.winnerId, Reason: "OpponentForfeit" },
+          });
+        }
       } else {
         // If the room never started or both players disappeared, nobody receives rewards.
         // Both DatabasePlayer status values are restored by cancelMatch.
@@ -408,26 +412,44 @@ async function broadcastDistributedMatch(
   await Promise.all(playerIds.map((playerId) => deliverPvpEnvelope(playerId, matchId, envelope)));
 }
 
-function scheduleDistributedDisconnectResolution(matchId: string, playerId: string, opponentId: string): void {
+function scheduleDistributedDisconnectResolution(
+  matchId: string,
+  playerId: string,
+  opponentId: string,
+  expectedDisconnectedAt: Date,
+): void {
   clearDisconnectTimer(matchId, playerId);
   const timer = setTimeout(() => {
     disconnectTimers.delete(disconnectKey(matchId, playerId));
     void (async () => {
       const match = await getMatch(matchId);
-      if (!match || match.state !== "active" || !match.disconnectedAt?.[playerId]) return;
+      const currentDisconnectedAt = match?.disconnectedAt?.[playerId];
+      if (!match
+        || match.state !== "active"
+        || !(currentDisconnectedAt instanceof Date)
+        || currentDisconnectedAt.getTime() !== expectedDisconnectedAt.getTime()) return;
       const opponentOnline = await isPvpPlayerConnected(opponentId);
       if (opponentOnline === null) {
         // Liveness is unknown during a Redis outage. Retry a full grace window rather than turning
         // an infrastructure failure into a player loss or an unearned opponent reward.
-        scheduleDistributedDisconnectResolution(matchId, playerId, opponentId);
+        scheduleDistributedDisconnectResolution(matchId, playerId, opponentId, expectedDisconnectedAt);
         return;
       }
       let ended: ClientEnvelope;
       if (opponentOnline) {
-        const settlement = await settleResult(matchId, opponentId, opponentId);
+        const settlement = await settleResult(matchId, opponentId, opponentId, {
+          disconnectedPlayerId: playerId,
+          disconnectedAt: expectedDisconnectedAt,
+        });
+        if (!settlement.rewarded) return;
+        // Re-read after the transaction rather than constructing a terminal payload from the
+        // timer arguments. The committed row owns the winner; an unexpected missing/nonterminal
+        // snapshot must not produce a transport-only result that has no durable counterpart.
+        const finished = await getMatch(matchId);
+        if (!finished || finished.state !== "finished") return;
         ended = {
           Type: "MatchEnded",
-          Payload: { MatchId: matchId, WinnerId: settlement.winnerId, Reason: "OpponentForfeit" },
+          Payload: { MatchId: matchId, WinnerId: finished.winnerId, Reason: "OpponentForfeit" },
         };
       } else {
         const cancelled = await cancelMatch(matchId, "both_players_disconnected");
@@ -473,7 +495,9 @@ async function handleDistributedSocketClose(client: Client, releaseAttempt = 0):
     Type: "OpponentDisconnected",
     Payload: { MatchId: match.matchId, PlayerId: client.playerId },
   });
-  scheduleDistributedDisconnectResolution(match.matchId, client.playerId, opponentId);
+  const disconnectedAt = marked.disconnectedAt?.[client.playerId];
+  if (!(disconnectedAt instanceof Date)) return;
+  scheduleDistributedDisconnectResolution(match.matchId, client.playerId, opponentId, disconnectedAt);
 }
 
 async function startClientPresenceHeartbeat(client: Client, playerId: string): Promise<void> {
