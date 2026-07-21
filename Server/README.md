@@ -479,6 +479,8 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   Its room registry accepts only an exact two-distinct-player allowlist reproduced by every join and
   enforces one room per authenticated player. Contradictory overlapping pairs and second-room joins
   fail before room creation, preventing ghost participants that close cleanup would otherwise miss.
+  Active lifecycle state is retained during reconnect grace, but generic and CardPlayed relay both
+  require the complete connected pair and cannot acknowledge an event delivered to no opponent.
   Match rows record their coordinator node, whose renewable Redis heartbeat separates crashed-room
   orphans from live peer-owned matches. When Redis coordination is selected, startup must commit
   that node's first heartbeat before it may create any durable match naming the owner. Startup and

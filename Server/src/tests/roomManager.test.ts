@@ -63,6 +63,11 @@ test("disconnect keeps the authorized room available for a legitimate reconnect"
   });
   assert.equal(manager.getRoom("m4")?.state, "active");
   assert.equal(manager.isParticipant("m4", "p1"), false);
+  assert.equal(
+    manager.relay("m4", "p2", { Type: "while-disconnected" }),
+    false,
+    "an active-state room must not acknowledge an event with no connected opponent",
+  );
   assert.equal(manager.join("m4", "attacker", "c3", ["p1", "p2"]), null);
   assert.ok(manager.join("m4", "p1", "c4", ["p1", "p2"]));
   assert.equal(manager.isParticipant("m4", "p1"), true);

@@ -96,7 +96,9 @@ unavailable deployments retain the same validated in-memory queue.
 The no-Redis `RoomManager` now admits only an exact two-distinct-player allowlist reproduced on
 every join and enforces its player-to-room index. One authenticated identity cannot occupy two
 process-local rooms, a contradictory overlapping allowlist cannot revise an existing room, and
-rejected joins cannot create ghost rooms that survive close cleanup or relay opaque events.
+rejected joins cannot create ghost rooms that survive close cleanup or relay opaque events. During
+reconnect grace the room may retain active lifecycle state, but both exact assigned participants
+must be currently present before any generic or CardPlayed relay reports successful delivery.
 
 `MatchFound` can cross backend nodes through a size/type-bounded pub/sub instruction. The receiving
 node never trusts that instruction as match authority: it reloads MongoDB and proves that the local

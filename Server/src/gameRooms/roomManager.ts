@@ -138,7 +138,10 @@ export class RoomManager {
    */
   relay(matchId: string, fromPlayerId: string, envelope: unknown): boolean {
     const room = this.rooms.get(matchId);
-    if (!room || room.state !== "active" || !room.participants.has(fromPlayerId)) return false;
+    if (!room
+      || room.state !== "active"
+      || room.participants.size !== room.allowedPlayerIds.size
+      || !room.participants.has(fromPlayerId)) return false;
     for (const p of room.participants.values()) {
       if (p.playerId !== fromPlayerId) this.send(p.clientId, envelope);
     }
