@@ -268,6 +268,12 @@ test("player data rejects corrupt core balances while preserving chargeback debt
   const corruptExperience = contractPlayer();
   corruptExperience.progression!.levelExperience = 1.5;
   assert.throws(() => buildPlayerData(corruptExperience), /Stored level experience balance is invalid/);
+
+  // progressionForPlayer is also used by state-changing and cross-player transaction paths; the
+  // authority check must run before a raw comparison can let NaN masquerade as sufficient funds.
+  const corruptMutationRead = contractPlayer();
+  corruptMutationRead.progression!.warBucks = Number.POSITIVE_INFINITY;
+  assert.throws(() => progressionForPlayer(corruptMutationRead), /Stored WarBucks balance is invalid/);
 });
 
 test("progression revision authority migrates absence and rejects corrupt or non-monotonic writes", () => {

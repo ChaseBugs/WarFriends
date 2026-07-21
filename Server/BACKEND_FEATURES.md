@@ -107,10 +107,11 @@ finished-match retries return the immutable receipt without applying any counter
 
 ### Current economy-safety increment
 
-Boot-time `PlayerData` validates the five core numeric progression fields before the Dynamo-style
-adapter runs: Gold and WarBucks retain safe-integer chargeback debt, while Tickets, Scraps, and
-level experience must be nonnegative safe integers. Non-finite, fractional, or unsafe values fail
-closed instead of entering the adapter's legacy zero fallback or losing precision in Unity.
+The shared persisted-progression read boundary and mutation-result boundary validate all five core
+numeric fields before price comparison, publication, or the boot adapter: Gold and WarBucks retain
+safe-integer chargeback debt, while Tickets, Scraps, and level experience must be nonnegative safe
+integers. Non-finite, fractional, unsafe, or invalid-negative values fail closed instead of
+bypassing a debit, entering the adapter's legacy zero fallback, or losing precision in Unity.
 The dog-tag tuple is likewise validated before boot and every time calculation: refill/cap values
 must describe whole positive tags, the update cursor cannot be future or non-finite, and stored
 seconds remain bounded by the normal cap and the recovered two-virtual-tag VIP debt floor. The

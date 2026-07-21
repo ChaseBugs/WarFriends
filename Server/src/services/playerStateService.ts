@@ -93,6 +93,10 @@ export function createInitialProgression(
 export function progressionForPlayer(player: PlayerDocument): PlayerProgressionState {
   if (!player.progression) return createInitialProgression(Math.floor(player.createdAt.getTime() / 1000));
   const state = player.progression;
+  // This is the shared persisted-progression read boundary, not only a boot serializer. Validate
+  // wallet/rank balances here so cross-player transactions and ordinary economy actions cannot
+  // let NaN/Infinity bypass a `< price` check before reaching a narrower service validator.
+  validatedCoreProgressionBalances(state);
   const hasCanonicalDogTagTuple = Object.prototype.hasOwnProperty.call(state, "dogTagSeconds")
     || Object.prototype.hasOwnProperty.call(state, "dogTagLastUpdate")
     || Object.prototype.hasOwnProperty.call(state, "dogTagMax")

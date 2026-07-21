@@ -6,6 +6,7 @@ import {
   progressionRevisionForRead,
   validateProgressionRevisionAdvance,
 } from "./progressionRevisionAuthorityService";
+import { validatedCoreProgressionBalances } from "./coreProgressionAuthorityService";
 
 const MAX_CONCURRENCY_RETRIES = 4;
 
@@ -48,6 +49,11 @@ export async function mutateProgression<T extends ProgressionMutation>(
     // advance several internal steps, hence the shared authority requires monotonicity rather
     // than an exact +1 delta.
     validateProgressionRevisionAdvance(currentRevision, result.state.revision);
+    // A transition can compose many helpers, some of which use ordinary numeric comparison before
+    // subtracting a price. The persisted read was validated above; repeat the complete balance
+    // check on the produced state so no underflow, NaN, Infinity, fraction, or unsafe arithmetic
+    // can be published even if a future helper forgets its own narrower guard.
+    validatedCoreProgressionBalances(result.state);
     const rawRevision = player.progression?.revision;
     const progressionFilter = player.progression
       ? rawRevision === undefined
