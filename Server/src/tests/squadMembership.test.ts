@@ -11,6 +11,7 @@ import {
   planDeclineSquadJoinRequest,
   planSquadInvitation,
   planSquadInvitationRevocation,
+  planSquadJoinRequestRevocation,
   squadInvitationJoinDisposition,
   planSquadJoin,
   planSquadKick,
@@ -239,6 +240,23 @@ test("joining one Squad revokes stale future-admission capability snapshots", ()
   assert.deepEqual(squad.invitedPlayerIds, ["member", "other"]);
 
   const replay = planSquadInvitationRevocation(revoked.squad, "member");
+  assert.equal(replay.changed, false);
+  assert.equal(replay.squad, revoked.squad);
+});
+
+test("joining one Squad revokes stale manager-approval capability snapshots", () => {
+  const squad = squadDocument(1);
+  squad.joinRequests.push(
+    { playerId: "member", name: "Player-member", createdAt: NOW },
+    { playerId: "other", name: "Player-other", createdAt: NOW },
+  );
+
+  const revoked = planSquadJoinRequestRevocation(squad, "member");
+  assert.equal(revoked.changed, true);
+  assert.deepEqual(revoked.squad.joinRequests.map((request) => request.playerId), ["other"]);
+  assert.deepEqual(squad.joinRequests.map((request) => request.playerId), ["member", "other"]);
+
+  const replay = planSquadJoinRequestRevocation(revoked.squad, "member");
   assert.equal(replay.changed, false);
   assert.equal(replay.squad, revoked.squad);
 });

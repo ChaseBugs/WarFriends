@@ -80,6 +80,12 @@ Status legend:
 
 ### Core Squad rank/removal wire authority — Partial
 
+Every successful join now revokes the player's bounded, indexed pending-admission set in every
+other Squad. Both `invitedPlayerIds` and embedded `joinRequests` are removed in the membership
+transaction, while active type-1 invitation messages are terminalized. This prevents either an old
+invitation or a later manager approval from becoming reusable after the player leaves the Squad
+they actually joined; damaged selected rows or an excessive cross-Squad set abort before writing.
+
 Actions 55 and 58 now require their exact recovered target field and canonical `OldSquadRank`; the
 asserted rank is compared to the same authoritative roster snapshot used for permission and the
 transactional write. A stale/lost-response retry therefore returns the stock `5501`/`5801` full-roster

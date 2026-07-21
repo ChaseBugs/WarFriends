@@ -530,11 +530,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   when that terminal message and current roster membership agree. Action `132` has no MessageId, so
   it consumes a matching active type-1 row when present while retaining a bounded legacy migration
   for pending invitations created before durable message delivery existed. Every successful join
-  also resolves the player's bounded set of other active/pending invitations through indexed
-  lookups, validates all selected Squad and message rows before writing, then removes the player
-  from every other queue and marks every other active type-1 row read/ignored in the same membership
-  transaction. Leaving later therefore cannot reactivate a capability issued before membership in
-  another Squad.
+  also resolves the player's bounded set of other pending admission capabilities through indexed
+  invitation and embedded join-request lookups, validates all selected Squad and message rows
+  before writing, then removes the player from every other invitation/request queue and marks every
+  other active type-1 row read/ignored in the same membership transaction. Leaving later therefore
+  cannot reactivate an invitation or manager approval issued before membership in another Squad.
   Rank and removal mutations are equally action-specific: promote/demote accept only their recovered
   target field and canonical `OldSquadRank`, leadership transfer accepts only `PlayerToPromoteId`,
   and kick accepts only `PlayerToKickId`; all derive the mutable Squad from authenticated membership.
