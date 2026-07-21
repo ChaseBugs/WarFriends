@@ -123,6 +123,7 @@ export function advanceBeginnerLeagueAfterPvp(
   postMatchLeagueMedals: number,
   now: number,
 ): BeginnerLeagueAdvance | null {
+  validatePlayerLeagueProgression(player);
   if (player.beginnersLeague <= 0) return null;
   const rule = BEGINNER_LEAGUE_RULES.find((row) => row.beginnersLeague === player.beginnersLeague);
   if (!rule) throw new Error(`Unsupported beginner league ${player.beginnersLeague}.`);
@@ -199,6 +200,33 @@ export interface PlayerLeaguePlacementAdvance {
   endsAt?: number;
 }
 
+/** Validate the only placement countdown supported by the recovered MainScene contract. */
+export function validatedPlayerLeagueRemainingMatches(value: number): number {
+  if (!Number.isSafeInteger(value) || value < 0 || value > PLAYER_LEAGUE_PLACEMENT_MATCHES) {
+    throw new Error("Player league placement counter is invalid.");
+  }
+  return value;
+}
+
+/**
+ * Validate persisted league progression before it can select a reward table or admission path.
+ *
+ * Clamping is unsafe here: `Math.floor(Infinity)` remains infinite and permanently freezes the
+ * recovered one-match placement gate, while a negative beginner tier can incorrectly fall through
+ * into normal-league admission. These values are server-owned and have exact source-backed bounds,
+ * so damaged legacy documents must stop before boot, tutorial repair, or PvP settlement publishes
+ * a contradictory profile.
+ */
+export function validatePlayerLeagueProgression(player: PlayerLeaguePlacementInput): void {
+  if (!Number.isSafeInteger(player.beginnersLeague)
+    || player.beginnersLeague < 0
+    || player.beginnersLeague > BEGINNER_LEAGUE_RULES.length) {
+    throw new Error("Beginner league tier is invalid.");
+  }
+  playerLeagueRule(player.leagueTier);
+  validatedPlayerLeagueRemainingMatches(player.remainingMatches);
+}
+
 export function playerLeagueRule(tier: number): PlayerLeagueRule {
   const rule = PLAYER_LEAGUE_RULES[tier - 1];
   if (!rule || rule.tier !== tier) throw new Error(`Unsupported player league tier ${tier}.`);
@@ -262,11 +290,12 @@ export function advancePlayerLeaguePlacementAfterPvp(
   player: PlayerLeaguePlacementInput,
   now: number,
 ): PlayerLeaguePlacementAdvance | null {
+  validatePlayerLeagueProgression(player);
   if (player.beginnersLeague > 0 || parseManagedPlayerLeagueId(player.leagueId)) return null;
   if (player.leagueId && !/^([1-9]|1[0-6])-placement$/.test(player.leagueId)) return null;
 
   const tier = Math.min(League.Champion, Math.max(League.Bronze3, player.leagueTier)) as League;
-  const remainingMatches = Math.max(0, Math.floor(player.remainingMatches));
+  const remainingMatches = player.remainingMatches;
   if (remainingMatches > 1) {
     return {
       leagueTier: tier,

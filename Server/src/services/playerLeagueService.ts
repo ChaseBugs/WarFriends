@@ -17,6 +17,7 @@ import {
   PLAYER_LEAGUE_PLACEMENT_MATCHES,
   playerLeagueSettlementDecision,
   validatePlayerLeagueCompetitionScore,
+  validatePlayerLeagueProgression,
 } from "./playerLeagueContract";
 
 export interface PlayerLeagueFinishResult {
@@ -91,7 +92,9 @@ export async function ensureActivePlayerLeague(player: PlayerDocument, now: numb
     // Re-read under the transaction instead of trusting the handler snapshot. This makes a
     // concurrent PvP placement win and leaderboard recovery converge on one membership write.
     const current = await players().findOne({ id: player.id }, { session });
-    if (!current || current.player.beginnersLeague > 0) return current ?? player;
+    if (!current) return player;
+    validatePlayerLeagueProgression(current.player);
+    if (current.player.beginnersLeague > 0) return current;
 
     const currentId = current.player.leagueId;
     const managed = parseManagedPlayerLeagueId(currentId);

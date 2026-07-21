@@ -65,6 +65,11 @@ test("tutorial completion grants only recovered starter constants and one placem
   assert.equal(replay.state.gold, 5);
   assert.equal(replay.state.warBucks, 10);
   assert.equal(replay.replayed, true);
+
+  assert.throws(
+    () => finishTutorialState(spent, BATTLE_ID, 2, Number.POSITIVE_INFINITY),
+    /Player league placement counter is invalid/,
+  );
 });
 
 test("tutorial starter grant pays chargeback debt instead of erasing it", () => {

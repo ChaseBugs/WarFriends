@@ -1,7 +1,10 @@
 import { randomUUID } from "crypto";
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import { players, type PlayerProgressionState } from "../db";
-import { PLAYER_LEAGUE_PLACEMENT_MATCHES } from "./playerLeagueContract";
+import {
+  PLAYER_LEAGUE_PLACEMENT_MATCHES,
+  validatedPlayerLeagueRemainingMatches,
+} from "./playerLeagueContract";
 import { findById } from "./playerService";
 import { progressionForPlayer } from "./playerStateService";
 import { mutateProgression } from "./progressionMutationService";
@@ -77,12 +80,13 @@ export function finishTutorialState(
   endReason: number,
   currentRemainingMatches: number,
 ): TutorialMutationResult {
+  const remainingMatches = validatedPlayerLeagueRemainingMatches(currentRemainingMatches);
   if (state.tutorialFinished) {
     return {
       state,
       battleId: state.tutorialBattle?.battleId ?? battleId,
       replayed: true,
-      remainingMatches: Math.max(currentRemainingMatches, PLAYER_LEAGUE_PLACEMENT_MATCHES),
+      remainingMatches: Math.max(remainingMatches, PLAYER_LEAGUE_PLACEMENT_MATCHES),
     };
   }
   if (endReason !== TUTORIAL_WIN_END_REASON) {
@@ -128,7 +132,7 @@ export function finishTutorialState(
     },
     battleId: receipt?.battleId ?? "",
     replayed: false,
-    remainingMatches: Math.max(currentRemainingMatches, PLAYER_LEAGUE_PLACEMENT_MATCHES),
+    remainingMatches: Math.max(remainingMatches, PLAYER_LEAGUE_PLACEMENT_MATCHES),
   };
 }
 

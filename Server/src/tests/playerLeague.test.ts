@@ -17,6 +17,7 @@ import {
   playerLeagueBootFields,
   playerLeagueSettlementDecision,
   validatePlayerLeagueCompetitionScore,
+  validatePlayerLeagueProgression,
 } from "../services/playerLeagueContract";
 import {
   claimableMessageReward,
@@ -226,6 +227,39 @@ test("player-league ranking rejects corrupt persisted competition scores", () =>
       /Player league skill is invalid/,
     );
   }
+});
+
+test("player-league progression rejects corrupt tiers and permanent placement counters", () => {
+  const valid = {
+    beginnersLeague: 0,
+    leagueTier: League.Bronze3,
+    leagueId: `${League.Bronze3}-placement`,
+    remainingMatches: 1,
+  };
+  assert.doesNotThrow(() => validatePlayerLeagueProgression(valid));
+  for (const remainingMatches of [Number.NaN, Number.POSITIVE_INFINITY, -1, 1.5, 2]) {
+    assert.throws(
+      () => validatePlayerLeagueProgression({ ...valid, remainingMatches }),
+      /Player league placement counter is invalid/,
+    );
+  }
+  for (const beginnersLeague of [Number.NaN, Number.POSITIVE_INFINITY, -1, 1.5, 4]) {
+    assert.throws(
+      () => validatePlayerLeagueProgression({ ...valid, beginnersLeague }),
+      /Beginner league tier is invalid/,
+    );
+  }
+  assert.throws(
+    () => validatePlayerLeagueProgression({ ...valid, leagueTier: 0 as League }),
+    /Unsupported player league tier/,
+  );
+  assert.throws(
+    () => advancePlayerLeaguePlacementAfterPvp({
+      ...valid,
+      remainingMatches: Number.POSITIVE_INFINITY,
+    }, 1_900_000_000),
+    /Player league placement counter is invalid/,
+  );
 });
 
 test("PlayerLeagueFinished inbox messages use MMKFEEGDFKN's typed attribute contract", () => {

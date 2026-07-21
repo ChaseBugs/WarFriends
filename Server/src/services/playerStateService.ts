@@ -4,7 +4,11 @@ import { createInitialItemInventory } from "./itemInventoryService";
 import { createInitialVisualInventory } from "./visualInventoryService";
 import { CARD_UNLOCK_LEVEL, createInitialCardCrafting, createInitialCardInventory } from "./cardInventoryService";
 import { warArenaConfiguration, warArenaWireData } from "./warArenaContract";
-import { playerLeagueBootFields } from "./playerLeagueContract";
+import {
+  playerLeagueBootFields,
+  validatePlayerLeagueCompetitionScore,
+  validatePlayerLeagueProgression,
+} from "./playerLeagueContract";
 import { VIP_LOOTBOX_MATCH_INTERVAL } from "./vipLootboxService";
 import { validatedVipExpiration } from "./vipEntitlementService";
 import { validatedSubscription } from "./subscriptionBenefitService";
@@ -153,6 +157,8 @@ function addSerializedObject(target: PlayerDataMap, typeName: string, value: unk
  */
 export function buildDatabasePlayer(document: PlayerDocument): Record<string, unknown> {
   const dto = document.player;
+  validatePlayerLeagueProgression(dto);
+  validatePlayerLeagueCompetitionScore(dto.medalsBalance, dto.skill, document.id);
   const progression = progressionForPlayer(document);
   const itemInventory = progression.itemInventory;
   const wire: Record<string, unknown> = {
@@ -405,6 +411,12 @@ export function buildPlayerData(player: PlayerDocument, now = unixNow()): Player
 
 /** Fields common to CreateAccount and the mandatory post-login GetPlayerData refresh. */
 export function buildPlayerStateResponse(player: PlayerDocument, now = unixNow()): Record<string, unknown> {
+  validatePlayerLeagueProgression(player.player);
+  validatePlayerLeagueCompetitionScore(
+    player.player.medalsBalance,
+    player.player.skill,
+    player.id,
+  );
   return {
     Time: now,
     BeginnersLeague: player.player.beginnersLeague,
