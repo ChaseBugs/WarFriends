@@ -235,6 +235,11 @@ MongoDB selection. It requires bounded trimmed control-free `MatchId` and `Winne
 optional `UsedCards` and opaque non-authoritative `Stats`, and rejects missing identities,
 alternate-case aliases, arrays, null, or extra fields instead of trusting a TypeScript cast.
 
+`JoinMatch` and `MatchEvent` share that executable wrapper boundary before durable admission or
+relay. Join permits only bounded `MatchId`; event requires bounded `MatchId`/`Event` and permits only
+optional `Data`. Unrecovered non-card Data remains opaque and non-authoritative, while CardPlayed
+still passes its deeper sequence, identity, delivery, and terminal-prefix proof.
+
 Stock `BattleId` and replacement `MatchId` now share one exact alias boundary for start and result
 routes. Every present alias must be a string and simultaneous aliases must be identical; explicit
 null, non-string, blank-versus-nonblank, or conflicting IDs cannot choose a lifecycle by nullish

@@ -758,6 +758,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   MongoDB lookup: bounded `MatchId` and `WinnerId` are required, only optional `UsedCards` and opaque
   non-authoritative `Stats` are allowed, and missing identities, alternate-case aliases, or extra
   fields fail instead of relying on a compile-time TypeScript cast.
+  `JoinMatch` and `MatchEvent` now use the same rule before durable admission or relay. Join permits
+  only one bounded `MatchId`; event requires bounded `MatchId`/`Event` and only optional `Data`.
+  Unknown event Data remains opaque and cannot affect gameplay state, while `CardPlayed` continues
+  through its exact sequence, card identity, live-delivery, and terminal-prefix authority.
   The stock `BattleId` and replacement `MatchId` fields likewise identify one lifecycle without
   precedence: every present alias must be a string and two present aliases must be identical.
   True total absence and the legacy empty BattleId still reach feature-specific tutorial migration,

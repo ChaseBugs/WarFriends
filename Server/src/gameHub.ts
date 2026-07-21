@@ -27,7 +27,11 @@ import {
   wasRelayedCardDelivered,
 } from "./services/matchService";
 import { parseOptionalPvpUsedCards } from "./services/cardInventoryService";
-import { validatedMatchResultPayload } from "./services/matchResultRequestAuthorityService";
+import {
+  validatedJoinMatchPayload,
+  validatedMatchEventPayload,
+  validatedMatchResultPayload,
+} from "./services/matchResultRequestAuthorityService";
 import { resolveMatchReportStatus, roomManager } from "./gameRooms/roomManager";
 import type {
   ClientEnvelope,
@@ -1101,13 +1105,18 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
 
     case "JoinMatch": {
       if (!client.playerId) return send(client, { Type: "AuthError", Payload: { Message: "Identify first." } });
-      const p = envelope.Payload as JoinMatchPayload;
+      let p: JoinMatchPayload;
+      try {
+        p = validatedJoinMatchPayload(envelope.Payload);
+      } catch {
+        return send(client, { Type: "MatchError", Payload: { Reason: "NotParticipantOrFull" } });
+      }
       if (client.presenceHeartbeat) {
-        const joined = await joinActiveMatch(p?.MatchId, client.playerId);
+        const joined = await joinActiveMatch(p.MatchId, client.playerId);
         if (!joined) {
           return send(client, {
             Type: "MatchError",
-            Payload: { MatchId: p?.MatchId, Reason: "NotParticipantOrFull" },
+            Payload: { MatchId: p.MatchId, Reason: "NotParticipantOrFull" },
           });
         }
         send(client, {
@@ -1163,36 +1172,36 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
         }
         return;
       }
-      const match = await getMatch(p?.MatchId);
+      const match = await getMatch(p.MatchId);
       const allowedPlayerIds = match?.state === "active" ? match.players.map((participant) => participant.playerId) : [];
       // Local rooms use the same MongoDB join/start authority as distributed rooms. Preflight the
       // transient registry first so a known second-room or contradictory-pair conflict cannot
       // pollute durable joinedPlayerIds, then repeat the exact check while attaching the socket.
-      if (!roomManager.canJoin(p?.MatchId, client.playerId, allowedPlayerIds)) {
-        return send(client, { Type: "MatchError", Payload: { MatchId: p?.MatchId, Reason: "NotParticipantOrFull" } });
+      if (!roomManager.canJoin(p.MatchId, client.playerId, allowedPlayerIds)) {
+        return send(client, { Type: "MatchError", Payload: { MatchId: p.MatchId, Reason: "NotParticipantOrFull" } });
       }
-      const joined = await joinActiveMatch(p?.MatchId, client.playerId);
+      const joined = await joinActiveMatch(p.MatchId, client.playerId);
       if (!joined) {
-        return send(client, { Type: "MatchError", Payload: { MatchId: p?.MatchId, Reason: "NotParticipantOrFull" } });
+        return send(client, { Type: "MatchError", Payload: { MatchId: p.MatchId, Reason: "NotParticipantOrFull" } });
       }
       const durableAllowedPlayerIds = joined.match.players.map((participant) => participant.playerId);
-      const room = roomManager.join(p?.MatchId, client.playerId, client.id, durableAllowedPlayerIds);
+      const room = roomManager.join(p.MatchId, client.playerId, client.id, durableAllowedPlayerIds);
       if (!room) {
         // This should be unreachable without another local handler changing the registry while the
         // MongoDB call was in flight. The durable join may already have started the pair, so fail
         // closed by cancelling and releasing both profiles rather than leaving a start row with no
         // corresponding local socket authority.
-        const cancelled = await cancelMatch(p?.MatchId, "local_room_admission_failed");
+        const cancelled = await cancelMatch(p.MatchId, "local_room_admission_failed");
         if (cancelled) {
-          roomManager.broadcast(p?.MatchId, {
+          roomManager.broadcast(p.MatchId, {
             Type: "MatchError",
-            Payload: { MatchId: p?.MatchId, Reason: "LocalRoomAdmissionFailed" },
+            Payload: { MatchId: p.MatchId, Reason: "LocalRoomAdmissionFailed" },
           });
         }
-        clearMatchJoinTimer(p?.MatchId);
-        clearMatchDisconnectTimers(p?.MatchId);
-        roomManager.finish(p?.MatchId);
-        return send(client, { Type: "MatchError", Payload: { MatchId: p?.MatchId, Reason: "NotParticipantOrFull" } });
+        clearMatchJoinTimer(p.MatchId);
+        clearMatchDisconnectTimers(p.MatchId);
+        roomManager.finish(p.MatchId);
+        return send(client, { Type: "MatchError", Payload: { MatchId: p.MatchId, Reason: "NotParticipantOrFull" } });
       }
       const observedDisconnect = joined.match.disconnectedAt?.[client.playerId];
       const durableReconnected = observedDisconnect instanceof Date
@@ -1239,14 +1248,13 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
 
     case "MatchEvent": {
       if (!client.playerId) return;
-      const p = envelope.Payload as MatchEventPayload;
-      if (typeof p?.Event !== "string"
-        || p.Event.length === 0
-        || p.Event.length > 128
-        || /\p{Cc}/u.test(p.Event)) {
+      let p: MatchEventPayload;
+      try {
+        p = validatedMatchEventPayload(envelope.Payload);
+      } catch {
         return send(client, {
           Type: "MatchError",
-          Payload: { MatchId: p?.MatchId, Reason: "InvalidEvent" },
+          Payload: { Reason: "InvalidEvent" },
         });
       }
       // Never relay attacker-supplied root/payload fields. Unknown event Data remains opaque until
@@ -1260,14 +1268,14 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
         },
       };
       if (client.presenceHeartbeat) {
-        const opponentId = await distributedMatchOpponent(p?.MatchId, client.playerId);
+        const opponentId = await distributedMatchOpponent(p.MatchId, client.playerId);
         if (!opponentId) {
           return send(client, {
             Type: "MatchError",
-            Payload: { MatchId: p?.MatchId, Reason: "NotInActiveMatch" },
+            Payload: { MatchId: p.MatchId, Reason: "NotInActiveMatch" },
           });
         }
-        if (p?.Event === "CardPlayed") {
+        if (p.Event === "CardPlayed") {
           const data = p.Data as CardPlayedEventData | undefined;
           try {
             const sequence = validatedRelayedCardSequence(data?.Sequence);
@@ -1320,7 +1328,7 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
               },
             });
           } catch {
-            send(client, { Type: "MatchError", Payload: { MatchId: p?.MatchId, Reason: "InvalidCardPlay" } });
+            send(client, { Type: "MatchError", Payload: { MatchId: p.MatchId, Reason: "InvalidCardPlay" } });
           }
           return;
         }
@@ -1329,7 +1337,7 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
         }
         return;
       }
-      if (p?.Event === "CardPlayed") {
+      if (p.Event === "CardPlayed") {
         const data = p.Data as CardPlayedEventData | undefined;
         try {
           const sequence = validatedRelayedCardSequence(data?.Sequence);
@@ -1383,12 +1391,12 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
             },
           });
         } catch {
-          send(client, { Type: "MatchError", Payload: { MatchId: p?.MatchId, Reason: "InvalidCardPlay" } });
+          send(client, { Type: "MatchError", Payload: { MatchId: p.MatchId, Reason: "InvalidCardPlay" } });
         }
         return;
       }
-      if (!roomManager.relay(p?.MatchId, client.playerId, relayedEnvelope)) {
-        send(client, { Type: "MatchError", Payload: { MatchId: p?.MatchId, Reason: "NotInActiveMatch" } });
+      if (!roomManager.relay(p.MatchId, client.playerId, relayedEnvelope)) {
+        send(client, { Type: "MatchError", Payload: { MatchId: p.MatchId, Reason: "NotInActiveMatch" } });
       }
       return;
     }
