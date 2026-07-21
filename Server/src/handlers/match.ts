@@ -25,10 +25,12 @@ import { parseInternetConnection, parseRegionPings } from "../services/regionPin
 import { updatePlayerFields } from "../services/playerService";
 import {
   settleWarcardsTutorial,
+  shouldStartWarcardsTutorial,
   startWarcardsTutorial,
 } from "../services/warcardsTutorialService";
 import {
   findFriendlyBattle,
+  parseOfflineBotStartMetadata,
   settleFriendlyBattle,
   startFriendlyBattle,
 } from "../services/friendlyBattleService";
@@ -115,12 +117,34 @@ export const matchHandlers: Record<number, HandlerEntry> = {
       // StartTutorialMatch deliberately enters the normal offline deathmatch controller. Its
       // LoadingStarted callback therefore looks like an ordinary bot action 64: matchmaking is
       // enabled and BotId is present, but there is no dedicated tutorial flag until GameEnded.
-      // Only an account whose server-owned cardTutState would be 1 can create this receipt.
+      // Server-owned cardTutState is therefore the only safe discriminator. Other bot starts
+      // receive a separate zero-reward lifecycle receipt; their client-simulated combat can never
+      // enter ranked settlement or become economy/progression authority.
       if (enabled(req.IsMatchMaking) && req.BotId !== undefined) {
-        const result = await startWarcardsTutorial(player!.id, player!.player.level, matchId(req));
+        const progression = progressionForPlayer(player!);
+        if (shouldStartWarcardsTutorial(progression, player!.player.level)) {
+          const result = await startWarcardsTutorial(player!.id, player!.player.level, matchId(req));
+          if (result.started) {
+            return ok(DbAction.GameStartedMaster, {
+              Time: unixNow(),
+              Replayed: result.replayed,
+            });
+          }
+          // Another request may have completed the tutorial between the attached player read and
+          // mutateProgression's current-state read. In that race, continue into the ordinary bot
+          // path instead of acknowledging a tutorial receipt that was never stored.
+        }
+        parseOfflineBotStartMetadata(req.BotId, req.BotName, req.BotLevel);
+        const result = await startFriendlyBattle(
+          player!.id,
+          matchId(req),
+          DbAction.GameStartedMaster,
+          "offline-bot",
+        );
         return ok(DbAction.GameStartedMaster, {
           Time: unixNow(),
           Replayed: result.replayed,
+          OfflineBotBattle: true,
         });
       }
       return ok(DbAction.GameStartedMaster, { Time: unixNow() });
@@ -229,10 +253,11 @@ export const matchHandlers: Record<number, HandlerEntry> = {
         integer(req.EndReason, "EndReason"),
       );
       const progression = progressionForPlayer(player!);
+      const offlineBot = friendlyReceipt.battleKind === "offline-bot";
       return ok(DbAction.GameEnded, {
         Settled: true,
-        ResultStatus: "friendly-finished",
-        FriendlyBattle: true,
+        ResultStatus: offlineBot ? "offline-bot-finished" : "friendly-finished",
+        ...(offlineBot ? { OfflineBotBattle: true } : { FriendlyBattle: true }),
         // The stock result parser dereferences GameReward whenever Skill is present. A complete
         // zero-valued object reports successful lifecycle completion without minting anything.
         GameReward: pvpGameReward(true),

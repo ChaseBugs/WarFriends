@@ -1026,18 +1026,21 @@ export interface ModerationRetentionRunDocument extends Document {
 }
 
 /**
- * Server-only lifecycle receipt for one participant in a direct PvP challenge.
+ * Server-only lifecycle receipt for one participant in a no-reward PvP-shaped battle.
  *
  * The recovered Photon client creates the room before it sends the inbox challenge. The room
  * owns `battleID`, and each participant later submits action 64/65 with `IsMatchMaking=0`.
  * There is no message ID or room name in those start requests, so this receipt is deliberately
  * keyed by the only stable tuple available on both the start and GameEnded calls: authenticated
- * player ID plus battle ID. Friendly battles never enter the ranked `matches` collection and
- * therefore can never reach its reward, league, medal, War Card, or squad-event settlement.
+ * player ID plus battle ID. Direct challenges and offline bots never enter the ranked `matches`
+ * collection and therefore can never reach its reward, league, medal, War Card, rental,
+ * assignment, achievement, or squad-event settlement.
  */
 export interface FriendlyBattleDocument {
   playerId: string;
   battleId: string;
+  /** Missing on legacy rows means a direct Photon challenge. */
+  battleKind?: "friendly" | "offline-bot";
   /** 64 for the Photon master, 65 for the Photon client. */
   startAction: 64 | 65;
   state: "active" | "finished";

@@ -11,9 +11,52 @@ const FRIENDLY_END_REASONS = new Set([1, 2, 3, 5, 8]);
 
 export type FriendlyBattleStartDecision = "create" | "replay" | "invalid";
 export type FriendlyBattleSettlementDecision = "settle" | "replay" | "invalid";
+export type NoRewardBattleKind = "friendly" | "offline-bot";
+
+export interface OfflineBotStartMetadata {
+  botId: number;
+  botLevel: number;
+}
 
 function validPlayerId(value: string): boolean {
   return value.length > 0 && value.length <= 160;
+}
+
+/**
+ * Validate the three fields emitted only by GameControllerDeathMatchOffline.
+ *
+ * They are classification evidence, not combat authority, and are deliberately not persisted:
+ * a modified APK can forge all three. Their sole effect is selecting the isolated zero-reward
+ * receipt path, so accepting them can never mint progression. Bounding them still prevents this
+ * compatibility endpoint from becoming an oversized parsing/logging surface.
+ */
+export function parseOfflineBotStartMetadata(
+  botIdValue: unknown,
+  botNameValue: unknown,
+  botLevelValue: unknown,
+): OfflineBotStartMetadata {
+  // BestHTTP sends invariant decimal strings; JSON tooling may send numbers. Do not use loose
+  // Number(value) here because it turns null, false, and an empty string into the valid integer 0.
+  const parseWireInteger = (value: unknown): number => {
+    if (typeof value === "number") return value;
+    if (typeof value === "string" && /^\d{1,7}$/u.test(value)) return Number(value);
+    return Number.NaN;
+  };
+  const botId = parseWireInteger(botIdValue);
+  const botLevel = parseWireInteger(botLevelValue);
+  const botName = typeof botNameValue === "string" ? botNameValue.trim() : "";
+  if (!Number.isSafeInteger(botId) || botId < 0 || botId > 1_000_000) {
+    throw new ApiError(ApiErrorCode.UnknownAction, "Offline bot ID is invalid.");
+  }
+  // BotLevel is the zero-based level written by the recovered action-64 call. The 4.9.5
+  // LevelManager contains exactly 58 rows, so values outside 0..57 are not source-valid.
+  if (!Number.isSafeInteger(botLevel) || botLevel < 0 || botLevel > 57) {
+    throw new ApiError(ApiErrorCode.UnknownAction, "Offline bot level is invalid.");
+  }
+  if (!botName || botName.length > 100 || /[\u0000-\u001f\u007f]/u.test(botName)) {
+    throw new ApiError(ApiErrorCode.UnknownAction, "Offline bot name is invalid.");
+  }
+  return { botId, botLevel };
 }
 
 /**
@@ -49,12 +92,14 @@ export function friendlyBattleStartDecision(
   playerId: string,
   battleId: string,
   startAction: number,
+  battleKind: NoRewardBattleKind = "friendly",
 ): FriendlyBattleStartDecision {
   validateFriendlyBattleId(battleId);
   validateStartAction(startAction);
   if (!validPlayerId(playerId)) return "invalid";
   if (!existing) return "create";
   if (existing.playerId !== playerId || existing.battleId !== battleId) return "invalid";
+  if ((existing.battleKind ?? "friendly") !== battleKind) return "invalid";
 
   // Photon can promote a client to master during reconnect. Role is useful telemetry, but it is
   // not reward authority, so action 64/65 retries share the same participant-owned receipt.
@@ -85,20 +130,22 @@ export interface FriendlyBattleMutationResult {
 }
 
 /**
- * Issue one authenticated, no-reward challenge receipt from action 64 or 65.
+ * Issue one authenticated, no-reward battle receipt from action 64 or 65.
  *
- * This does not require an accepted inbox row because AcceptChallenge is sent asynchronously
- * after the recipient begins joining Photon. Requiring that unrelated HTTP request to win the
- * race would randomly reject legitimate fast joins. The receipt itself grants nothing and only
- * prevents a later GameEnded call from being mistaken for ranked matchmaking.
+ * A friendly receipt does not require an accepted inbox row because AcceptChallenge is sent
+ * asynchronously after the recipient begins joining Photon. An offline-bot receipt instead
+ * classifies GameControllerDeathMatchOffline after its metadata has been bounded by the caller.
+ * Neither kind grants anything; both exist only to prevent a later GameEnded call from being
+ * mistaken for ranked matchmaking.
  */
 export async function startFriendlyBattle(
   playerId: string,
   battleId: string,
   startAction: number,
+  battleKind: NoRewardBattleKind = "friendly",
   now = new Date(),
 ): Promise<FriendlyBattleMutationResult> {
-  const decision = friendlyBattleStartDecision(null, playerId, battleId, startAction);
+  const decision = friendlyBattleStartDecision(null, playerId, battleId, startAction, battleKind);
   if (decision !== "create") {
     throw new ApiError(ApiErrorCode.UnknownAction, "Friendly battle start is invalid.");
   }
@@ -106,6 +153,7 @@ export async function startFriendlyBattle(
   const receipt: FriendlyBattleDocument = {
     playerId,
     battleId,
+    battleKind,
     startAction,
     state: "active",
     startedAt: now,
@@ -120,7 +168,7 @@ export async function startFriendlyBattle(
   if (write.upsertedCount === 1) return { receipt, replayed: false };
 
   const existing = await friendlyBattles().findOne({ playerId, battleId });
-  if (friendlyBattleStartDecision(existing, playerId, battleId, startAction) !== "replay" || !existing) {
+  if (friendlyBattleStartDecision(existing, playerId, battleId, startAction, battleKind) !== "replay" || !existing) {
     throw new ApiError(ApiErrorCode.UnknownAction, "Friendly battle receipt conflicts with this start.");
   }
   return { receipt: existing, replayed: true };
@@ -135,7 +183,7 @@ export async function findFriendlyBattle(
 }
 
 /**
- * Consume one participant's friendly receipt without touching any gameplay progression.
+ * Consume one participant's no-reward receipt without touching any gameplay progression.
  *
  * The state transition is a compare-and-set. Concurrent identical GameEnded requests converge
  * on the stored terminal row; a different result cannot overwrite it. Keeping this collection

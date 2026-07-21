@@ -324,6 +324,15 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   Action `29` remains the presence heartbeat for non-ranked modes, but its active-match read and
   profile write share a MongoDB transaction. An active/settling ranked reservation always wins
   over a forged or early `Online`/`Offline` report.
+- **Offline bot fallback (stock action `64`/`62`)**: `GameControllerDeathMatchOffline` sends
+  `IsMatchMaking=1`, `BotId`, `BotName`, and zero-based `BotLevel`, which previously collided with
+  the Play Warcards tutorial's bot-shaped start. The server first derives tutorial eligibility
+  from durable `cardTutState`; every other source-valid bot-shaped request receives a separate
+  participant/battle receipt. Matching `GameEnded` calls settle and replay with a parser-safe
+  zero-valued `GameReward`. Bot metadata and combat outcomes are client-simulated, so this path is
+  deliberately unranked: it cannot grant currency, XP, medals, league/assignment/achievement/event
+  progress, consume War Cards, advance VIP/rentals, or enter two-party match consensus. This makes
+  offline gameplay complete cleanly without presenting a forged local win as backend authority.
 - **Squad Chat (WebSocket `/hub`)**: after `Identify`, a replacement client sends
   `SubscribeSquadChat` to receive `SquadChatSubscribed { SquadId, Messages }`, using the exact
   recovered three-message history default. When `NextBeforeCursor` is non-null,
