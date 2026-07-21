@@ -697,9 +697,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   or cross-node fan-out. It must have exact known fields, a UUID message ID, the sender-bound
   idempotency key, bounded nonce/squad/sender/text, source-valid level/league/rank snapshots, and
   safe ordered dates with one-to-365-day retention. Reads use one captured application time to
-  reject future or expired rows. Deployment policy requires exact safe integers: history pages
-  1-100, retention 1-365 whole days, rate 1-1,000 attempts per minute, and message length 1-2,048.
-  Malformed values fail closed rather than being silently defaulted or clamped.
+  reject future or expired rows. History page size, retention, sender rate, and message length
+  resolve once during module startup as one immutable policy snapshot and require exact safe
+  integers respectively bounded to 1-100, 1-365 whole days, 1-1,000 attempts per minute, and
+  1-2,048 characters. Malformed values stop startup rather than being silently defaulted, clamped,
+  or re-read between text admission, rate reservation, durable expiry, and history publication.
   This is a replacement protocol: the stock client still needs its Photon Chat adapter repointed
   to these typed messages.
 

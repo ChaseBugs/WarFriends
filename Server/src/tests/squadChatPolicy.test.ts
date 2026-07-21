@@ -4,8 +4,23 @@ import {
   squadChatHistoryLimit,
   squadChatMaximumLength,
   squadChatMessagesPerMinute,
+  squadChatPolicy,
   squadChatRetentionDays,
 } from "../services/squadChatPolicyService";
+
+test("Squad Chat uses one immutable startup policy snapshot", () => {
+  assert.equal(Object.isFrozen(squadChatPolicy()), true);
+  assert.deepEqual(squadChatPolicy(), {
+    historyLimit: 3,
+    retentionDays: 30,
+    messagesPerMinute: 10,
+    maximumLength: 256,
+  });
+  assert.equal(squadChatHistoryLimit(), 3);
+  assert.equal(squadChatRetentionDays(), 30);
+  assert.equal(squadChatMessagesPerMinute(), 10);
+  assert.equal(squadChatMaximumLength(), 256);
+});
 
 test("Squad Chat policy preserves exact supported deployment values", () => {
   assert.equal(squadChatHistoryLimit(3), 3);
