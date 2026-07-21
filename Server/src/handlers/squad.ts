@@ -44,12 +44,16 @@ import {
   requestedAcceptSquadJoinRequest,
   requestedGlobalSquadDirectory,
   requestedDirectSquadChatTimestamp,
+  requestedDirectSquadJoin,
   requestedDeclineSquadJoinRequest,
   requestedSquadInvitation,
+  requestedSquadJoinRequest,
   requestedSquadKickTarget,
   requestedSquadLeadershipTarget,
   requestedSquadNamePrefix,
   requestedSquadRankChange,
+  requestedSquadMembersRead,
+  requestedSquadRead,
   requestedSuggestedSquadSkill,
   requestedSquadJoinPolicy,
 } from "./squadAdmissionParsing";
@@ -170,12 +174,16 @@ export const squadHandlers: Record<number, HandlerEntry> = {
   }),
 
   [DbAction.JoinSquad]: authed(async ({ player, req }) => {
-    const squad = await joinSquad(player!.id, squadName(req));
+    const input = requestedDirectSquadJoin(req);
+    // MessageId is retained by the parser because invitation-backed admission must eventually
+    // consume that exact inbox capability. The current invitation queue remains the authority;
+    // never reinterpret MessageId as a Squad name while that migration is pending.
+    const squad = await joinSquad(player!.id, input.squadId);
     return ok(DbAction.JoinSquad, { Squad: buildDatabaseSquad(squad), SquadId: squad.name, PlayerRank: 0 });
   }),
 
   [DbAction.JoinSquadRequest]: authed(async ({ player, req }) => {
-    const squad = await requestToJoin(player!.id, squadName(req));
+    const squad = await requestToJoin(player!.id, requestedSquadJoinRequest(req));
     return ok(DbAction.JoinSquadRequest, { Squad: buildDatabaseSquad(squad) });
   }),
 
@@ -242,8 +250,11 @@ export const squadHandlers: Record<number, HandlerEntry> = {
     }
   }),
 
-  [DbAction.LeaveSquad]: authed(async ({ player, req }) => {
-    const result = await leaveSquad(player!.id, squadName(req) || player!.player.squadName);
+  [DbAction.LeaveSquad]: authed(async ({ player }) => {
+    // MOGOJFFMFED emits no gameplay fields. Only the authenticated player mirror may select the
+    // roster being left; accepting SquadId/NewSquadId here would create an undocumented cross-
+    // action capability and could target a Squad unrelated to the session.
+    const result = await leaveSquad(player!.id, player!.player.squadName);
     return ok(DbAction.LeaveSquad, {
       // GCGBPMPECDO expects a JSON list and calls CardManager.AddCard once per ID, so amounts
       // are intentionally represented by repeated IDs rather than a dictionary.
@@ -321,7 +332,7 @@ export const squadHandlers: Record<number, HandlerEntry> = {
   }),
 
   [DbAction.GetSquadDetails]: authed(async ({ player, req }) => {
-    const name = squadName(req) || player!.player.squadName;
+    const name = requestedSquadRead(req, "Squad detail read");
     // Assignment may update RoundId. Resolve it before reading the squad snapshot so the object
     // and its top-level SquadWarsId/position/evaluation metadata describe the same division.
     const squadWarFields = name ? await getSquadWarDetailFields(name) : {};
@@ -334,7 +345,7 @@ export const squadHandlers: Record<number, HandlerEntry> = {
   }),
 
   [DbAction.GetFullSquadInfo]: authed(async ({ player, req }) => {
-    const name = squadName(req) || player!.player.squadName;
+    const name = requestedSquadRead(req, "Full Squad read");
     const squadWarFields = name ? await getSquadWarDetailFields(name) : {};
     const squad = await getByName(name);
     return ok(DbAction.GetFullSquadInfo, {
@@ -344,8 +355,13 @@ export const squadHandlers: Record<number, HandlerEntry> = {
     });
   }),
 
-  [DbAction.GetAllSquadMembers]: authed(async ({ player, req }) => {
-    const name = squadName(req) || player!.player.squadName;
+  [DbAction.GetAllSquadMembers]: authed(async ({ req }) => {
+    const input = requestedSquadMembersRead(req);
+    const name = input.squadId;
+    // The stock client computes CheckMessages from its displayed rank. It is not an authority
+    // signal and the recovered response parser needs no alternate member payload, but validating
+    // its exact 0/1 transport prevents malformed requests from silently taking another path.
+    void input.checkMessages;
     const members = (await getSquadMemberPlayers(name)).map(buildDatabasePlayer);
     return ok(DbAction.GetAllSquadMembers, { SquadId: name, SquadMembers: members, Members: members });
   }),
@@ -399,7 +415,8 @@ export const squadHandlers: Record<number, HandlerEntry> = {
   }),
 
   [DbAction.UpdateSquad]: authed(async ({ player, req }) => {
-    const squad = await updateSquad(player!.id, squadName(req) || player!.player.squadName, {
+    // UpdateSquadInfo emits no Squad identity. Bind the mutation to authenticated membership.
+    const squad = await updateSquad(player!.id, player!.player.squadName, {
       description: typeof req.Message === "string" ? req.Message : undefined,
       joinPolicy: requestedSquadJoinPolicy(req),
       requiredMedals: req.RequiredMedals === undefined
@@ -410,7 +427,12 @@ export const squadHandlers: Record<number, HandlerEntry> = {
   }),
 
   [DbAction.UpdateSquadEmblem]: authed(async ({ player, req }) => {
-    const squad = await updateSquad(player!.id, squadName(req) || player!.player.squadName, { emblem: emblem(req) });
+    if (typeof req.Icon !== "string") {
+      throw new ApiError(ApiErrorCode.UnknownAction, "Squad emblem Icon is invalid.");
+    }
+    // AOHJMKNDNOD emits only Icon. The current Squad is session-owned and an `Emblem` object or
+    // Squad-name alias must not redirect this manager mutation to another document.
+    const squad = await updateSquad(player!.id, player!.player.squadName, { emblem: { id: req.Icon } });
     return ok(DbAction.UpdateSquadEmblem, { Squad: buildDatabaseSquad(squad) });
   }),
 };

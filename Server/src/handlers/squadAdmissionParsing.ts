@@ -119,6 +119,54 @@ function requestedExistingSquadId(value: unknown, action: string): string {
   return value;
 }
 
+export interface DirectSquadJoinInput {
+  squadId: string;
+  messageId?: string;
+}
+
+/**
+ * Parse action 38 exactly as emitted by BeanstalkServerManager.LINEMJAIGMI.
+ *
+ * `NewSquadId` is always present. `MessageId` exists only when the player accepts a durable
+ * SquadInvitation inbox row, so it is preserved separately for capability validation rather
+ * than being allowed to compete with SquadId/SquadName aliases for the destination Squad.
+ */
+export function requestedDirectSquadJoin(req: Record<string, unknown>): DirectSquadJoinInput {
+  const input: DirectSquadJoinInput = {
+    squadId: requestedExistingSquadId(req.NewSquadId, "Direct Squad join"),
+  };
+  if (req.MessageId !== undefined) {
+    input.messageId = requestedSquadPlayerId(req.MessageId, "Direct Squad join invitation");
+  }
+  return input;
+}
+
+/** Parse action 132's sole recovered destination field without accepting direct-join aliases. */
+export function requestedSquadJoinRequest(req: Record<string, unknown>): string {
+  return requestedExistingSquadId(req.SquadId, "Squad join request");
+}
+
+/** Actions 45 and 151 both require the recovered `SquadId` lookup field. */
+export function requestedSquadRead(req: Record<string, unknown>, action: string): string {
+  return requestedExistingSquadId(req.SquadId, action);
+}
+
+export interface SquadMembersReadInput {
+  squadId: string;
+  checkMessages: boolean;
+}
+
+/**
+ * Parse action 44's complete recovered request. CheckMessages is an exact stock 0/1 form value;
+ * it remains a presentation hint and does not grant manager or inbox authority.
+ */
+export function requestedSquadMembersRead(req: Record<string, unknown>): SquadMembersReadInput {
+  return {
+    squadId: requestedExistingSquadId(req.SquadId, "Squad member read"),
+    checkMessages: exactBinaryBoolean(req.CheckMessages, "CheckMessages") ?? false,
+  };
+}
+
 /** Parse action 59's sole recovered gameplay field without accepting another action's aliases. */
 export function requestedSquadInvitation(req: Record<string, unknown>): string {
   return requestedSquadPlayerId(req.PlayerToInviteId, "Squad invitation");

@@ -6,14 +6,18 @@ import {
   exactSquadInteger,
   requestedAcceptSquadJoinRequest,
   requestedDirectSquadChatTimestamp,
+  requestedDirectSquadJoin,
   requestedDeclineSquadJoinRequest,
   requestedGlobalSquadDirectory,
   requestedSquadInvitation,
+  requestedSquadJoinRequest,
   requestedSquadKickTarget,
   requestedSquadLeadershipTarget,
   requestedSquadNamePrefix,
   requestedSquadJoinPolicy,
   requestedSquadRankChange,
+  requestedSquadMembersRead,
+  requestedSquadRead,
   requestedSuggestedSquadSkill,
 } from "../handlers/squadAdmissionParsing";
 import {
@@ -153,6 +157,61 @@ test("Squad invitation and approval parse only their recovered identity fields",
       () => requestedAcceptSquadJoinRequest(request),
       /Squad join-request approval.*field is invalid/,
     );
+  }
+});
+
+test("core Squad join and read actions bind their exact recovered fields", () => {
+  assert.deepEqual(
+    requestedDirectSquadJoin({ NewSquadId: "Alpha Squad" }),
+    { squadId: "Alpha Squad" },
+  );
+  assert.deepEqual(
+    requestedDirectSquadJoin({ NewSquadId: "Alpha Squad", MessageId: "SquadInvitation-a-123" }),
+    { squadId: "Alpha Squad", messageId: "SquadInvitation-a-123" },
+  );
+  assert.equal(requestedSquadJoinRequest({ SquadId: "Alpha Squad" }), "Alpha Squad");
+  assert.equal(requestedSquadRead({ SquadId: "Alpha Squad" }, "Squad detail read"), "Alpha Squad");
+  assert.deepEqual(
+    requestedSquadMembersRead({ SquadId: "Alpha Squad", CheckMessages: "1" }),
+    { squadId: "Alpha Squad", checkMessages: true },
+  );
+  assert.deepEqual(
+    requestedSquadMembersRead({ SquadId: "Alpha Squad", CheckMessages: "0" }),
+    { squadId: "Alpha Squad", checkMessages: false },
+  );
+
+  for (const request of [
+    {},
+    { SquadId: "Alpha Squad" },
+    { SquadName: "Alpha Squad" },
+    { NewSquadId: " Alpha Squad" },
+    { NewSquadId: "Alpha Squad", MessageId: " invitation" },
+  ]) {
+    assert.throws(() => requestedDirectSquadJoin(request), /Direct Squad join.*field is invalid/);
+  }
+  for (const request of [
+    {},
+    { NewSquadId: "Alpha Squad" },
+    { SquadName: "Alpha Squad" },
+    { SquadId: "Alpha  Squad" },
+  ]) {
+    assert.throws(() => requestedSquadJoinRequest(request), /Squad join request squad field is invalid/);
+  }
+  for (const request of [
+    {},
+    { SquadName: "Alpha Squad" },
+    { SquadId: " Alpha Squad" },
+  ]) {
+    assert.throws(() => requestedSquadRead(request, "Squad detail read"), /Squad detail read squad field is invalid/);
+  }
+  for (const request of [
+    {},
+    { SquadId: "Alpha Squad" },
+    { SquadId: "Alpha Squad", CheckMessages: 1 },
+    { SquadId: "Alpha Squad", CheckMessages: "true" },
+    { NewSquadId: "Alpha Squad", CheckMessages: "1" },
+  ]) {
+    assert.throws(() => requestedSquadMembersRead(request), /(Squad member read squad field|CheckMessages)/);
   }
 });
 

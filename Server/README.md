@@ -513,6 +513,16 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   authenticated membership before removing only the named pending row. Replaying an already
   completed decline returns the current Squad without advancing `updatedAt` or invalidating another
   manager's otherwise fresh optimistic snapshot.
+  The remaining core endpoints no longer share the generic Squad-name alias parser. Action `38`
+  requires `NewSquadId` and retains its optional invitation `MessageId` as a separate field; action
+  `132` requires `SquadId`; actions `45`, `151`, and `44` require `SquadId`, with action `44` also
+  validating the recovered `CheckMessages` value as exact `0`/`1`. Leave (`49`), settings (`131`),
+  and emblem (`63`) requests carry no Squad identity, so those mutations derive the only writable
+  Squad from authenticated membership; emblem accepts only the recovered `Icon` field. The current
+  durable admission queue still authorizes invitation-backed joins. Persisting a type-1
+  `SquadInvitation` inbox row and atomically binding/consuming action `38`'s `MessageId` remains an
+  explicit parity gap; the server does not pretend the validated-but-unused message field is
+  already a capability receipt.
   Rank and removal mutations are equally action-specific: promote/demote accept only their recovered
   target field and canonical `OldSquadRank`, leadership transfer accepts only `PlayerToPromoteId`,
   and kick accepts only `PlayerToKickId`; all derive the mutable Squad from authenticated membership.
