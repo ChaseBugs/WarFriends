@@ -10,6 +10,23 @@ import {
 import { calculateArmyPower } from "./armyPowerService";
 import { applyLevelExperienceState, playerLevelDefinition } from "./levelProgressionService";
 import { progressionForPlayer, unixNow } from "./playerStateService";
+import {
+  INSTANT_BATTLE_MAX_CHARGES,
+  INSTANT_BATTLE_MAX_GOLD_COST,
+  INSTANT_BATTLE_MIN_GOLD_COST,
+  INSTANT_BATTLE_RELOAD_SECONDS,
+  INSTANT_BATTLE_UNLOCK_DISPLAY_LEVEL,
+  validatedInstantBattleState,
+} from "./instantBattleAuthorityService";
+
+export {
+  INSTANT_BATTLE_MAX_CHARGES,
+  INSTANT_BATTLE_MAX_GOLD_COST,
+  INSTANT_BATTLE_MIN_GOLD_COST,
+  INSTANT_BATTLE_RELOAD_SECONDS,
+  INSTANT_BATTLE_UNLOCK_DISPLAY_LEVEL,
+  validatedInstantBattleState,
+} from "./instantBattleAuthorityService";
 
 /**
  * Action-199 balancing reconstructed from the two recovered client versions.
@@ -20,12 +37,6 @@ import { progressionForPlayer, unixNow } from "./playerStateService";
  * order yields the coherent 9 / 5 / 48 / 35 / 140 contract below. MainScene is patched to the
  * same order, so the stock client and backend perform identical calculations.
  */
-export const INSTANT_BATTLE_UNLOCK_DISPLAY_LEVEL = 9;
-export const INSTANT_BATTLE_MAX_CHARGES = 5;
-export const INSTANT_BATTLE_RELOAD_SECONDS = 48 * 60;
-export const INSTANT_BATTLE_MIN_GOLD_COST = 35;
-export const INSTANT_BATTLE_MAX_GOLD_COST = 140;
-
 const MAX_CONCURRENCY_RETRIES = 4;
 
 export interface InstantBattleRewardPolicy {
@@ -76,36 +87,18 @@ function checkedBalanceSum(left: number, right: number, name: string): number {
   return value;
 }
 
-/** Clone and validate the private counters instead of mutating a MongoDB snapshot in place. */
-export function instantBattleStateFor(state: PlayerProgressionState): InstantBattleState {
-  const current = state.instantBattle ?? {
-    instantBattlesTime: 0,
-    instantBattles: 0,
-    paidInstantBattles: 0,
-  };
-  checkedNonNegativeInteger(current.instantBattlesTime, "Instant Battle timer");
-  checkedNonNegativeInteger(current.instantBattles, "Instant Battle lifetime count");
-  checkedNonNegativeInteger(current.paidInstantBattles, "Paid Instant Battle count");
-  return {
-    instantBattlesTime: current.instantBattlesTime,
-    instantBattles: current.instantBattles,
-    paidInstantBattles: current.paidInstantBattles,
-    ...(current.lastReceipt ? { lastReceipt: { ...current.lastReceipt } } : {}),
-  };
+/** Clone and validate private counters instead of mutating a MongoDB snapshot in place. */
+export function instantBattleStateFor(state: PlayerProgressionState, now?: number): InstantBattleState {
+  return validatedInstantBattleState(state.instantBattle, now);
 }
 
 /** Reproduce PlayerAnalyticsData.GetInstantBattlesReady with server time as authority. */
 export function instantBattlesReady(value: InstantBattleState, now: number): number {
-  checkedNonNegativeInteger(now, "Instant Battle request time");
-  if (value.instantBattlesTime === 0) return INSTANT_BATTLE_MAX_CHARGES;
-  // A future anchor can only come from corrupt/hand-edited persistence. Silently treating it
-  // as zero would preserve an impossible timer forever, so fail closed and surface the data bug.
-  if (value.instantBattlesTime > now) {
-    throw new ApiError(ApiErrorCode.InternalServerError, "Instant Battle timer is in the future.");
-  }
+  const current = validatedInstantBattleState(value, now);
+  if (current.instantBattlesTime === 0) return INSTANT_BATTLE_MAX_CHARGES;
   return Math.min(
     INSTANT_BATTLE_MAX_CHARGES,
-    Math.floor((now - value.instantBattlesTime) / INSTANT_BATTLE_RELOAD_SECONDS),
+    Math.floor((now - current.instantBattlesTime) / INSTANT_BATTLE_RELOAD_SECONDS),
   );
 }
 
@@ -177,7 +170,7 @@ export function playInstantBattleState(
     throw new ApiError(ApiErrorCode.RequestNotAuthorized, "Instant Battle is not unlocked at this rank.");
   }
 
-  const current = instantBattleStateFor(state);
+  const current = instantBattleStateFor(state, now);
   const normalizedPaidCost = paidCost ?? 0;
   if (!Number.isSafeInteger(normalizedPaidCost) || normalizedPaidCost < 0) {
     throw new ApiError(ApiErrorCode.RequestNotAuthorized, "Instant Battle Gold price is invalid.");

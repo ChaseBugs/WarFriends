@@ -24,6 +24,7 @@ import {
 } from "./starterAssignmentAuthorityService";
 import { videoAdRewardTimesForState } from "./videoAdRewardAuthorityService";
 import { validatedPvpWinStreak } from "./pvpWinStreakAuthorityService";
+import { validatedInstantBattleState } from "./instantBattleAuthorityService";
 
 /** Unix seconds are used throughout the recovered Beanstalk protocol. */
 export function unixNow(): number {
@@ -361,6 +362,7 @@ export function buildPlayerData(player: PlayerDocument, now = unixNow()): Player
     validatedStarterAssignmentState(state.starterAssignments)
       ?? createInitialStarterAssignmentState(Math.floor(player.createdAt.getTime() / 1_000)),
   );
+  const instantBattle = validatedInstantBattleState(state.instantBattle, Math.floor(now));
 
   // PlayerAnalytics derives from DatabaseSerializedObjectGeneric<PlayerAnalyticsData>, so
   // this exact nested type name is the boot lookup key. The real chat channel is Photon
@@ -382,9 +384,9 @@ export function buildPlayerData(player: PlayerDocument, now = unixNow()): Player
     // PlayerAnalytics computes both the visible charge count and the escalating purchase
     // price locally. Restoring all three server-owned action-199 counters prevents reconnects
     // from resetting the timer to a free full batch or resetting a paid price to 35 Gold.
-    instantBattlesTime: state.instantBattle?.instantBattlesTime ?? 0,
-    instantBattles: state.instantBattle?.instantBattles ?? 0,
-    paidInstantBattles: state.instantBattle?.paidInstantBattles ?? 0,
+    instantBattlesTime: instantBattle.instantBattlesTime,
+    instantBattles: instantBattle.instantBattles,
+    paidInstantBattles: instantBattle.paidInstantBattles,
     // TutorialManagerPlayWarcards starts only when this recovered field equals 1 and the
     // level-six War Card lock is already open. Value 2 is its durable terminal state. Derive
     // both values from server-owned progression instead of accepting the client's analytics

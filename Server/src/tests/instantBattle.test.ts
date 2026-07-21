@@ -240,10 +240,40 @@ test("PlayerAnalyticsData restores authoritative timer, lifetime, and paid count
     },
   } satisfies PlayerDocument;
 
-  const data = buildPlayerData(player);
+  const data = buildPlayerData(player, NOW);
   const analytics = JSON.parse((data.PlayerAnalyticsData as { S: string }).S) as Record<string, number>;
   assert.equal(analytics.instantBattlesTime, NOW - 500);
   assert.equal(analytics.instantBattles, 45);
   assert.equal(analytics.paidInstantBattles, 2);
   assert.deepEqual(instantBattleStateFor(state), state.instantBattle);
+
+  state.instantBattle.instantBattlesTime = NOW + 1;
+  assert.throws(
+    () => buildPlayerData(player, NOW),
+    /Instant Battle timer is in the future/,
+  );
+});
+
+test("Instant Battle counter authority rejects non-client and inconsistent persisted tuples", () => {
+  const state = unlockedState();
+  const valid = {
+    instantBattlesTime: NOW - 500,
+    instantBattles: 45,
+    paidInstantBattles: 2,
+  };
+  state.instantBattle = valid;
+  assert.deepEqual(instantBattleStateFor(state, NOW), valid);
+
+  for (const value of [Number.NaN, Number.POSITIVE_INFINITY, -1, 1.5, 2_147_483_648]) {
+    for (const field of ["instantBattlesTime", "instantBattles", "paidInstantBattles"] as const) {
+      state.instantBattle = { ...valid, [field]: value };
+      assert.throws(() => instantBattleStateFor(state, NOW), /is invalid/);
+    }
+  }
+
+  state.instantBattle = { ...valid, instantBattles: 9, paidInstantBattles: 2 };
+  assert.throws(
+    () => playInstantBattleState(state, UNLOCKED_LEVEL_INDEX, NOW, undefined, POLICY),
+    /Instant Battle counters are inconsistent/,
+  );
 });

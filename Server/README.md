@@ -449,7 +449,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   are ready, the paid path verifies and debits the exact 35/70/140-Gold escalating price and
   simulates a full five-battle batch. Timer, lifetime/paid counters, wallet, XP, level Gold,
   dog-tag rank-up refill, and rank Army Power commit in one revision-guarded player write and
-  are restored through `PlayerAnalyticsData`. The hybrid MainScene's shifted five constants are
+  are restored through `PlayerAnalyticsData`. One shared validator requires all three public
+  counters to fit the recovered client's nonnegative signed integers before readiness, settlement,
+  or boot; future timers and paid five-battle groups beyond the lifetime count fail closed. The
+  hybrid MainScene's shifted five constants are
   realigned to the old script's field order so its visible five-charge/35-Gold UI agrees with the
   backend. The retired reward table is unavailable; `INSTANT_BATTLE_XP_PER_BATTLE` (20) and
   `INSTANT_BATTLE_WARBUCKS_PER_BATTLE` (600) are explicit offline policy, while rare Gold/card/

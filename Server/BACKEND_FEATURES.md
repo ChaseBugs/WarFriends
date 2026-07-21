@@ -148,6 +148,9 @@ Arena run appear finished, make an achievement tier appear complete, or unlock a
 - Paid-VIP lootbox countdowns must be exact 1-4 integers; only an absent legacy field defaults to
   four. A selected visual's persisted parts may not exceed its catalog target before duplicate
   conversion, so damaged ownership cannot be normalized into WarBucks.
+- Instant Battle timer/lifetime/paid counters must fit the recovered client's nonnegative signed
+  integers before readiness, settlement, or boot; future timers and paid five-battle groups beyond
+  the lifetime count fail closed instead of being clamped into a recharge or Gold-price state.
 - A current daily-reward calendar must have a real UTC year/month/last-check date and ordered,
   month-bounded unlock/claim cursors before any check, claim, or wire projection.
   Subscription authority must also remain an ordered start/lock/expiry interval; future or inverted
