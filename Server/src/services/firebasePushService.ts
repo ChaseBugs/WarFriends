@@ -20,6 +20,59 @@ export interface FirebasePushTransport {
   send(message: FirebaseDataPush, policy: FirebasePushPolicy): Promise<void>;
 }
 
+export type FirebaseFailureDisposition = "invalidToken" | "transient" | "configuration";
+
+export class FirebasePushDeliveryError extends Error {
+  constructor(
+    message: string,
+    readonly disposition: FirebaseFailureDisposition,
+  ) {
+    super(message);
+    this.name = "FirebasePushDeliveryError";
+  }
+}
+
+function record(value: unknown): Record<string, unknown> | null {
+  return value !== null && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : null;
+}
+
+/**
+ * Classify the structured HTTP v1 error without deleting tokens for deployment mistakes.
+ *
+ * Firebase documents `UNREGISTERED` as terminal. `INVALID_ARGUMENT` is terminal for a token only
+ * when the response contains the FCM-specific detail; a generic BadRequest can instead mean that
+ * the sender payload is wrong. Quota, availability, internal, and transport failures remain
+ * retryable. Sender/auth/project mismatches are configuration failures and must retain every token.
+ */
+export function firebaseFailureDisposition(error: unknown): FirebaseFailureDisposition {
+  const outer = record(error);
+  const response = record(outer?.response);
+  const envelope = record(response?.data);
+  const providerError = record(envelope?.error);
+  const status = typeof providerError?.status === "string" ? providerError.status : "";
+  const details = Array.isArray(providerError?.details) ? providerError.details : [];
+  const fcmCode = details
+    .map(record)
+    .find((detail) => detail?.["@type"] === "type.googleapis.com/google.firebase.fcm.v1.FcmError")
+    ?.errorCode;
+  if (fcmCode === "UNREGISTERED"
+    || (status === "UNREGISTERED")
+    || (fcmCode === "INVALID_ARGUMENT" && status === "INVALID_ARGUMENT")) return "invalidToken";
+
+  const httpStatus = typeof response?.status === "number"
+    ? response.status
+    : typeof providerError?.code === "number" ? providerError.code : 0;
+  if (status === "QUOTA_EXCEEDED"
+    || status === "UNAVAILABLE"
+    || status === "INTERNAL"
+    || httpStatus === 429
+    || httpStatus >= 500
+    || !response) return "transient";
+  return "configuration";
+}
+
 /** Build the complete provider request without adding un-recovered visible notification fields. */
 export function firebaseHttpV1RequestFor(message: FirebaseDataPush, policy: FirebasePushPolicy) {
   return {
@@ -33,6 +86,28 @@ export function firebaseHttpV1RequestFor(message: FirebaseDataPush, policy: Fire
         // Data-only messages need high priority to wake the stock Android Firebase callback in
         // time; this changes transport scheduling, not game-visible notification content.
         android: { priority: "HIGH" },
+      },
+    },
+  };
+}
+
+/** Exact compare-and-set used to retire only the registration token rejected by FCM. */
+export function invalidFirebaseTokenRetirement(
+  recipientPlayerId: string,
+  deviceToken: string,
+  now: Date,
+) {
+  return {
+    filter: {
+      id: recipientPlayerId,
+      deviceToken,
+      "player.deviceToken": deviceToken,
+    },
+    update: {
+      $set: {
+        deviceToken: "",
+        "player.deviceToken": "",
+        updatedAt: now,
       },
     },
   };
@@ -87,8 +162,15 @@ export class FirebaseHttpV1Transport implements FirebasePushTransport {
   private readonly auth = new GoogleAuth({ scopes: [FIREBASE_MESSAGING_SCOPE] });
 
   async send(message: FirebaseDataPush, policy: FirebasePushPolicy): Promise<void> {
-    const client = await this.auth.getClient();
-    await client.request(firebaseHttpV1RequestFor(message, policy));
+    try {
+      const client = await this.auth.getClient();
+      await client.request(firebaseHttpV1RequestFor(message, policy));
+    } catch (error) {
+      throw new FirebasePushDeliveryError(
+        "Firebase HTTP v1 delivery failed.",
+        firebaseFailureDisposition(error),
+      );
+    }
   }
 }
 
@@ -109,6 +191,7 @@ export async function publishOfflineInboxPush(
   policy: FirebasePushPolicy = firebasePushPolicy(),
 ): Promise<boolean> {
   if (!policy.enabled) return false;
+  let attemptedToken = "";
   try {
     const fanout = await getLiveInboxFanout(recipientPlayerId, messageId);
     if (!fanout) return false;
@@ -128,12 +211,35 @@ export async function publishOfflineInboxPush(
       settingsForPlayer(player),
     );
     if (!dataPush) return false;
+    attemptedToken = dataPush.token;
     await transport.send(dataPush, policy);
     return true;
   } catch (error) {
+    if (attemptedToken
+      && error instanceof FirebasePushDeliveryError
+      && error.disposition === "invalidToken") {
+      // Compare both mirrored copies so a concurrent action-13 token refresh wins. Only the exact
+      // token rejected by Firebase is retired; a newer installation credential is never cleared by
+      // a delayed provider response from an older send attempt.
+      try {
+        const retirement = invalidFirebaseTokenRetirement(
+          recipientPlayerId,
+          attemptedToken,
+          new Date(),
+        );
+        await players().updateOne(retirement.filter, retirement.update);
+      } catch (retirementError) {
+        logger.warnWithEmoji("PUSH", "Invalid Firebase token could not be retired", "FIREBASE", {
+          recipientPlayerId,
+          messageId,
+          error: retirementError instanceof Error ? retirementError.message : "Unknown database error",
+        });
+      }
+    }
     logger.warnWithEmoji("PUSH", "Firebase inbox wake-up failed", "FIREBASE", {
       recipientPlayerId,
       messageId,
+      disposition: error instanceof FirebasePushDeliveryError ? error.disposition : "unknown",
       error: error instanceof Error ? error.message : "Unknown Firebase error",
     });
     return false;

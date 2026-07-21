@@ -871,8 +871,12 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   reminder uses `SQUAD_INFO`. Direct type-27 messages are not pushed because no distinct recovered
   consent mapping exists. No title, body, reward, or ownership assertion crosses FCM, and provider
   failure never rolls back or marks the MongoDB row. The normal inbox read remains recovery.
-  Visible notification copy, durable provider retry/deduplication, invalid-token retirement, and a
-  source-backed direct-message consent category remain explicit platform-integration gaps.
+  Structured HTTP v1 failures retire a token only for `UNREGISTERED` or FCM-specific
+  `INVALID_ARGUMENT`. The update compare-and-sets both token mirrors, so a delayed rejection cannot
+  erase a newer action-13 registration. Generic payload errors, sender/project/auth mistakes,
+  quota, service, internal, and transport failures retain the token. Visible notification copy,
+  durable provider retry/deduplication, and a source-backed direct-message consent category remain
+  explicit platform-integration gaps.
 - **Moderation reports and sanctions**: authenticated player/cheater reports are validated, rate-limited,
   deduplicated for safe retries, and stored with review status and evidence metadata. Mandatory
   `ReportType` accepts only canonical recovered decimal text or an exact JSON integer in the bounded

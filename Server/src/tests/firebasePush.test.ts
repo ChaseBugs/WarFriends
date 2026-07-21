@@ -4,8 +4,10 @@ import { PlayerStatus } from "../constants";
 import type { NotificationSettingsDTO } from "../dtos";
 import {
   firebaseDataPushFor,
+  firebaseFailureDisposition,
   firebaseHttpV1RequestFor,
   firebaseWakeActionFor,
+  invalidFirebaseTokenRetirement,
 } from "../services/firebasePushService";
 import { exactFirebasePushPolicy } from "../services/firebasePushPolicyService";
 
@@ -98,4 +100,65 @@ test("Firebase HTTP v1 request contains only recovered data and transport schedu
     },
   });
   assert.equal("notification" in request.data.message, false);
+});
+
+function providerError(status: string, code: number, detailType?: string, errorCode?: string) {
+  return {
+    response: {
+      status: code,
+      data: {
+        error: {
+          code,
+          status,
+          details: detailType ? [{ "@type": detailType, errorCode }] : [],
+        },
+      },
+    },
+  };
+}
+
+test("Firebase failures retire only provider-proven invalid tokens", () => {
+  const fcmDetail = "type.googleapis.com/google.firebase.fcm.v1.FcmError";
+  assert.equal(firebaseFailureDisposition(
+    providerError("UNREGISTERED", 404, fcmDetail, "UNREGISTERED"),
+  ), "invalidToken");
+  assert.equal(firebaseFailureDisposition(
+    providerError("INVALID_ARGUMENT", 400, fcmDetail, "INVALID_ARGUMENT"),
+  ), "invalidToken");
+
+  // A generic invalid payload response is a server/configuration defect, not proof that the
+  // player's opaque token is dead. It must never trigger token retirement.
+  assert.equal(firebaseFailureDisposition(providerError(
+    "INVALID_ARGUMENT",
+    400,
+    "type.googleapis.com/google.rpc.BadRequest",
+  )), "configuration");
+  assert.equal(firebaseFailureDisposition(
+    providerError("SENDER_ID_MISMATCH", 403, fcmDetail, "SENDER_ID_MISMATCH"),
+  ), "configuration");
+});
+
+test("Firebase quota, service, and transport failures remain retryable", () => {
+  assert.equal(firebaseFailureDisposition(providerError("QUOTA_EXCEEDED", 429)), "transient");
+  assert.equal(firebaseFailureDisposition(providerError("UNAVAILABLE", 503)), "transient");
+  assert.equal(firebaseFailureDisposition(providerError("INTERNAL", 500)), "transient");
+  assert.equal(firebaseFailureDisposition(new Error("socket closed")), "transient");
+});
+
+test("invalid-token retirement compare-and-sets both mirrors before clearing either", () => {
+  const now = new Date("2026-07-22T00:00:00.000Z");
+  assert.deepEqual(invalidFirebaseTokenRetirement("player", "old-token", now), {
+    filter: {
+      id: "player",
+      deviceToken: "old-token",
+      "player.deviceToken": "old-token",
+    },
+    update: {
+      $set: {
+        deviceToken: "",
+        "player.deviceToken": "",
+        updatedAt: now,
+      },
+    },
+  });
 });

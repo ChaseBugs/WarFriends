@@ -72,10 +72,12 @@ and 1-30-second request-timeout policy. Every call rebinds the committed recipie
 to complete MongoDB message authority and the validated player envelope; exact offline status, a
 nonempty mirrored token, and matching recovered six-field consent are required. The data-only
 payload sends recovered `id=2` for challenges and `id=90` for supported system-inbox families, with
-type-28 following the recovered local `SQUAD_INFO` category. Provider failure is logged without
-mutating, claiming, deleting, or rolling back the authoritative inbox row. Visible notification
-copy, a distinct type-27 consent category, durable provider retry/deduplication, and invalid-token
-retirement remain explicit gaps.
+type-28 following the recovered local `SQUAD_INFO` category. Structured FCM `UNREGISTERED` and
+FCM-specific `INVALID_ARGUMENT` responses retire both exact old token mirrors through compare-and-set
+without erasing a concurrent action-13 refresh; generic bad payload, sender/project/auth, quota,
+service, internal, and transport failures retain the token. Provider failure cannot mutate, claim,
+delete, or roll back the authoritative inbox row. Visible notification copy, a distinct type-27
+consent category, and durable provider retry/deduplication remain explicit gaps.
 
 Live inbox delivery now covers every message family emitted by the backend. Direct/challenge and
 Squad type-3/21/28 producers publish after durable persistence. Player League type-23 and Squad War
