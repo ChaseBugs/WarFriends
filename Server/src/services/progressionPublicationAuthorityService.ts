@@ -8,6 +8,7 @@ import { validatedProgressionSchemaVersion } from "./progressionSchemaAuthorityS
 import { validatedVipTimeline } from "./vipEntitlementService";
 import { validatedSubscriptionAuthorityReceiptId } from "./subscriptionBenefitService";
 import { validatedRequestBufferAuthority } from "./requestBufferAuthorityService";
+import { validatedWarBucksConversionReceipt } from "./warBucksConversionAuthorityService";
 
 /**
  * Validate the common authority shared by every full progression-document replacement.
@@ -29,6 +30,8 @@ export function validatedProgressionSuccessor(
   validatedSubscriptionAuthorityReceiptId(next.subscriptionAuthorityReceiptId);
   validatedRequestBufferAuthority(current);
   validatedRequestBufferAuthority(next);
+  validatedWarBucksConversionReceipt(current.warBucksConversion, current.revision);
+  validatedWarBucksConversionReceipt(next.warBucksConversion, next.revision);
   validatedCoreProgressionBalances(current);
   validateProgressionRevisionAdvance(progressionRevisionForRead(current.revision), next.revision);
   validatedCoreProgressionBalances(next);

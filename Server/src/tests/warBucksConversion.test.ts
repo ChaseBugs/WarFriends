@@ -6,6 +6,7 @@ import {
 } from "../services/economyService";
 import { playerLevelDefinition } from "../services/levelProgressionService";
 import { createInitialProgression } from "../services/playerStateService";
+import { validatedWarBucksConversionReceipt } from "../services/warBucksConversionAuthorityService";
 
 function funded(gold = 20_000) {
   return { ...createInitialProgression(1_700_000_000), gold };
@@ -58,4 +59,31 @@ test("same-revision transport retry reuses its receipt without a second debit or
   assert.equal(later.replayed, false);
   assert.equal(later.state.gold, 19_900);
   assert.equal(later.state.warBucks, 15_000);
+});
+
+test("conversion receipt authority rejects malformed rows without reopening their reward", () => {
+  const first = convertGoldToWarBucksState(funded(), 1_700_000_100, 0, "warbucks1", "standard");
+  const receipt = first.state.warBucksConversion!;
+  assert.deepEqual(validatedWarBucksConversionReceipt(receipt, first.state.revision), receipt);
+
+  for (const corrupt of [
+    { ...receipt, id: "warbucks7" },
+    { ...receipt, goldDeducted: receipt.goldDeducted + 1 },
+    { ...receipt, warBucksAdded: Number.NaN },
+    { ...receipt, processedAt: Number.POSITIVE_INFINITY },
+    { ...receipt, progressionRevision: first.state.revision + 1 },
+  ]) {
+    assert.throws(
+      () => validatedWarBucksConversionReceipt(corrupt, first.state.revision),
+      /Stored WarBucks conversion receipt is invalid/,
+    );
+  }
+  assert.throws(
+    () => convertGoldToWarBucksState({ ...first.state, warBucksConversion: { ...receipt, id: "forged" } }, 1_700_000_101, 0, "warbucks1", "standard"),
+    /Stored WarBucks conversion receipt is invalid/,
+  );
+  assert.throws(
+    () => convertGoldToWarBucksState(funded(), 1_700_000_100.5, 0, "warbucks1", "standard"),
+    /WarBucks conversion time is invalid/,
+  );
 });

@@ -7,6 +7,10 @@ import { checkedRewardBalance } from "./rewardMathService";
 import { isVipActiveAt } from "./vipEntitlementService";
 import { validatedSubscription } from "./subscriptionBenefitService";
 import { validatedDogTagAuthority } from "./dogTagAuthorityService";
+import {
+  validatedWarBucksConversionReceipt,
+  validatedWarBucksConversionTime,
+} from "./warBucksConversionAuthorityService";
 
 export interface DogTagMutationResult {
   state: PlayerProgressionState;
@@ -64,12 +68,13 @@ export function convertGoldToWarBucksState(
   requestedId: string,
   variant = configuredWarBucksVariant(),
 ): WarBucksConversionResult {
-  const prior = state.warBucksConversion;
+  const currentTime = validatedWarBucksConversionTime(now);
+  const prior = validatedWarBucksConversionReceipt(state.warBucksConversion, state.revision);
   if (
     prior?.id === requestedId
     && prior.progressionRevision === state.revision
-    && Math.floor(now) >= prior.processedAt
-    && Math.floor(now) <= prior.processedAt + CONVERSION_REPLAY_SECONDS
+    && currentTime >= prior.processedAt
+    && currentTime <= prior.processedAt + CONVERSION_REPLAY_SECONDS
   ) {
     return {
       state,
@@ -102,10 +107,11 @@ export function convertGoldToWarBucksState(
       id: requestedId,
       goldDeducted: definition.goldPrice,
       warBucksAdded,
-      processedAt: Math.floor(now),
+      processedAt: currentTime,
       progressionRevision: revision,
     },
   };
+  validatedWarBucksConversionReceipt(next.warBucksConversion, next.revision);
   return {
     state: next,
     id: requestedId,

@@ -496,6 +496,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   exact row units by the authenticated player's source `CONVERTGOLDTOWARBUCKS` rank value. The
   wallet and a narrow transport-replay receipt commit atomically. `WARBUCKS_GOLD_VARIANT` defaults
   to the conservative standard curve because the retired remote experiment selector is absent.
+  Its two-second lost-response receipt is complete private authority: both recovered A/B prefixes
+  remain valid across deployment changes, but the ID must map to its exact source Gold price, grant
+  and timestamp must be safe, and receipt revision cannot exceed current progression. A malformed
+  receipt fails closed instead of being discarded and reopening the conversion.
 - **Instant Battle / Skirmish**: action `199` is server-authoritative from rank 9 onward. A
   new account starts with five ready battles; after a batch is consumed, one battle recharges
   every 48 minutes up to five. A free request consumes every currently ready battle. When none

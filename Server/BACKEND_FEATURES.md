@@ -135,6 +135,10 @@ when expiry is zero, and never later than a nonzero expiry.
 Any present subscription revalidation owner must be the exact 64-character lowercase hexadecimal
 HMAC-SHA256 purchase-receipt key. Absence remains valid for legacy subscription rows; arbitrary or
 malformed durable IDs fail before stale-event comparison or publication.
+Action `221` validates its entire narrow lost-response receipt before replay, read, or publication:
+only the twelve recovered A/B IDs and matching Gold prices are accepted, the historical grant and
+timestamp must be safe, and its receipt revision cannot exceed current progression. Corruption is
+never discarded or overwritten to reopen a recent conversion.
 
 Starter and daily assignments, assignment mega rewards, achievements, reward-bearing inbox
 messages, one-time/tutorial grants, Gold conversion, level rewards, normal/VIP lootbox duplicates,
