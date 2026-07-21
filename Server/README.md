@@ -99,6 +99,17 @@ history. The admin boundary provides `GET /appeals`, `GET /appeals/:appealId`, a
 terminal-note controls as report review. Accepting an appeal revokes a still-live sanction in the
 same MongoDB transaction, while rejection and player withdrawal leave the sanction unchanged.
 
+Moderation retention is an explicit admin workflow rather than an automatic TTL. Configure terminal
+record age with `MODERATION_REPORT_RETENTION_DAYS` and `MODERATION_APPEAL_RETENTION_DAYS` (30-3650;
+both default to 365). `GET /admin/moderation/lifecycle/retention/preview` freezes the cutoffs and
+eligible counts at one `previewedAt`; page every eligible record through
+`GET /admin/moderation/lifecycle/retention/export?kind=reports|appeals&previewedAt=...` before applying
+the purge. `POST /admin/moderation/lifecycle/retention/apply` requires that timestamp,
+`X-Admin-Actor`, `Idempotency-Key`, and exact confirmation `DELETE_TERMINAL_MODERATION_RECORDS`.
+The report/appeal deletes and immutable count receipt commit in one MongoDB transaction, so an exact
+lost-response retry returns the original result. Open/reviewing records can never match the purge
+filters, and account-sanction audit rows are retained indefinitely by policy.
+
 ## How the client talks to it
 
 The client (`BeanstalkServerManager`) sends form fields to a URL ending in the numeric
@@ -340,6 +351,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   transactionally revokes the live sanction, while all terminal appeal states remain immutable.
   Because the recovered banned dialog has only retry/log controls, a replacement support frontend
   or client adapter is still required to expose this workflow to stock-client players.
+  Terminal reports and appeals additionally have an admin-only lifecycle preview, bounded stable
+  export, and explicitly confirmed transactional purge. The frozen timestamp prevents review/export
+  drift; active/open records are excluded, exact retries return the immutable deletion receipt, and
+  sanctions remain indefinitely auditable.
   Army Power/rank/time fields remain explicitly untrusted claims. When both accounts occur in a
   recent replacement-backend ranked match, the report also captures the exact server match ID,
   participant snapshots, state, terminal winner/cancellation, authenticated result claims, and

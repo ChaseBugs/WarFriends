@@ -40,6 +40,18 @@ import {
   PlayerAppealInputError,
   reviewPlayerAppeal,
 } from "../services/playerAppealService";
+import {
+  applyModerationRetention,
+  exportModerationRetentionPage,
+  moderationRetentionPolicy,
+  ModerationLifecycleInputError,
+  normalizeModerationExportLimit,
+  normalizeModerationLifecycleActor,
+  normalizeModerationLifecycleOperationId,
+  normalizeModerationPreviewedAt,
+  normalizeModerationRetentionKind,
+  previewModerationRetention,
+} from "../services/moderationLifecycleService";
 
 export const adminModerationRouter = Router();
 
@@ -105,12 +117,110 @@ function wireAppeal(appeal: PlayerAppealDocument): Record<string, unknown> {
 function moderationFailure(error: unknown, res: Response): void {
   if (error instanceof PlayerSanctionInputError ||
       error instanceof ReportReviewInputError ||
-      error instanceof PlayerAppealInputError) {
+      error instanceof PlayerAppealInputError ||
+      error instanceof ModerationLifecycleInputError) {
     res.status(error.httpStatus).json({ Code: 0, Message: error.message });
     return;
   }
   throw error;
 }
+
+function wireRetentionRun(run: Awaited<ReturnType<typeof applyModerationRetention>>["run"]): Record<string, unknown> {
+  return {
+    retentionRunId: run._id,
+    operationId: run.operationId,
+    actor: run.actor,
+    previewedAt: run.previewedAt.toISOString(),
+    reportBefore: run.reportBefore.toISOString(),
+    appealBefore: run.appealBefore.toISOString(),
+    deletedReports: run.deletedReports,
+    deletedAppeals: run.deletedAppeals,
+    createdAt: run.createdAt.toISOString(),
+  };
+}
+
+/**
+ * Preview the exact terminal rows selected by the configured lifecycle policy. The returned
+ * timestamp must be reused for export and apply, freezing both cutoffs while an operator reviews
+ * and archives every bounded export page.
+ */
+adminModerationRouter.get("/lifecycle/retention/preview", async (req, res, next) => {
+  try {
+    const previewedAt = req.query.asOf === undefined
+      ? new Date()
+      : normalizeModerationPreviewedAt(req.query.asOf);
+    const preview = await previewModerationRetention(previewedAt);
+    res.json({
+      Policy: moderationRetentionPolicy(),
+      Preview: {
+        previewedAt: preview.previewedAt.toISOString(),
+        reportBefore: preview.reportBefore.toISOString(),
+        appealBefore: preview.appealBefore.toISOString(),
+        eligibleReports: preview.eligibleReports,
+        eligibleAppeals: preview.eligibleAppeals,
+      },
+    });
+  } catch (error) {
+    try {
+      moderationFailure(error, res);
+    } catch (unexpected) {
+      next(unexpected);
+    }
+  }
+});
+
+/** Export only the terminal rows eligible in one previously previewed retention snapshot. */
+adminModerationRouter.get("/lifecycle/retention/export", async (req, res, next) => {
+  try {
+    const page = await exportModerationRetentionPage({
+      kind: normalizeModerationRetentionKind(req.query.kind),
+      previewedAt: normalizeModerationPreviewedAt(req.query.previewedAt),
+      cursor: typeof req.query.cursor === "string" ? req.query.cursor : undefined,
+      limit: normalizeModerationExportLimit(req.query.limit),
+    });
+    res.json({
+      Kind: page.kind,
+      Records: page.kind === "reports"
+        ? (page.reportRows ?? []).map(wireReport)
+        : (page.appealRows ?? []).map(wireAppeal),
+      ...(page.nextCursor ? { NextCursor: page.nextCursor } : {}),
+    });
+  } catch (error) {
+    try {
+      moderationFailure(error, res);
+    } catch (unexpected) {
+      next(unexpected);
+    }
+  }
+});
+
+/**
+ * Purge the frozen preview set only after an explicit destructive confirmation. Both collection
+ * deletes and the immutable idempotency receipt share one transaction; active/open records and
+ * the indefinitely retained sanction audit collection are structurally outside the filters.
+ */
+adminModerationRouter.post("/lifecycle/retention/apply", async (req, res, next) => {
+  try {
+    if (req.body?.confirm !== "DELETE_TERMINAL_MODERATION_RECORDS") {
+      throw new ModerationLifecycleInputError(
+        "confirm must equal DELETE_TERMINAL_MODERATION_RECORDS.",
+        400,
+      );
+    }
+    const result = await applyModerationRetention({
+      previewedAt: normalizeModerationPreviewedAt(req.body?.previewedAt),
+      actor: normalizeModerationLifecycleActor(header(req, "X-Admin-Actor")),
+      operationId: normalizeModerationLifecycleOperationId(header(req, "Idempotency-Key")),
+    });
+    res.json({ Replayed: result.replayed, RetentionRun: wireRetentionRun(result.run) });
+  } catch (error) {
+    try {
+      moderationFailure(error, res);
+    } catch (unexpected) {
+      next(unexpected);
+    }
+  }
+});
 
 /** Player appeals are a separate operator queue because their text is not report evidence. */
 adminModerationRouter.get("/appeals", async (req, res, next) => {

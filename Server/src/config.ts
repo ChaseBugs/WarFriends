@@ -129,6 +129,10 @@ export const config = {
   challengeTtlSeconds: Number(process.env.CHALLENGE_TTL_SECONDS ?? 86_400),
   outgoingMessagesPerMinute: Number(process.env.OUTGOING_MESSAGES_PER_MINUTE ?? 20),
   reportMaxPerHour: Number(process.env.REPORT_MAX_PER_HOUR ?? 5),
+  // Moderation lifecycle is reconstruction-owned operator policy, not a Unity wire contract.
+  // Only terminal reports/appeals become eligible; sanctions remain indefinitely auditable.
+  moderationReportRetentionDays: Number(process.env.MODERATION_REPORT_RETENTION_DAYS ?? 365),
+  moderationAppealRetentionDays: Number(process.env.MODERATION_APPEAL_RETENTION_DAYS ?? 365),
 
   // Photon Chat subscribed with the exact MainScene ChatMessagesLimit value of three. The
   // replacement hub preserves that visible history size while making retention, text length,

@@ -1,0 +1,254 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import type { Collection, Document } from "mongodb";
+import type {
+  ModerationRetentionRunDocument,
+  PlayerAppealDocument,
+} from "../db";
+import {
+  applyModerationRetentionInCollections,
+  decodeModerationExportCursor,
+  exportModerationRetentionPage,
+  ModerationLifecycleInputError,
+  moderationRetentionCutoffs,
+  normalizeModerationExportLimit,
+  normalizeModerationPreviewedAt,
+  previewModerationRetention,
+  type ModerationRetentionPolicy,
+} from "../services/moderationLifecycleService";
+import type { PlayerReportDocument } from "../services/reportService";
+
+const POLICY: ModerationRetentionPolicy = { reportDays: 30, appealDays: 60, sanctions: "indefinite" };
+
+function report(overrides: Partial<PlayerReportDocument> = {}): PlayerReportDocument {
+  return {
+    reportId: "123e4567-e89b-42d3-a456-426614174000",
+    reporterPlayerId: "reporter-1",
+    reportedPlayerId: "target-1",
+    kind: "player",
+    status: "resolved",
+    reportType: 1,
+    message: "reviewed report",
+    evidence: {},
+    createdAt: new Date("2026-01-01T00:00:00Z"),
+    updatedAt: new Date("2026-01-02T00:00:00Z"),
+    ...overrides,
+  };
+}
+
+function appeal(overrides: Partial<PlayerAppealDocument> = {}): PlayerAppealDocument {
+  return {
+    _id: "223e4567-e89b-42d3-a456-426614174000",
+    sanctionId: "323e4567-e89b-42d3-a456-426614174000",
+    playerId: "player-1",
+    status: "accepted",
+    message: "Please review this sanction because the evidence is incorrect.",
+    submissionOperationId: "appeal:player-1:001",
+    createdAt: new Date("2026-01-01T00:00:00Z"),
+    updatedAt: new Date("2026-01-02T00:00:00Z"),
+    ...overrides,
+  };
+}
+
+function matchesRetention(
+  row: { status: string; createdAt: Date; updatedAt?: Date },
+  filter: Record<string, unknown>,
+): boolean {
+  const statuses = (filter.status as { $in: string[] }).$in;
+  const before = (filter.createdAt as { $lt: Date }).$lt;
+  const previewedAt = (filter.updatedAt as { $lte: Date }).$lte;
+  return statuses.includes(row.status) && row.createdAt < before &&
+    row.updatedAt !== undefined && row.updatedAt <= previewedAt;
+}
+
+function mutableCollection<T extends { status: string; createdAt: Date; updatedAt?: Date }>(rows: T[]): Collection<T> {
+  return {
+    async countDocuments(filter: Record<string, unknown>) {
+      return rows.filter((row) => matchesRetention(row, filter)).length;
+    },
+    async deleteMany(filter: Record<string, unknown>) {
+      let deletedCount = 0;
+      for (let index = rows.length - 1; index >= 0; index -= 1) {
+        if (matchesRetention(rows[index]!, filter)) {
+          rows.splice(index, 1);
+          deletedCount += 1;
+        }
+      }
+      return { acknowledged: true, deletedCount };
+    },
+  } as unknown as Collection<T>;
+}
+
+function runCollection(rows: ModerationRetentionRunDocument[]): Collection<ModerationRetentionRunDocument> {
+  return {
+    async findOne(filter: { operationId: string }) {
+      return rows.find((row) => row.operationId === filter.operationId) ?? null;
+    },
+    async insertOne(row: ModerationRetentionRunDocument) {
+      rows.push(row);
+      return { acknowledged: true, insertedId: row._id };
+    },
+  } as unknown as Collection<ModerationRetentionRunDocument>;
+}
+
+function exportCollection<T extends Document>(
+  rows: T[],
+  capture: { filter?: Record<string, unknown>; sort?: Record<string, number>; limit?: number },
+): Collection<T> {
+  return {
+    find(filter: Record<string, unknown>) {
+      capture.filter = filter;
+      const cursor = {
+        sort(sort: Record<string, number>) {
+          capture.sort = sort;
+          return cursor;
+        },
+        limit(limit: number) {
+          capture.limit = limit;
+          return cursor;
+        },
+        async toArray() { return rows; },
+      };
+      return cursor;
+    },
+  } as unknown as Collection<T>;
+}
+
+test("retention timestamps and export limits reject unsafe operator input", () => {
+  const now = new Date("2026-07-21T00:00:00Z");
+  assert.equal(normalizeModerationPreviewedAt("2026-07-20T00:00:00.000Z", now).toISOString(),
+    "2026-07-20T00:00:00.000Z");
+  assert.equal(normalizeModerationExportLimit(undefined), 100);
+  assert.equal(normalizeModerationExportLimit("500"), 500);
+  assert.throws(() => normalizeModerationPreviewedAt("not-a-date", now), ModerationLifecycleInputError);
+  assert.throws(
+    () => normalizeModerationPreviewedAt("2026-07-21T00:02:00.000Z", now),
+    ModerationLifecycleInputError,
+  );
+  assert.throws(() => normalizeModerationExportLimit(501), ModerationLifecycleInputError);
+});
+
+test("preview counts only terminal records older than each configured cutoff", async () => {
+  const previewedAt = new Date("2026-07-21T00:00:00Z");
+  const cutoffs = moderationRetentionCutoffs(previewedAt, POLICY);
+  assert.equal(cutoffs.reportBefore.toISOString(), "2026-06-21T00:00:00.000Z");
+  assert.equal(cutoffs.appealBefore.toISOString(), "2026-05-22T00:00:00.000Z");
+
+  const reports = [
+    report(),
+    report({ reportId: "123e4567-e89b-42d3-a456-426614174001", status: "open" }),
+    report({ reportId: "123e4567-e89b-42d3-a456-426614174002", createdAt: new Date("2026-07-01T00:00:00Z") }),
+  ];
+  const appeals = [
+    appeal(),
+    appeal({ _id: "223e4567-e89b-42d3-a456-426614174001", status: "reviewing" }),
+    appeal({ _id: "223e4567-e89b-42d3-a456-426614174002", createdAt: new Date("2026-06-01T00:00:00Z") }),
+  ];
+  const preview = await previewModerationRetention(
+    previewedAt,
+    mutableCollection(reports) as unknown as Collection<Document>,
+    mutableCollection(appeals),
+    POLICY,
+  );
+  assert.equal(preview.eligibleReports, 1);
+  assert.equal(preview.eligibleAppeals, 1);
+});
+
+test("bounded export pages use kind-bound stable cursors and the frozen preview filter", async () => {
+  const previewedAt = new Date("2026-07-21T00:00:00Z");
+  const older = report();
+  const newer = report({
+    reportId: "123e4567-e89b-42d3-a456-426614174001",
+    createdAt: new Date("2026-01-02T00:00:00Z"),
+  });
+  const capture: { filter?: Record<string, unknown>; sort?: Record<string, number>; limit?: number } = {};
+  const page = await exportModerationRetentionPage(
+    { kind: "reports", previewedAt, limit: 1 },
+    exportCollection([newer, older], capture) as unknown as Collection<Document>,
+    exportCollection<PlayerAppealDocument>([], {}),
+    POLICY,
+  );
+  assert.deepEqual(page.reportRows?.map((row) => row.reportId), [newer.reportId]);
+  assert.ok(page.nextCursor);
+  assert.deepEqual(capture.sort, { createdAt: -1, reportId: -1 });
+  assert.equal(capture.limit, 2);
+  assert.deepEqual(capture.filter, {
+    status: { $in: ["resolved", "dismissed"] },
+    createdAt: { $lt: new Date("2026-06-21T00:00:00Z") },
+    updatedAt: { $lte: previewedAt },
+  });
+  assert.equal(decodeModerationExportCursor(page.nextCursor, "reports")?.id, newer.reportId);
+  assert.throws(() => decodeModerationExportCursor(page.nextCursor, "appeals"), ModerationLifecycleInputError);
+});
+
+test("apply deletes the frozen terminal set once and retains open records and sanctions by design", async () => {
+  const reports = [
+    report(),
+    report({ reportId: "123e4567-e89b-42d3-a456-426614174001", status: "open" }),
+    report({
+      reportId: "123e4567-e89b-42d3-a456-426614174002",
+      updatedAt: new Date("2026-07-21T00:30:00Z"),
+    }),
+  ];
+  const appeals = [
+    appeal(),
+    appeal({ _id: "223e4567-e89b-42d3-a456-426614174001", status: "reviewing" }),
+    appeal({
+      _id: "223e4567-e89b-42d3-a456-426614174002",
+      updatedAt: new Date("2026-07-21T00:30:00Z"),
+    }),
+  ];
+  const runs: ModerationRetentionRunDocument[] = [];
+  const input = {
+    previewedAt: new Date("2026-07-21T00:00:00Z"),
+    actor: "privacy-operator@example.test",
+    operationId: "moderation-retention:2026-07-21:001",
+  };
+  const reportRows = mutableCollection(reports) as unknown as Collection<Document>;
+  const appealRows = mutableCollection(appeals);
+  const runRows = runCollection(runs);
+  const first = await applyModerationRetentionInCollections(
+    input,
+    new Date("2026-07-21T01:00:00Z"),
+    reportRows,
+    appealRows,
+    runRows,
+    undefined,
+    POLICY,
+  );
+  const replay = await applyModerationRetentionInCollections(
+    input,
+    new Date("2026-07-21T02:00:00Z"),
+    reportRows,
+    appealRows,
+    runRows,
+    undefined,
+    POLICY,
+  );
+
+  assert.equal(first.replayed, false);
+  assert.equal(replay.replayed, true);
+  assert.equal(first.run.deletedReports, 1);
+  assert.equal(first.run.deletedAppeals, 1);
+  assert.deepEqual(reports.map((row) => row.reportId), [
+    "123e4567-e89b-42d3-a456-426614174001",
+    "123e4567-e89b-42d3-a456-426614174002",
+  ]);
+  assert.deepEqual(appeals.map((row) => row._id), [
+    "223e4567-e89b-42d3-a456-426614174001",
+    "223e4567-e89b-42d3-a456-426614174002",
+  ]);
+  assert.equal(runs.length, 1);
+  await assert.rejects(
+    applyModerationRetentionInCollections(
+      { ...input, actor: "another-operator@example.test" },
+      new Date("2026-07-21T03:00:00Z"),
+      reportRows,
+      appealRows,
+      runRows,
+      undefined,
+      POLICY,
+    ),
+    (error: unknown) => error instanceof ModerationLifecycleInputError && error.httpStatus === 409,
+  );
+});

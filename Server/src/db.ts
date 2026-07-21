@@ -1007,6 +1007,25 @@ export interface PlayerAppealReviewEntry {
 }
 
 /**
+ * Immutable receipt for one explicit moderation-retention purge.
+ *
+ * The operation key makes an uncertain admin retry return the first deletion counts instead of
+ * running a second, differently-scoped purge. Sanctions are deliberately absent: account-ban
+ * audit records are retained indefinitely unless a future reviewed policy replaces that rule.
+ */
+export interface ModerationRetentionRunDocument extends Document {
+  _id: string;
+  operationId: string;
+  actor: string;
+  previewedAt: Date;
+  reportBefore: Date;
+  appealBefore: Date;
+  deletedReports: number;
+  deletedAppeals: number;
+  createdAt: Date;
+}
+
+/**
  * Server-only lifecycle receipt for one participant in a direct PvP challenge.
  *
  * The recovered Photon client creates the room before it sends the inbox challenge. The room
@@ -1050,6 +1069,7 @@ let reportRateLimitsCollection: Collection<ReportRateLimitDocument> | null = nul
 let reportDeduplicationsCollection: Collection<ReportDeduplicationDocument> | null = null;
 let playerSanctionsCollection: Collection<PlayerSanctionDocument> | null = null;
 let playerAppealsCollection: Collection<PlayerAppealDocument> | null = null;
+let moderationRetentionRunsCollection: Collection<ModerationRetentionRunDocument> | null = null;
 let friendlyBattlesCollection: Collection<FriendlyBattleDocument> | null = null;
 let gameCatalogEntriesCollection: Collection<GameCatalogEntryDocument> | null = null;
 let gameCatalogReleasesCollection: Collection<GameCatalogReleaseDocument> | null = null;
@@ -1143,6 +1163,7 @@ export async function connectMongo(): Promise<void> {
   reportDeduplicationsCollection = db.collection<ReportDeduplicationDocument>("reportDeduplications");
   playerSanctionsCollection = db.collection<PlayerSanctionDocument>("playerSanctions");
   playerAppealsCollection = db.collection<PlayerAppealDocument>("playerAppeals");
+  moderationRetentionRunsCollection = db.collection<ModerationRetentionRunDocument>("moderationRetentionRuns");
   friendlyBattlesCollection = db.collection<FriendlyBattleDocument>("friendlyBattles");
   gameCatalogEntriesCollection = db.collection<GameCatalogEntryDocument>("gameCatalogEntries");
   gameCatalogReleasesCollection = db.collection<GameCatalogReleaseDocument>("gameCatalogReleases");
@@ -1267,6 +1288,8 @@ export async function connectMongo(): Promise<void> {
     { "reviewHistory.operationId": 1 },
     { unique: true, sparse: true },
   );
+  await moderationRetentionRunsCollection.createIndex({ operationId: 1 }, { unique: true });
+  await moderationRetentionRunsCollection.createIndex({ createdAt: -1 });
 
   // A reconnect or lost HTTP response may repeat the same challenge start. The compound unique
   // key turns every process into the same idempotent writer, while TTL bounds telemetry storage.
@@ -1331,6 +1354,7 @@ export async function disconnectMongo(): Promise<void> {
   reportDeduplicationsCollection = null;
   playerSanctionsCollection = null;
   playerAppealsCollection = null;
+  moderationRetentionRunsCollection = null;
   friendlyBattlesCollection = null;
   gameCatalogEntriesCollection = null;
   gameCatalogReleasesCollection = null;
@@ -1447,6 +1471,10 @@ export function playerSanctions(): Collection<PlayerSanctionDocument> {
 
 export function playerAppeals(): Collection<PlayerAppealDocument> {
   return requireCollection("playerAppeals", playerAppealsCollection);
+}
+
+export function moderationRetentionRuns(): Collection<ModerationRetentionRunDocument> {
+  return requireCollection("moderationRetentionRuns", moderationRetentionRunsCollection);
 }
 
 export function friendlyBattles(): Collection<FriendlyBattleDocument> {
