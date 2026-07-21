@@ -13,6 +13,7 @@ import { validatedVipDailyCardState } from "./vipDailyCardAuthorityService";
 import { validatedCardLifecycleCounters } from "./cardLifecycleCounterAuthorityService";
 import { cardCraftingAuthorityFor } from "./cardCraftingAuthorityService";
 import { cardInventoryAuthorityFor } from "./cardInventoryAuthorityService";
+import { validatedPvpWinStreakShape } from "./pvpWinStreakAuthorityService";
 
 /**
  * Validate the common authority shared by every full progression-document replacement.
@@ -44,6 +45,8 @@ export function validatedProgressionSuccessor(
   cardCraftingAuthorityFor(next.cardCrafting);
   cardInventoryAuthorityFor(current.cardInventory);
   cardInventoryAuthorityFor(next.cardInventory);
+  validatedPvpWinStreakShape(current.pvpWinStreak);
+  validatedPvpWinStreakShape(next.pvpWinStreak);
   validatedCoreProgressionBalances(current);
   validateProgressionRevisionAdvance(progressionRevisionForRead(current.revision), next.revision);
   validatedCoreProgressionBalances(next);

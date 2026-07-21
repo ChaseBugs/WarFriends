@@ -6,10 +6,11 @@ import {
   PVP_WIN_STREAK_WARBUCKS,
   validatedPvpWinStreak,
 } from "../services/matchService";
-import { buildPlayerData, createInitialProgression } from "../services/playerStateService";
+import { buildPlayerData, createInitialProgression, progressionForPlayer } from "../services/playerStateService";
 import { newPlayer } from "../dtos";
 import { AccountType } from "../constants";
-import type { PlayerDocument } from "../db";
+import type { PlayerDocument, PvpWinStreakState } from "../db";
+import { validatedProgressionSuccessor } from "../services/progressionPublicationAuthorityService";
 
 test("PvP win-streak table preserves the nine verified MainScene rewards and interval", () => {
   assert.equal(PVP_WIN_STREAK_INTERVAL_SECONDS, 200);
@@ -74,6 +75,41 @@ test("ranked settlement rejects corrupt streak authority instead of clamping or 
   );
   assert.throws(
     () => advancePvpWinStreak({ winCount: 1, timestamp: 0 }, false, false, 40_000),
+    /Stored PvP win-streak authority is invalid/,
+  );
+});
+
+test("shared progression boundaries reject malformed win-streak pairs before unrelated writes", () => {
+  const dto = newPlayer("streak-authority", "StreakAuthority", AccountType.Guest);
+  const progression = createInitialProgression(40_000);
+  progression.pvpWinStreak = {
+    winCount: 1,
+    timestamp: 39_999,
+    unexpected: true,
+  } as unknown as PvpWinStreakState;
+  const player: PlayerDocument = {
+    id: dto.id,
+    accountName: dto.accountName,
+    accountType: dto.accountType,
+    leagueTier: dto.leagueTier,
+    armyPower: dto.armyPower,
+    experience: dto.experience,
+    squadPoints: dto.squadPoints,
+    squadName: dto.squadName,
+    player: dto,
+    progression,
+    createdAt: new Date(40_000_000),
+    updatedAt: new Date(40_000_000),
+  };
+  assert.throws(() => progressionForPlayer(player), /Stored PvP win-streak authority is invalid/);
+
+  const clean = createInitialProgression(40_000);
+  assert.throws(
+    () => validatedProgressionSuccessor(clean, {
+      ...clean,
+      revision: clean.revision + 1,
+      pvpWinStreak: { winCount: 0, timestamp: 39_999 },
+    }),
     /Stored PvP win-streak authority is invalid/,
   );
 });

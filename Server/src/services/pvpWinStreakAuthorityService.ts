@@ -27,6 +27,35 @@ export const PVP_WIN_STREAK_WARBUCKS = Object.freeze([
 ] as const);
 
 /**
+ * Validate the durable pair without applying a wall-clock comparison.
+ *
+ * Shared reads and progression publication must be deterministic across transaction retries, so
+ * they validate the complete stored shape and signed-client bounds here. Boot and settlement add
+ * the request's authoritative time below; keeping that second check separate avoids making a
+ * document valid or invalid merely because two MongoDB retry attempts crossed a clock boundary.
+ */
+export function validatedPvpWinStreakShape(
+  value: PvpWinStreakState | undefined,
+): PvpWinStreakState {
+  if (value === undefined) return { winCount: 0, timestamp: 0 };
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error("Stored PvP win-streak authority is invalid.");
+  }
+  const keys = Object.keys(value).sort();
+  if (keys.length !== 2 || keys[0] !== "timestamp" || keys[1] !== "winCount"
+    || !Number.isSafeInteger(value.winCount)
+    || value.winCount < 0
+    || value.winCount > PVP_WIN_STREAK_WARBUCKS.length
+    || !Number.isSafeInteger(value.timestamp)
+    || value.timestamp < 0
+    || value.timestamp > MAX_CLIENT_UNIX_SECONDS
+    || (value.winCount === 0) !== (value.timestamp === 0)) {
+    throw new Error("Stored PvP win-streak authority is invalid.");
+  }
+  return { winCount: value.winCount, timestamp: value.timestamp };
+}
+
+/**
  * Validate the complete server-owned streak before boot projection or ranked settlement.
  *
  * Clamping a stored count is unsafe because a damaged value such as 100 would select the maximum
@@ -43,16 +72,9 @@ export function validatedPvpWinStreak(
   if (!Number.isSafeInteger(now) || now < 0 || now > MAX_CLIENT_UNIX_SECONDS) {
     throw new Error("PvP win-streak authority timestamp is invalid.");
   }
-  if (value === undefined) return { winCount: 0, timestamp: 0 };
-  if (!Number.isSafeInteger(value.winCount)
-    || value.winCount < 0
-    || value.winCount > PVP_WIN_STREAK_WARBUCKS.length
-    || !Number.isSafeInteger(value.timestamp)
-    || value.timestamp < 0
-    || value.timestamp > MAX_CLIENT_UNIX_SECONDS
-    || value.timestamp > now
-    || (value.winCount === 0) !== (value.timestamp === 0)) {
+  const validated = validatedPvpWinStreakShape(value);
+  if (validated.timestamp > now) {
     throw new Error("Stored PvP win-streak authority is invalid.");
   }
-  return { ...value };
+  return validated;
 }

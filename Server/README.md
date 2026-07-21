@@ -1000,7 +1000,10 @@ allowlist of analytics/impression actions is safely ignored.
   the first stock `GameEnded` request receive the receipt committed by the second agreeing report.
 - **Win-streak fidelity** — the 200-second interval and nine valid WarBucks tiers are decoded from
   MainScene and persisted authoritatively. The corrupted/unusable tenth value is capped at tier nine
-  until archived live balancing is available. Settlement and boot share exact pair validation:
+  until archived live balancing is available. Shared progression read/publication first validates
+  the exact two-field shape, count range, zero-pair invariant, and signed-client timestamp bound
+  without consulting the wall clock, keeping MongoDB retries deterministic. Settlement and boot
+  then add the authoritative non-future comparison:
   count is limited to 0-9, zero requires timestamp zero, and positive streaks require a non-future
   signed-client-int Unix second. Corrupt counts are rejected rather than clamped into tier nine,
   and future timestamps cannot enter the recovered client's permanent `isInfinite` display path.

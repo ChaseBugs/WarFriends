@@ -26,7 +26,7 @@ import {
   validatedStarterAssignmentState,
 } from "./starterAssignmentAuthorityService";
 import { videoAdRewardTimesForState } from "./videoAdRewardAuthorityService";
-import { validatedPvpWinStreak } from "./pvpWinStreakAuthorityService";
+import { validatedPvpWinStreak, validatedPvpWinStreakShape } from "./pvpWinStreakAuthorityService";
 import { validatedInstantBattleState } from "./instantBattleAuthorityService";
 import { validatedSquadCreationsCount } from "./squadCreationAuthorityService";
 import { validatedRenameCount } from "./playerRenameAuthorityService";
@@ -110,6 +110,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
   validatedCardLifecycleCounters(state);
   const cardInventory = cardInventoryAuthorityFor(state.cardInventory);
   const cardCrafting = cardCraftingAuthorityFor(state.cardCrafting);
+  const pvpWinStreak = validatedPvpWinStreakShape(state.pvpWinStreak);
   // This is the shared persisted-progression read boundary, not only a boot serializer. Validate
   // wallet/rank balances here so cross-player transactions and ordinary economy actions cannot
   // let NaN/Infinity bypass a `< price` check before reaching a narrower service validator.
@@ -143,6 +144,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
       visualInventory: state.visualInventory ?? createInitialVisualInventory(),
       cardInventory,
       cardCrafting,
+      pvpWinStreak,
     };
   }
 
@@ -174,6 +176,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
     visualInventory: state.visualInventory ?? createInitialVisualInventory(),
     cardInventory,
     cardCrafting,
+    pvpWinStreak,
   };
 }
 

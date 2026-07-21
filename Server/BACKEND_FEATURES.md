@@ -192,8 +192,11 @@ Arena run appear finished, make an achievement tier appear complete, or unlock a
   division is returned or settled; beginner/normal tiers and the zero-or-one placement counter are
   validated before boot/admission/progress, and the complete member set before the first reward write.
 - Ranked-PvP win-streak authority must be an exact 0-9 count/timestamp pair before settlement or
-  boot; future or non-client-int timestamps and inconsistent zero states fail closed instead of
-  selecting the maximum reward or entering the recovered client's permanent-streak branch.
+  boot; its exact two-field shape, count range, zero-pair invariant, and signed-client timestamp
+  bound also validate at shared progression read/publication boundaries. Future timestamps are
+  rejected against request time at boot/settlement, while deterministic transaction publication
+  avoids wall-clock-dependent retry results. Corruption fails closed instead of selecting the
+  maximum reward or entering the recovered client's permanent-streak branch.
 - Paid-VIP lootbox countdowns must be exact 1-4 integers; only an absent legacy field defaults to
   four. A selected visual's persisted parts may not exceed its catalog target before duplicate
   conversion, so damaged ownership cannot be normalized into WarBucks.
