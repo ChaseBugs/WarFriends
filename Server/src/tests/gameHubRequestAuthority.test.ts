@@ -1,10 +1,30 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  validatedIdentifyPayload,
   validatedJoinMatchPayload,
   validatedMatchEventPayload,
   validatedMatchResultPayload,
-} from "../services/matchResultRequestAuthorityService";
+} from "../services/gameHubRequestAuthorityService";
+
+test("WebSocket Identify accepts only one exact bounded credential pair", () => {
+  const valid = { PlayerId: "player-a", Token: "token-value" };
+  assert.equal(validatedIdentifyPayload(valid), valid);
+  for (const value of [
+    undefined,
+    null,
+    [],
+    {},
+    { PlayerId: "player-a" },
+    { Token: "token-value" },
+    { PlayerId: " player-a", Token: "token-value" },
+    { PlayerId: "player-a", Token: "" },
+    { PlayerId: "player-a", Token: "token-value", playerId: "player-b" },
+    { PlayerId: "player-a", Token: "token-value", Password: "other" },
+  ]) {
+    assert.throws(() => validatedIdentifyPayload(value), /Identify payload is invalid/u);
+  }
+});
 
 test("WebSocket JoinMatch accepts only its exact bounded match identity", () => {
   const valid = { MatchId: "match-1" };

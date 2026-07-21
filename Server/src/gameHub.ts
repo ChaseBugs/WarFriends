@@ -28,15 +28,15 @@ import {
 } from "./services/matchService";
 import { parseOptionalPvpUsedCards } from "./services/cardInventoryService";
 import {
+  validatedIdentifyPayload,
   validatedJoinMatchPayload,
   validatedMatchEventPayload,
   validatedMatchResultPayload,
-} from "./services/matchResultRequestAuthorityService";
+} from "./services/gameHubRequestAuthorityService";
 import { resolveMatchReportStatus, roomManager } from "./gameRooms/roomManager";
 import type {
   ClientEnvelope,
   CardPlayedEventData,
-  IdentifyPayload,
   JoinMatchPayload,
   MatchEventPayload,
   MatchResultPayload,
@@ -834,9 +834,9 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
         client.socket.close(1008, "Socket is already identified");
         return;
       }
-      const p = envelope.Payload as IdentifyPayload | undefined;
       try {
-        const doc = await authenticate(p?.PlayerId, p?.Token);
+        const p = validatedIdentifyPayload(envelope.Payload);
+        const doc = await authenticate(p.PlayerId, p.Token);
         try {
           // Establish the new cross-node route before evicting the old login. If Redis selected
           // distributed coordination but cannot commit the claim, the authenticated request fails

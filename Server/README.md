@@ -762,6 +762,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   only one bounded `MatchId`; event requires bounded `MatchId`/`Event` and only optional `Data`.
   Unknown event Data remains opaque and cannot affect gameplay state, while `CardPlayed` continues
   through its exact sequence, card identity, live-delivery, and terminal-prefix authority.
+  WebSocket `Identify` validates exactly one bounded `PlayerId`/`Token` pair before authentication;
+  missing values, whitespace/control characters, alternate-case identity aliases, password aliases,
+  and extra keys fail. The authentication service remains the cryptographic proof, while the exact
+  wrapper prevents competing descriptions of the socket's immutable account binding.
   The stock `BattleId` and replacement `MatchId` fields likewise identify one lifecycle without
   precedence: every present alias must be a string and two present aliases must be identical.
   True total absence and the legacy empty BattleId still reach feature-specific tutorial migration,

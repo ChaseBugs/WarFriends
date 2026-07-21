@@ -240,6 +240,11 @@ relay. Join permits only bounded `MatchId`; event requires bounded `MatchId`/`Ev
 optional `Data`. Unrecovered non-card Data remains opaque and non-authoritative, while CardPlayed
 still passes its deeper sequence, identity, delivery, and terminal-prefix proof.
 
+WebSocket `Identify` now validates an exact bounded `PlayerId`/`Token` pair before authentication.
+Missing fields, whitespace/control characters, alternate-case identity aliases, password aliases,
+and extra keys fail before credential lookup; authentication still provides the cryptographic proof
+and the successful socket identity remains immutable across its connection lifetime.
+
 Stock `BattleId` and replacement `MatchId` now share one exact alias boundary for start and result
 routes. Every present alias must be a string and simultaneous aliases must be identical; explicit
 null, non-string, blank-versus-nonblank, or conflicting IDs cannot choose a lifecycle by nullish
