@@ -480,7 +480,13 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   profile write share a MongoDB transaction. An active/settling ranked reservation always wins
   over a forged or early `Online`/`Offline` report. The same transaction validates the full durable
   account before changing status or `updatedAt`; a heartbeat cannot repair or overwrite around
-  malformed account authority through an ID/status-only projection.
+  malformed account authority through an ID/status-only projection. Its response always includes
+  the recovered `Time` Unix second read unconditionally by the stock callback, and a valid report
+  writes `Status` plus `LastAction` as one snapshot. Account creation and every server-owned ranked
+  transition (admission, settlement, cancellation, and restart repair) also publish both fields in
+  their existing transaction. This preserves `DatabasePlayer.GetRealStatus`'s recovered 2700-second
+  freshness rule; an invalid status enum receives callback-safe time but cannot refresh durable
+  presence.
   One complete durable match validator now guards creation and every read, transition, projection,
   or replay used by room admission/start, disconnect and presence authority, card relay/delivery,
   result consensus, moderation correlation, restart recovery, cancellation, and settlement. It

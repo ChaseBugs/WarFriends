@@ -20,7 +20,7 @@ import {
   providerForAccountType,
 } from "./identityService";
 import { normalizePlayerName } from "./playerSettingsService";
-import { createInitialProgression } from "./playerStateService";
+import { createInitialProgression, unixNow } from "./playerStateService";
 import {
   clearLoginAttempt,
   clearLoginAttemptsForSession,
@@ -287,6 +287,11 @@ export async function createCustomAccount(
   // intentionally replaced with a collision-resistant guest label for first-time boot.
   const resolvedName = accountName ? normalizePlayerName(accountName) : `Recruit-${id.slice(0, 6)}`;
   const player = newPlayer(id, resolvedName, accountType);
+  const createdAtUnix = unixNow();
+  // A new account is returned to public profile lookups before it necessarily sends action 29.
+  // Initialize the recovered LastAction heartbeat with the same frozen boot timestamp used by
+  // progression so squad/chat rosters do not immediately downgrade this Online profile Offline.
+  player.lastAction = createdAtUnix;
   player.deviceToken = deviceToken ?? "";
   if (options.gameCenterId) player.gameCenterId = options.gameCenterId;
 
@@ -307,7 +312,7 @@ export async function createCustomAccount(
       squadPoints: player.squadPoints,
       squadName: player.squadName,
       player,
-      progression: createInitialProgression(),
+      progression: createInitialProgression(createdAtUnix),
     }, options.session);
   } catch (error) {
     if (isDuplicateAccountName(error)) {

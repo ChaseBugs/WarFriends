@@ -4,7 +4,7 @@ import { ok } from "../dtos";
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import { findById, updatePlayerFields } from "../services/playerService";
 import { replaceCustomProfileCredential } from "../services/authService";
-import { buildDatabasePlayer, buildPlayerStateResponse, progressionForPlayer } from "../services/playerStateService";
+import { buildDatabasePlayer, buildPlayerStateResponse, progressionForPlayer, unixNow } from "../services/playerStateService";
 import { recomputePlayerArmyPower } from "../services/armyPowerService";
 import {
   ensurePlayerNameAvailable,
@@ -79,11 +79,18 @@ export const playerHandlers: Record<number, HandlerEntry> = {
   }),
 
   [DbAction.SetPlayerStatus]: authed(async ({ player, req }) => {
+    const reportedAt = unixNow();
     const status = Number(req.PlayerStatus ?? req.Status ?? PlayerStatus.Online);
-    if (!Object.values(PlayerStatus).includes(status)) return ok(DbAction.SetPlayerStatus, { Status: player!.player.status });
-    const effective = await setPlayerPresence(player!.id, status as PlayerStatus);
-    player!.player.status = effective;
-    return ok(DbAction.SetPlayerStatus, { Status: effective });
+    // HOCGNAKEHNB, the recovered action-29 callback, reads Time unconditionally whenever the
+    // response is not an explicit offline envelope. Preserve that wire field even for a rejected
+    // enum, but do not refresh durable LastAction for an invalid heartbeat.
+    if (!Object.values(PlayerStatus).includes(status)) {
+      return ok(DbAction.SetPlayerStatus, { Status: player!.player.status, Time: reportedAt });
+    }
+    const effective = await setPlayerPresence(player!.id, status as PlayerStatus, reportedAt);
+    player!.player.status = effective.status;
+    player!.player.lastAction = effective.lastAction;
+    return ok(DbAction.SetPlayerStatus, { Status: effective.status, Time: effective.lastAction });
   }),
 
   [DbAction.UpdateDeviceToken]: authed(async ({ player, req }) => {

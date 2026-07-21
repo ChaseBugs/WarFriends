@@ -111,7 +111,11 @@ or settling match lookup and profile write share one MongoDB transaction, so a c
 cannot clear the server-owned `InGame` reservation during admission, play, or settlement. The
 transaction loads and validates the complete durable account before writing status or `updatedAt`;
 a narrow heartbeat projection cannot bypass malformed credential, profile, or progression state
-and then normalize that damaged row.
+and then normalize that damaged row. Action `29` now publishes the recovered `Time` response field
+and atomically writes `Status` with its signed-client-`int` Unix `LastAction`; remote clients use
+that exact pair and a 2700-second window in `DatabasePlayer.GetRealStatus`. New accounts start with
+a current heartbeat, and ranked admission, settlement, cancellation, and restart recovery update
+both fields in their owning transaction so backend status changes cannot immediately appear stale.
 
 Moderation duplicate suppression is also cross-process: one HMAC-keyed atomic winner stores the
 complete first report payload for ten minutes, and every racing process upserts that same report

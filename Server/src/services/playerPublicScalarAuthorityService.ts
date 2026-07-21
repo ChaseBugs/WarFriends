@@ -4,6 +4,16 @@ import { playerLevelDefinition } from "./levelProgressionService";
 const MAX_CLIENT_INT = 2_147_483_647;
 const WAR_ARENA_CROWN_TYPES = new Set(["", "bronze", "silver", "gold", "flawless"]);
 
+/** Prove a Unix second fits the recovered client's signed C# `int` LastAction field. */
+export function validatedPlayerLastAction(value: unknown): number {
+  if (!Number.isSafeInteger(value)
+    || Number(value) < 0
+    || Number(value) > MAX_CLIENT_INT) {
+    throw new Error("Stored player last-action time is invalid.");
+  }
+  return Number(value);
+}
+
 /**
  * Validate public DatabasePlayer scalars that are not duplicated in MongoDB root indexes.
  *
@@ -33,11 +43,7 @@ export function validatePlayerPublicScalarAuthority(player: DatabasePlayerDTO): 
   // `GetRealStatus` subtracts this recovered signed-int Unix second from server time. A negative,
   // fractional, non-finite, or wider value can keep a stale player online through overflow-like
   // JavaScript behavior even though the stock client could never represent the durable value.
-  if (!Number.isSafeInteger(player.lastAction)
-    || player.lastAction < 0
-    || player.lastAction > MAX_CLIENT_INT) {
-    throw new Error("Stored player last-action time is invalid.");
-  }
+  validatedPlayerLastAction(player.lastAction);
 
   // DatabasePlayer.warArenaCrown recognizes only these four exact source strings and uses the
   // paired signed-int Unix expiry. Unknown strings must not be retained as public live-event state;

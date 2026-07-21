@@ -63,6 +63,7 @@ import {
 } from "./squadWarService";
 import { allocatePlayerLeagueDivision } from "./playerLeagueService";
 import { validatedMatchDocument } from "./matchAuthorityService";
+import { validatedPlayerLastAction } from "./playerPublicScalarAuthorityService";
 
 export { validatedMatchDocument } from "./matchAuthorityService";
 
@@ -187,6 +188,7 @@ export function normalizeMatchCancelReason(reason: string): string {
 export async function cancelMatch(matchId: string, reason: string): Promise<boolean> {
   const cancelReason = normalizeMatchCancelReason(reason);
   const transitionAt = new Date();
+  const transitionUnix = validatedPlayerLastAction(Math.floor(transitionAt.getTime() / 1_000));
   // A late join-timeout callback must never cancel a distributed room whose second participant
   // already committed the start transition on another node.
   const cancellationGuard = cancelReason === "join_timeout"
@@ -214,7 +216,13 @@ export async function cancelMatch(matchId: string, reason: string): Promise<bool
     const playerIds = [...new Set(match.players.map((participant) => participant.playerId))];
     await players().updateMany(
       { id: { $in: playerIds }, "player.status": PlayerStatus.InGame },
-      { $set: { "player.status": PlayerStatus.Online, updatedAt: new Date() } },
+      {
+        $set: {
+          "player.status": PlayerStatus.Online,
+          "player.lastAction": transitionUnix,
+          updatedAt: transitionAt,
+        },
+      },
       { session },
     );
     return true;
@@ -264,6 +272,7 @@ export async function recoverInterruptedMatches(
 
   const recovered = await withMongoTransaction(async (session) => {
     const transitionAt = new Date();
+    const transitionUnix = validatedPlayerLastAction(Math.floor(transitionAt.getTime() / 1_000));
     const interrupted = await matches()
       .find(
         { matchId: { $in: orphanIds }, state: { $in: ["active", "settling"] } },
@@ -307,7 +316,13 @@ export async function recoverInterruptedMatches(
         "player.status": PlayerStatus.InGame,
         ...(protectedPlayerIds.length > 0 ? { id: { $nin: protectedPlayerIds } } : {}),
       },
-      { $set: { "player.status": PlayerStatus.Online, updatedAt: new Date() } },
+      {
+        $set: {
+          "player.status": PlayerStatus.Online,
+          "player.lastAction": transitionUnix,
+          updatedAt: transitionAt,
+        },
+      },
       { session },
     );
     return { count: matchIds.length, repairedPlayers: presence.modifiedCount };
@@ -605,6 +620,7 @@ export async function createMatch(a: MatchPlayer, b: MatchPlayer, coordinatorId?
     throw new MatchAdmissionError("Match coordinator identity is invalid.");
   }
   const createdAt = new Date();
+  const createdAtUnix = validatedPlayerLastAction(Math.floor(createdAt.getTime() / 1_000));
   const doc: MatchDoc = validatedMatchDocument({
     matchId,
     ...(normalizedCoordinatorId ? { coordinatorId: normalizedCoordinatorId } : {}),
@@ -645,7 +661,15 @@ export async function createMatch(a: MatchPlayer, b: MatchPlayer, coordinatorId?
     await matches().insertOne(doc, { session });
     const reserved = await players().updateMany(
       { id: { $in: playerIds }, "player.status": { $ne: PlayerStatus.InGame } },
-      { $set: { "player.status": PlayerStatus.InGame, updatedAt: new Date() } },
+      {
+        $set: {
+          // Ranked admission owns both parts of public presence. Keeping the timestamp on the
+          // same transaction prevents a valid InGame reservation from looking stale in rosters.
+          "player.status": PlayerStatus.InGame,
+          "player.lastAction": createdAtUnix,
+          updatedAt: createdAt,
+        },
+      },
       { session },
     );
     if (reserved.matchedCount !== 2) {
@@ -954,6 +978,9 @@ async function settlePlayerCore(
           "player.armyPower": nextArmyPower,
           armyPower: nextArmyPower,
           "player.status": PlayerStatus.Online,
+          // Settlement releases presence at the exact authoritative settlement second. A later
+          // retry replays the terminal receipt and cannot publish a second heartbeat.
+          "player.lastAction": validatedPlayerLastAction(settlementUnix),
           // Beginner/placement advances occur only inside this confirmed two-party settlement.
           // Folding them into the same player write prevents a forged standalone request or
           // replay from changing leagues without the matching medal result.

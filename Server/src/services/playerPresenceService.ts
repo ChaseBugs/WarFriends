@@ -1,12 +1,31 @@
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import { PlayerStatus } from "../constants";
 import { matches, players, withMongoTransaction } from "../db";
-import { validatedMatchDocument, type MatchDoc } from "./matchService";
+import { validatedMatchDocument } from "./matchAuthorityService";
+import type { MatchDoc } from "./matchService";
+import { validatedPlayerLastAction } from "./playerPublicScalarAuthorityService";
 import { validatedPlayerAccountEnvelope } from "./playerProfileMirrorAuthorityService";
+
+export interface PlayerPresenceSnapshot {
+  status: PlayerStatus;
+  lastAction: number;
+}
 
 /** Ranked reservations override client presence; other modes retain their recovered heartbeat. */
 export function effectivePlayerStatus(requested: PlayerStatus, hasActiveRankedMatch: boolean): PlayerStatus {
   return hasActiveRankedMatch ? PlayerStatus.InGame : requested;
+}
+
+/** Build the exact pair consumed by DatabasePlayer.GetRealStatus on other clients. */
+export function effectivePlayerPresence(
+  requested: PlayerStatus,
+  hasActiveRankedMatch: boolean,
+  reportedAt: number,
+): PlayerPresenceSnapshot {
+  return {
+    status: effectivePlayerStatus(requested, hasActiveRankedMatch),
+    lastAction: validatedPlayerLastAction(reportedAt),
+  };
 }
 
 /**
@@ -17,7 +36,14 @@ export function effectivePlayerStatus(requested: PlayerStatus, hasActiveRankedMa
  * state. A client can still report InGame for campaign, co-op, Arena, or friendly Photon play,
  * but cannot write Online/Offline over an active or settling ranked reservation.
  */
-export async function setPlayerPresence(playerId: string, requested: PlayerStatus): Promise<PlayerStatus> {
+export async function setPlayerPresence(
+  playerId: string,
+  requested: PlayerStatus,
+  reportedAt = Math.floor(Date.now() / 1_000),
+): Promise<PlayerPresenceSnapshot> {
+  // Freeze and validate the heartbeat before MongoDB can retry the transaction. Recomputing time
+  // inside a retry would make one request publish different callback and durable timestamps.
+  const lastAction = validatedPlayerLastAction(reportedAt);
   return withMongoTransaction(async (session) => {
     const player = await players().findOne(
       { id: playerId },
@@ -32,11 +58,19 @@ export async function setPlayerPresence(playerId: string, requested: PlayerStatu
       { session },
     );
     if (activeMatch) validatedMatchDocument(activeMatch as unknown as MatchDoc);
-    const effective = effectivePlayerStatus(requested, Boolean(activeMatch));
-    if (player.player.status !== effective) {
+    const effective = effectivePlayerPresence(requested, Boolean(activeMatch), lastAction);
+    if (player.player.status !== effective.status || player.player.lastAction !== effective.lastAction) {
       const update = await players().updateOne(
         { id: playerId },
-        { $set: { "player.status": effective, updatedAt: new Date() } },
+        {
+          $set: {
+            // Status without LastAction is not a complete recovered presence update. Remote
+            // clients apply their 2700-second freshness rule to this same pair.
+            "player.status": effective.status,
+            "player.lastAction": effective.lastAction,
+            updatedAt: new Date(),
+          },
+        },
         { session },
       );
       if (update.matchedCount !== 1) throw new Error("Concurrent player presence update failed.");
