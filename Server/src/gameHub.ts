@@ -56,11 +56,13 @@ import {
 } from "./services/pvpFanoutService";
 import {
   claimPvpSocket,
+  isUnidentifiedPvpSocket,
   isPvpPlayerConnected,
   pvpSocketOwner,
   refreshPvpSocket,
   releasePvpSocket,
   socketPresenceHeartbeatMs,
+  usesDistributedPvpSocket,
 } from "./services/pvpSocketPresenceService";
 import { serverMetrics } from "./services/metricsService";
 import {
@@ -466,14 +468,22 @@ async function handleDistributedSocketClose(client: Client, releaseAttempt = 0):
   scheduleDistributedDisconnectResolution(match.matchId, client.playerId, opponentId);
 }
 
-async function startClientPresenceHeartbeat(client: Client): Promise<void> {
-  if (!client.playerId || !isRedisAvailable()) return;
+async function startClientPresenceHeartbeat(client: Client, playerId: string): Promise<void> {
   if (client.presenceHeartbeat) clearInterval(client.presenceHeartbeat);
   const owner = pvpSocketOwner(hubInstanceId, client.id);
-  await claimPvpSocket(client.playerId, owner);
+  const claimed = await claimPvpSocket(playerId, owner);
+  try {
+    if (!usesDistributedPvpSocket(claimed)) return;
+  } catch (error) {
+    // A SET error can be ambiguous: Redis may have accepted the owner immediately before the
+    // connection failed. Compare-delete only this new owner so the previous login's route is
+    // preserved when the write definitely did not occur, while an uncertain new route expires or
+    // is removed instead of being treated as a successful distributed claim.
+    await releasePvpSocket(playerId, owner);
+    throw error;
+  }
   client.presenceHeartbeat = setInterval(() => {
-    if (!client.playerId) return;
-    void refreshPvpSocket(client.playerId, owner).then((owned) => {
+    void refreshPvpSocket(playerId, owner).then((owned) => {
       if (owned === false) client.socket.close(4001, "Signed in elsewhere");
     });
   }, socketPresenceHeartbeatMs);
@@ -626,9 +636,31 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
 
   switch (envelope.Type) {
     case "Identify": {
+      if (!isUnidentifiedPvpSocket(client.playerId)) {
+        // Rebinding one live transport would leave the first player's onlinePlayers entry and
+        // Redis owner pointing at a Client whose authenticated identity has changed. Keep socket
+        // identity immutable; legitimate account switching reconnects and receives a new owner.
+        send(client, { Type: "AuthError", Payload: { Message: "Socket is already identified." } });
+        client.socket.close(1008, "Socket is already identified");
+        return;
+      }
       const p = envelope.Payload as IdentifyPayload | undefined;
       try {
         const doc = await authenticate(p?.PlayerId, p?.Token);
+        try {
+          // Establish the new cross-node route before evicting the old login. If Redis selected
+          // distributed coordination but cannot commit the claim, the authenticated request fails
+          // closed and the older valid socket remains usable.
+          await startClientPresenceHeartbeat(client, doc.id);
+        } catch (error: unknown) {
+          logger.match.error("Distributed socket ownership claim failed", {
+            playerId: doc.id,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          send(client, { Type: "ServerError", Payload: { Message: "PvP coordination is unavailable." } });
+          client.socket.close(1013, "PvP coordination unavailable");
+          return;
+        }
         const previousClientId = onlinePlayers.get(doc.id);
         const previousClient = previousClientId ? clients.get(previousClientId) : undefined;
         if (previousClient && previousClient.id !== client.id) previousClient.socket.close(4001, "Signed in elsewhere");
@@ -638,7 +670,6 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
         // This prevents reconnecting or changing source addresses from resetting the WS allowance.
         client.rateLimitKey = webSocketRateLimitKey(`player:${doc.id}`);
         onlinePlayers.set(doc.id, client.id);
-        await startClientPresenceHeartbeat(client);
         send(client, { Type: "Identified", Payload: { PlayerId: doc.id } });
       } catch {
         send(client, { Type: "AuthError", Payload: { Message: "Invalid credentials." } });

@@ -105,7 +105,13 @@ result reports before broadcasting the terminal row to both nodes. Cross-node re
 disconnect-grace, and forfeit coordination now uses renewable compare-owned Redis socket routes,
 durable per-participant disconnect clocks, MongoDB-validated opponent notifications, retry-safe
 rejoin clearing, and grace-expiry forfeit or both-offline cancellation. Unknown Redis liveness
-extends the grace instead of manufacturing a loss.
+extends the grace instead of manufacturing a loss. Socket admission now distinguishes deliberate
+no-Redis local mode from an attempted Redis ownership-write failure: distributed handling begins
+only after the exact player/socket owner is stored, a failed new claim preserves an older valid
+login, and uncertain cleanup compare-deletes only the prospective owner before the new socket is
+closed with a retryable coordination error. A live socket's authenticated player binding is now
+immutable, preventing a second `Identify` from leaving the first account's local/Redis route aimed
+at a transport that has switched identity.
 
 Each new match also stores its backend coordinator UUID. Redis carries a renewable crash-expiring
 heartbeat for that UUID, and startup plus periodic orphan recovery cancels only matches whose owner

@@ -480,7 +480,13 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   without duplicating an already delivered effect. Results use MongoDB's two-party consensus and
   terminal settlement before `MatchEnded` or `ResultConflict` is delivered across nodes.
   Every distributed socket also owns a renewable Redis route that an older/replaced socket cannot
-  refresh or delete. A real close writes a durable disconnect clock and notifies the opponent;
+  refresh or delete. `Identify` enters this mode only after the exact player/socket owner write
+  succeeds. Deliberate Redis-unavailable operation stays on the local-room path, while an attempted
+  but failed ownership write rejects only the new socket with a retryable coordination error and
+  does not evict the older valid login; ambiguous cleanup compare-deletes only the prospective new
+  owner. One socket may complete `Identify` only once, so a second account cannot inherit a live
+  transport while the first account's route still points to it; account switching reconnects. A
+  real close writes a durable disconnect clock and notifies the opponent;
   `JoinMatch` clears it on re-entry. Grace expiry grants a forfeit only while the opponent remains
   connected, cancels when both are offline, and waits rather than guessing when Redis is unknown.
   Cancellation likewise commits the terminal match and both presence releases together. On a
