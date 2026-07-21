@@ -7,11 +7,13 @@ import {
   validatedOutgoingMessageRateLimit,
 } from "../services/outgoingMessageRateLimitService";
 
-test("outgoing-message policy clamps malformed deployment values", () => {
-  assert.equal(outgoingMessageRateLimitMaximum(Number.NaN), 20);
-  assert.equal(outgoingMessageRateLimitMaximum(0), 1);
-  assert.equal(outgoingMessageRateLimitMaximum(2_000), 1_000);
-  assert.equal(outgoingMessageRateLimitMaximum(20.9), 20);
+test("outgoing-message policy preserves exact supported values and rejects normalization", () => {
+  assert.equal(outgoingMessageRateLimitMaximum(1), 1);
+  assert.equal(outgoingMessageRateLimitMaximum(20), 20);
+  assert.equal(outgoingMessageRateLimitMaximum(1_000), 1_000);
+  for (const value of [Number.NaN, Number.POSITIVE_INFINITY, 0, 1_001, 20.9]) {
+    assert.throws(() => outgoingMessageRateLimitMaximum(value), /Outgoing-message abuse-limit policy is invalid/);
+  }
 });
 
 test("outgoing-message admission accepts only the configured atomic reservations", () => {

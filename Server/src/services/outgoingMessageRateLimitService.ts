@@ -5,6 +5,9 @@ import {
   outgoingMessageRateLimits,
   type OutgoingMessageRateLimitDocument,
 } from "../db";
+import { outgoingMessageRateLimitMaximum } from "./abuseLimitPolicyService";
+
+export { outgoingMessageRateLimitMaximum } from "./abuseLimitPolicyService";
 
 const WINDOW_MS = 60_000;
 const MAXIMUM_ATTEMPTS = 1_000;
@@ -15,11 +18,6 @@ const RATE_LIMIT_KEYS = new Set([
 
 function safeDate(value: unknown): value is Date {
   return value instanceof Date && Number.isSafeInteger(value.getTime()) && value.getTime() >= 0;
-}
-
-/** Clamp malformed deployment policy instead of allowing NaN or zero to disable protection. */
-export function outgoingMessageRateLimitMaximum(value = config.outgoingMessagesPerMinute): number {
-  return Number.isFinite(value) ? Math.min(MAXIMUM_ATTEMPTS, Math.max(1, Math.floor(value))) : 20;
 }
 
 export function outgoingMessageRateLimitAllows(attemptCount: number, maximum: number): boolean {

@@ -6,11 +6,13 @@ import {
   validatedReportRateLimit,
 } from "../services/reportRateLimitService";
 
-test("report rate-limit policy clamps malformed deployment values", () => {
-  assert.equal(reportRateLimitMaximum(Number.NaN), 5);
-  assert.equal(reportRateLimitMaximum(0), 1);
-  assert.equal(reportRateLimitMaximum(500), 100);
-  assert.equal(reportRateLimitMaximum(5.9), 5);
+test("report rate-limit policy preserves exact supported values and rejects normalization", () => {
+  assert.equal(reportRateLimitMaximum(1), 1);
+  assert.equal(reportRateLimitMaximum(5), 5);
+  assert.equal(reportRateLimitMaximum(100), 100);
+  for (const value of [Number.NaN, Number.POSITIVE_INFINITY, 0, 101, 5.9]) {
+    assert.throws(() => reportRateLimitMaximum(value), /Report abuse-limit policy is invalid/);
+  }
 });
 
 test("only the configured number of atomic reservations are accepted", () => {

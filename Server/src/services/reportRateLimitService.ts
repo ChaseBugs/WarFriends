@@ -2,6 +2,9 @@ import { createHmac } from "crypto";
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import { config } from "../config";
 import { reportRateLimits, type ReportRateLimitDocument } from "../db";
+import { reportRateLimitMaximum } from "./abuseLimitPolicyService";
+
+export { reportRateLimitMaximum } from "./abuseLimitPolicyService";
 
 const WINDOW_MS = 60 * 60 * 1_000;
 const MAXIMUM_ATTEMPTS = 100;
@@ -12,10 +15,6 @@ const REPORT_RATE_LIMIT_KEYS = new Set([
 
 function safeDate(value: unknown): value is Date {
   return value instanceof Date && Number.isSafeInteger(value.getTime()) && value.getTime() >= 0;
-}
-
-export function reportRateLimitMaximum(value = config.reportMaxPerHour): number {
-  return Number.isFinite(value) ? Math.min(MAXIMUM_ATTEMPTS, Math.max(1, Math.floor(value))) : 5;
 }
 
 export function reportRateLimitAllows(attemptCount: number, maximum: number): boolean {

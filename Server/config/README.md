@@ -115,6 +115,15 @@ hidden 24-hour lifetime. Existing challenge rows remain valid against their own 
 to-seven-day interval because those rows do not retain the deployment policy version that created
 them.
 
+# Player-authored abuse limits
+
+`OUTGOING_MESSAGES_PER_MINUTE` must be an exact safe integer from 1 through 1,000, and
+`REPORT_MAX_PER_HOUR` must be an exact safe integer from 1 through 100. These values authorize an
+attempt only after its shared MongoDB fixed-window counter is atomically reserved. Fractional,
+non-finite, zero, negative, and oversized settings fail closed instead of being floored, clamped,
+or replaced with a hidden default. Durable counters saturate one step above their global maximum,
+so changing from one valid deployment limit to another does not invalidate an in-flight window.
+
 # Limited-time Event Assignment configuration
 
 `EVENT_ASSIGNMENT_CONFIG_PATH` controls the separate `EventAssignmentManager` daily calendar used
