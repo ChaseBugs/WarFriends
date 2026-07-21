@@ -642,6 +642,9 @@ Daily Missions cycle materialization, start, and settlement now use the same sha
 Settlement carries that one value through receipt expiry, VIP evaluation, rank-up dog-tag refill,
 rental cleanup, and terminal receipt publication; malformed time cannot select a UTC mission set or
 split one transition across different normalized timestamps.
+Limited-time Event Assignment selection, UTC day indexing, trusted progress, daily claims, and
+milestone claims now use the shared Date-bounded clock without flooring. Malformed application time
+cannot select an active schedule or turn a fractional boundary into an eligible reward day.
 One shared application-clock boundary now protects initial progression creation, persisted
 progression reads, successor publication, `PlayerData`, and the top-level player-state response.
 It requires a nonnegative safe Unix second inside JavaScript/BSON Date support and passes that same

@@ -20,6 +20,7 @@ import {
 import { buildPlayerData, createInitialProgression } from "../services/playerStateService";
 import { validatedEventAssignmentState } from "../services/eventAssignmentAuthorityService";
 import { validatedProgressionSuccessor } from "../services/progressionPublicationAuthorityService";
+import { MAX_APPLICATION_UNIX_SECONDS } from "../services/applicationTimeAuthorityService";
 
 const START = 1_728_000_000; // Exact UTC-midnight Unix boundary.
 const EVENT: EventAssignmentEventConfig = {
@@ -82,6 +83,31 @@ test("Event Assignment config is strict, non-overlapping, and maps one row per U
   assert.equal(eventAssignmentDayIndex(EVENT, START + 123), 0);
   assert.equal(eventAssignmentDayIndex(EVENT, START + 86_400 + 123), 1);
   assert.notEqual(eventAssignmentConfigHash(EVENT), eventAssignmentConfigHash({ ...EVENT, eventName: "Changed" }));
+
+  const initialized = ensureEventAssignmentState(createInitialProgression(START), EVENT).state;
+  for (const invalidTime of [
+    Number.NaN,
+    Number.POSITIVE_INFINITY,
+    -1,
+    0.5,
+    MAX_APPLICATION_UNIX_SECONDS + 1,
+  ]) {
+    assert.throws(
+      () => selectActiveEventAssignment(parsed, invalidTime),
+      /Event Assignment selection time is invalid/,
+    );
+    assert.throws(
+      () => eventAssignmentDayIndex(EVENT, invalidTime),
+      /Event Assignment calendar time is invalid/,
+    );
+    assert.throws(
+      () => claimEventMilestoneState(initialized, EVENT, invalidTime, {
+        milestoneId: 0,
+        rewardValue: "HELMETS_CAKEHAT",
+      }),
+      /Event Assignment milestone time is invalid/,
+    );
+  }
 
   assert.throws(
     () => parseEventAssignmentsConfig({ events: [{ ...EVENT, unknown: true }] }),

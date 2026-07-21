@@ -1683,7 +1683,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   bounded, totals are signed-client-safe, day/milestone keys are canonical bounded sparse indexes,
   progress records are exact, and present milestone markers are only `true`. The active-config
   boundary additionally caps each day, requires claimed days to reach target, derives total points
-  exactly from claimed rows, and requires milestones to be an earned prefix. Client `RewardType`, `RewardValue`, and
+  exactly from claimed rows, and requires milestones to be an earned prefix. Active selection, UTC
+  day indexing, trusted progress, daily claims, and milestone claims require one exact Date-bounded
+  application time; fractions and malformed clocks are rejected instead of floored into an active
+  event day. Client `RewardType`, `RewardValue`, and
   `MilestoneId` are assertions only. The client-local destroyed-winter-box update is deliberately
   ignored until authoritative battle telemetry can advance the provided trusted-progress transition.
 - **Daily/co-op/heroic missions**: actions `67`-`69`, `215`, `216`, and mission-flavoured

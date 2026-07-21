@@ -8,6 +8,7 @@ import { mutateProgression } from "./progressionMutationService";
 import { grantMissionElitePartsState, isPlayerUnitName } from "./unitInventoryService";
 import { grantEventAssignmentVisualState, VISUAL_CATALOG } from "./visualInventoryService";
 import { validatedEventAssignmentState } from "./eventAssignmentAuthorityService";
+import { validatedApplicationUnixSeconds } from "./applicationTimeAuthorityService";
 
 const DAY_SECONDS = 86_400;
 const MAX_UNIX_SECONDS = 2_147_483_647;
@@ -212,11 +213,14 @@ export function selectActiveEventAssignment(
   source: EventAssignmentsConfig,
   now: number,
 ): EventAssignmentEventConfig | null {
-  return source.events.find((event) => event.startTime <= now && now < event.endTime) ?? null;
+  const currentTime = validatedApplicationUnixSeconds(now, "Event Assignment selection time");
+  return source.events.find(
+    (event) => event.startTime <= currentTime && currentTime < event.endTime,
+  ) ?? null;
 }
 
 export async function getActiveConfiguredEventAssignment(now: number): Promise<EventAssignmentEventConfig | null> {
-  return selectActiveEventAssignment(await configuredEvents(), Math.floor(now));
+  return selectActiveEventAssignment(await configuredEvents(), now);
 }
 
 export function eventAssignmentConfigHash(event: EventAssignmentEventConfig): string {
@@ -224,8 +228,12 @@ export function eventAssignmentConfigHash(event: EventAssignmentEventConfig): st
 }
 
 export function utcMidnight(now: number): number {
-  const date = new Date(Math.floor(now) * 1_000);
-  return Math.floor(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()) / 1_000);
+  const currentTime = validatedApplicationUnixSeconds(now, "Event Assignment calendar time");
+  const date = new Date(currentTime * 1_000);
+  return validatedApplicationUnixSeconds(
+    Math.floor(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()) / 1_000),
+    "Event Assignment midnight",
+  );
 }
 
 export function eventAssignmentDayIndex(event: EventAssignmentEventConfig, now: number): number {
@@ -386,7 +394,10 @@ export function claimEventMilestoneState(
   now: number,
   echo: EventMilestoneClaimEcho,
 ): EventAssignmentMutationResult {
-  if (now < event.startTime || now >= event.endTime) throw new ApiError(ApiErrorCode.UnknownAction, "Event Assignment is not active.");
+  const currentTime = validatedApplicationUnixSeconds(now, "Event Assignment milestone time");
+  if (currentTime < event.startTime || currentTime >= event.endTime) {
+    throw new ApiError(ApiErrorCode.UnknownAction, "Event Assignment is not active.");
+  }
   const eventAssignment = stateForEvent(state, event);
   const firstUnclaimed = event.milestones.findIndex((_, index) => eventAssignment.milestones[String(index)] !== true);
   if (firstUnclaimed < 0 || echo.milestoneId !== firstUnclaimed) {
