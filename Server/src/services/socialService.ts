@@ -21,6 +21,11 @@ import { progressionRevisionForRead } from "./progressionRevisionAuthorityServic
 import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
 import { validatedPlayerAccountEnvelope } from "./playerProfileMirrorAuthorityService";
 import { validatedInboxRewardMessage } from "./inboxRewardAuthorityService";
+import {
+  MAX_CHALLENGE_TTL_MS,
+  MIN_CHALLENGE_TTL_MS,
+  validatedChallengeMessage,
+} from "./challengeMessageAuthorityService";
 
 // Player discovery + messaging (BACKEND.md §2.3 "Social / messaging / hit list"). Search
 // and directory reads project players to the client's summary shape; messages are stored
@@ -127,7 +132,10 @@ export function buildSquadKickMessage(
 }
 
 function challengeTtlMilliseconds(): number {
-  return Math.max(60, Math.floor(config.challengeTtlSeconds)) * 1_000;
+  const configured = Number.isFinite(config.challengeTtlSeconds)
+    ? Math.floor(config.challengeTtlSeconds) * 1_000
+    : 24 * 60 * 60 * 1_000;
+  return Math.min(MAX_CHALLENGE_TTL_MS, Math.max(MIN_CHALLENGE_TTL_MS, configured));
 }
 
 /** Pure expiry predicate shared by database paths and contract tests. */
@@ -215,7 +223,7 @@ export async function sendChallenge(from: PlayerDocument, input: ChallengeMessag
     createdAt: { $gte: new Date(createdAt.getTime() - CHALLENGE_RETRY_WINDOW_MS) },
     expiresAt: { $gt: createdAt },
   });
-  if (duplicate) return duplicate as unknown as MessageDoc;
+  if (duplicate) return validatedChallengeMessage(duplicate as unknown as MessageDoc, createdAt)!;
   await enforceOutgoingMessageLimit(from.id, createdAt);
   const doc: MessageDoc = {
     // The recovered client strips the trailing numeric segment to recover challenger ID.
@@ -246,6 +254,13 @@ export async function sendChallenge(from: PlayerDocument, input: ChallengeMessag
     createdAt,
     expiresAt: new Date(createdAt.getTime() + challengeTtlMilliseconds()),
   };
+  try {
+    validatedChallengeMessage(doc, createdAt);
+  } catch {
+    // These fields originate in the old action-2 request. Convert malformed client input to a
+    // protocol error before insertion; stored rows use the same validator without this translation.
+    throw new ApiError(ApiErrorCode.UnknownAction, "Challenge payload is invalid.");
+  }
   await messages().insertOne(doc);
   return doc;
 }
@@ -293,10 +308,11 @@ export async function inboxPage(
   beforeCursor?: string,
 ): Promise<InboxPage> {
   const safeLimit = Math.min(100, Math.max(1, Math.floor(limit)));
+  const now = new Date();
   const cursor = beforeCursor ? parseInboxCursor(beforeCursor) : null;
   if (beforeCursor && !cursor) throw new ApiError(ApiErrorCode.UnknownAction, "Inbox cursor is invalid.");
   const conditions: Filter<Document>[] = [
-    { $or: [{ expiresAt: { $exists: false } }, { expiresAt: { $gt: new Date() } }] },
+    { $or: [{ expiresAt: { $exists: false } }, { expiresAt: { $gt: now } }] },
   ];
   if (cursor) {
     conditions.push({
@@ -316,6 +332,9 @@ export async function inboxPage(
     .limit(safeLimit + 1)
     .toArray();
   const typed = docs as unknown as MessageDoc[];
+  // A future-dated invitation can pass MongoDB's expiry predicate. Validate every returned
+  // challenge against the same page time so clock corruption cannot publish it as live authority.
+  for (const message of typed) validatedChallengeMessage(message, now);
   const hasMore = typed.length > safeLimit;
   const page = typed.slice(0, safeLimit);
   return {
@@ -470,6 +489,7 @@ export function challengeAcceptanceDecision(
 export async function acceptChallenge(playerId: string, messageId: string): Promise<boolean> {
   const now = new Date();
   const message = await messages().findOne({ messageId, toPlayerId: playerId }) as unknown as MessageDoc | null;
+  if (message?.messageType === 0) validatedChallengeMessage(message, now);
   const decision = challengeAcceptanceDecision(message, playerId, now);
   if (decision === "invalid") return false;
   if (decision === "replay") return true;
@@ -491,7 +511,9 @@ export async function acceptChallenge(playerId: string, messageId: string): Prom
   // the terminal state so both callers receive Accepted=true; never convert expiry/ignore races
   // into a false replay success.
   const winner = await messages().findOne({ messageId, toPlayerId: playerId }) as unknown as MessageDoc | null;
-  return challengeAcceptanceDecision(winner, playerId, new Date()) === "replay";
+  const winnerNow = new Date();
+  if (winner?.messageType === 0) validatedChallengeMessage(winner, winnerNow);
+  return challengeAcceptanceDecision(winner, playerId, winnerNow) === "replay";
 }
 
 type DynamoValue = { S: string } | { N: string } | { BOOL: boolean };
@@ -518,6 +540,7 @@ export function toClientMessage(doc: MessageDoc): Record<string, DynamoValue> {
   // envelope before the generic numeric adapter can publish a believable but internally damaged
   // placement, reward, or replay receipt to the stock client.
   validatedInboxRewardMessage(doc);
+  validatedChallengeMessage(doc);
   const wire: Record<string, DynamoValue> = {
     MessageId: { S: doc.messageId },
     // HHFHFANGCEJ's local-message constructor assigns currentPlayer.id here, proving that

@@ -441,6 +441,13 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   identical send retries are deduplicated and player-generated traffic has a rolling sender limit.
   Acceptance records its first durable timestamp and is idempotent after a lost response, while
   wrong-recipient, ignored, expired, and non-challenge rows remain rejected.
+  The complete type-0 row is validated before insertion, duplicate replay, inbox publication,
+  acceptance, and concurrent replay. It requires the exact recovered map/game/region/room/version
+  payload and optional mission fields, bounded identities/text and parseable opponent snapshot, a
+  sender-and-created-millisecond-derived ID, and consistent accepted/read/timestamp state with no
+  economy fields. The stored TTL must be ordered between one minute and seven days; the deployment
+  setting is clamped to that range, and one captured application time rejects future or expired
+  invitations independently of MongoDB TTL cleanup.
   Direct DeathMatch challenges retain the stock Photon handoff: the inviter creates a named room
   carrying `battleID`, the inbox message transports room/region/version metadata, and actions
   `64`/`65` report `IsMatchMaking=0` after both clients join. The backend stores a separate,

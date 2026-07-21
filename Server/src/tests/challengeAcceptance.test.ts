@@ -2,18 +2,25 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { MessageDoc } from "../services/socialService";
 import { challengeAcceptanceDecision } from "../services/socialService";
+import { validatedChallengeMessage } from "../services/challengeMessageAuthorityService";
 
 const NOW = new Date(Date.UTC(2026, 6, 20, 12, 0, 0));
 
 function challenge(values: Partial<MessageDoc> = {}): MessageDoc {
   return {
-    messageId: "challenger-1753012800000",
+    messageId: `challenger-${NOW.getTime() - 1_000}`,
     toPlayerId: "recipient",
     fromPlayerId: "challenger",
     fromName: "Challenger",
     body: "",
     messageType: 0,
-    payload: { GameType: 8, roomName: "room" },
+    payload: {
+      MapName: "map_1",
+      GameType: 8,
+      Region: 0,
+      roomName: "room",
+      clientVersion: "4.9.5",
+    },
     otherPlayerJson: "{}",
     read: false,
     ignored: false,
@@ -23,6 +30,28 @@ function challenge(values: Partial<MessageDoc> = {}): MessageDoc {
     ...values,
   };
 }
+
+test("challenge authority binds recovered payload, identity, TTL, and acceptance time", () => {
+  const valid = challenge();
+  assert.equal(validatedChallengeMessage(valid, NOW), valid);
+  assert.throws(
+    () => validatedChallengeMessage(challenge({ accepted: true, acceptedAt: NOW }), NOW),
+    /Stored challenge message is invalid/,
+    "accepted challenges must also carry the recovered read marker",
+  );
+  assert.throws(
+    () => validatedChallengeMessage(challenge({
+      createdAt: new Date(NOW.getTime() + 1),
+      expiresAt: new Date(NOW.getTime() + 61_000),
+      messageId: `challenger-${NOW.getTime() + 1}`,
+    }), NOW),
+    /Stored challenge message is invalid/,
+  );
+  assert.throws(
+    () => validatedChallengeMessage(challenge({ payload: { ...valid.payload, Region: 11 } }), NOW),
+    /Stored challenge message is invalid/,
+  );
+});
 
 test("challenge acceptance is recipient-owned and a durable accepted row replays successfully", () => {
   assert.equal(challengeAcceptanceDecision(challenge(), "recipient", NOW), "accept");

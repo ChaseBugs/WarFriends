@@ -1467,12 +1467,19 @@ test("challenge inbox adapter emits the DynamoDB attribute wrappers parsed by Un
     fromName: "Challenger",
     body: "",
     messageType: 0,
-    payload: { MapName: "map_1", GameType: 2, Region: 1, roomName: "room" },
+    payload: {
+      MapName: "map_1",
+      GameType: 2,
+      Region: 1,
+      roomName: "room",
+      clientVersion: "4.9.5",
+    },
     otherPlayerJson: "{\"id\":\"challenger\"}",
     read: false,
     ignored: false,
     accepted: false,
     createdAt: new Date(1_700_000_000_000),
+    expiresAt: new Date(1_700_086_400_000),
   };
   const wire = toClientMessage(message);
   assert.deepEqual(wire.MessageType, { N: "0" });
@@ -1488,13 +1495,17 @@ test("challenge inbox adapter emits the DynamoDB attribute wrappers parsed by Un
   };
   assert.throws(
     () => toClientMessage(corruptPayload),
-    /DynamoDB numeric attribute authority is invalid/,
+    /Stored challenge message is invalid/,
   );
 
   const corruptType = { ...message, messageType: Number.POSITIVE_INFINITY } as unknown as MessageDoc;
   assert.throws(
     () => toClientMessage(corruptType),
     /DynamoDB numeric attribute authority is invalid/,
+  );
+  assert.throws(
+    () => toClientMessage({ ...message, expiresAt: undefined }),
+    /Stored challenge message is invalid/,
   );
 });
 
