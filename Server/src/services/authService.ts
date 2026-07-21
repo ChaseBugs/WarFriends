@@ -28,7 +28,10 @@ import {
   type LoginAttemptReservation,
 } from "./authRateLimitService";
 import { assertPlayerNotSanctioned } from "./playerSanctionService";
-import { authenticationCredentialSecrets } from "./authSecretService";
+import {
+  authenticationCredentialSecrets,
+  isSupportedAuthenticationScryptCost,
+} from "./authSecretService";
 
 // Auth model (BACKEND.md §2.2): id + token credential. On CreateAccount the server mints a
 // player id and an HMAC auth token derived from a server-side salt; the client stores both
@@ -46,13 +49,13 @@ function legacyCredentialHash(playerId: string, credential: string, secret = con
 }
 
 const SCRYPT_VERSION = "v1";
-const SCRYPT_COST = 16_384;
 const SCRYPT_BLOCK_SIZE = 8;
 const SCRYPT_PARALLELIZATION = 1;
 const SCRYPT_KEY_LENGTH = 32;
-const SCRYPT_MAX_MEMORY = 64 * 1024 * 1024;
+const SCRYPT_MIN_MAX_MEMORY = 64 * 1024 * 1024;
 
 interface ParsedScryptHash {
+  cost: number;
   salt: Buffer;
   digest: Buffer;
 }
@@ -69,17 +72,24 @@ function passwordMaterial(playerId: string, credential: string, secret = config.
     .digest();
 }
 
-function deriveScryptKey(material: Buffer, salt: Buffer): Promise<Buffer> {
+function deriveScryptKey(material: Buffer, salt: Buffer, cost: number): Promise<Buffer> {
+  // Node requires maxmem to exceed roughly 128*N*r bytes. Derive it from the bounded stored
+  // factor so a legitimate older/higher-cost digest remains verifiable after configuration
+  // changes, while malformed database input can never request unbounded memory.
+  const maxMemory = Math.max(
+    SCRYPT_MIN_MAX_MEMORY,
+    (128 * cost * SCRYPT_BLOCK_SIZE) + (2 * 1024 * 1024),
+  );
   return new Promise((resolve, reject) => {
     scrypt(
       material,
       salt,
       SCRYPT_KEY_LENGTH,
       {
-        N: SCRYPT_COST,
+        N: cost,
         r: SCRYPT_BLOCK_SIZE,
         p: SCRYPT_PARALLELIZATION,
-        maxmem: SCRYPT_MAX_MEMORY,
+        maxmem: maxMemory,
       },
       (error, derivedKey) => error ? reject(error) : resolve(derivedKey),
     );
@@ -88,27 +98,35 @@ function deriveScryptKey(material: Buffer, salt: Buffer): Promise<Buffer> {
 
 function parseScryptHash(value: string): ParsedScryptHash | null {
   const parts = value.split("$");
+  const cost = Number(parts[2]);
   if (
     parts.length !== 7
     || parts[0] !== "scrypt"
     || parts[1] !== SCRYPT_VERSION
-    || Number(parts[2]) !== SCRYPT_COST
+    || !isSupportedAuthenticationScryptCost(cost)
     || Number(parts[3]) !== SCRYPT_BLOCK_SIZE
     || Number(parts[4]) !== SCRYPT_PARALLELIZATION
     || !/^[0-9a-f]{32}$/u.test(parts[5] ?? "")
     || !/^[0-9a-f]{64}$/u.test(parts[6] ?? "")
   ) return null;
-  return { salt: Buffer.from(parts[5]!, "hex"), digest: Buffer.from(parts[6]!, "hex") };
+  return { cost, salt: Buffer.from(parts[5]!, "hex"), digest: Buffer.from(parts[6]!, "hex") };
 }
 
 /** Produce a versioned, salted, memory-hard digest for a human-entered custom password. */
-export async function hashCustomCredential(playerId: string, credential: string): Promise<string> {
+export async function hashCustomCredential(
+  playerId: string,
+  credential: string,
+  cost = config.authScryptCost,
+): Promise<string> {
   const salt = randomBytes(16);
-  const digest = await deriveScryptKey(passwordMaterial(playerId, credential), salt);
+  if (!isSupportedAuthenticationScryptCost(cost)) {
+    throw new Error("AUTH_SCRYPT_COST is outside the supported work-factor range.");
+  }
+  const digest = await deriveScryptKey(passwordMaterial(playerId, credential), salt, cost);
   return [
     "scrypt",
     SCRYPT_VERSION,
-    SCRYPT_COST,
+    cost,
     SCRYPT_BLOCK_SIZE,
     SCRYPT_PARALLELIZATION,
     salt.toString("hex"),
@@ -118,7 +136,15 @@ export async function hashCustomCredential(playerId: string, credential: string)
 
 /** Legacy rows contain one unversioned 64-hex HMAC and are upgraded after a valid login. */
 export function customCredentialHashNeedsUpgrade(value: string | undefined): boolean {
-  return Boolean(value && !parseScryptHash(value));
+  if (!value) return false;
+  const parsed = parseScryptHash(value);
+  return !parsed || parsed.cost < config.authScryptCost;
+}
+
+/** Preserve a stronger stored factor when a fallback-key match still requires re-peppering. */
+function customCredentialRehashCost(value: string): number {
+  const parsed = parseScryptHash(value);
+  return parsed ? Math.max(parsed.cost, config.authScryptCost) : config.authScryptCost;
 }
 
 export interface CustomCredentialVerification {
@@ -150,9 +176,15 @@ export async function verifyCustomCredential(
       }
       continue;
     }
-    const candidate = await deriveScryptKey(passwordMaterial(playerId, credential, secret), parsed.salt);
+    const candidate = await deriveScryptKey(
+      passwordMaterial(playerId, credential, secret),
+      parsed.salt,
+      parsed.cost,
+    );
     if (candidate.length === parsed.digest.length && timingSafeEqual(candidate, parsed.digest)) {
-      return { matches: true, needsUpgrade: index > 0 };
+      // A temporary capacity rollback may lower the configured factor for newly created
+      // passwords. Never rewrite an already stronger digest downward during that period.
+      return { matches: true, needsUpgrade: index > 0 || parsed.cost < config.authScryptCost };
     }
   }
   return { matches: false, needsUpgrade: false };
@@ -408,7 +440,11 @@ export async function authenticate(
     await assertPlayerNotSanctioned(doc);
     if (customCredentialHashNeedsUpgrade(doc.authTokenHash) || customPasswordVerification.needsUpgrade) {
       const legacyHash = doc.authTokenHash!;
-      const upgradedHash = await hashCustomCredential(doc.id, token);
+      const upgradedHash = await hashCustomCredential(
+        doc.id,
+        token,
+        customCredentialRehashCost(legacyHash),
+      );
       if (await compareAndUpgradeCredentialHash(doc.id, legacyHash, upgradedHash)) {
         doc.authTokenHash = upgradedHash;
       } else {

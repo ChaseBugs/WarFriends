@@ -18,6 +18,7 @@
 - Keep player appeals ownership-scoped and separate from stock gameplay actions. Accept one appeal per active sanction through the current session credential, expose no private sanction fields, require optimistic append-audited review/withdrawal transitions, and revoke an accepted appeal's live sanction in the same transaction.
 - Keep moderation retention explicit and operator-driven: freeze one preview timestamp for bounded export and purge, delete only terminal reports/appeals older than configured cutoffs, retain sanctions indefinitely, and publish the purge counts in the same idempotent transaction as deletion.
 - Rotate `AUTH_SECRET` through the bounded fallback-key overlap documented in `Server/README.md`: keep gameplay sessions valid, verify durable password/provider digests against fallbacks only, and compare-and-set rehash a successful fallback login with the active key before retiring the old key.
+- Treat each stored custom-password scrypt factor as verification authority within the bounded supported range. Raising `AUTH_SCRYPT_COST` may upgrade a successful login, but a temporary lower setting must never downgrade an already stronger digest.
 - Preserve legitimate negative Gold or WarBucks chargeback debt, but reject non-safe-integer rewards and arithmetic overflow.
 - Fail closed when authoritative combat evidence, live-event configuration, or source-backed balancing is unavailable.
 - Add detailed English comments where recovered names are opaque or atomicity, replay, migration, or fallback decisions are not obvious.

@@ -45,6 +45,14 @@ Existing gameplay sessions survive a rotation because their opaque tokens are st
 directly. A durable password/provider login that matches a fallback key is atomically rehashed with
 the active key before its replacement gameplay session is returned.
 
+`AUTH_SCRYPT_COST` controls the work factor for newly written custom-password digests. It must be a
+power of two from 16384 through 65536, and invalid values stop startup in every environment. Each
+digest carries its original bounded factor, so increasing the setting does not lock out existing
+accounts: the next valid password login verifies with the stored factor and compare-and-set upgrades
+the digest. Lowering the setting affects only new writes and never downgrades an already stronger
+digest. Benchmark login latency and memory on the target hosts before raising it, then monitor the
+durable-login rate and latency during rollout; gameplay-session requests do not run scrypt.
+
 Use this staged procedure for a rolling deployment from key `old` to key `new`:
 
 1. Generate `new` with a cryptographically secure secret manager. Deploy this server version to

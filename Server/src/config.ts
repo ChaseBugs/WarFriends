@@ -20,6 +20,9 @@ export const config = {
     .split(",")
     .map((secret) => secret.trim())
     .filter(Boolean),
+  // Current scrypt CPU/memory work factor for durable custom passwords. Stored digests retain
+  // their original factor and are opportunistically upgraded after a successful explicit login.
+  authScryptCost: Number(process.env.AUTH_SCRYPT_COST ?? 16_384),
   // Separate operator credential. It is never accepted by gameplay authentication and protects
   // metrics/maintenance routes when configured.
   adminSecret: process.env.ADMIN_SECRET ?? "",

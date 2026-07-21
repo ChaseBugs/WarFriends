@@ -31,6 +31,16 @@ async function withAuthKeyring<T>(
   }
 }
 
+async function withScryptCost<T>(cost: number, action: () => Promise<T> | T): Promise<T> {
+  const savedCost = config.authScryptCost;
+  config.authScryptCost = cost;
+  try {
+    return await action();
+  } finally {
+    config.authScryptCost = savedCost;
+  }
+}
+
 test("custom passwords remain verifiable during rotation and request active-key upgrade", async () => {
   const storedHash = await withAuthKeyring(OLD_SECRET, [], () =>
     hashCustomCredential("rotation-player", "rotation-password"));
@@ -78,6 +88,38 @@ test("provider credential digests use fallback keys only as a migration bridge",
   });
 });
 
+test("stored scrypt factors remain verifiable and request migration to the configured factor", async () => {
+  const storedHash = await withScryptCost(16_384, () =>
+    hashCustomCredential("cost-player", "cost-password"));
+
+  await withScryptCost(32_768, async () => {
+    assert.deepEqual(
+      await verifyCustomCredential("cost-player", storedHash, "cost-password"),
+      { matches: true, needsUpgrade: true },
+    );
+    const upgradedHash = await hashCustomCredential("cost-player", "cost-password");
+    assert.match(upgradedHash, /^scrypt\$v1\$32768\$8\$1\$/u);
+    assert.deepEqual(
+      await verifyCustomCredential("cost-player", upgradedHash, "cost-password"),
+      { matches: true, needsUpgrade: false },
+    );
+    const unboundedHash = storedHash.replace("$16384$", "$131072$");
+    assert.deepEqual(
+      await verifyCustomCredential("cost-player", unboundedHash, "cost-password"),
+      { matches: false, needsUpgrade: false },
+    );
+  });
+
+  const strongerHash = await withScryptCost(32_768, () =>
+    hashCustomCredential("cost-player", "cost-password"));
+  await withScryptCost(16_384, async () => {
+    assert.deepEqual(
+      await verifyCustomCredential("cost-player", strongerHash, "cost-password"),
+      { matches: true, needsUpgrade: false },
+    );
+  });
+});
+
 test("production authentication key rings reject weak, duplicate, and unbounded keys", async () => {
   await withAuthKeyring(NEW_SECRET, [OLD_SECRET], () => {
     assert.doesNotThrow(() => validateAuthenticationSecretConfiguration(true));
@@ -105,5 +147,11 @@ test("production authentication key rings reject weak, duplicate, and unbounded 
   // deployment policy while unit tests or a local recovered client are starting.
   await withAuthKeyring("change-me-in-production", [], () => {
     assert.doesNotThrow(() => validateAuthenticationSecretConfiguration(false));
+  });
+  await withScryptCost(20_000, () => {
+    assert.throws(
+      () => validateAuthenticationSecretConfiguration(false),
+      /AUTH_SCRYPT_COST must be a power of two/u,
+    );
   });
 });
