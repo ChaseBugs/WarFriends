@@ -11,6 +11,10 @@ import {
   serializeAssignmentData,
 } from "../services/assignmentService";
 import { createInitialProgression } from "../services/playerStateService";
+import {
+  validatedRequestBufferAuthority,
+  validatedRequestBufferId,
+} from "../services/requestBufferAuthorityService";
 
 const NOW = Date.UTC(2026, 6, 19, 12, 0, 0) / 1_000;
 
@@ -97,6 +101,28 @@ test("BufferId replay after UTC midnight does not roll unrelated assignments", (
   assert.equal(replay.replayed, true);
   assert.equal(replay.state, first.state);
   assert.equal(replay.assignments.dayKey, "2026-07-19");
+});
+
+test("RequestBuffer durable authority rejects ambiguous replay and outbox snapshots", () => {
+  const initial = createInitialProgression(NOW);
+  const first = processAssignmentBufferState(initial, NOW, "buffer-authority", []);
+  assert.equal(validatedRequestBufferAuthority(first.state).processedRequestBuffers.length, 1);
+  assert.throws(() => validatedRequestBufferId("buffer\nreplay"), /BufferId is invalid/);
+  assert.throws(
+    () => processAssignmentBufferState(initial, Number.NaN, "buffer-time", []),
+    /Assignment request time is invalid/,
+  );
+
+  const entry = first.state.processedRequestBuffers![0]!;
+  for (const corrupt of [
+    { ...initial, processedRequestBuffers: [entry, { ...entry }] },
+    { ...initial, processedRequestBuffers: [{ ...entry, result: "not-json" }] },
+    { ...initial, processedRequestBuffers: [{ ...entry, processedAt: Number.POSITIVE_INFINITY }] },
+    { ...initial, pendingMessageIgnores: ["message-1", "message-1"] },
+    { ...initial, pendingMessageIgnores: ["message\n1"] },
+  ]) {
+    assert.throws(() => validatedRequestBufferAuthority(corrupt), /Stored (RequestBuffer|message-ignore)/);
+  }
 });
 
 test("assignment claim validates the reward amount supplied by the old client", () => {

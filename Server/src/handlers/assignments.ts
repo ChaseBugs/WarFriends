@@ -22,18 +22,12 @@ import {
   claimEventAssignment,
   claimEventMilestone,
 } from "../services/eventAssignmentService";
+import { validatedRequestBufferId } from "../services/requestBufferAuthorityService";
 
 function integer(value: unknown, field: string): number {
   const parsed = Number(value);
   if (!Number.isInteger(parsed)) throw new ApiError(ApiErrorCode.UnknownAction, `${field} must be an integer.`);
   return parsed;
-}
-
-function bufferId(value: unknown): string {
-  if (typeof value !== "string" || value.length < 1 || value.length > 128) {
-    throw new ApiError(ApiErrorCode.UnknownAction, "BufferId is invalid.");
-  }
-  return value;
 }
 
 function starterAssignmentIds(value: unknown): string[] {
@@ -210,7 +204,7 @@ export const assignmentHandlers: Record<number, HandlerEntry> = {
   }),
 
   [DbAction.SendRequestBuffer]: authed(async ({ player, req }) => {
-    const id = bufferId(req.BufferId);
+    const id = validatedRequestBufferId(req.BufferId);
     const requests = bufferedRequests(req.Requests);
     const expectedCount = integer(req.Count, "Count");
     if (expectedCount !== requests.length || expectedCount < 0 || expectedCount > 100) {

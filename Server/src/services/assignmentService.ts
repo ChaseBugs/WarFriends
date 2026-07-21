@@ -86,6 +86,12 @@ import {
   getActiveConfiguredEventAssignment,
   type EventAssignmentEventConfig,
 } from "./eventAssignmentService";
+import {
+  MAX_PENDING_MESSAGE_IGNORES,
+  MAX_PROCESSED_REQUEST_BUFFERS,
+  validatedRequestBufferAuthority,
+  validatedRequestBufferId,
+} from "./requestBufferAuthorityService";
 
 /**
  * Daily assignments and the recovered RequestBuffer transaction boundary.
@@ -108,8 +114,6 @@ const SUCCESS = 1; // IJEAJGCCHEF.Success
 const ASSIGNMENT_NOT_FOUND = 11201;
 const ASSIGNMENT_INCORRECT_REWARD = 11203;
 const MEGA_REWARD_POINTS = 50;
-const MAX_BUFFER_REPLAYS = 20;
-const MAX_PENDING_MESSAGE_IGNORES = 100;
 const MAX_DATE_UNIX_SECONDS = 8_640_000_000_000;
 
 /** Validate a daily-assignment clock value before it controls rollover or serialization. */
@@ -519,7 +523,8 @@ function boundedReplayCache(
   existing: ProcessedRequestBuffer[] | undefined,
   item: ProcessedRequestBuffer,
 ): ProcessedRequestBuffer[] {
-  return [...(existing ?? []).filter((entry) => entry.id !== item.id), item].slice(-MAX_BUFFER_REPLAYS);
+  return [...(existing ?? []).filter((entry) => entry.id !== item.id), item]
+    .slice(-MAX_PROCESSED_REQUEST_BUFFERS);
 }
 
 function bufferedMessageId(value: string): string {
@@ -556,7 +561,9 @@ export function processAssignmentBufferState(
   // VIP is part of the same progression revision as buffered visual purchases. The optional
   // argument exists only for legacy documents whose entitlement still lives in the profile.
   const effectiveVipExpiration = state.vipExpiration ?? playerVipExpiration;
-  const replay = state.processedRequestBuffers?.find((entry) => entry.id === bufferId);
+  const validatedBufferId = validatedRequestBufferId(bufferId);
+  const replayAuthority = validatedRequestBufferAuthority(state);
+  const replay = replayAuthority.processedRequestBuffers.find((entry) => entry.id === validatedBufferId);
   if (replay) {
     // Do not execute any subrequest again. Even deterministic validation is insufficient
     // here: a successful item earlier in the original batch may already have changed the
@@ -1158,10 +1165,10 @@ export function processAssignmentBufferState(
   // Cache only a bounded tail. Buffer IDs protect short-term transport retries, not an
   // unbounded audit history; retaining every mobile request forever would make the embedded
   // progression document grow without limit.
-  const processedRequestBuffers = boundedReplayCache(working.processedRequestBuffers, {
-    id: bufferId,
+  const processedRequestBuffers = boundedReplayCache(replayAuthority.processedRequestBuffers, {
+    id: validatedBufferId,
     result: requestsResults,
-    processedAt: Math.floor(now),
+    processedAt: assignmentUnixSeconds(now, "RequestBuffer processed time"),
   });
   return {
     state: {
@@ -1231,7 +1238,7 @@ export function acknowledgeBufferedMessageIgnoresState(
   completedIds: readonly string[],
 ): PlayerProgressionState {
   const completed = new Set(completedIds);
-  const pending = state.pendingMessageIgnores ?? [];
+  const pending = validatedRequestBufferAuthority(state).pendingMessageIgnores;
   const remaining = pending.filter((id) => !completed.has(id));
   if (remaining.length === pending.length) return state;
   const next: PlayerProgressionState = { ...state, revision: state.revision + 1 };

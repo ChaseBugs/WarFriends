@@ -409,6 +409,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   The stock buffered `IgnoreMessage` path records a durable progression outbox entry beside
   `BufferId`, performs the recipient-filtered inbox update, and clears the entry afterward, so
   a process interruption is recoverable without allowing one player to hide another's message.
+  The replay cache and outbox are validated as complete bounded authority before lookup, read,
+  acknowledgement, or publication: BufferIds and message IDs are unique, trimmed, control-free,
+  and length-bounded; replay timestamps are safe Unix seconds and cached results parse as bounded
+  response arrays. Malformed rows fail closed instead of being discarded and reopening a buffer.
   Reward action `91` accepts only server-generated type-9/11/23 Gold payloads. Its pure transition
   validates the wallet and monotonic revision, then a progression-revision-filtered player update
   commits in the same retry-safe transaction as the terminal message marker. A lost-response retry
