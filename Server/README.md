@@ -448,6 +448,13 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   as successful friendly results with a complete zero-valued `GameReward`. This path intentionally
   cannot enter ranked match consensus or mutate currency, XP, medals, league placement, win streak,
   War Cards, squad points/events, assignments, missions, VIP countdowns, or rental state.
+  Each friendly/offline-bot receipt is validated as one complete participant lifecycle before start
+  replay, `GameEnded` discrimination, settlement, or terminal replay: only known fields, bounded
+  player/battle IDs, action 64/65, one supported kind, safe ordered dates, and the exact 24-hour
+  active or seven-day terminal interval are accepted. Only a finished row may carry one recovered
+  end reason. Missing `battleKind` remains the explicit legacy direct-challenge migration. Logical
+  expiry and the settlement compare-and-set use application time, so delayed MongoDB TTL cleanup
+  cannot extend the zero-reward receipt or let it be mistaken for ranked authority.
   `GetAllMessages` keeps the stock `Items` array and adds an optional `NextCursor`; a replacement
   client sends it back as `BeforeCursor` to read older pages. The cursor combines exact
   milliseconds with the message ID, page size remains server-bounded, and every query retains the

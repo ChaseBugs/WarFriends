@@ -8,6 +8,10 @@ const ACTIVE_RECEIPT_TTL_MS = 24 * 60 * 60 * 1_000;
 const FINISHED_RECEIPT_TTL_MS = 7 * 24 * 60 * 60 * 1_000;
 const BATTLE_ID_PATTERN = /^[\w.:@+-]+$/;
 const FRIENDLY_END_REASONS = new Set([1, 2, 3, 5, 8]);
+const RECEIPT_KEYS = new Set([
+  "_id", "playerId", "battleId", "battleKind", "startAction", "state", "startedAt",
+  "settledAt", "endReason", "expiresAt",
+]);
 
 export type FriendlyBattleStartDecision = "create" | "replay" | "invalid";
 export type FriendlyBattleSettlementDecision = "settle" | "replay" | "invalid";
@@ -19,7 +23,66 @@ export interface OfflineBotStartMetadata {
 }
 
 function validPlayerId(value: string): boolean {
-  return value.length > 0 && value.length <= 160;
+  return value.length > 0
+    && value.length <= 160
+    && value.trim() === value
+    && !/[\u0000-\u001f\u007f]/u.test(value);
+}
+
+function validDate(value: unknown): value is Date {
+  return value instanceof Date && Number.isSafeInteger(value.getTime()) && value.getTime() > 0;
+}
+
+function invalidStoredReceipt(): never {
+  throw new Error("Stored friendly battle receipt is invalid.");
+}
+
+/**
+ * Validate the complete participant-owned zero-reward lifecycle before any replay or settlement.
+ *
+ * MongoDB TTL cleanup is asynchronous, so `expiresAt` cannot merely be trusted as storage policy.
+ * The exact active/finished interval proves which fields may exist and prevents a damaged or stale
+ * receipt from being treated as a valid challenge/offline-bot result. Missing `battleKind` is the
+ * sole legacy migration and means the original direct-Photon-challenge path.
+ */
+export function validatedFriendlyBattleReceipt(
+  receipt: FriendlyBattleDocument,
+): FriendlyBattleDocument {
+  if (!receipt
+    || typeof receipt !== "object"
+    || Object.keys(receipt).some((key) => !RECEIPT_KEYS.has(key))
+    || !validPlayerId(receipt.playerId)
+    || !receipt.battleId
+    || receipt.battleId.length > 160
+    || !BATTLE_ID_PATTERN.test(receipt.battleId)
+    || (receipt.battleKind !== undefined
+      && receipt.battleKind !== "friendly"
+      && receipt.battleKind !== "offline-bot")
+    || (receipt.startAction !== 64 && receipt.startAction !== 65)
+    || (receipt.state !== "active" && receipt.state !== "finished")
+    || !validDate(receipt.startedAt)
+    || !validDate(receipt.expiresAt)) invalidStoredReceipt();
+
+  if (receipt.state === "active") {
+    if (receipt.settledAt !== undefined
+      || receipt.endReason !== undefined
+      || receipt.expiresAt.getTime() - receipt.startedAt.getTime() !== ACTIVE_RECEIPT_TTL_MS) {
+      invalidStoredReceipt();
+    }
+    return receipt;
+  }
+
+  if (!validDate(receipt.settledAt)
+    || receipt.settledAt.getTime() < receipt.startedAt.getTime()
+    || !FRIENDLY_END_REASONS.has(receipt.endReason ?? 0)
+    || receipt.expiresAt.getTime() - receipt.settledAt.getTime() !== FINISHED_RECEIPT_TTL_MS) {
+    invalidStoredReceipt();
+  }
+  return receipt;
+}
+
+function validAuthoritativeTime(now: Date): void {
+  if (!validDate(now)) throw new ApiError(ApiErrorCode.InternalServerError, "Friendly battle server time is invalid.");
 }
 
 /**
@@ -93,13 +156,17 @@ export function friendlyBattleStartDecision(
   battleId: string,
   startAction: number,
   battleKind: NoRewardBattleKind = "friendly",
+  now?: Date,
 ): FriendlyBattleStartDecision {
   validateFriendlyBattleId(battleId);
   validateStartAction(startAction);
+  if (now) validAuthoritativeTime(now);
   if (!validPlayerId(playerId)) return "invalid";
   if (!existing) return "create";
+  validatedFriendlyBattleReceipt(existing);
   if (existing.playerId !== playerId || existing.battleId !== battleId) return "invalid";
   if ((existing.battleKind ?? "friendly") !== battleKind) return "invalid";
+  if (now && existing.expiresAt.getTime() <= now.getTime()) return "invalid";
 
   // Photon can promote a client to master during reconnect. Role is useful telemetry, but it is
   // not reward authority, so action 64/65 retries share the same participant-owned receipt.
@@ -112,11 +179,17 @@ export function friendlyBattleSettlementDecision(
   playerId: string,
   battleId: string,
   endReason: number,
+  now?: Date,
 ): FriendlyBattleSettlementDecision {
   validateFriendlyBattleId(battleId);
   validateEndReason(endReason);
+  if (now) validAuthoritativeTime(now);
   if (!validPlayerId(playerId) || !existing) return "invalid";
+  validatedFriendlyBattleReceipt(existing);
   if (existing.playerId !== playerId || existing.battleId !== battleId) return "invalid";
+  if (now && (existing.startedAt.getTime() > now.getTime() || existing.expiresAt.getTime() <= now.getTime())) {
+    return "invalid";
+  }
   if (existing.state === "active") return "settle";
 
   // A lost response must be replayable, but changing the outcome after the first terminal write
@@ -145,6 +218,7 @@ export async function startFriendlyBattle(
   battleKind: NoRewardBattleKind = "friendly",
   now = new Date(),
 ): Promise<FriendlyBattleMutationResult> {
+  validAuthoritativeTime(now);
   const decision = friendlyBattleStartDecision(null, playerId, battleId, startAction, battleKind);
   if (decision !== "create") {
     throw new ApiError(ApiErrorCode.UnknownAction, "Friendly battle start is invalid.");
@@ -159,6 +233,7 @@ export async function startFriendlyBattle(
     startedAt: now,
     expiresAt: new Date(now.getTime() + ACTIVE_RECEIPT_TTL_MS),
   };
+  validatedFriendlyBattleReceipt(receipt);
 
   const write = await friendlyBattles().updateOne(
     { playerId, battleId },
@@ -168,7 +243,7 @@ export async function startFriendlyBattle(
   if (write.upsertedCount === 1) return { receipt, replayed: false };
 
   const existing = await friendlyBattles().findOne({ playerId, battleId });
-  if (friendlyBattleStartDecision(existing, playerId, battleId, startAction, battleKind) !== "replay" || !existing) {
+  if (friendlyBattleStartDecision(existing, playerId, battleId, startAction, battleKind, now) !== "replay" || !existing) {
     throw new ApiError(ApiErrorCode.UnknownAction, "Friendly battle receipt conflicts with this start.");
   }
   return { receipt: existing, replayed: true };
@@ -179,7 +254,8 @@ export async function findFriendlyBattle(
   battleId: string,
 ): Promise<FriendlyBattleDocument | null> {
   validateFriendlyBattleId(battleId);
-  return friendlyBattles().findOne({ playerId, battleId });
+  const receipt = await friendlyBattles().findOne({ playerId, battleId });
+  return receipt ? validatedFriendlyBattleReceipt(receipt) : null;
 }
 
 /**
@@ -196,8 +272,9 @@ export async function settleFriendlyBattle(
   endReason: number,
   now = new Date(),
 ): Promise<FriendlyBattleMutationResult> {
+  validAuthoritativeTime(now);
   const existing = await findFriendlyBattle(playerId, battleId);
-  const decision = friendlyBattleSettlementDecision(existing, playerId, battleId, endReason);
+  const decision = friendlyBattleSettlementDecision(existing, playerId, battleId, endReason, now);
   if (decision === "invalid" || !existing) {
     throw new ApiError(ApiErrorCode.UnknownAction, "Friendly battle receipt is missing or conflicts with this result.");
   }
@@ -207,18 +284,25 @@ export async function settleFriendlyBattle(
   const settledAt = now;
   const expiresAt = new Date(now.getTime() + FINISHED_RECEIPT_TTL_MS);
   const write = await friendlyBattles().updateOne(
-    { playerId, battleId, state: "active" },
+    { playerId, battleId, state: "active", expiresAt: { $gt: now } },
     { $set: { state: "finished", endReason, settledAt, expiresAt } },
   );
   if (write.modifiedCount === 1) {
+    const receipt = validatedFriendlyBattleReceipt({
+      ...existing,
+      state: "finished",
+      endReason,
+      settledAt,
+      expiresAt,
+    });
     return {
-      receipt: { ...existing, state: "finished", endReason, settledAt, expiresAt },
+      receipt,
       replayed: false,
     };
   }
 
   const winner = await friendlyBattles().findOne({ playerId, battleId });
-  if (friendlyBattleSettlementDecision(winner, playerId, battleId, endReason) !== "replay" || !winner) {
+  if (friendlyBattleSettlementDecision(winner, playerId, battleId, endReason, now) !== "replay" || !winner) {
     throw new ApiError(ApiErrorCode.UnknownAction, "Concurrent friendly battle settlement conflicted.");
   }
   return { receipt: winner, replayed: true };

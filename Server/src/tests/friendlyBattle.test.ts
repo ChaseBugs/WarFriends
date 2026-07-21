@@ -6,6 +6,7 @@ import {
   friendlyBattleStartDecision,
   parseOfflineBotStartMetadata,
   validateFriendlyBattleId,
+  validatedFriendlyBattleReceipt,
 } from "../services/friendlyBattleService";
 
 const NOW = new Date("2026-07-20T12:00:00.000Z");
@@ -93,6 +94,7 @@ test("friendly settlement is terminal, idempotent, and rejects a changed result"
     state: "finished",
     endReason: 2,
     settledAt: new Date(NOW.getTime() + 30_000),
+    expiresAt: new Date(NOW.getTime() + 30_000 + (7 * 86_400_000)),
   });
   assert.equal(
     friendlyBattleSettlementDecision(finished, "player-a", "player-a-1784548800", 2),
@@ -106,6 +108,30 @@ test("friendly settlement is terminal, idempotent, and rejects a changed result"
     friendlyBattleSettlementDecision(null, "player-a", "player-a-1784548800", 2),
     "invalid",
     "GameEnded cannot manufacture a no-reward lifecycle without a prior action 64/65 receipt",
+  );
+});
+
+test("friendly receipt authority rejects stale or contradictory durable lifecycles", () => {
+  const valid = receipt();
+  assert.equal(validatedFriendlyBattleReceipt(valid), valid);
+  assert.throws(
+    () => validatedFriendlyBattleReceipt(receipt({ expiresAt: new Date(NOW.getTime() + 1) })),
+    /Stored friendly battle receipt is invalid/,
+  );
+  assert.throws(
+    () => validatedFriendlyBattleReceipt(receipt({ state: "active", endReason: 2 })),
+    /Stored friendly battle receipt is invalid/,
+  );
+  assert.equal(
+    friendlyBattleSettlementDecision(
+      receipt(),
+      "player-a",
+      "player-a-1784548800",
+      2,
+      new Date(NOW.getTime() + 86_400_000),
+    ),
+    "invalid",
+    "logical expiry must close authority even before MongoDB TTL cleanup",
   );
 });
 
