@@ -54,6 +54,20 @@ export const UNIT_ELITE_INCORRECT_PARTS_AMOUNT = 20802;
  */
 export const UNIT_PART_TO_SCRAPS_SELL_RATE = 5;
 export const UNIT_SCRAPS_TO_PART_UPGRADE_RATE = 24;
+const MAX_CLIENT_INTEGER = 2_147_483_647;
+
+/** Add a server-authored Elite-part reward without overflowing SavedArmySlots.parts. */
+export function checkedUnitPartsReward(current: number, reward: number): number {
+  if (!Number.isSafeInteger(current)
+    || current < 0
+    || current > MAX_CLIENT_INTEGER
+    || !Number.isSafeInteger(reward)
+    || reward <= 0
+    || reward > MAX_CLIENT_INTEGER - current) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Heroic unit parts overflowed.");
+  }
+  return current + reward;
+}
 
 /**
  * Authoritative unit purchase logic recovered from the 4.9.5 MainScene.
@@ -1418,17 +1432,19 @@ export function grantMissionElitePartsState(
   parts: number,
 ): MissionElitePartsRewardResult {
   const definition = PLAYER_UNIT_CATALOG[unitName];
-  if (!definition || !Number.isSafeInteger(parts) || parts <= 0) {
+  if (!definition) {
     throw new ApiError(ApiErrorCode.InternalServerError, "Heroic elite-parts reward is invalid.");
   }
   const itemInventory = itemInventoryStateFor(state);
   const unit = itemInventory.levelManagerData.savedArmies[unitName] ?? emptyUnit(definition);
-  if (!Number.isSafeInteger(unit.parts) || unit.parts < 0 || unit.parts > Number.MAX_SAFE_INTEGER - parts) {
-    throw new ApiError(ApiErrorCode.InternalServerError, "Heroic unit parts overflowed.");
-  }
+  // The enclosing mission/event transition later validates the complete inventory successor, but
+  // the reward primitive must not manufacture an invalid intermediate snapshot. The recovered
+  // LevelManager.SavedArmySlots.parts field is C# int, which is much narrower than JavaScript's
+  // exact-integer range; check that client width before a receipt or claim marker can advance.
+  const rewardedParts = checkedUnitPartsReward(unit.parts, parts);
   itemInventory.levelManagerData.savedArmies[unitName] = {
     ...unit,
-    parts: unit.parts + parts,
+    parts: rewardedParts,
   };
   return {
     state: { ...state, itemInventory },

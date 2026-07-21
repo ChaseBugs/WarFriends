@@ -21,9 +21,11 @@ import { createInitialProgression } from "../services/playerStateService";
 import {
   activateUnitState,
   activateUnitUpgradeState,
+  checkedUnitPartsReward,
   convertScrapsToUnitPartsState,
   convertUnitPartsToScrapsState,
   equippedUnitPower,
+  grantMissionElitePartsState,
   instantUnitUpgradeState,
   parseUnitActivateData,
   parseUnitEquipData,
@@ -798,6 +800,39 @@ test("unit ArmyPower follows normal, promoted special, and bought elite rows", (
   elite.unit.tier = 2;
   assert.ok(Math.abs(unitArmyPower(elite.state, SHOTGUNNER) - 83.47) < 0.000_01);
   assert.equal(equippedUnitPower(elite.state), 83);
+});
+
+test("mission and Event Assignment Elite-part rewards retain the recovered C# width", () => {
+  assert.equal(checkedUnitPartsReward(2_147_483_646, 1), 2_147_483_647);
+  for (const [current, reward] of [
+    [2_147_483_647, 1],
+    [0, 2_147_483_648],
+    [0, 0],
+    [-1, 1],
+  ]) {
+    assert.throws(
+      () => checkedUnitPartsReward(current, reward),
+      /Heroic unit parts overflowed/,
+    );
+  }
+
+  const capped = grantMissionElitePartsState(
+    createInitialProgression(NOW),
+    SHOTGUNNER,
+    2_147_483_647,
+  );
+  assert.equal(
+    capped.itemInventory.levelManagerData.savedArmies[SHOTGUNNER]?.parts,
+    2_147_483_647,
+  );
+  assert.throws(
+    () => grantMissionElitePartsState(capped.state, SHOTGUNNER, 1),
+    /Heroic unit parts overflowed/,
+  );
+  assert.equal(
+    capped.state.itemInventory?.levelManagerData.savedArmies[SHOTGUNNER]?.parts,
+    2_147_483_647,
+  );
 });
 
 test("BuyUnit, ActivateUnit, and auto-equip are atomic and replay-safe in RequestBuffer", () => {

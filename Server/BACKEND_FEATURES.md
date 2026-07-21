@@ -266,6 +266,10 @@ The check accepts authoritative chargeback debt in an existing wallet, rejects n
 non-integer rewards, and rejects any sum outside JavaScript's safe-integer range. Each caller
 calculates the final balance before consuming its claim marker or terminal receipt, so invalid
 persisted data or an operator-configured overflow fails closed without losing the reward on retry.
+Heroic Daily Mission and configured Event Assignment unit-part grants additionally use a checked
+signed-client-int successor before their enclosing receipt/claim transition. `SavedArmySlots.parts`
+is a recovered C# `int`; JavaScript-safe addition alone must never create an inventory snapshot that
+the stock client cannot deserialize or the shared inventory boundary immediately rejects.
 
 Assignment, achievement, and War Arena eligibility counters are also validated before comparisons,
 and Arena lifetime increments reject safe-integer overflow before settlement.

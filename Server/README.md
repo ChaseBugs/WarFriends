@@ -1206,7 +1206,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   reconstruction gap. Completing the fifth Heroic mission now also
   grants the exact level-row Bronze/Silver/Gold ten-card pack and one Elite part for the unit
   target persisted in `DailyMissionsData`; identities, inventory, currencies, and receipt commit
-  together, with bought units preferred by the documented replacement selector. The daily cycle
+  together, with bought units preferred by the documented replacement selector. Daily Mission and
+  configured Event Assignment part grants check the recovered signed-client parts width before a
+  receipt or claim marker advances, so a near-cap unit cannot become unreadable after a valid
+  server-authored reward. The daily cycle
   now cryptographically selects all six source reward variants after the rank-6 War Card unlock
   (currency-only before it); Bronze/Silver/Gold card variants grant their exact 8/5/3, 9/6/4, or
   10/7/5 level-row counts through `DailyMissionsCompletionRewardCards`. The missing production
