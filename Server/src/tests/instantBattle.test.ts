@@ -13,7 +13,12 @@ import {
   playInstantBattleState,
 } from "../services/instantBattleService";
 import { playerLevelDefinition } from "../services/levelProgressionService";
-import { buildPlayerData, createInitialProgression } from "../services/playerStateService";
+import {
+  buildPlayerData,
+  createInitialProgression,
+  progressionForPlayer,
+} from "../services/playerStateService";
+import { validatedProgressionSuccessor } from "../services/progressionPublicationAuthorityService";
 
 const NOW = 1_800_000_000;
 const UNLOCKED_LEVEL_INDEX = 8;
@@ -252,6 +257,17 @@ test("PlayerAnalyticsData restores authoritative timer, lifetime, and paid count
     () => buildPlayerData(player, NOW),
     /Instant Battle timer is in the future/,
   );
+
+  state.instantBattle = {
+    instantBattlesTime: NOW - 500,
+    instantBattles: 45,
+    paidInstantBattles: 2,
+    lastReceipt: null,
+  } as unknown as typeof state.instantBattle;
+  assert.throws(
+    () => progressionForPlayer(player),
+    /Instant Battle receipt is invalid/,
+  );
 });
 
 test("Instant Battle counter authority rejects non-client and inconsistent persisted tuples", () => {
@@ -275,5 +291,46 @@ test("Instant Battle counter authority rejects non-client and inconsistent persi
   assert.throws(
     () => playInstantBattleState(state, UNLOCKED_LEVEL_INDEX, NOW, undefined, POLICY),
     /Instant Battle counters are inconsistent/,
+  );
+});
+
+test("Instant Battle replay receipt is exact and revision-bound at shared publication", () => {
+  const current = unlockedState();
+  const settled = playInstantBattleState(
+    current,
+    UNLOCKED_LEVEL_INDEX,
+    NOW,
+    undefined,
+    POLICY,
+  );
+  assert.equal(validatedProgressionSuccessor(current, settled.state), settled.state);
+
+  const futureRevision = {
+    ...settled.state,
+    revision: settled.state.revision + 1,
+    instantBattle: {
+      ...settled.instantBattle,
+      lastReceipt: {
+        ...settled.receipt,
+        progressionRevision: settled.state.revision + 2,
+      },
+    },
+  };
+  assert.throws(
+    () => validatedProgressionSuccessor(settled.state, futureRevision),
+    /Instant Battle receipt is inconsistent/,
+  );
+
+  const unknownReceiptField = {
+    ...settled.state,
+    revision: settled.state.revision + 1,
+    instantBattle: {
+      ...settled.instantBattle,
+      lastReceipt: { ...settled.receipt, clientReward: 999 },
+    },
+  };
+  assert.throws(
+    () => validatedProgressionSuccessor(settled.state, unknownReceiptField),
+    /Instant Battle receipt is invalid/,
   );
 });

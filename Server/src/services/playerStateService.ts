@@ -28,7 +28,10 @@ import {
 } from "./starterAssignmentAuthorityService";
 import { videoAdRewardTimesForState } from "./videoAdRewardAuthorityService";
 import { validatedPvpWinStreak, validatedPvpWinStreakShape } from "./pvpWinStreakAuthorityService";
-import { validatedInstantBattleState } from "./instantBattleAuthorityService";
+import {
+  validatedInstantBattleShape,
+  validatedInstantBattleState,
+} from "./instantBattleAuthorityService";
 import { validatedSquadCreationsCount } from "./squadCreationAuthorityService";
 import { validatedRenameCount } from "./playerRenameAuthorityService";
 import { validatedCollectedRewards } from "./oneTimeRewardAuthorityService";
@@ -118,6 +121,10 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
   const tutorialLifecycle = validatedTutorialLifecycleShape(state);
   const featureIntroductions = validatedFeatureIntroductions(state.featureIntroductions);
   const squadCreationsCount = validatedSquadCreationsCount(state.squadCreationsCount);
+  const instantBattle = validatedInstantBattleShape(
+    state.instantBattle,
+    progressionRevisionForRead(state.revision),
+  );
   // This is the shared persisted-progression read boundary, not only a boot serializer. Validate
   // wallet/rank balances here so cross-player transactions and ordinary economy actions cannot
   // let NaN/Infinity bypass a `< price` check before reaching a narrower service validator.
@@ -155,6 +162,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
       ...tutorialLifecycle,
       featureIntroductions,
       squadCreationsCount,
+      instantBattle,
     };
   }
 
@@ -190,6 +198,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
     ...tutorialLifecycle,
     featureIntroductions,
     squadCreationsCount,
+    instantBattle,
   };
 }
 
@@ -429,7 +438,11 @@ export function buildPlayerData(player: PlayerDocument, now = unixNow()): Player
     validatedStarterAssignmentState(state.starterAssignments)
       ?? createInitialStarterAssignmentState(Math.floor(player.createdAt.getTime() / 1_000)),
   );
-  const instantBattle = validatedInstantBattleState(state.instantBattle, Math.floor(now));
+  const instantBattle = validatedInstantBattleState(
+    state.instantBattle,
+    Math.floor(now),
+    state.revision,
+  );
   const featureIntroductions = validatedFeatureIntroductions(state.featureIntroductions);
   const tutorialLifecycle = validatedTutorialLifecycle(state, Math.floor(now));
 

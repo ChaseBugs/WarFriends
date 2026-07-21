@@ -515,8 +515,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   simulates a full five-battle batch. Timer, lifetime/paid counters, wallet, XP, level Gold,
   dog-tag rank-up refill, and rank Army Power commit in one revision-guarded player write and
   are restored through `PlayerAnalyticsData`. One shared validator requires all three public
-  counters to fit the recovered client's nonnegative signed integers before readiness, settlement,
-  or boot; future timers and paid five-battle groups beyond the lifetime count fail closed. The
+  counters and the exact private replay receipt to retain signed-client values, source price/count
+  bounds, level/refill consistency, and a non-future progression revision at shared progression
+  read/publication and before readiness, settlement, or boot. Transaction validation remains
+  deterministic; action/boot request time separately rejects future timer and receipt timestamps.
+  Paid five-battle groups beyond the lifetime count also fail closed. The
   hybrid MainScene's shifted five constants are
   realigned to the old script's field order so its visible five-charge/35-Gold UI agrees with the
   backend. The retired reward table is unavailable; `INSTANT_BATTLE_XP_PER_BATTLE` (20) and

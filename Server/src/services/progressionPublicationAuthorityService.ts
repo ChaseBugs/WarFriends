@@ -22,6 +22,7 @@ import { validatedCollectedRewards } from "./oneTimeRewardAuthorityService";
 import { validatedTutorialLifecycleShape } from "./tutorialCompletionAuthorityService";
 import { validatedFeatureIntroductions } from "./featureIntroductionAuthorityService";
 import { validatedSquadCreationsCount } from "./squadCreationAuthorityService";
+import { validatedInstantBattleShape } from "./instantBattleAuthorityService";
 
 /**
  * Validate the common authority shared by every full progression-document replacement.
@@ -67,6 +68,8 @@ export function validatedProgressionSuccessor(
   validatedFeatureIntroductions(next.featureIntroductions);
   validatedSquadCreationsCount(current.squadCreationsCount);
   validatedSquadCreationsCount(next.squadCreationsCount);
+  validatedInstantBattleShape(current.instantBattle, progressionRevisionForRead(current.revision));
+  validatedInstantBattleShape(next.instantBattle, progressionRevisionForRead(next.revision));
   validatedCoreProgressionBalances(current);
   validateProgressionRevisionAdvance(progressionRevisionForRead(current.revision), next.revision);
   validatedCoreProgressionBalances(next);

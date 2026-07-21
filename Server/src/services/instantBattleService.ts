@@ -90,7 +90,7 @@ function checkedBalanceSum(left: number, right: number, name: string): number {
 
 /** Clone and validate private counters instead of mutating a MongoDB snapshot in place. */
 export function instantBattleStateFor(state: PlayerProgressionState, now?: number): InstantBattleState {
-  return validatedInstantBattleState(state.instantBattle, now);
+  return validatedInstantBattleState(state.instantBattle, now, state.revision);
 }
 
 /** Reproduce PlayerAnalyticsData.GetInstantBattlesReady with server time as authority. */
