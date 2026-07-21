@@ -8,6 +8,7 @@ import {
   withMongoTransaction,
   type PlayerDocument,
   type PlayerProgressionState,
+  type PurchaseReconciliationCursorDocument,
   type PurchaseReceiptDocument,
   type PurchaseReversibleGrant,
 } from "../db";
@@ -33,6 +34,32 @@ const cursorId = "google-play-voided-products" as const;
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1_000;
 const WINDOW_OVERLAP_MS = 10 * 60 * 1_000;
 const defaultLister = new GooglePlayDeveloperApiVerifier();
+const CURSOR_KEYS = new Set(["_id", "lastSuccessfulEndTime", "updatedAt"]);
+
+/** A future or drifted cursor could skip provider events, so validate it as reconciliation authority. */
+export function validatedPurchaseReconciliationCursor(
+  cursor: PurchaseReconciliationCursorDocument,
+  now: Date,
+): PurchaseReconciliationCursorDocument {
+  const raw = cursor as unknown as Record<string, unknown>;
+  const nowMillis = now.getTime();
+  if (!cursor
+    || typeof cursor !== "object"
+    || Array.isArray(cursor)
+    || Object.keys(raw).some((key) => !CURSOR_KEYS.has(key))
+    || cursor._id !== cursorId
+    || !(cursor.lastSuccessfulEndTime instanceof Date)
+    || !(cursor.updatedAt instanceof Date)
+    || !Number.isSafeInteger(cursor.lastSuccessfulEndTime.getTime())
+    || !Number.isSafeInteger(cursor.updatedAt.getTime())
+    || !Number.isSafeInteger(nowMillis)
+    || cursor.lastSuccessfulEndTime.getTime() < 0
+    || cursor.updatedAt.getTime() !== cursor.lastSuccessfulEndTime.getTime()
+    || cursor.lastSuccessfulEndTime.getTime() > nowMillis) {
+    throw new Error("Stored purchase-reconciliation cursor authority is invalid.");
+  }
+  return cursor;
+}
 
 function receiptIdForToken(token: string): string {
   return createHmac("sha256", config.purchaseTokenHashSecret)
@@ -254,6 +281,7 @@ export async function runGooglePlayVoidedPurchaseSweep(
   const leased = await withScheduledJobLease(jobId, Math.max(300_000, interval * 2_000), async () => {
     const nowMillis = now * 1_000;
     const cursor = await purchaseReconciliationCursors().findOne({ _id: cursorId });
+    if (cursor) validatedPurchaseReconciliationCursor(cursor, new Date(nowMillis));
     // Google accepts at most a 30-day lookback. Leave one minute inside that hard boundary to
     // avoid clock skew, and overlap successful windows so records delayed around an edge replay.
     const earliest = nowMillis - THIRTY_DAYS_MS + 60_000;
@@ -279,9 +307,19 @@ export async function runGooglePlayVoidedPurchaseSweep(
       }
       pageToken = page.nextPageToken;
     } while (pageToken);
+    const successor = validatedPurchaseReconciliationCursor({
+      _id: cursorId,
+      lastSuccessfulEndTime: new Date(nowMillis),
+      updatedAt: new Date(nowMillis),
+    }, new Date(nowMillis));
     await purchaseReconciliationCursors().updateOne(
       { _id: cursorId },
-      { $set: { lastSuccessfulEndTime: new Date(nowMillis), updatedAt: new Date(nowMillis) } },
+      {
+        $set: {
+          lastSuccessfulEndTime: successor.lastSuccessfulEndTime,
+          updatedAt: successor.updatedAt,
+        },
+      },
       { upsert: true },
     );
     return { revoked, replayed, unmatched };

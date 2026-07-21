@@ -751,9 +751,16 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   subscription checks advance the bounded counter with compare-and-set ownership, so concurrent
   workers cannot overwrite each other's provider evidence or retry schedule.
 
+  Every shared background-job lease is validated before acquisition and after its MongoDB
+  compare-and-set: exact fields, bounded job ID, UUID owner, safe ordered dates, and a duration from
+  one second through 24 hours. A malformed expiry therefore fails as damaged authority instead of
+  looking like permanent lock contention to all nodes.
+
   A second Mongo-leased scheduler queries Google Play Voided Purchases for one-time products with
   a durable successful-window cursor, ten-minute overlap, complete token pagination, and Google's
-  30-day first-run boundary. It matches the HMAC token plus exact order ID, reverses each receipt
+  30-day first-run boundary. The singleton cursor must retain exact fields, equal successful-end and
+  audit timestamps, safe dates, and a non-future position before it can select or publish a provider
+  window, so corruption cannot skip void events. It matches the HMAC token plus exact order ID, reverses each receipt
   once, records source/reason/time, preserves benefits backed by another active pack receipt, and
   resets revoked equipped items to recovered defaults. Already-spent refunded currency becomes a
   negative server balance so later earnings repay the chargeback before spending resumes. The
