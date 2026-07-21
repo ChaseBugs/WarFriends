@@ -738,7 +738,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   inventory-consuming activation as `MatchEvent { Event: "CardPlayed", Data: { Sequence,
   CardId } }`. `Sequence` must remain an exact JSON integer number from zero through five; null,
   Boolean, blank text, numeric text, arrays, fractions, and non-finite numbers cannot coerce to
-  sequence zero. The server validates the authenticated owner's complete candidate list, durably
+  sequence zero. `Data` contains exactly those two fields and `CardId` must be a string within the
+  shared terminal-list identity bounds; nested aliases, missing fields, and extra targeting claims
+  fail before persistence. Local and cross-node paths reuse that one canonical pair. The server
+  validates the authenticated owner's complete candidate list, durably
   appends contiguous evidence before relaying the effect and acknowledges exact retries without
   relaying twice. After the opponent socket send, both local and cross-node paths append the same
   contiguous durable delivery prefix. Terminal `UsedCards`, ordinary settlement, and disconnect

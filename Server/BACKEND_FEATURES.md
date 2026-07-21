@@ -508,7 +508,9 @@ The replacement WebSocket transport now recognizes a typed
 participant has a contiguous zero-based sequence capped by the recovered six-card selection
 limit. The sequence remains an exact JSON integer number at client, local-room, durable-evidence,
 and distributed-fan-out boundaries; null, Boolean, blank text, numeric text, arrays, fractions, and
-non-finite values cannot coerce to zero. The backend validates ownership against the complete candidate list, persists evidence
+non-finite values cannot coerce to zero. The nested Data object must contain exactly `Sequence` and
+string `CardId`; missing fields, alternate aliases, and extra targeting claims fail before evidence,
+and local/cross-node paths use the same canonical pair. The backend validates ownership against the complete candidate list, persists evidence
 before relaying the effect, acknowledges an exact retry without relaying it twice, and serializes
 each socket's messages so `MatchResult` cannot overtake its last card activation. Both local and
 cross-node handoffs append one durable contiguous delivery prefix after the opponent socket send.

@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   applyRelayedCardPlay,
   deliveredRelayedCards,
+  validatedCardPlayedEventData,
   validatedRelayedCardSequence,
   validateRelayedCardReport,
 } from "../services/matchService";
@@ -13,6 +14,28 @@ test("CardPlayed sequence requires the exact bounded JSON-number transport", () 
   for (const value of [undefined, null, false, true, [], [0], "", "0", NaN, Infinity, -1, 0.5, 6]) {
     assert.throws(() => validatedRelayedCardSequence(value), /CardPlayed sequence is invalid/);
     assert.throws(() => applyRelayedCardPlay([], value, "AMMOCRATE"), /CardPlayed sequence is invalid/);
+  }
+});
+
+test("CardPlayed Data accepts only the exact sequence and string identity pair", () => {
+  assert.deepEqual(
+    validatedCardPlayedEventData({ Sequence: 0, CardId: "AMMOCRATE" }),
+    { Sequence: 0, CardId: "AMMOCRATE" },
+  );
+  for (const value of [
+    undefined,
+    null,
+    [],
+    {},
+    { Sequence: 0 },
+    { CardId: "AMMOCRATE" },
+    { Sequence: "0", CardId: "AMMOCRATE" },
+    { Sequence: 0, CardId: null },
+    { sequence: 0, CardId: "AMMOCRATE" },
+    { Sequence: 0, cardId: "AMMOCRATE" },
+    { Sequence: 0, CardId: "AMMOCRATE", Target: "enemy" },
+  ]) {
+    assert.throws(() => validatedCardPlayedEventData(value));
   }
 });
 

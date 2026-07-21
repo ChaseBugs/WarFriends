@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 import type { ClientSession } from "mongodb";
+import type { CardPlayedEventData } from "../gameRooms/types";
 import {
   matches,
   players,
@@ -1437,6 +1438,31 @@ export async function isMatchParticipant(matchId: string, playerId: string): Pro
 export interface RelayedCardPlayResult {
   cards: string[];
   replayed: boolean;
+}
+
+/**
+ * Canonicalize the only recovered MatchEvent data shape that may become gameplay authority.
+ *
+ * Unknown event Data remains opaque transport, but CardPlayed can eventually consume inventory.
+ * It therefore requires exactly one JSON-number sequence and one string card identity. Extra keys
+ * and alternate aliases are rejected rather than stripped before durable evidence and opponent
+ * delivery. The shared card-list parser retains the same identity bounds as terminal UsedCards.
+ */
+export function validatedCardPlayedEventData(value: unknown): CardPlayedEventData {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new ApiError(CARD_NOT_FOUND, "CardPlayed Data is invalid.");
+  }
+  const record = value as Record<string, unknown>;
+  const keys = Object.keys(record);
+  if (keys.length !== 2 || !keys.includes("Sequence") || !keys.includes("CardId")) {
+    throw new ApiError(CARD_NOT_FOUND, "CardPlayed Data is invalid.");
+  }
+  const Sequence = validatedRelayedCardSequence(record.Sequence);
+  const [CardId] = parsePvpUsedCards([record.CardId]);
+  if (!CardId) {
+    throw new ApiError(CARD_NOT_FOUND, "CardPlayed Data is invalid.");
+  }
+  return { Sequence, CardId };
 }
 
 /**

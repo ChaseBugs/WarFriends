@@ -23,7 +23,7 @@ import {
   reportMatchResult,
   settleResult,
   type MatchPlayer,
-  validatedRelayedCardSequence,
+  validatedCardPlayedEventData,
   wasRelayedCardDelivered,
 } from "./services/matchService";
 import { parseOptionalPvpUsedCards } from "./services/cardInventoryService";
@@ -38,7 +38,6 @@ import {
 import { resolveMatchReportStatus, roomManager } from "./gameRooms/roomManager";
 import type {
   ClientEnvelope,
-  CardPlayedEventData,
   JoinMatchPayload,
   MatchEventPayload,
   MatchResultPayload,
@@ -457,8 +456,9 @@ async function receiveRemotePvpFanout(raw: string): Promise<void> {
   if (notice.envelope.Type === "MatchEvent") {
     const payload = notice.envelope.Payload as MatchEventPayload;
     if (payload.Event === "CardPlayed") {
-      const sequence = validatedRelayedCardSequence((payload.Data as CardPlayedEventData).Sequence);
-      const cardId = String((payload.Data as CardPlayedEventData).CardId);
+      const data = validatedCardPlayedEventData(payload.Data);
+      const sequence = data.Sequence;
+      const cardId = data.CardId;
       const receiptKey = `${notice.matchId}:${notice.sourcePlayerId}:${sequence}`;
       // Redis publication proves only that a subscriber received a transport hint. The node owning
       // the opponent socket writes the durable receipt after the actual socket send; if only that
@@ -1276,14 +1276,14 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
           });
         }
         if (p.Event === "CardPlayed") {
-          const data = p.Data as CardPlayedEventData | undefined;
           try {
-            const sequence = validatedRelayedCardSequence(data?.Sequence);
+            const data = validatedCardPlayedEventData(p.Data);
+            const sequence = data.Sequence;
             const recorded = await recordRelayedCardPlay(
               p.MatchId,
               client.playerId,
               sequence,
-              typeof data?.CardId === "string" ? data.CardId : "",
+              data.CardId,
             );
             // Evidence persistence and live delivery have separate failure boundaries. If Redis
             // failed after evidence committed, the same sequence may retry delivery; once the
@@ -1291,7 +1291,7 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
             const alreadyDelivered = await wasRelayedCardDelivered(p.MatchId, client.playerId, sequence);
             let delivered = alreadyDelivered;
             if (!delivered) {
-              const cardId = typeof data?.CardId === "string" ? data.CardId : "";
+              const cardId = data.CardId;
               const dispatch = await deliverPvpEnvelope(opponentId, p.MatchId, {
                 Type: "MatchEvent",
                 Payload: {
@@ -1338,9 +1338,9 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
         return;
       }
       if (p.Event === "CardPlayed") {
-        const data = p.Data as CardPlayedEventData | undefined;
         try {
-          const sequence = validatedRelayedCardSequence(data?.Sequence);
+          const data = validatedCardPlayedEventData(p.Data);
+          const sequence = data.Sequence;
           const room = roomManager.getRoom(p.MatchId);
           if (room?.state !== "active" || !roomManager.isParticipant(p.MatchId, client.playerId)) {
             return send(client, { Type: "MatchError", Payload: { MatchId: p.MatchId, Reason: "NotInActiveMatch" } });
@@ -1349,7 +1349,7 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
             p.MatchId,
             client.playerId,
             sequence,
-            typeof data?.CardId === "string" ? data.CardId : "",
+            data.CardId,
           );
           // Room-local delivery tracking distinguishes a lost sender acknowledgement from
           // evidence that committed immediately before the opponent disconnected. The former is
@@ -1359,13 +1359,13 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
             Payload: {
               MatchId: p.MatchId,
               Event: "CardPlayed",
-              Data: { Sequence: sequence, CardId: typeof data?.CardId === "string" ? data.CardId : "" },
+              Data: { Sequence: sequence, CardId: data.CardId },
             },
           });
           if (delivery === "invalid") {
             return send(client, { Type: "MatchError", Payload: { MatchId: p.MatchId, Reason: "NotInActiveMatch" } });
           }
-          const cardId = typeof data?.CardId === "string" ? data.CardId : "";
+          const cardId = data.CardId;
           // Process-local socket handoff needs the same durable receipt as cross-node delivery.
           // If only this marker write loses its compare-and-set, relayCardEvent suppresses a
           // duplicate visible effect and the sender retry can safely finish the receipt.
