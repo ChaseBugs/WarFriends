@@ -223,8 +223,11 @@ equality or routing; JSON adapters may use an exact integer number. JavaScript-c
 Booleans, arrays, whitespace, leading zeros, fractions, exponents, non-finite numbers, and values
 above `Int32.MaxValue` are rejected before action 157's raw-response shortcut as well as ordinary
 handlers. `MIN_CLIENT_VERSION`, when nonzero, gates the optional numeric replacement-client
-`ClientVersion` field with the same exact grammar. The stock client continues to send its dotted
-build in `Version`; a malformed numeric adapter value cannot exploit `NaN` to bypass the gate.
+`ClientVersion` field with the same exact grammar. The deployment minimum is validated during
+dispatcher startup as an exact integer from zero through `Int32.MaxValue`, with only zero disabling
+the gate. If `ClientVersion` and `clientVersion` are both supplied, both must be canonical and equal;
+malformed or conflicting claims cannot use alias precedence or `NaN` to bypass the gate. The stock
+client continues to send its dotted build in the separate `Version` field.
 
 ```bash
 # Create a guest account (DatabaseAction 118) using the recovered BestHTTP shape

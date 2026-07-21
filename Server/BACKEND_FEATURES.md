@@ -526,9 +526,12 @@ The URL action and repeated body `requestId`/diagnostic `DbAction` now independe
 canonical nonnegative C# `int` before they are compared or routed. JSON adapters may use the exact
 integer number. Missing, null, Boolean, array, blank, signed, padded, leading-zero, fractional,
 exponent, non-finite, and out-of-range values fail before the raw action-157 configuration path or
-normal handler registry. When `MIN_CLIENT_VERSION` enables the numeric replacement-client gate, a
-present malformed `ClientVersion` also fails as invalid/old instead of bypassing the comparison via
-JavaScript `NaN`; the stock dotted `Version` remains the separately documented BestHTTP field.
+normal handler registry. `MIN_CLIENT_VERSION` is validated during dispatcher startup as an exact
+zero-through-`Int32.MaxValue` integer, with only zero disabling the numeric replacement-client gate.
+When enabled, every supplied `ClientVersion`/`clientVersion` alias must use the same canonical value;
+malformed or conflicting claims fail as invalid/old instead of using alias precedence or bypassing
+comparison through JavaScript `NaN`. The stock dotted `Version` remains the separately documented
+BestHTTP field.
 
 ## Implementation order
 

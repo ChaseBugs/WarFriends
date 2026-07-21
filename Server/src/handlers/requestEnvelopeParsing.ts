@@ -29,3 +29,46 @@ export function exactDatabaseAction(value: unknown): number | undefined {
 export function exactNumericClientVersion(value: unknown): number | undefined {
   return exactDatabaseAction(value);
 }
+
+/**
+ * Validate the deployment-owned replacement-client floor without silently disabling it.
+ *
+ * Zero is the documented disabled state. A negative, fractional, non-finite, or oversized value
+ * must fail module startup rather than making `requestedVersion < minimumVersion` evaluate false
+ * or changing the operator's reviewed threshold through rounding.
+ */
+export function exactMinimumClientVersion(value: unknown): number {
+  const parsed = exactNumericClientVersion(value);
+  if (parsed === undefined) throw new Error("Minimum client-version policy is invalid.");
+  return parsed;
+}
+
+/**
+ * Parse the replacement adapter's two accepted field aliases as one request claim.
+ *
+ * Total absence maps to zero so the stock client remains outside an enabled replacement-client
+ * gate exactly as documented. When either alias is supplied, every supplied value must use the
+ * canonical C# integer transport and all aliases must agree; precedence would let a caller hide a
+ * conflicting or malformed claim behind whichever property the dispatcher happened to read first.
+ */
+export function exactRequestedNumericClientVersion(
+  clientVersion: unknown,
+  legacyClientVersion: unknown,
+): number | undefined {
+  const supplied = [clientVersion, legacyClientVersion].filter((value) => value !== undefined);
+  if (supplied.length === 0) return 0;
+  const parsed = supplied.map(exactNumericClientVersion);
+  if (parsed.some((value) => value === undefined)) return undefined;
+  return parsed.every((value) => value === parsed[0]) ? parsed[0] : undefined;
+}
+
+/** Apply one already-validated deployment floor to the canonical replacement-client claim. */
+export function replacementClientVersionIsAllowed(
+  clientVersion: unknown,
+  legacyClientVersion: unknown,
+  minimumClientVersion: number,
+): boolean {
+  if (minimumClientVersion === 0) return true;
+  const requested = exactRequestedNumericClientVersion(clientVersion, legacyClientVersion);
+  return requested !== undefined && requested >= minimumClientVersion;
+}

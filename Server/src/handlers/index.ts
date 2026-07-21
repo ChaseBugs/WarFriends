@@ -35,7 +35,15 @@ import { offerHandlers } from "./offers";
 import type { HandlerEntry } from "./types";
 import logger from "../utils/logger";
 import { exactRequestedAccountType } from "../services/accountTypeRequestService";
-import { exactDatabaseAction, exactNumericClientVersion } from "./requestEnvelopeParsing";
+import {
+  exactDatabaseAction,
+  exactMinimumClientVersion,
+  replacementClientVersionIsAllowed,
+} from "./requestEnvelopeParsing";
+
+// Evaluate the deployment gate while the dispatcher module loads. Invalid policy must stop server
+// startup before one node silently accepts clients that another node rejects during a rolling deploy.
+const minimumClientVersion = exactMinimumClientVersion(config.minClientVersion);
 
 const benignNoOpActions = new Set<number>([
   92, // client error report
@@ -120,11 +128,6 @@ export const registeredHandlerActions = Object.freeze(
   Object.keys(registry).map((value) => Number(value)).sort((left, right) => left - right),
 );
 
-function clientVersion(req: RequestEnvelope): number | undefined {
-  const value = req.ClientVersion ?? req.clientVersion;
-  return value === undefined ? 0 : exactNumericClientVersion(value);
-}
-
 /**
  * Route one Beanstalk envelope to its handler and produce the response envelope.
  * Never throws — all failures become a `{ Code, Message }` error envelope.
@@ -136,11 +139,7 @@ export async function dispatch(req: RequestEnvelope): Promise<ResponseEnvelope> 
   }
   logger.api.action(dbActionName(action), action);
 
-  const requestedClientVersion = clientVersion(req);
-  if (
-    config.minClientVersion > 0
-    && (requestedClientVersion === undefined || requestedClientVersion < config.minClientVersion)
-  ) {
+  if (!replacementClientVersionIsAllowed(req.ClientVersion, req.clientVersion, minimumClientVersion)) {
     return { DbAction: action, ...apiError(ApiErrorCode.InvalidClientVersion, "Client version is missing, invalid, or too old.") };
   }
 
