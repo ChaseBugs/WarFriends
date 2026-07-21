@@ -19,6 +19,7 @@ import {
 } from "./cardInventoryService";
 import { findById } from "./playerService";
 import { progressionForPlayer, unixNow } from "./playerStateService";
+import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
 import { itemInventoryStateFor, weaponDefinitionFor } from "./itemInventoryService";
 import { visualInventoryStateFor } from "./visualInventoryService";
 
@@ -552,14 +553,15 @@ export async function depositSquadCards(
       : null;
     if (!squad) throw new ApiError(ApiErrorCode.NotSquadMember, "Player is not in a squad.");
     requireSquadMembership(player, squad);
+    const currentProgression = progressionForPlayer(player);
     const result = applyDepositCardChangesState(
-      progressionForPlayer(player),
+      currentProgression,
       player.player.depositedCardsDic ?? {},
       changes,
       squadCardPoolCapacity(squad.level),
-      buddyDepositAuthorityFor(player, progressionForPlayer(player), unixNow()),
+      buddyDepositAuthorityFor(player, currentProgression, unixNow()),
     );
-    const canonical = canonicalProgression(result.state);
+    const canonical = canonicalProgression(validatedProgressionSuccessor(currentProgression, result.state));
     const update = await players().updateOne(
       {
         id: player.id,
@@ -619,14 +621,18 @@ export async function withdrawSquadCard(
     requireSquadMembership(recipient, squad);
     requireSquadMembership(donor, squad);
 
+    const currentRecipientProgression = progressionForPlayer(recipient);
     const result = withdrawSquadCardState(
-      progressionForPlayer(recipient),
+      currentRecipientProgression,
       donor.player.depositedCardsDic ?? {},
       donor.player.reputation,
       cardId,
       unixNow(),
     );
-    const canonicalRecipient = canonicalProgression(result.recipientState);
+    const canonicalRecipient = canonicalProgression(validatedProgressionSuccessor(
+      currentRecipientProgression,
+      result.recipientState,
+    ));
     const now = new Date();
     const recipientUpdate = await players().updateOne(
       { id: recipient.id, ...progressionRevisionFilter(recipient) },

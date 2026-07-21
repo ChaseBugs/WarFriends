@@ -466,9 +466,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   absent pre-revision field to zero. Present and produced values must be nonnegative safe integers,
   and every non-no-op transition must advance monotonically before MongoDB builds its revision
   filter or publishes the replacement. A recovered multi-action RequestBuffer may advance several
-  internal steps in its single atomic replacement. One shared successor proof now also covers
-  custom inbox and Google Play purchase/revalidation/reversal transactions, validating both core
-  balance snapshots and their revision ordering before a full progression replacement is built.
+  internal steps in its single atomic replacement. One shared successor proof also covers custom
+  inbox, Google Play entitlement, mission, Instant Battle, rename, Squad economy/card/departure,
+  tutorial, Squad War, core PvP, and operator-integrity transactions, validating both core-balance
+  snapshots and their revision ordering before a full progression replacement is built.
 - **Core progression balance authority**: every persisted progression read and every produced
   mutation state validates Gold, WarBucks, Tickets, Scraps, and level XP before price comparison or
   publication. Safe-integer Gold/WarBucks chargeback debt remains legitimate; Tickets, Scraps, and

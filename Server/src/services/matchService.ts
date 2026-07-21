@@ -25,6 +25,7 @@ import {
 } from "./cardInventoryService";
 import { ApiError } from "../apiErrors";
 import { progressionForPlayer } from "./playerStateService";
+import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
 import { applyLevelExperienceState } from "./levelProgressionService";
 import { calculateArmyPower } from "./armyPowerService";
 import {
@@ -880,6 +881,10 @@ async function settlePlayerCore(
     canonical,
     leagueAdvance?.leagueTier ?? player.player.leagueTier,
   ).state;
+  // PvP composes card consumption, assignments, achievements, XP, VIP lootboxes, currencies,
+  // win streak, and league projection before one full player replacement. Prove the final state
+  // once here so no helper's unsafe balance or revision can reach the terminal transaction.
+  canonical = canonicalProgression(validatedProgressionSuccessor(initialState, canonical));
   const enteredNormalLeague = beginnerAdvance?.enteredNormalLeague
     ? beginnerAdvance
     : normalLeagueAdvance?.enteredLeague

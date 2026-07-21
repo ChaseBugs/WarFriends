@@ -25,6 +25,7 @@ import {
 } from "./matchService";
 import { mutateProgression } from "./progressionMutationService";
 import { progressionForPlayer, unixNow } from "./playerStateService";
+import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
 import { advanceRentalAfterBattleState } from "./rentalService";
 import { grantMissionElitePartsState, selectMissionElitePartUnit } from "./unitInventoryService";
 import { isVipActiveAt } from "./vipEntitlementService";
@@ -977,6 +978,7 @@ export async function settleDailyMission(
       input,
     );
     if (result.replayed) return result;
+    const successor = validatedProgressionSuccessor(state, result.state);
 
     const nextLifetimeExperience = checkedSum(
       player.player.experience,
@@ -986,7 +988,7 @@ export async function settleDailyMission(
     const levelChanged = result.levelTo !== result.levelFrom;
     const projected: PlayerDocument = {
       ...player,
-      progression: result.state,
+      progression: successor,
       player: {
         ...player.player,
         experience: nextLifetimeExperience,
@@ -994,7 +996,7 @@ export async function settleDailyMission(
       },
     };
     const armyPower = levelChanged ? calculateArmyPower(projected).total : player.player.armyPower;
-    const { dogTags: _legacyDogTags, ...canonicalState } = result.state;
+    const { dogTags: _legacyDogTags, ...canonicalState } = successor;
     const update = await players().updateOne(
       { id: playerId, ...progressionRevisionFilter(player) },
       {

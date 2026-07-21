@@ -1,6 +1,7 @@
 import { SquadRank } from "../constants";
 import { players, type PlayerDocument, type PlayerProgressionState, type SquadDocument } from "../db";
 import { progressionForPlayer } from "./playerStateService";
+import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
 import { reclaimDepositedCardsForDepartureState } from "./squadCardPoolService";
 
 export type SquadIntegrityIssueCode =
@@ -163,8 +164,11 @@ export function inspectSquadIntegrity(
     const depositedCards = player.player.depositedCardsDic ?? {};
     if (!membership && Object.keys(depositedCards).length > 0) {
       try {
-        const reclaim = reclaimDepositedCardsForDepartureState(progressionForPlayer(player), depositedCards);
-        repairedProgression = reclaim.returnedCardIds.length > 0 ? reclaim.state : undefined;
+        const currentProgression = progressionForPlayer(player);
+        const reclaim = reclaimDepositedCardsForDepartureState(currentProgression, depositedCards);
+        repairedProgression = reclaim.returnedCardIds.length > 0
+          ? validatedProgressionSuccessor(currentProgression, reclaim.state)
+          : undefined;
         clearDepositedCards = true;
         needsRepair = true;
         issues.push({
@@ -207,7 +211,16 @@ export async function applySquadIntegrityRepairs(
   for (const repair of repairs) {
     let canonicalProgression: PlayerProgressionState | undefined;
     if (repair.progression) {
-      const { dogTags: _legacyDogTags, ...canonical } = repair.progression;
+      // Repair plans are operator-controlled input and may be applied well after generation.
+      // Reload the exact audit snapshot before accepting a full progression replacement; the
+      // following updatedAt predicate still catches a race between this proof and the write.
+      const live = await players().findOne({ id: repair.playerId, updatedAt: repair.expectedUpdatedAt });
+      if (!live) {
+        conflicts.push(repair.playerId);
+        continue;
+      }
+      const successor = validatedProgressionSuccessor(progressionForPlayer(live), repair.progression);
+      const { dogTags: _legacyDogTags, ...canonical } = successor;
       canonicalProgression = canonical;
     }
     const result = await players().updateOne(

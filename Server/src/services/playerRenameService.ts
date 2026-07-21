@@ -2,6 +2,7 @@ import { ApiError, ApiErrorCode } from "../apiErrors";
 import { players, type PlayerProgressionState } from "../db";
 import { findById } from "./playerService";
 import { progressionForPlayer } from "./playerStateService";
+import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
 import {
   SECOND_RENAME_BASE_GOLD_COST,
   renameGoldPrice,
@@ -102,12 +103,14 @@ export async function renamePlayer(
 
     const rawRenameCount = player.player.renameCount;
     const renameCount = validatedRenameCount(rawRenameCount);
+    const currentProgression = progressionForPlayer(player);
     const economy = applyRenameEconomyState(
-      progressionForPlayer(player),
+      currentProgression,
       renameCount,
       payForRename,
     );
-    const { dogTags: _legacyDogTags, ...canonicalState } = economy.state;
+    const successor = validatedProgressionSuccessor(currentProgression, economy.state);
+    const { dogTags: _legacyDogTags, ...canonicalState } = successor;
     const normalizedAccountName = name.toLocaleLowerCase("en-US");
 
     try {

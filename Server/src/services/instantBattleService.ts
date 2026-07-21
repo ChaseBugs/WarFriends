@@ -10,6 +10,7 @@ import {
 import { calculateArmyPower } from "./armyPowerService";
 import { applyLevelExperienceState, playerLevelDefinition } from "./levelProgressionService";
 import { progressionForPlayer, unixNow } from "./playerStateService";
+import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
 import {
   INSTANT_BATTLE_MAX_CHARGES,
   INSTANT_BATTLE_MAX_GOLD_COST,
@@ -321,6 +322,7 @@ export async function playInstantBattle(
         armyPower: player.player.armyPower,
       };
     }
+    const successor = validatedProgressionSuccessor(state, transition.state);
 
     const nextLifetimeExperience = checkedSum(
       player.player.experience,
@@ -330,7 +332,7 @@ export async function playInstantBattle(
     const levelChanged = transition.receipt.levelTo !== transition.receipt.levelFrom;
     const projected: PlayerDocument = {
       ...player,
-      progression: transition.state,
+      progression: successor,
       player: {
         ...player.player,
         experience: nextLifetimeExperience,
@@ -338,7 +340,7 @@ export async function playInstantBattle(
       },
     };
     const armyPower = levelChanged ? calculateArmyPower(projected).total : player.player.armyPower;
-    const { dogTags: _legacyDogTags, ...canonicalState } = transition.state;
+    const { dogTags: _legacyDogTags, ...canonicalState } = successor;
     const update = await players().updateOne(
       { id: playerId, ...progressionRevisionFilter(player) },
       {

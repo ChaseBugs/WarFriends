@@ -17,6 +17,7 @@ import {
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import { buildDatabasePlayer } from "./playerStateService";
 import { progressionForPlayer } from "./playerStateService";
+import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
 import { completeFirstSquadWarAchievementState } from "./achievementService";
 import type { MessageDoc } from "./socialService";
 import {
@@ -612,6 +613,7 @@ async function completeFirstSquadWarAchievement(
   const current = progressionForPlayer(player);
   const completed = completeFirstSquadWarAchievementState(current);
   if (completed.state === current) return;
+  const successor = validatedProgressionSuccessor(current, completed.state);
 
   const rawRevision = player.progression?.revision;
   const progressionFilter = player.progression
@@ -619,7 +621,7 @@ async function completeFirstSquadWarAchievement(
       ? { "progression.revision": { $exists: false } }
       : { "progression.revision": rawRevision }
     : { progression: { $exists: false } };
-  const { dogTags: _legacyDogTags, ...canonicalState } = completed.state;
+  const { dogTags: _legacyDogTags, ...canonicalState } = successor;
   const update = await players().updateOne(
     { id: player.id, ...progressionFilter },
     { $set: { progression: canonicalState, updatedAt: now } },

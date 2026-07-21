@@ -12,6 +12,7 @@ import { SquadRank } from "../constants";
 import { newSquad, type SquadDTO, type SquadMemberDTO } from "../dtos";
 import { findById, updatePlayerFields } from "./playerService";
 import { progressionForPlayer } from "./playerStateService";
+import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
 import { reclaimDepositedCardsForDepartureState } from "./squadCardPoolService";
 import { buildSquadKickMessage } from "./socialService";
 import logger from "../utils/logger";
@@ -177,8 +178,10 @@ export async function createSquad(
         throw new ApiError(ApiErrorCode.SquadAlreadyExists, "Player already belongs to a squad.");
       }
 
-      const economy = applySquadCreationEconomyState(progressionForPlayer(founder));
-      const { dogTags: _legacyDogTags, ...canonicalState } = economy.state;
+      const currentProgression = progressionForPlayer(founder);
+      const economy = applySquadCreationEconomyState(currentProgression);
+      const successor = validatedProgressionSuccessor(currentProgression, economy.state);
+      const { dogTags: _legacyDogTags, ...canonicalState } = successor;
 
       // All initial values are derived or bounded on the server. In particular, the request
       // cannot choose its founder, inject members, or create an out-of-range join policy.
@@ -595,18 +598,21 @@ export async function leaveSquad(playerId: string, requestedName: string): Promi
     }
 
     const depositedCards = player.player.depositedCardsDic ?? {};
+    const currentProgression = progressionForPlayer(player);
     const reclaim = reclaimDepositedCardsForDepartureState(
-      progressionForPlayer(player),
+      currentProgression,
       depositedCards,
     );
-    const progressionChanged = reclaim.state !== player.progression
-      && reclaim.returnedCardIds.length > 0;
+    const progressionChanged = reclaim.state !== currentProgression;
     const shouldUpdatePlayer =
       plan.playerMirrorChanged
       || Object.keys(depositedCards).length > 0
       || progressionChanged;
     if (shouldUpdatePlayer) {
-      const { dogTags: _legacyDogTags, ...canonicalState } = reclaim.state;
+      const successor = progressionChanged
+        ? validatedProgressionSuccessor(currentProgression, reclaim.state)
+        : currentProgression;
+      const { dogTags: _legacyDogTags, ...canonicalState } = successor;
       const updated = await players().updateOne(
         {
           id: player.id,
@@ -922,12 +928,16 @@ export async function kickMember(actorId: string, targetId: string, requestedNam
       if (error instanceof ApiError) throw new ApiError(ApiErrorCode.KickPlayerError, error.message);
       throw error;
     }
+    const currentProgression = progressionForPlayer(targetPlayer);
     const reclaim = reclaimDepositedCardsForDepartureState(
-      progressionForPlayer(targetPlayer),
+      currentProgression,
       targetPlayer.player.depositedCardsDic ?? {},
     );
-    const progressionChanged = reclaim.returnedCardIds.length > 0;
-    const { dogTags: _legacyDogTags, ...canonicalState } = reclaim.state;
+    const progressionChanged = reclaim.state !== currentProgression;
+    const successor = progressionChanged
+      ? validatedProgressionSuccessor(currentProgression, reclaim.state)
+      : currentProgression;
+    const { dogTags: _legacyDogTags, ...canonicalState } = successor;
     const now = new Date();
 
     const squadUpdate = await squads().updateOne(

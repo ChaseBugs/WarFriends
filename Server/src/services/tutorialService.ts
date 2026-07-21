@@ -7,6 +7,7 @@ import {
 } from "./playerLeagueContract";
 import { findById } from "./playerService";
 import { progressionForPlayer, unixNow } from "./playerStateService";
+import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
 import { mutateProgression } from "./progressionMutationService";
 import { checkedRewardBalance } from "./rewardMathService";
 import {
@@ -166,7 +167,8 @@ export async function finishTutorial(
       unixNow(),
     );
     const profileNeedsUpdate = player.player.remainingMatches !== result.remainingMatches;
-    if (result.state === state && !profileNeedsUpdate) return result;
+    const progressionChanged = result.state !== state;
+    if (!progressionChanged && !profileNeedsUpdate) return result;
 
     const rawRevision = player.progression?.revision;
     const progressionFilter = player.progression
@@ -174,18 +176,23 @@ export async function finishTutorial(
         ? { "progression.revision": { $exists: false } }
         : { "progression.revision": rawRevision }
       : { progression: { $exists: false } };
-    const { dogTags: _legacyDogTags, ...canonicalState } = result.state;
+    const successor = progressionChanged
+      ? validatedProgressionSuccessor(state, result.state)
+      : state;
+    const { dogTags: _legacyDogTags, ...canonicalState } = successor;
     const update = await players().updateOne(
       { id: playerId, ...progressionFilter },
       {
         $set: {
-          progression: canonicalState,
+          ...(progressionChanged ? { progression: canonicalState } : {}),
           "player.remainingMatches": result.remainingMatches,
           updatedAt: new Date(),
         },
       },
     );
-    if (update.modifiedCount === 1) return { ...result, state: canonicalState };
+    if (update.modifiedCount === 1) {
+      return { ...result, state: progressionChanged ? canonicalState : state };
+    }
   }
   throw new ApiError(ApiErrorCode.InternalServerError, "Concurrent tutorial completion could not be committed.");
 }
