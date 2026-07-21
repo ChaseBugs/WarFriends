@@ -57,6 +57,11 @@ const migrations: readonly DatabaseMigration[] = [
 const receiptCollectionName = "schemaMigrations";
 const runnerLockId = "__database_migration_runner__";
 const lockLeaseMs = 5 * 60 * 1000;
+const migrationIdPattern = /^\d{8}_\d{3}_[a-z0-9_]+$/u;
+const checksumPattern = /^sha256:[a-f0-9]{64}$/u;
+const uuidV4Pattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
+const receiptKeys = new Set(["_id", "kind", "checksum", "description", "appliedAt", "durationMs"]);
+const lockKeys = new Set(["_id", "kind", "ownerId", "acquiredAt", "expiresAt"]);
 
 interface MigrationReceiptDocument extends Document {
   _id: string;
@@ -73,6 +78,84 @@ interface MigrationLockDocument extends Document {
   ownerId: string;
   acquiredAt: Date;
   expiresAt: Date;
+}
+
+function plainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function validDate(value: unknown): value is Date {
+  return value instanceof Date && Number.isSafeInteger(value.getTime()) && value.getTime() >= 0;
+}
+
+function validNow(now: Date): number {
+  if (!validDate(now)) throw new MigrationHistoryError("Database migration authority time is invalid.");
+  return now.getTime();
+}
+
+/**
+ * Validate one durable success receipt before it is allowed to suppress a migration.
+ *
+ * The old read projected only `_id` and `checksum`. A damaged row could therefore omit its kind,
+ * description, audit date, or duration and still convince startup that schema work had completed.
+ * These receipts are deployment authority, so every persisted field is now required and immutable.
+ */
+export function validateMigrationReceiptAuthority(
+  value: unknown,
+  now: Date,
+  expected?: DatabaseMigration,
+): asserts value is MigrationReceiptDocument {
+  const nowMs = validNow(now);
+  if (!plainObject(value)
+    || Object.keys(value).length !== receiptKeys.size
+    || Object.keys(value).some((key) => !receiptKeys.has(key))
+    || typeof value._id !== "string"
+    || !migrationIdPattern.test(value._id)
+    || value.kind !== "migration"
+    || typeof value.checksum !== "string"
+    || !checksumPattern.test(value.checksum)
+    || typeof value.description !== "string"
+    || value.description.trim() !== value.description
+    || value.description.length < 1
+    || value.description.length > 512
+    || !validDate(value.appliedAt)
+    || value.appliedAt.getTime() > nowMs
+    || !Number.isSafeInteger(value.durationMs)
+    || (value.durationMs as number) < 0) {
+    throw new MigrationHistoryError("Stored database migration receipt authority is invalid.");
+  }
+  if (expected && (value._id !== expected.id
+    || value.checksum !== expected.checksum
+    || value.description !== expected.description)) {
+    throw new MigrationHistoryError(`Stored database migration receipt does not match ${value._id}.`);
+  }
+}
+
+/**
+ * Validate the singleton lease before deciding whether it is active or safe to replace.
+ * An invalid date must never be interpreted as expired, because that would let two migration
+ * runners overlap. The upper expiry bound also prevents a corrupt row from blocking startup
+ * forever; operators must repair that row explicitly rather than letting time comparisons guess.
+ */
+export function validateMigrationLockAuthority(
+  value: unknown,
+  now: Date,
+): asserts value is MigrationLockDocument {
+  const nowMs = validNow(now);
+  if (!plainObject(value)
+    || Object.keys(value).length !== lockKeys.size
+    || Object.keys(value).some((key) => !lockKeys.has(key))
+    || value._id !== runnerLockId
+    || value.kind !== "lock"
+    || typeof value.ownerId !== "string"
+    || !uuidV4Pattern.test(value.ownerId)
+    || !validDate(value.acquiredAt)
+    || !validDate(value.expiresAt)
+    || value.acquiredAt.getTime() > nowMs
+    || value.expiresAt.getTime() <= value.acquiredAt.getTime()
+    || value.expiresAt.getTime() > nowMs + lockLeaseMs) {
+    throw new MigrationHistoryError("Stored database migration lease authority is invalid.");
+  }
 }
 
 export class MigrationHistoryError extends Error {
@@ -95,8 +178,16 @@ export function planDatabaseMigrations(
 ): DatabaseMigration[] {
   const knownIds = new Set<string>();
   for (const migration of known) {
-    if (!/^\d{8}_\d{3}_[a-z0-9_]+$/u.test(migration.id)) {
+    if (!migrationIdPattern.test(migration.id)) {
       throw new MigrationHistoryError(`Migration ID is invalid: ${migration.id}`);
+    }
+    if (!checksumPattern.test(migration.checksum)) {
+      throw new MigrationHistoryError(`Migration checksum is invalid: ${migration.id}`);
+    }
+    if (migration.description.trim() !== migration.description
+      || migration.description.length < 1
+      || migration.description.length > 512) {
+      throw new MigrationHistoryError(`Migration description is invalid: ${migration.id}`);
     }
     if (knownIds.has(migration.id)) throw new MigrationHistoryError(`Duplicate migration ID: ${migration.id}`);
     knownIds.add(migration.id);
@@ -129,40 +220,74 @@ function duplicateKey(error: unknown): boolean {
 /** Acquire the cluster-wide lease. A live runner makes later nodes fail startup instead of race. */
 async function acquireMigrationLease(db: Db, ownerId: string, now: Date): Promise<void> {
   const receipts = db.collection<MigrationLockDocument>(receiptCollectionName);
+  const nowMs = validNow(now);
+  const replacement: MigrationLockDocument = {
+    _id: runnerLockId,
+    kind: "lock",
+    ownerId,
+    acquiredAt: now,
+    expiresAt: new Date(nowMs + lockLeaseMs),
+  };
+  validateMigrationLockAuthority(replacement, now);
   try {
+    const existing = await receipts.findOne({ _id: runnerLockId });
+    if (!existing) {
+      // `insertOne` is important here. A read-then-upsert could match and overwrite a competing
+      // runner inserted between the two operations. The singleton `_id` turns that race into the
+      // duplicate-key contention handled below.
+      await receipts.insertOne(replacement);
+      return;
+    }
+    validateMigrationLockAuthority(existing, now);
+    if (existing.expiresAt.getTime() > nowMs) {
+      throw new MigrationHistoryError("Database migration lease is held by another server.");
+    }
     const lock = await receipts.findOneAndUpdate(
       {
         _id: runnerLockId,
-        $or: [
-          { expiresAt: { $lte: now } },
-          { ownerId },
-        ],
+        kind: "lock",
+        ownerId: existing.ownerId,
+        acquiredAt: existing.acquiredAt,
+        expiresAt: existing.expiresAt,
       },
       {
         $set: {
-          kind: "lock",
-          ownerId,
-          acquiredAt: now,
-          expiresAt: new Date(now.getTime() + lockLeaseMs),
+          kind: replacement.kind,
+          ownerId: replacement.ownerId,
+          acquiredAt: replacement.acquiredAt,
+          expiresAt: replacement.expiresAt,
         },
       },
-      { upsert: true, returnDocument: "after" },
+      { returnDocument: "after" },
     );
-    if (!lock || lock.ownerId !== ownerId) throw new MigrationHistoryError("Database migration lease is unavailable.");
+    if (!lock) throw new MigrationHistoryError("Database migration lease changed during acquisition.");
+    validateMigrationLockAuthority(lock, now);
+    if (lock.ownerId !== ownerId) throw new MigrationHistoryError("Database migration lease is unavailable.");
   } catch (error) {
-    // An upsert against an existing unexpired singleton lock produces E11000 because `_id` is
-    // unique. Translate that expected contention into one stable operational error.
+    // A competing singleton insert produces E11000 because `_id` is unique. Translate that
+    // expected contention into one stable operational error.
     if (duplicateKey(error)) throw new MigrationHistoryError("Database migration lease is held by another server.");
     throw error;
   }
 }
 
-async function renewMigrationLease(db: Db, ownerId: string): Promise<void> {
-  const renewed = await db.collection<MigrationLockDocument>(receiptCollectionName).updateOne(
-    { _id: runnerLockId, ownerId },
-    { $set: { expiresAt: new Date(Date.now() + lockLeaseMs) } },
+export async function renewMigrationLease(db: Db, ownerId: string, now: Date = new Date()): Promise<void> {
+  const nowMs = validNow(now);
+  const renewed = await db.collection<MigrationLockDocument>(receiptCollectionName).findOneAndUpdate(
+    {
+      _id: runnerLockId,
+      kind: "lock",
+      ownerId,
+      acquiredAt: { $lte: now },
+      // A stalled process must not resurrect an expired lease. Once this boundary passes, another
+      // server is entitled to take ownership even if it has not done so yet.
+      expiresAt: { $gt: now },
+    },
+    { $set: { expiresAt: new Date(nowMs + lockLeaseMs) } },
+    { returnDocument: "after" },
   );
-  if (renewed.matchedCount !== 1) throw new MigrationHistoryError("Database migration lease was lost.");
+  if (!renewed) throw new MigrationHistoryError("Database migration lease was lost.");
+  validateMigrationLockAuthority(renewed, now);
 }
 
 /**
@@ -203,11 +328,17 @@ export async function runDatabaseMigrations(db: Db = mongoDatabase()): Promise<n
   await acquireMigrationLease(db, ownerId, new Date());
   const heartbeat = startLeaseHeartbeat(db, ownerId);
   try {
+    const historyNow = new Date();
     const appliedDocuments = await receipts
-      .find({ kind: "migration" })
+      // Read every non-lock row, not merely `{ kind: "migration" }`. Filtering by the asserted
+      // kind would hide a damaged receipt and let its duplicate `_id` fail only after `up` ran.
+      .find({ _id: { $ne: runnerLockId } })
       .sort({ _id: 1 })
-      .project<MigrationReceiptDocument>({ _id: 1, checksum: 1 })
       .toArray();
+    for (const receipt of appliedDocuments) {
+      const expected = migrations.find((migration) => migration.id === receipt._id);
+      validateMigrationReceiptAuthority(receipt, historyNow, expected);
+    }
     const pending = planDatabaseMigrations(
       migrations,
       appliedDocuments.map((receipt) => ({ id: receipt._id, checksum: receipt.checksum })),
@@ -218,14 +349,19 @@ export async function runDatabaseMigrations(db: Db = mongoDatabase()): Promise<n
       const startedAt = Date.now();
       await migration.up(db);
       await heartbeat.assertOwned();
-      await receipts.insertOne({
+      const appliedAt = new Date();
+      const receipt: MigrationReceiptDocument = {
         _id: migration.id,
         kind: "migration",
         checksum: migration.checksum,
         description: migration.description,
-        appliedAt: new Date(),
-        durationMs: Date.now() - startedAt,
-      });
+        appliedAt,
+        durationMs: appliedAt.getTime() - startedAt,
+      };
+      // Validate our own projection before it becomes durable authority. In particular, a host
+      // clock rollback must stop startup instead of publishing a negative migration duration.
+      validateMigrationReceiptAuthority(receipt, appliedAt, migration);
+      await receipts.insertOne(receipt);
       logger.infoWithEmoji("DB", "Database migration applied", "MIGRATION", {
         migrationId: migration.id,
         description: migration.description,
@@ -236,6 +372,7 @@ export async function runDatabaseMigrations(db: Db = mongoDatabase()): Promise<n
     heartbeat.stop();
     await db.collection<MigrationLockDocument>(receiptCollectionName).deleteOne({
       _id: runnerLockId,
+      kind: "lock",
       ownerId,
     });
   }

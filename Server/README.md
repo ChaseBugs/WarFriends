@@ -36,6 +36,22 @@ multi-document transactions, so enable a single-node replica set for local devel
 replicated/sharded managed deployment) and include `replicaSet` in `MONGO_URL`. Health check:
 `GET /health`.
 
+### Schema migration safety
+
+Startup applies the ordered registry in `services/databaseMigrationService.ts` under the singleton
+`schemaMigrations` lease. Migration implementations must remain idempotent because MongoDB can
+complete `up` before a process persists its success receipt. Every non-lock history row is read and
+validated before the first pending migration runs: exact fields, canonical SHA-256 checksum,
+manifest-matching description, safe non-future `appliedAt`, and nonnegative safe `durationMs` are
+required. An unknown, reordered, duplicated, drifted, or malformed row stops startup.
+
+Lease acquisition inserts the singleton when absent and replaces an expired row only when its full
+previous owner/date snapshot still matches. Renewal requires the stored lease to be unexpired at
+the captured application time. A stalled process therefore cannot resurrect ownership after its
+deadline, even if no other node has acquired the lease yet; it must stop and let a fresh startup
+re-evaluate migration history. Invalid lease clocks fail closed for operator repair rather than
+being guessed expired.
+
 ### Rotate `AUTH_SECRET` without invalidating accounts
 
 Production requires `AUTH_SECRET` and every comma-separated `AUTH_SECRET_FALLBACKS` entry to be
