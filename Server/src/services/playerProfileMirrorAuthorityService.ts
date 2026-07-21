@@ -5,7 +5,10 @@ import {
   validatedOptionalStringPlayerId,
 } from "./identityExternalIdAuthorityService";
 import { isSupportedAuthenticationScryptCost } from "./authSecretService";
-import { validatePlayerLeagueIdentity } from "./playerLeagueContract";
+import {
+  validatePlayerLeagueCompetitionScore,
+  validatePlayerLeagueProgression,
+} from "./playerLeagueContract";
 import { isCanonicalStoredPlayerName } from "./playerNameContract";
 import {
   validatedNotificationSettings,
@@ -89,7 +92,9 @@ export function checkedPlayerLifetimeSquadPoints(current: number, increment: num
  * Current server writers also trim names and exclude controls, so accepting those shapes only from
  * legacy storage would let search, chat, logs, or leaderboards publish invisible/multiline identity.
  * League identity is checked against DatabasePlayer's real first/last-segment parser; importantly,
- * this does not guess the middle portion of retired production division IDs.
+ * this does not guess the middle portion of retired production division IDs. The same boundary
+ * proves the server-owned placement and competition counters because authentication, matchmaking,
+ * and Squad/economy handlers all consume this profile before a league-specific response is built.
  */
 function validatePlayerPublicIdentityFields(player: PlayerDocument): void {
   const dto = player.player;
@@ -97,7 +102,13 @@ function validatePlayerPublicIdentityFields(player: PlayerDocument): void {
     throw new Error("Stored player public identity is invalid.");
   }
   try {
-    validatePlayerLeagueIdentity(dto);
+    // Do not postpone these checks until GetPlayerData or the season scheduler. Every authenticated
+    // request passes this shared account boundary, and match admission snapshots leagueTier before
+    // those narrower paths run. Rejecting the complete tuple here prevents NaN/Infinity or an
+    // impossible placement counter from entering a queue, being normalized by tutorial repair, or
+    // surviving an unrelated write as equally corrupt durable authority.
+    validatePlayerLeagueProgression(dto);
+    validatePlayerLeagueCompetitionScore(dto.medalsBalance, dto.skill, dto.id);
     // Settings are stored inside the DTO rather than duplicated at the root, but the same shared
     // profile boundary is the earliest point that can prevent corrupt consent from reaching push
     // selection or being normalized by an unrelated settings update.

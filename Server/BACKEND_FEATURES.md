@@ -216,6 +216,11 @@ Economy/profile retry and transaction reloads independently revalidate the full 
 Power refresh, Daily Mission or Instant Battle settlement, PvP settlement, inbox reward claim, and
 Player League allocation or population ranking. One corrupt league member aborts the atomic season
 settlement before the first player or reward-message write.
+The shared account proof now includes the complete source-backed Player League progression tuple
+(`BeginnersLeague`, supported normal `LeagueTier`, and exact zero-or-one `RemainingMatches`) plus
+the nonnegative safe-integer `MedalsBalance` and `Skill` competition mirrors. Consequently a
+damaged league profile fails before authentication/gameplay use, matchmaking admission, tutorial
+repair, Squad/economy mutation, ranking, or settlement rather than only during boot projection.
 Squad creation, join, leave, rank, leadership, kick, card withdrawal, and chat sender reloads also
 prove the complete account before roster/profile publication, inventory transfer, or durable sender
 identity. Every player in a multi-account Squad transaction validates independently before its first

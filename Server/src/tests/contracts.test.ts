@@ -430,6 +430,28 @@ test("shared profile authority rejects equally corrupt numeric mirrors and unsaf
   );
 });
 
+test("shared profile authority rejects corrupt Player League counters before admission", () => {
+  for (const [field, value] of [
+    ["beginnersLeague", Number.NaN],
+    ["beginnersLeague", -1],
+    ["beginnersLeague", 4],
+    ["remainingMatches", Number.POSITIVE_INFINITY],
+    ["remainingMatches", -1],
+    ["remainingMatches", 2],
+    ["medalsBalance", Number.NaN],
+    ["medalsBalance", -1],
+    ["skill", Number.POSITIVE_INFINITY],
+    ["skill", -1],
+  ] as const) {
+    const corrupt = contractPlayer();
+    (corrupt.player as unknown as Record<string, unknown>)[field] = value;
+    assert.throws(
+      () => validatedPlayerProfileLookup(corrupt),
+      /Stored player public identity is invalid/,
+    );
+  }
+});
+
 test("indexed player profile mirrors must match before client-visible projection", () => {
   assert.equal(validatedPlayerProfileLookup(null), null);
   assert.equal(validatedPlayerProfileLookup(contractPlayer())?.id, "player-contract");

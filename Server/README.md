@@ -310,6 +310,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   integer, and Squad Points must be a nonnegative signed-client integer. This rejects matching
   `NaN`/`Infinity` or overflow in both copies before authentication, matchmaking, leaderboards, or
   settlement while retaining the server's documented fractional Army Power storage.
+  That shared proof also validates the full Player League admission tuple before any authenticated
+  gameplay handler can use the account: beginner tier is source-bounded, normal tier is supported,
+  RemainingMatches is exactly zero or one, and MedalsBalance/Skill are nonnegative safe integers.
+  Corrupt league authority therefore cannot enter matchmaking, survive tutorial repair, or wait
+  for a later boot/ranking path to discover it.
   The same profile proof restricts `PlayerStatus` to Offline/Online/InGame and `SquadRank` to the
   five recovered values before authentication, publication, or mutation; a heartbeat must never
   overwrite an unknown stored status and conceal durable damage.
