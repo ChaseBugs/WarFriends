@@ -11,6 +11,21 @@ Status legend:
 - **Missing** — the action is rejected with error code `90`; no false-success response.
 - **Telemetry** — deliberately accepted as a no-op because it does not mutate gameplay.
 
+### Recovered-client gap corrections
+
+- **Loyalty is not a backend action in recovered 1.6.0.** Its only concrete occurrence is the
+  `InappScreen.MPJAFCCIOEO.Loyalty` presentation-tab enum and tab-selection UI. There is no Loyalty
+  `DbAction`, request builder, durable DTO field, response parser, or balancing table in the
+  recovered scripts. Loyalty visuals remain catalog-classified and fail closed, but a separate
+  Loyalty backend feature is not missing unless later evidence supplies a real contract.
+- **The paid extra War Card slot is implemented.** Reviewed value-pack entitlements set durable
+  `CardManagerData.extraSlot`; purchase receipts record whether the pack introduced it, boot
+  restores it, shared authority rejects non-Boolean state, and void reversal removes it only after
+  the last active granting receipt disappears. The recovered battle selection has three normal
+  slots plus VIP, paid-extra, and Buddy candidates, so PvP's six-card bound already covers it.
+  The remaining Squad-card gap is only the unmodified client's lack of a nonce/adapter for a
+  server-selected Buddy identity.
+
 ## Feature inventory
 
 | Priority | Feature | Client actions | Status | Implemented backend behavior | Required remaining work |

@@ -4,6 +4,7 @@
 
 - Treat `Client` as the 4.9.5 resource source of truth.
 - Treat `Client-Decompiled-Mono-1.6.0` as the recovered C# script, protocol, and behavioral-contract source.
+- Do not promote a presentation-only enum into a backend feature. Recovered 1.6.0 Loyalty exists only as an `InappScreen` tab and has no action/DTO/parser contract; keep Loyalty catalog rows closed unless later evidence supplies one. Treat the paid extra War Card slot as implemented through reviewed pack entitlement, boot projection, receipt replay, and void reversal rather than listing it as a missing reward family.
 - When the two versions differ, document the evidence and keep any server fallback explicit; do not invent retired live-ops prices, schedules, weights, or rewards.
 
 ## Server implementation rules

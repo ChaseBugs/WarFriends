@@ -8,6 +8,12 @@ Core gameplay logic guides: [`../Docs/README.md`](../Docs/README.md).
 Stack: Node.js + Express + TypeScript, MongoDB (native driver), Redis (optional), `ws`.
 Structure mirrors the sibling recovery backend (`Heyworks/Backend`).
 
+Recovered-contract classification: 1.6.0 Loyalty is only an `InappScreen` presentation tab and
+has no database action, DTO, parser, or reward table, so it is not an implementable backend gap.
+The paid extra War Card slot is already durable through reviewed value-pack grants, exact
+`CardManagerData.extraSlot` boot projection, receipt replay, and last-grant-aware void reversal;
+PvP's six-candidate ceiling includes that slot.
+
 ## Run
 
 ```bash
