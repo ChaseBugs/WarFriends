@@ -620,7 +620,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   stock `SendRequestBuffer` path use a persistent UTC cycle. Only objectives derived from
   confirmed PvP settlement advance. Same-day `GetNewAssignments` reads preserve progression
   identity while the UTC rollover persists once; buffered claim retries are idempotent by `BufferId`, return
-  the cached response without a revision/write, and never roll an unrelated UTC cycle.
+  the cached response without a revision/write, and never roll an unrelated UTC cycle. Daily
+  completion and carried mega-reward counters are safe-integer validated before claim eligibility;
+  corrupt counters fail closed instead of bypassing JavaScript comparisons or consuming a marker.
 - **Reward arithmetic boundary**: server-authored nonnegative currency rewards use one shared
   safe-integer addition guard before publishing their claim or receipt markers. Assignment,
   achievement, inbox, one-time, tutorial, conversion, level-up, lootbox, core-PvP, Elite-part, and War Arena rewards

@@ -111,6 +111,30 @@ const MEGA_REWARD_POINTS = 50;
 const MAX_BUFFER_REPLAYS = 20;
 const MAX_PENDING_MESSAGE_IGNORES = 100;
 
+/**
+ * Validate a persisted assignment counter before it can influence claim eligibility.
+ *
+ * In particular, JavaScript comparisons against NaN are false. Without this boundary a damaged
+ * `megaReward` value could bypass the `< 50` gate, consume a mega claim, and serialize back as an
+ * unusable value. Counters are server-owned nonnegative integers, so repairing them silently would
+ * risk either deleting earned progress or fabricating it; fail closed and leave operator recovery
+ * possible instead.
+ */
+function assignmentCounter(value: number, label: string): number {
+  if (!Number.isSafeInteger(value) || value < 0) {
+    throw new ApiError(ApiErrorCode.InternalServerError, `${label} is invalid.`);
+  }
+  return value;
+}
+
+function addAssignmentCounter(value: number, increment: number, label: string): number {
+  const current = assignmentCounter(value, label);
+  if (!Number.isSafeInteger(increment) || increment < 0 || current > Number.MAX_SAFE_INTEGER - increment) {
+    throw new ApiError(ApiErrorCode.InternalServerError, `${label} overflowed.`);
+  }
+  return current + increment;
+}
+
 interface AssignmentTemplate {
   id: number;
   target: number;
@@ -186,9 +210,16 @@ function newAssignment(template: AssignmentTemplate): AssignmentRecordState {
 export function assignmentStateFor(state: PlayerProgressionState, now: number): AssignmentState {
   const key = utcDayKey(now);
   const existing = state.assignments;
+  const megaReward = assignmentCounter(existing?.megaReward ?? 0, "Stored assignment mega reward");
   if (existing?.dayKey === key && existing.tomorrow > now) {
+    const completed = assignmentCounter(existing.completed, "Stored daily assignment completion count");
+    if (completed > existing.assignments.length) {
+      throw new ApiError(ApiErrorCode.InternalServerError, "Stored daily assignment completion count is impossible.");
+    }
     return {
       ...existing,
+      completed,
+      megaReward,
       assignments: existing.assignments.map((assignment) => ({ ...assignment })),
     };
   }
@@ -197,7 +228,7 @@ export function assignmentStateFor(state: PlayerProgressionState, now: number): 
     tomorrow: nextUtcMidnight(now),
     completed: 0,
     issued: Math.floor(now),
-    megaReward: Math.max(0, existing?.megaReward ?? 0),
+    megaReward,
     skipUsed: false,
     dayKey: key,
   };
@@ -289,9 +320,22 @@ export function claimAssignmentState(
   }
 
   const gold = checkedRewardBalance(state.gold, template.gold, "Daily assignment Gold");
+  const completed = addAssignmentCounter(
+    assignments.completed,
+    1,
+    "Daily assignment completion count",
+  );
+  if (completed > assignments.assignments.length) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Daily assignment completion count overflowed its cycle.");
+  }
+  const megaReward = addAssignmentCounter(
+    assignments.megaReward,
+    template.megaPoints,
+    "Assignment mega reward points",
+  );
   assignment.claimed = true;
-  assignments.completed += 1;
-  assignments.megaReward += template.megaPoints;
+  assignments.completed = completed;
+  assignments.megaReward = megaReward;
   const rewardedState: PlayerProgressionState = {
     ...state,
     revision: state.revision + 1,

@@ -4,6 +4,7 @@ import { DbAction } from "../dbActions";
 import {
   assignmentStateFor,
   claimAssignmentState,
+  claimAssignmentMegaRewardState,
   ensureAssignmentsState,
   processAssignmentBufferState,
   recordPvpAssignmentProgressState,
@@ -105,5 +106,39 @@ test("assignment claim validates the reward amount supplied by the old client", 
   assert.throws(
     () => claimAssignmentState(state, NOW + 60, 5, 999),
     (error: unknown) => (error as { code?: number }).code === 11203,
+  );
+});
+
+test("assignment claims reject corrupt counters before consuming a reward marker", () => {
+  const initial = createInitialProgression(NOW);
+  const assignments = assignmentStateFor(initial, NOW);
+  assignments.assignments[0]!.done = true;
+
+  const corrupt = {
+    ...initial,
+    assignments: { ...assignments, completed: Number.NaN },
+  };
+  assert.throws(
+    () => claimAssignmentState(corrupt, NOW + 60, assignments.assignments[0]!.id, 2),
+    /completion count is invalid/,
+  );
+  assert.equal(assignments.assignments[0]!.claimed, false);
+});
+
+test("mega claims and UTC rollover reject a non-integer carried mega cursor", () => {
+  const initial = createInitialProgression(NOW);
+  const assignments = assignmentStateFor(initial, NOW);
+  const corrupt = {
+    ...initial,
+    assignments: { ...assignments, megaReward: Number.NaN },
+  };
+
+  assert.throws(
+    () => claimAssignmentMegaRewardState(corrupt, NOW + 60),
+    /mega reward is invalid/,
+  );
+  assert.throws(
+    () => assignmentStateFor(corrupt, assignments.tomorrow + 1),
+    /mega reward is invalid/,
   );
 });
