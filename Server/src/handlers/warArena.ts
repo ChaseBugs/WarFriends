@@ -11,6 +11,7 @@ import {
   takeWarArenaLife,
 } from "../services/warArenaService";
 import { authed, type HandlerEntry } from "./types";
+import { validatedPlayerProfileMirrors } from "../services/playerProfileMirrorAuthorityService";
 
 function integer(value: unknown, field: string, fallback?: number): number {
   if ((value === undefined || value === null || value === "") && fallback !== undefined) return fallback;
@@ -36,6 +37,9 @@ async function arenaOpponentIds(playerId: string, armyPower: number, limit = 12)
     .sort({ updatedAt: -1 })
     .limit(100)
     .toArray();
+  // Arena matching consumes only public ID and Army Power, not private account credentials. Prove
+  // their duplicated profile authority without coupling opponent availability to private fields.
+  for (const candidate of candidates) validatedPlayerProfileMirrors(candidate);
   return candidates
     .sort((left, right) => Math.abs(left.armyPower - armyPower) - Math.abs(right.armyPower - armyPower))
     .slice(0, limit)

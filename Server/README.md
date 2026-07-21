@@ -239,6 +239,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   creation, admission, departure, rank, leadership, kick, card withdrawal, and chat sender reloads
   apply the same rule before publishing roster/profile mirrors, transferring inventory, or recording
   a sender identity; every player participating in a multi-player mutation must pass independently.
+  The operator Squad-integrity repair is the narrow exception to complete mirror proof: it may read
+  the squad mirror mismatch it is explicitly replacing, but separately validates all private account
+  fields, the exact audited `updatedAt`, and any progression successor before its guarded update.
   Full-account creation hashes before its single insert, while the recovered action 121 publishes
   name, password digest, and rotated session atomically with a stale-session guard.
   Repeated status, country, language, device-registration, and notification-setting values are
@@ -1031,7 +1034,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
 - **War Arena (persistent core)**: login supplies the recovered Dynamo-style
   `WarArenaConfig`, while `EnterArena`, action-64/65 starts, Arena `GameEnded`, heart/life
   actions, scraps claims, rollover, and `GetArenaLeaderboards` use the exact `WarArenaData`
-  contract. Action `212` requires authentication, accepts only the active server-generated
+  contract. The nearest-Army-Power fallback validates every candidate's duplicated public profile
+  mirrors before using its ID or power, without making public opponent selection depend on private
+  credentials. Action `212` requires authentication, accepts only the active server-generated
   `ArenaId`, and retains a bounded two-year event-dialog acknowledgement history without exposing
   it in the public wire object. Replays do not increment progression revision or write MongoDB,
   and acknowledging a dialog cannot enter an event or grant value. Runs and prices are server-owned,

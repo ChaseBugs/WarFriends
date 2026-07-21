@@ -37,6 +37,7 @@ import { validatedProgressionSuccessor } from "../services/progressionPublicatio
 import { validatedProgressionSchemaVersion } from "../services/progressionSchemaAuthorityService";
 import {
   validatedPlayerCredentialProjection,
+  validatedPlayerPrivateAccountFields,
   validatedPlayerProfileLookup,
 } from "../services/playerProfileMirrorAuthorityService";
 
@@ -450,6 +451,14 @@ test("indexed player profile mirrors must match before client-visible projection
   assert.throws(
     () => validatedPlayerCredentialProjection({ authTokenHash: "scrypt$v1$16384$8$1$bad$bad" }),
     /Stored player credential projection is invalid/,
+  );
+
+  const repairableSquadMirror = contractPlayer();
+  repairableSquadMirror.squadName = "damaged-root-squad";
+  assert.equal(validatedPlayerPrivateAccountFields(repairableSquadMirror), repairableSquadMirror);
+  assert.throws(
+    () => validatedPlayerProfileLookup(repairableSquadMirror),
+    /Stored player profile mirrors are inconsistent/,
   );
 
   const reversedAuditDates = contractPlayer();

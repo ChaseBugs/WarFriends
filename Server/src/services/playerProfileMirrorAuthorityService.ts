@@ -92,8 +92,7 @@ export function validatedPlayerCredentialProjection<T extends PlayerCredentialPr
  * comparison. Password hashes accept only the explicit legacy-HMAC migration form or the bounded
  * versioned scrypt form. Profile timestamps are durable optimistic/audit state and must be real.
  */
-export function validatedPlayerAccountEnvelope(player: PlayerDocument): PlayerDocument {
-  validatedPlayerProfileMirrors(player);
+export function validatedPlayerPrivateAccountFields(player: PlayerDocument): PlayerDocument {
   validatedPlayerCredentialProjection(player);
   const createdAt = player.createdAt instanceof Date ? player.createdAt.getTime() : Number.NaN;
   const updatedAt = player.updatedAt instanceof Date ? player.updatedAt.getTime() : Number.NaN;
@@ -110,6 +109,12 @@ export function validatedPlayerAccountEnvelope(player: PlayerDocument): PlayerDo
     && updatedAt >= createdAt;
   if (!valid) throw new Error("Stored player account envelope is invalid.");
   return player;
+}
+
+/** Prove both the public/indexed mirrors and the private account fields on a complete read. */
+export function validatedPlayerAccountEnvelope(player: PlayerDocument): PlayerDocument {
+  validatedPlayerProfileMirrors(player);
+  return validatedPlayerPrivateAccountFields(player);
 }
 
 /**

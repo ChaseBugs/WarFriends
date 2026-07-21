@@ -153,6 +153,11 @@ Squad creation, join, leave, rank, leadership, kick, card withdrawal, and chat s
 prove the complete account before roster/profile publication, inventory transfer, or durable sender
 identity. Every player in a multi-account Squad transaction validates independently before its first
 write, preserving the all-or-nothing membership and card-transfer boundary.
+Operator Squad-integrity repair keeps one explicit exception: it may tolerate only the squad mirror
+mismatch it is designed to replace while separately validating private account fields, the exact
+audited timestamp, and any progression successor. The Player League scheduler validates its selected
+division representative before settlement, while War Arena validates candidate ID/Army Power profile
+mirrors without unnecessarily consuming private credential state.
 Action `221` validates its entire narrow lost-response receipt before replay, read, or publication:
 only the twelve recovered A/B IDs and matching Gold prices are accepted, the historical grant and
 timestamp must be safe, and its receipt revision cannot exceed current progression. Corruption is

@@ -2,6 +2,7 @@ import { SquadRank } from "../constants";
 import { players, type PlayerDocument, type PlayerProgressionState, type SquadDocument } from "../db";
 import { progressionForPlayer } from "./playerStateService";
 import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
+import { validatedPlayerPrivateAccountFields } from "./playerProfileMirrorAuthorityService";
 import { reclaimDepositedCardsForDepartureState } from "./squadCardPoolService";
 
 export type SquadIntegrityIssueCode =
@@ -219,6 +220,10 @@ export async function applySquadIntegrityRepairs(
         conflicts.push(repair.playerId);
         continue;
       }
+      // This operator action is explicitly allowed to repair squad profile mirrors, so applying the
+      // complete mirror validator here would make the repair impossible. Still prove credentials,
+      // identity shape, device data, and audit dates before accepting its progression replacement.
+      validatedPlayerPrivateAccountFields(live);
       const successor = validatedProgressionSuccessor(progressionForPlayer(live), repair.progression);
       const { dogTags: _legacyDogTags, ...canonical } = successor;
       canonicalProgression = canonical;

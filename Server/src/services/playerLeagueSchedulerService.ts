@@ -3,6 +3,7 @@ import { players } from "../db";
 import logger from "../utils/logger";
 import { parseManagedPlayerLeagueId } from "./playerLeagueContract";
 import { finishExpiredPlayerLeague } from "./playerLeagueService";
+import { validatedPlayerProfileLookup } from "./playerProfileMirrorAuthorityService";
 import { withScheduledJobLease } from "./scheduledJobLeaseService";
 
 const jobId = "player-league-settlement";
@@ -31,7 +32,9 @@ export async function runPlayerLeagueSettlementSweep(now = Math.floor(Date.now()
     let settledDivisions = 0;
     let settledPlayers = 0;
     for (const leagueId of leagueIds) {
-      const requester = await players().findOne({ "player.leagueId": leagueId });
+      // The scheduler owns no authenticated handler snapshot. Prove the full account selected as
+      // its division representative before that row can trigger the all-member settlement.
+      const requester = validatedPlayerProfileLookup(await players().findOne({ "player.leagueId": leagueId }));
       if (!requester) continue;
       const result = await finishExpiredPlayerLeague(requester, now);
       if (!result.finished) continue;
