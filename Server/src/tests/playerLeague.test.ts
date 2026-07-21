@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { League } from "../constants";
+import type { PlayerLeagueAllocationDocument } from "../db";
 import {
   advanceBeginnerLeagueAfterPvp,
   advancePlayerLeaguePlacementAfterPvp,
@@ -26,6 +27,7 @@ import {
 } from "../services/socialService";
 import { socialHandlers } from "../handlers/social";
 import { DbAction } from "../dbActions";
+import { validatedPlayerLeagueAllocation } from "../services/playerLeagueService";
 
 test("recovered player-league table preserves all 16 source tiers and constants", () => {
   assert.equal(PLAYER_LEAGUE_RULES.length, 16);
@@ -55,6 +57,33 @@ test("recovered player-league table preserves all 16 source tiers and constants"
     { beginnersLeague: 2, maxMedals: 100, promoteAtOrAbovePosition: 35 },
     { beginnersLeague: 3, maxMedals: 150, promoteAtOrAbovePosition: 31 },
   ]);
+});
+
+test("player-league allocation authority binds season, ordinal, and audit time", () => {
+  const now = 1_800_000_000;
+  const window = managedPlayerLeagueId(League.Gold3, now);
+  const timestamp = new Date(now * 1_000);
+  const allocation: PlayerLeagueAllocationDocument = {
+    seasonKey: `${League.Gold3}:${window.endsAt}`,
+    tier: League.Gold3,
+    endsAt: window.endsAt,
+    nextMemberOrdinal: 101,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  };
+  assert.equal(validatedPlayerLeagueAllocation(allocation, League.Gold3, window.endsAt, now), allocation);
+  assert.throws(
+    () => validatedPlayerLeagueAllocation({ ...allocation, nextMemberOrdinal: Number.MAX_SAFE_INTEGER + 1 }, League.Gold3, window.endsAt, now),
+    /is inconsistent/,
+  );
+  assert.throws(
+    () => validatedPlayerLeagueAllocation({ ...allocation, seasonKey: `8:${window.endsAt}` }, League.Gold3, window.endsAt, now),
+    /is inconsistent/,
+  );
+  assert.throws(
+    () => validatedPlayerLeagueAllocation({ ...allocation, updatedAt: new Date((now + 1) * 1_000) }, League.Gold3, window.endsAt, now),
+    /is inconsistent/,
+  );
 });
 
 test("beginner position math preserves exact recovered promotion boundaries", () => {

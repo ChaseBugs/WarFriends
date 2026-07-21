@@ -5,6 +5,7 @@ import {
   playerLeagueAllocations,
   players,
   withMongoTransaction,
+  type PlayerLeagueAllocationDocument,
   type PlayerDocument,
 } from "../db";
 import { synchronizeLeagueAchievementState } from "./achievementService";
@@ -34,6 +35,52 @@ export interface PlayerLeagueFinishResult {
 interface PlayerLeagueFinishedMessage extends MessageDoc {
   messageType: 23;
   idempotencyKey: string;
+}
+
+const MAX_UNIX_SECONDS = 2_147_483_647;
+const PLAYER_LEAGUE_ALLOCATION_KEYS = new Set([
+  "_id", "seasonKey", "tier", "endsAt", "nextMemberOrdinal", "createdAt", "updatedAt",
+]);
+
+/** Prove the complete transactional admission counter before deriving its 100-player bucket. */
+export function validatedPlayerLeagueAllocation(
+  allocation: PlayerLeagueAllocationDocument,
+  expectedTier: League,
+  expectedEndsAt: number,
+  now: number,
+): PlayerLeagueAllocationDocument {
+  const raw = allocation as unknown as Record<string, unknown>;
+  const createdMillis = allocation?.createdAt instanceof Date ? allocation.createdAt.getTime() : Number.NaN;
+  const updatedMillis = allocation?.updatedAt instanceof Date ? allocation.updatedAt.getTime() : Number.NaN;
+  if (!allocation
+    || typeof allocation !== "object"
+    || Array.isArray(allocation)
+    || Object.keys(raw).some((key) => !PLAYER_LEAGUE_ALLOCATION_KEYS.has(key))
+    || !Number.isInteger(allocation.tier)
+    || allocation.tier < League.Bronze3
+    || allocation.tier > League.Champion
+    || allocation.tier !== expectedTier
+    || !Number.isSafeInteger(allocation.endsAt)
+    || allocation.endsAt <= 0
+    || allocation.endsAt > MAX_UNIX_SECONDS
+    || allocation.endsAt !== expectedEndsAt
+    || allocation.seasonKey !== `${allocation.tier}:${allocation.endsAt}`
+    || !Number.isSafeInteger(allocation.nextMemberOrdinal)
+    || allocation.nextMemberOrdinal < 1
+    || !Number.isSafeInteger(now)
+    || now < 0
+    || now >= allocation.endsAt
+    || !Number.isSafeInteger(createdMillis)
+    || !Number.isSafeInteger(updatedMillis)
+    || createdMillis < 0
+    || createdMillis > updatedMillis
+    || updatedMillis !== now * 1_000
+    || updatedMillis >= allocation.endsAt * 1_000) {
+    throw new Error(`Player league allocation ${allocation?.seasonKey ?? "unknown"} is inconsistent.`);
+  }
+  // This second bound proves the conversion itself before its result becomes a league ID.
+  playerLeagueDivisionIndexForOrdinal(allocation.nextMemberOrdinal);
+  return allocation;
 }
 
 function placementLeagueId(tier: League): string {
@@ -77,9 +124,8 @@ export async function allocatePlayerLeagueDivision(
     ],
     { session, upsert: true, returnDocument: "after" },
   );
-  if (!allocation || allocation.tier !== tier || allocation.endsAt !== window.endsAt) {
-    throw new Error(`Player league allocation ${seasonKey} is inconsistent.`);
-  }
+  if (!allocation) throw new Error(`Player league allocation ${seasonKey} was not persisted.`);
+  validatedPlayerLeagueAllocation(allocation, tier, window.endsAt, now);
   const divisionIndex = playerLeagueDivisionIndexForOrdinal(allocation.nextMemberOrdinal);
   return managedPlayerLeagueId(tier, now, divisionIndex);
 }

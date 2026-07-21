@@ -1149,7 +1149,10 @@ allowlist of analytics/impression actions is safely ignored.
   stage atomically emits the stock normal-league handoff fields and enters the managed Bronze
   division. The local UTC-aligned allocator uses a transactional tier/window counter to create
   stable `localN` divisions of exactly 100 committed admissions; allocation shares the confirmed
-  PvP transaction, so an aborted settlement cannot consume capacity. Pre-upgrade `local` divisions
+  PvP transaction, so an aborted settlement cannot consume capacity. The complete returned counter
+  must retain exact fields, tier/end/season-key identity, a positive safe ordinal, signed-client-safe
+  end time, ordered dates, and an update equal to the current in-window transaction time before that
+  ordinal becomes a division ID. Pre-upgrade `local` divisions
   are never split mid-season and finish under their original immutable ID. The retired production
   assignment policy and final beginner weekly-medal reset remain explicit reconstruction policy.
 - **Arena fidelity / league operations** — recover production arena prices, rules, opponent
