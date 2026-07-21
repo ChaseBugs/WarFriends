@@ -21,7 +21,12 @@ import {
   buildPlayerData,
   buildPlayerStateResponse,
   createInitialProgression,
+  progressionForPlayer,
 } from "../services/playerStateService";
+import {
+  progressionRevisionForRead,
+  validateProgressionRevisionAdvance,
+} from "../services/progressionRevisionAuthorityService";
 
 function contractPlayer(): PlayerDocument {
   const player = newPlayer("player-contract", "ContractPlayer", AccountType.Facebook);
@@ -265,6 +270,26 @@ test("player data rejects corrupt core balances while preserving chargeback debt
   assert.throws(() => buildPlayerData(corruptExperience), /Stored level experience balance is invalid/);
 });
 
+test("progression revision authority migrates absence and rejects corrupt or non-monotonic writes", () => {
+  const legacy = contractPlayer();
+  delete (legacy.progression! as { revision?: number }).revision;
+  assert.equal(progressionForPlayer(legacy).revision, 0);
+  assert.equal(progressionRevisionForRead(7), 7);
+  assert.equal(validateProgressionRevisionAdvance(7, 8), 8);
+  // A RequestBuffer may compose several successful actions into one atomic replacement.
+  assert.equal(validateProgressionRevisionAdvance(7, 12), 12);
+
+  for (const corrupt of [null, -1, 1.5, Number.NaN, Number.POSITIVE_INFINITY]) {
+    assert.throws(() => progressionRevisionForRead(corrupt), /Stored progression revision is invalid/);
+  }
+  assert.throws(() => validateProgressionRevisionAdvance(7, 7), /did not advance safely/);
+  assert.throws(() => validateProgressionRevisionAdvance(7, 6), /did not advance safely/);
+  assert.throws(
+    () => validateProgressionRevisionAdvance(Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER + 1),
+    /Stored progression revision is invalid/,
+  );
+});
+
 test("dog-tag state uses accumulated seconds and recovered 900-second balancing", () => {
   const initial = createInitialProgression(1_000, 900, 5);
   assert.equal(initial.dogTagSeconds, 4_500);
@@ -308,6 +333,13 @@ test("dog-tag authority rejects malformed tuples and preserves bounded VIP debt"
   assert.throws(
     () => buildPlayerData(futureBoot, 1_700_000_000),
     /Stored dog-tag time authority is invalid/,
+  );
+
+  const corruptCanonicalBoot = contractPlayer();
+  corruptCanonicalBoot.progression!.dogTagSeconds = Number.NaN;
+  assert.throws(
+    () => buildPlayerData(corruptCanonicalBoot, 1_700_000_000),
+    /Stored dog-tag authority is invalid/,
   );
 });
 

@@ -113,7 +113,13 @@ level experience must be nonnegative safe integers. Non-finite, fractional, or u
 closed instead of entering the adapter's legacy zero fallback or losing precision in Unity.
 The dog-tag tuple is likewise validated before boot and every time calculation: refill/cap values
 must describe whole positive tags, the update cursor cannot be future or non-finite, and stored
-seconds remain bounded by the normal cap and the recovered two-virtual-tag VIP debt floor.
+seconds remain bounded by the normal cap and the recovered two-virtual-tag VIP debt floor. The
+legacy count-only migration is selected only when the canonical tuple is absent; malformed present
+fields are rejected instead of being reinterpreted as legacy state.
+The shared progression read/mutation boundary now treats only an absent legacy revision as zero.
+Present and produced revisions must be nonnegative safe integers, and every state-changing write
+must advance monotonically before its MongoDB compare-and-swap filter or replacement is built;
+multi-action RequestBuffer writes may advance more than one internal step atomically.
 
 Starter and daily assignments, assignment mega rewards, achievements, reward-bearing inbox
 messages, one-time/tutorial grants, Gold conversion, level rewards, normal/VIP lootbox duplicates,

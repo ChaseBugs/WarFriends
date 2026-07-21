@@ -456,7 +456,13 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   reconnect after expiry materializes the historical split without granting post-expiry speed.
   Before boot or time arithmetic, the refill/cap pair must describe whole positive tags, the
   update cursor must be a non-future safe Unix second, and base credit must stay between the
-  normal cap and the source-backed two-tag VIP debt floor.
+  normal cap and the source-backed two-tag VIP debt floor. Count-only legacy migration requires
+  the canonical tuple to be absent; malformed present fields fail closed instead of being rebuilt.
+- **Progression revision authority**: the central progression read boundary migrates only an
+  absent pre-revision field to zero. Present and produced values must be nonnegative safe integers,
+  and every non-no-op transition must advance monotonically before MongoDB builds its revision
+  filter or publishes the replacement. A recovered multi-action RequestBuffer may advance several
+  internal steps in its single atomic replacement.
 - **Gold-to-WarBucks exchange**: action `221` validates `WarbucksId` against the deployment-owned
   MainScene A/B prefix, debits the exact 50/200/500/1000/3500/7000 Gold row, and multiplies the
   exact row units by the authenticated player's source `CONVERTGOLDTOWARBUCKS` rank value. The

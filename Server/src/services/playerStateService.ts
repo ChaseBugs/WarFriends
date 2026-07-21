@@ -33,6 +33,7 @@ import { validatedFeatureIntroductions } from "./featureIntroductionAuthoritySer
 import { validatedTutorialLifecycle } from "./tutorialCompletionAuthorityService";
 import { validatedCoreProgressionBalances } from "./coreProgressionAuthorityService";
 import { validatedDogTagAuthority } from "./dogTagAuthorityService";
+import { progressionRevisionForRead } from "./progressionRevisionAuthorityService";
 
 /** Unix seconds are used throughout the recovered Beanstalk protocol. */
 export function unixNow(): number {
@@ -92,12 +93,20 @@ export function createInitialProgression(
 export function progressionForPlayer(player: PlayerDocument): PlayerProgressionState {
   if (!player.progression) return createInitialProgression(Math.floor(player.createdAt.getTime() / 1000));
   const state = player.progression;
-  if (Number.isFinite(state.dogTagSeconds) && Number.isFinite(state.dogTagRefillSeconds)) {
+  const hasCanonicalDogTagTuple = Object.prototype.hasOwnProperty.call(state, "dogTagSeconds")
+    || Object.prototype.hasOwnProperty.call(state, "dogTagLastUpdate")
+    || Object.prototype.hasOwnProperty.call(state, "dogTagMax")
+    || Object.prototype.hasOwnProperty.call(state, "dogTagRefillSeconds");
+  if (hasCanonicalDogTagTuple) {
     // Accounts written before typed inventory recovery have no server-owned item state.
     // Materialize the verified 4.9.5 starter loadout at the read boundary; the next buffered
-    // inventory mutation persists it together with the currency transaction.
+    // inventory mutation persists it together with the currency transaction. Detect the dog-tag
+    // schema by field presence rather than numeric validity: a canonical NaN/Infinity/partial
+    // tuple is damaged authority that downstream boot/economy validators must reject, not a
+    // count-only legacy account that this read boundary is allowed to reconstruct.
     return {
       ...state,
+      revision: progressionRevisionForRead(state.revision),
       vipExpiration: validatedVipExpiration(state.vipExpiration ?? player.player.vipExpiration),
       subscription: validatedSubscription(state.subscription),
       rental: validatedRentalState(state.rental),
@@ -119,7 +128,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
   const legacyCount = Math.max(0, Math.floor(state.dogTags ?? cap));
   return {
     ...state,
-    revision: state.revision ?? 0,
+    revision: progressionRevisionForRead(state.revision),
     dogTagSeconds: Math.min(cap, legacyCount) * refillSeconds,
     dogTagLastUpdate: state.dogTagLastUpdate || Math.floor(player.createdAt.getTime() / 1000),
     dogTagMax: cap * refillSeconds,
