@@ -130,12 +130,19 @@ function innerObject(value: unknown, field: string): Record<string, unknown> {
   throw new ApiError(CARD_NOT_FOUND, `${field} contains invalid card JSON.`);
 }
 
-function safeInteger(value: unknown, field: string, minimum = 0, maximum = MAX_CARD_AMOUNT): number {
-  const parsed = Number(value);
-  if (!Number.isSafeInteger(parsed) || parsed < minimum || parsed > maximum) {
+/**
+ * CardData and BuddyCardData expose C# `int` fields, and Json.NET serializes those members as JSON
+ * numbers. Do not coerce strings, null, booleans, or arrays: those shapes are not client output and
+ * could otherwise manufacture an amount or loadout index before server-owned comparison.
+ */
+function exactCardJsonInteger(value: unknown, field: string, minimum = 0, maximum = MAX_CARD_AMOUNT): number {
+  if (typeof value !== "number"
+    || !Number.isSafeInteger(value)
+    || value < minimum
+    || value > maximum) {
     throw new ApiError(CARD_NOT_FOUND, `${field} is outside the supported range.`);
   }
-  return parsed;
+  return value;
 }
 
 function visualSlots(value: unknown): SavedBuddyCardState["equippedVisuals"] {
@@ -159,7 +166,7 @@ function visualSlots(value: unknown): SavedBuddyCardState["equippedVisuals"] {
 function decodePoolEntry(id: string, value: unknown, field: string): PoolEntry {
   if (id.length < 1 || id.length > 256) throw new ApiError(CARD_NOT_FOUND, `${field} has an invalid card ID.`);
   const data = innerObject(value, field);
-  const amount = safeInteger(data.amount ?? 0, `${field}.${id}.amount`, 0);
+  const amount = exactCardJsonInteger(data.amount, `${field}.${id}.amount`, 0);
   const buddyName = data.buddyName;
   if (typeof buddyName === "string" && buddyName.length > 0) {
     if (buddyName.length > 128 || amount > 1) {
@@ -172,13 +179,13 @@ function decodePoolEntry(id: string, value: unknown, field: string): PoolEntry {
         amount: 1,
         buddyName,
         equippedVisuals: visualSlots(data.equippedVisuals ?? {}),
-        unityType: safeInteger(data.unityType, "BuddyCard.unityType", 0, 3),
-        primaryWeapon: safeInteger(data.primaryWeapon, "BuddyCard.primaryWeapon", 0, 1_000),
-        secondaryWeapon: Number(data.secondaryWeapon) === -1
+        unityType: exactCardJsonInteger(data.unityType, "BuddyCard.unityType", 0, 3),
+        primaryWeapon: exactCardJsonInteger(data.primaryWeapon, "BuddyCard.primaryWeapon", 0, 1_000),
+        secondaryWeapon: data.secondaryWeapon === -1
           ? -1
-          : safeInteger(data.secondaryWeapon, "BuddyCard.secondaryWeapon", 0, 1_000),
-        armypower: safeInteger(data.armypower, "BuddyCard.armypower", 0, 100_000_000),
-        level: safeInteger(data.level, "BuddyCard.level", 0, 1_000),
+          : exactCardJsonInteger(data.secondaryWeapon, "BuddyCard.secondaryWeapon", 0, 1_000),
+        armypower: exactCardJsonInteger(data.armypower, "BuddyCard.armypower", 0, 100_000_000),
+        level: exactCardJsonInteger(data.level, "BuddyCard.level", 0, 1_000),
       },
     };
   }

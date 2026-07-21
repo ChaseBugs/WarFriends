@@ -1117,7 +1117,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   or partial state fails closed instead of being cleared and reopening a three-card exchange.
 - **Squad War Card pool**: `DepositCards` validates the nested
   `AddedCards`/`RemovedCards` dictionaries, ownership, and the recovered 3-10 slot squad-level
-  capacity before atomically exchanging inventory and `depositedCardsDic`. `WithdrawCard` verifies
+  capacity before atomically exchanging inventory and `depositedCardsDic`. Nested `CardData.amount`
+  and every numeric `BuddyCardData` member must be an exact bounded JSON integer number, matching
+  the recovered C# fields; missing, null, Boolean, string, array, fractional, non-finite, or unsafe
+  values cannot manufacture an amount/loadout index, and only numeric `-1` means no secondary
+  weapon. `WithdrawCard` verifies
   both players against the same squad roster, transfers one card in a MongoDB transaction, awards
   the donor 5/15/45 rarity reputation, and starts the exact 240-minute recipient cooldown. Normal
   and 30-point Buddy rewards share one checked signed-client Reputation increment before either

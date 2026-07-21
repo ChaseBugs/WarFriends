@@ -524,6 +524,43 @@ test("squad-card deposits reject forged ownership and contradictory deltas", () 
   );
 });
 
+test("squad-card payload integers retain the recovered CardData JSON-number shape", () => {
+  for (const amount of [undefined, null, false, true, [], [1], "1", 1.5]) {
+    assert.throws(
+      () => parseDepositCardChanges(
+        JSON.stringify({ AMMOCRATE: JSON.stringify({ amount }) }),
+        JSON.stringify({}),
+      ),
+      (error: unknown) => (error as { code?: number }).code === CARD_NOT_FOUND,
+    );
+  }
+
+  const buddy = {
+    amount: 1,
+    buddyName: "Warfriend123456",
+    equippedVisuals: {},
+    unityType: 0,
+    primaryWeapon: 13,
+    secondaryWeapon: -1,
+    armypower: 1_234,
+    level: 8,
+  };
+  assert.doesNotThrow(() => parseDepositCardChanges(
+    JSON.stringify({ buddy: JSON.stringify(buddy) }),
+    JSON.stringify({}),
+  ));
+  for (const field of ["amount", "unityType", "primaryWeapon", "secondaryWeapon", "armypower", "level"] as const) {
+    const forged = { ...buddy, [field]: String(buddy[field]) };
+    assert.throws(
+      () => parseDepositCardChanges(
+        JSON.stringify({ buddy: JSON.stringify(forged) }),
+        JSON.stringify({}),
+      ),
+      (error: unknown) => (error as { code?: number }).code === CARD_NOT_FOUND,
+    );
+  }
+});
+
 test("Buddy deposit reproduces the current loadout and starts the exact cooldown", () => {
   const document = playerDocument();
   document.player.armyPower = 1_234;

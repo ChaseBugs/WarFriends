@@ -315,6 +315,12 @@ dialog. Explicit null, blank, Boolean, array, padded, signed, fractional, expone
 or oversized values return the stock authorization failure instead of becoming a free batch or a
 coerced price.
 
+Squad-card nested payloads now preserve the recovered Json.NET shape before inventory or pool
+authority is derived. `CardData.amount` and all numeric `BuddyCardData` fields must be bounded JSON
+integer numbers matching their C# `int` declarations. Missing, null, Boolean, string, array,
+fractional, non-finite, unsafe, and out-of-range values reject instead of manufacturing a card
+amount or loadout index; only exact numeric `-1` selects the no-secondary-weapon sentinel.
+
 The shared persisted-progression read boundary and mutation-result boundary validate all five core
 numeric fields before price comparison, publication, or the boot adapter: Gold and WarBucks retain
 safe-integer chargeback debt, while Tickets, Scraps, and level experience must be nonnegative safe
