@@ -70,6 +70,13 @@ coerced into durable defaults. Retry deduplication now replays a recent same-roo
 participants and complete payload equal the new request, so a changed map, game, region, version,
 or mission cannot silently return stale invitation metadata.
 
+VIP and lootbox purchase handlers now require the mandatory recovered `discount` as one canonical
+0-99 C# decimal integer before service admission. Missing, null, Boolean, array, blank, signed,
+leading-zero, fractional, exponent, unsafe, and out-of-range forms cannot coerce into the authorized
+zero-discount path and commit a Gold purchase. Both handler and service boundaries also require
+product IDs to be own catalog properties, so inherited JavaScript object keys cannot masquerade as
+VIP or lootbox rows.
+
 Moderation-retention retry receipts now validate exact identity fields, safe nonnegative report/appeal
 deletion counts, safe preview/creation chronology, and exact whole-day cutoffs within the global
 30-3650-day bounds before replay. Historical receipts remain valid across deploy-time policy changes.

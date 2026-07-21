@@ -112,6 +112,9 @@ test("VIP daily cards grant again after the UTC boundary and reject expired memb
 
 test("VIP rejects invented discounts and insufficient Gold with stock error codes", () => {
   const rich = { ...createInitialProgression(NOW), gold: 10_000 };
+  for (const inheritedId of ["__proto__", "constructor", "toString"]) {
+    assert.throws(() => purchaseVipState(rich, NOW, inheritedId, 0), /is not available/);
+  }
   assert.throws(
     () => purchaseVipState(rich, NOW, "VIP_4", 50),
     (error: unknown) => (error as { code?: number }).code === VIP_DISCOUNT_NOT_FOUND,

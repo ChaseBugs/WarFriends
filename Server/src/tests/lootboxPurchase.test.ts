@@ -78,6 +78,12 @@ test("duplicate conversion pays chargeback debt and rejects a corrupt persisted 
 
 test("purchase rejects client-authored discounts and insufficient balances with stock fields", () => {
   const initial = { ...createInitialProgression(NOW), gold: 48 };
+  for (const inheritedId of ["__proto__", "constructor", "toString"]) {
+    assert.throws(
+      () => purchaseLootboxesState(initial, inheritedId, 0, selectVisual("HEAD_CLOWN")),
+      /recovered lootbox product/,
+    );
+  }
   assert.throws(
     () => purchaseLootboxesState(initial, "lootboxes1", 10, selectVisual("HEAD_CLOWN")),
     (error: unknown) => {

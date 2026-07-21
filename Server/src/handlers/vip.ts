@@ -10,18 +10,13 @@ import {
   purchaseVip,
 } from "../services/vipService";
 import { authed, type HandlerEntry } from "./types";
+import { exactPurchaseDiscount } from "./purchaseRequestParsing";
 
 function productId(value: unknown): string {
-  if (typeof value !== "string" || !VIP_CATALOG[value]) {
+  if (typeof value !== "string" || !Object.hasOwn(VIP_CATALOG, value)) {
     throw new ApiError(ApiErrorCode.UnknownAction, "Id must name a recovered VIP product.");
   }
   return value;
-}
-
-function integer(value: unknown, field: string): number {
-  const parsed = typeof value === "number" ? value : Number(value);
-  if (!Number.isInteger(parsed)) throw new ApiError(ApiErrorCode.UnknownAction, `${field} must be an integer.`);
-  return parsed;
 }
 
 function failure(
@@ -38,7 +33,7 @@ function failure(
 export const vipHandlers: Record<number, HandlerEntry> = {
   [DbAction.BuyVip]: authed(async ({ player, req }) => {
     const id = productId(req.Id);
-    const discount = integer(req.discount ?? 0, "discount");
+    const discount = exactPurchaseDiscount(req.discount);
     try {
       const result = await purchaseVip(player!.id, id, discount);
       return ok(DbAction.BuyVip, {

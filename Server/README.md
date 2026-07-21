@@ -925,7 +925,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   `BuyLootboxes` validates one of the six exact MainScene products (49/89/159/279/479/749 Gold
   for 5/10/20/40/80/150 one-part rewards), atomically debits Gold, persists every part and exact
   duplicate-WarBucks conversion, and returns the recovered `NewVisuals`/`Id`/`LootboxCost`
-  contract. Client-authored sales remain rejected. Confirmed active-VIP PvP settlement also owns
+  contract. Its mandatory `discount` is accepted only as the canonical 0-99 decimal integer sent
+  by the recovered dialog; missing/null/Boolean/array/blank/fraction/exponent forms cannot coerce
+  into the authorized zero path and commit a malformed purchase. Product IDs must be own catalog
+  rows rather than inherited JavaScript object keys. Client-authored sales remain rejected. Confirmed active-VIP PvP settlement also owns
   the source-defined four-battle countdown
   and two one-part suitcase rewards: parts, exact duplicate WarBucks, `NewVisuals`, and immutable
   retry receipts commit in the terminal match transaction. The persisted countdown is validated
@@ -971,7 +974,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   the 4.9.5 MainScene table (49 Gold/12 hours, 249/3 days, 499/7 days, and 1799/30 days), debits
   Gold and extends the Unix entitlement in one revision-safe transaction, emits the exact
   `Vip`/`VipStart`/`Gold`/`Id` success contract, and returns recovered `11401`/`13601` recovery
-  payloads. Active VIP is read from progression by direct and buffered VIP-only visual purchases;
+  payloads. The mandatory discount uses the same exact canonical decimal parser as lootboxes, and
+  both the handler and service require an own VIP catalog row, so malformed zero coercions and
+  inherited object keys fail before Gold or entitlement changes. Active VIP is read from progression by direct and buffered VIP-only visual purchases;
   action `195` is a deadline-based acknowledgement. Active members also receive exactly two
   daily War Cards through the recovered `VipReward1`/`VipReward2` response contract: each draw is
   Gold with the source-decoded 75% chance and Silver otherwise, while an atomic UTC cursor prevents

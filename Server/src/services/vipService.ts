@@ -164,8 +164,10 @@ export function purchaseVipState(
   authorizedDiscount = 0,
   choose: VipRandomIndex = randomInt,
 ): VipPurchaseResult {
-  const product = VIP_CATALOG[id];
-  if (!product) throw new ApiError(ApiErrorCode.UnknownAction, `VIP product ${id} is not available.`);
+  if (!Object.hasOwn(VIP_CATALOG, id)) {
+    throw new ApiError(ApiErrorCode.UnknownAction, `VIP product ${id} is not available.`);
+  }
+  const product = VIP_CATALOG[id]!;
   if (
     !Number.isInteger(clientDiscount)
     || !Number.isInteger(authorizedDiscount)

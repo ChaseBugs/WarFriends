@@ -183,10 +183,10 @@ export function purchaseLootboxesState(
   clientDiscount: number,
   pickIndex: PickIndex = (exclusiveMaximum) => randomInt(exclusiveMaximum),
 ): LootboxPurchaseTransition {
-  const product = LOOTBOX_CATALOG[id];
-  if (!product) {
+  if (!Object.hasOwn(LOOTBOX_CATALOG, id)) {
     throw new ApiError(ApiErrorCode.UnknownAction, "Id must name a recovered lootbox product.");
   }
+  const product = LOOTBOX_CATALOG[id]!;
   if (!Number.isInteger(clientDiscount) || clientDiscount < 0 || clientDiscount > 99) {
     throw new ApiError(ApiErrorCode.UnknownAction, "discount must be an integer from 0 to 99.");
   }
