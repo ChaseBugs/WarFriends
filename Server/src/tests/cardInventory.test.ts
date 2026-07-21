@@ -21,6 +21,7 @@ import {
   createInitialCardCrafting,
   createInitialCardInventory,
   craftAndClaimSubscribedCardState,
+  grantMissionCardsState,
   parseCardPackPurchaseData,
   parsePvpUsedCards,
   parseOptionalPvpUsedCards,
@@ -37,6 +38,7 @@ import {
 import { buildPlayerData, createInitialProgression } from "../services/playerStateService";
 import { validatedProgressionSuccessor } from "../services/progressionPublicationAuthorityService";
 import { checkedPlayerReputationIncrement } from "../services/playerPublicScalarAuthorityService";
+import { PLAYER_LEVELS } from "../services/levelProgressionService";
 
 const NOW = 1_700_000_000;
 
@@ -771,6 +773,22 @@ test("card packs fail closed for locked level, invalid roll, unresolved cards, d
     discount: 0,
     startTime: NOW,
   };
+  for (const invalidLevel of [
+    Number.NaN,
+    Number.POSITIVE_INFINITY,
+    -1,
+    1.5,
+    PLAYER_LEVELS.length,
+  ]) {
+    assert.throws(
+      () => purchaseCardPackState(state, invalidLevel, validPayload),
+      /Player level index .* is invalid/,
+    );
+    assert.throws(
+      () => grantMissionCardsState(state, 1, 1, invalidLevel, () => 0),
+      /Player level index .* is invalid/,
+    );
+  }
   assert.throws(
     () => purchaseCardPackState(state, 4, validPayload),
     (error: unknown) => (error as { code?: number }).code === CARD_PACK_NOT_FOUND,

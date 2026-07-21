@@ -1402,7 +1402,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   four source-priced packs from MainScene. Buffered `BuyCardPack` validates unlock level, pack,
   count, playable IDs, fixed and ranged rarity slots, discount, timing, and funds; then atomically
   debits Gold/WarBucks and increments card amounts with `BufferId` replay protection and exact
-  rollback fields. `BuyThreeCards` legitimately omits `discount` and `StartTime`; only that true
+  rollback fields. Pack unlock and mission-card `FROMMISSION` selection first require the
+  authenticated zero-based player level to identify one exact recovered rank row. The source index
+  controls the rank-6 unlock and its one-based display number controls mission eligibility;
+  non-finite, fractional, negative, or out-of-catalog levels cannot bypass the gate through
+  JavaScript comparison behavior. `BuyThreeCards` legitimately omits `discount` and `StartTime`; only that true
   absence derives zero, while present fields must remain exact nonnegative C#-int JSON numbers and
   malformed null, Boolean, string, array, fractional, negative, unsafe, or oversized values reject
   before economy logic. The stock client selects card identities before sending and cannot consume

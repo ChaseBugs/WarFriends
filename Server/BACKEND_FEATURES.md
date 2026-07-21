@@ -653,6 +653,9 @@ Black Market issuance and rotation now require the authenticated player level to
 recovered rank row before per-weapon maximum-level clamping. Fractions, non-finite values, negative
 levels, and indexes beyond the source catalog cannot publish an empty or lower-rank 24-hour set;
 reading an already-active durable set still does not depend on the caller's current level.
+Card-pack unlock checks and mission-card `FROMMISSION` selection now require that same exact rank
+row. The row index controls the rank-6 unlock and its one-based display number controls the recovered
+mission threshold, preventing `NaN` or floored fractional levels from entering card economy.
 One shared application-clock boundary now protects initial progression creation, persisted
 progression reads, successor publication, `PlayerData`, and the top-level player-state response.
 It requires a nonnegative safe Unix second inside JavaScript/BSON Date support and passes that same

@@ -12,6 +12,7 @@ import {
   cardInventoryAuthorityFor,
   validatedCardInventoryState,
 } from "./cardInventoryAuthorityService";
+import { playerLevelDefinition } from "./levelProgressionService";
 
 export const CARD_PACK_NOT_FOUND = 112;
 export const CARD_PACK_NOT_ENOUGH_FUNDS = 100;
@@ -625,7 +626,7 @@ export function grantMissionCardsState(
   if (!Number.isSafeInteger(rarity) || rarity < 1 || rarity > 3 || !Number.isSafeInteger(count) || count <= 0) {
     throw new ApiError(ApiErrorCode.InternalServerError, "Daily mission card reward is invalid.");
   }
-  const displayLevel = Math.max(1, Math.floor(playerLevelIndex) + 1);
+  const displayLevel = playerLevelDefinition(playerLevelIndex).displayLevel;
   const pool = Object.values(CARD_CATALOG)
     .filter((card) => (
       card.implemented
@@ -674,7 +675,8 @@ export function purchaseCardPackState(
   if (payload.startTime < 0) throw new ApiError(CARD_PACK_NOT_FOUND, "Card-pack start time is invalid.");
   // DatabasePlayer.Level is LevelManager.levelNumber (zero based); CardConstants stores the
   // display level, matching the recovered `warcardsUnlockLevel > currentLevel.displayNumber` gate.
-  if (Math.max(0, Math.floor(playerLevelIndex)) < CARD_UNLOCK_LEVEL - 1) {
+  const sourceLevel = playerLevelDefinition(playerLevelIndex);
+  if (sourceLevel.index < CARD_UNLOCK_LEVEL - 1) {
     throw new ApiError(CARD_PACK_NOT_FOUND, "War Cards are not unlocked for this player level.");
   }
   validatePackContents(pack, payload.cards);
