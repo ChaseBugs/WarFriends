@@ -17,6 +17,10 @@ import {
 import type { MessageDoc } from "./socialService";
 import { validatedInboxRewardMessage } from "./inboxRewardAuthorityService";
 import {
+  publishInboxFanouts,
+  type InboxFanoutReference,
+} from "./inboxFanoutService";
+import {
   managedPlayerLeagueId,
   parseManagedPlayerLeagueId,
   playerLeagueDivisionIndexForOrdinal,
@@ -262,7 +266,7 @@ export async function finishExpiredPlayerLeague(
   const managed = parseManagedPlayerLeagueId(formerLeagueId);
   if (!managed || managed.endsAt > now) return { finished: false, settledPlayers: 0 };
 
-  return withMongoTransaction(async (session) => {
+  const committed = await withMongoTransaction(async (session) => {
     const members = await playersInPlayerLeague(formerLeagueId, session, 0);
     if (members.length === 0) {
       // A retry can arrive after another process committed the division. The deterministic
@@ -271,7 +275,10 @@ export async function finishExpiredPlayerLeague(
         { idempotencyKey: `player-league-finished:${formerLeagueId}:${requester.id}` },
         { session, projection: { _id: 1 } },
       );
-      return { finished: Boolean(existing), settledPlayers: 0, leagueId: formerLeagueId };
+      return {
+        result: { finished: Boolean(existing), settledPlayers: 0, leagueId: formerLeagueId },
+        fanouts: [] as InboxFanoutReference[],
+      };
     }
 
     const createdAt = new Date(now * 1_000);
@@ -323,6 +330,16 @@ export async function finishExpiredPlayerLeague(
     }
 
     await messages().insertMany(notifications, { session, ordered: true });
-    return { finished: true, settledPlayers: members.length, leagueId: formerLeagueId };
+    return {
+      result: { finished: true, settledPlayers: members.length, leagueId: formerLeagueId },
+      fanouts: notifications.map((message) => ({
+        recipientPlayerId: message.toPlayerId,
+        messageId: message.messageId,
+      })),
+    };
   });
+  // `withTransaction` may rerun its callback. Publish only the references returned by the
+  // successful committed attempt, so a transient wake-up can never expose a rolled-back league.
+  await publishInboxFanouts(committed.fanouts);
+  return committed.result;
 }

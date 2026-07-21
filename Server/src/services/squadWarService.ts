@@ -23,6 +23,10 @@ import { completeFirstSquadWarAchievementState } from "./achievementService";
 import type { MessageDoc } from "./socialService";
 import { validatedInboxRewardMessage } from "./inboxRewardAuthorityService";
 import {
+  publishInboxFanouts,
+  type InboxFanoutReference,
+} from "./inboxFanoutService";
+import {
   rankSquadWarDivision,
   SQUAD_WAR_MAX_DIVISION_SIZE,
   SQUAD_WAR_MAX_LEVEL,
@@ -870,17 +874,27 @@ async function completeFirstSquadWarAchievement(
 
 /** Settle one expired division, including deterministic type-9 claim messages. */
 export async function settleSquadWarRound(roundId: string, now = new Date()): Promise<{ settled: boolean; messages: number }> {
-  return withMongoTransaction(async (session) => {
+  const committed = await withMongoTransaction(async (session) => {
     const round = await squadWarRounds().findOne({ roundId }, { session });
-    if (!round) return { settled: false, messages: 0 };
+    if (!round) return {
+      result: { settled: false, messages: 0 },
+      fanouts: [] as InboxFanoutReference[],
+    };
     const season = await squadWarSeasons().findOne({ seasonId: round.seasonId }, { session });
     if (!season) throw new Error(`Squad Wars season ${round.seasonId} is missing.`);
     validatedSquadWarRound(round, season, now);
-    if (round.status === "settled") return { settled: false, messages: 0 };
-    if (round.endsAt > now) return { settled: false, messages: 0 };
+    if (round.status === "settled") return {
+      result: { settled: false, messages: 0 },
+      fanouts: [] as InboxFanoutReference[],
+    };
+    if (round.endsAt > now) return {
+      result: { settled: false, messages: 0 },
+      fanouts: [] as InboxFanoutReference[],
+    };
 
     const placements = rankSquadWarDivision(round.entries, round.level);
     let insertedMessages = 0;
+    const fanouts: InboxFanoutReference[] = [];
     for (const placement of placements) {
       const entry = round.entries.find((candidate) => candidate.squadId === placement.squadId)!;
       const squad = await squads().findOne({ name: placement.squadId }, { session });
@@ -935,6 +949,9 @@ export async function settleSquadWarRound(roundId: string, now = new Date()): Pr
           { upsert: true, session },
         );
         insertedMessages += result.upsertedCount;
+        if (result.upsertedCount === 1) {
+          fanouts.push({ recipientPlayerId: message.toPlayerId, messageId: message.messageId });
+        }
       }
       // Do not clear a pointer already advanced by an operator repair/newer season. This guard
       // makes a delayed old-round settlement unable to roll a squad backward.
@@ -976,8 +993,13 @@ export async function settleSquadWarRound(roundId: string, now = new Date()): Pr
       { session },
     );
     if (finish.modifiedCount !== 1) throw new Error(`Concurrent Squad Wars settlement rejected ${roundId}.`);
-    return { settled: true, messages: insertedMessages };
+    return { result: { settled: true, messages: insertedMessages }, fanouts };
   });
+  // The settlement transaction owns both reward rows and division state. Only its committed
+  // upserts are eligible for presentation; retries that matched an existing idempotency row emit
+  // no new notice, and action 91 remains the sole claim authority.
+  await publishInboxFanouts(committed.fanouts);
+  return committed.result;
 }
 
 /** Settle every expired round, close complete seasons, and allocate the current window. */

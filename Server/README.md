@@ -854,6 +854,12 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   idempotency key plus that suffix. A terminal marker must contain the exact payload-derived Gold response and be both read
   and ignored. Canonical safe-integer strings remain the explicit legacy DynamoDB-number migration,
   and only an absent older idempotency key is optional; malformed or extra authority fails closed.
+  Player League type-23 and Squad War type-9 settlements return only newly inserted message
+  identities from their successful MongoDB transaction attempt. Squad Event type-11 identities
+  bubble through the enclosing PvP/economy transaction. After commit, those references are
+  announced sequentially through the same local/Redis inbox fan-out, avoiding both an uncommitted
+  reward notice and an unbounded division-close burst. A live `InboxMessage` remains presentation
+  only: action `91` is still the sole atomic Gold-claim boundary.
 - **Moderation reports and sanctions**: authenticated player/cheater reports are validated, rate-limited,
   deduplicated for safe retries, and stored with review status and evidence metadata. Mandatory
   `ReportType` accepts only canonical recovered decimal text or an exact JSON integer in the bounded

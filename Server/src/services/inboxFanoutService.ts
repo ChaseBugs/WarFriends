@@ -26,6 +26,11 @@ export interface InboxFanoutMessage {
   message: ReturnType<typeof toClientMessage>;
 }
 
+export interface InboxFanoutReference {
+  recipientPlayerId: string;
+  messageId: string;
+}
+
 type LocalDelivery = (recipientPlayerId: string, messageId: string) => void | Promise<void>;
 let localDelivery: LocalDelivery | null = null;
 
@@ -154,4 +159,17 @@ export async function publishInboxFanout(recipientPlayerId: string, messageId: s
   }
   const notice = buildInboxFanoutNotice(inboxFanoutOriginId, recipientPlayerId, messageId);
   await redisPublish(INBOX_FANOUT_REDIS_CHANNEL, notice);
+}
+
+/**
+ * Publish a committed batch without making transient delivery part of its durable transaction.
+ *
+ * The loop is intentionally sequential. League and Squad settlements can create many recipient
+ * rows at once; an unbounded Promise.all would turn one normal division close into a Redis/socket
+ * burst. Each reference still follows the same best-effort local-then-Redis recovery contract.
+ */
+export async function publishInboxFanouts(references: readonly InboxFanoutReference[]): Promise<void> {
+  for (const reference of references) {
+    await publishInboxFanout(reference.recipientPlayerId, reference.messageId);
+  }
 }

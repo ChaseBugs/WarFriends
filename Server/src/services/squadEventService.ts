@@ -16,6 +16,7 @@ import type { MessageDoc } from "./socialService";
 import { decimalNumberAttribute } from "./dynamoNumberAttributeService";
 import { validatedInboxRewardMessage } from "./inboxRewardAuthorityService";
 import { validatedSquadDocument } from "./squadAuthorityService";
+import type { InboxFanoutReference } from "./inboxFanoutService";
 
 const MAX_UNIX_SECONDS = 2_147_483_647;
 const MAX_SEASONS = 128;
@@ -512,6 +513,11 @@ type CurrentSquadEventProjectionStatus = Exclude<
   "config_mismatch" | "invalid_progress"
 >;
 
+export interface SquadEventProjectionResult {
+  status: CurrentSquadEventProjectionStatus;
+  fanouts: InboxFanoutReference[];
+}
+
 /**
  * Project one confirmed participant result inside the match settlement transaction.
  *
@@ -519,30 +525,30 @@ type CurrentSquadEventProjectionStatus = Exclude<
  * reached only by the transaction that wins that transition. Roster membership is rechecked
  * in the same snapshot, so a stale player mirror cannot contribute to a squad the player left.
  */
-export async function recordConfirmedPvpSquadEventProgress(
+export async function recordConfirmedPvpSquadEventProgressWithFanouts(
   session: ClientSession,
   season: SquadEventSeasonConfig,
   playerId: string,
   squadId: string,
   won: boolean,
   now = new Date(),
-): Promise<CurrentSquadEventProjectionStatus> {
+): Promise<SquadEventProjectionResult> {
   const squad = squadId
     ? await squads().findOne({ name: squadId, "members.playerId": playerId }, { session })
     : null;
   if (!squad) {
-    return "not_member";
+    return { status: "not_member", fanouts: [] };
   }
   validatedSquadDocument(squad, now);
   const current = await squadEventProgress().findOne({ squadId, eventId: season.id }, { session });
-  if (!current) return "not_joined";
+  if (!current) return { status: "not_joined", fanouts: [] };
   // `applyConfirmedPvpSquadEventProgress` verifies both the immutable configuration hash and the
   // complete stored progress shape. Do not translate either invariant failure into a successful
   // terminal receipt: once the match is finished, its confirmed win/play contribution cannot be
   // applied again. Let the error abort core rewards as well, then retry after the operator restores
   // the live definition or repairs the damaged projection.
   const next = applyConfirmedPvpSquadEventProgress(current, season, won, now);
-  if (!next.changed) return "unchanged";
+  if (!next.changed) return { status: "unchanged", fanouts: [] };
   const update = await squadEventProgress().updateOne(
     { _id: current._id, revision: current.revision, configHash: current.configHash },
     {
@@ -562,6 +568,7 @@ export async function recordConfirmedPvpSquadEventProgress(
     // Tier progress is shared, but the reward is one claimable inbox row per current member.
     // Insert every row in the same match transaction as ActiveTier, so a crash cannot advance
     // the squad without its rewards or enqueue rewards for a tier that did not commit.
+    const fanouts: InboxFanoutReference[] = [];
     for (const member of squad.members) {
       const message = buildSquadEventTierRewardMessage(
         member.playerId,
@@ -572,14 +579,42 @@ export async function recordConfirmedPvpSquadEventProgress(
         now,
       );
       validatedInboxRewardMessage(message);
-      await messages().updateOne(
+      const insert = await messages().updateOne(
         { idempotencyKey: message.idempotencyKey },
         { $setOnInsert: message },
         { upsert: true, session },
       );
+      if (insert.upsertedCount === 1) {
+        fanouts.push({ recipientPlayerId: message.toPlayerId, messageId: message.messageId });
+      }
     }
+    return { status: "updated", fanouts };
   }
-  return "updated";
+  return { status: "updated", fanouts: [] };
+}
+
+/**
+ * Preserve the original projection API for callers that do not own the outer commit boundary.
+ * Match settlement uses the fan-out-aware variant above because only it can publish after the
+ * enclosing economy transaction commits; other callers still receive the established status.
+ */
+export async function recordConfirmedPvpSquadEventProgress(
+  session: ClientSession,
+  season: SquadEventSeasonConfig,
+  playerId: string,
+  squadId: string,
+  won: boolean,
+  now = new Date(),
+): Promise<CurrentSquadEventProjectionStatus> {
+  const result = await recordConfirmedPvpSquadEventProgressWithFanouts(
+    session,
+    season,
+    playerId,
+    squadId,
+    won,
+    now,
+  );
+  return result.status;
 }
 
 /** Optional event fields appended to squad-detail responses for the currently active season. */

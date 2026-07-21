@@ -42,7 +42,7 @@ import {
 } from "./playerLeagueContract";
 import {
   getActiveConfiguredSquadEvent,
-  recordConfirmedPvpSquadEventProgress,
+  recordConfirmedPvpSquadEventProgressWithFanouts,
   squadEventConfigHash,
   type SquadEventProjectionStatus,
 } from "./squadEventService";
@@ -70,6 +70,10 @@ import { validatedMatchDocument } from "./matchAuthorityService";
 import { validatedPlayerLastAction } from "./playerPublicScalarAuthorityService";
 import { validatedPlayerPresenceTransitions } from "./playerPresenceService";
 import { matchResultConsensusTimeoutMilliseconds } from "./multiplayerTimeoutPolicyService";
+import {
+  publishInboxFanouts,
+  type InboxFanoutReference,
+} from "./inboxFanoutService";
 
 export { validatedMatchDocument } from "./matchAuthorityService";
 
@@ -1883,7 +1887,12 @@ export async function settleResult(
   }
   const transaction = await withMongoTransaction(async (session) => {
     const match = await matches().findOne({ matchId }, { session }) as unknown as MatchDoc | null;
-    if (!match) return { result: { matchId, winnerId, rewarded: false }, grants: [] as CoreGrant[], unknown: true };
+    if (!match) return {
+      result: { matchId, winnerId, rewarded: false },
+      grants: [] as CoreGrant[],
+      inboxFanouts: [] as InboxFanoutReference[],
+      unknown: true,
+    };
     validatedMatchDocument(match, settlementTime);
     if (match.state === "finished") {
       return {
@@ -1894,18 +1903,34 @@ export async function settleResult(
           rewards: match.rewardReceipts,
         },
         grants: [] as CoreGrant[],
+        inboxFanouts: [] as InboxFanoutReference[],
         unknown: false,
       };
     }
     if (match.state !== "active" || !match.players.some((participant) => participant.playerId === winnerId)) {
-      return { result: { matchId, winnerId, rewarded: false }, grants: [] as CoreGrant[], unknown: false };
+      return {
+        result: { matchId, winnerId, rewarded: false },
+        grants: [] as CoreGrant[],
+        inboxFanouts: [] as InboxFanoutReference[],
+        unknown: false,
+      };
     }
     if (reportedById && !match.players.some((participant) => participant.playerId === reportedById)) {
-      return { result: { matchId, winnerId, rewarded: false }, grants: [] as CoreGrant[], unknown: false };
+      return {
+        result: { matchId, winnerId, rewarded: false },
+        grants: [] as CoreGrant[],
+        inboxFanouts: [] as InboxFanoutReference[],
+        unknown: false,
+      };
     }
     if (disconnectForfeitAuthority
       && !matchesDisconnectForfeitAuthority(match, winnerId, disconnectForfeitAuthority)) {
-      return { result: { matchId, winnerId, rewarded: false }, grants: [] as CoreGrant[], unknown: false };
+      return {
+        result: { matchId, winnerId, rewarded: false },
+        grants: [] as CoreGrant[],
+        inboxFanouts: [] as InboxFanoutReference[],
+        unknown: false,
+      };
     }
 
     const grants: CoreGrant[] = [];
@@ -1931,6 +1956,7 @@ export async function settleResult(
     const rewardReceipts = Object.fromEntries(
       grants.map((grant) => [grant.playerId, grant.reward]),
     );
+    const inboxFanouts: InboxFanoutReference[] = [];
     const eventParticipants: Array<{
       playerId: string;
       squadId: string;
@@ -1938,7 +1964,7 @@ export async function settleResult(
     }> = [];
     if (squadEventSeason) {
       for (const grant of grants) {
-        const status = await recordConfirmedPvpSquadEventProgress(
+        const projection = await recordConfirmedPvpSquadEventProgressWithFanouts(
           session,
           squadEventSeason,
           grant.playerId,
@@ -1946,7 +1972,12 @@ export async function settleResult(
           grant.won,
           settlementTime,
         );
-        eventParticipants.push({ playerId: grant.playerId, squadId: grant.squadName, status });
+        eventParticipants.push({
+          playerId: grant.playerId,
+          squadId: grant.squadName,
+          status: projection.status,
+        });
+        inboxFanouts.push(...projection.fanouts);
       }
     }
     const squadWarParticipants: Array<{
@@ -2006,12 +2037,16 @@ export async function settleResult(
     return {
       result: { matchId, winnerId, rewarded: true, rewards: rewardReceipts },
       grants,
+      inboxFanouts,
       unknown: false,
     };
   });
 
   if (transaction.unknown) logger.match.error("Result for unknown match", { matchId });
   if (!transaction.result.rewarded) return transaction.result;
+  // Squad Event type-11 rows were inserted inside the same atomic match/economy transaction.
+  // Announce only the final committed attempt; the recipient still claims Gold through action 91.
+  await publishInboxFanouts(transaction.inboxFanouts);
   logger.match.event("Match settled", { matchId, winnerId });
   return transaction.result;
 }

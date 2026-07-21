@@ -4,6 +4,8 @@ import {
   buildInboxFanoutNotice,
   liveInboxMessageFor,
   parseInboxFanoutNotice,
+  publishInboxFanouts,
+  registerLocalInboxDelivery,
 } from "../services/inboxFanoutService";
 import { buildDirectMessage, type MessageDoc } from "../services/socialService";
 
@@ -32,6 +34,20 @@ test("inbox fan-out notices contain only bounded routing identities", () => {
   })), null);
   assert.equal(parseInboxFanoutNotice("[]"), null);
   assert.throws(() => buildInboxFanoutNotice("not-a-uuid", "recipient", "message"));
+});
+
+test("committed inbox batches are handed to local delivery in source order", async () => {
+  const delivered: string[] = [];
+  registerLocalInboxDelivery((recipientPlayerId, messageId) => {
+    delivered.push(`${recipientPlayerId}:${messageId}`);
+  });
+
+  await publishInboxFanouts([
+    { recipientPlayerId: "player-a", messageId: "message-a" },
+    { recipientPlayerId: "player-b", messageId: "message-b" },
+  ]);
+
+  assert.deepEqual(delivered, ["player-a:message-a", "player-b:message-b"]);
 });
 
 test("live inbox delivery reuses the exact GetAllMessages wire projection", () => {
