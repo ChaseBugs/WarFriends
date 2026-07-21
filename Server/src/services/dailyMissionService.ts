@@ -29,6 +29,7 @@ import { validatedProgressionSuccessor } from "./progressionPublicationAuthority
 import { advanceRentalAfterBattleState } from "./rentalService";
 import { grantMissionElitePartsState, selectMissionElitePartUnit } from "./unitInventoryService";
 import { isVipActiveAt } from "./vipEntitlementService";
+import { validatedDailyMissionsState } from "./dailyMissionAuthorityService";
 
 /**
  * Persistent daily/heroic mission lifecycle reconstructed from the Unity client contract.
@@ -270,19 +271,9 @@ function cloneMission(record: DailyMissionRecordState): DailyMissionRecordState 
 }
 
 function cloneDailyMissions(value: DailyMissionsState): DailyMissionsState {
-  // Mutations run inside an optimistic compare-and-swap loop. Deep-cloning arrays and cached
-  // responses keeps a failed/retried mutation from modifying the snapshot owned by another
-  // attempt before MongoDB accepts the revision.
-  return {
-    ...value,
-    dailyMissions: value.dailyMissions.map(cloneMission),
-    heroicMissions: value.heroicMissions.map(cloneMission),
-    activeSessions: value.activeSessions.map((session) => ({ ...session })),
-    recentSettlements: value.recentSettlements.map((settlement) => ({
-      ...settlement,
-      response: cloneResponse(settlement.response),
-    })),
-  };
+  // Mutations and shared publishers use one complete proof. Its returned value is already a
+  // deep clone, so retry attempts cannot modify the snapshot owned by another CAS attempt.
+  return validatedDailyMissionsState(value)!;
 }
 
 function cloneResponse(value: Record<string, unknown>): Record<string, unknown> {
@@ -431,16 +422,17 @@ export function dailyMissionsStateFor(
 
 /** Return only fields declared by DailyMissionsManager.DailyMissionsData. */
 export function dailyMissionsWireData(value: DailyMissionsState): Record<string, unknown> {
+  const validated = validatedDailyMissionsState(value)!;
   return {
-    dailyMissions: value.dailyMissions.map(cloneMission),
-    heroicMissions: value.heroicMissions.map(cloneMission),
-    heroicPoints: value.heroicPoints,
-    isHeroicOpened: value.isHeroicOpened,
-    tomorrow: value.tomorrow,
-    dailyMissionRewardInd: value.dailyMissionRewardInd,
-    dailyMissionLevel: value.dailyMissionLevel,
-    heroicMissionLevel: value.heroicMissionLevel,
-    heroicUnitReward: value.heroicUnitReward,
+    dailyMissions: validated.dailyMissions.map(cloneMission),
+    heroicMissions: validated.heroicMissions.map(cloneMission),
+    heroicPoints: validated.heroicPoints,
+    isHeroicOpened: validated.isHeroicOpened,
+    tomorrow: validated.tomorrow,
+    dailyMissionRewardInd: validated.dailyMissionRewardInd,
+    dailyMissionLevel: validated.dailyMissionLevel,
+    heroicMissionLevel: validated.heroicMissionLevel,
+    heroicUnitReward: validated.heroicUnitReward,
   };
 }
 

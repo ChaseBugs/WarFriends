@@ -882,7 +882,13 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   fields. UTC issuance, start receipts, consumed failure receipts, mode/index/order checks,
   no-write same-day boot/start/settled-receipt replay, durable expired-session pruning,
   separate solo/co-op completion, response replay, the 30-point heroic gate, and recovered
-  completion currencies are persisted atomically. Mission XP and WarBucks now reproduce the
+  completion currencies are persisted atomically. One complete lifecycle authority protects
+  shared persisted reads/publication and all rollover/boot/action/serialization boundaries. It
+  binds the exact three daily and five ordered Heroic mission/config/unit shapes, completion and
+  reward flags, level/reward/point bounds, derived UTC reset tuple, source-backed Heroic target,
+  and bounded unique active/terminal receipts with valid modes, indexes, results, timestamps, and
+  cached JSON. Expired cycles still validate because Heroic progress and replay history carry over;
+  malformed receipt history is never trimmed into new replay capacity. Mission XP and WarBucks now reproduce the
   recovered `MissionsConstants` exponential level formula, per-slot `MissionsSettings`
   modifiers, upward-to-50 rounding, zero co-op-master share, and half co-op-client share. The
   result applies the source 1.5x/1.5x/2x VIP XP/WarBucks/GameGold rules, crosses exact rank rows,

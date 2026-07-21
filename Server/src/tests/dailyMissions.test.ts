@@ -16,6 +16,8 @@ import {
 } from "../services/dailyMissionService";
 import { playerLevelDefinition } from "../services/levelProgressionService";
 import { createInitialProgression } from "../services/playerStateService";
+import { validatedDailyMissionsState } from "../services/dailyMissionAuthorityService";
+import { validatedProgressionSuccessor } from "../services/progressionPublicationAuthorityService";
 
 const NOW = Date.UTC(2026, 6, 19, 12, 0, 0) / 1_000;
 const POLICY = { experience: 30, warBucks: 800 } as const;
@@ -59,6 +61,28 @@ test("unchanged mission boot and start receipt replays do not write progression"
   );
   assert.equal(startReplay.replayed, true);
   assert.equal(startReplay.state, started.state);
+});
+
+test("shared progression publication rejects forged Heroic order and duplicate mission receipts", () => {
+  const current = createInitialProgression(NOW);
+  const missions = dailyMissionsStateFor(current, NOW, 1);
+  missions.heroicMissions[1]!.completedSolo = true;
+  assert.throws(() => validatedDailyMissionsState(missions), /heroic mission order is invalid/);
+  assert.throws(
+    () => validatedProgressionSuccessor(current, {
+      ...current,
+      revision: 1,
+      dailyMissions: missions,
+    }),
+    /heroic mission order is invalid/,
+  );
+
+  const duplicate = dailyMissionsStateFor(current, NOW, 1);
+  duplicate.activeSessions = [
+    { battleId: "mission-duplicate", startAction: 67, startedAt: NOW, dayKey: duplicate.dayKey },
+    { battleId: "mission-duplicate", startAction: 67, startedAt: NOW, dayKey: duplicate.dayKey },
+  ];
+  assert.throws(() => validatedDailyMissionsState(duplicate), /battle receipt is invalid/);
 });
 
 test("mission boot still persists expired receipt cleanup", () => {

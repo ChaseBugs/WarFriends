@@ -33,6 +33,7 @@ import { validatedAssignmentState } from "./assignmentAuthorityService";
 import { validatedSquadChatCursor } from "./squadChatCursorAuthorityService";
 import { validatedAchievementState } from "./achievementAuthorityService";
 import { validatedWarArenaState } from "./warArenaAuthorityService";
+import { validatedDailyMissionsState } from "./dailyMissionAuthorityService";
 
 /**
  * Validate the common authority shared by every full progression-document replacement.
@@ -101,6 +102,8 @@ export function validatedProgressionSuccessor(
   validatedAchievementState(next.achievements);
   validatedWarArenaState(current.warArena);
   validatedWarArenaState(next.warArena);
+  validatedDailyMissionsState(current.dailyMissions);
+  validatedDailyMissionsState(next.dailyMissions);
   validatedCoreProgressionBalances(current);
   validateProgressionRevisionAdvance(progressionRevisionForRead(current.revision), next.revision);
   validatedCoreProgressionBalances(next);
