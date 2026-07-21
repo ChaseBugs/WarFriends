@@ -18,6 +18,8 @@ import {
   type EventAssignmentEventConfig,
 } from "../services/eventAssignmentService";
 import { buildPlayerData, createInitialProgression } from "../services/playerStateService";
+import { validatedEventAssignmentState } from "../services/eventAssignmentAuthorityService";
+import { validatedProgressionSuccessor } from "../services/progressionPublicationAuthorityService";
 
 const START = 1_728_000_000; // Exact UTC-midnight Unix boundary.
 const EVENT: EventAssignmentEventConfig = {
@@ -131,6 +133,34 @@ test("daily reward claim requires confirmed progress and server-owned reward ech
   assert.throws(
     () => claimEventAssignmentState(claimed.state, EVENT, START + 100, { rewardType: 1, rewardValue: 5 }),
     /already claimed/,
+  );
+});
+
+test("shared publication rejects malformed event state and active config rejects inconsistent totals", () => {
+  const current = createInitialProgression(START);
+  const initialized = ensureEventAssignmentState(current, EVENT).eventAssignment;
+  const malformed = {
+    ...initialized,
+    progress: { "00": { v: 1, c: false } },
+  };
+  assert.throws(() => validatedEventAssignmentState(malformed), /Stored Event Assignment progress is invalid/);
+  assert.throws(
+    () => validatedProgressionSuccessor(current, {
+      ...current,
+      revision: 1,
+      eventAssignment: malformed,
+    }),
+    /Stored Event Assignment progress is invalid/,
+  );
+
+  const inconsistent = {
+    ...initialized,
+    totalValue: 0,
+    progress: { "0": { v: 3, c: true } },
+  };
+  assert.throws(
+    () => ensureEventAssignmentState({ ...current, eventAssignment: inconsistent }, EVENT),
+    /Stored Event Assignment progress is invalid/,
   );
 });
 

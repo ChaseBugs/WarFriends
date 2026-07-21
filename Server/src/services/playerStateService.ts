@@ -60,6 +60,7 @@ import { validatedAssignmentState } from "./assignmentAuthorityService";
 import { validatedAchievementState } from "./achievementAuthorityService";
 import { validatedWarArenaState } from "./warArenaAuthorityService";
 import { validatedDailyMissionsState } from "./dailyMissionAuthorityService";
+import { validatedEventAssignmentState } from "./eventAssignmentAuthorityService";
 
 /** Unix seconds are used throughout the recovered Beanstalk protocol. */
 export function unixNow(): number {
@@ -145,6 +146,7 @@ export function progressionForPlayer(player: PlayerDocument, now = unixNow()): P
   const achievements = validatedAchievementState(state.achievements);
   const warArena = validatedWarArenaState(state.warArena);
   const dailyMissions = validatedDailyMissionsState(state.dailyMissions);
+  const eventAssignment = validatedEventAssignmentState(state.eventAssignment);
   const rental = validatedRentalState(state.rental);
   const blackMarket = validatedBlackMarketOfferState(state.blackMarket);
   const visualInventory = validatedVisualInventoryState(
@@ -195,6 +197,7 @@ export function progressionForPlayer(player: PlayerDocument, now = unixNow()): P
       achievements,
       warArena,
       dailyMissions,
+      eventAssignment,
     };
   }
 
@@ -238,6 +241,7 @@ export function progressionForPlayer(player: PlayerDocument, now = unixNow()): P
     achievements,
     warArena,
     dailyMissions,
+    eventAssignment,
   };
 }
 

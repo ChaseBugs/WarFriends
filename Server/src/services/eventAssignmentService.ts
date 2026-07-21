@@ -7,6 +7,7 @@ import type { EventAssignmentState, PlayerProgressionState } from "../db";
 import { mutateProgression } from "./progressionMutationService";
 import { grantMissionElitePartsState, isPlayerUnitName } from "./unitInventoryService";
 import { grantEventAssignmentVisualState, VISUAL_CATALOG } from "./visualInventoryService";
+import { validatedEventAssignmentState } from "./eventAssignmentAuthorityService";
 
 const DAY_SECONDS = 86_400;
 const MAX_UNIX_SECONDS = 2_147_483_647;
@@ -236,12 +237,26 @@ function initialEventState(event: EventAssignmentEventConfig): EventAssignmentSt
 }
 
 function stateForEvent(state: PlayerProgressionState, event: EventAssignmentEventConfig): EventAssignmentState {
-  const current = state.eventAssignment;
+  const current = validatedEventAssignmentState(state.eventAssignment);
   if (!current || current.eventId !== event.id) return initialEventState(event);
   if (current.configHash !== eventAssignmentConfigHash(event)) {
     throw new ApiError(ApiErrorCode.InternalServerError, "Active Event Assignment changed after player progress was created.");
   }
-  if (!Number.isSafeInteger(current.totalValue) || current.totalValue < 0) {
+  let expectedTotalValue = 0;
+  for (const [key, progress] of Object.entries(current.progress)) {
+    const index = Number(key);
+    const definition = event.assignments[index];
+    if (!definition || progress.v > definition.target || (progress.c && progress.v !== definition.target)) {
+      throw new ApiError(ApiErrorCode.InternalServerError, "Stored Event Assignment progress is invalid.");
+    }
+    if (progress.c) expectedTotalValue = addSafe(expectedTotalValue, definition.progress, "Event points");
+  }
+  if (current.totalValue !== expectedTotalValue) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Stored Event Assignment progress is invalid.");
+  }
+  const claimedMilestones = Object.keys(current.milestones).map(Number).sort((left, right) => left - right);
+  if (claimedMilestones.some((index, position) => index !== position
+    || !event.milestones[index] || current.totalValue < event.milestones[index].target)) {
     throw new ApiError(ApiErrorCode.InternalServerError, "Stored Event Assignment progress is invalid.");
   }
   return {
@@ -272,11 +287,12 @@ export function buildEventAssignmentClientConfig(event: EventAssignmentEventConf
 }
 
 export function serializeEventAssignmentData(value: EventAssignmentState): Record<string, unknown> {
+  const validated = validatedEventAssignmentState(value)!;
   return {
-    eventId: value.eventId,
-    totalValue: value.totalValue,
-    progress: value.progress,
-    milestones: value.milestones,
+    eventId: validated.eventId,
+    totalValue: validated.totalValue,
+    progress: validated.progress,
+    milestones: validated.milestones,
   };
 }
 

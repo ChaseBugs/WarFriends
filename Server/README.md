@@ -874,7 +874,12 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   `EventAssignmentConfig`, UTC `Midnight`, and nested `EventAssignmentData` contracts. Daily and
   ordered milestone claims derive their active index, target, points, currency/parts/visual reward,
   and eligibility from immutable hashed server configuration; wallet/inventory/claim state commits
-  atomically and `BufferId` replay cannot grant twice. Client `RewardType`, `RewardValue`, and
+  atomically and `BufferId` replay cannot grant twice. A generic exact state validator protects
+  shared persisted reads/publication and boot/serialization: IDs and lowercase SHA-256 digests are
+  bounded, totals are signed-client-safe, day/milestone keys are canonical bounded sparse indexes,
+  progress records are exact, and present milestone markers are only `true`. The active-config
+  boundary additionally caps each day, requires claimed days to reach target, derives total points
+  exactly from claimed rows, and requires milestones to be an earned prefix. Client `RewardType`, `RewardValue`, and
   `MilestoneId` are assertions only. The client-local destroyed-winter-box update is deliberately
   ignored until authoritative battle telemetry can advance the provided trusted-progress transition.
 - **Daily/co-op/heroic missions**: actions `67`-`69`, `215`, `216`, and mission-flavoured
