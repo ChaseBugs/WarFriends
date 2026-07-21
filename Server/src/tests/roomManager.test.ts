@@ -28,6 +28,7 @@ test("match results require matching reports from both participants", () => {
   assert.equal(manager.recordResult("m2", "p1", "attacker"), "invalid");
   assert.equal(manager.recordResult("m2", "p1", "p1"), "pending");
   assert.equal(manager.recordResult("m2", "p2", "p1"), "confirmed");
+  manager.finish("m2");
 
   manager.join("m3", "p1", "c1", ["p1", "p2"]);
   manager.join("m3", "p2", "c2", ["p1", "p2"]);
@@ -74,4 +75,34 @@ test("CardPlayed delivery retries only when durable evidence was not delivered b
   manager.join("m5", "p2", "c3", ["p1", "p2"]);
   assert.equal(manager.relayCardEvent("m5", "p1", 1, event), "delivered");
   assert.equal(sent.filter((item) => item.clientId === "c3" && item.envelope === event).length, 1);
+});
+
+test("one authenticated player cannot occupy two process-local match rooms", () => {
+  const manager = new RoomManager();
+  assert.ok(manager.join("exclusive-a", "p1", "c1", ["p1", "p2"]));
+  assert.equal(
+    manager.join("exclusive-b", "p1", "c1", ["p1", "p3"]),
+    null,
+  );
+  assert.equal(manager.getRoom("exclusive-b"), undefined, "a rejected join must not create a ghost room");
+
+  manager.finish("exclusive-a");
+  assert.ok(manager.join("exclusive-b", "p1", "c1", ["p1", "p3"]));
+});
+
+test("every room join must reproduce one exact two-player durable allowlist", () => {
+  const manager = new RoomManager();
+  assert.equal(manager.join("allowlist", "p1", "c1", ["p1"]), null);
+  assert.equal(manager.join("allowlist", "p1", "c1", ["p1", "p1"]), null);
+  assert.equal(manager.getRoom("allowlist"), undefined);
+
+  assert.ok(manager.join("allowlist", "p1", "c1", ["p1", "p2"]));
+  assert.equal(
+    manager.join("allowlist", "p2", "c2", ["p1", "p3"]),
+    null,
+    "one overlapping participant must not replace the immutable pair",
+  );
+  assert.equal(manager.getRoom("allowlist")?.state, "waiting");
+  assert.ok(manager.join("allowlist", "p2", "c2", ["p2", "p1"]));
+  assert.equal(manager.getRoom("allowlist")?.state, "active");
 });

@@ -93,6 +93,11 @@ and score instead of letting one transient row abort matching for healthy player
 reload and transactional admission remain the final gameplay authority. Redis-disabled or
 unavailable deployments retain the same validated in-memory queue.
 
+The no-Redis `RoomManager` now admits only an exact two-distinct-player allowlist reproduced on
+every join and enforces its player-to-room index. One authenticated identity cannot occupy two
+process-local rooms, a contradictory overlapping allowlist cannot revise an existing room, and
+rejected joins cannot create ghost rooms that survive close cleanup or relay opaque events.
+
 `MatchFound` can cross backend nodes through a size/type-bounded pub/sub instruction. The receiving
 node never trusts that instruction as match authority: it reloads MongoDB and proves that the local
 target belongs to the named active match before delivering to the socket. Fan-out now requires exact

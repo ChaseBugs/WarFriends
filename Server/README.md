@@ -476,6 +476,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   committed join-timeout or initial-delivery cancellation reaches remote participants through this
   same validated path.
   Without Redis, the same code retains the verified process-local queue and direct delivery path.
+  Its room registry accepts only an exact two-distinct-player allowlist reproduced by every join and
+  enforces one room per authenticated player. Contradictory overlapping pairs and second-room joins
+  fail before room creation, preventing ghost participants that close cleanup would otherwise miss.
   Match rows record their coordinator node, whose renewable Redis heartbeat separates crashed-room
   orphans from live peer-owned matches. When Redis coordination is selected, startup must commit
   that node's first heartbeat before it may create any durable match naming the owner. Startup and

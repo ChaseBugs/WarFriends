@@ -64,7 +64,15 @@ export class RoomManager {
    * Rejoining replaces only that player's socket ID, which supports reconnect safely.
    */
   join(matchId: string, playerId: string, clientId: string, allowedPlayerIds: readonly string[]): MatchRoom | null {
-    if (!allowedPlayerIds.includes(playerId)) return null;
+    const suppliedAllowlist = new Set(allowedPlayerIds);
+    if (allowedPlayerIds.length !== 2
+      || suppliedAllowlist.size !== 2
+      || !suppliedAllowlist.has(playerId)) return null;
+    const currentMatchId = this.playerRoom.get(playerId);
+    // The authenticated socket identity can own only one process-local room. Without this check a
+    // stale/duplicate JoinMatch could leave the same client in two room participant maps; close
+    // cleanup would evict only the first and the ghost room could continue relaying opaque events.
+    if (currentMatchId !== undefined && currentMatchId !== matchId) return null;
     let room = this.rooms.get(matchId);
     if (!room) {
       room = {
@@ -78,7 +86,11 @@ export class RoomManager {
       };
       this.rooms.set(matchId, room);
     }
-    if (!room.allowedPlayerIds.has(playerId)) return null;
+    // Every join reloads the durable match allowlist. Require it to reproduce the room's immutable
+    // pair exactly rather than accepting one overlapping player from a contradictory snapshot.
+    if (room.allowedPlayerIds.size !== suppliedAllowlist.size
+      || [...suppliedAllowlist].some((id) => !room!.allowedPlayerIds.has(id))
+      || !room.allowedPlayerIds.has(playerId)) return null;
     const existing = room.participants.get(playerId);
     if (!existing && room.participants.size >= 2) {
       return null; // room full with two different players
@@ -86,7 +98,7 @@ export class RoomManager {
     room.participants.set(playerId, { playerId, clientId });
     this.playerRoom.set(playerId, matchId);
 
-    if (room.participants.size === 2 && room.state === "waiting") {
+    if (room.participants.size === room.allowedPlayerIds.size && room.state === "waiting") {
       room.state = "active";
       logger.match.event("Match room active", { matchId });
       this.broadcast(matchId, { Type: "MatchStart", Payload: { MatchId: matchId } });
@@ -165,7 +177,9 @@ export class RoomManager {
     const room = this.rooms.get(matchId);
     if (!room) return undefined;
     room.state = "finished";
-    for (const p of room.participants.values()) this.playerRoom.delete(p.playerId);
+    for (const p of room.participants.values()) {
+      if (this.playerRoom.get(p.playerId) === matchId) this.playerRoom.delete(p.playerId);
+    }
     this.rooms.delete(matchId);
     logger.match.event("Match room finished", { matchId });
     return room;
@@ -184,7 +198,7 @@ export class RoomManager {
       const wasActive = room.state === "active";
       const opponentId = [...room.allowedPlayerIds].find((id) => id !== entry.playerId);
       room.participants.delete(entry.playerId);
-      this.playerRoom.delete(entry.playerId);
+      if (this.playerRoom.get(entry.playerId) === room.matchId) this.playerRoom.delete(entry.playerId);
       this.broadcast(room.matchId, {
         Type: "OpponentDisconnected",
         Payload: { MatchId: room.matchId, PlayerId: entry.playerId },
