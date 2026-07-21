@@ -202,7 +202,7 @@ export interface ChallengeMessageInput {
   missionData?: string;
 }
 
-function sameChallenge(message: MessageDoc, fromPlayerId: string, input: ChallengeMessageInput): boolean {
+export function sameChallenge(message: MessageDoc, fromPlayerId: string, input: ChallengeMessageInput): boolean {
   const payload = message.payload;
   return message.messageType === 0
     && message.fromPlayerId === fromPlayerId
@@ -240,7 +240,10 @@ export async function sendChallenge(from: PlayerDocument, input: ChallengeMessag
     createdAt: { $gte: new Date(createdAt.getTime() - CHALLENGE_RETRY_WINDOW_MS) },
     expiresAt: { $gt: createdAt },
   });
-  if (duplicate) return validatedChallengeMessage(duplicate as unknown as MessageDoc, createdAt)!;
+  if (duplicate) {
+    const validated = validatedChallengeMessage(duplicate as unknown as MessageDoc, createdAt)!;
+    if (sameChallenge(validated, from.id, input)) return validated;
+  }
   await reserveOutgoingMessageSlot(from.id, createdAt);
   const doc: MessageDoc = {
     // The recovered client strips the trailing numeric segment to recover challenger ID.

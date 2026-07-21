@@ -14,6 +14,7 @@ import {
 } from "../services/socialService";
 import { getFriendsInfo } from "../services/friendService";
 import { authed, type HandlerEntry } from "./types";
+import { parseChallengeMessageRequest } from "./socialRequestParsing";
 
 // Player discovery and inbox handlers. Hit-list mutations remain rejected because their
 // recovered capacity semantics are ambiguous; normal/challenge messages use exact client
@@ -36,19 +37,8 @@ export const socialHandlers: Record<number, HandlerEntry> = {
     ok(DbAction.GetFriendsInfo, await getFriendsInfo(player!, req))),
 
   [DbAction.MessageSent]: authed(async ({ player, req }) => {
-    const challengedPlayerId = str(req.ChallengedPlayerId);
-    if (challengedPlayerId) {
-      const message = await sendChallenge(player!, {
-        challengedPlayerId,
-        mapName: str(req.MapName),
-        gameType: Number(req.GameType) || 0,
-        region: Number(req.Region) || 0,
-        roomName: str(req.roomName) || "default",
-        clientVersion: str(req.clientVersion) || "0.0.0",
-        missionType: str(req.MissionType) || undefined,
-        numberOfMission: Number.isInteger(Number(req.NumberOfMission)) ? Number(req.NumberOfMission) : undefined,
-        missionData: str(req.MissionData) || undefined,
-      });
+    if (req.ChallengedPlayerId !== undefined) {
+      const message = await sendChallenge(player!, parseChallengeMessageRequest(req));
       return ok(DbAction.MessageSent, { Delivered: true, MessageId: message.messageId });
     }
 

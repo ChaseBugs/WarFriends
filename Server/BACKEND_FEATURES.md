@@ -62,6 +62,14 @@ snapshot that granted manager, roster, pending-capability, and admission authori
 miss fails and requires a fresh read, so an older snapshot cannot overwrite a concurrent demotion,
 membership transition, or admission change through the former name-only persistence path.
 
+Action-2 challenge creation now parses the exact required identity/map/game/region/room/version and
+optional mission fields emitted by the recovered `BeanstalkServerManager.Challenge` call. Exact C#
+decimal integers and source-supported enums are required; nulls, booleans, arrays, blanks,
+fractions, exponent strings, missing required fields, and malformed optional fields cannot be
+coerced into durable defaults. Retry deduplication now replays a recent same-room row only when its
+participants and complete payload equal the new request, so a changed map, game, region, version,
+or mission cannot silently return stale invitation metadata.
+
 Moderation-retention retry receipts now validate exact identity fields, safe nonnegative report/appeal
 deletion counts, safe preview/creation chronology, and exact whole-day cutoffs within the global
 30-3650-day bounds before replay. Historical receipts remain valid across deploy-time policy changes.
