@@ -26,6 +26,7 @@ import { initializeRemoteConfiguration } from "./services/remoteConfigurationSer
 import { startGooglePlayVoidedPurchaseScheduler } from "./services/googlePlayVoidedPurchaseService";
 import { startSquadWarScheduler } from "./services/squadWarSchedulerService";
 import { adminModerationRouter } from "./routes/adminModeration";
+import { adminDiagnosticsRouter } from "./routes/adminDiagnostics";
 import { supportModerationRouter } from "./routes/supportModeration";
 import { validateAuthenticationSecretConfiguration } from "./services/authSecretService";
 import { trafficPolicy } from "./services/trafficPolicyService";
@@ -88,6 +89,10 @@ app.get("/metrics", requireAdmin, (_req, res) => {
 // Per-operation actor and idempotency headers are validated inside the router and retained in
 // the sanction audit history; the Bearer secret itself is never persisted or returned.
 app.use("/admin/moderation", requireAdmin, adminModerationRouter);
+
+// Retained diagnostics can contain player logs and failed-response bodies. Keep the entire read
+// surface behind the independent admin credential; game sessions never authorize this router.
+app.use("/admin/diagnostics", requireAdmin, adminDiagnosticsRouter);
 
 // Sanctioned players cannot use the normal game dispatcher, but may prove their current session
 // credential to this narrowly scoped support router. It can read/create only their own appeals and

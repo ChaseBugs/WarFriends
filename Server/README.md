@@ -1781,6 +1781,22 @@ retention without consuming inbox, Squad Chat, analytics, or explicit support-lo
 rows are never read by gameplay services. Pre-login, disabled, and no-consent calls return the
 stock success shape without storing sensitive data or triggering an error-report feedback loop.
 
+### Administrative diagnostic reads
+
+The independent admin Bearer credential protects `GET /admin/diagnostics/:kind`, where `kind` is
+exactly `analytics`, `support-logs`, or `client-errors`. Optional `playerId`, `limit` (1-100, default
+50), and `cursor` query parameters provide a stable descending `(receivedAt, UUID)` view without
+granting gameplay sessions access to sensitive diagnostics. Cursors are canonical Base64URL JSON,
+bound to the exact kind and player filter, and cannot carry a future timestamp.
+
+Each selected row is revalidated through its complete family authority before serialization, and
+one damaged row aborts the whole page rather than returning partial believable diagnostics.
+Application-time expiry prevents TTL-monitor delay from extending operator visibility. Dedicated
+global and per-player compound indexes support the cursor order. The response exposes only the
+reviewed fields for that family; it never joins diagnostics to progression, purchases, rewards, or
+combat authority. Deployments should place this sensitive endpoint behind their normal operator
+network controls in addition to the required `ADMIN_SECRET`.
+
 ### Next
 
 - **Squad extensions** — normal/Buddy pool deposits and withdrawals, configured Squad Events,

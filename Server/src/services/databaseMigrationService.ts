@@ -97,6 +97,27 @@ const migrations: readonly DatabaseMigration[] = [
       );
     },
   },
+  {
+    id: "20260722_006_admin_diagnostic_read_indexes",
+    checksum: "sha256:295a9a1e51e0c942991f6d4ec8b27e3a9bce29cb861463aab58e3be7c093cf95",
+    description: "Index stable global and per-player diagnostic administration pages.",
+    up: async (db) => {
+      for (const [collectionName, prefix] of [
+        ["clientAnalyticsEvents", "client_analytics"],
+        ["clientLogEntries", "client_log"],
+        ["clientErrorEvents", "client_error"],
+      ] as const) {
+        await db.collection(collectionName).createIndex(
+          { receivedAt: -1, _id: -1 },
+          { name: `${prefix}_admin_time` },
+        );
+        await db.collection(collectionName).createIndex(
+          { playerId: 1, receivedAt: -1, _id: -1 },
+          { name: `${prefix}_admin_player_time` },
+        );
+      }
+    },
+  },
 ];
 
 const receiptCollectionName = "schemaMigrations";
