@@ -3,6 +3,7 @@ import { readFileSync } from "fs";
 import { resolve } from "path";
 import { config } from "../config";
 import type { RequestEnvelope } from "../dtos";
+import { exactNumericClientVersion } from "../handlers/requestEnvelopeParsing";
 
 export interface RemoteConfigurationSheet {
   id: string;
@@ -213,6 +214,23 @@ function rolloutMatches(publication: RemoteConfigurationPublication, fields: Req
   return (digest.readUInt32BE(0) / 0x1_0000_0000) * 100 < percent;
 }
 
+/**
+ * Read only the numeric replacement-client build aliases used by remote publication targeting.
+ *
+ * The recovered client always sends dotted `Version` (for example `1.6.0`) on the common request
+ * envelope. That text has no lossless ordering relation to the operator's integer build policy and
+ * must not become `NaN`, because both `NaN < minimum` and `NaN > maximum` are false. If a patched
+ * client sends both numeric aliases, they must describe one exact canonical C# integer rather than
+ * giving alias precedence a chance to select a different publication.
+ */
+function requestedNumericClientVersion(fields: RequestEnvelope): number | undefined | null {
+  const supplied = [fields.ClientVersion, fields.clientVersion].filter((value) => value !== undefined);
+  if (supplied.length === 0) return undefined;
+  const parsed = supplied.map(exactNumericClientVersion);
+  if (parsed.some((value) => value === undefined) || new Set(parsed).size !== 1) return null;
+  return parsed[0]!;
+}
+
 export function selectRemoteConfiguration(
   fields: RequestEnvelope,
   manifest: RemoteConfigurationManifest | null = activeManifest,
@@ -220,13 +238,19 @@ export function selectRemoteConfiguration(
   if (!manifest) return null;
   const variant = requestedString(fields, "abTestVariant", "*");
   const language = requestedString(fields, "Language", "*").toLowerCase();
-  const clientVersion = Number(fields.ClientVersion ?? fields.clientVersion ?? fields.Version ?? 0);
+  const clientVersion = requestedNumericClientVersion(fields);
+  // A malformed/conflicting numeric adapter value invalidates targeting entirely. This is
+  // deliberately stricter than treating it as absent: otherwise an unbounded publication could
+  // still be selected after the caller presented a bad version proof.
+  if (clientVersion === null) return null;
   return manifest.publications.find((publication) => {
     if (publication.variant !== "*" && publication.variant !== variant) return false;
     const languages = publication.languages ?? ["*"];
     if (!languages.some((candidate) => candidate === "*" || candidate.toLowerCase() === language)) return false;
-    if (publication.minimumClientVersion !== undefined && clientVersion < publication.minimumClientVersion) return false;
-    if (publication.maximumClientVersion !== undefined && clientVersion > publication.maximumClientVersion) return false;
+    if (publication.minimumClientVersion !== undefined
+      && (clientVersion === undefined || clientVersion < publication.minimumClientVersion)) return false;
+    if (publication.maximumClientVersion !== undefined
+      && (clientVersion === undefined || clientVersion > publication.maximumClientVersion)) return false;
     return rolloutMatches(publication, fields);
   }) ?? null;
 }

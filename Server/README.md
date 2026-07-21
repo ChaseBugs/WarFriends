@@ -113,8 +113,12 @@ lifecycles and must not be copied into the authentication key ring.
 Remote Google2u sheets remain disabled unless `REMOTE_CONFIGURATION_MANIFEST_PATH` points to an
 operator-reviewed manifest signed with `REMOTE_CONFIGURATION_SIGNING_SECRET`. The exact stock
 semicolon/DynamoDB-shaped wire supports sheet versions, row IDs, AB variant, language, client-build
-range, and deterministic player rollout targeting. See `config/README.md`; unsigned or malformed
-publication data fails startup, while an empty path preserves the APK-bundled sheets.
+range, and deterministic player rollout targeting. A ranged publication requires one canonical
+numeric `ClientVersion`/`clientVersion` from a replacement client; conflicting aliases or malformed
+values fail targeting, and the stock client's dotted `Version` (for example `1.6.0`) is never
+coerced through `NaN` into a ranged match. Unbounded publications may still target the stock client.
+See `config/README.md`; unsigned or malformed publication data fails startup, while an empty path
+preserves the APK-bundled sheets.
 
 Google Play purchases are fail-closed by default. To enable verified Android currency, reviewed
 pack, and `subscription1` delivery, grant a service account Play Console purchase-read access, set

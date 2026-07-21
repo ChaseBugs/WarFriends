@@ -85,6 +85,46 @@ test("current, untargeted, and pre-auth rollout clients retain bundled sheets", 
   }, rolloutManifest), null);
 });
 
+test("remote publication targeting requires one canonical numeric replacement-client version", () => {
+  const manifest = signedManifest();
+  const targeted = {
+    DbAction: 157,
+    PlayerId: "player-1",
+    abTestVariant: "economy-a",
+    Language: "en",
+  };
+  assert.equal(selectRemoteConfiguration({ ...targeted, ClientVersion: "495" }, manifest), manifest.publications[0]);
+
+  // Stock 1.6.0 supplies dotted Version automatically. It is deliberately not interpreted as
+  // integer build 160/1 because the manifest declares an unrelated numeric adapter contract.
+  assert.equal(selectRemoteConfiguration({ ...targeted, Version: "1.6.0" }, manifest), null);
+  for (const ClientVersion of [null, false, "", "0495", "495.0", "1.6.0", [], Number.NaN]) {
+    assert.equal(selectRemoteConfiguration({
+      ...targeted,
+      ClientVersion: ClientVersion as unknown as string | number,
+    }, manifest), null);
+  }
+  assert.equal(selectRemoteConfiguration({
+    ...targeted,
+    ClientVersion: 495,
+    clientVersion: 496,
+  }, manifest), null);
+
+  const unbounded = {
+    ...manifest,
+    publications: [{
+      ...manifest.publications[0]!,
+      minimumClientVersion: undefined,
+      maximumClientVersion: undefined,
+    }],
+  };
+  assert.equal(selectRemoteConfiguration({ ...targeted, Version: "1.6.0" }, unbounded), unbounded.publications[0]);
+  assert.equal(selectRemoteConfiguration({
+    ...targeted,
+    ClientVersion: false as unknown as string,
+  }, unbounded), null);
+});
+
 test("remote manifest rejects tampering and row delimiters that would corrupt the stock parser", () => {
   const manifest = signedManifest();
   assert.throws(
