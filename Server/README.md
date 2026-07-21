@@ -377,8 +377,8 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   local buckets. The WebSocket decision is serialized with gameplay messages before JSON parsing
   or gameplay work. The WebSocket parser rejects frames above the configured 64-KiB
   default, rejected bursts receive `RateLimited { RetryAfterSeconds }`, and repeated consecutive
-  violations close with policy code `1008`. Payload/rate/violation limits are bounded even when an
-  unsafe environment value is supplied.
+  violations close with policy code `1008`. All seven HTTP/WebSocket limits resolve together once
+  during module startup; an unsafe environment value stops startup before a listener accepts it.
 - **Bootcamp/tutorial lifecycle**: authenticated actions `119` and `120` persist one
   server-issued tutorial battle receipt and consume it only for the recovered Win end reason.
   Action `120` parses `EndReason` through the same exact nonnegative invariant-culture C# `int`
@@ -411,8 +411,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   addresses are trusted only when `TRUST_PROXY_HOPS` is explicitly configured; rejected bursts receive HTTP 429
   and `Retry-After` without reaching request parsing or game handlers. HTTP capacity (1-100,000),
   window (1-86,400 seconds), and memory entries (100-1,000,000), plus WebSocket capacity/window,
-  payload (1,024-1,048,576 bytes), and violation tolerance (1-100), must be exact safe integers;
-  malformed deployment policy fails startup instead of being rounded, clamped, or defaulted.
+  payload (1,024-1,048,576 bytes), and violation tolerance (1-100), resolve together as one
+  immutable exact-safe-integer snapshot. The WebSocket listener captures that same snapshot for
+  parser, bucket, and disconnect behavior. Malformed deployment policy fails startup instead of
+  being rounded, clamped, defaulted, or independently re-read.
 - **Photon-region profile compatibility**: action `140` validates and atomically persists the
   recovered ten-region latency dictionary plus `None`/`Cellural`/`Wifi` connection type.
   Public `DatabasePlayer` snapshots restore the exact `Regions: { S: "..." }` contract used by

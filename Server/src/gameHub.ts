@@ -78,6 +78,7 @@ import {
   webSocketRateLimitKey,
   webSocketViolationLimit,
 } from "./services/webSocketRateLimitService";
+import { trafficPolicy } from "./services/trafficPolicyService";
 import {
   matchmakingTimeoutSeconds,
   matchDisconnectGraceSeconds,
@@ -620,12 +621,15 @@ export async function createGameHub(httpServer: HttpServer): Promise<WebSocketSe
     });
   });
 
+  // Capture the already frozen traffic policy once so parser allocation, rate enforcement, and
+  // disconnect tolerance visibly use one coherent startup authority for every connection.
+  const traffic = trafficPolicy();
   const wss = new WebSocketServer({
     server: httpServer,
     path: "/hub",
     // ws otherwise permits very large frames. Bound allocation at the protocol parser so a
     // client cannot force JSON parsing or retain a giant opaque MatchEvent in memory.
-    maxPayload: webSocketPayloadLimit(config.websocketMaxPayloadBytes),
+    maxPayload: webSocketPayloadLimit(traffic.webSocketPayloadBytes),
   });
 
   wss.on("connection", (socket, request) => {
@@ -634,8 +638,8 @@ export async function createGameHub(httpServer: HttpServer): Promise<WebSocketSe
       socket,
       processing: Promise.resolve(),
       rateLimiter: new WebSocketRateLimiter(
-        config.websocketRateLimitMessages,
-        config.websocketRateLimitWindowSeconds,
+        traffic.webSocketMessageCapacity,
+        traffic.webSocketWindowSeconds,
       ),
       consecutiveRateLimitViolations: 0,
       rateLimitKey: webSocketRateLimitKey(request.socket.remoteAddress ?? "unknown"),
@@ -665,7 +669,7 @@ export async function createGameHub(httpServer: HttpServer): Promise<WebSocketSe
             Type: "RateLimited",
             Payload: { RetryAfterSeconds: rate.retryAfterSeconds },
           });
-          if (client.consecutiveRateLimitViolations >= webSocketViolationLimit(config.websocketRateLimitMaxViolations)) {
+          if (client.consecutiveRateLimitViolations >= webSocketViolationLimit(traffic.webSocketViolationLimit)) {
             socket.close(1008, "Message rate limit exceeded");
           }
           return;

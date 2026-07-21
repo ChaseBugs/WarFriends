@@ -3,7 +3,7 @@ import type { NextFunction, Request, Response } from "express";
 import { config } from "../config";
 import logger from "../utils/logger";
 import { consumeDistributedToken } from "./distributedRateLimitService";
-import { exactTrafficPolicyInteger } from "./trafficPolicyService";
+import { exactTrafficPolicyInteger, trafficPolicy } from "./trafficPolicyService";
 
 interface Bucket {
   tokens: number;
@@ -95,12 +95,17 @@ export function httpRateLimitKey(address: string, secret: string): string {
   return createHmac("sha256", secret).update("http-rate-limit\0").update(address).digest("hex");
 }
 
+function configuredHttpRateLimiter(): HttpRateLimiter {
+  const policy = trafficPolicy();
+  return new HttpRateLimiter(
+    policy.httpRequestCapacity,
+    policy.httpWindowSeconds,
+    policy.httpMemoryEntryCap,
+  );
+}
+
 export function createHttpRateLimitMiddleware(
-  limiter = new HttpRateLimiter(
-    config.httpRateLimitMaxRequests,
-    config.httpRateLimitWindowSeconds,
-    config.httpRateLimitMaxEntries,
-  ),
+  limiter = configuredHttpRateLimiter(),
 ) {
   return (req: Request, res: Response, next: NextFunction): void => {
     // Monitoring must remain able to determine that the process is alive, and a browser's CORS

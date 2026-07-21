@@ -1,6 +1,20 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { HttpRateLimiter, httpRateLimitKey } from "../services/httpRateLimitService";
+import { trafficPolicy } from "../services/trafficPolicyService";
+
+test("HTTP and WebSocket limits are one immutable startup traffic policy", () => {
+  assert.equal(Object.isFrozen(trafficPolicy()), true);
+  assert.deepEqual(trafficPolicy(), {
+    httpRequestCapacity: 120,
+    httpWindowSeconds: 60,
+    httpMemoryEntryCap: 10_000,
+    webSocketPayloadBytes: 65_536,
+    webSocketMessageCapacity: 120,
+    webSocketWindowSeconds: 10,
+    webSocketViolationLimit: 3,
+  });
+});
 
 test("HTTP token bucket rejects a burst and refills continuously", () => {
   const limiter = new HttpRateLimiter(3, 6, 100);

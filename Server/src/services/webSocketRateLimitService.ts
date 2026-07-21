@@ -5,13 +5,17 @@ export interface WebSocketRateLimitDecision {
 }
 
 /** Validate the ws library's per-frame allocation before it accepts a payload into application code. */
-export function webSocketPayloadLimit(value: number): number {
-  return exactTrafficPolicyInteger(value, "WebSocket payload-byte-limit", 1_024, 1_048_576);
+export function webSocketPayloadLimit(value?: number): number {
+  return value === undefined
+    ? trafficPolicy().webSocketPayloadBytes
+    : exactTrafficPolicyInteger(value, "WebSocket payload-byte-limit", 1_024, 1_048_576);
 }
 
 /** Require an exact repeated-violation tolerance so configuration cannot disable disconnect. */
-export function webSocketViolationLimit(value: number): number {
-  return exactTrafficPolicyInteger(value, "WebSocket violation-limit", 1, 100);
+export function webSocketViolationLimit(value?: number): number {
+  return value === undefined
+    ? trafficPolicy().webSocketViolationLimit
+    : exactTrafficPolicyInteger(value, "WebSocket violation-limit", 1, 100);
 }
 
 /**
@@ -72,4 +76,4 @@ export async function consumeWebSocketRateLimit(
 import { createHmac } from "crypto";
 import { config } from "../config";
 import { consumeDistributedToken } from "./distributedRateLimitService";
-import { exactTrafficPolicyInteger } from "./trafficPolicyService";
+import { exactTrafficPolicyInteger, trafficPolicy } from "./trafficPolicyService";

@@ -177,6 +177,12 @@ same snapshot; explicit collection-test/tooling policies pass through the identi
 historical purge receipts continue proving their stored intervals against global bounds rather
 than the current deployment snapshot.
 
+HTTP and WebSocket capacities/windows, HTTP local-memory cap, WebSocket parser payload cap, and
+WebSocket violation tolerance now resolve together once during module startup as one immutable
+seven-value traffic policy. The WebSocket listener captures that snapshot once for parser, local
+and Redis-backed bucket, and disconnect decisions; malformed values stop startup rather than being
+rounded, clamped, defaulted, or independently re-read by different transport boundaries.
+
 Squad War maintenance now widens its round/season queries beyond ordinary due dates so malformed or
 missing BSON dates and unknown statuses enter validation instead of remaining permanently invisible.
 Both selected batches validate before the first settlement write; any non-settled round blocks its
