@@ -18,6 +18,7 @@ import { findById } from "../services/playerService";
 import { progressionForPlayer } from "../services/playerStateService";
 import { mutateProgression } from "../services/progressionMutationService";
 import { notifySquadMemberToDeposit } from "../services/squadSocialService";
+import { publishInboxFanout } from "../services/inboxFanoutService";
 import { authed, type HandlerEntry } from "./types";
 
 /**
@@ -91,6 +92,9 @@ export const cardHandlers: Record<number, HandlerEntry> = {
     // inbox notification after a malformed or replayed request.
     const targetId = typeof req.SquadMemberId === "string" ? req.SquadMemberId : "";
     const message = await notifySquadMemberToDeposit(player!.id, targetId);
+    // Persistence is complete before this best-effort wake-up. A socket/Redis outage leaves the
+    // exact same type-28 row available through the normal GetAllMessages recovery path.
+    await publishInboxFanout(message.toPlayerId, message.messageId);
     // The stock success handler only logs completion. MessageId is included for repaired clients,
     // operations diagnostics, and deterministic retry verification.
     return ok(DbAction.NotifyPlayerToDeposit, { MessageId: message.messageId });

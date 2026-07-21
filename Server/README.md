@@ -768,11 +768,12 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   storage margin. The
   complete recipient account is validated before a message targets it, rather than trusting an
   ID-only index projection.
-  Once a direct message or challenge is durable, the `/hub` transport pushes an `InboxMessage`
-  envelope to an authenticated recipient on the same node and publishes a bounded identity-only
-  Redis hint for other nodes. The receiving node reloads the exact recipient/message row from
-  MongoDB, runs the shared type-specific authority, excludes already-read/accepted/ignored rows or
-  expired challenges, emits
+  Once a direct message, challenge, kick, Squad Event notice, or War Card deposit reminder is
+  durable, the `/hub` transport pushes an `InboxMessage` envelope to an authenticated recipient on
+  the same node and publishes a bounded identity-only Redis hint for other nodes. Transactional
+  producers publish only after commit, never from a MongoDB transaction callback that may retry.
+  The receiving node reloads the exact recipient/message row from MongoDB, runs the shared
+  type-specific authority, excludes already-read/accepted/ignored rows or expired challenges, emits
   the same Dynamo attribute projection as `GetAllMessages`, and keeps a bounded duplicate receipt.
   Redis and socket delivery remain best-effort after persistence; neither can invent content or
   turn delivery failure into message loss because the normal inbox read remains the recovery path.
@@ -1265,7 +1266,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   primary/secondary pair, one-pool limit, and the exact 480-minute cooldown are server-validated.
   Existing Buddy deposits transfer with their full loadout and a ten-card cap.
   `NotifyPlayerToDeposit` validates both players against the same roster and persists the exact
-  type-28 sender snapshot with one actor/target reminder per UTC day.
+  type-28 sender snapshot with one actor/target reminder per UTC day. Types 3, 21, and 28 use the
+  same post-persistence local/cross-node `InboxMessage` delivery as direct messages and challenges;
+  an offline target still recovers the authoritative row through `GetAllMessages`.
 - **Weapon inventory foundation**: private and public player snapshots now serialize the
   exact recovered `InventoryData.slots` and `LevelManagerData.savedWeapons` structures with
   the 4.9.5 starter loadout. One shared authority now validates the complete nested

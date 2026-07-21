@@ -29,6 +29,9 @@ export interface InboxFanoutMessage {
 type LocalDelivery = (recipientPlayerId: string, messageId: string) => void | Promise<void>;
 let localDelivery: LocalDelivery | null = null;
 
+/** Every inbox family for which `toClientMessage` has a recovered, validated wire projection. */
+const LIVE_INBOX_MESSAGE_TYPES: readonly MessageDoc["messageType"][] = [0, 3, 9, 11, 21, 23, 27, 28];
+
 function boundedIdentity(value: unknown, maximumLength: number): value is string {
   return typeof value === "string"
     && value.length > 0
@@ -84,11 +87,12 @@ export function parseInboxFanoutNotice(raw: string): InboxFanoutNotice | null {
 }
 
 /**
- * Re-bind one transient hint to a complete durable direct/challenge message.
+ * Re-bind one transient hint to a complete durable inbox message.
  *
- * Only the two player-authored families are pushed. Economy/result messages retain their normal
- * ordered inbox fetch and claim lifecycle. Validation runs before ignored/expiry filtering so a
- * malformed MongoDB row cannot become harmless-looking absence merely because Redis named it.
+ * Live delivery changes presentation latency only. Reward messages remain unclaimed and retain
+ * their normal recipient-owned action-91 lifecycle; `GetAllMessages` remains the ordered recovery
+ * path for every family. Validation runs before read/ignored/expiry filtering so a malformed
+ * MongoDB row cannot become harmless-looking absence merely because Redis named it.
  */
 export function liveInboxMessageFor(
   raw: MessageDoc,
@@ -108,7 +112,7 @@ export function liveInboxMessageFor(
     throw new Error("Stored inbox message is from the future.");
   }
   if (message.toPlayerId !== recipientPlayerId
-    || (message.messageType !== 0 && message.messageType !== 27)
+    || !LIVE_INBOX_MESSAGE_TYPES.includes(message.messageType)
     || message.read
     || message.ignored
     || message.accepted
@@ -130,7 +134,7 @@ export async function getLiveInboxFanout(
   const message = await messages().findOne({
     toPlayerId: recipientPlayerId,
     messageId,
-    messageType: { $in: [0, 27] },
+    messageType: { $in: LIVE_INBOX_MESSAGE_TYPES },
   }) as unknown as MessageDoc | null;
   return message ? liveInboxMessageFor(message, recipientPlayerId, now) : null;
 }

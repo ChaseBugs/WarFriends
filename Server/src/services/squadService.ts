@@ -16,6 +16,7 @@ import { validatedPlayerAccountEnvelope } from "./playerProfileMirrorAuthoritySe
 import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
 import { reclaimDepositedCardsForDepartureState } from "./squadCardPoolService";
 import { buildSquadKickMessage } from "./socialService";
+import { publishInboxFanout } from "./inboxFanoutService";
 import logger from "../utils/logger";
 import { requireModeratedText } from "./textModerationService";
 import { invalidateSquadWarRewardEligibility } from "./squadWarService";
@@ -1002,7 +1003,7 @@ export function planSquadKick(squad: SquadDTO, actorId: string, targetId: string
 
 export async function kickMember(actorId: string, targetId: string, requestedName: string): Promise<SquadDTO> {
   const name = cleanName(requestedName);
-  return withMongoTransaction(async (session) => {
+  const committed = await withMongoTransaction(async (session) => {
     const [squad, actorPlayer, targetPlayer] = await Promise.all([
       squads().findOne({ name }, { session }),
       players().findOne({ id: actorId }, { session }),
@@ -1068,12 +1069,15 @@ export async function kickMember(actorId: string, targetId: string, requestedNam
     // Persist the recovered MessageType=3 payload in the same transaction as membership and
     // inventory. This is delivery for both connected and offline targets, not merely an audit
     // row: GetAllMessages converts it to the DynamoDB fields parsed by MBACFNICJPL.
-    await messages().insertOne(
-      buildSquadKickMessage(actorPlayer, targetPlayer, squad.name, reclaim.returnedCardIds, now),
-      { session },
-    );
-    return plan.squad;
+    const message = buildSquadKickMessage(actorPlayer, targetPlayer, squad.name, reclaim.returnedCardIds, now);
+    await messages().insertOne(message, { session });
+    return { squad: plan.squad, message };
   });
+  // Never publish from inside the transaction callback: withTransaction can retry that callback,
+  // and a remote node must not observe a notice for a row that later rolls back. The wake-up is
+  // deliberately best-effort after commit; the durable inbox row is the offline recovery path.
+  await publishInboxFanout(committed.message.toPlayerId, committed.message.messageId);
+  return committed.squad;
 }
 
 export interface UpdateSquadOptions {

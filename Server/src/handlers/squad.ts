@@ -36,6 +36,7 @@ import {
   getSquadWarDivision,
 } from "../services/squadWarService";
 import { rankSquadWarDivision } from "../services/squadWarContract";
+import { publishInboxFanout } from "../services/inboxFanoutService";
 import {
   exactSquadInteger,
   requestedDirectSquadChatTimestamp,
@@ -106,6 +107,7 @@ export const squadHandlers: Record<number, HandlerEntry> = {
   [DbAction.InformSquadLeaderAboutEvent]: authed(async ({ player, req }) => {
     const name = squadName(req) || player!.player.squadName;
     const message = await informSquadLeaderAboutEvent(player!.id, name);
+    if (message) await publishInboxFanout(message.toPlayerId, message.messageId);
     return ok(DbAction.InformSquadLeaderAboutEvent, {
       Informed: Boolean(message),
       ...(message ? { MessageId: message.messageId } : {}),
@@ -272,8 +274,9 @@ export const squadHandlers: Record<number, HandlerEntry> = {
   }),
 
   [DbAction.KickPlayer]: authed(async ({ player, req }) => {
-    const squad = await kickMember(player!.id, targetId(req), squadName(req) || player!.player.squadName);
-    const kicked = await findById(targetId(req));
+    const target = targetId(req);
+    const squad = await kickMember(player!.id, target, squadName(req) || player!.player.squadName);
+    const kicked = await findById(target);
     return ok(DbAction.KickPlayer, {
       Squad: buildDatabaseSquad(squad),
       ...(kicked ? { Player: buildDatabasePlayer(kicked) } : {}),
@@ -281,8 +284,9 @@ export const squadHandlers: Record<number, HandlerEntry> = {
   }),
 
   [DbAction.RemoveUserFromSquad]: authed(async ({ player, req }) => {
-    const squad = await kickMember(player!.id, targetId(req), squadName(req) || player!.player.squadName);
-    const removed = await findById(targetId(req));
+    const target = targetId(req);
+    const squad = await kickMember(player!.id, target, squadName(req) || player!.player.squadName);
+    const removed = await findById(target);
     return ok(DbAction.RemoveUserFromSquad, {
       Squad: buildDatabaseSquad(squad),
       ...(removed ? { Player: buildDatabasePlayer(removed) } : {}),
