@@ -812,6 +812,33 @@ test("dog-tag state uses accumulated seconds and recovered 900-second balancing"
   );
 });
 
+test("new-account dog-tag policy rejects malformed or overflowing deployment values", () => {
+  for (const [refillSeconds, cap] of [
+    [Number.NaN, 5],
+    [900.5, 5],
+    [900, 0],
+    [Number.MAX_SAFE_INTEGER, 2],
+  ]) {
+    assert.throws(
+      () => createInitialProgression(1_000, refillSeconds, cap),
+      /Dog-tag deployment policy (is invalid|overflowed)/,
+    );
+  }
+});
+
+test("count-only dog-tag migration rejects malformed durable energy authority", () => {
+  for (const count of [Number.NaN, Number.POSITIVE_INFINITY, -1, 1.5]) {
+    const legacy = contractPlayer();
+    const imported = legacy.progression as unknown as Record<string, unknown>;
+    delete imported.dogTagSeconds;
+    delete imported.dogTagLastUpdate;
+    delete imported.dogTagMax;
+    delete imported.dogTagRefillSeconds;
+    legacy.progression!.dogTags = count;
+    assert.throws(() => progressionForPlayer(legacy), /Legacy dog-tag count is invalid/);
+  }
+});
+
 test("shared progression boundaries reject malformed or future dog-tag authority", () => {
   const corruptRead = contractPlayer();
   corruptRead.progression!.dogTagMax = Number.NaN;
@@ -1020,6 +1047,28 @@ test("daily reward checks unlock at most one ordered claim per UTC login day", (
   assert.equal(nextDayCheck.calendar.claimReward, 1);
   assert.notEqual(nextDayCheck.state, claim.state);
   assert.equal(nextDayCheck.state.revision, claim.state.revision + 1);
+});
+
+test("daily reward calendar rejects malformed deployment-owned Gold authority", () => {
+  const ordinary = config.dailyRewardGold;
+  const weekly = config.dailyRewardWeeklyGold;
+  try {
+    for (const [configuredOrdinary, configuredWeekly] of [
+      [Number.NaN, 10],
+      [5.5, 10],
+      [-1, 10],
+      [10, 9],
+      [5, Number.POSITIVE_INFINITY],
+    ]) {
+      config.dailyRewardGold = configuredOrdinary;
+      config.dailyRewardWeeklyGold = configuredWeekly;
+      assert.throws(() => dailyRewardGoldForDay(1), /Daily reward Gold policy is invalid/);
+      assert.throws(() => buildDailyRewardConfig(2026, 7), /Daily reward Gold policy is invalid/);
+    }
+  } finally {
+    config.dailyRewardGold = ordinary;
+    config.dailyRewardWeeklyGold = weekly;
+  }
 });
 
 test("daily reward month rollover remains a durable transition after same-day no-op checks", () => {

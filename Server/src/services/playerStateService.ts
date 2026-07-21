@@ -1,4 +1,5 @@
 import type { PlayerDocument, PlayerProgressionState } from "../db";
+import { ApiError, ApiErrorCode } from "../apiErrors";
 import { config } from "../config";
 import { createInitialItemInventory } from "./itemInventoryService";
 import { createInitialVisualInventory } from "./visualInventoryService";
@@ -74,6 +75,35 @@ export function unixNow(): number {
   return Math.floor(Date.now() / 1000);
 }
 
+interface InitialDogTagPolicy {
+  refillSeconds: number;
+  cap: number;
+  maximumSeconds: number;
+}
+
+/**
+ * Validate deployment-owned dog-tag balancing before creating or migrating durable authority.
+ *
+ * `Math.floor` and `Math.max` propagate `NaN`, and silently rounding a fractional environment
+ * value would make the stored economy policy differ from the operator's configuration. The
+ * product is persisted as the normal energy ceiling, so it must remain an exact safe integer too.
+ */
+function initialDogTagPolicy(refillSeconds: number, cap: number): InitialDogTagPolicy {
+  if (
+    !Number.isSafeInteger(refillSeconds)
+    || refillSeconds <= 0
+    || !Number.isSafeInteger(cap)
+    || cap <= 0
+  ) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Dog-tag deployment policy is invalid.");
+  }
+  const maximumSeconds = refillSeconds * cap;
+  if (!Number.isSafeInteger(maximumSeconds)) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Dog-tag deployment policy overflowed.");
+  }
+  return { refillSeconds, cap, maximumSeconds };
+}
+
 function currentUtcMidnight(now: number): number {
   const date = new Date(Math.floor(now) * 1_000);
   return Math.floor(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()) / 1_000);
@@ -92,8 +122,7 @@ export function createInitialProgression(
   refillSeconds = config.dogTagRefillSeconds,
   cap = config.dogTagCap,
 ): PlayerProgressionState {
-  const safeRefillSeconds = Math.max(1, Math.floor(refillSeconds));
-  const safeCap = Math.max(1, Math.floor(cap));
+  const dogTags = initialDogTagPolicy(refillSeconds, cap);
   return {
     schemaVersion: 1,
     revision: 0,
@@ -102,10 +131,10 @@ export function createInitialProgression(
     tickets: 0,
     scraps: 0,
     levelExperience: 0,
-    dogTagSeconds: safeCap * safeRefillSeconds,
+    dogTagSeconds: dogTags.maximumSeconds,
     dogTagLastUpdate: now,
-    dogTagMax: safeCap * safeRefillSeconds,
-    dogTagRefillSeconds: safeRefillSeconds,
+    dogTagMax: dogTags.maximumSeconds,
+    dogTagRefillSeconds: dogTags.refillSeconds,
     vipStart: 0,
     vipExpiration: 0,
     tutorialFinished: false,
@@ -220,15 +249,20 @@ export function progressionForPlayer(player: PlayerDocument, now?: number): Play
   // An early unreleased reconstruction stored dogTags as a count. Convert that shape at the
   // read boundary so development databases remain usable; the next economy mutation persists
   // the canonical seconds-based representation and removes the transitional field.
-  const refillSeconds = Math.max(1, Math.floor(config.dogTagRefillSeconds));
-  const cap = Math.max(1, Math.floor(config.dogTagCap));
-  const legacyCount = Math.max(0, Math.floor(state.dogTags ?? cap));
+  const policy = initialDogTagPolicy(config.dogTagRefillSeconds, config.dogTagCap);
+  const legacyCount = state.dogTags ?? policy.cap;
+  if (!Number.isSafeInteger(legacyCount) || legacyCount < 0) {
+    // Do not let Math.floor normalize fractions/negative counts or Math.min turn Infinity into a
+    // full wallet. Although this field predates the canonical tuple, it still controls migration
+    // into durable spendable energy and therefore remains authority rather than display data.
+    throw new ApiError(ApiErrorCode.InternalServerError, "Legacy dog-tag count is invalid.");
+  }
   const vip = validatedVipTimeline(state.vipStart, state.vipExpiration ?? player.player.vipExpiration);
   const migratedDogTags = validatedDogTagAuthority({
-    dogTagSeconds: Math.min(cap, legacyCount) * refillSeconds,
+    dogTagSeconds: Math.min(policy.cap, legacyCount) * policy.refillSeconds,
     dogTagLastUpdate: state.dogTagLastUpdate || Math.floor(player.createdAt.getTime() / 1000),
-    dogTagMax: cap * refillSeconds,
-    dogTagRefillSeconds: refillSeconds,
+    dogTagMax: policy.maximumSeconds,
+    dogTagRefillSeconds: policy.refillSeconds,
   }, now);
   return {
     ...state,

@@ -369,9 +369,17 @@ boot or time arithmetic. Callers that own an authoritative request/boot time sup
 time for both snapshots and additionally reject future cursors; context-free publishers remain
 deterministic while still rejecting every malformed tuple value. Refill/cap values must describe
 whole positive tags, the cursor must be a safe Unix second, and stored seconds remain bounded by
-the normal cap and the recovered two-virtual-tag VIP debt floor. The legacy count-only migration is
-selected only when the canonical tuple is absent; malformed present fields are rejected instead of
-being reinterpreted as legacy state or surviving an unrelated replacement.
+the normal cap and the recovered two-virtual-tag VIP debt floor. New-account and legacy-migration
+deployment policy requires exact positive safe refill/cap integers with a safe persisted product.
+The legacy count-only migration is selected only when the canonical tuple is absent and rejects
+negative, fractional, unsafe, and non-finite counts instead of rounding them into spendable energy;
+malformed present fields are rejected rather than reinterpreted as legacy state or allowed through
+an unrelated replacement.
+
+The offline Daily Reward calendar also validates its deployment-owned ordinary and weekly Gold
+values before wire construction or claim. Both must be exact nonnegative safe integers and the
+weekly value cannot be lower than the ordinary value, so fractional settings are not silently
+rounded and `NaN`/infinity cannot enter a client response as JSON `null`.
 The shared progression read/mutation boundary now treats only an absent legacy revision as zero.
 Present and produced revisions must be nonnegative safe integers, and every state-changing write
 must advance monotonically before its MongoDB compare-and-swap filter or replacement is built;

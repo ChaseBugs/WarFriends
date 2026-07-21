@@ -851,8 +851,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   reject future cursors; context-free publishers remain deterministic while still rejecting every
   malformed tuple value. The refill/cap pair must describe whole positive tags, and base credit
   must stay between the normal cap and the source-backed two-tag VIP debt floor. Count-only legacy
-  migration requires the canonical tuple to be absent; malformed present fields fail closed
-  instead of being rebuilt or surviving an unrelated full-document replacement.
+  migration requires the canonical tuple to be absent and its old count to remain a nonnegative
+  safe integer; fractions, negative values, and non-finite counts cannot be rounded into energy.
+  New-account and legacy-migration deployment values must likewise be exact positive safe integers
+  whose persisted seconds product cannot overflow. Malformed present fields fail closed instead of
+  being rebuilt or surviving an unrelated full-document replacement.
 - **Progression revision authority**: the central progression read boundary migrates only an
   absent pre-revision field to zero. Present and produced values must be nonnegative safe integers,
   and every non-no-op transition must advance monotonically before MongoDB builds its revision
@@ -1293,7 +1296,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   exact parser payloads for Gold, WarBucks, Arena Tickets, loose Bronze/Silver/Gold cards,
   and Bronze/Silver/Gold packs. All three currency branches use the shared nonnegative safe-reward
   balance guard before advancing the claim cursor, so invalid amounts, damaged wallets, or overflow
-  leave the day retryable. Wallets, inventory, achievement progress, the optional VIP pair,
+  leave the day retryable. The configurable ordinary and weekly Gold values must be exact
+  nonnegative safe integers, with the weekly value no lower than the ordinary value, before the
+  calendar can be serialized; malformed policy cannot become JSON `null` or a rounded reward.
+  Wallets, inventory, achievement progress, the optional VIP pair,
   and the claim cursor commit atomically. The deterministic seven-position schedule and amounts
   are an explicit conservative replacement because the original remote live-ops sheet is absent.
   One time-aware authority validates the exact five-field snapshot at shared persisted reads and

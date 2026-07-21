@@ -100,10 +100,23 @@ function secondsUntilNextUtcDay(date: Date): number {
   return Math.max(1, Math.floor((next - date.getTime()) / 1000));
 }
 
-/** Return the configurable Gold fallback retained for compatibility and operator tuning. */
+/**
+ * Return the configurable Gold fallback retained for compatibility and operator tuning.
+ *
+ * These values become both client-visible calendar data and claim authority. Require the exact
+ * safe-integer policy instead of rounding fractions or letting `NaN` serialize as JSON `null`.
+ */
 export function dailyRewardGoldForDay(day: number): number {
-  const ordinary = Math.max(0, Math.floor(config.dailyRewardGold));
-  const weekly = Math.max(ordinary, Math.floor(config.dailyRewardWeeklyGold));
+  const ordinary = config.dailyRewardGold;
+  const weekly = config.dailyRewardWeeklyGold;
+  if (
+    !Number.isSafeInteger(ordinary)
+    || ordinary < 0
+    || !Number.isSafeInteger(weekly)
+    || weekly < ordinary
+  ) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Daily reward Gold policy is invalid.");
+  }
   return day % 7 === 0 ? weekly : ordinary;
 }
 
