@@ -8,7 +8,7 @@ import {
   type PlayerAppealReviewEntry,
   type PlayerSanctionDocument,
 } from "../db";
-import { activeSanctionAt } from "./playerSanctionService";
+import { activeSanctionAt, validatedPlayerSanction } from "./playerSanctionService";
 
 export type PlayerAppealStatus = PlayerAppealDocument["status"];
 
@@ -343,6 +343,7 @@ export async function submitPlayerAppeal(
     // enumerate sanctions belonging to other accounts.
     throw new PlayerAppealInputError("Active sanction was not found.", 404);
   }
+  validatedPlayerSanction(sanction, now);
   if (!activeSanctionAt(sanction, now)) {
     throw new PlayerAppealInputError("Only an active sanction can be appealed.", 409);
   }
@@ -431,7 +432,19 @@ export async function reviewPlayerAppealInCollections(
       options,
     );
     if (!sanction) throw new PlayerAppealInputError("Appeal sanction no longer exists.", 409);
+    validatedPlayerSanction(sanction, now);
     if (sanction.status === "active" && activeSanctionAt(sanction, now)) {
+      // Prove the exact post-revocation lifecycle before its compare-and-set participates in the
+      // appeal transaction; a malformed source row must not be normalized into valid authority.
+      validatedPlayerSanction({
+        ...sanction,
+        status: "revoked",
+        revokedAt: now,
+        revokedBy: input.actor,
+        revocationReason: ("Appeal accepted: " + input.note).slice(0, 500),
+        revocationOperationId: "appeal:" + current._id,
+        resolvedAt: now,
+      }, now);
       const result = await sanctionCollection.updateOne(
         { _id: sanction._id, playerId: current.playerId, status: "active" },
         { $set: {
@@ -450,6 +463,7 @@ export async function reviewPlayerAppealInCollections(
     } else if (sanction.status === "active") {
       // Application time already makes the sanction non-blocking. Persist its audit projection in
       // the same transaction so the accepted appeal cannot leave a stale active status behind.
+      validatedPlayerSanction({ ...sanction, status: "expired", resolvedAt: now }, now);
       await sanctionCollection.updateOne(
         { _id: sanction._id, playerId: current.playerId, status: "active" },
         { $set: { status: "expired", resolvedAt: now } },

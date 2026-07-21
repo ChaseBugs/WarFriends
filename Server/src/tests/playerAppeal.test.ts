@@ -231,7 +231,10 @@ test("appeal cannot target another player, an expired sanction, or change first 
       },
       new Date("2026-07-21T02:00:00Z"),
       appealCollection([]),
-      sanctionCollection([sanction({ expiresAt: new Date("2026-07-21T01:00:00Z") })]),
+      sanctionCollection([sanction({
+        durationSeconds: 3600,
+        expiresAt: new Date("2026-07-21T01:00:00Z"),
+      })]),
     ),
     (error: unknown) => error instanceof PlayerAppealInputError && error.httpStatus === 409,
   );

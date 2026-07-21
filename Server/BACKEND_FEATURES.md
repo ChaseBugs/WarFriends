@@ -54,6 +54,12 @@ Moderation-retention retry receipts now validate exact identity fields, safe non
 deletion counts, safe preview/creation chronology, and exact whole-day cutoffs within the global
 30-3650-day bounds before replay. Historical receipts remain valid across deploy-time policy changes.
 
+Account-sanction rows now have complete durable authority before authentication, issue/revoke replay,
+admin publication, appeal intake, and accepted-appeal mutation. Exact known fields, normalized
+identities, safe chronology, exact optional duration/expiry equality, and status-consistent
+resolution/revocation evidence are mandatory. Active lookup deliberately has no expiry predicate, so
+malformed Dates reach validation and cannot silently reopen access through database comparison.
+
 ### Current PvP relay increment
 
 Redis-enabled deployments now use one atomic Lua operation for cross-node queue deduplication,

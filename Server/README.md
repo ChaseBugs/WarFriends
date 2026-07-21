@@ -120,7 +120,11 @@ and `GET /players/:playerId/sanctions` returns the latest 100 audit rows. Mutati
 `X-Admin-Actor` and an 8-128 character `Idempotency-Key`, so a lost response can be retried without
 creating a second ban, extending a temporary deadline, or duplicating a revocation. The collection
 retains expired and revoked history, permits only one active sanction per player, and evaluates expiry
-from application time instead of waiting for MongoDB cleanup. After a caller proves account ownership,
+from application time instead of waiting for MongoDB cleanup. Every durable row is validated before
+enforcement, replay, operator publication, or appeal mutation: exact fields and normalized identities,
+safe chronology, an exact optional duration/expiry pair, and status-consistent resolution/revocation
+evidence are required. Authentication reads the active slot without an expiry filter so a malformed
+Date fails closed instead of disappearing from the database comparison. After a caller proves account ownership,
 all authenticated HTTP gameplay paths enforce the same record, and every non-heartbeat action on an
 already-identified WebSocket rechecks it before reading or mutating live game state. The stock client receives exact error
 `3003`, `accountId`, and `accountName`; temporary bans additionally receive remaining `seconds`, while
@@ -520,7 +524,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   admin routes can issue, inspect, and revoke durable permanent or temporary account bans. Issue and
   revoke operations are idempotent, one active-ban index is race-safe across processes, expired bans
   stop blocking immediately, and enforcement returns the recovered client dialog contract from the
-  shared authentication boundary.
+  shared authentication boundary. Complete sanction authority is checked before authentication,
+  issue/revoke replay, admin listing, appeal intake, and accepted-appeal revocation: exact known
+  fields, normalized identities, safe ordered dates, exact temporary duration/expiry equality, and
+  status-consistent resolution or revocation audit evidence are mandatory. The active lookup omits
+  an expiry predicate so invalid Dates cannot silently reopen access.
   The authenticated admin queue supports stable filtered pagination, exact report inspection, and
   optimistic `open -> reviewing -> resolved/dismissed` decisions. Each transition appends actor,
   note, previous/next status, operation ID, and timestamp atomically; terminal states are immutable,

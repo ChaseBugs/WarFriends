@@ -13,6 +13,7 @@ import {
   normalizeTemporaryBanSeconds,
   PlayerSanctionInputError,
   revokePlayerSanction,
+  validatedPlayerSanction,
   webSocketMessageRequiresSanctionCheck,
 } from "../services/playerSanctionService";
 
@@ -82,7 +83,7 @@ test("shared authentication sanction check rejects active rows and ignores elaps
     async findOne(filter: unknown) {
       query = filter;
       return {
-        _id: "sanction-1",
+        _id: "123e4567-e89b-42d3-a456-426614174000",
         playerId: "player-1",
         status: "active",
         reason: "confirmed abuse",
@@ -100,7 +101,6 @@ test("shared authentication sanction check rejects active rows and ignores elaps
   assert.deepEqual(query, {
     playerId: "player-1",
     status: "active",
-    $or: [{ expiresAt: { $exists: false } }, { expiresAt: { $gt: now } }],
   });
 
   const clearCollection = {
@@ -109,6 +109,80 @@ test("shared authentication sanction check rejects active rows and ignores elaps
   await assert.doesNotReject(
     assertPlayerNotSanctioned({ id: "player-1", accountName: "Player One" }, now, clearCollection),
   );
+
+  const corruptCollection = {
+    async findOne() {
+      return {
+        _id: "123e4567-e89b-42d3-a456-426614174000",
+        playerId: "player-1",
+        status: "active",
+        reason: "confirmed abuse",
+        issuedBy: "moderator@example.test",
+        issuedAt: new Date("2026-07-20T23:00:00Z"),
+        durationSeconds: 3600,
+        expiresAt: new Date(Number.NaN),
+        operationId: "issue-0001",
+      } satisfies PlayerSanctionDocument;
+    },
+  } as unknown as Collection<PlayerSanctionDocument>;
+  await assert.rejects(
+    assertPlayerNotSanctioned({ id: "player-1", accountName: "Player One" }, now, corruptCollection),
+    /Stored player sanction authority is invalid/u,
+  );
+});
+
+test("complete sanction authority binds exact duration, expiry, and resolution audit fields", () => {
+  const issuedAt = new Date("2026-07-21T00:00:00Z");
+  const now = new Date("2026-07-21T02:00:00Z");
+  const base: PlayerSanctionDocument = {
+    _id: "123e4567-e89b-42d3-a456-426614174000",
+    playerId: "player-1",
+    status: "active",
+    reason: "confirmed abusive conduct",
+    issuedBy: "moderator@example.test",
+    issuedAt,
+    operationId: "issue:player-1:001",
+    durationSeconds: 3600,
+    expiresAt: new Date("2026-07-21T01:00:00Z"),
+  };
+  assert.equal(validatedPlayerSanction(base, now), base);
+  assert.doesNotThrow(() => validatedPlayerSanction({
+    ...base,
+    status: "expired",
+    resolvedAt: new Date("2026-07-21T01:00:01Z"),
+  }, now));
+  assert.doesNotThrow(() => validatedPlayerSanction({
+    ...base,
+    status: "revoked",
+    revokedAt: new Date("2026-07-21T00:30:00Z"),
+    revokedBy: "senior-moderator@example.test",
+    revocationReason: "appeal accepted",
+    revocationOperationId: "revoke:player-1:001",
+    resolvedAt: new Date("2026-07-21T00:30:00Z"),
+  }, now));
+
+  assert.throws(() => validatedPlayerSanction({
+    ...base,
+    expiresAt: new Date("2026-07-21T01:00:01Z"),
+  }, now), /Stored player sanction authority is invalid/u);
+  assert.throws(() => validatedPlayerSanction({
+    ...base,
+    status: "expired",
+    resolvedAt: new Date("2026-07-21T00:59:59Z"),
+  }, now), /Stored player sanction authority is invalid/u);
+  assert.throws(() => validatedPlayerSanction({
+    ...base,
+    status: "revoked",
+    revokedAt: new Date("2026-07-21T00:30:00Z"),
+    revokedBy: "senior-moderator@example.test",
+    revocationReason: "appeal accepted",
+    revocationOperationId: "revoke:player-1:001",
+    resolvedAt: new Date("2026-07-21T00:31:00Z"),
+  }, now), /Stored player sanction authority is invalid/u);
+  assert.throws(() => validatedPlayerSanction({
+    ...base,
+    expiresAt: new Date(Number.NaN),
+  }, now), /Stored player sanction authority is invalid/u);
 });
 
 test("operator bounds distinguish permanent bans from bounded temporary bans", () => {
