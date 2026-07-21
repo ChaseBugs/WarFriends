@@ -194,6 +194,31 @@ test("unit request parsers preserve recovered JSON number transport", () => {
   );
 });
 
+test("UpdateEquippedUnits parser preserves ArmyScreen's sparse true-only flag dictionaries", () => {
+  assert.deepEqual(
+    parseUnitEquipData(equippedData({ [SHOTGUNNER]: { wasEquipped: true } })).equips[SHOTGUNNER],
+    { wasEquipped: true, equipped: false },
+  );
+  assert.deepEqual(
+    parseUnitEquipData(equippedData({ [SHOTGUNNER]: { equipped: true } })).equips[SHOTGUNNER],
+    { wasEquipped: false, equipped: true },
+  );
+
+  for (const detail of [
+    {},
+    { wasEquipped: null },
+    { wasEquipped: false },
+    { equipped: null },
+    { equipped: false },
+    { wasEquipped: true, extra: true },
+  ]) {
+    assert.throws(
+      () => parseUnitEquipData(JSON.stringify({ armyPower: 100, equips: { [SHOTGUNNER]: detail } })),
+      (error: unknown) => (error as { code?: number }).code === UNIT_CANT_EQUIP,
+    );
+  }
+});
+
 test("unit extraction preserves player, helper, and unresolved boundaries", () => {
   assert.equal(generatedUnitCatalog.schemaVersion, 1);
   assert.equal(generatedUnitCatalog.source, "Client/ExportedProject/Assets/Scenes/MainScene.unity");

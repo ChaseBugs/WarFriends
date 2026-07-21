@@ -336,6 +336,12 @@ text. Mandatory discounts and delivery reductions no longer convert absence or n
 signed numeric values still reach the feature layer so its recovered negative-value errors remain
 unchanged.
 
+Action 1003 now also preserves ArmyScreen's sparse equipped-unit detail dictionaries. The client
+adds `wasEquipped` and `equipped` only when each value is true and omits a unit when both are false;
+the backend therefore treats true absence as false but requires every present member to be exact
+JSON `true`. Empty detail objects, explicit false, null, non-Boolean values, and unknown nested keys
+return the recovered `CantEquipUnit` result before tutorial ownership or loadout state can change.
+
 The shared persisted-progression read boundary and mutation-result boundary validate all five core
 numeric fields before price comparison, publication, or the boot adapter: Gold and WarBucks retain
 safe-integer chargeback debt, while Tickets, Scraps, and level experience must be nonnegative safe

@@ -1172,6 +1172,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   `deliveryReduce` members cannot disappear or become null-backed zero values. This rejects
   JavaScript-coercible booleans, arrays, blanks, numeric strings, fractions, non-finite numbers,
   and out-of-range values without changing the later source-specific negative-price handling.
+  `UpdateEquippedUnits` additionally keeps ArmyScreen's sparse true-only detail map: omitted flags
+  mean false, while a present `wasEquipped`/`equipped` must be exact JSON `true`; empty details,
+  explicit false/null values, and unknown nested keys fail with `CantEquipUnit` before loadout or
+  tutorial-unit state is mutated.
 - **Weapon upgrade lifecycle**: buffered actions `73`-`75` use all 165 recovered per-level
   Google2u tables across shop and Black Market families (11,640 normal-level transitions).
   BuyWeaponUpgrade validates the old index and server-derived duration, including the recovered

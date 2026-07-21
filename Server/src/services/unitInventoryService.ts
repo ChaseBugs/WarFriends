@@ -480,10 +480,22 @@ export function parseUnitEquipData(value: string): UnitEquipPayload {
     if (!isObject(rawDetail)) {
       throw new ApiError(UNIT_CANT_EQUIP, "Equipped-unit detail is invalid.");
     }
-    const wasEquipped = rawDetail.wasEquipped ?? false;
-    const equipped = rawDetail.equipped ?? false;
-    if (typeof wasEquipped !== "boolean" || typeof equipped !== "boolean") {
-      throw new ApiError(UNIT_CANT_EQUIP, "Equipped-unit flags must be booleans.");
+    const keys = Object.keys(rawDetail);
+    if (
+      keys.length < 1
+      || keys.length > 2
+      || keys.some((key) => key !== "wasEquipped" && key !== "equipped")
+    ) {
+      throw new ApiError(UNIT_CANT_EQUIP, "Equipped-unit detail has an invalid field set.");
+    }
+
+    // ArmyScreen builds a sparse dictionary: it adds each key only when that Boolean is true,
+    // and omits the whole unit when both values are false. Presence therefore means exact JSON
+    // `true`; null/false must not be confused with absence and an empty object cannot be emitted.
+    const wasEquipped = Object.prototype.hasOwnProperty.call(rawDetail, "wasEquipped");
+    const equipped = Object.prototype.hasOwnProperty.call(rawDetail, "equipped");
+    if ((wasEquipped && rawDetail.wasEquipped !== true) || (equipped && rawDetail.equipped !== true)) {
+      throw new ApiError(UNIT_CANT_EQUIP, "Present equipped-unit flags must be true.");
     }
     equips[unitName(name)] = { wasEquipped, equipped };
   }
