@@ -297,6 +297,13 @@ export interface WeaponActivatePayload {
   name: string;
 }
 
+export interface WeaponPurchaseInstantPayload {
+  name: string;
+  expectedPrice: number;
+  goldCoefficient: number;
+  goldExpCoefficient: number;
+}
+
 export interface ItemInventoryMutationResult {
   state: PlayerProgressionState;
   itemInventory: ItemInventoryState;
@@ -382,6 +389,17 @@ export function parseWeaponPurchaseData(value: string): WeaponPurchasePayload {
 export function parseWeaponActivateData(value: string): WeaponActivatePayload {
   const data = parseObjectJson(value);
   return { name: boundedName(data.LevelName) };
+}
+
+/** Decode WeaponScreen.HDBDPLBHNKD's zero-delivery action-126 dictionary. */
+export function parseWeaponPurchaseInstantData(value: string): WeaponPurchaseInstantPayload {
+  const data = parseObjectJson(value);
+  return {
+    name: boundedName(data.LevelName),
+    expectedPrice: exactRequestJsonInteger(data.ExpectedPrice, "ExpectedPrice", ITEM_PRICE_MISMATCH),
+    goldCoefficient: exactRequestJsonFiniteNumber(data.GoldCoefficient, "GoldCoefficient", ITEM_PRICE_MISMATCH),
+    goldExpCoefficient: exactRequestJsonFiniteNumber(data.GoldExpCoefficient, "GoldExpCoefficient", ITEM_PRICE_MISMATCH),
+  };
 }
 
 /** Decode the exact dictionary queued by WeaponScreen.EquipWeapon. */
@@ -630,6 +648,41 @@ export function activateWeaponState(
   if (!definition) throw new ApiError(ITEM_PRICE_NOT_FOUND, "Weapon was not found.");
   if (!weapon?.bought || weapon.borrowed) {
     throw new ApiError(ITEM_WRONG_INDEX_TO_ACTIVATE, "A permanent weapon purchase must exist before activation.");
+  }
+  return { state, itemInventory, weapon, definition };
+}
+
+/**
+ * Acknowledge InstantBuyWeapon only for the source-backed zero-delivery catalog.
+ *
+ * Unity may queue action 126 after optimistically calling InstantBuyWeapon even though every
+ * enabled 4.9.5 purchase row has `DELIVERTIME=0`. BuyWeapon is therefore the sole debit/grant.
+ * Requiring permanent ownership, an empty delivery receipt, zero client price, and the recovered
+ * coefficients prevents this compatibility action from becoming a second purchase or a generic
+ * way to consume a future timed delivery whose contract has not been recovered.
+ */
+export function instantBuyWeaponState(
+  state: PlayerProgressionState,
+  payload: WeaponPurchaseInstantPayload,
+): ItemInventoryMutationResult {
+  const definition = weaponDefinitionFor(payload.name);
+  const itemInventory = itemInventoryStateFor(state);
+  const weapon = definition ? itemInventory.levelManagerData.savedWeapons[definition.name] : undefined;
+  const delivery = itemInventory.levelManagerData.weaponDelivery;
+  if (!definition || definition.deliverySeconds !== 0) {
+    throw new ApiError(ITEM_PRICE_NOT_FOUND, "Timed weapon purchase is not source-backed.");
+  }
+  if (!weapon?.bought || weapon.borrowed) {
+    throw new ApiError(ITEM_WEAPON_NOT_BOUGHT, "A permanent weapon purchase must exist before instant acknowledgement.");
+  }
+  if (
+    payload.expectedPrice !== 0
+    || Math.abs(payload.goldCoefficient - WEAPON_GOLD_COEFFICIENT) > 0.000_001
+    || Math.abs(payload.goldExpCoefficient - WEAPON_GOLD_EXP_COEFFICIENT) > 0.000_001
+    || delivery.activationNeeded
+    || delivery.itemId.length > 0
+  ) {
+    throw new ApiError(ITEM_PRICE_MISMATCH, "Instant weapon purchase assertion is invalid.");
   }
   return { state, itemInventory, weapon, definition };
 }

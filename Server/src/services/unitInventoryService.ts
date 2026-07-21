@@ -244,6 +244,13 @@ export interface UnitActivatePayload {
   name: string;
 }
 
+export interface UnitPurchaseInstantPayload {
+  name: string;
+  expectedPrice: number;
+  goldCoefficient: number;
+  goldExpCoefficient: number;
+}
+
 export interface UnitUpgradePurchasePayload {
   name: string;
   boughtIndex: number;
@@ -365,6 +372,17 @@ export function parseUnitPurchaseData(value: string): UnitPurchasePayload {
 export function parseUnitActivateData(value: string): UnitActivatePayload {
   const data = parseObjectJson(value);
   return { name: unitName(data.LevelName) };
+}
+
+/** Decode ArmyScreen.BCLKDNPDOBI's zero-delivery action-125 dictionary. */
+export function parseUnitPurchaseInstantData(value: string): UnitPurchaseInstantPayload {
+  const data = parseObjectJson(value);
+  return {
+    name: unitName(data.LevelName),
+    expectedPrice: exactRequestJsonInteger(data.ExpectedPrice, "ExpectedPrice", ITEM_PRICE_MISMATCH),
+    goldCoefficient: exactRequestJsonFiniteNumber(data.GoldCoefficient, "GoldCoefficient", ITEM_PRICE_MISMATCH),
+    goldExpCoefficient: exactRequestJsonFiniteNumber(data.GoldExpCoefficient, "GoldExpCoefficient", ITEM_PRICE_MISMATCH),
+  };
 }
 
 /** Decode ArmyScreen.EFGAIHKNKGG's action-77 normal/special upgrade request. */
@@ -641,6 +659,33 @@ export function activateUnitState(
   const unit = itemInventory.levelManagerData.savedArmies[definition.name];
   if (!unit?.bought) {
     throw new ApiError(ITEM_WRONG_INDEX_TO_ACTIVATE, "Unit has no completed purchase to activate.");
+  }
+  return { state, itemInventory, unit, definition };
+}
+
+/** Zero-delivery counterpart of instantBuyWeaponState for recovered roster units. */
+export function instantBuyUnitState(
+  state: PlayerProgressionState,
+  payload: UnitPurchaseInstantPayload,
+): UnitInventoryMutationResult {
+  const definition = UNIT_CATALOG[payload.name];
+  const itemInventory = itemInventoryStateFor(state);
+  const unit = definition ? itemInventory.levelManagerData.savedArmies[definition.name] : undefined;
+  const delivery = itemInventory.levelManagerData.unitDelivery;
+  if (!definition || definition.deliverySeconds !== 0) {
+    throw new ApiError(ITEM_PRICE_NOT_FOUND, "Timed unit purchase is not source-backed.");
+  }
+  if (!unit?.bought || unit.borrowed) {
+    throw new ApiError(ITEM_PRICE_NOT_FOUND, "A permanent unit purchase must exist before instant acknowledgement.");
+  }
+  if (
+    payload.expectedPrice !== 0
+    || Math.abs(payload.goldCoefficient - WEAPON_GOLD_COEFFICIENT) > 0.000_001
+    || Math.abs(payload.goldExpCoefficient - WEAPON_GOLD_EXP_COEFFICIENT) > 0.000_001
+    || delivery.activationNeeded
+    || delivery.itemId.length > 0
+  ) {
+    throw new ApiError(ITEM_PRICE_MISMATCH, "Instant unit purchase assertion is invalid.");
   }
   return { state, itemInventory, unit, definition };
 }

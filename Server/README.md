@@ -1168,12 +1168,15 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   WarBucks prices, level gates, category masks, and non-sequential indexes are recovered from
   MainScene; purchases grant immediate ownership because every enabled row has
   `DELIVERTIME=0`. Action `128` validates the preceding permanent purchase as an idempotent
-  zero-delivery acknowledgement and cannot grant or convert a rental. Mutations include server
+  zero-delivery acknowledgement and cannot grant or convert a rental. Recovered buffered actions
+  `125`/`126` apply the same rule to Unity's optimistic `InstantBuyUnit`/`InstantBuyWeapon` calls:
+  they require the permanent purchase, exact Gold coefficients, `ExpectedPrice=0`, and an empty
+  matching delivery receipt, then preserve state identity without a second debit or grant. Mutations include server
   price/discount validation, atomic debits, category-safe equipment, Unity rollback fields, and
   `BufferId` replay protection. Re-equipping the exact current weapon is validated but preserves
-  progression identity instead of creating an unrelated inventory revision. Timed
-  `InstantBuyWeapon` remains rejected because no supported
-  source row can produce its required pending-delivery state. Nine
+  progression identity instead of creating an unrelated inventory revision. Any nonzero timed
+  instant-purchase lifecycle remains rejected because no supported source row can produce its
+  required pending-delivery state. Nine
   shop-priced Pulse Rifle rows with null LevelManager entries, unknown catalog rows, and
   unrelated OfferManager-discounted purchases still fail closed.
   `../Tools/Extract-WeaponCatalog.ps1` reproduces the catalog by joining the serialized

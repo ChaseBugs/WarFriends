@@ -27,7 +27,9 @@ import {
   equippedUnitPower,
   grantMissionElitePartsState,
   instantUnitUpgradeState,
+  instantBuyUnitState,
   parseUnitActivateData,
+  parseUnitPurchaseInstantData,
   parseUnitEquipData,
   parseUnitEliteUpgradeData,
   parseUnitPartsToScrapsData,
@@ -82,6 +84,16 @@ function buyData(
 
 function activateData(name = SHOTGUNNER): string {
   return JSON.stringify({ LevelName: name });
+}
+
+function instantBuyData(name = SHOTGUNNER, overrides: Record<string, unknown> = {}): string {
+  return JSON.stringify({
+    LevelName: name,
+    ExpectedPrice: 0,
+    GoldCoefficient: 0.6325,
+    GoldExpCoefficient: -0.175,
+    ...overrides,
+  });
 }
 
 function upgradePurchaseData(
@@ -915,6 +927,28 @@ test("BuyUnit, ActivateUnit, and auto-equip are atomic and replay-safe in Reques
   assert.equal(replay.replayed, true);
   assert.equal(replay.requestsResults, first.requestsResults);
   assert.equal(Object.keys(replay.state.itemInventory?.levelManagerData.savedArmies ?? {}).length, 1);
+});
+
+test("InstantBuyUnit acknowledges only a zero-price completed source purchase", () => {
+  const initial = createInitialProgression(NOW);
+  const payload = parseUnitPurchaseInstantData(instantBuyData());
+  assert.throws(() => instantBuyUnitState(initial, payload), /permanent unit purchase/);
+
+  const result = processAssignmentBufferState(initial, NOW, "unit-instant-buy", [
+    { action: DbAction.BuyUnit, data: buyData() },
+    { action: DbAction.InstantBuyUnit, data: instantBuyData() },
+  ], 0);
+  assert.deepEqual(JSON.parse(result.requestsResults), [
+    { ActionId: DbAction.BuyUnit, Result: 1 },
+    { ActionId: DbAction.InstantBuyUnit, Result: 1 },
+  ]);
+  assert.equal(result.state.itemInventory?.levelManagerData.savedArmies[SHOTGUNNER]?.bought, true);
+
+  const forged = processAssignmentBufferState(initial, NOW, "unit-instant-buy-forged", [
+    { action: DbAction.BuyUnit, data: buyData() },
+    { action: DbAction.InstantBuyUnit, data: instantBuyData(SHOTGUNNER, { GoldCoefficient: 1 }) },
+  ], 0);
+  assert.equal((JSON.parse(forged.requestsResults) as Array<{ Result: number }>)[1]?.Result, ITEM_PRICE_MISMATCH);
 });
 
 test("UpdateEquippedUnits persists the tutorial grant from its first backend-visible event", () => {

@@ -25,9 +25,11 @@ import {
   activateWeaponState,
   activateWeaponUpgradeState,
   equipWeaponState,
+  instantBuyWeaponState,
   instantWeaponUpgradeState,
   markWeaponShownState,
   parseWeaponActivateData,
+  parseWeaponPurchaseInstantData,
   parseWeaponUpgradeActivateData,
   parseWeaponUpgradeInstantData,
   parseWeaponUpgradePurchaseData,
@@ -44,9 +46,11 @@ import {
   convertScrapsToUnitPartsState,
   convertUnitPartsToScrapsState,
   equippedUnitsRecoveryFields,
+  instantBuyUnitState,
   instantUnitUpgradeState,
   markUnitShownState,
   parseUnitActivateData,
+  parseUnitPurchaseInstantData,
   parseUnitEquipData,
   parseUnitEliteUpgradeData,
   parseUnitPartsToScrapsData,
@@ -601,6 +605,7 @@ export function processAssignmentBufferState(
 
     if (
       request.action === DbAction.BuyWeapon
+      || request.action === DbAction.InstantBuyWeapon
       || request.action === DbAction.ActivateWeapon
       || request.action === DbAction.EquipWeapon
       || request.action === DbAction.BuyWeaponUpgrade
@@ -618,6 +623,14 @@ export function processAssignmentBufferState(
             playerLevel,
             parseWeaponPurchaseData(request.data),
             now,
+          ).state;
+        } else if (request.action === DbAction.InstantBuyWeapon) {
+          // All enabled purchase rows have zero delivery time. This source-compatible action
+          // validates the client's zero-price fast-delivery assertion and earlier permanent
+          // purchase, but BuyWeapon remains the only debit and ownership grant.
+          working = instantBuyWeaponState(
+            working,
+            parseWeaponPurchaseInstantData(request.data),
           ).state;
         } else if (request.action === DbAction.ActivateWeapon) {
           // All source-backed normal-shop rows activate immediately after BuyWeapon. The
@@ -681,7 +694,11 @@ export function processAssignmentBufferState(
       continue;
     }
 
-    if (request.action === DbAction.BuyUnit || request.action === DbAction.ActivateUnit) {
+    if (
+      request.action === DbAction.BuyUnit
+      || request.action === DbAction.InstantBuyUnit
+      || request.action === DbAction.ActivateUnit
+    ) {
       try {
         if (request.action === DbAction.BuyUnit) {
           // ArmyScreen calls UpgradeSlots.Buy() before transport, so a failure must later
@@ -692,6 +709,13 @@ export function processAssignmentBufferState(
             working,
             playerLevel,
             parseUnitPurchaseData(request.data),
+          ).state;
+        } else if (request.action === DbAction.InstantBuyUnit) {
+          // The catalog proves a zero-duration purchase, so action 125 is an ownership-bound,
+          // zero-price acknowledgement rather than a second economy transition.
+          working = instantBuyUnitState(
+            working,
+            parseUnitPurchaseInstantData(request.data),
           ).state;
         } else {
           // All supported 4.9.5 purchase rows have zero delivery time. Unity therefore queues

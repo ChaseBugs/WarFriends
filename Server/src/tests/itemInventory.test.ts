@@ -11,6 +11,7 @@ import {
   activateWeaponUpgradeState,
   createInitialItemInventory,
   equipWeaponState,
+  instantBuyWeaponState,
   instantWeaponUpgradeState,
   ITEM_ALREADY_UPGRADING,
   ITEM_NEGATIVE_PRICE_FROM_CLIENT,
@@ -24,6 +25,7 @@ import {
   ITEM_WEAPON_NOT_BOUGHT,
   parseWeaponUpgradeActivateData,
   parseWeaponActivateData,
+  parseWeaponPurchaseInstantData,
   parseWeaponUpgradeInstantData,
   parseWeaponUpgradePurchaseData,
   parseWeaponEquipData,
@@ -76,6 +78,16 @@ function equipData(overrides: Record<string, unknown> = {}): string {
 
 function activateData(overrides: Record<string, unknown> = {}): string {
   return JSON.stringify({ LevelName: FAMAS, ...overrides });
+}
+
+function instantBuyData(overrides: Record<string, unknown> = {}): string {
+  return JSON.stringify({
+    LevelName: FAMAS,
+    ExpectedPrice: 0,
+    GoldCoefficient: 0.6325,
+    GoldExpCoefficient: -0.175,
+    ...overrides,
+  });
 }
 
 function upgradePurchaseData(overrides: Record<string, unknown> = {}): string {
@@ -650,6 +662,36 @@ test("ActivateWeapon validates a permanent purchase and never grants or debits t
   assert.equal(activated.state, bought.state);
   assert.equal(activated.state.gold, 51);
   assert.equal(activated.weapon.bought, true);
+});
+
+test("InstantBuyWeapon is a zero-price ownership acknowledgement, not a second purchase", () => {
+  const initial = { ...createInitialProgression(NOW), gold: 1_000 };
+  const payload = parseWeaponPurchaseInstantData(instantBuyData());
+  assert.throws(() => instantBuyWeaponState(initial, payload), /permanent weapon purchase/);
+
+  const requests = [
+    { action: DbAction.BuyWeapon, data: purchaseData() },
+    { action: DbAction.InstantBuyWeapon, data: instantBuyData() },
+  ];
+  const result = processAssignmentBufferState(initial, NOW, "weapon-instant-buy", requests, 13);
+  assert.deepEqual(JSON.parse(result.requestsResults), [
+    { ActionId: DbAction.BuyWeapon, Result: 1 },
+    { ActionId: DbAction.InstantBuyWeapon, Result: 1 },
+  ]);
+  assert.equal(result.state.gold, 51);
+
+  const forged = processAssignmentBufferState(
+    initial,
+    NOW,
+    "weapon-instant-buy-forged",
+    [
+      { action: DbAction.BuyWeapon, data: purchaseData() },
+      { action: DbAction.InstantBuyWeapon, data: instantBuyData({ ExpectedPrice: 1 }) },
+    ],
+    13,
+  );
+  assert.equal((JSON.parse(forged.requestsResults) as Array<{ Result: number }>)[1]?.Result, ITEM_PRICE_MISMATCH);
+  assert.equal(forged.state.gold, 51);
 });
 
 test("buffered BuyWeapon/ActivateWeapon and message impression are ordered and replay-safe", () => {
