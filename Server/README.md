@@ -1523,8 +1523,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   so entry/heart/scraps values are environment-tunable and final lootboxes currently use a
   documented scraps fallback rather than fabricated inventory objects.
 
-Unimplemented state-changing `DbAction` values return error code `90`; only an explicit
-allowlist of analytics/impression actions is safely ignored.
+Unimplemented state-changing `DbAction` values return error code `90`. Post-login broad analytics
+and impression actions `179`, `194`, and `1007` are explicit authenticated no-ops, so their
+untrusted payloads cannot change gameplay and an unauthenticated request cannot receive a false
+success. The narrow handler-less allowlist is reserved for bounded pre-login crash/error telemetry.
 
 ### Next
 

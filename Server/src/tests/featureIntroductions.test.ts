@@ -138,7 +138,28 @@ test("all seven dedicated shown actions now require authentication", () => {
     DbAction.ElitesFeatureShown,
   ];
   for (const action of actions) assert.equal(analyticsHandlers[action]?.requiresAuth, true, String(action));
-  // The broad serialized PlayerAnalytics request still contains economy counters and must not
-  // become a generic mutation surface merely because the narrow booleans are now persistent.
-  assert.equal(analyticsHandlers[DbAction.UpdateAnalytics], undefined);
+  // Broad analytics and impression payloads remain non-authoritative no-ops, but their stock call
+  // sites execute in an authenticated gameplay session and must not succeed through the open
+  // dispatcher fallback.
+  for (const action of [
+    DbAction.UpdateAnalytics,
+    DbAction.MessageWasShown,
+    DbAction.SpecialOfferShowed,
+  ]) {
+    assert.equal(analyticsHandlers[action]?.requiresAuth, true, String(action));
+  }
+});
+
+test("broad analytics and impression actions acknowledge without mutating gameplay", async () => {
+  for (const action of [
+    DbAction.UpdateAnalytics,
+    DbAction.MessageWasShown,
+    DbAction.SpecialOfferShowed,
+  ]) {
+    const response = await analyticsHandlers[action]!.handler({
+      req: { DbAction: action, forgedEconomy: 2_147_483_647 },
+      player: playerDocument(),
+    });
+    assert.deepEqual(response, { DbAction: action, Result: 1, Ignored: true });
+  }
 });

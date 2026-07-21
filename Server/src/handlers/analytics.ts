@@ -24,7 +24,7 @@ const featureByAction: Readonly<Record<number, FeatureIntroductionKey>> = Object
   [DbAction.ElitesFeatureShown]: "elitesShown",
 });
 
-export const analyticsHandlers: Record<number, HandlerEntry> = Object.fromEntries(
+const featureIntroductionHandlers: Record<number, HandlerEntry> = Object.fromEntries(
   Object.entries(featureByAction).map(([rawAction, feature]) => {
     const action = Number(rawAction);
     return [action, authed(async ({ player }) => {
@@ -35,3 +35,30 @@ export const analyticsHandlers: Record<number, HandlerEntry> = Object.fromEntrie
     })];
   }),
 );
+
+/**
+ * Authenticated no-op actions whose payload cannot safely become gameplay authority.
+ *
+ * These actions used to live in dispatcher's handler-less benign allowlist. That branch runs
+ * before player authentication, so a request received a successful gameplay-shaped response even
+ * with no valid session. The stock analytics and offer-impression call sites execute after login,
+ * while MessageWasShown normally arrives in an authenticated RequestBuffer. Preserve their exact
+ * no-mutation behavior but require the same session proof as their surrounding gameplay flow.
+ */
+const authenticatedIgnoredActions = [
+  DbAction.UpdateAnalytics,
+  DbAction.MessageWasShown,
+  DbAction.SpecialOfferShowed,
+] as const;
+
+const authenticatedIgnoredHandlers: Record<number, HandlerEntry> = Object.fromEntries(
+  authenticatedIgnoredActions.map((action) => [
+    action,
+    authed(async () => ok(action, { Ignored: true })),
+  ]),
+);
+
+export const analyticsHandlers: Record<number, HandlerEntry> = {
+  ...featureIntroductionHandlers,
+  ...authenticatedIgnoredHandlers,
+};
