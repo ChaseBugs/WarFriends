@@ -14,6 +14,11 @@ import {
   type GooglePlaySubscriptionStatus,
   type GooglePlaySubscriptionStatusVerifier,
 } from "./googlePlayPurchaseVerifier";
+import {
+  googlePlaySubscriptionRevalidationBatchSize,
+  googlePlaySubscriptionRevalidationCadenceSeconds,
+  googlePlaySubscriptionSchedulerIntervalSeconds,
+} from "./googlePlayPolicyService";
 import { progressionForPlayer, unixNow } from "./playerStateService";
 import { validatedPlayerAccountEnvelope } from "./playerProfileMirrorAuthorityService";
 import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
@@ -94,24 +99,23 @@ function progressionFilter(player: PlayerDocument): Filter<PlayerDocument> {
     : { id: player.id, "progression.revision": rawRevision };
 }
 
-function cadenceSeconds(): number {
-  return Math.min(86_400, Math.max(300, Math.floor(config.googlePlaySubscriptionRevalidationCadenceSeconds)));
-}
-
 function nextSuccessfulCheck(status: GooglePlaySubscriptionStatus, now: number): Date | null {
   if ((TERMINAL_PURCHASE_SUBSCRIPTION_STATES as readonly string[]).includes(status.subscriptionState)) {
     return null;
   }
   const next = status.entitled && status.expiresAt
-    ? Math.min(status.expiresAt, now + cadenceSeconds())
-    : now + cadenceSeconds();
+    ? Math.min(status.expiresAt, now + googlePlaySubscriptionRevalidationCadenceSeconds())
+    : now + googlePlaySubscriptionRevalidationCadenceSeconds();
   return new Date(next * 1_000);
 }
 
 function retrySeconds(failures: number): number {
   // Begin at five minutes and cap at the normal cadence. The durable counter prevents a broken
   // credential from hammering Play after every process restart while still recovering itself.
-  return Math.min(cadenceSeconds(), 300 * (2 ** Math.min(8, Math.max(0, failures - 1))));
+  return Math.min(
+    googlePlaySubscriptionRevalidationCadenceSeconds(),
+    300 * (2 ** Math.min(8, Math.max(0, failures - 1))),
+  );
 }
 
 async function recordRetry(receipt: PurchaseReceiptDocument, now: number): Promise<void> {
@@ -290,10 +294,10 @@ export async function runGooglePlaySubscriptionRevalidationSweep(
   if (!config.googlePlaySubscriptionRevalidationEnabled) {
     return { checked: 0, changed: 0, failed: 0, skipped: true };
   }
-  const interval = Math.min(3_600, Math.max(30, Math.floor(config.googlePlaySubscriptionSchedulerIntervalSeconds)));
+  const interval = googlePlaySubscriptionSchedulerIntervalSeconds();
   const leased = await withScheduledJobLease(jobId, Math.max(300_000, interval * 2_000), async (lease) => {
     await lease.assertOwned();
-    const batchSize = Math.min(1_000, Math.max(1, Math.floor(config.googlePlaySubscriptionRevalidationBatchSize)));
+    const batchSize = googlePlaySubscriptionRevalidationBatchSize();
     const due = await purchaseReceipts().find({
       $and: [
         {
@@ -349,7 +353,7 @@ export async function runGooglePlaySubscriptionRevalidationSweep(
 
 export function startGooglePlaySubscriptionRevalidationScheduler(): NodeJS.Timeout | null {
   if (!config.googlePlaySubscriptionRevalidationEnabled) return null;
-  const seconds = Math.min(3_600, Math.max(30, Math.floor(config.googlePlaySubscriptionSchedulerIntervalSeconds)));
+  const seconds = googlePlaySubscriptionSchedulerIntervalSeconds();
   const run = (): void => {
     void runGooglePlaySubscriptionRevalidationSweep().then((result) => {
       if (!result.skipped && (result.checked > 0 || result.failed > 0)) {

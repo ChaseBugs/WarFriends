@@ -130,6 +130,12 @@ nonterminal provider state. Missing, malformed, or terminally contradictory curs
 into the leased audit batch, whose complete receipts validate before the first provider call.
 Retry, deleted-account retirement, and provider-result successors also validate before persistence.
 Terminal responses without a fresh expiry preserve the last verified entitlement boundary.
+The subscription cadence, subscription scheduler interval and batch size, and voided-purchase
+scheduler interval now share one exact bounded provider-policy service. Initial receipt cursors and
+later successful/retry checks use the same 300-to-86,400-second cadence; scheduler intervals accept
+only 30-to-3,600 seconds for subscriptions and 60-to-3,600 seconds for void reconciliation, while a
+sweep batch accepts 1-to-1,000 receipts. Fractional, non-finite, negative, and out-of-range settings
+fail closed instead of being rounded, clamped, or stored as invalid dates.
 
 Squad War maintenance now widens its round/season queries beyond ordinary due dates so malformed or
 missing BSON dates and unknown statuses enter validation instead of remaining permanently invisible.

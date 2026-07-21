@@ -1099,6 +1099,13 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   terminal response that omits a new expiry preserves the receipt's last verified expiry as audit
   context instead of deleting the original entitlement boundary.
 
+  Google Play provider scheduling now uses one exact deployment-policy boundary. Subscription
+  cadence is 300-86,400 seconds and is shared by initial receipt creation, successful checks, and
+  retry caps; its scheduler interval is 30-3,600 seconds and its batch is 1-1,000 receipts. The
+  voided-purchase scheduler interval is 60-3,600 seconds. Every setting must be an exact safe
+  integer. Fractional, non-finite, negative, or out-of-range values fail closed instead of being
+  rounded, clamped, or producing a durable invalid revalidation date.
+
   Every shared background-job lease is validated before acquisition and after its MongoDB
   compare-and-set: exact fields, bounded job ID, UUID owner, safe ordered dates, and a duration from
   one second through 24 hours. A malformed expiry therefore fails as damaged authority instead of

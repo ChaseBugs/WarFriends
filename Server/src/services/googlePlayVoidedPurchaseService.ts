@@ -19,6 +19,7 @@ import {
   type GooglePlayVoidedPurchase,
   type GooglePlayVoidedPurchaseLister,
 } from "./googlePlayPurchaseVerifier";
+import { googlePlayVoidedPurchaseSchedulerIntervalSeconds } from "./googlePlayPolicyService";
 import { createInitialItemInventory, itemInventoryStateFor } from "./itemInventoryService";
 import { progressionForPlayer, unixNow } from "./playerStateService";
 import { validatedPlayerAccountEnvelope } from "./playerProfileMirrorAuthorityService";
@@ -277,7 +278,7 @@ export async function runGooglePlayVoidedPurchaseSweep(
   if (!config.googlePlayVoidedPurchaseReconciliationEnabled) {
     return { revoked: 0, replayed: 0, unmatched: 0, skipped: true };
   }
-  const interval = Math.min(3_600, Math.max(60, Math.floor(config.googlePlayVoidedPurchaseSchedulerIntervalSeconds)));
+  const interval = googlePlayVoidedPurchaseSchedulerIntervalSeconds();
   const leased = await withScheduledJobLease(jobId, Math.max(300_000, interval * 2_000), async (lease) => {
     await lease.assertOwned();
     const nowMillis = now * 1_000;
@@ -334,7 +335,7 @@ export async function runGooglePlayVoidedPurchaseSweep(
 
 export function startGooglePlayVoidedPurchaseScheduler(): NodeJS.Timeout | null {
   if (!config.googlePlayVoidedPurchaseReconciliationEnabled) return null;
-  const seconds = Math.min(3_600, Math.max(60, Math.floor(config.googlePlayVoidedPurchaseSchedulerIntervalSeconds)));
+  const seconds = googlePlayVoidedPurchaseSchedulerIntervalSeconds();
   const run = (): void => {
     void runGooglePlayVoidedPurchaseSweep().then((result) => {
       if (!result.skipped && (result.revoked > 0 || result.unmatched > 0)) {

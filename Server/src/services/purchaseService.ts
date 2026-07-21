@@ -18,6 +18,7 @@ import {
   type GooglePlayPurchaseVerifier,
   type VerifiedGooglePlayPurchase,
 } from "./googlePlayPurchaseVerifier";
+import { googlePlaySubscriptionRevalidationCadenceSeconds } from "./googlePlayPolicyService";
 import { progressionForPlayer, unixNow } from "./playerStateService";
 import { validatedPlayerAccountEnvelope } from "./playerProfileMirrorAuthorityService";
 import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
@@ -330,7 +331,7 @@ export async function deliverGooglePlayPurchase(
           subscriptionExpiresAt: new Date((verified.expiresAt ?? now) * 1_000),
           revalidateAfter: new Date(Math.min(
             verified.expiresAt ?? now,
-            now + Math.max(300, Math.floor(config.googlePlaySubscriptionRevalidationCadenceSeconds)),
+            now + googlePlaySubscriptionRevalidationCadenceSeconds(),
           ) * 1_000),
           revalidationFailures: 0,
         } : {}),

@@ -74,6 +74,20 @@ transaction. Action 124 and Squad detail reads derive their round from authentic
 request fields cannot select another division or provide scores. During the short rollover window,
 `GetPlayerData` exposes the recovered presence-only `SquadWarsProcessing` flag.
 
+# Google Play provider scheduling
+
+All Google Play numeric scheduling settings are exact safe integers. Subscription revalidation
+cadence must be 300-86,400 seconds, the subscription scheduler interval must be 30-3,600 seconds,
+and its batch size must be 1-1,000 complete receipts. Initial subscription receipt creation and
+later successful/retry scheduling deliberately use the same cadence, so durable polling authority
+cannot disagree with the worker that consumes it. The voided-purchase scheduler interval must be
+60-3,600 seconds.
+
+Malformed, fractional, non-finite, negative, and out-of-range values fail closed. The backend never
+rounds or clamps these provider controls because that would hide deployment damage and can write an
+invalid or unexpectedly delayed receipt cursor. Provider features remain disabled until their
+enablement flags and external Google Play credentials are explicitly configured.
+
 # Multiplayer timeout policy
 
 `MATCHMAKING_TIMEOUT`, `MATCH_JOIN_TIMEOUT_SECONDS`, and
