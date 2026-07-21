@@ -893,10 +893,13 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   four-slot equipment, notification state, rollback data, and `BufferId` replay protection are
   atomic. Re-equipping the current category item and replaying an already-cleared visual badge
   acknowledgement preserve exact state identity instead of creating false inventory revisions.
-  One shared `DecalManagerData` authority boundary validates every saved flag, part counter, timed
-  expiry, equipped slot, and previous-head value at progression read/publication and before boot,
-  ownership/equip, purchase, paid-pack extension, or voided-purchase reversal. In particular, `NaN`, `Infinity`, fractional, negative,
-  or out-of-Date-range expiry values fail closed instead of making a temporary power band permanent.
+  One shared `DecalManagerData` authority boundary validates the exact root/saved/slot shapes,
+  source-catalog visual identities, catalog-bounded part counters, all four recovered category
+  slots, category-correct equipped IDs, and the helmet-only previous-head value at progression
+  read/publication and before boot, ownership/equip, purchase, paid-pack extension, or
+  voided-purchase reversal. In particular, unknown IDs, missing slots, cross-category equipment,
+  and `NaN`, `Infinity`, fractional, negative, or out-of-Date-range expiry values fail closed
+  instead of becoming durable client-invented ownership or permanent power bands.
   Actions `104`/`105` now persist the weapon/unit `showed` flags through both direct and
   buffered transports without granting ownership; locked or unknown rows fail closed. Direct
   action `194` and its stock buffered form are explicit telemetry acknowledgements, so opening a
@@ -1324,8 +1327,13 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
 - **Achievements (authoritative subset)**: actions `218`-`220` use the recovered
   `AchievementsData`/RequestBuffer contract. Solo missions, ranked wins, assignment completion,
   squad points, and daily-reward claims advance only from accepted server settlements. Purchased
-  weapons/units, their normal upgrades, paid permanent visuals, and confirmed consumed War Cards
-  are re-derived from authoritative progression snapshots using the client's StatsManager rules.
+  weapons/units, their normal upgrades, collected permanent visuals, and confirmed consumed War
+  Cards are re-derived from authoritative progression snapshots. Visual group 15 includes the four
+  recovered category defaults, then counts source-backed bought or parts-completed non-power-band
+  rows from shop, event, assignment, pack, and lootbox grants; this maps the scene's 7/14/29 values
+  to the platform labels for 3/10/25 collected equipment pieces without trusting client progress.
+  Snapshot normalization retains only the minimum target of an already-claimed tier when a later
+  chargeback removes inventory; larger unclaimed/imported totals are discarded.
   The exact 4.9.5 tiers for soldier deployment (group 6), vehicle deployment (group 7), and stolen
   crates (group 18) are present in the wire model, but their values are pinned to zero and their
   claim paths fail closed because stock `GameEnded.Stats` is self-authored combat telemetry.
@@ -1406,7 +1414,7 @@ allowlist of analytics/impression actions is safely ignored.
   purchase, dedicated Black Market weapons, daily weapon/unit rentals, and complete active-loadout
   ArmyPower, periodic VIP visual-part lootboxes, and the exact five-card Play Warcards tutorial
   reward are implemented. Add the remaining authoritative combat card reward/consumption events,
-  server-selected card/Buddy RNG, and non-shop visual reward delivery.
+  server-selected card/Buddy RNG, and source-backed Arena/loyalty/hidden visual reward delivery.
   Normal unit purchase is authoritative for 23
   non-tutorial roster units, and the tutorial unit is persisted through its first equip event;
   three helper rows and 18 ArmyUpgrades rows without LevelManager objects remain closed. All 84

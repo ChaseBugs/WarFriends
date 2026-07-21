@@ -126,7 +126,7 @@ test("pack extension preserves active VIP start and remaining timed visual durat
           showed: true,
           expiresOn: NOW + 100,
           borrowed: false,
-          parts: 7,
+          parts: 0,
           notificate: false,
         },
       },
@@ -143,7 +143,7 @@ test("pack extension preserves active VIP start and remaining timed visual durat
   const visual = visualInventoryStateFor(result.state).visuals.BANDS_DAMAGE_0;
   assert.equal(visual.expiresOn, NOW + 100 + 14_400);
   assert.equal(visual.showed, true);
-  assert.equal(visual.parts, 7);
+  assert.equal(visual.parts, 0);
 });
 
 test("pack delivery rejects a non-finite existing timed visual before extending it", () => {

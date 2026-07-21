@@ -695,9 +695,10 @@ test("progression schema authority accepts only the explicitly supported embedde
 
 test("shared progression boundaries reject malformed rental, Black Market, and visual authority", () => {
   const corruptRead = contractPlayer();
+  const initialVisuals = createInitialProgression(1_700_000_000).visualInventory!;
   corruptRead.progression!.visualInventory = {
     visuals: {
-      broken: {
+      BANDS_DAMAGE_0: {
         bought: false,
         showed: false,
         borrowed: false,
@@ -706,10 +707,10 @@ test("shared progression boundaries reject malformed rental, Black Market, and v
         expiresOn: Number.POSITIVE_INFINITY,
       },
     },
-    slots: { "0": { equippedID: "Default" } },
+    slots: initialVisuals.slots,
     previousHeadDecal: "",
   };
-  assert.throws(() => progressionForPlayer(corruptRead), /Visual broken expiry is invalid/);
+  assert.throws(() => progressionForPlayer(corruptRead), /Visual BANDS_DAMAGE_0 expiry is invalid/);
 
   const current = createInitialProgression(1_700_000_000);
   assert.throws(

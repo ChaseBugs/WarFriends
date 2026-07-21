@@ -79,6 +79,9 @@ const artifact = generatedVisualCatalog as VisualCatalogArtifact;
 export const VISUAL_CATALOG: Readonly<Record<string, Readonly<VisualDefinition>>> = Object.freeze(
   Object.fromEntries(artifact.visuals.map((definition) => [definition.name, Object.freeze({ ...definition })])),
 );
+export const VISUAL_CATEGORY_DEFAULT_IDS: readonly string[] = Object.freeze(
+  artifact.categories.map((category) => category.defaultId),
+);
 const CATEGORY_CATALOG = Object.freeze(Object.fromEntries(
   artifact.categories.map((category) => [category.id, Object.freeze({ ...category, ids: Object.freeze([...category.ids]) })]),
 )) as Readonly<Record<number, Readonly<VisualCategoryDefinition>>>;

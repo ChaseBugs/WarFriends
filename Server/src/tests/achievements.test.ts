@@ -24,7 +24,7 @@ import {
 } from "../services/itemInventoryService";
 import { createInitialProgression } from "../services/playerStateService";
 import { UNIT_CATALOG } from "../services/unitInventoryService";
-import { VISUAL_CATALOG } from "../services/visualInventoryService";
+import { createInitialVisualInventory, VISUAL_CATALOG } from "../services/visualInventoryService";
 import { validatedCardLifecycleCounters } from "../services/cardLifecycleCounterAuthorityService";
 import { validatedAchievementState } from "../services/achievementAuthorityService";
 import { validatedProgressionSuccessor } from "../services/progressionPublicationAuthorityService";
@@ -222,21 +222,42 @@ test("inventory achievement groups preserve source tiers and derive StatsManager
     };
   }
 
-  state.visualInventory = { visuals: {}, slots: {}, previousHeadDecal: "" };
-  const visuals = Object.values(VISUAL_CATALOG)
-    .filter((definition) =>
-      definition.categoryId !== 3 && definition.priceGold + definition.priceWarBucks > 0)
-    .slice(0, 7);
-  for (const definition of visuals) {
-    state.visualInventory.visuals[definition.name] = {
-      bought: true,
-      showed: true,
-      expiresOn: 0,
-      borrowed: false,
-      parts: 0,
-      notificate: false,
-    };
-  }
+  state.visualInventory = createInitialVisualInventory();
+  const shopVisual = Object.values(VISUAL_CATALOG).find((definition) =>
+    definition.categoryId !== 3
+    && definition.purchasable === "shop"
+    && definition.priceGold + definition.priceWarBucks > 0)!;
+  const eventVisual = Object.values(VISUAL_CATALOG).find((definition) =>
+    definition.categoryId !== 3 && definition.purchasable === "event")!;
+  const partsVisual = Object.values(VISUAL_CATALOG).find((definition) =>
+    definition.categoryId !== 3
+    && definition.parts > 0
+    && definition.name !== shopVisual.name
+    && definition.name !== eventVisual.name)!;
+  state.visualInventory.visuals[shopVisual.name] = {
+    bought: true,
+    showed: true,
+    expiresOn: 0,
+    borrowed: false,
+    parts: 0,
+    notificate: false,
+  };
+  state.visualInventory.visuals[eventVisual.name] = {
+    bought: true,
+    showed: true,
+    expiresOn: 0,
+    borrowed: false,
+    parts: 0,
+    notificate: false,
+  };
+  state.visualInventory.visuals[partsVisual.name] = {
+    bought: false,
+    showed: true,
+    expiresOn: 0,
+    borrowed: false,
+    parts: partsVisual.parts,
+    notificate: false,
+  };
 
   const achievements = achievementStateFor(state);
   assert.deepEqual(
@@ -248,6 +269,23 @@ test("inventory achievement groups preserve source tiers and derive StatsManager
     () => validateAchievementProgressState(state, 15, 8),
     (error: unknown) => (error as { code?: number }).code === ACHIEVEMENT_REWARD_NOT_FOUND,
   );
+
+  // A voided purchase may remove the underlying visual after an earned tier was claimed. Keep
+  // only that claim's minimum target; an unclaimed imported value remains non-authoritative.
+  const reversed = createInitialProgression(NOW);
+  reversed.achievements = {
+    data: [{ id: 15, offset: 0, value: 7, progress: [
+      { claimed: true }, { claimed: false }, { claimed: false },
+    ] }],
+  };
+  assert.equal(achievementStateFor(reversed).data.find((group) => group.id === 15)?.value, 7);
+  reversed.achievements.data[0] = {
+    id: 15,
+    offset: 0,
+    value: 29,
+    progress: [{ claimed: false }, { claimed: false }, { claimed: false }],
+  };
+  assert.equal(achievementStateFor(reversed).data.find((group) => group.id === 15)?.value, 4);
 });
 
 test("Arena achievement definitions preserve exact Ticket and Scraps rewards", () => {

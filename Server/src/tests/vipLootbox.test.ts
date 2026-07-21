@@ -197,6 +197,6 @@ test("VIP lootbox settlement rejects selected over-target parts before duplicate
 
   assert.throws(
     () => applyVipBattleLootboxState(initial, true, selectVisual("HEAD_CLOWN")),
-    /VIP lootbox visual HEAD_CLOWN parts are invalid/,
+    /Saved visual authority is invalid/,
   );
 });

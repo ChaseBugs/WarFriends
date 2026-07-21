@@ -1,7 +1,33 @@
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import type { SavedVisualState, VisualInventoryState } from "../db";
+import generatedVisualCatalog from "../data/visualCatalog.generated.json";
 
 const MAX_DATE_UNIX_SECONDS = 8_640_000_000_000;
+const SAVED_VISUAL_KEYS = ["borrowed", "bought", "expiresOn", "notificate", "parts", "showed"] as const;
+const SAVED_SLOT_KEYS = ["equippedID"] as const;
+
+interface VisualAuthorityDefinition {
+  name: string;
+  categoryId: number;
+  parts: number;
+}
+
+interface VisualAuthorityCategory {
+  id: number;
+  defaultId: string;
+}
+
+const visualDefinitions = new Map(
+  (generatedVisualCatalog.visuals as VisualAuthorityDefinition[]).map((definition) => [definition.name, definition]),
+);
+const visualCategories = new Map(
+  (generatedVisualCatalog.categories as VisualAuthorityCategory[]).map((category) => [String(category.id), category]),
+);
+
+function hasExactKeys(value: object, expected: readonly string[]): boolean {
+  const actual = Object.keys(value).sort();
+  return actual.length === expected.length && actual.every((key, index) => key === expected[index]);
+}
 
 /** Validate a timed-cosmetic deadline before it participates in ownership or persistence. */
 export function validatedVisualUnixSeconds(value: number, field: string): number {
@@ -23,20 +49,32 @@ export function validatedVisualInventoryState(
   value: VisualInventoryState | undefined,
 ): VisualInventoryState | undefined {
   if (value === undefined) return undefined;
-  if (!value.visuals || typeof value.visuals !== "object" || Array.isArray(value.visuals)) {
+  if (
+    !value
+    || typeof value !== "object"
+    || Array.isArray(value)
+    || !hasExactKeys(value, ["previousHeadDecal", "slots", "visuals"])
+    || !value.visuals
+    || typeof value.visuals !== "object"
+    || Array.isArray(value.visuals)
+  ) {
     throw new ApiError(ApiErrorCode.InternalServerError, "Visual inventory is invalid.");
   }
   for (const [name, saved] of Object.entries(value.visuals)) {
+    const definition = visualDefinitions.get(name);
     if (
-      name.length === 0
-      || name.length > 256
+      !definition
       || !saved
+      || typeof saved !== "object"
+      || Array.isArray(saved)
+      || !hasExactKeys(saved, SAVED_VISUAL_KEYS)
       || typeof saved.bought !== "boolean"
       || typeof saved.showed !== "boolean"
       || typeof saved.borrowed !== "boolean"
       || typeof saved.notificate !== "boolean"
       || !Number.isSafeInteger(saved.parts)
       || saved.parts < 0
+      || saved.parts > definition.parts
     ) {
       throw new ApiError(ApiErrorCode.InternalServerError, "Saved visual authority is invalid.");
     }
@@ -45,18 +83,34 @@ export function validatedVisualInventoryState(
   if (!value.slots || typeof value.slots !== "object" || Array.isArray(value.slots)) {
     throw new ApiError(ApiErrorCode.InternalServerError, "Visual slots are invalid.");
   }
+  if (Object.keys(value.slots).length !== visualCategories.size) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Visual slots are invalid.");
+  }
   for (const [slot, saved] of Object.entries(value.slots)) {
+    const category = visualCategories.get(slot);
+    const equipped = saved && typeof saved.equippedID === "string"
+      ? visualDefinitions.get(saved.equippedID)
+      : undefined;
     if (
-      !/^\d{1,3}$/.test(slot)
+      !category
       || !saved
+      || typeof saved !== "object"
+      || Array.isArray(saved)
+      || !hasExactKeys(saved, SAVED_SLOT_KEYS)
       || typeof saved.equippedID !== "string"
-      || saved.equippedID.length === 0
-      || saved.equippedID.length > 256
+      || !equipped
+      || equipped.categoryId !== category.id
     ) {
       throw new ApiError(ApiErrorCode.InternalServerError, "Visual slot authority is invalid.");
     }
   }
-  if (typeof value.previousHeadDecal !== "string" || value.previousHeadDecal.length > 256) {
+  const previousHead = value.previousHeadDecal === ""
+    ? undefined
+    : visualDefinitions.get(value.previousHeadDecal);
+  if (
+    typeof value.previousHeadDecal !== "string"
+    || (value.previousHeadDecal !== "" && (!previousHead || previousHead.categoryId !== 1))
+  ) {
     throw new ApiError(ApiErrorCode.InternalServerError, "Previous head visual is invalid.");
   }
   return value;

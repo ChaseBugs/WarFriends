@@ -9,7 +9,11 @@ import { itemInventoryStateFor, weaponDefinitionFor } from "./itemInventoryServi
 import { mutateProgression } from "./progressionMutationService";
 import { checkedRewardBalance } from "./rewardMathService";
 import { UNIT_CATALOG } from "./unitInventoryService";
-import { VISUAL_CATALOG, visualInventoryStateFor } from "./visualInventoryService";
+import {
+  VISUAL_CATALOG,
+  VISUAL_CATEGORY_DEFAULT_IDS,
+  visualInventoryStateFor,
+} from "./visualInventoryService";
 import { validatedCardLifecycleCounters } from "./cardLifecycleCounterAuthorityService";
 import { validatedAchievementState } from "./achievementAuthorityService";
 
@@ -173,9 +177,12 @@ export const ACHIEVEMENT_DEFINITIONS: Readonly<Record<number, readonly Achieveme
  * Purchases count only rows whose display unlock level is above three, exactly matching
  * `StatsManager.weaponsPurchased` and `unitsPurchased`; this excludes the starter loadout and
  * tutorial Assaulter. Upgrade counters are sums of the stored normal `boughtIndex`, not events,
- * special slots, promotions, or Elite parts. Visuals exclude power bands and require a permanent
- * bought row with a non-zero source shop price. Borrowed rentals are deliberately excluded from
- * every count because they are temporary entitlements and must not unlock permanent rewards.
+ * special slots, promotions, or Elite parts. The visual counter starts with the four scene
+ * category defaults, which explains why the recovered 7/14/29 server targets correspond to the
+ * platform achievement labels for 3/10/25 collected pieces. Every later permanent bought or
+ * parts-completed visual counts regardless of whether it came from the shop, an assignment, or a
+ * lootbox. Temporary power bands and borrowed rentals are deliberately excluded because they are
+ * not durable collected equipment and must not unlock permanent rewards.
  */
 function snapshotAchievementValues(state: PlayerProgressionState): Readonly<Record<number, number>> {
   const cardCounters = validatedCardLifecycleCounters(state);
@@ -201,16 +208,14 @@ function snapshotAchievementValues(state: PlayerProgressionState): Readonly<Reco
   }
 
   const visuals = visualInventoryStateFor(state).visuals;
-  const paidVisuals = Object.entries(visuals).filter(([name, saved]) => {
+  const collectedVisuals = new Set(VISUAL_CATEGORY_DEFAULT_IDS);
+  for (const [name, saved] of Object.entries(visuals)) {
     const definition = VISUAL_CATALOG[name];
-    return Boolean(
-      definition
-      && definition.categoryId !== 3
-      && definition.priceGold + definition.priceWarBucks > 0
-      && saved.bought
-      && !saved.borrowed,
-    );
-  }).length;
+    if (!definition || definition.categoryId === 3 || saved.borrowed) continue;
+    if (saved.bought || (definition.parts > 0 && saved.parts >= definition.parts)) {
+      collectedVisuals.add(name);
+    }
+  }
   return {
     0: unitsPurchased,
     1: weaponsPurchased,
@@ -220,7 +225,7 @@ function snapshotAchievementValues(state: PlayerProgressionState): Readonly<Reco
     9: soldierUpgrades,
     10: mechanicalUpgrades,
     11: weaponUpgrades,
-    15: paidVisuals,
+    15: collectedVisuals.size,
   };
 }
 
@@ -276,12 +281,21 @@ export function achievementStateFor(state: PlayerProgressionState): AchievementS
   }
   // Inventory is already the authority for these counters. Re-deriving them on every read and
   // buffered achievement action also migrates older accounts without trusting a client offset or
-  // requiring historical purchase events that predate this server implementation.
+  // requiring historical purchase events that predate this server implementation. An already
+  // claimed tier is the sole lower bound retained from the achievement blob: chargeback or voided
+  // purchase handling may later remove inventory, but it must not make the durable ordered claim
+  // prefix internally invalid. Any unclaimed value above the current snapshot is still discarded.
   for (const [rawId, value] of Object.entries(snapshotAchievementValues(state))) {
     const id = Number(rawId);
     const group = byId.get(id);
     const tiers = ACHIEVEMENT_DEFINITIONS[id];
-    if (group && tiers) group.value = Math.min(tiers[tiers.length - 1].target, value);
+    if (group && tiers) {
+      let claimedFloor = 0;
+      for (let tierIndex = 0; tierIndex < group.progress.length && tierIndex < tiers.length; tierIndex += 1) {
+        if (group.progress[tierIndex].claimed) claimedFloor = tiers[tierIndex].target;
+      }
+      group.value = Math.max(claimedFloor, Math.min(tiers[tiers.length - 1].target, value));
+    }
   }
   // Groups 6, 7, and 18 are present in MainScene and must exist in AchievementsData, but their
   // local StatsManager values are self-authored. Pin them to zero at every read/mutation boundary

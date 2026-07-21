@@ -77,12 +77,17 @@ the same battle receipt returns its stored response, so neither counter can adva
 
 Seven additional MainScene groups are now reconstructed from server-owned snapshots: bought units
 (group 0), bought weapons (1), confirmed War Cards consumed in PvP (8), soldier normal upgrades
-(9), mechanical normal upgrades (10), weapon upgrades (11), and paid permanent visuals (15).
+(9), mechanical normal upgrades (10), weapon upgrades (11), and collected permanent visuals (15).
 Their exact three-tier targets and Gold/WarBucks rewards come from the serialized Achievements
 component. Purchase counters require source unlock level above three, upgrade counters sum only
-normal `boughtIndex`, visual counting excludes power bands, and temporary rentals never qualify.
+normal `boughtIndex`. Visual progress begins with the four category defaults and counts durable
+bought or parts-completed rows from every implemented reward path while excluding temporary power
+bands; this is why the 7/14/29 scene targets match the 3/10/25 platform labels. Temporary rentals
+never qualify.
 Recomputing these monotonic values from inventory also migrates older accounts without trusting
-the client's action-220 progress or offset.
+the client's action-220 progress or offset. If a later voided purchase removes inventory, only the
+minimum target proven by an already-claimed tier is retained so the ordered claim prefix remains
+valid; a larger unclaimed imported value is still discarded.
 
 Group 13 is also source-backed: `AchievementGetToLeague` reads `DatabasePlayer.leagueTier`, which
 the backend owns. Silver II, Gold I, and Master III unlock 5, 10, and 20 Gold respectively. League

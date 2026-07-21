@@ -113,6 +113,8 @@ rejected mutation therefore returns authoritative Gold, WarBucks, and the comple
 `DecalManagerData` so the recovered response parser can undo the optimistic change.
 
 - Catalog presence never grants an event, Arena, loyalty, or hidden item.
+- Durable snapshots accept only source-catalog IDs, exact saved-row fields, catalog-bounded parts,
+  all four category slots, category-correct equipped IDs, and a helmet-only previous-head value.
 - Client price, discount, VIP, expiry, parts, and ownership values are never authoritative.
 - An unresolved row must not be purchasable even when its price is known.
 - Timed power bands are checked against server time at equipment time.
@@ -120,12 +122,12 @@ rejected mutation therefore returns authoritative Gold, WarBucks, and the comple
 
 ## Remaining work
 
-- Server-owned reward grants for Arena, events, assignments, loyalty, and value packs.
+- Server-owned reward grants for the remaining Arena, loyalty, and hidden families.
 - Recovery of the retired normal-lootbox rarity/visual weights; the periodic VIP path currently
   uses the documented uniform normal-shop fallback.
-- Rental grants and expiration cleanup.
 - Offer-backed discounts and subscription/VIP purchase flows.
-- Remaining non-ownership visual achievement or reward integrations.
+- Recovery of any retired visual reward families not represented by the reviewed event,
+  assignment, pack, lootbox, and rewarded-video paths.
 
 ## Key implementation files
 

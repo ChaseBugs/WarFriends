@@ -17,6 +17,7 @@ import {
 import { AccountType } from "../constants";
 import type { PlayerDocument } from "../db";
 import { newPlayer } from "../dtos";
+import { validatedVisualInventoryState } from "../services/visualEntitlementService";
 
 const NOW = 1_700_000_000;
 
@@ -77,6 +78,51 @@ test("new accounts serialize the exact DecalManagerData shape and default slots"
   });
   const wire = buildPlayerData(playerDocument());
   assert.deepEqual(JSON.parse((wire.DecalManagerData as { S: string }).S), initial);
+});
+
+test("visual authority rejects unknown rows, impossible parts, and cross-category equipment", () => {
+  const initial = createInitialVisualInventory();
+  const saved = {
+    bought: false,
+    showed: false,
+    expiresOn: 0,
+    borrowed: false,
+    parts: 0,
+    notificate: false,
+  };
+
+  assert.throws(
+    () => validatedVisualInventoryState({
+      ...initial,
+      visuals: { RETIRED_OR_CLIENT_INVENTED_VISUAL: saved },
+    }),
+    /Saved visual authority is invalid/,
+  );
+  assert.throws(
+    () => validatedVisualInventoryState({
+      ...initial,
+      visuals: { CAMOS_DEFAULT: { ...saved, parts: 1 } },
+    }),
+    /Saved visual authority is invalid/,
+  );
+  assert.throws(
+    () => validatedVisualInventoryState({
+      ...initial,
+      slots: { ...initial.slots, "1": { equippedID: "HEAD_CIGAR" } },
+    }),
+    /Visual slot authority is invalid/,
+  );
+  assert.throws(
+    () => validatedVisualInventoryState({
+      ...initial,
+      slots: { "0": initial.slots["0"]! },
+    }),
+    /Visual slots are invalid/,
+  );
+  assert.throws(
+    () => validatedVisualInventoryState({ ...initial, previousHeadDecal: "CAMOS_DEFAULT" }),
+    /Previous head visual is invalid/,
+  );
 });
 
 test("WarBucks visual purchase and equip use the source row and owned category", () => {
