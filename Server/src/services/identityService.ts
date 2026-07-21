@@ -108,7 +108,46 @@ export async function findIdentity(
     // mutations call the same strict normalizer directly and retain its stable authorization error.
     return null;
   }
-  return identities().findOne({ provider, externalId: normalized }, session ? { session } : undefined);
+  const identity = await identities().findOne(
+    { provider, externalId: normalized },
+    session ? { session } : undefined,
+  );
+  return identity ? validatedIdentityDocument(identity) : null;
+}
+
+/**
+ * Validate every field that makes a durable identity usable as authentication authority.
+ *
+ * HMAC output is exactly 32 bytes encoded as lower-case hexadecimal. Accepting truncated or
+ * noncanonical text would make timing-safe comparison semantics depend on Buffer's permissive hex
+ * parser. Timestamps are audit state rather than expiry gates, but impossible or reversed values
+ * indicate a partially imported row and must not be advertised by an existence endpoint.
+ */
+export function validatedIdentityDocument(identity: IdentityDocument): IdentityDocument {
+  let externalId: string;
+  try {
+    externalId = validatedConnectedIdentityExternalId(identity.provider, identity.externalId);
+  } catch {
+    throw new Error("Stored platform identity external id is invalid.");
+  }
+  const createdAt = identity.createdAt instanceof Date ? identity.createdAt.getTime() : Number.NaN;
+  const updatedAt = identity.updatedAt instanceof Date ? identity.updatedAt.getTime() : Number.NaN;
+  const valid = (identity.provider === "facebook"
+      || identity.provider === "googlePlay"
+      || identity.provider === "gameCenter")
+    && externalId === identity.externalId
+    && typeof identity.playerId === "string"
+    && identity.playerId.length > 0
+    && identity.playerId.length <= 256
+    && /^[0-9a-f]{64}$/u.test(identity.credentialHash)
+    && typeof identity.displayName === "string"
+    && identity.displayName.length <= 100
+    && identity.displayName === identity.displayName.trim()
+    && Number.isFinite(createdAt)
+    && Number.isFinite(updatedAt)
+    && updatedAt >= createdAt;
+  if (!valid) throw new Error("Stored platform identity authority is invalid.");
+  return identity;
 }
 
 export interface ValidatedIdentityOwner {

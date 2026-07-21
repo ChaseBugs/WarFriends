@@ -238,7 +238,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   final credential after comparison so a concurrent unlink, relink, or rotation cannot authenticate
   a stale owner. Facebook IDs retain the stock C# signed-`long` contract as canonical invariant
   strings, including values above JavaScript's safe-integer range; malformed/out-of-range text and
-  the reserved disconnected value `-1` cannot create or resolve an identity. First-time
+  the reserved disconnected value `-1` cannot create or resolve an identity. Every shared identity
+  lookup also validates the complete row: exact provider/external ID, bounded owner, canonical
+  64-character lower-case HMAC, trimmed display name, and ordered finite audit timestamps. First-time
   `CreateGcAccount` commits the player and identity in one transaction,
   returns separate platform/session credentials, and supplies the recovered `15400` existing-account
   profile contract. Remaining response-contract work is tracked in `BACKEND_FEATURES.md`.

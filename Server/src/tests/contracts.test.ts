@@ -9,6 +9,7 @@ import {
   accountTypeAfterIdentityRemoval,
   normalizeIdentityExternalId,
   providerForAccountType,
+  validatedIdentityDocument,
   validatedIdentityOwner,
 } from "../services/identityService";
 import {
@@ -234,7 +235,20 @@ test("platform identity authority must match the exact connected player mirror",
     createdAt: new Date("2023-11-14T22:13:20Z"),
     updatedAt: new Date("2023-11-14T22:13:20Z"),
   };
+  assert.equal(validatedIdentityDocument(identity), identity);
   assert.equal(validatedIdentityOwner(identity, player).player.id, player.id);
+
+  assert.throws(
+    () => validatedIdentityDocument({ ...identity, credentialHash: "not-a-hmac" }),
+    /Stored platform identity authority is invalid/,
+  );
+  assert.throws(
+    () => validatedIdentityDocument({
+      ...identity,
+      updatedAt: new Date(identity.createdAt.getTime() - 1),
+    }),
+    /Stored platform identity authority is invalid/,
+  );
 
   assert.throws(
     () => validatedIdentityOwner({ ...identity, externalId: "987654321" }, player),
