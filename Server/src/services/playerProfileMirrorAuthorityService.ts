@@ -28,3 +28,15 @@ export function validatedPlayerProfileMirrors(player: PlayerDocument): PlayerDoc
   if (!valid) throw new Error("Stored player profile mirrors are inconsistent.");
   return player;
 }
+
+/**
+ * Preserve a legitimate lookup miss while proving every document returned by a shared lookup.
+ *
+ * Keeping this nullable adapter beside the mirror proof prevents callers from accidentally
+ * treating damaged authority as "player not found". A missing row remains `null`; an existing
+ * split-brain row throws and the request fails closed before authentication or gameplay logic can
+ * select by one root value while consuming a different value from DatabasePlayerDTO.
+ */
+export function validatedPlayerProfileLookup(player: PlayerDocument | null): PlayerDocument | null {
+  return player === null ? null : validatedPlayerProfileMirrors(player);
+}

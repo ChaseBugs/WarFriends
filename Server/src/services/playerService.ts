@@ -2,23 +2,32 @@ import type { ClientSession } from "mongodb";
 import { players, type PlayerDocument } from "../db";
 import type { DatabasePlayerDTO } from "../dtos";
 import { ApiError, ApiErrorCode } from "../apiErrors";
-import { validatedPlayerProfileMirrors } from "./playerProfileMirrorAuthorityService";
+import {
+  validatedPlayerProfileLookup,
+  validatedPlayerProfileMirrors,
+} from "./playerProfileMirrorAuthorityService";
 
 // Data-access for the player document. The full client-facing snapshot lives in
 // document.player (DatabasePlayerDTO); a few dimensions are denormalized to the top level
 // for indexed lookup/matchmaking and kept in sync on every save.
 
 export async function findById(id: string): Promise<PlayerDocument | null> {
-  return players().findOne({ id });
+  return validatedPlayerProfileLookup(await players().findOne({ id }));
 }
 
 export async function findByAuthToken(id: string, authToken: string): Promise<PlayerDocument | null> {
-  return players().findOne({ id, authToken });
+  return validatedPlayerProfileLookup(await players().findOne({ id, authToken }));
 }
 
-/** Best-effort attach for non-auth-required handlers: returns null instead of throwing. */
+/**
+ * Best-effort attach for non-auth-required handlers: a real lookup miss returns null.
+ *
+ * "Optional" applies only to absent or invalid credentials. If MongoDB did find the account, its
+ * complete mirror tuple must still pass the same authority proof as an authenticated lookup; a
+ * damaged profile is never downgraded to an anonymous request that could hide corruption.
+ */
 export async function findByIdOptional(id: string, authToken: string): Promise<PlayerDocument | null> {
-  return players().findOne({ id, authToken });
+  return validatedPlayerProfileLookup(await players().findOne({ id, authToken }));
 }
 
 export async function insertPlayer(

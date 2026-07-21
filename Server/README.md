@@ -213,9 +213,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   zero or raw `NaN`/`Infinity` string; War Arena also validates its monthly derivation clock.
   Root/indexed player identity, sparse provider IDs, device token, league, Army Power,
   lifetime-experience, squad-point, and squad-name mirrors must exactly match the client-facing
-  `DatabasePlayer` DTO before insert or boot/profile/leaderboard projection. Full-profile saves
-  set/unset those roots atomically, so MongoDB cannot order, select, or authenticate by a value
-  different from the one Unity displays.
+  `DatabasePlayer` DTO after every shared player lookup and before insert, authentication/gameplay
+  use, or boot/profile/leaderboard projection. A missing row remains a normal lookup miss, while an
+  existing split profile fails closed. Full-profile saves set/unset those roots atomically, so
+  MongoDB cannot order, select, or authenticate by a value different from the one Unity displays.
   Human passwords use versioned salted scrypt with automatic legacy-HMAC migration; provider
   credentials remain separate from the rotated internal
   gameplay session token. Durable login guesses use an

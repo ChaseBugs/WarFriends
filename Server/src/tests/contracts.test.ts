@@ -29,6 +29,7 @@ import {
 } from "../services/progressionRevisionAuthorityService";
 import { validatedProgressionSuccessor } from "../services/progressionPublicationAuthorityService";
 import { validatedProgressionSchemaVersion } from "../services/progressionSchemaAuthorityService";
+import { validatedPlayerProfileLookup } from "../services/playerProfileMirrorAuthorityService";
 
 function contractPlayer(): PlayerDocument {
   const player = newPlayer("player-contract", "ContractPlayer", AccountType.Facebook);
@@ -309,8 +310,15 @@ test("DynamoDB numeric wire projection rejects corrupt profile authority instead
 });
 
 test("indexed player profile mirrors must match before client-visible projection", () => {
+  assert.equal(validatedPlayerProfileLookup(null), null);
+  assert.equal(validatedPlayerProfileLookup(contractPlayer())?.id, "player-contract");
+
   const corrupt = contractPlayer();
   corrupt.experience += 1;
+  assert.throws(
+    () => validatedPlayerProfileLookup(corrupt),
+    /Stored player profile mirrors are inconsistent/,
+  );
   assert.throws(
     () => buildDatabasePlayer(corrupt),
     /Stored player profile mirrors are inconsistent/,
