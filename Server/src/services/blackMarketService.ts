@@ -7,6 +7,11 @@ import type {
 import { WEAPON_BLACK_MARKET_PRICES } from "../data/weaponUpgradeCatalog.generated";
 import { BLACK_MARKET_WEAPON_CATALOG } from "./itemInventoryService";
 import { mutateProgression } from "./progressionMutationService";
+import {
+  hasActiveBlackMarketOffer,
+  validatedBlackMarketOfferState,
+  validatedBlackMarketUnixSeconds,
+} from "./blackMarketEntitlementService";
 
 /**
  * Recovered Black Market offer lifecycle.
@@ -32,15 +37,6 @@ export interface BlackMarketMutationResult {
   state: PlayerProgressionState;
   blackMarket: BlackMarketOfferState;
   issued: boolean;
-}
-
-function hasActiveOffer(value: BlackMarketOfferState | undefined, now: number): boolean {
-  return Boolean(
-    value
-      && Number.isInteger(value.offerEnd)
-      && value.offerEnd > now
-      && Array.isArray(value.currentOffers),
-  );
 }
 
 /**
@@ -82,18 +78,20 @@ export function ensureBlackMarketOfferState(
   playerLevel: number,
   now: number,
 ): BlackMarketMutationResult {
-  if (hasActiveOffer(state.blackMarket, now)) {
+  const currentTime = validatedBlackMarketUnixSeconds(now, "Black Market issuance time");
+  const current = validatedBlackMarketOfferState(state.blackMarket);
+  if (hasActiveBlackMarketOffer(state, currentTime)) {
     return {
       // Action 217 is both an issuance request and a read of the current set. A reconnect must
       // not rotate offers, advance progression revision, or replace identical MongoDB state.
       state,
-      blackMarket: state.blackMarket!,
+      blackMarket: current!,
       issued: false,
     };
   }
 
   const owned = state.itemInventory?.levelManagerData.savedWeapons ?? {};
-  const issue = Math.max(0, Math.floor(state.blackMarket?.offersTotal ?? 0)) + 1;
+  const issue = (current?.offersTotal ?? 0) + 1;
   const currentOffers = Object.values(BLACK_MARKET_WEAPON_CATALOG)
     // Two recovered LevelManager rows have no WEAPONPRICE column and therefore cannot be
     // sold safely; offeredWeapon returns null for them. Nine additional balancing rows have
@@ -101,19 +99,19 @@ export function ensureBlackMarketOfferState(
     .filter((definition) => !owned[definition.name]?.bought)
     .map((definition) => ({
       offer: offeredWeapon(definition.name, playerLevel),
-      order: offerOrderKey(playerId, issue, now, definition.name),
+      order: offerOrderKey(playerId, issue, currentTime, definition.name),
     }))
     .filter((entry): entry is { offer: BlackMarketOfferedWeaponState; order: string } => entry.offer !== null)
     .sort((left, right) => left.order.localeCompare(right.order))
     .slice(0, BLACK_MARKET_OFFER_COUNT)
     .map((entry) => entry.offer);
 
-  const blackMarket: BlackMarketOfferState = {
+  const blackMarket = validatedBlackMarketOfferState({
     offersTotal: issue,
     lastTrigger: "ServerSchedule",
-    offerEnd: now + BLACK_MARKET_OFFER_SECONDS,
+    offerEnd: currentTime + BLACK_MARKET_OFFER_SECONDS,
     currentOffers,
-  };
+  })!;
   return {
     state: { ...state, revision: state.revision + 1, blackMarket },
     blackMarket,
@@ -136,11 +134,12 @@ export async function getOrCreateBlackMarketOffer(
  * validation fields from accidentally becoming part of the client contract.
  */
 export function serializeBlackMarketOffer(value: BlackMarketOfferState): string {
+  const offerSet = validatedBlackMarketOfferState(value)!;
   return JSON.stringify({
-    offersTotal: value.offersTotal,
-    lastTrigger: value.lastTrigger,
-    offerEnd: value.offerEnd,
-    currentOffers: value.currentOffers.map((offer) => ({
+    offersTotal: offerSet.offersTotal,
+    lastTrigger: offerSet.lastTrigger,
+    offerEnd: offerSet.offerEnd,
+    currentOffers: offerSet.currentOffers.map((offer) => ({
       level: offer.level,
       special: offer.special,
       weaponId: offer.weaponId,

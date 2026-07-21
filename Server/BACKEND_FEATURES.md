@@ -144,6 +144,9 @@ Arena run appear finished, make an achievement tier appear complete, or unlock a
 - Rental state must pass one shared lifecycle validator before boot, equip, Army Power, acceptance,
   settlement, or redemption. Non-finite deadlines, unsupported types/discounts, and trial or sale
   intervals that contradict the replacement boundary fail closed instead of extending authority.
+- Black Market state must pass one shared set validator before boot, issuance replay/rotation,
+  serialization, or redemption. Unsafe expiry/cursors, duplicate weapon identities, oversized sets,
+  and nonzero retired-feature authority fail closed instead of creating permanent offers.
 - Client-provided serialized blobs may be round-tripped but must not be trusted for rewards.
 - Add tests for contract field names, authorization failures, duplicate requests, and concurrency.
 - Update this tracker in the same commit whenever a feature status changes.

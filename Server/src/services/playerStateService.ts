@@ -9,6 +9,7 @@ import { VIP_LOOTBOX_MATCH_INTERVAL } from "./vipLootboxService";
 import { validatedVipExpiration } from "./vipEntitlementService";
 import { validatedSubscription } from "./subscriptionBenefitService";
 import { validatedRentalState } from "./rentalEntitlementService";
+import { validatedBlackMarketOfferState } from "./blackMarketEntitlementService";
 
 /** Unix seconds are used throughout the recovered Beanstalk protocol. */
 export function unixNow(): number {
@@ -80,6 +81,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
       vipExpiration: validatedVipExpiration(state.vipExpiration ?? player.player.vipExpiration),
       subscription: validatedSubscription(state.subscription),
       rental: validatedRentalState(state.rental),
+      blackMarket: validatedBlackMarketOfferState(state.blackMarket),
       matchesToNextLootboxes: state.matchesToNextLootboxes ?? VIP_LOOTBOX_MATCH_INTERVAL,
       collectedRewards: state.collectedRewards ?? {},
       itemInventory: state.itemInventory ?? createInitialItemInventory(),
@@ -105,6 +107,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
     vipExpiration: validatedVipExpiration(state.vipExpiration ?? player.player.vipExpiration),
     subscription: validatedSubscription(state.subscription),
     rental: validatedRentalState(state.rental),
+    blackMarket: validatedBlackMarketOfferState(state.blackMarket),
     matchesToNextLootboxes: state.matchesToNextLootboxes ?? VIP_LOOTBOX_MATCH_INTERVAL,
     collectedRewards: state.collectedRewards ?? {},
     itemInventory: state.itemInventory ?? createInitialItemInventory(),
@@ -273,16 +276,17 @@ export function buildPlayerData(player: PlayerDocument, now = unixNow()): Player
     WinCount: state.pvpWinStreak?.winCount ?? 0,
     TimeStamp: state.pvpWinStreak?.timestamp ?? 0,
   });
-  if (state.blackMarket) {
+  const blackMarket = validatedBlackMarketOfferState(state.blackMarket);
+  if (blackMarket) {
     // BlackMarketManager inherits DatabaseSerializedObjectGeneric<BlackMarketOfferData>, so
     // the boot lookup key is the nested type name. Action 217 uses the historic response key
     // `BlackMarketOffer`; these two names are intentionally different parts of the client
     // contract. Loading persisted state here keeps an active offer visible after relogging.
     addSerializedObject(data, "BlackMarketOfferData", {
-      offersTotal: state.blackMarket.offersTotal,
-      lastTrigger: state.blackMarket.lastTrigger,
-      offerEnd: state.blackMarket.offerEnd,
-      currentOffers: state.blackMarket.currentOffers.map((offer) => ({ ...offer })),
+      offersTotal: blackMarket.offersTotal,
+      lastTrigger: blackMarket.lastTrigger,
+      offerEnd: blackMarket.offerEnd,
+      currentOffers: blackMarket.currentOffers.map((offer) => ({ ...offer })),
     });
   }
 

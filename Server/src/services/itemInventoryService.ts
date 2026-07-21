@@ -14,6 +14,10 @@ import {
 } from "../data/weaponUpgradeCatalog.generated";
 import { subscriptionUpgradeDeliverySeconds } from "./subscriptionBenefitService";
 import { hasActiveRentalItem } from "./rentalEntitlementService";
+import {
+  hasActiveBlackMarketOffer,
+  validatedBlackMarketOfferState,
+} from "./blackMarketEntitlementService";
 
 /**
  * Recovered weapon ownership and loadout logic.
@@ -535,13 +539,14 @@ export function purchaseWeaponState(
   if (payload.discount !== 0) {
     throw new ApiError(13601, "Weapon discount is not backed by an active server offer.");
   }
-  const offered = state.blackMarket?.currentOffers.find((offer) => offer.weaponId === definition.name);
+  const blackMarket = validatedBlackMarketOfferState(state.blackMarket);
+  const offered = blackMarket?.currentOffers.find((offer) => offer.weaponId === definition.name);
   const blackMarketPrices = WEAPON_BLACK_MARKET_PRICES[definition.name];
   const blackMarketGold = offered && blackMarketPrices?.[offered.level];
   const isBlackMarketPurchase = Boolean(
     offered
-      && Number.isInteger(now)
-      && state.blackMarket!.offerEnd > now!
+      && now !== undefined
+      && hasActiveBlackMarketOffer(state, now)
       && Number.isInteger(offered.level)
       && offered.level >= 0
       && Number.isInteger(offered.special)

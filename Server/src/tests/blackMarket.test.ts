@@ -22,6 +22,7 @@ import {
 } from "../services/itemInventoryService";
 import { equippedWeaponPower } from "../services/armyPowerService";
 import { buildPlayerData, createInitialProgression } from "../services/playerStateService";
+import { validatedBlackMarketOfferState } from "../services/blackMarketEntitlementService";
 
 const NOW = 1_900_000_000;
 
@@ -148,4 +149,50 @@ test("Black Market wire serializer exposes only the recovered client fields", ()
   };
   const boot = buildPlayerData(document).BlackMarketOfferData as { S: string };
   assert.deepEqual(JSON.parse(boot.S), wire);
+});
+
+test("Black Market authority rejects permanent deadlines, duplicate rows, and unsafe cursors", () => {
+  const issued = ensureBlackMarketOfferState(
+    createInitialProgression(NOW),
+    "player-black-market-integrity",
+    4,
+    NOW,
+  );
+  assert.throws(
+    () => ensureBlackMarketOfferState({
+      ...issued.state,
+      blackMarket: { ...issued.blackMarket, offerEnd: Number.POSITIVE_INFINITY },
+    }, "player-black-market-integrity", 4, NOW + 1),
+    /Black Market offer expiry is invalid/,
+  );
+
+  const first = issued.blackMarket.currentOffers[0]!;
+  assert.throws(
+    () => validatedBlackMarketOfferState({
+      ...issued.blackMarket,
+      currentOffers: [first, { ...first }],
+    }),
+    /Black Market offered weapon is invalid/,
+  );
+  assert.throws(
+    () => validatedBlackMarketOfferState({
+      ...issued.blackMarket,
+      currentOffers: [{ ...first, special: 1 }],
+    }),
+    /Black Market offered weapon is invalid/,
+  );
+
+  // Rotation increments the persisted issue cursor. Validate the newly derived set as well so a
+  // maximum safe imported cursor cannot overflow and become unstable hash/purchase authority.
+  assert.throws(
+    () => ensureBlackMarketOfferState({
+      ...issued.state,
+      blackMarket: {
+        ...issued.blackMarket,
+        offersTotal: Number.MAX_SAFE_INTEGER,
+        offerEnd: NOW,
+      },
+    }, "player-black-market-integrity", 4, NOW),
+    /Black Market issue cursor is invalid/,
+  );
 });
