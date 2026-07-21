@@ -74,7 +74,7 @@ export const handlerlessActionDispositions = Object.freeze({
   ] as const),
   responseOnly: Object.freeze([
     DbAction.UniqueSquadNameFailure, DbAction.UniqueSquadNameSuccess, DbAction.FacebookLoginOk,
-    DbAction.UserAddedToSquadSuccess, DbAction.SystemMessage,
+    DbAction.UserAddedToSquadSuccess, DbAction.RemoveUserFromSquad, DbAction.SystemMessage,
   ] as const),
   retired: Object.freeze([
     DbAction.SwitchToFacebook, DbAction.AddToHitList, DbAction.GetPlayersFromHitList,

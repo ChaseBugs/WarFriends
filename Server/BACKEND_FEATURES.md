@@ -85,8 +85,9 @@ asserted rank is compared to the same authoritative roster snapshot used for per
 transactional write. A stale/lost-response retry therefore returns the stock `5501`/`5801` full-roster
 rollback without applying another step. Actions 57 and 172 likewise accept only their recovered
 `PlayerToPromoteId` and `PlayerToKickId`, and all four derive the mutable Squad from authenticated
-membership. The parent feature remains Partial only for the explicit geography and production-audit
-gaps in the table above.
+membership. Action 42 has client UI listeners but no recovered outbound call and is classified
+response-only, so it cannot act as an alternate generic-alias kick endpoint. The parent feature
+remains Partial only for the explicit geography and production-audit gaps in the table above.
 
 ### Firebase offline inbox wake-up — Partial
 

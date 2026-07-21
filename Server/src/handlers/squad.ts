@@ -320,16 +320,6 @@ export const squadHandlers: Record<number, HandlerEntry> = {
     });
   }),
 
-  [DbAction.RemoveUserFromSquad]: authed(async ({ player, req }) => {
-    const target = targetId(req);
-    const squad = await kickMember(player!.id, target, squadName(req) || player!.player.squadName);
-    const removed = await findById(target);
-    return ok(DbAction.RemoveUserFromSquad, {
-      Squad: buildDatabaseSquad(squad),
-      ...(removed ? { Player: buildDatabasePlayer(removed) } : {}),
-    });
-  }),
-
   [DbAction.GetSquadDetails]: authed(async ({ player, req }) => {
     const name = squadName(req) || player!.player.squadName;
     // Assignment may update RoundId. Resolve it before reading the squad snapshot so the object

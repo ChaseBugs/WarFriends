@@ -22,3 +22,9 @@ test("every recovered DbAction has one explicit backend disposition", () => {
   assert.deepEqual(missing, [], `Unclassified DbActions: ${missing.join(", ")}`);
   assert.deepEqual(duplicated, [], `Multiply classified DbActions: ${duplicated.join(", ")}`);
 });
+
+test("response-only Squad removal cannot be used as a second inbound kick mutation", () => {
+  assert.equal(registeredHandlerActions.includes(DbAction.RemoveUserFromSquad), false);
+  assert.equal(handlerlessActionDispositions.responseOnly.includes(DbAction.RemoveUserFromSquad), true);
+  assert.equal(registeredHandlerActions.includes(DbAction.KickPlayer), true);
+});
