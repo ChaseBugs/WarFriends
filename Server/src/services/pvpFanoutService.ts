@@ -186,7 +186,9 @@ export function pvpFanoutMatchesDurableAuthority(
         ? "BothPlayersDisconnected"
         : match.cancelReason === "room_activation_presence_unproven"
           ? "ActivationPresenceUnproven"
-          : undefined;
+          : match.cancelReason === "participant_cancelled_before_start"
+            ? "ParticipantCancelledBeforeStart"
+            : undefined;
     return expectedReason !== undefined && payload.Reason === expectedReason;
   }
   if (type === "MatchError") {

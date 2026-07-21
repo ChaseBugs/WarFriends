@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { League } from "../constants";
 import {
+  cancellationRequiresUnstartedRoom,
   MatchAdmissionError,
   normalizeMatchCancelReason,
   type MatchPlayer,
@@ -29,6 +30,13 @@ test("match cancellation reasons remain bounded machine-readable audit values", 
       (error: unknown) => error instanceof MatchAdmissionError,
     );
   }
+});
+
+test("queue and participant cancellation callbacks cannot cancel a started room", () => {
+  assert.equal(cancellationRequiresUnstartedRoom("join_timeout"), true);
+  assert.equal(cancellationRequiresUnstartedRoom("participant_cancelled_before_start"), true);
+  assert.equal(cancellationRequiresUnstartedRoom("both_players_disconnected"), false);
+  assert.equal(cancellationRequiresUnstartedRoom("server_restart"), false);
 });
 
 test("match admission rejects duplicate, corrupt, and out-of-range participants", () => {

@@ -503,6 +503,12 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   are definitely present. A missing or unknown route cancels that unproven activation without
   rewards, preventing stale pre-start `joinedPlayerIds` from starting one client; late join-timeout
   callbacks cannot cancel a separately proven live activation.
+  `CancelMatch` removes an ordinary queue entry when one still exists. After pairing has already
+  consumed that entry, it instead resolves the authenticated caller's validated unstarted match,
+  atomically cancels the pair and releases both `InGame` profiles, then sends the MongoDB-bound
+  no-reward terminal reason to both nodes. The same cancellation reason requires
+  `roomStartedAt` to remain absent inside the transaction; a started room returns `AlreadyStarted`
+  and must use normal result or disconnect-forfeit handling.
   In-match fan-out is source-bound and requires both durable joins. Card activations store ordered
   evidence separately from the successful live-delivery receipt, allowing a failed handoff retry
   without duplicating an already delivered effect; receiving nodes independently require that same

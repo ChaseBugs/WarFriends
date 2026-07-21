@@ -220,6 +220,16 @@ test("terminal fan-out derives winner and visible reason from durable match stat
     Payload: { MatchId: unprovenActivation.matchId, Reason: "ActivationPresenceUnproven" },
   });
   assert.equal(pvpFanoutMatchesDurableAuthority(activationCancellation, unprovenActivation), true);
+
+  const playerCancelled = activeAuthority({
+    state: "cancelled",
+    cancelReason: "participant_cancelled_before_start",
+  });
+  const playerCancellation = parsedNotice("player-b", playerCancelled, {
+    Type: "MatchEnded",
+    Payload: { MatchId: playerCancelled.matchId, Reason: "ParticipantCancelledBeforeStart" },
+  });
+  assert.equal(pvpFanoutMatchesDurableAuthority(playerCancellation, playerCancelled), true);
 });
 
 test("opponent presence fan-out follows the durable disconnect clock", () => {

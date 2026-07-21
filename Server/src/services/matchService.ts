@@ -184,6 +184,15 @@ export function normalizeMatchCancelReason(reason: string): string {
   return normalized;
 }
 
+/**
+ * These lifecycle reasons are valid only before the one-time room start transition. Keeping the
+ * policy in one predicate prevents a late queue/join callback from cancelling gameplay that has
+ * already acquired active-room authority.
+ */
+export function cancellationRequiresUnstartedRoom(cancelReason: string): boolean {
+  return cancelReason === "join_timeout" || cancelReason === "participant_cancelled_before_start";
+}
+
 export interface BothPlayersDisconnectedAuthority {
   /** Exact two-player disconnect snapshot captured after transport liveness says both are gone. */
   disconnectedAt: Record<string, Date>;
@@ -252,7 +261,7 @@ export async function cancelMatch(
   const transitionUnix = validatedPlayerLastAction(Math.floor(transitionAt.getTime() / 1_000));
   // A late join-timeout callback must never cancel a distributed room whose second participant
   // already committed the start transition on another node.
-  const cancellationGuard = cancelReason === "join_timeout"
+  const cancellationGuard = cancellationRequiresUnstartedRoom(cancelReason)
     ? { roomStartedAt: { $exists: false } }
     : {};
   const cancelled = await withMongoTransaction(async (session) => {
@@ -1289,6 +1298,17 @@ export async function findStartedMatchForPlayer(playerId: string): Promise<Match
     roomStartedAt: { $exists: true },
     "players.playerId": playerId,
     joinedPlayerIds: playerId,
+  }) as unknown as MatchDoc | null;
+  return match ? validatedMatchDocument(match) : null;
+}
+
+/** Find the caller's server-assigned pair only while it is still safe to cancel without a result. */
+export async function findUnstartedMatchForPlayer(playerId: string): Promise<MatchDoc | null> {
+  if (!playerId || playerId.length > 128) return null;
+  const match = await matches().findOne({
+    state: "active",
+    roomStartedAt: { $exists: false },
+    "players.playerId": playerId,
   }) as unknown as MatchDoc | null;
   return match ? validatedMatchDocument(match) : null;
 }

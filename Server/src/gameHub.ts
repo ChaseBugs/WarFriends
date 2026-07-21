@@ -14,6 +14,7 @@ import {
   completeBothPlayersDisconnectedAuthority,
   createMatch,
   findStartedMatchForPlayer,
+  findUnstartedMatchForPlayer,
   getMatch,
   joinActiveMatch,
   markRelayedCardDelivered,
@@ -966,9 +967,42 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
     }
 
     case "CancelMatch": {
-      if (client.playerId) {
-        await leaveQueue(client.playerId);
-        clearMatchmakingTimer(client.playerId);
+      if (!client.playerId) return send(client, { Type: "AuthError", Payload: { Message: "Identify first." } });
+      const removedFromQueue = await leaveQueue(client.playerId);
+      clearMatchmakingTimer(client.playerId);
+      if (removedFromQueue) {
+        send(client, { Type: "MatchCancelled", Payload: {} });
+        return;
+      }
+
+      // Pairing removes the queue row before MatchFound is delivered. A cancellation arriving in
+      // that state must own the durable unstarted match too; acknowledging only the already-empty
+      // queue used to leave both profiles InGame until the join timeout eventually repaired them.
+      const pendingMatch = await findUnstartedMatchForPlayer(client.playerId);
+      if (pendingMatch) {
+        const cancelled = await cancelMatch(pendingMatch.matchId, "participant_cancelled_before_start");
+        if (cancelled) {
+          const ended: ClientEnvelope = {
+            Type: "MatchEnded",
+            Payload: { MatchId: pendingMatch.matchId, Reason: "ParticipantCancelledBeforeStart" },
+          };
+          await broadcastDistributedMatch(
+            pendingMatch.matchId,
+            pendingMatch.players.map((participant) => participant.playerId),
+            ended,
+          );
+          clearMatchJoinTimer(pendingMatch.matchId);
+          clearMatchDisconnectTimers(pendingMatch.matchId);
+          roomManager.finish(pendingMatch.matchId);
+          return;
+        }
+      }
+
+      // Once roomStartedAt exists, leaving is a gameplay forfeit/result decision and cannot be
+      // disguised as a free matchmaking cancellation.
+      if (await findStartedMatchForPlayer(client.playerId)) {
+        send(client, { Type: "MatchError", Payload: { Reason: "AlreadyStarted" } });
+        return;
       }
       send(client, { Type: "MatchCancelled", Payload: {} });
       return;
