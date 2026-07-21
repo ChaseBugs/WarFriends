@@ -580,7 +580,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   or damaged accounts abort the transaction instead of being concealed by a partial bulk update.
   Replacement clients send an
   inventory-consuming activation as `MatchEvent { Event: "CardPlayed", Data: { Sequence,
-  CardId } }`: the server validates the authenticated owner's complete candidate list, durably
+  CardId } }`. `Sequence` must remain an exact JSON integer number from zero through five; null,
+  Boolean, blank text, numeric text, arrays, fractions, and non-finite numbers cannot coerce to
+  sequence zero. The server validates the authenticated owner's complete candidate list, durably
   appends contiguous evidence before relaying the effect, acknowledges exact retries without
   relaying twice, and requires terminal `UsedCards` order and multiplicity to match. Per-socket
   message serialization prevents a sender's result from overtaking its last card event; durable

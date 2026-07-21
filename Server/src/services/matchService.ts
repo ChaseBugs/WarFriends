@@ -1392,6 +1392,21 @@ export interface RelayedCardPlayResult {
 }
 
 /**
+ * Require the replacement WebSocket contract's zero-based sequence to remain a JSON number.
+ * `Number(value)` is unsafe here because null, false, an empty string, and an empty array all
+ * coerce to zero, which could create or replay durable card-consumption evidence for sequence 0.
+ */
+export function validatedRelayedCardSequence(value: unknown): number {
+  if (typeof value !== "number"
+    || !Number.isInteger(value)
+    || value < 0
+    || value >= MAX_PVP_CARDS_PER_MATCH) {
+    throw new ApiError(CARD_NOT_FOUND, "CardPlayed sequence is invalid.");
+  }
+  return value;
+}
+
+/**
  * Validate one participant's ordered CardPlayed evidence without mutating the stored list.
  *
  * Sequence numbers make a lost acknowledgement retry distinguishable from a second activation.
@@ -1400,20 +1415,21 @@ export interface RelayedCardPlayResult {
  */
 export function applyRelayedCardPlay(
   existing: readonly string[],
-  sequence: number,
+  sequence: unknown,
   cardId: string,
 ): RelayedCardPlayResult {
+  const checkedSequence = validatedRelayedCardSequence(sequence);
   const [normalized] = parsePvpUsedCards([cardId]);
-  if (!Number.isInteger(sequence) || sequence < 0 || sequence >= MAX_PVP_CARDS_PER_MATCH || !normalized) {
+  if (!normalized) {
     throw new ApiError(CARD_NOT_FOUND, "CardPlayed sequence or identity is invalid.");
   }
-  if (sequence < existing.length) {
-    if (existing[sequence] !== normalized) {
+  if (checkedSequence < existing.length) {
+    if (existing[checkedSequence] !== normalized) {
       throw new ApiError(CARD_NOT_FOUND, "CardPlayed sequence was already used for another card.");
     }
     return { cards: [...existing], replayed: true };
   }
-  if (sequence !== existing.length || existing.length >= MAX_PVP_CARDS_PER_MATCH) {
+  if (checkedSequence !== existing.length || existing.length >= MAX_PVP_CARDS_PER_MATCH) {
     throw new ApiError(CARD_NOT_FOUND, "CardPlayed events must be contiguous and bounded.");
   }
   return { cards: [...existing, normalized], replayed: false };

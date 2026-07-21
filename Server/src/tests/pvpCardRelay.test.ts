@@ -2,8 +2,18 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   applyRelayedCardPlay,
+  validatedRelayedCardSequence,
   validateRelayedCardReport,
 } from "../services/matchService";
+
+test("CardPlayed sequence requires the exact bounded JSON-number transport", () => {
+  assert.equal(validatedRelayedCardSequence(0), 0);
+  assert.equal(validatedRelayedCardSequence(5), 5);
+  for (const value of [undefined, null, false, true, [], [0], "", "0", NaN, Infinity, -1, 0.5, 6]) {
+    assert.throws(() => validatedRelayedCardSequence(value), /CardPlayed sequence is invalid/);
+    assert.throws(() => applyRelayedCardPlay([], value, "AMMOCRATE"), /CardPlayed sequence is invalid/);
+  }
+});
 
 test("sequenced CardPlayed evidence is contiguous, bounded, and replay-idempotent", () => {
   const first = applyRelayedCardPlay([], 0, "AMMOCRATE");

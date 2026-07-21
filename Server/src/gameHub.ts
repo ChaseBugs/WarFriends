@@ -23,6 +23,7 @@ import {
   reportMatchResult,
   settleResult,
   type MatchPlayer,
+  validatedRelayedCardSequence,
   wasRelayedCardDelivered,
 } from "./services/matchService";
 import { parsePvpUsedCards } from "./services/cardInventoryService";
@@ -404,7 +405,7 @@ async function receiveRemotePvpFanout(raw: string): Promise<void> {
   if (notice.envelope.Type === "MatchEvent") {
     const payload = notice.envelope.Payload as MatchEventPayload;
     if (payload.Event === "CardPlayed") {
-      const sequence = Number((payload.Data as CardPlayedEventData).Sequence);
+      const sequence = validatedRelayedCardSequence((payload.Data as CardPlayedEventData).Sequence);
       const cardId = String((payload.Data as CardPlayedEventData).CardId);
       const receiptKey = `${notice.matchId}:${notice.sourcePlayerId}:${sequence}`;
       // Redis publication proves only that a subscriber received a transport hint. The node owning
@@ -1209,8 +1210,8 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
         }
         if (p?.Event === "CardPlayed") {
           const data = p.Data as CardPlayedEventData | undefined;
-          const sequence = Number(data?.Sequence);
           try {
+            const sequence = validatedRelayedCardSequence(data?.Sequence);
             const recorded = await recordRelayedCardPlay(
               p.MatchId,
               client.playerId,
@@ -1271,8 +1272,8 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
       }
       if (p?.Event === "CardPlayed") {
         const data = p.Data as CardPlayedEventData | undefined;
-        const sequence = Number(data?.Sequence);
         try {
+          const sequence = validatedRelayedCardSequence(data?.Sequence);
           const room = roomManager.getRoom(p.MatchId);
           if (room?.state !== "active" || !roomManager.isParticipant(p.MatchId, client.playerId)) {
             return send(client, { Type: "MatchError", Payload: { MatchId: p.MatchId, Reason: "NotInActiveMatch" } });

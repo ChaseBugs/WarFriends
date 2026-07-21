@@ -261,7 +261,9 @@ ID. TTL removes old coordination rows but is never used as the logical replay cl
 The replacement WebSocket transport now recognizes a typed
 `MatchEvent { Event: "CardPlayed", Data: { Sequence, CardId } }` contract. Each authenticated
 participant has a contiguous zero-based sequence capped by the recovered six-card selection
-limit. The backend validates ownership against the complete candidate list, persists evidence
+limit. The sequence remains an exact JSON integer number at client, local-room, durable-evidence,
+and distributed-fan-out boundaries; null, Boolean, blank text, numeric text, arrays, fractions, and
+non-finite values cannot coerce to zero. The backend validates ownership against the complete candidate list, persists evidence
 before relaying the effect, acknowledges an exact retry without relaying it twice, serializes each
 socket's messages so `MatchResult` cannot overtake its last card activation, and requires terminal
 `UsedCards` order and multiplicity to match. Disconnect-forfeit settlement consumes the same
