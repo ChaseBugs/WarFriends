@@ -27,6 +27,7 @@ import {
   wasRelayedCardDelivered,
 } from "./services/matchService";
 import { parseOptionalPvpUsedCards } from "./services/cardInventoryService";
+import { validatedMatchResultPayload } from "./services/matchResultRequestAuthorityService";
 import { resolveMatchReportStatus, roomManager } from "./gameRooms/roomManager";
 import type {
   ClientEnvelope,
@@ -1394,9 +1395,14 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
 
     case "MatchResult": {
       if (!client.playerId) return;
-      const p = envelope.Payload as MatchResultPayload;
+      let p: MatchResultPayload;
+      try {
+        p = validatedMatchResultPayload(envelope.Payload);
+      } catch {
+        return send(client, { Type: "MatchError", Payload: { Reason: "InvalidResult" } });
+      }
       if (client.presenceHeartbeat) {
-        const durableMatch = await getMatch(p?.MatchId);
+        const durableMatch = await getMatch(p.MatchId);
         const joined = new Set(durableMatch?.joinedPlayerIds ?? []);
         const terminalReplay = durableMatch?.state === "finished" || durableMatch?.state === "cancelled";
         if (!durableMatch
@@ -1406,7 +1412,7 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
             || !(durableMatch.roomStartedAt instanceof Date)
             || !durableMatch.players.every((participant) => joined.has(participant.playerId))
           ))) {
-          return send(client, { Type: "MatchError", Payload: { MatchId: p?.MatchId, Reason: "InvalidResult" } });
+          return send(client, { Type: "MatchError", Payload: { MatchId: p.MatchId, Reason: "InvalidResult" } });
         }
         let durable;
         try {
@@ -1418,7 +1424,7 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
             true,
           );
         } catch {
-          return send(client, { Type: "MatchError", Payload: { MatchId: p?.MatchId, Reason: "InvalidUsedCards" } });
+          return send(client, { Type: "MatchError", Payload: { MatchId: p.MatchId, Reason: "InvalidUsedCards" } });
         }
         if (durable.status === "conflict") {
           const conflict: ClientEnvelope = {
@@ -1459,15 +1465,15 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
         return;
       }
       // Settle only after both participants report the same winner.
-      const report = roomManager.recordResult(p?.MatchId, client.playerId, p?.WinnerId);
+      const report = roomManager.recordResult(p.MatchId, client.playerId, p.WinnerId);
       // Normal reports require current local-room membership. Once MongoDB is terminal the room
       // should already be gone, so an assigned participant may bypass only that missing transient
       // mirror to recover a lost immutable MatchEnded/ResultConflict response.
-      const terminalRetryMatch = report === "invalid" ? await getMatch(p?.MatchId) : null;
+      const terminalRetryMatch = report === "invalid" ? await getMatch(p.MatchId) : null;
       const allowDurableTerminalReplay = terminalRetryMatch?.state === "finished"
         || terminalRetryMatch?.state === "cancelled";
       if (report === "invalid" && !allowDurableTerminalReplay) {
-        return send(client, { Type: "MatchError", Payload: { MatchId: p?.MatchId, Reason: "InvalidResult" } });
+        return send(client, { Type: "MatchError", Payload: { MatchId: p.MatchId, Reason: "InvalidResult" } });
       }
       let durable;
       try {
@@ -1479,7 +1485,7 @@ async function handleMessage(client: Client, envelope: ClientEnvelope): Promise<
           true,
         );
       } catch {
-        return send(client, { Type: "MatchError", Payload: { MatchId: p?.MatchId, Reason: "InvalidUsedCards" } });
+        return send(client, { Type: "MatchError", Payload: { MatchId: p.MatchId, Reason: "InvalidUsedCards" } });
       }
       // The local room report proves only that this socket currently belongs to the room. MongoDB
       // owns cross-handler consensus and may already be terminal when the local mirror says

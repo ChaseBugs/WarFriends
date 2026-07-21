@@ -230,6 +230,11 @@ arrays are accepted, while only true field absence selects the replacement empty
 Explicit null, Boolean, numeric, object, malformed JSON, or invalid list values fail before result
 consensus instead of becoming a zero-consumption report.
 
+Replacement WebSocket `MatchResult` now has executable exact-wrapper authority before local-room or
+MongoDB selection. It requires bounded trimmed control-free `MatchId` and `WinnerId`, permits only
+optional `UsedCards` and opaque non-authoritative `Stats`, and rejects missing identities,
+alternate-case aliases, arrays, null, or extra fields instead of trusting a TypeScript cast.
+
 Stock `BattleId` and replacement `MatchId` now share one exact alias boundary for start and result
 routes. Every present alias must be a string and simultaneous aliases must be identical; explicit
 null, non-string, blank-versus-nonblank, or conflicting IDs cannot choose a lifecycle by nullish

@@ -754,6 +754,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   replacement field means an empty list; explicit null, Boolean, number, object, malformed JSON,
   oversized, or invalid list input fails before result consensus rather than being nullish-defaulted
   into a zero-consumption report.
+  WebSocket `MatchResult` also validates its complete runtime wrapper before any local-room or
+  MongoDB lookup: bounded `MatchId` and `WinnerId` are required, only optional `UsedCards` and opaque
+  non-authoritative `Stats` are allowed, and missing identities, alternate-case aliases, or extra
+  fields fail instead of relying on a compile-time TypeScript cast.
   The stock `BattleId` and replacement `MatchId` fields likewise identify one lifecycle without
   precedence: every present alias must be a string and two present aliases must be identical.
   True total absence and the legacy empty BattleId still reach feature-specific tutorial migration,
