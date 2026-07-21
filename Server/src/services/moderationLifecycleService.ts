@@ -9,7 +9,7 @@ import {
   type ModerationRetentionRunDocument,
   type PlayerAppealDocument,
 } from "../db";
-import type { PlayerReportDocument } from "./reportService";
+import { validatedModerationReport, type PlayerReportDocument } from "./reportService";
 
 const MILLISECONDS_PER_DAY = 86_400_000;
 const MINIMUM_RETENTION_DAYS = 30;
@@ -184,6 +184,20 @@ export function appealRetentionFilter(before: Date, previewedAt: Date): Filter<P
   };
 }
 
+async function validatedEligibleReports(
+  collection: Collection<Document>,
+  filter: Filter<Document>,
+  authorityTime: Date,
+  session?: ClientSession,
+): Promise<PlayerReportDocument[]> {
+  // Retention is intentionally operator-driven and transactional. Reading the complete eligible
+  // set here lets application authority prove every terminal lifecycle before any destructive
+  // write. The later delete remains filter-bound as well as ID-bound, so a concurrent status/date
+  // change cannot broaden what the frozen preview authorized.
+  const rows = await collection.find(filter, sessionOptions(session)).toArray() as unknown as PlayerReportDocument[];
+  return rows.map((report) => validatedModerationReport(report, authorityTime));
+}
+
 /** Count exactly what a later apply call with this timestamp is allowed to remove. */
 export async function previewModerationRetention(
   previewedAt = new Date(),
@@ -192,11 +206,15 @@ export async function previewModerationRetention(
   policy = moderationRetentionPolicy(),
 ): Promise<ModerationRetentionPreview> {
   const cutoffs = moderationRetentionCutoffs(previewedAt, policy);
-  const [eligibleReports, eligibleAppeals] = await Promise.all([
-    reportCollection.countDocuments(reportRetentionFilter(cutoffs.reportBefore, previewedAt)),
+  const [eligibleReportRows, eligibleAppeals] = await Promise.all([
+    validatedEligibleReports(
+      reportCollection,
+      reportRetentionFilter(cutoffs.reportBefore, previewedAt),
+      previewedAt,
+    ),
     appealCollection.countDocuments(appealRetentionFilter(cutoffs.appealBefore, previewedAt)),
   ]);
-  return { previewedAt, ...cutoffs, eligibleReports, eligibleAppeals };
+  return { previewedAt, ...cutoffs, eligibleReports: eligibleReportRows.length, eligibleAppeals };
 }
 
 function encodeModerationExportCursor(cursor: ModerationExportCursor): string {
@@ -256,7 +274,8 @@ export async function exportModerationRetentionPage(
       .sort({ createdAt: -1, reportId: -1 })
       .limit(input.limit + 1)
       .toArray() as unknown as PlayerReportDocument[];
-    const page = rows.slice(0, input.limit);
+    const page = rows.slice(0, input.limit)
+      .map((report) => validatedModerationReport(report, input.previewedAt));
     return {
       kind: input.kind,
       reportRows: page,
@@ -331,8 +350,15 @@ export async function applyModerationRetentionInCollections(
   }
 
   const cutoffs = moderationRetentionCutoffs(input.previewedAt, policy);
+  const reportFilter = reportRetentionFilter(cutoffs.reportBefore, input.previewedAt);
+  const eligibleReportRows = await validatedEligibleReports(
+    reportCollection,
+    reportFilter,
+    input.previewedAt,
+    session,
+  );
   const reportResult = await reportCollection.deleteMany(
-    reportRetentionFilter(cutoffs.reportBefore, input.previewedAt),
+    { ...reportFilter, reportId: { $in: eligibleReportRows.map((report) => report.reportId) } },
     options,
   );
   const appealResult = await appealCollection.deleteMany(

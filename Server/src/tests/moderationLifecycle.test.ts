@@ -21,7 +21,8 @@ import type { PlayerReportDocument } from "../services/reportService";
 const POLICY: ModerationRetentionPolicy = { reportDays: 30, appealDays: 60, sanctions: "indefinite" };
 
 function report(overrides: Partial<PlayerReportDocument> = {}): PlayerReportDocument {
-  return {
+  const reviewedAt = new Date("2026-01-02T00:00:00Z");
+  const row: PlayerReportDocument = {
     reportId: "123e4567-e89b-42d3-a456-426614174000",
     reporterPlayerId: "reporter-1",
     reportedPlayerId: "target-1",
@@ -31,9 +32,22 @@ function report(overrides: Partial<PlayerReportDocument> = {}): PlayerReportDocu
     message: "reviewed report",
     evidence: {},
     createdAt: new Date("2026-01-01T00:00:00Z"),
-    updatedAt: new Date("2026-01-02T00:00:00Z"),
+    updatedAt: reviewedAt,
+    reviewHistory: [{
+      operationId: "review:retention:001",
+      fromStatus: "open",
+      toStatus: "resolved",
+      actor: "retention-reviewer",
+      note: "resolved before retention",
+      createdAt: reviewedAt,
+    }],
     ...overrides,
   };
+  if (row.status === "open") {
+    delete row.updatedAt;
+    delete row.reviewHistory;
+  }
+  return row;
 }
 
 function appeal(overrides: Partial<PlayerAppealDocument> = {}): PlayerAppealDocument {
@@ -51,18 +65,23 @@ function appeal(overrides: Partial<PlayerAppealDocument> = {}): PlayerAppealDocu
 }
 
 function matchesRetention(
-  row: { status: string; createdAt: Date; updatedAt?: Date },
+  row: { reportId?: string; status: string; createdAt: Date; updatedAt?: Date },
   filter: Record<string, unknown>,
 ): boolean {
   const statuses = (filter.status as { $in: string[] }).$in;
   const before = (filter.createdAt as { $lt: Date }).$lt;
   const previewedAt = (filter.updatedAt as { $lte: Date }).$lte;
-  return statuses.includes(row.status) && row.createdAt < before &&
+  const reportIds = (filter.reportId as { $in?: string[] } | undefined)?.$in;
+  return (!reportIds || (row.reportId !== undefined && reportIds.includes(row.reportId)))
+    && statuses.includes(row.status) && row.createdAt < before &&
     row.updatedAt !== undefined && row.updatedAt <= previewedAt;
 }
 
 function mutableCollection<T extends { status: string; createdAt: Date; updatedAt?: Date }>(rows: T[]): Collection<T> {
   return {
+    find(filter: Record<string, unknown>) {
+      return { async toArray() { return rows.filter((row) => matchesRetention(row, filter)); } };
+    },
     async countDocuments(filter: Record<string, unknown>) {
       return rows.filter((row) => matchesRetention(row, filter)).length;
     },
@@ -152,6 +171,31 @@ test("preview counts only terminal records older than each configured cutoff", a
   );
   assert.equal(preview.eligibleReports, 1);
   assert.equal(preview.eligibleAppeals, 1);
+});
+
+test("retention cannot count or delete a forged terminal report without its audit proof", async () => {
+  const corrupt = report();
+  delete corrupt.reviewHistory;
+  const reports = [corrupt];
+  const runs: ModerationRetentionRunDocument[] = [];
+  await assert.rejects(
+    applyModerationRetentionInCollections(
+      {
+        previewedAt: new Date("2026-07-21T00:00:00Z"),
+        actor: "privacy-operator@example.test",
+        operationId: "moderation-retention:corrupt:001",
+      },
+      new Date("2026-07-21T01:00:00Z"),
+      mutableCollection(reports) as unknown as Collection<Document>,
+      mutableCollection<PlayerAppealDocument>([]),
+      runCollection(runs),
+      undefined,
+      POLICY,
+    ),
+    /moderation report authority is invalid/,
+  );
+  assert.equal(reports.length, 1);
+  assert.equal(runs.length, 0);
 });
 
 test("bounded export pages use kind-bound stable cursors and the frozen preview filter", async () => {
