@@ -40,6 +40,7 @@ import { progressionRevisionForRead } from "./progressionRevisionAuthorityServic
 import { validatedProgressionSchemaVersion } from "./progressionSchemaAuthorityService";
 import { validatedRequestBufferAuthority } from "./requestBufferAuthorityService";
 import { validatedWarBucksConversionReceipt } from "./warBucksConversionAuthorityService";
+import { validatedVipDailyCardState } from "./vipDailyCardAuthorityService";
 
 /** Unix seconds are used throughout the recovered Beanstalk protocol. */
 export function unixNow(): number {
@@ -102,6 +103,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
   validatedProgressionSchemaVersion(state.schemaVersion);
   validatedRequestBufferAuthority(state);
   validatedWarBucksConversionReceipt(state.warBucksConversion, progressionRevisionForRead(state.revision));
+  validatedVipDailyCardState(state.vipDailyCards);
   // This is the shared persisted-progression read boundary, not only a boot serializer. Validate
   // wallet/rank balances here so cross-player transactions and ordinary economy actions cannot
   // let NaN/Infinity bypass a `< price` check before reaching a narrower service validator.

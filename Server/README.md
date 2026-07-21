@@ -603,7 +603,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   action `195` is a deadline-based acknowledgement. Active members also receive exactly two
   daily War Cards through the recovered `VipReward1`/`VipReward2` response contract: each draw is
   Gold with the source-decoded 75% chance and Silver otherwise, while an atomic UTC cursor prevents
-  reconnect, renewal, and concurrent-fetch duplicates. Login, VIP purchase, and daily-calendar
+  reconnect, renewal, and concurrent-fetch duplicates. That marker's day must derive from its safe
+  non-future grant timestamp and both saved IDs must remain implemented Silver/Gold cards (including
+  a legal duplicate), so corruption cannot be overwritten to reopen the pair. Login, VIP purchase,
+  and daily-calendar
   claims use their exact outer/nested parser locations. The periodic benefit advances only on
   confirmed active-VIP PvP, resets after four battles, grants two independently selected visual
   parts, preserves duplicate `_#n-VIP` wire entries, and restores its countdown through

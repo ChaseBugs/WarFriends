@@ -15,6 +15,7 @@ import {
   validatedVipExpiration,
   validatedVipTimeline,
 } from "../services/vipEntitlementService";
+import { validatedVipDailyCardState } from "../services/vipDailyCardAuthorityService";
 
 const NOW = 1_700_000_000;
 
@@ -167,4 +168,31 @@ test("VIP timeline authority validates display metadata without changing expiry-
   ]) {
     assert.throws(() => validatedVipTimeline(start, expiration), /Stored VIP/);
   }
+});
+
+test("VIP daily-card marker rejects malformed or future durable grant authority", () => {
+  const active = {
+    ...createInitialProgression(NOW),
+    vipStart: NOW - 100,
+    vipExpiration: NOW + 1_000,
+  };
+  const granted = grantDailyVipCardsState(active, NOW, scriptedRandom(0, 0, 0, 0));
+  const marker = granted.state.vipDailyCards!;
+  assert.deepEqual(validatedVipDailyCardState(marker, NOW), marker);
+
+  for (const corrupt of [
+    { ...marker, lastGrantDay: "2020-02-31" },
+    { ...marker, lastGrantedAt: Number.POSITIVE_INFINITY },
+    { ...marker, lastRewardIds: [marker.lastRewardIds[0]] },
+    { ...marker, lastRewardIds: ["unknown-card", marker.lastRewardIds[1]] },
+  ]) {
+    assert.throws(
+      () => validatedVipDailyCardState(corrupt as typeof marker, NOW),
+      /Stored VIP daily-card|VIP daily-card grant time/,
+    );
+  }
+  assert.throws(
+    () => grantDailyVipCardsState({ ...active, vipDailyCards: marker }, NOW - 1, () => 0),
+    /Stored VIP daily-card grant time is in the future/,
+  );
 });

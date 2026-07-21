@@ -9,6 +9,7 @@ import { validatedVipTimeline } from "./vipEntitlementService";
 import { validatedSubscriptionAuthorityReceiptId } from "./subscriptionBenefitService";
 import { validatedRequestBufferAuthority } from "./requestBufferAuthorityService";
 import { validatedWarBucksConversionReceipt } from "./warBucksConversionAuthorityService";
+import { validatedVipDailyCardState } from "./vipDailyCardAuthorityService";
 
 /**
  * Validate the common authority shared by every full progression-document replacement.
@@ -32,6 +33,8 @@ export function validatedProgressionSuccessor(
   validatedRequestBufferAuthority(next);
   validatedWarBucksConversionReceipt(current.warBucksConversion, current.revision);
   validatedWarBucksConversionReceipt(next.warBucksConversion, next.revision);
+  validatedVipDailyCardState(current.vipDailyCards);
+  validatedVipDailyCardState(next.vipDailyCards);
   validatedCoreProgressionBalances(current);
   validateProgressionRevisionAdvance(progressionRevisionForRead(current.revision), next.revision);
   validatedCoreProgressionBalances(next);

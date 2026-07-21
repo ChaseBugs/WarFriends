@@ -139,6 +139,10 @@ Action `221` validates its entire narrow lost-response receipt before replay, re
 only the twelve recovered A/B IDs and matching Gold prices are accepted, the historical grant and
 timestamp must be safe, and its receipt revision cannot exceed current progression. Corruption is
 never discarded or overwritten to reopen a recent conversion.
+The private paid-VIP daily-card marker is validated before comparison, read, and publication: its
+UTC day derives exactly from a safe non-future grant timestamp, and its exact two reward IDs must be
+implemented recovered Silver/Gold cards (a duplicate pair remains legal). Corruption cannot be
+overwritten to reopen the once-per-day grant.
 
 Starter and daily assignments, assignment mega rewards, achievements, reward-bearing inbox
 messages, one-time/tutorial grants, Gold conversion, level rewards, normal/VIP lootbox duplicates,

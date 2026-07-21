@@ -4,6 +4,10 @@ import type { PlayerProgressionState } from "../db";
 import { CARD_CATALOG, cardInventoryStateFor } from "./cardInventoryService";
 import { mutateProgression } from "./progressionMutationService";
 import { isVipActiveAt, validatedVipExpiration } from "./vipEntitlementService";
+import {
+  validatedVipDailyCardState,
+  vipDailyCardDayKey,
+} from "./vipDailyCardAuthorityService";
 
 /** IJEAJGCCHEF values handled by the stock BuyVip failure parser. */
 export const VIP_NOT_ENOUGH_GOLD = 11_401;
@@ -72,10 +76,6 @@ const VIP_CARD_POOLS: Readonly<Record<2 | 3, readonly string[]>> = Object.freeze
     .sort()),
 });
 
-function utcDayKey(now: number): string {
-  return new Date(now * 1_000).toISOString().slice(0, 10);
-}
-
 function chooseIndex(choose: VipRandomIndex, upperBound: number): number {
   const selected = choose(upperBound);
   if (!Number.isInteger(selected) || selected < 0 || selected >= upperBound) {
@@ -108,8 +108,9 @@ function applyDailyVipCards(
   choose: VipRandomIndex,
 ): VipDailyCardResult {
   const expiration = validatedVipExpiration(state.vipExpiration);
-  const dayKey = utcDayKey(now);
-  if (!isVipActiveAt(expiration, now) || state.vipDailyCards?.lastGrantDay === dayKey) return { state };
+  const dayKey = vipDailyCardDayKey(now);
+  const previousGrant = validatedVipDailyCardState(state.vipDailyCards, now);
+  if (!isVipActiveAt(expiration, now) || previousGrant?.lastGrantDay === dayKey) return { state };
 
   // The two cards are independent draws. A duplicate is valid and increments the same amount
   // twice, matching CardManager.AddCard being invoked once for each response field.
@@ -123,15 +124,16 @@ function applyDailyVipCards(
     cardInventory.cardData[cardId] = { amount: previous + 1 };
   }
 
+  const vipDailyCards = validatedVipDailyCardState({
+    lastGrantDay: dayKey,
+    lastGrantedAt: now,
+    lastRewardIds: [...cardIds],
+  }, now)!;
   return {
     state: {
       ...state,
       cardInventory,
-      vipDailyCards: {
-        lastGrantDay: dayKey,
-        lastGrantedAt: now,
-        lastRewardIds: [...cardIds],
-      },
+      vipDailyCards,
     },
     reward: { cardIds, dayKey },
   };
