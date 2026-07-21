@@ -3,8 +3,8 @@ import { players, type PlayerDocument } from "../db";
 import type { DatabasePlayerDTO } from "../dtos";
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import {
+  validatedPlayerAccountEnvelope,
   validatedPlayerProfileLookup,
-  validatedPlayerProfileMirrors,
 } from "./playerProfileMirrorAuthorityService";
 
 // Data-access for the player document. The full client-facing snapshot lives in
@@ -36,7 +36,7 @@ export async function insertPlayer(
 ): Promise<PlayerDocument> {
   const now = new Date();
   const full: PlayerDocument = { ...doc, createdAt: now, updatedAt: now };
-  validatedPlayerProfileMirrors(full);
+  validatedPlayerAccountEnvelope(full);
   await players().insertOne(full, session ? { session } : undefined);
   return full;
 }

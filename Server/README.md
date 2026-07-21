@@ -217,7 +217,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   use, or boot/profile/leaderboard projection. A missing row remains a normal lookup miss, while an
   existing split profile fails closed. Provider IDs must also satisfy their recovered wire shapes
   even when root and DTO agree; disconnected sentinels live only in the DTO and their sparse root
-  index keys must be absent. Full-profile saves set/unset those roots atomically, so
+  index keys must be absent. Shared full-document lookup/insert additionally validates the private
+  account envelope: exact session HMAC, supported legacy/scrypt password digest, bounded identity
+  and device fields, canonical optional normalized name, and ordered finite audit dates. A missing
+  legacy session is allowed only so a separately proven password/provider login can rotate it.
+  Full-profile saves set/unset those roots atomically, so
   MongoDB cannot order, select, or authenticate by a value different from the one Unity displays.
   Human passwords use versioned salted scrypt with automatic legacy-HMAC migration; provider
   credentials remain separate from the rotated internal

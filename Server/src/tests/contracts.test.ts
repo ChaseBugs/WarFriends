@@ -49,7 +49,7 @@ function contractPlayer(): PlayerDocument {
   return {
     id: player.id,
     accountName: player.accountName,
-    authToken: "session-token",
+    authToken: "a".repeat(64),
     accountType: player.accountType,
     facebookId: String(player.facebookId),
     leagueTier: player.leagueTier,
@@ -423,6 +423,27 @@ test("indexed player profile mirrors must match before client-visible projection
   assert.throws(
     () => validatedPlayerProfileLookup(indexedDisconnectedSentinel),
     /Stored player profile mirrors are inconsistent/,
+  );
+
+  const weakSession = contractPlayer();
+  weakSession.authToken = "guessable";
+  assert.throws(
+    () => validatedPlayerProfileLookup(weakSession),
+    /Stored player account envelope is invalid/,
+  );
+
+  const malformedPassword = contractPlayer();
+  malformedPassword.authTokenHash = "scrypt$v1$16384$8$1$bad$bad";
+  assert.throws(
+    () => validatedPlayerProfileLookup(malformedPassword),
+    /Stored player account envelope is invalid/,
+  );
+
+  const reversedAuditDates = contractPlayer();
+  reversedAuditDates.updatedAt = new Date(reversedAuditDates.createdAt.getTime() - 1);
+  assert.throws(
+    () => validatedPlayerProfileLookup(reversedAuditDates),
+    /Stored player account envelope is invalid/,
   );
 });
 
@@ -1248,7 +1269,7 @@ test("custom login returns distinct session and provider credentials", async () 
     },
   });
   assert.equal(response.AccountType, AccountType.Facebook);
-  assert.equal(response.Token, "session-token");
+  assert.equal(response.Token, "a".repeat(64));
   assert.equal(response.Password, "facebook-credential");
   assert.ok(response.PlayerData);
   assert.deepEqual((response.Player as Record<string, unknown>).Id, { S: "player-contract" });

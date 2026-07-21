@@ -4,6 +4,7 @@ import {
   validatedFacebookPlayerId,
   validatedOptionalStringPlayerId,
 } from "./identityExternalIdAuthorityService";
+import { isSupportedAuthenticationScryptCost } from "./authSecretService";
 
 /**
  * Prove that MongoDB's indexed player fields still mirror the client-facing DatabasePlayer DTO.
@@ -50,6 +51,52 @@ export function validatedPlayerProfileMirrors(player: PlayerDocument): PlayerDoc
   return player;
 }
 
+function validCustomCredentialHash(value: unknown): boolean {
+  if (typeof value !== "string") return false;
+  // Reconstruction builds before versioned scrypt stored one lower-case SHA-256 HMAC. It remains
+  // verification authority only as a bounded migration format and is upgraded after valid login.
+  if (/^[0-9a-f]{64}$/u.test(value)) return true;
+  const parts = value.split("$");
+  if (parts.length !== 7 || parts[0] !== "scrypt" || parts[1] !== "v1") return false;
+  const cost = Number(parts[2]);
+  return isSupportedAuthenticationScryptCost(cost)
+    && parts[2] === String(cost)
+    && parts[3] === "8"
+    && parts[4] === "1"
+    && /^[0-9a-f]{32}$/u.test(parts[5] ?? "")
+    && /^[0-9a-f]{64}$/u.test(parts[6] ?? "");
+}
+
+/**
+ * Validate private player-account fields consumed before a request reaches gameplay logic.
+ *
+ * `authToken` remains optional solely for legacy rows that can prove a durable password/provider
+ * credential and receive a newly rotated session. If present, it must be one server-issued HMAC;
+ * a corrupt one-character token must never become an easy account credential through exact string
+ * comparison. Password hashes accept only the explicit legacy-HMAC migration form or the bounded
+ * versioned scrypt form. Profile timestamps are durable optimistic/audit state and must be real.
+ */
+export function validatedPlayerAccountEnvelope(player: PlayerDocument): PlayerDocument {
+  validatedPlayerProfileMirrors(player);
+  const createdAt = player.createdAt instanceof Date ? player.createdAt.getTime() : Number.NaN;
+  const updatedAt = player.updatedAt instanceof Date ? player.updatedAt.getTime() : Number.NaN;
+  const valid = typeof player.id === "string"
+    && player.id.length > 0
+    && player.id.length <= 256
+    && (player.authToken === undefined || /^[0-9a-f]{64}$/u.test(player.authToken))
+    && (player.authTokenHash === undefined || validCustomCredentialHash(player.authTokenHash))
+    && (player.normalizedAccountName === undefined
+      || player.normalizedAccountName === player.accountName.toLocaleLowerCase("en-US"))
+    && typeof player.player.deviceToken === "string"
+    && player.player.deviceToken.length <= 4096
+    && player.player.deviceToken === player.player.deviceToken.trim()
+    && Number.isFinite(createdAt)
+    && Number.isFinite(updatedAt)
+    && updatedAt >= createdAt;
+  if (!valid) throw new Error("Stored player account envelope is invalid.");
+  return player;
+}
+
 /**
  * Preserve a legitimate lookup miss while proving every document returned by a shared lookup.
  *
@@ -59,5 +106,5 @@ export function validatedPlayerProfileMirrors(player: PlayerDocument): PlayerDoc
  * select by one root value while consuming a different value from DatabasePlayerDTO.
  */
 export function validatedPlayerProfileLookup(player: PlayerDocument | null): PlayerDocument | null {
-  return player === null ? null : validatedPlayerProfileMirrors(player);
+  return player === null ? null : validatedPlayerAccountEnvelope(player);
 }
