@@ -25,6 +25,94 @@ const MIN_APPEAL_MESSAGE_LENGTH = 20;
 const MAX_APPEAL_MESSAGE_LENGTH = 2_000;
 const DEFAULT_PAGE_SIZE = 50;
 const MAX_PAGE_SIZE = 100;
+const APPEAL_KEYS = new Set([
+  "_id", "sanctionId", "playerId", "status", "message", "submissionOperationId", "reviewHistory",
+  "createdAt", "updatedAt",
+]);
+const APPEAL_REVIEW_KEYS = new Set(["operationId", "fromStatus", "toStatus", "actor", "note", "createdAt"]);
+
+function plainRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value) && !(value instanceof Date);
+}
+
+function safeDate(value: unknown): value is Date {
+  return value instanceof Date && Number.isSafeInteger(value.getTime()) && value.getTime() >= 0;
+}
+
+function boundedIdentity(value: unknown, maximum: number): value is string {
+  return typeof value === "string" && value.length >= 1 && value.length <= maximum && !/\p{Cc}/u.test(value);
+}
+
+/**
+ * Prove one appeal as immutable player intake followed by at most two audited lifecycle moves.
+ * Status is only a projection of that history. The open row uses updatedAt=createdAt because its
+ * submission operation is itself a durable mutation; every later update must equal the final
+ * review/withdrawal timestamp exactly.
+ */
+export function validatedPlayerAppeal(
+  appeal: PlayerAppealDocument,
+  now: Date,
+): PlayerAppealDocument {
+  const raw = appeal as unknown as Record<string, unknown>;
+  if (!plainRecord(appeal)
+    || Object.keys(raw).some((key) => !APPEAL_KEYS.has(key))
+    || !UUID_V4_PATTERN.test(appeal._id)
+    || !UUID_V4_PATTERN.test(appeal.sanctionId)
+    || !boundedIdentity(appeal.playerId, 256)
+    || !APPEAL_STATUSES.has(appeal.status)
+    || typeof appeal.message !== "string"
+    || appeal.message.length < MIN_APPEAL_MESSAGE_LENGTH
+    || appeal.message.length > MAX_APPEAL_MESSAGE_LENGTH
+    || appeal.message.trim().replace(/\s+/gu, " ") !== appeal.message
+    || !OPERATION_ID_PATTERN.test(appeal.submissionOperationId)
+    || !safeDate(appeal.createdAt)
+    || !safeDate(appeal.updatedAt)
+    || !safeDate(now)
+    || appeal.createdAt.getTime() > now.getTime()
+    || appeal.updatedAt.getTime() > now.getTime()) {
+    throw new Error("Stored player appeal authority is invalid.");
+  }
+
+  const history = appeal.reviewHistory;
+  if (appeal.status === "open") {
+    if (history !== undefined || appeal.updatedAt.getTime() !== appeal.createdAt.getTime()) {
+      throw new Error("Stored player appeal authority is invalid.");
+    }
+    return appeal;
+  }
+  if (!Array.isArray(history) || history.length < 1 || history.length > 2) {
+    throw new Error("Stored player appeal authority is invalid.");
+  }
+  let projected: PlayerAppealStatus = "open";
+  let previousTime = appeal.createdAt.getTime();
+  const operationIds = new Set([appeal.submissionOperationId]);
+  for (const entry of history) {
+    const entryRaw = entry as unknown as Record<string, unknown>;
+    const terminal = entry.toStatus === "accepted" || entry.toStatus === "rejected" || entry.toStatus === "withdrawn";
+    if (!plainRecord(entry)
+      || Object.keys(entryRaw).some((key) => !APPEAL_REVIEW_KEYS.has(key))
+      || !OPERATION_ID_PATTERN.test(entry.operationId)
+      || operationIds.has(entry.operationId)
+      || entry.fromStatus !== projected
+      || !appealTransitionAllowed(projected, entry.toStatus)
+      || !boundedIdentity(entry.actor, 100)
+      || typeof entry.note !== "string"
+      || entry.note.length > 1_000
+      || (terminal && entry.note.length < 1)
+      || !safeDate(entry.createdAt)
+      || entry.createdAt.getTime() < previousTime
+      || entry.createdAt.getTime() > now.getTime()) {
+      throw new Error("Stored player appeal authority is invalid.");
+    }
+    operationIds.add(entry.operationId);
+    projected = entry.toStatus;
+    previousTime = entry.createdAt.getTime();
+  }
+  if (projected !== appeal.status || appeal.updatedAt.getTime() !== previousTime) {
+    throw new Error("Stored player appeal authority is invalid.");
+  }
+  return appeal;
+}
 
 export class PlayerAppealInputError extends Error {
   constructor(
@@ -242,6 +330,7 @@ export async function submitPlayerAppeal(
 ): Promise<PlayerAppealMutationResult> {
   const existingOperation = await appealCollection.findOne({ submissionOperationId: input.operationId });
   if (existingOperation) {
+    validatedPlayerAppeal(existingOperation, now);
     if (!sameSubmission(existingOperation, playerId, input)) {
       throw new PlayerAppealInputError("Idempotency-Key was already used for another appeal.", 409);
     }
@@ -260,6 +349,7 @@ export async function submitPlayerAppeal(
 
   const existingSanctionAppeal = await appealCollection.findOne({ sanctionId: input.sanctionId });
   if (existingSanctionAppeal) {
+    validatedPlayerAppeal(existingSanctionAppeal, now);
     if (sameSubmission(existingSanctionAppeal, playerId, input)) {
       return { appeal: existingSanctionAppeal, replayed: true };
     }
@@ -276,6 +366,7 @@ export async function submitPlayerAppeal(
     createdAt: now,
     updatedAt: now,
   };
+  validatedPlayerAppeal(appeal, now);
   try {
     await appealCollection.insertOne(appeal);
     return { appeal, replayed: false };
@@ -287,6 +378,7 @@ export async function submitPlayerAppeal(
         { submissionOperationId: input.operationId },
       ],
     });
+    if (winner) validatedPlayerAppeal(winner, now);
     if (winner && sameSubmission(winner, playerId, input)) {
       return { appeal: winner, replayed: true };
     }
@@ -318,6 +410,7 @@ export async function reviewPlayerAppealInCollections(
   const options = sessionOptions(session);
   const current = await appealCollection.findOne({ _id: input.appealId }, options);
   if (!current) throw new PlayerAppealInputError("Appeal was not found.", 404);
+  validatedPlayerAppeal(current, now);
   const replay = reviewEntry(current, input.operationId);
   if (replay) {
     if (!reviewEntryMatches(replay, input)) {
@@ -385,9 +478,13 @@ export async function reviewPlayerAppealInCollections(
     } as Document,
     { ...options, returnDocument: "after" },
   );
-  if (updated) return { appeal: updated, replayed: false };
+  if (updated) {
+    validatedPlayerAppeal(updated, now);
+    return { appeal: updated, replayed: false };
+  }
 
   const winner = await appealCollection.findOne({ _id: current._id }, options);
+  if (winner) validatedPlayerAppeal(winner, now);
   const winnerEntry = winner ? reviewEntry(winner, input.operationId) : undefined;
   if (winner && winnerEntry && reviewEntryMatches(winnerEntry, input)) {
     return { appeal: winner, replayed: true };
@@ -411,6 +508,7 @@ export async function reviewPlayerAppeal(
   } catch (error) {
     if ((error as { code?: number }).code !== 11000) throw error;
     const owner = await playerAppeals().findOne({ "reviewHistory.operationId": input.operationId });
+    if (owner) validatedPlayerAppeal(owner, now);
     const ownerEntry = owner ? reviewEntry(owner, input.operationId) : undefined;
     if (owner?._id === input.appealId && ownerEntry && reviewEntryMatches(ownerEntry, input)) {
       return { appeal: owner, replayed: true };
@@ -422,22 +520,27 @@ export async function reviewPlayerAppeal(
 export async function findPlayerAppeal(
   appealId: string,
   appealCollection: Collection<PlayerAppealDocument> = playerAppeals(),
+  now = new Date(),
 ): Promise<PlayerAppealDocument | null> {
-  return appealCollection.findOne({ _id: appealId });
+  const appeal = await appealCollection.findOne({ _id: appealId });
+  return appeal ? validatedPlayerAppeal(appeal, now) : null;
 }
 
 export async function findOwnedPlayerAppeal(
   appealId: string,
   playerId: string,
   appealCollection: Collection<PlayerAppealDocument> = playerAppeals(),
+  now = new Date(),
 ): Promise<PlayerAppealDocument | null> {
-  return appealCollection.findOne({ _id: appealId, playerId });
+  const appeal = await appealCollection.findOne({ _id: appealId, playerId });
+  return appeal ? validatedPlayerAppeal(appeal, now) : null;
 }
 
 /** Stable admin queue ordered by creation time plus appeal UUID as a deterministic tie-breaker. */
 export async function listPlayerAppeals(
   input: PlayerAppealListInput,
   appealCollection: Collection<PlayerAppealDocument> = playerAppeals(),
+  now = new Date(),
 ): Promise<PlayerAppealListPage> {
   const filter: Filter<PlayerAppealDocument> = {};
   if (input.status) filter.status = input.status;
@@ -454,7 +557,7 @@ export async function listPlayerAppeals(
     .limit(input.limit + 1)
     .toArray();
   const hasMore = rows.length > input.limit;
-  const page = rows.slice(0, input.limit);
+  const page = rows.slice(0, input.limit).map((appeal) => validatedPlayerAppeal(appeal, now));
   return {
     appeals: page,
     ...(hasMore && page.length > 0 ? { nextCursor: encodeAppealCursor(page[page.length - 1]!) } : {}),

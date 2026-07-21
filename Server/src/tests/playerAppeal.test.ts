@@ -13,6 +13,7 @@ import {
   PlayerAppealInputError,
   reviewPlayerAppealInCollections,
   submitPlayerAppeal,
+  validatedPlayerAppeal,
 } from "../services/playerAppealService";
 import { parsePlayerSupportAuthorization } from "../services/playerSupportAuthService";
 
@@ -255,6 +256,7 @@ test("appeal queue cursor preserves newest-first createdAt and UUID ordering", a
   const older = appeal({
     _id: "223e4567-e89b-42d3-a456-426614174000",
     createdAt: new Date("2026-07-21T00:59:00Z"),
+    updatedAt: new Date("2026-07-21T00:59:00Z"),
   });
   const encoded = encodeAppealCursor(newer);
   const decoded = decodeAppealCursor(encoded);
@@ -306,6 +308,31 @@ test("appeal transitions permit review, decision, and withdrawal but keep termin
   assert.equal(appealTransitionAllowed("reviewing", "open"), false);
   assert.equal(appealTransitionAllowed("accepted", "rejected"), false);
   assert.equal(appealTransitionAllowed("withdrawn", "reviewing"), false);
+});
+
+test("complete appeal authority binds intake, status, and the ordered audit projection", () => {
+  const reviewedAt = new Date("2026-07-21T02:00:00Z");
+  const valid = appeal({
+    status: "accepted",
+    updatedAt: reviewedAt,
+    reviewHistory: [{
+      operationId: "appeal-review:0001",
+      fromStatus: "open",
+      toStatus: "accepted",
+      actor: "moderator@example.test",
+      note: "The appeal is supported by the reviewed evidence.",
+      createdAt: reviewedAt,
+    }],
+  });
+  assert.equal(validatedPlayerAppeal(valid, reviewedAt), valid);
+  assert.throws(
+    () => validatedPlayerAppeal({ ...valid, reviewHistory: undefined }, reviewedAt),
+    /player appeal authority is invalid/,
+  );
+  assert.throws(
+    () => validatedPlayerAppeal({ ...valid, updatedAt: new Date(reviewedAt.getTime() + 1) }, reviewedAt),
+    /player appeal authority is invalid/,
+  );
 });
 
 test("accepting an appeal revokes its active sanction and exact retry appends no second audit entry", async () => {
@@ -374,7 +401,11 @@ test("appeal decisions reject stale status, terminal rewrites, changed retries, 
     note: "Assigned for evidence review.",
     createdAt: new Date("2026-07-21T01:30:00Z"),
   };
-  const appeals = [appeal({ status: "reviewing", reviewHistory: [initialEntry] })];
+  const appeals = [appeal({
+    status: "reviewing",
+    reviewHistory: [initialEntry],
+    updatedAt: initialEntry.createdAt,
+  })];
   const sanctions = [sanction()];
   const collection = reviewAppealCollection(appeals);
   const sanctionRows = reviewSanctionCollection(sanctions);
@@ -412,7 +443,7 @@ test("appeal decisions reject stale status, terminal rewrites, changed retries, 
       note: "Cannot rewrite a terminal decision.",
       operationId: "appeal-review:accepted:003",
     }, new Date(), collection, sanctionRows),
-    (error: unknown) => error instanceof PlayerAppealInputError && error.httpStatus === 409,
+    /player appeal authority is invalid/,
   );
   await assert.rejects(
     reviewPlayerAppealInCollections({

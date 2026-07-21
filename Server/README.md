@@ -533,6 +533,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   sanction, permits owned reads and optimistic withdrawal, and exposes no private moderation data.
   Its admin queue supports audited `open -> reviewing -> accepted/rejected` decisions; acceptance
   transactionally revokes the live sanction, while all terminal appeal states remain immutable.
+  Complete appeal authority is checked at submission replay, owned/admin read, list, mutation, and
+  replay boundaries: exact appeal/sanction/player/submission identities, normalized bounded message,
+  safe creation/update dates, and a unique legal one-or-two-entry audit chain must project the final
+  status and exact `updatedAt`. Open intake keeps equal creation/update times and no review history.
   Because the recovered banned dialog has only retry/log controls, a replacement support frontend
   or client adapter is still required to expose this workflow to stock-client players.
   Terminal reports and appeals additionally have an admin-only lifecycle preview, bounded stable
