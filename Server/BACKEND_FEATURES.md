@@ -170,6 +170,13 @@ settings stop startup instead of being floored, clamped, replaced with hidden de
 after traffic begins; durable counters retain their global denial-sentinel bounds so later valid
 policy changes remain compatible after restart.
 
+Moderation lifecycle retention now resolves its report/appeal day pair once during module startup
+as one immutable exact policy. Both values must remain whole days from 30 through 3,650, while
+sanctions remain indefinitely retained. Preview, bounded export, and destructive apply share that
+same snapshot; explicit collection-test/tooling policies pass through the identical validator, and
+historical purge receipts continue proving their stored intervals against global bounds rather
+than the current deployment snapshot.
+
 Squad War maintenance now widens its round/season queries beyond ordinary due dates so malformed or
 missing BSON dates and unknown statuses enter validation instead of remaining permanently invisible.
 Both selected batches validate before the first settlement write; any non-settled round blocks its

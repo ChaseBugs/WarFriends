@@ -201,8 +201,10 @@ same MongoDB transaction, while rejection and player withdrawal leave the sancti
 
 Moderation retention is an explicit admin workflow rather than an automatic TTL. Configure terminal
 record age with `MODERATION_REPORT_RETENTION_DAYS` and `MODERATION_APPEAL_RETENTION_DAYS` (30-3650;
-both default to 365). `GET /admin/moderation/lifecycle/retention/preview` freezes the cutoffs and
-eligible counts at one `previewedAt`; page every eligible record through
+both default to 365). The exact pair resolves once during module startup as one immutable policy,
+so preview, export, and apply cannot observe different process-local cutoffs. Malformed policy stops
+startup instead of being rounded, substituted, or re-read. The retention `preview` endpoint freezes
+the cutoffs and eligible counts at one `previewedAt`; page every eligible record through
 `GET /admin/moderation/lifecycle/retention/export?kind=reports|appeals&previewedAt=...` before applying
 the purge. `POST /admin/moderation/lifecycle/retention/apply` requires that timestamp,
 `X-Admin-Actor`, `Idempotency-Key`, and exact confirmation `DELETE_TERMINAL_MODERATION_RECORDS`.

@@ -10,6 +10,7 @@ import {
   decodeModerationExportCursor,
   exportModerationRetentionPage,
   ModerationLifecycleInputError,
+  moderationRetentionPolicy,
   moderationRetentionCutoffs,
   normalizeModerationExportLimit,
   normalizeModerationPreviewedAt,
@@ -20,6 +21,30 @@ import {
 import type { PlayerReportDocument } from "../services/reportService";
 
 const POLICY: ModerationRetentionPolicy = { reportDays: 30, appealDays: 60, sanctions: "indefinite" };
+
+test("moderation retention uses one immutable exact startup policy", () => {
+  assert.equal(Object.isFrozen(moderationRetentionPolicy()), true);
+  assert.deepEqual(moderationRetentionPolicy(), {
+    reportDays: 365,
+    appealDays: 365,
+    sanctions: "indefinite",
+  });
+  for (const policy of [
+    { ...POLICY, reportDays: 29 },
+    { ...POLICY, appealDays: 3_651 },
+    { ...POLICY, reportDays: 30.5 },
+    { ...POLICY, sanctions: "temporary" },
+  ]) {
+    assert.throws(
+      () => moderationRetentionPolicy(policy as ModerationRetentionPolicy),
+      /retention policy|must be an integer/,
+    );
+    assert.throws(
+      () => moderationRetentionCutoffs(new Date("2026-07-21T00:00:00Z"), policy as ModerationRetentionPolicy),
+      /retention policy|must be an integer/,
+    );
+  }
+});
 
 function report(overrides: Partial<PlayerReportDocument> = {}): PlayerReportDocument {
   const reviewedAt = new Date("2026-01-02T00:00:00Z");

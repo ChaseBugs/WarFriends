@@ -91,9 +91,9 @@ export class ModerationLifecycleInputError extends Error {
 }
 
 export interface ModerationRetentionPolicy {
-  reportDays: number;
-  appealDays: number;
-  sanctions: "indefinite";
+  readonly reportDays: number;
+  readonly appealDays: number;
+  readonly sanctions: "indefinite";
 }
 
 export interface ModerationRetentionPreview {
@@ -142,25 +142,46 @@ function configuredRetentionDays(value: number, name: string): number {
   return value;
 }
 
-/**
- * Return the deploy-time lifecycle policy after validating its safety bounds.
- *
- * The recovered clients define report submission and banned-dialog behavior, but no storage
- * lifecycle. These defaults are therefore explicit backend policy. Account sanctions remain
- * indefinite because deleting the enforcement audit can make later operator decisions ambiguous.
- */
-export function moderationRetentionPolicy(): ModerationRetentionPolicy {
+function exactModerationRetentionPolicy(
+  policy: ModerationRetentionPolicy,
+): ModerationRetentionPolicy {
+  if (policy.sanctions !== "indefinite") {
+    throw new Error("Moderation sanction retention policy must remain indefinite.");
+  }
   return {
     reportDays: configuredRetentionDays(
-      config.moderationReportRetentionDays,
+      policy.reportDays,
       "MODERATION_REPORT_RETENTION_DAYS",
     ),
     appealDays: configuredRetentionDays(
-      config.moderationAppealRetentionDays,
+      policy.appealDays,
       "MODERATION_APPEAL_RETENTION_DAYS",
     ),
     sanctions: "indefinite",
   };
+}
+
+/**
+ * Return the immutable deploy-time lifecycle policy after validating its safety bounds.
+ *
+ * The recovered clients define report submission and banned-dialog behavior, but no storage
+ * lifecycle. These defaults are therefore explicit backend policy. Resolve the pair once before
+ * admin traffic so preview, export, and purge cannot observe different cutoffs in one process.
+ * Account sanctions remain indefinite because deleting their audit can make later operator
+ * decisions ambiguous.
+ */
+const CONFIGURED_MODERATION_RETENTION_POLICY = Object.freeze(exactModerationRetentionPolicy({
+  reportDays: config.moderationReportRetentionDays,
+  appealDays: config.moderationAppealRetentionDays,
+  sanctions: "indefinite",
+}));
+
+export function moderationRetentionPolicy(
+  policy?: ModerationRetentionPolicy,
+): ModerationRetentionPolicy {
+  return policy === undefined
+    ? CONFIGURED_MODERATION_RETENTION_POLICY
+    : exactModerationRetentionPolicy(policy);
 }
 
 export function normalizeModerationPreviewedAt(value: unknown, now = new Date()): Date {
@@ -221,9 +242,13 @@ export function moderationRetentionCutoffs(
   previewedAt: Date,
   policy = moderationRetentionPolicy(),
 ): Pick<ModerationRetentionPreview, "reportBefore" | "appealBefore"> {
+  // Explicit policies exist for deterministic collection-level tests and operator tooling. Route
+  // them through the same exact boundary as startup configuration instead of trusting structural
+  // TypeScript types at runtime.
+  const values = moderationRetentionPolicy(policy);
   return {
-    reportBefore: new Date(previewedAt.getTime() - policy.reportDays * MILLISECONDS_PER_DAY),
-    appealBefore: new Date(previewedAt.getTime() - policy.appealDays * MILLISECONDS_PER_DAY),
+    reportBefore: new Date(previewedAt.getTime() - values.reportDays * MILLISECONDS_PER_DAY),
+    appealBefore: new Date(previewedAt.getTime() - values.appealDays * MILLISECONDS_PER_DAY),
   };
 }
 
