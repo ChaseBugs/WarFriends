@@ -210,9 +210,12 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   durable inbox responses, Squad War member snapshots, and War Arena configuration share one
   integer-projection numeric adapter. Squad Event progress uses its paired finite decimal-preserving
   adapter. Both reject non-finite or unsafe numeric authority instead of publishing a believable
-  zero or raw `NaN`/`Infinity` string; War Arena also validates its monthly derivation clock. Human
-  passwords use versioned salted scrypt with
-  automatic legacy-HMAC migration; provider credentials remain separate from the rotated internal
+  zero or raw `NaN`/`Infinity` string; War Arena also validates its monthly derivation clock.
+  Root/indexed player identity, league, Army Power, lifetime-experience, squad-point, and squad-name
+  mirrors must exactly match the client-facing `DatabasePlayer` DTO before boot/profile/leaderboard
+  projection, so MongoDB cannot order or select by a value different from the one Unity displays.
+  Human passwords use versioned salted scrypt with automatic legacy-HMAC migration; provider
+  credentials remain separate from the rotated internal
   gameplay session token. Durable login guesses use an
   atomic MongoDB throttle keyed by an HMAC of the presented identity; active gameplay sessions
   remain usable and provider credentials are never accepted by ordinary gameplay actions.

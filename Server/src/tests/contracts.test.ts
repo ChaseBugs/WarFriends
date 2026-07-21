@@ -281,6 +281,7 @@ test("player data rejects corrupt core balances while preserving chargeback debt
 test("DynamoDB numeric wire projection rejects corrupt profile authority instead of emitting zero", () => {
   const fractionalArmyPower = contractPlayer();
   fractionalArmyPower.player.armyPower = 321.75;
+  fractionalArmyPower.armyPower = 321.75;
   assert.deepEqual(buildDatabasePlayer(fractionalArmyPower).ArmyPower, { N: "321" });
 
   const corruptPublicProfile = contractPlayer();
@@ -292,6 +293,7 @@ test("DynamoDB numeric wire projection rejects corrupt profile authority instead
 
   const corruptPrivateBoot = contractPlayer();
   corruptPrivateBoot.player.experience = Number.POSITIVE_INFINITY;
+  corruptPrivateBoot.experience = Number.POSITIVE_INFINITY;
   assert.throws(
     () => buildPlayerData(corruptPrivateBoot),
     /DynamoDB numeric attribute authority is invalid/,
@@ -302,6 +304,23 @@ test("DynamoDB numeric wire projection rejects corrupt profile authority instead
   assert.throws(
     () => buildPlayerData(unsafeProjection),
     /DynamoDB numeric attribute authority is invalid/,
+  );
+});
+
+test("indexed player profile mirrors must match before client-visible projection", () => {
+  const corrupt = contractPlayer();
+  corrupt.experience += 1;
+  assert.throws(
+    () => buildDatabasePlayer(corrupt),
+    /Stored player profile mirrors are inconsistent/,
+  );
+  assert.throws(
+    () => buildPlayerData(corrupt),
+    /Stored player profile mirrors are inconsistent/,
+  );
+  assert.throws(
+    () => buildPlayerLeaderboardItem(corrupt, 1),
+    /Stored player profile mirrors are inconsistent/,
   );
 });
 
@@ -1097,6 +1116,7 @@ test("experience leaderboard items use the FHIPGDADNFG field contract", () => {
 
   const corruptExperience = contractPlayer();
   corruptExperience.player.experience = Number.NaN;
+  corruptExperience.experience = Number.NaN;
   assert.throws(
     () => buildPlayerLeaderboardItem(corruptExperience, 1),
     /DynamoDB numeric attribute authority is invalid/,

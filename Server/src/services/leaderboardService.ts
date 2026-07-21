@@ -4,6 +4,7 @@ import { config } from "../config";
 import { redisZRevRange, redisZAdd } from "../redis";
 import { progressionForPlayer } from "./playerStateService";
 import { integerNumberAttribute as numberAttribute } from "./dynamoNumberAttributeService";
+import { validatedPlayerProfileMirrors } from "./playerProfileMirrorAuthorityService";
 import { buildDatabaseSquad } from "./squadWireService";
 import { serializeWarArenaData } from "./warArenaContract";
 
@@ -21,6 +22,7 @@ function s(value: unknown): StringAttribute {
 
 /** Build the exact item parsed by FHIPGDADNFG.MAINIENLLIL. */
 export function buildPlayerLeaderboardItem(doc: PlayerDocument, position: number): PlayerLeaderboardItem {
+  validatedPlayerProfileMirrors(doc);
   const player = doc.player;
   const progression = progressionForPlayer(doc);
   const item: PlayerLeaderboardItem = {
@@ -85,6 +87,7 @@ export async function topArenaPlayers(limit = 100): Promise<PlayerLeaderboardIte
 export async function playerRank(playerId: string): Promise<number> {
   const doc = await players().findOne({ id: playerId });
   if (!doc) return 0;
+  validatedPlayerProfileMirrors(doc);
   const ahead = await players().countDocuments({ experience: { $gt: doc.experience } });
   return ahead + 1;
 }

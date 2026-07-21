@@ -62,6 +62,7 @@ import { validatedWarArenaState } from "./warArenaAuthorityService";
 import { validatedDailyMissionsState } from "./dailyMissionAuthorityService";
 import { validatedEventAssignmentState } from "./eventAssignmentAuthorityService";
 import { integerNumberAttribute as numberAttribute } from "./dynamoNumberAttributeService";
+import { validatedPlayerProfileMirrors } from "./playerProfileMirrorAuthorityService";
 
 /** Unix seconds are used throughout the recovered Beanstalk protocol. */
 export function unixNow(): number {
@@ -283,6 +284,7 @@ function addSerializedObject(target: PlayerDataMap, typeName: string, value: unk
  * was the reason early responses produced a valid JSON object but an empty Unity player.
  */
 export function buildDatabasePlayer(document: PlayerDocument): Record<string, unknown> {
+  validatedPlayerProfileMirrors(document);
   const dto = document.player;
   validatePlayerLeagueProgression(dto);
   validatePlayerLeagueCompetitionScore(dto.medalsBalance, dto.skill, document.id);
@@ -362,6 +364,7 @@ export function buildDatabasePlayer(document: PlayerDocument): Record<string, un
  * OGLEHLIPEFM.NCNNKGNJNOH in the recovered 1.6.0 client.
  */
 export function buildPlayerData(player: PlayerDocument, now = unixNow()): PlayerDataMap {
+  validatedPlayerProfileMirrors(player);
   const state = progressionForPlayer(player, Math.floor(now));
   const dto = player.player;
   const balances = validatedCoreProgressionBalances(state);
@@ -553,6 +556,7 @@ export function buildPlayerData(player: PlayerDocument, now = unixNow()): Player
 
 /** Fields common to CreateAccount and the mandatory post-login GetPlayerData refresh. */
 export function buildPlayerStateResponse(player: PlayerDocument, now = unixNow()): Record<string, unknown> {
+  validatedPlayerProfileMirrors(player);
   validatePlayerLeagueProgression(player.player);
   validatePlayerLeagueCompetitionScore(
     player.player.medalsBalance,
