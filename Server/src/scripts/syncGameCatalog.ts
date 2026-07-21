@@ -1,5 +1,6 @@
 import { connectMongo, disconnectMongo, gameCatalogReleases } from "../db";
 import { GAME_CATALOG_CLIENT_VERSION } from "../services/gameCatalogService";
+import { validatedGameCatalogRelease } from "../services/gameCatalogAuthorityService";
 
 /**
  * Operational entry point for explicitly refreshing the MongoDB material database after a
@@ -13,6 +14,7 @@ async function main(): Promise<void> {
       clientVersion: GAME_CATALOG_CLIENT_VERSION,
     });
     if (!release) throw new Error("Catalog synchronization completed without a release pointer.");
+    validatedGameCatalogRelease(release, new Date(), GAME_CATALOG_CLIENT_VERSION);
 
     process.stdout.write(
       `Published WarFriends ${release.clientVersion} catalog ${release.catalogRevision} `

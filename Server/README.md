@@ -657,6 +657,15 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   balancing changes auditable. Startup idempotently writes all immutable revision entries before switching the
   current 4.9.5 release pointer, so readers cannot observe a partial synchronization. Run
   `npm run sync:catalog` to publish explicitly; normal server startup performs the same sync.
+  A complete durable authority boundary now validates the release pointer before startup reuse,
+  CLI reporting, or lookup: exact fields, SHA-256 revision, conserved safe counts, canonically
+  ordered unique source triples, and safe ordered dates. Every resolved entry must have an exact
+  kind/availability identity, bounded canonical JSON without non-finite values, a recomputed content
+  hash, one source triple present in the release, and audit dates no later than pointer publication.
+  Deterministic revision rows are insert-once; synchronization re-reads and proves all 531 expected
+  identities before atomically replacing the release. Provenance identity includes path, schema,
+  and digest because checked-in extraction artifacts can record different snapshots of the same
+  source path; the former path/schema-only map silently omitted the unit artifact's recorded digest.
 - **Authoritative Army Power**: `scripts/Extract-ArmyPowerCatalog.mjs` reproduces 11,805 normal
   weapon DPS rows and all 58 player-rank `ARMYPOWER` rows from MainScene. The server independently
   rounds equipped-unit float power, equipped-weapon float DPS, and the current zero-based rank row

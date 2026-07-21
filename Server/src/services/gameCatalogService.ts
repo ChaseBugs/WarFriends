@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import type { Collection } from "mongodb";
 import generatedArmyPowerCatalog from "../data/armyPowerCatalog.generated.json";
 import generatedUnitCatalog from "../data/unitCatalog.generated.json";
@@ -10,6 +9,13 @@ import {
   WEAPON_BLACK_MARKET_PRICES,
   WEAPON_UPGRADE_CATALOG,
 } from "../data/weaponUpgradeCatalog.generated";
+import {
+  catalogContentHash,
+  validatedGameCatalogEntry,
+  validatedGameCatalogRelease,
+} from "./gameCatalogAuthorityService";
+
+export { catalogContentHash } from "./gameCatalogAuthorityService";
 
 export const GAME_CATALOG_CLIENT_VERSION = "4.9.5";
 
@@ -151,27 +157,6 @@ const unitUpgrades = generatedUnitUpgradeCatalog as unknown as UnitUpgradeArtifa
 const armyPower = generatedArmyPowerCatalog as unknown as ArmyPowerArtifact;
 const visuals = generatedVisualCatalog as unknown as VisualCatalogArtifact;
 const cards = generatedCardCatalog as unknown as CardCatalogArtifact;
-
-/**
- * JSON.stringify preserves insertion order, which is not a safe canonical form for hashes.
- * Recursively sorting object keys makes release IDs stable across operating systems and lets
- * an operator prove that two databases contain exactly the same recovered client balancing.
- */
-function canonicalize(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map(canonicalize);
-  if (value && typeof value === "object" && !(value instanceof Date)) {
-    return Object.fromEntries(
-      Object.entries(value as Record<string, unknown>)
-        .sort(([left], [right]) => left.localeCompare(right))
-        .map(([key, child]) => [key, canonicalize(child)]),
-    );
-  }
-  return value;
-}
-
-export function catalogContentHash(value: unknown): string {
-  return createHash("sha256").update(JSON.stringify(canonicalize(value))).digest("hex");
-}
 
 function requiredName(row: Record<string, unknown>, family: string): string {
   if (typeof row.name !== "string" || row.name.length === 0) {
@@ -466,7 +451,10 @@ export function buildGameCatalog(): BuiltGameCatalog {
     { path: armyPower.source, sha256: armyPower.sourceSha256, schemaVersion: armyPower.schemaVersion },
     { path: visuals.source, sha256: visuals.sourceSha256, schemaVersion: visuals.schemaVersion },
     { path: cards.source, sha256: cards.sourceSha256, schemaVersion: cards.schemaVersion },
-  ]) sourceMap.set(`${source.path}:${source.schemaVersion}`, source);
+  // Checked-in extraction artifacts can record distinct provenance digests for the same scene
+  // path. Provenance identity therefore includes the digest as well as path/schema; using
+  // only path/schema silently discarded the unit snapshot and left 45 entries unbound.
+  ]) sourceMap.set(`${source.path}:${source.schemaVersion}:${source.sha256}`, source);
 
   return {
     clientVersion: GAME_CATALOG_CLIENT_VERSION,
@@ -474,7 +462,9 @@ export function buildGameCatalog(): BuiltGameCatalog {
     entries,
     counts,
     sources: [...sourceMap.values()].sort((left, right) =>
-      left.path.localeCompare(right.path) || left.schemaVersion - right.schemaVersion),
+      left.path.localeCompare(right.path)
+      || left.schemaVersion - right.schemaVersion
+      || left.sha256.localeCompare(right.sha256)),
   };
 }
 
@@ -490,6 +480,18 @@ export async function syncGameCatalog(
   now = new Date(),
 ): Promise<BuiltGameCatalog> {
   const built = buildGameCatalog();
+  const currentRelease = await releaseCollection.findOne({ clientVersion: built.clientVersion });
+  if (currentRelease) validatedGameCatalogRelease(currentRelease, now, built.clientVersion);
+
+  const release: GameCatalogReleaseDocument = validatedGameCatalogRelease({
+    clientVersion: built.clientVersion,
+    catalogRevision: built.catalogRevision,
+    entryCount: built.entries.length,
+    counts: built.counts,
+    sources: built.sources,
+    createdAt: currentRelease?.createdAt ?? now,
+    updatedAt: now,
+  }, now, built.clientVersion);
 
   if (built.entries.length > 0) {
     await entryCollection.bulkWrite(built.entries.map((entry) => ({
@@ -501,26 +503,38 @@ export async function syncGameCatalog(
           key: entry.key,
         },
         update: {
-          $set: { ...entry, updatedAt: now },
-          $setOnInsert: { createdAt: now },
+          // A content revision is immutable. A retry may prove that the deterministic row already
+          // exists, but it must never rewrite a damaged row into something that merely looks new.
+          $setOnInsert: { ...entry, createdAt: now, updatedAt: now },
         },
         upsert: true,
       },
     })), { ordered: true });
   }
 
-  await releaseCollection.updateOne(
+  // Re-read the exact revision before publication. This detects missing, duplicate, unknown-field,
+  // source-mismatched, or hash-damaged rows before the atomic pointer can expose them to readers.
+  const storedEntries = await entryCollection.find({
+    clientVersion: built.clientVersion,
+    catalogRevision: built.catalogRevision,
+  }).toArray();
+  if (storedEntries.length !== built.entries.length) {
+    throw new Error("Stored game-catalog revision is incomplete.");
+  }
+  const expected = new Map(built.entries.map((entry) => [`${entry.kind}\u0000${entry.key}`, entry.contentHash]));
+  for (const entry of storedEntries) {
+    validatedGameCatalogEntry(entry, release, now);
+    const identity = `${entry.kind}\u0000${entry.key}`;
+    if (expected.get(identity) !== entry.contentHash) {
+      throw new Error("Stored game-catalog revision contains an unexpected entry.");
+    }
+    expected.delete(identity);
+  }
+  if (expected.size !== 0) throw new Error("Stored game-catalog revision is missing an expected entry.");
+
+  await releaseCollection.replaceOne(
     { clientVersion: built.clientVersion },
-    {
-      $set: {
-        catalogRevision: built.catalogRevision,
-        entryCount: built.entries.length,
-        counts: built.counts,
-        sources: built.sources,
-        updatedAt: now,
-      },
-      $setOnInsert: { createdAt: now },
-    },
+    release,
     { upsert: true },
   );
 
@@ -535,12 +549,15 @@ export async function findPublishedCatalogEntry(
   key: string,
   clientVersion = GAME_CATALOG_CLIENT_VERSION,
 ): Promise<GameCatalogEntryDocument | null> {
+  const now = new Date();
   const release = await releaseCollection.findOne({ clientVersion });
   if (!release) return null;
-  return entryCollection.findOne({
+  validatedGameCatalogRelease(release, now, clientVersion);
+  const entry = await entryCollection.findOne({
     clientVersion,
     catalogRevision: release.catalogRevision,
     kind,
     key,
   });
+  return entry ? validatedGameCatalogEntry(entry, release, now, kind, key) : null;
 }
