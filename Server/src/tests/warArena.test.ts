@@ -25,6 +25,8 @@ import {
   takeWarArenaLifeState,
   warArenaStateFor,
 } from "../services/warArenaService";
+import { validatedWarArenaState } from "../services/warArenaAuthorityService";
+import { validatedProgressionSuccessor } from "../services/progressionPublicationAuthorityService";
 
 const NOW = Date.UTC(2026, 6, 19, 12, 0, 0) / 1_000;
 
@@ -96,6 +98,30 @@ test("Arena reward gates reject corrupt counters and receipt timestamps", () => 
     () => warArenaStateFor(corruptReceipt),
     /Stored War Arena battle receipt is invalid/,
   );
+});
+
+test("shared progression publication rejects duplicate Arena history and mismatched battle receipts", () => {
+  const current = createInitialProgression(NOW);
+  const duplicateHistory = {
+    ...initialWarArenaState(),
+    shownArenaIds: ["arena-2026-07", "arena-2026-07"],
+  };
+  assert.throws(() => validatedWarArenaState(duplicateHistory), /collections are invalid/);
+  assert.throws(
+    () => validatedProgressionSuccessor(current, {
+      ...current,
+      revision: 1,
+      warArena: duplicateHistory,
+    }),
+    /collections are invalid/,
+  );
+
+  const mismatchedBattle = {
+    ...initialWarArenaState(),
+    arenaId: "arena-2026-07",
+    activeBattle: { battleId: "battle-1", arenaId: "arena-2026-08", startedAt: NOW },
+  };
+  assert.throws(() => validatedWarArenaState(mismatchedBattle), /battle receipt is invalid/);
 });
 
 test("Arena lifetime counters reject unsafe increments before persistence", () => {

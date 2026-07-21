@@ -58,6 +58,7 @@ import { itemInventoryAuthorityFor } from "./itemInventoryAuthorityService";
 import { dailyRewardAuthorityFor } from "./dailyRewardAuthorityService";
 import { validatedAssignmentState } from "./assignmentAuthorityService";
 import { validatedAchievementState } from "./achievementAuthorityService";
+import { validatedWarArenaState } from "./warArenaAuthorityService";
 
 /** Unix seconds are used throughout the recovered Beanstalk protocol. */
 export function unixNow(): number {
@@ -141,6 +142,7 @@ export function progressionForPlayer(player: PlayerDocument, now = unixNow()): P
   const assignments = validatedAssignmentState(state.assignments);
   const lastSeenSquadChatTimestamp = validatedSquadChatCursor(state.lastSeenSquadChatTimestamp, now);
   const achievements = validatedAchievementState(state.achievements);
+  const warArena = validatedWarArenaState(state.warArena);
   const rental = validatedRentalState(state.rental);
   const blackMarket = validatedBlackMarketOfferState(state.blackMarket);
   const visualInventory = validatedVisualInventoryState(
@@ -189,6 +191,7 @@ export function progressionForPlayer(player: PlayerDocument, now = unixNow()): P
       assignments,
       lastSeenSquadChatTimestamp,
       achievements,
+      warArena,
     };
   }
 
@@ -230,6 +233,7 @@ export function progressionForPlayer(player: PlayerDocument, now = unixNow()): P
     assignments,
     lastSeenSquadChatTimestamp,
     achievements,
+    warArena,
   };
 }
 

@@ -977,11 +977,16 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   and acknowledging a dialog cannot enter an event or grant value. Runs and prices are server-owned,
   battle IDs are receipt-bound, and entry/start/result/heart/life/reward/end retries return their
   recovered response without a false revision increment or MongoDB replacement. Expired receipt
-  cleanup remains durable because it unblocks a future battle. Arena achievement progress shares this receipt authority; combat outcomes
-  and reward gates first validate persisted run counters, flags, collections, and receipt timestamps,
-  so malformed state cannot make an active run appear finished. Lifetime run/match/loss/flawless
-  increments also reject safe-integer overflow before the Arena receipt is published.
-  remain client-reported pending authoritative validation. The retired remote price/lootbox tables are absent from both APKs,
+  cleanup remains durable because it unblocks a future battle. One complete lifecycle authority
+  protects shared persisted reads/publication plus every Arena action and boot boundary. It
+  validates known fields, safe counters, bounded timestamps and response JSON, Boolean flags,
+  unique bounded opponent/shown-event collections, supported unique settlement receipts, and an
+  active battle bound to the same Arena with no terminal duplicate. Only the absent legacy
+  shown-event list normalizes empty; malformed durable history fails closed instead of being
+  truncated into replay capacity or satisfying a reward gate. Arena achievement progress shares
+  this receipt authority, and lifetime run/match/loss/flawless increments reject safe-integer
+  overflow before publication. Combat outcomes remain client-reported pending authoritative
+  validation. The retired remote price/lootbox tables are absent from both APKs,
   so entry/heart/scraps values are environment-tunable and final lootboxes currently use a
   documented scraps fallback rather than fabricated inventory objects.
 
