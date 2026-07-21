@@ -55,9 +55,10 @@ them again in the authoritative service. Join policy is limited to recovered int
 required medals is a nonnegative C# signed `int`, and the legacy `IsPublic` projection accepts only
 exact Boolean representations. Fractional, blank, broadly coerced, oversized, or explicitly
 malformed inputs fail instead of being floored, silently ignored, or replaced by a default.
-Squad settings, invitation, and join-request replacements also bind the exact validated `updatedAt`
-snapshot that granted manager, roster, pending-capability, and admission authority, with a strictly
-advancing successor even for same-millisecond writes. A compare-and-set
+Every core membership, settings, invitation, join-request, PvP Squad Point, and Squad War write now
+advances `SquadDocument.updatedAt` through one shared strictly monotonic helper, including writes in
+the same wall-clock millisecond. Single-document replacements also bind the exact validated prior
+snapshot that granted manager, roster, pending-capability, and admission authority. A compare-and-set
 miss fails and requires a fresh read, so an older snapshot cannot overwrite a concurrent demotion,
 membership transition, or admission change through the former name-only persistence path.
 

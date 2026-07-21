@@ -31,7 +31,7 @@ import {
   squadWarWindowAt,
 } from "./squadWarContract";
 import { integerNumberAttribute } from "./dynamoNumberAttributeService";
-import { validatedSquadDocument } from "./squadAuthorityService";
+import { nextSquadUpdatedAt, validatedSquadDocument } from "./squadAuthorityService";
 
 const MAX_UNIX_SECONDS = 2_147_483_647;
 const SQUAD_WAR_SEASON_KEYS = new Set([
@@ -343,14 +343,15 @@ export async function ensureActiveSquadWarSeason(now = new Date()): Promise<Squa
           validatedSquadWarRound(round, season, now);
           rounds.push(round);
           for (const squad of members) {
+            const squadUpdatedAt = nextSquadUpdatedAt(squad, now);
             validatedSquadDocument({
               ...squad,
               squadWarLevel: level,
               squadWarRoundId: roundId,
               leagueId: roundId,
               leagueDivision: window.seasonId,
-              updatedAt: now,
-            }, now);
+              updatedAt: squadUpdatedAt,
+            }, squadUpdatedAt);
             await squads().updateOne(
               { name: squad.name },
               {
@@ -361,7 +362,7 @@ export async function ensureActiveSquadWarSeason(now = new Date()): Promise<Squa
                   // war pointer there while retaining normalized server-only fields above.
                   leagueId: roundId,
                   leagueDivision: window.seasonId,
-                  updatedAt: now,
+                  updatedAt: squadUpdatedAt,
                 },
               },
               { session },
@@ -432,14 +433,15 @@ export async function ensureSquadWarAssignment(squadId: string, now = new Date()
         || squad.leagueId !== assigned.roundId
         || squad.leagueDivision !== season.seasonId;
       if (pointerNeedsRepair) {
+        const squadUpdatedAt = nextSquadUpdatedAt(squad, now);
         validatedSquadDocument({
           ...squad,
           squadWarLevel: assigned.level,
           squadWarRoundId: assigned.roundId,
           leagueId: assigned.roundId,
           leagueDivision: season.seasonId,
-          updatedAt: now,
-        }, now);
+          updatedAt: squadUpdatedAt,
+        }, squadUpdatedAt);
         const repair = await squads().updateOne(
           { name: squadId },
           {
@@ -448,7 +450,7 @@ export async function ensureSquadWarAssignment(squadId: string, now = new Date()
               squadWarRoundId: assigned.roundId,
               leagueId: assigned.roundId,
               leagueDivision: season.seasonId,
-              updatedAt: now,
+              updatedAt: squadUpdatedAt,
             },
           },
           { session },
@@ -498,14 +500,15 @@ export async function ensureSquadWarAssignment(squadId: string, now = new Date()
       await squadWarRounds().insertOne(round, { session });
     }
     if (!round) throw new Error(`Squad Wars assignment did not create a round for ${squadId}.`);
+    const squadUpdatedAt = nextSquadUpdatedAt(squad, now);
     validatedSquadDocument({
       ...squad,
       squadWarLevel: SQUAD_WAR_MIN_LEVEL,
       squadWarRoundId: round.roundId,
       leagueId: round.roundId,
       leagueDivision: season.seasonId,
-      updatedAt: now,
-    }, now);
+      updatedAt: squadUpdatedAt,
+    }, squadUpdatedAt);
     const assignment = await squads().updateOne(
       { name: squadId },
       {
@@ -514,7 +517,7 @@ export async function ensureSquadWarAssignment(squadId: string, now = new Date()
           squadWarRoundId: round.roundId,
           leagueId: round.roundId,
           leagueDivision: season.seasonId,
-          updatedAt: now,
+          updatedAt: squadUpdatedAt,
         },
       },
       { session },
@@ -934,6 +937,7 @@ export async function settleSquadWarRound(roundId: string, now = new Date()): Pr
       }
       // Do not clear a pointer already advanced by an operator repair/newer season. This guard
       // makes a delayed old-round settlement unable to roll a squad backward.
+      const squadUpdatedAt = nextSquadUpdatedAt(squad, now);
       validatedSquadDocument({
         ...squad,
         squadWarLevel: placement.nextLevel,
@@ -941,8 +945,8 @@ export async function settleSquadWarRound(roundId: string, now = new Date()): Pr
         leagueId: "",
         leagueDivision: "",
         squadWarWins: (squad.squadWarWins ?? 0) + (placement.position === 1 ? 1 : 0),
-        updatedAt: now,
-      }, now);
+        updatedAt: squadUpdatedAt,
+      }, squadUpdatedAt);
       await squads().updateOne(
         { name: squad.name, squadWarRoundId: round.roundId },
         {
@@ -951,7 +955,7 @@ export async function settleSquadWarRound(roundId: string, now = new Date()): Pr
             squadWarRoundId: "",
             leagueId: "",
             leagueDivision: "",
-            updatedAt: now,
+            updatedAt: squadUpdatedAt,
           },
           ...(placement.position === 1 ? { $inc: { squadWarWins: 1 } } : {}),
         },

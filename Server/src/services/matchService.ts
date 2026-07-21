@@ -31,7 +31,7 @@ import {
   validatedPlayerAccountEnvelope,
 } from "./playerProfileMirrorAuthorityService";
 import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
-import { validatedSquadDocument } from "./squadAuthorityService";
+import { nextSquadUpdatedAt, validatedSquadDocument } from "./squadAuthorityService";
 import { applyLevelExperienceState } from "./levelProgressionService";
 import { calculateArmyPower } from "./armyPowerService";
 import {
@@ -1149,6 +1149,7 @@ async function settlePlayerCore(
     // both are client-visible economy/progression state. Updating them inside the match
     // transaction guarantees equality with the player's mirrored lifetime squad points.
     const rewardedMember = activeSquad!.members.find((member) => member.playerId === playerId)!;
+    const squadUpdatedAt = nextSquadUpdatedAt(activeSquad!, settledAt);
     // Prove all three incremented mirrors before MongoDB applies them. A corrupt or exhausted
     // squad counter must abort the same transaction as player rewards and the terminal match.
     validatedSquadDocument({
@@ -1158,13 +1159,13 @@ async function settlePlayerCore(
       members: activeSquad!.members.map((member) => member.playerId === playerId
         ? { ...member, squadPoints: rewardedMember.squadPoints + squadPoints }
         : member),
-      updatedAt: settledAt,
-    }, settledAt);
+      updatedAt: squadUpdatedAt,
+    }, squadUpdatedAt);
     const squadUpdate = await squads().updateOne(
       { name: squadName, "members.playerId": playerId },
       {
         $inc: { experience: squadPoints, squadPoints, "members.$.squadPoints": squadPoints },
-        $set: { updatedAt: settledAt },
+        $set: { updatedAt: squadUpdatedAt },
       },
       { session },
     );

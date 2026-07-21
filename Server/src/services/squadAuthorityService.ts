@@ -30,6 +30,28 @@ function safeDate(value: unknown): value is Date {
   return value instanceof Date && Number.isSafeInteger(value.getTime()) && value.getTime() >= 0;
 }
 
+/**
+ * Produce a strictly advancing optimistic revision for every durable SquadDocument writer.
+ * MongoDB dates have millisecond precision; reusing the same clock tick would leave an older
+ * compare-and-set token valid after a successful partial or transactional squad mutation.
+ */
+export function nextSquadUpdatedAt(
+  squad: Pick<SquadDocument, "name" | "updatedAt">,
+  observedAt = new Date(),
+): Date {
+  if (!safeDate(squad.updatedAt)) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Squad write snapshot has an invalid revision.");
+  }
+  if (!safeDate(observedAt)) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Squad write clock is invalid.");
+  }
+  const next = new Date(Math.max(observedAt.getTime(), squad.updatedAt.getTime() + 1));
+  if (!safeDate(next)) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Squad write revision cannot advance safely.");
+  }
+  return next;
+}
+
 function boundedCanonicalText(value: unknown, minimum: number, maximum: number): value is string {
   return typeof value === "string"
     && value.length >= minimum

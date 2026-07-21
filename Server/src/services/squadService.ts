@@ -25,6 +25,7 @@ import {
   validatedSquadCreationsCount,
 } from "./squadCreationAuthorityService";
 import {
+  nextSquadUpdatedAt,
   requestedSquadEmblem,
   SQUAD_MAX_PENDING_ADMISSIONS,
   validatedSquadDocument,
@@ -35,6 +36,7 @@ export {
   squadCreationWarBucksPrice,
   validatedSquadCreationsCount,
 } from "./squadCreationAuthorityService";
+export { nextSquadUpdatedAt } from "./squadAuthorityService";
 
 /**
  * Squad membership, admission, rank authority, and denormalized player mirrors.
@@ -119,22 +121,6 @@ export function squadSnapshotWriteFilter(
     throw new ApiError(ApiErrorCode.InternalServerError, "Squad write snapshot has an invalid revision.");
   }
   return { name: squad.name, updatedAt: squad.updatedAt };
-}
-
-/** Advance the optimistic revision even when two mutations share one wall-clock millisecond. */
-export function nextSquadUpdatedAt(
-  squad: Pick<SquadDocument, "name" | "updatedAt">,
-  observedAt = new Date(),
-): Date {
-  const previous = squadSnapshotWriteFilter(squad).updatedAt.getTime();
-  if (!(observedAt instanceof Date) || !Number.isSafeInteger(observedAt.getTime()) || observedAt.getTime() < 0) {
-    throw new ApiError(ApiErrorCode.InternalServerError, "Squad write clock is invalid.");
-  }
-  const next = new Date(Math.max(observedAt.getTime(), previous + 1));
-  if (!Number.isSafeInteger(next.getTime())) {
-    throw new ApiError(ApiErrorCode.InternalServerError, "Squad write revision cannot advance safely.");
-  }
-  return next;
 }
 
 async function persist(squad: SquadDocument): Promise<void> {
@@ -436,7 +422,7 @@ async function joinSquadTransaction(playerId: string, requestedName: string, app
     validatedPlayerAccountEnvelope(player);
 
     const plan = planSquadJoin(squad, player, approvedBy);
-    const now = new Date();
+    const now = nextSquadUpdatedAt(squad);
     validatedSquadDocument({ ...plan.squad, createdAt: squad.createdAt, updatedAt: now }, now);
     if (plan.rosterChanged || plan.admissionStateChanged) {
       const squadUpdate = await squads().updateOne(
@@ -657,7 +643,7 @@ export async function leaveSquad(playerId: string, requestedName: string): Promi
     const squad = name ? await squads().findOne({ name }, { session }) : null;
     if (squad) validatedSquadDocument(squad);
     const plan = planSquadLeave(squad, player, name);
-    const now = new Date();
+    const now = squad ? nextSquadUpdatedAt(squad) : new Date();
 
     if (plan.squadWrite === "delete" && squad) {
       const deleted = await squads().deleteOne(
@@ -833,7 +819,7 @@ async function changeMemberRankTransaction(
       if (error instanceof ApiError) throw new ApiError(failureCode, error.message);
       throw error;
     }
-    const now = new Date();
+    const now = nextSquadUpdatedAt(squad);
     validatedSquadDocument({ ...plan.squad, createdAt: squad.createdAt, updatedAt: now }, now);
 
     const squadUpdate = await squads().updateOne(
@@ -941,7 +927,7 @@ export async function transferLeadership(actorId: string, targetId: string, requ
       if (error instanceof ApiError) throw new ApiError(ApiErrorCode.PromoteToFounderError, error.message);
       throw error;
     }
-    const now = new Date();
+    const now = nextSquadUpdatedAt(squad);
     validatedSquadDocument({ ...plan.squad, createdAt: squad.createdAt, updatedAt: now }, now);
 
     const squadUpdate = await squads().updateOne(
@@ -1045,7 +1031,7 @@ export async function kickMember(actorId: string, targetId: string, requestedNam
       ? validatedProgressionSuccessor(currentProgression, reclaim.state)
       : currentProgression;
     const { dogTags: _legacyDogTags, ...canonicalState } = successor;
-    const now = new Date();
+    const now = nextSquadUpdatedAt(squad);
     validatedSquadDocument({ ...plan.squad, createdAt: squad.createdAt, updatedAt: now }, now);
 
     const squadUpdate = await squads().updateOne(

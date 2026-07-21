@@ -403,9 +403,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   required medals accepts only a nonnegative C# signed `int`, and the legacy `IsPublic`
   projection accepts only exact Boolean representations. Malformed, fractional, blank, or
   oversized input is rejected instead of floored, broadly coerced, silently ignored, or
-  replaced by a default. Single-document settings, invitation, and join-request writes also
-  compare the exact validated `updatedAt` snapshot that authorized them and strictly advance that
-  revision even within one wall-clock millisecond; a concurrent demotion,
+  replaced by a default. Every core membership, settings, invitation, join-request, PvP Squad
+  Point, and Squad War write advances `updatedAt` through one shared strictly monotonic helper,
+  including operations in the same wall-clock millisecond. Single-document replacements also
+  compare the exact validated prior snapshot that authorized them; a concurrent demotion,
   roster edit, or admission change forces a fresh read instead of letting stale manager authority
   overwrite the winning state. Kick persists the exact type-3 offline
   notification in the membership transaction. The operational integrity audit reports duplicate
