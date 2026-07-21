@@ -34,7 +34,10 @@ import { validatedRenameCount } from "./playerRenameAuthorityService";
 import { validatedCollectedRewards } from "./oneTimeRewardAuthorityService";
 import { validatedSquadChatCursor } from "./squadChatCursorAuthorityService";
 import { validatedFeatureIntroductions } from "./featureIntroductionAuthorityService";
-import { validatedTutorialLifecycle } from "./tutorialCompletionAuthorityService";
+import {
+  validatedTutorialLifecycle,
+  validatedTutorialLifecycleShape,
+} from "./tutorialCompletionAuthorityService";
 import { validatedCoreProgressionBalances } from "./coreProgressionAuthorityService";
 import { validatedDogTagAuthority } from "./dogTagAuthorityService";
 import { progressionRevisionForRead } from "./progressionRevisionAuthorityService";
@@ -112,6 +115,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
   const cardInventory = cardInventoryAuthorityFor(state.cardInventory);
   const cardCrafting = cardCraftingAuthorityFor(state.cardCrafting);
   const pvpWinStreak = validatedPvpWinStreakShape(state.pvpWinStreak);
+  const tutorialLifecycle = validatedTutorialLifecycleShape(state);
   // This is the shared persisted-progression read boundary, not only a boot serializer. Validate
   // wallet/rank balances here so cross-player transactions and ordinary economy actions cannot
   // let NaN/Infinity bypass a `< price` check before reaching a narrower service validator.
@@ -146,6 +150,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
       cardInventory,
       cardCrafting,
       pvpWinStreak,
+      ...tutorialLifecycle,
     };
   }
 
@@ -178,6 +183,7 @@ export function progressionForPlayer(player: PlayerDocument): PlayerProgressionS
     cardInventory,
     cardCrafting,
     pvpWinStreak,
+    ...tutorialLifecycle,
   };
 }
 

@@ -5,7 +5,12 @@ import type { PlayerDocument } from "../db";
 import { newPlayer } from "../dtos";
 import { DbAction } from "../dbActions";
 import { tutorialHandlers } from "../handlers/tutorial";
-import { buildPlayerData, createInitialProgression } from "../services/playerStateService";
+import {
+  buildPlayerData,
+  createInitialProgression,
+  progressionForPlayer,
+} from "../services/playerStateService";
+import { validatedProgressionSuccessor } from "../services/progressionPublicationAuthorityService";
 import {
   TUTORIAL_STARTING_GOLD,
   TUTORIAL_STARTING_WARBUCKS,
@@ -121,6 +126,34 @@ test("tutorial lifecycle rejects non-Boolean completion authority and revision o
     () => startTutorialState(createInitialProgression(NOW), Number.NaN, BATTLE_ID),
     /Tutorial lifecycle server time is invalid/,
   );
+});
+
+test("shared progression boundaries reject corrupt tutorial lifecycle authority", () => {
+  const corruptRead = playerDocument(false);
+  corruptRead.progression!.warcardsTutorialBattle = { battleId: BATTLE_ID, startedAt: NOW };
+  assert.throws(
+    () => progressionForPlayer(corruptRead),
+    /Stored tutorial lifecycle order is invalid/,
+  );
+
+  const current = createInitialProgression(NOW);
+  const corruptSuccessor = {
+    ...current,
+    revision: 1,
+    tutorialBattle: { battleId: BATTLE_ID, startedAt: Number.POSITIVE_INFINITY },
+  };
+  assert.throws(
+    () => validatedProgressionSuccessor(current, corruptSuccessor),
+    /Stored tutorial battle is invalid/,
+  );
+
+  // Missing legacy completion fields normalize to false at the common persisted read boundary.
+  const legacy = playerDocument(false);
+  delete legacy.progression!.tutorialFinished;
+  delete legacy.progression!.warcardsTutorialFinished;
+  const normalized = progressionForPlayer(legacy);
+  assert.equal(normalized.tutorialFinished, false);
+  assert.equal(normalized.warcardsTutorialFinished, false);
 });
 
 test("tutorial completion rejects forged receipts and non-win results", () => {

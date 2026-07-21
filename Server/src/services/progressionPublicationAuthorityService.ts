@@ -19,6 +19,7 @@ import { cardInventoryAuthorityFor } from "./cardInventoryAuthorityService";
 import { validatedPvpWinStreakShape } from "./pvpWinStreakAuthorityService";
 import { validatedVipLootboxCountdown } from "./vipLootboxService";
 import { validatedCollectedRewards } from "./oneTimeRewardAuthorityService";
+import { validatedTutorialLifecycleShape } from "./tutorialCompletionAuthorityService";
 
 /**
  * Validate the common authority shared by every full progression-document replacement.
@@ -58,6 +59,8 @@ export function validatedProgressionSuccessor(
   validatedVipLootboxCountdown(next.matchesToNextLootboxes);
   validatedCollectedRewards(current.collectedRewards);
   validatedCollectedRewards(next.collectedRewards);
+  validatedTutorialLifecycleShape(current);
+  validatedTutorialLifecycleShape(next);
   validatedCoreProgressionBalances(current);
   validateProgressionRevisionAdvance(progressionRevisionForRead(current.revision), next.revision);
   validatedCoreProgressionBalances(next);

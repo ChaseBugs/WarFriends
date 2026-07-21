@@ -36,9 +36,8 @@ function validatedTutorialTime(value: number, label: string): number {
   return value;
 }
 
-function validatedTutorialBattle(
+function validatedTutorialBattleShape(
   value: TutorialBattleState | undefined,
-  now: number,
   label: string,
 ): TutorialBattleState | undefined {
   if (value === undefined) return undefined;
@@ -50,7 +49,7 @@ function validatedTutorialBattle(
     throw new ApiError(ApiErrorCode.InternalServerError, `${label} is invalid.`);
   }
   validatedTutorialBattleId(value.battleId, ApiErrorCode.InternalServerError);
-  if (!Number.isSafeInteger(value.startedAt) || value.startedAt < 0 || value.startedAt > now) {
+  if (!Number.isSafeInteger(value.startedAt) || value.startedAt < 0) {
     throw new ApiError(ApiErrorCode.InternalServerError, `${label} is invalid.`);
   }
   return value;
@@ -93,19 +92,16 @@ export function validatedTutorialRevision(revision: number): number {
  * bootcamp. Rejecting impossible combinations prevents a stale or malformed receipt from being
  * replayed as server proof after the account has moved to a different onboarding phase.
  */
-export function validatedTutorialLifecycle(
+export function validatedTutorialLifecycleShape(
   state: Pick<
     PlayerProgressionState,
     "tutorialFinished" | "warcardsTutorialFinished" | "tutorialBattle" | "warcardsTutorialBattle"
   >,
-  now: number,
 ): TutorialLifecycleAuthority {
-  const currentTime = validatedTutorialTime(now, "Tutorial lifecycle server time");
   const completion = validatedTutorialCompletion(state);
-  const tutorialBattle = validatedTutorialBattle(state.tutorialBattle, currentTime, "Stored tutorial battle");
-  const warcardsTutorialBattle = validatedTutorialBattle(
+  const tutorialBattle = validatedTutorialBattleShape(state.tutorialBattle, "Stored tutorial battle");
+  const warcardsTutorialBattle = validatedTutorialBattleShape(
     state.warcardsTutorialBattle,
-    currentTime,
     "Stored Play Warcards battle",
   );
   if (
@@ -116,4 +112,30 @@ export function validatedTutorialLifecycle(
     throw new ApiError(ApiErrorCode.InternalServerError, "Stored tutorial lifecycle order is invalid.");
   }
   return { ...completion, tutorialBattle, warcardsTutorialBattle };
+}
+
+/**
+ * Validate the complete tutorial lifecycle against the authoritative request time.
+ *
+ * Shared read/publication validation intentionally uses `validatedTutorialLifecycleShape`
+ * instead: a transaction successor must be deterministic and must not become invalid merely
+ * because a different application node evaluates it one second later. Gameplay and boot paths
+ * have an authoritative `now`, so they additionally reject future-issued private receipts here.
+ */
+export function validatedTutorialLifecycle(
+  state: Pick<
+    PlayerProgressionState,
+    "tutorialFinished" | "warcardsTutorialFinished" | "tutorialBattle" | "warcardsTutorialBattle"
+  >,
+  now: number,
+): TutorialLifecycleAuthority {
+  const currentTime = validatedTutorialTime(now, "Tutorial lifecycle server time");
+  const lifecycle = validatedTutorialLifecycleShape(state);
+  if (lifecycle.tutorialBattle && lifecycle.tutorialBattle.startedAt > currentTime) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Stored tutorial battle is invalid.");
+  }
+  if (lifecycle.warcardsTutorialBattle && lifecycle.warcardsTutorialBattle.startedAt > currentTime) {
+    throw new ApiError(ApiErrorCode.InternalServerError, "Stored Play Warcards battle is invalid.");
+  }
+  return lifecycle;
 }
