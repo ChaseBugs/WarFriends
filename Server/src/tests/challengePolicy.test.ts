@@ -1,10 +1,17 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  challengeLifetimePolicy,
   challengeTtlSeconds,
   MAX_CHALLENGE_TTL_SECONDS,
   MIN_CHALLENGE_TTL_SECONDS,
 } from "../services/challengePolicyService";
+
+test("new challenge lifetime is immutable startup authority", () => {
+  assert.equal(Object.isFrozen(challengeLifetimePolicy()), true);
+  assert.deepEqual(challengeLifetimePolicy(), { ttlSeconds: 86_400 });
+  assert.equal(challengeTtlSeconds(), 86_400);
+});
 
 test("challenge policy preserves exact supported invitation lifetimes", () => {
   assert.equal(challengeTtlSeconds(MIN_CHALLENGE_TTL_SECONDS), 60);
