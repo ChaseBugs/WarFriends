@@ -53,3 +53,25 @@ export function assertedPvpWinnerId(
 export function exactGameEndedUsedCards(value: unknown): string[] {
   return parsePvpUsedCards(value === undefined ? [] : value);
 }
+
+/**
+ * Resolve the stock BattleId and replacement MatchId aliases without precedence ambiguity.
+ *
+ * Some legacy tutorial migration deliberately reaches its service with no/empty BattleId, so this
+ * boundary preserves true total absence as an empty string and leaves feature-specific nonempty
+ * validation downstream. Once an alias is present, however, it must be a string; if both are
+ * present they must identify the exact same durable lifecycle instead of letting MatchId silently
+ * override a contradictory BattleId.
+ */
+export function exactMatchIdentityAliases(matchId: unknown, battleId: unknown): string {
+  const aliases = [matchId, battleId].filter((value) => value !== undefined);
+  if (aliases.length === 0) return "";
+  if (aliases.some((value) => typeof value !== "string")) {
+    throw new ApiError(ApiErrorCode.UnknownAction, "MatchId and BattleId must be exact strings when present.");
+  }
+  const values = aliases as string[];
+  if (values.some((value) => value !== values[0])) {
+    throw new ApiError(ApiErrorCode.UnknownAction, "MatchId and BattleId identify different battles.");
+  }
+  return values[0]!;
+}

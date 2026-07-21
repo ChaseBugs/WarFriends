@@ -36,6 +36,7 @@ import {
 import {
   assertedPvpWinnerId,
   exactGameEndedUsedCards,
+  exactMatchIdentityAliases,
   exactMatchInteger,
 } from "./matchRequestParsing";
 import { exactBinaryBoolean } from "./requestBooleanParsing";
@@ -45,9 +46,9 @@ import { exactBinaryBoolean } from "./requestBooleanParsing";
 
 function matchId(req: Record<string, unknown>): string {
   // PvP historically names the durable record MatchId, while the stock Photon-era client
-  // sends BattleId. Normalizing both names here keeps the settlement logic transport-neutral.
-  const id = req.MatchId ?? req.BattleId;
-  return typeof id === "string" ? id : "";
+  // sends BattleId. Both are transport aliases for one lifecycle identity, so an explicitly
+  // malformed or contradictory pair must fail rather than selecting one by precedence.
+  return exactMatchIdentityAliases(req.MatchId, req.BattleId);
 }
 
 function missionMode(value: unknown): DailyMissionMode {

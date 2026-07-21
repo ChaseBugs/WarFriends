@@ -229,6 +229,12 @@ replacement native arrays use the same bounded card parser, while only true fiel
 the replacement empty-list shorthand. Explicit null, Boolean, numeric, object, malformed JSON, or
 invalid list values fail before result consensus instead of becoming a zero-consumption report.
 
+Stock `BattleId` and replacement `MatchId` now share one exact alias boundary for start and result
+routes. Every present alias must be a string and simultaneous aliases must be identical; explicit
+null, non-string, blank-versus-nonblank, or conflicting IDs cannot choose a lifecycle by nullish
+fallback or precedence. True total absence/empty BattleId remains only for downstream validation,
+including the documented one-time empty-ID tutorial migration.
+
 Both recovered moderation-report actions now parse mandatory `ReportType` as canonical nonnegative
 decimal text or an exact JSON integer in the existing bounded compatibility range. Missing, null,
 Boolean, array, blank, signed or space-padded, leading-zero, fractional, exponent, non-finite, and

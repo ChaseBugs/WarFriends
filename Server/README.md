@@ -753,6 +753,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   actually omitted replacement field means an empty list; explicit null, Boolean, number, object,
   malformed JSON, oversized, or invalid list input fails before result consensus rather than being
   nullish-defaulted into a zero-consumption report.
+  The stock `BattleId` and replacement `MatchId` fields likewise identify one lifecycle without
+  precedence: every present alias must be a string and two present aliases must be identical.
+  True total absence and the legacy empty BattleId still reach feature-specific tutorial migration,
+  while explicit null, non-string, blank-versus-nonblank, or conflicting IDs fail at the boundary.
   Action `29` remains the presence heartbeat for non-ranked modes, but its active-match read and
   profile write share a MongoDB transaction. An active/settling ranked reservation always wins
   over a forged or early `Online`/`Offline` report. The same transaction validates the full durable

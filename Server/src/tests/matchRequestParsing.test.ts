@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   assertedPvpWinnerId,
   exactGameEndedUsedCards,
+  exactMatchIdentityAliases,
   exactMatchInteger,
 } from "../handlers/matchRequestParsing";
 
@@ -45,5 +46,24 @@ test("replacement UsedCards defaults only true absence to an empty report", () =
 
   for (const value of [null, false, true, 0, "", {}, { 0: "AMMOCRATE" }]) {
     assert.throws(() => exactGameEndedUsedCards(value));
+  }
+});
+
+test("MatchId and BattleId aliases preserve absence and reject precedence conflicts", () => {
+  assert.equal(exactMatchIdentityAliases(undefined, undefined), "");
+  assert.equal(exactMatchIdentityAliases(undefined, "stock-battle"), "stock-battle");
+  assert.equal(exactMatchIdentityAliases("replacement-match", undefined), "replacement-match");
+  assert.equal(exactMatchIdentityAliases("same", "same"), "same");
+  assert.equal(exactMatchIdentityAliases(undefined, ""), "");
+
+  for (const [matchId, battleId] of [
+    [null, "stock-battle"],
+    ["replacement-match", null],
+    [true, undefined],
+    [undefined, 1],
+    ["replacement-match", "stock-battle"],
+    ["", "stock-battle"],
+  ] as const) {
+    assert.throws(() => exactMatchIdentityAliases(matchId, battleId));
   }
 });
