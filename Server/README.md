@@ -86,6 +86,19 @@ Status and the append-only audit entry commit in one MongoDB update. Concurrent 
 both act on the same stale status, a retry cannot change its decision, and terminal reports cannot
 be reopened. Newest-first pages use `createdAt` plus `reportId` as a stable cursor tie-breaker.
 
+Player appeals use the separate `/support/moderation` boundary because the recovered stock banned
+dialog has no database appeal action. A support frontend supplies `X-Player-Id` and the current
+server-issued session token as `Authorization: Bearer <token>`; passwords and provider credentials
+are not accepted. `POST /appeals` creates the sole appeal for that player's currently active
+sanction, `GET /appeals` and `GET /appeals/:appealId` expose only owned public appeal fields, and
+`POST /appeals/:appealId/withdraw` closes an owned `open` or `reviewing` appeal. Mutations require an
+8-128 character `Idempotency-Key`, and withdrawal also requires `expectedStatus`. The support API
+never restores gameplay access and never returns sanction reason, operator identity, or review
+history. The admin boundary provides `GET /appeals`, `GET /appeals/:appealId`, and
+`POST /appeals/:appealId/review`; decisions require the same actor, retry-key, expected-status, and
+terminal-note controls as report review. Accepting an appeal revokes a still-live sanction in the
+same MongoDB transaction, while rejection and player withdrawal leave the sanction unchanged.
+
 ## How the client talks to it
 
 The client (`BeanstalkServerManager`) sends form fields to a URL ending in the numeric
@@ -321,6 +334,12 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   optimistic `open -> reviewing -> resolved/dismissed` decisions. Each transition appends actor,
   note, previous/next status, operation ID, and timestamp atomically; terminal states are immutable,
   stale snapshots conflict, and identical retries return the committed review without a second entry.
+  A separately authenticated support API now accepts one ownership-checked appeal per active
+  sanction, permits owned reads and optimistic withdrawal, and exposes no private moderation data.
+  Its admin queue supports audited `open -> reviewing -> accepted/rejected` decisions; acceptance
+  transactionally revokes the live sanction, while all terminal appeal states remain immutable.
+  Because the recovered banned dialog has only retry/log controls, a replacement support frontend
+  or client adapter is still required to expose this workflow to stock-client players.
   Army Power/rank/time fields remain explicitly untrusted claims. When both accounts occur in a
   recent replacement-backend ranked match, the report also captures the exact server match ID,
   participant snapshots, state, terminal winner/cancellation, authenticated result claims, and

@@ -12,7 +12,7 @@ import {
   PlayerSanctionInputError,
   revokePlayerSanction,
 } from "../services/playerSanctionService";
-import type { PlayerSanctionDocument } from "../db";
+import type { PlayerAppealDocument, PlayerSanctionDocument } from "../db";
 import type { PlayerReportDocument } from "../services/reportService";
 import {
   findModerationReport,
@@ -27,6 +27,19 @@ import {
   ReportReviewInputError,
   reviewPlayerReport,
 } from "../services/reportReviewService";
+import {
+  findPlayerAppeal,
+  listPlayerAppeals,
+  normalizeAppealExpectedStatus,
+  normalizeAppealId,
+  normalizeAppealListInput,
+  normalizeAppealOperationId,
+  normalizeAppealReviewActor,
+  normalizeAppealReviewNote,
+  normalizeAppealReviewStatus,
+  PlayerAppealInputError,
+  reviewPlayerAppeal,
+} from "../services/playerAppealService";
 
 export const adminModerationRouter = Router();
 
@@ -72,13 +85,92 @@ function wireReport(report: PlayerReportDocument): Record<string, unknown> {
   };
 }
 
+function wireAppeal(appeal: PlayerAppealDocument): Record<string, unknown> {
+  return {
+    appealId: appeal._id,
+    sanctionId: appeal.sanctionId,
+    playerId: appeal.playerId,
+    status: appeal.status,
+    message: appeal.message,
+    submissionOperationId: appeal.submissionOperationId,
+    createdAt: appeal.createdAt.toISOString(),
+    updatedAt: appeal.updatedAt.toISOString(),
+    reviewHistory: (appeal.reviewHistory ?? []).map((entry) => ({
+      ...entry,
+      createdAt: entry.createdAt.toISOString(),
+    })),
+  };
+}
+
 function moderationFailure(error: unknown, res: Response): void {
-  if (error instanceof PlayerSanctionInputError || error instanceof ReportReviewInputError) {
+  if (error instanceof PlayerSanctionInputError ||
+      error instanceof ReportReviewInputError ||
+      error instanceof PlayerAppealInputError) {
     res.status(error.httpStatus).json({ Code: 0, Message: error.message });
     return;
   }
   throw error;
 }
+
+/** Player appeals are a separate operator queue because their text is not report evidence. */
+adminModerationRouter.get("/appeals", async (req, res, next) => {
+  try {
+    const page = await listPlayerAppeals(normalizeAppealListInput(req.query as Record<string, unknown>));
+    res.json({
+      Appeals: page.appeals.map(wireAppeal),
+      ...(page.nextCursor ? { NextCursor: page.nextCursor } : {}),
+    });
+  } catch (error) {
+    try {
+      moderationFailure(error, res);
+    } catch (unexpected) {
+      next(unexpected);
+    }
+  }
+});
+
+adminModerationRouter.get("/appeals/:appealId", async (req, res, next) => {
+  try {
+    const appeal = await findPlayerAppeal(normalizeAppealId(req.params.appealId));
+    if (!appeal) {
+      res.status(404).json({ Code: 0, Message: "Appeal was not found." });
+      return;
+    }
+    res.json({ Appeal: wireAppeal(appeal) });
+  } catch (error) {
+    try {
+      moderationFailure(error, res);
+    } catch (unexpected) {
+      next(unexpected);
+    }
+  }
+});
+
+/**
+ * Move an appeal through its audited operator workflow. The caller must state the status it read,
+ * so two moderators cannot silently overwrite each other. Accepting an appeal and revoking its
+ * sanction are committed in one MongoDB transaction; rejecting it leaves the sanction unchanged.
+ */
+adminModerationRouter.post("/appeals/:appealId/review", async (req, res, next) => {
+  try {
+    const status = normalizeAppealReviewStatus(req.body?.status);
+    const result = await reviewPlayerAppeal({
+      appealId: normalizeAppealId(req.params.appealId),
+      expectedStatus: normalizeAppealExpectedStatus(req.body?.expectedStatus),
+      status,
+      actor: normalizeAppealReviewActor(header(req, "X-Admin-Actor")),
+      note: normalizeAppealReviewNote(req.body?.note, status === "accepted" || status === "rejected"),
+      operationId: normalizeAppealOperationId(header(req, "Idempotency-Key")),
+    });
+    res.json({ Replayed: result.replayed, Appeal: wireAppeal(result.appeal) });
+  } catch (error) {
+    try {
+      moderationFailure(error, res);
+    } catch (unexpected) {
+      next(unexpected);
+    }
+  }
+});
 
 /**
  * Return a stable newest-first moderation queue. Optional status/kind/player filters and an

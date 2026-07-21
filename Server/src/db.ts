@@ -979,6 +979,34 @@ export interface PlayerSanctionDocument extends Document {
 }
 
 /**
+ * Player-authored appeal for one active sanction.
+ *
+ * A unique sanctionId permits exactly one intake record per moderation decision. The public
+ * support API never receives or returns the sanction's private reason/operator fields; those
+ * remain available only through the authenticated moderation API.
+ */
+export interface PlayerAppealDocument extends Document {
+  _id: string;
+  sanctionId: string;
+  playerId: string;
+  status: "open" | "reviewing" | "accepted" | "rejected" | "withdrawn";
+  message: string;
+  submissionOperationId: string;
+  reviewHistory?: PlayerAppealReviewEntry[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface PlayerAppealReviewEntry {
+  operationId: string;
+  fromStatus: PlayerAppealDocument["status"];
+  toStatus: PlayerAppealDocument["status"];
+  actor: string;
+  note: string;
+  createdAt: Date;
+}
+
+/**
  * Server-only lifecycle receipt for one participant in a direct PvP challenge.
  *
  * The recovered Photon client creates the room before it sends the inbox challenge. The room
@@ -1021,6 +1049,7 @@ let authRateLimitsCollection: Collection<AuthRateLimitDocument> | null = null;
 let reportRateLimitsCollection: Collection<ReportRateLimitDocument> | null = null;
 let reportDeduplicationsCollection: Collection<ReportDeduplicationDocument> | null = null;
 let playerSanctionsCollection: Collection<PlayerSanctionDocument> | null = null;
+let playerAppealsCollection: Collection<PlayerAppealDocument> | null = null;
 let friendlyBattlesCollection: Collection<FriendlyBattleDocument> | null = null;
 let gameCatalogEntriesCollection: Collection<GameCatalogEntryDocument> | null = null;
 let gameCatalogReleasesCollection: Collection<GameCatalogReleaseDocument> | null = null;
@@ -1113,6 +1142,7 @@ export async function connectMongo(): Promise<void> {
   reportRateLimitsCollection = db.collection<ReportRateLimitDocument>("reportRateLimits");
   reportDeduplicationsCollection = db.collection<ReportDeduplicationDocument>("reportDeduplications");
   playerSanctionsCollection = db.collection<PlayerSanctionDocument>("playerSanctions");
+  playerAppealsCollection = db.collection<PlayerAppealDocument>("playerAppeals");
   friendlyBattlesCollection = db.collection<FriendlyBattleDocument>("friendlyBattles");
   gameCatalogEntriesCollection = db.collection<GameCatalogEntryDocument>("gameCatalogEntries");
   gameCatalogReleasesCollection = db.collection<GameCatalogReleaseDocument>("gameCatalogReleases");
@@ -1229,6 +1259,14 @@ export async function connectMongo(): Promise<void> {
     { unique: true, sparse: true },
   );
   await playerSanctionsCollection.createIndex({ playerId: 1, issuedAt: -1 });
+  await playerAppealsCollection.createIndex({ sanctionId: 1 }, { unique: true });
+  await playerAppealsCollection.createIndex({ submissionOperationId: 1 }, { unique: true });
+  await playerAppealsCollection.createIndex({ status: 1, createdAt: -1, _id: -1 });
+  await playerAppealsCollection.createIndex({ playerId: 1, createdAt: -1 });
+  await playerAppealsCollection.createIndex(
+    { "reviewHistory.operationId": 1 },
+    { unique: true, sparse: true },
+  );
 
   // A reconnect or lost HTTP response may repeat the same challenge start. The compound unique
   // key turns every process into the same idempotent writer, while TTL bounds telemetry storage.
@@ -1292,6 +1330,7 @@ export async function disconnectMongo(): Promise<void> {
   reportRateLimitsCollection = null;
   reportDeduplicationsCollection = null;
   playerSanctionsCollection = null;
+  playerAppealsCollection = null;
   friendlyBattlesCollection = null;
   gameCatalogEntriesCollection = null;
   gameCatalogReleasesCollection = null;
@@ -1404,6 +1443,10 @@ export function reportDeduplications(): Collection<ReportDeduplicationDocument> 
 
 export function playerSanctions(): Collection<PlayerSanctionDocument> {
   return requireCollection("playerSanctions", playerSanctionsCollection);
+}
+
+export function playerAppeals(): Collection<PlayerAppealDocument> {
+  return requireCollection("playerAppeals", playerAppealsCollection);
 }
 
 export function friendlyBattles(): Collection<FriendlyBattleDocument> {

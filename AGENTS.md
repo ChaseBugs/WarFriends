@@ -15,6 +15,7 @@
 - Bind each real-money purchase action to its reviewed entitlement family; sharing store-proof verification must never let a token cross into an incompatible response or grant path.
 - Keep account sanctions as audited server-owned records. Enforce active bans through the shared authentication path only after credential proof, evaluate temporary expiry from application time rather than TTL cleanup, return the recovered `AccountBanned` fields, and require retry-safe operator issue/revoke keys.
 - Keep moderation report review transitions optimistic and append-audited: require the operator's expected status, never reopen a terminal report, and replay only an identical actor/decision/note operation.
+- Keep player appeals ownership-scoped and separate from stock gameplay actions. Accept one appeal per active sanction through the current session credential, expose no private sanction fields, require optimistic append-audited review/withdrawal transitions, and revoke an accepted appeal's live sanction in the same transaction.
 - Preserve legitimate negative Gold or WarBucks chargeback debt, but reject non-safe-integer rewards and arithmetic overflow.
 - Fail closed when authoritative combat evidence, live-event configuration, or source-backed balancing is unavailable.
 - Add detailed English comments where recovered names are opaque or atomicity, replay, migration, or fallback decisions are not obvious.

@@ -410,6 +410,29 @@ export async function authenticate(
 }
 
 /**
+ * Prove ownership for the external moderation-appeal API without reopening gameplay access.
+ *
+ * This deliberately accepts only the current server-issued session credential. It does not check
+ * a human password or platform token, rotate a session, clear login throttles, or skip any normal
+ * credential comparison. The sole difference from gameplay authentication is that an otherwise
+ * valid sanctioned account is returned instead of receiving AccountBanned, allowing a support
+ * frontend to submit an appeal while every game route remains blocked.
+ */
+export async function authenticateModerationAppealSession(
+  id: string | undefined,
+  token: string | undefined,
+): Promise<PlayerDocument> {
+  if (!id || !token || id.length > 256 || token.length > 4096) {
+    throw new ApiError(ApiErrorCode.RequestNotAuthorized, "Invalid support credentials.");
+  }
+  const player = await findById(id);
+  if (!player || !(await playerCredentialMatches(player, token, false))) {
+    throw new ApiError(ApiErrorCode.RequestNotAuthorized, "Invalid support credentials.");
+  }
+  return player;
+}
+
+/**
  * Replace the custom-account password and rotate the ordinary session credential.
  *
  * The password digest allows the next LoginToCustomAccount request to authenticate. The

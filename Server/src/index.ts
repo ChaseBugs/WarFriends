@@ -26,6 +26,7 @@ import { initializeRemoteConfiguration } from "./services/remoteConfigurationSer
 import { startGooglePlayVoidedPurchaseScheduler } from "./services/googlePlayVoidedPurchaseService";
 import { startSquadWarScheduler } from "./services/squadWarSchedulerService";
 import { adminModerationRouter } from "./routes/adminModeration";
+import { supportModerationRouter } from "./routes/supportModeration";
 
 const app = express();
 
@@ -81,6 +82,11 @@ app.get("/metrics", requireAdmin, (_req, res) => {
 // Per-operation actor and idempotency headers are validated inside the router and retained in
 // the sanction audit history; the Bearer secret itself is never persisted or returned.
 app.use("/admin/moderation", requireAdmin, adminModerationRouter);
+
+// Sanctioned players cannot use the normal game dispatcher, but may prove their current session
+// credential to this narrowly scoped support router. It can read/create only their own appeals and
+// never returns private sanction or operator fields.
+app.use("/support/moderation", supportModerationRouter);
 
 app.use(apiRouter);
 
