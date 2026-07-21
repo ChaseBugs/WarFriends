@@ -867,7 +867,14 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   void metadata must agree. Only old currency receipts may derive an omitted reversible wallet grant
   from their exact catalog-bound response; pack ownership history has no such migration. Failed
   subscription checks advance the bounded counter with compare-and-set ownership, so concurrent
-  workers cannot overwrite each other's provider evidence or retry schedule.
+  workers cannot overwrite each other's provider evidence or retry schedule. Every live receipt
+  retains a Date retry cursor strictly after its latest verification audit; terminal Play states
+  retain revocation evidence and no cursor, while only a revoked deleted-account orphan may retire
+  a nonterminal state. The leased sweep explicitly selects missing, malformed, and terminally
+  contradictory cursors, validates the whole selected batch before its first provider call, and
+  validates each retry, orphan-retirement, or provider-result successor before writing it. A
+  terminal response that omits a new expiry preserves the receipt's last verified expiry as audit
+  context instead of deleting the original entitlement boundary.
 
   Every shared background-job lease is validated before acquisition and after its MongoDB
   compare-and-set: exact fields, bounded job ID, UUID owner, safe ordered dates, and a duration from

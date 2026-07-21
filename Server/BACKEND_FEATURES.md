@@ -59,6 +59,14 @@ Public player publication now validates the complete durable account envelope at
 challenge, experience, and Arena leaderboard views therefore reject malformed credential or audit
 authority instead of publishing an apparently usable account from matching public mirrors alone.
 
+Google Play subscription receipts now enforce one scheduler-visible lifecycle: every live receipt
+has a Date retry cursor strictly after its latest verification audit, terminal states retain
+revocation evidence without a cursor, and only a revoked deleted-account orphan may retire a
+nonterminal provider state. Missing, malformed, or terminally contradictory cursors are selected
+into the leased audit batch, whose complete receipts validate before the first provider call.
+Retry, deleted-account retirement, and provider-result successors also validate before persistence.
+Terminal responses without a fresh expiry preserve the last verified entitlement boundary.
+
 Account-sanction rows now have complete durable authority before authentication, issue/revoke replay,
 admin publication, appeal intake, and accepted-appeal mutation. Exact known fields, normalized
 identities, safe chronology, exact optional duration/expiry equality, and status-consistent

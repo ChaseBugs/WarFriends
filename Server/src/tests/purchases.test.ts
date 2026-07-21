@@ -409,6 +409,30 @@ test("durable purchase receipts validate their complete catalog, response, grant
   };
   assert.equal(validatedPurchaseReceipt(subscription), subscription);
   assert.equal(nextPurchaseRevalidationFailureCount(subscription), 1);
+  const { revalidateAfter: _missingCursor, ...missingCursor } = subscription;
+  assert.throws(
+    () => validatedPurchaseReceipt(missingCursor as PurchaseReceiptDocument),
+    /Stored purchase receipt is invalid/,
+  );
+  assert.throws(
+    () => validatedPurchaseReceipt({ ...subscription, revalidateAfter: subscription.verifiedAt }),
+    /Stored purchase receipt is invalid/,
+  );
+  const terminalSubscription: PurchaseReceiptDocument = {
+    ...subscription,
+    subscriptionState: "SUBSCRIPTION_STATE_EXPIRED",
+    lastRevalidatedAt: new Date((NOW + 20) * 1_000),
+    revokedAt: new Date((NOW + 20) * 1_000),
+  };
+  delete terminalSubscription.revalidateAfter;
+  assert.equal(validatedPurchaseReceipt(terminalSubscription), terminalSubscription);
+  assert.throws(
+    () => validatedPurchaseReceipt({
+      ...terminalSubscription,
+      revalidateAfter: new Date((NOW + 300) * 1_000),
+    }),
+    /Stored purchase receipt is invalid/,
+  );
   assert.throws(
     () => validatedPurchaseReceipt({ ...subscription, revalidationFailures: Number.NaN }),
     /Stored purchase receipt is invalid/,

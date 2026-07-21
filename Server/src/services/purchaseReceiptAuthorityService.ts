@@ -16,6 +16,10 @@ const RECEIPT_KEYS = new Set([
 const GRANT_KEYS = new Set([
   "gold", "warBucks", "vipSeconds", "weapons", "visuals", "extraCardSlot", "introducedExtraCardSlot",
 ]);
+export const TERMINAL_PURCHASE_SUBSCRIPTION_STATES = [
+  "SUBSCRIPTION_STATE_EXPIRED",
+  "SUBSCRIPTION_STATE_PENDING_PURCHASE_CANCELED",
+] as const;
 const SUBSCRIPTION_STATES = new Set([
   "SUBSCRIPTION_STATE_UNSPECIFIED",
   "SUBSCRIPTION_STATE_PENDING",
@@ -27,6 +31,7 @@ const SUBSCRIPTION_STATES = new Set([
   "SUBSCRIPTION_STATE_EXPIRED",
   "SUBSCRIPTION_STATE_PENDING_PURCHASE_CANCELED",
 ]);
+const TERMINAL_SUBSCRIPTION_STATES = new Set<string>(TERMINAL_PURCHASE_SUBSCRIPTION_STATES);
 const MAX_REVALIDATION_FAILURES = 1_000_000;
 
 function fail(): never {
@@ -185,6 +190,8 @@ export function validatedPurchaseReceipt(receipt: PurchaseReceiptDocument): Purc
 
   if (entitlement.kind === "subscription") {
     const encrypted = receipt.encryptedPurchaseToken;
+    const terminal = TERMINAL_SUBSCRIPTION_STATES.has(receipt.subscriptionState ?? "");
+    const revalidationBaseline = receipt.lastRevalidatedAt ?? receipt.verifiedAt;
     if (!encrypted
       || !exactKeys(encrypted, new Set(["version", "iv", "authTag", "ciphertext"]))
       || encrypted.version !== 1
@@ -194,6 +201,12 @@ export function validatedPurchaseReceipt(receipt: PurchaseReceiptDocument): Purc
       || !SUBSCRIPTION_STATES.has(receipt.subscriptionState ?? "")
       || !receipt.subscriptionExpiresAt
       || receipt.subscriptionExpiresAt < receipt.purchasedAt
+      // A live receipt needs a future retry cursor. The only nonterminal exception is a revoked
+      // orphan whose player account was deleted; that row is deliberately retired from provider
+      // polling. Terminal Play states must have the revocation audit and no retry cursor at all.
+      || (terminal && (!receipt.revokedAt || receipt.revalidateAfter !== undefined))
+      || (!terminal && !receipt.revalidateAfter && !receipt.revokedAt)
+      || (receipt.revalidateAfter !== undefined && receipt.revalidateAfter <= revalidationBaseline)
       || receipt.reversibleGrant !== undefined
       || receipt.voidedSource !== undefined
       || receipt.voidedReason !== undefined

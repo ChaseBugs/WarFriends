@@ -20,6 +20,7 @@ import { validatedProgressionSuccessor } from "./progressionPublicationAuthority
 import { decryptPurchaseToken } from "./purchaseTokenCryptoService";
 import {
   nextPurchaseRevalidationFailureCount,
+  TERMINAL_PURCHASE_SUBSCRIPTION_STATES,
   validatedPurchaseReceipt,
 } from "./purchaseReceiptAuthorityService";
 import { withScheduledJobLease } from "./scheduledJobLeaseService";
@@ -98,8 +99,7 @@ function cadenceSeconds(): number {
 }
 
 function nextSuccessfulCheck(status: GooglePlaySubscriptionStatus, now: number): Date | null {
-  if (status.subscriptionState === "SUBSCRIPTION_STATE_EXPIRED"
-    || status.subscriptionState === "SUBSCRIPTION_STATE_PENDING_PURCHASE_CANCELED") {
+  if ((TERMINAL_PURCHASE_SUBSCRIPTION_STATES as readonly string[]).includes(status.subscriptionState)) {
     return null;
   }
   const next = status.entitled && status.expiresAt
@@ -117,6 +117,10 @@ function retrySeconds(failures: number): number {
 async function recordRetry(receipt: PurchaseReceiptDocument, now: number): Promise<void> {
   const previousFailures = receipt.revalidationFailures;
   const failures = nextPurchaseRevalidationFailureCount(receipt);
+  const revalidateAfter = new Date((now + retrySeconds(failures)) * 1_000);
+  // Prove the complete successor before a retry cursor becomes durable. This catches a clock or
+  // arithmetic regression before it can strand the receipt outside every later due query.
+  validatedPurchaseReceipt({ ...receipt, revalidateAfter, revalidationFailures: failures });
   const retry = await purchaseReceipts().updateOne(
     {
       _id: receipt._id,
@@ -130,7 +134,7 @@ async function recordRetry(receipt: PurchaseReceiptDocument, now: number): Promi
     },
     {
       $set: {
-        revalidateAfter: new Date((now + retrySeconds(failures)) * 1_000),
+        revalidateAfter,
         revalidationFailures: failures,
       },
     },
@@ -154,10 +158,20 @@ async function commitSuccessfulStatus(
     validatedPurchaseReceipt(liveReceipt);
     const player = await players().findOne({ id: receipt.playerId }, { session });
     if (!player) {
+      const retiredAt = new Date(now * 1_000);
+      const retiredReceipt: PurchaseReceiptDocument = {
+        ...liveReceipt,
+        lastRevalidatedAt: retiredAt,
+        revokedAt: retiredAt,
+      };
+      delete retiredReceipt.revalidateAfter;
+      // A deleted account deliberately retires even an otherwise active Play token. Validate that
+      // exact terminal storage shape before removing it from future scheduler selection.
+      validatedPurchaseReceipt(retiredReceipt);
       await purchaseReceipts().updateOne(
         { _id: receipt._id },
         {
-          $set: { lastRevalidatedAt: new Date(now * 1_000), revokedAt: new Date(now * 1_000) },
+          $set: { lastRevalidatedAt: retiredAt, revokedAt: retiredAt },
           $unset: { revalidateAfter: "" },
         },
         { session },
@@ -204,8 +218,25 @@ async function commitSuccessfulStatus(
     // A hold can recover after payment succeeds. Clear its audit marker when Google later reports
     // entitlement again instead of leaving an active receipt labeled as permanently revoked.
     if (status.entitled) unsetFields.revokedAt = "";
-    if (status.expiresAt === undefined) unsetFields.subscriptionExpiresAt = "";
+    // Some terminal provider states omit a fresh expiry. Preserve the last verified expiry in that
+    // case: it remains immutable audit context, while deleting it would make the receipt invalid
+    // and erase the boundary that originally authorized the subscription.
     if (Object.keys(unsetFields).length > 0) receiptUpdate.$unset = unsetFields;
+    const projectedReceipt: PurchaseReceiptDocument = {
+      ...liveReceipt,
+      subscriptionState: status.subscriptionState,
+      lastRevalidatedAt: new Date(now * 1_000),
+      revalidationFailures: 0,
+    };
+    if (status.expiresAt !== undefined) projectedReceipt.subscriptionExpiresAt = new Date(status.expiresAt * 1_000);
+    if (next) projectedReceipt.revalidateAfter = next;
+    else delete projectedReceipt.revalidateAfter;
+    if (status.entitled) delete projectedReceipt.revokedAt;
+    else projectedReceipt.revokedAt = new Date(now * 1_000);
+    // The provider response changes several lifecycle fields together. Validate their fully
+    // projected combination before the update so terminal/cursor contradictions never become a
+    // durable receipt that later queries silently skip.
+    validatedPurchaseReceipt(projectedReceipt);
     await purchaseReceipts().updateOne(
       { _id: receipt._id, playerId: receipt.playerId },
       receiptUpdate,
@@ -264,10 +295,41 @@ export async function runGooglePlaySubscriptionRevalidationSweep(
     await lease.assertOwned();
     const batchSize = Math.min(1_000, Math.max(1, Math.floor(config.googlePlaySubscriptionRevalidationBatchSize)));
     const due = await purchaseReceipts().find({
-      kind: "subscription",
-      encryptedPurchaseToken: { $exists: true },
-      revalidateAfter: { $lte: new Date(now * 1_000) },
+      $and: [
+        {
+          // Do not let a damaged `kind` or missing ciphertext hide an otherwise subscription-like
+          // row. Any subscription product or lifecycle field places the receipt in this audit
+          // domain; the complete validator then decides whether it is legitimate authority.
+          $or: [
+            { kind: "subscription" },
+            { productId: "subscription1" },
+            { encryptedPurchaseToken: { $exists: true } },
+            { subscriptionState: { $exists: true } },
+            { subscriptionExpiresAt: { $exists: true } },
+            { revalidateAfter: { $exists: true } },
+            { lastRevalidatedAt: { $exists: true } },
+            { revalidationFailures: { $exists: true } },
+          ],
+        },
+        {
+          $or: [
+            { revalidateAfter: { $lte: new Date(now * 1_000) } },
+            // Cursor anomalies must enter the audited batch instead of disappearing from the due
+            // comparison forever. Revoked rows without a cursor are intentional deleted-account or
+            // terminal-state retirement and remain outside provider polling.
+            { revalidateAfter: { $exists: false }, revokedAt: { $exists: false } },
+            { revalidateAfter: { $exists: true, $not: { $type: "date" } } },
+            {
+              subscriptionState: { $in: [...TERMINAL_PURCHASE_SUBSCRIPTION_STATES] },
+              revalidateAfter: { $exists: true },
+            },
+          ],
+        },
+      ],
     }).sort({ revalidateAfter: 1, _id: 1 }).limit(batchSize).toArray();
+    // Validate the complete selected batch before its first external call or durable mutation. A
+    // corrupt receipt is operator-repair authority, not permission to partially advance neighbors.
+    due.forEach((receipt) => validatedPurchaseReceipt(receipt));
     let checked = 0;
     let changed = 0;
     let failed = 0;
