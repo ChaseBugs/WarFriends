@@ -18,6 +18,11 @@ import {
   hasActiveBlackMarketOffer,
   validatedBlackMarketOfferState,
 } from "./blackMarketEntitlementService";
+import {
+  exactRequestIntegerText,
+  exactRequestJsonFiniteNumber,
+  exactRequestJsonInteger,
+} from "./requestJsonNumberService";
 
 /**
  * Recovered weapon ownership and loadout logic.
@@ -339,18 +344,6 @@ function isObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
-function integer(value: unknown, field: string): number {
-  const parsed = Number(value);
-  if (!Number.isInteger(parsed)) throw new ApiError(ITEM_PRICE_MISMATCH, `${field} must be an integer.`);
-  return parsed;
-}
-
-function finiteNumber(value: unknown, field: string): number {
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed)) throw new ApiError(ITEM_PRICE_MISMATCH, `${field} must be finite.`);
-  return parsed;
-}
-
 function boundedName(value: unknown): string {
   if (typeof value !== "string" || value.length < 1 || value.length > 128) {
     throw new ApiError(ITEM_PRICE_NOT_FOUND, "Weapon name is invalid.");
@@ -377,11 +370,11 @@ export function parseWeaponPurchaseData(value: string): WeaponPurchasePayload {
   const data = parseObjectJson(value);
   return {
     name: boundedName(data.Name),
-    warBucks: integer(data.Warbucks, "Warbucks"),
-    gold: integer(data.Gold, "Gold"),
-    unlockLevel: integer(data.UnlockLevel, "UnlockLevel"),
-    startTime: integer(data.StartTime, "StartTime"),
-    discount: integer(data.discount ?? 0, "discount"),
+    warBucks: exactRequestJsonInteger(data.Warbucks, "Warbucks", ITEM_PRICE_MISMATCH),
+    gold: exactRequestJsonInteger(data.Gold, "Gold", ITEM_PRICE_MISMATCH),
+    unlockLevel: exactRequestJsonInteger(data.UnlockLevel, "UnlockLevel", ITEM_PRICE_MISMATCH),
+    startTime: exactRequestJsonInteger(data.StartTime, "StartTime", ITEM_PRICE_MISMATCH),
+    discount: exactRequestJsonInteger(data.discount, "discount", ITEM_PRICE_MISMATCH),
   };
 }
 
@@ -395,12 +388,12 @@ export function parseWeaponActivateData(value: string): WeaponActivatePayload {
 export function parseWeaponEquipData(value: string): WeaponEquipPayload {
   const data = parseObjectJson(value);
   return {
-    // Index is a string in the stock request; integer() intentionally accepts that shape.
-    index: integer(data.Index, "Index"),
+    // Index is the only recovered weapon integer explicitly converted to text by Unity.
+    index: exactRequestIntegerText(data.Index, "Index", ITEM_PRICE_MISMATCH),
     name: boundedName(data.Name),
-    slotIndex: integer(data.SlotIndex, "SlotIndex"),
-    armyPower: integer(data.ArmyPower, "ArmyPower"),
-    specialFeature: integer(data.SpecialFeature, "SpecialFeature"),
+    slotIndex: exactRequestJsonInteger(data.SlotIndex, "SlotIndex", ITEM_PRICE_MISMATCH),
+    armyPower: exactRequestJsonInteger(data.ArmyPower, "ArmyPower", ITEM_PRICE_MISMATCH),
+    specialFeature: exactRequestJsonInteger(data.SpecialFeature, "SpecialFeature", ITEM_PRICE_MISMATCH),
   };
 }
 
@@ -409,11 +402,11 @@ export function parseWeaponUpgradePurchaseData(value: string): WeaponUpgradePurc
   const data = parseObjectJson(value);
   return {
     name: boundedName(data.LevelName),
-    boughtIndex: integer(data.BoughtIndex, "BoughtIndex"),
-    startTime: integer(data.StartTime, "StartTime"),
-    discount: integer(data.discount ?? 0, "discount"),
-    deliveryTime: integer(data.DeliveryTime, "DeliveryTime"),
-    deliveryReduce: integer(data.deliveryReduce ?? 0, "deliveryReduce"),
+    boughtIndex: exactRequestJsonInteger(data.BoughtIndex, "BoughtIndex", ITEM_PRICE_MISMATCH),
+    startTime: exactRequestJsonInteger(data.StartTime, "StartTime", ITEM_PRICE_MISMATCH),
+    discount: exactRequestJsonInteger(data.discount, "discount", ITEM_PRICE_MISMATCH),
+    deliveryTime: exactRequestJsonInteger(data.DeliveryTime, "DeliveryTime", ITEM_PRICE_MISMATCH),
+    deliveryReduce: exactRequestJsonInteger(data.deliveryReduce, "deliveryReduce", ITEM_PRICE_MISMATCH),
   };
 }
 
@@ -422,12 +415,12 @@ export function parseWeaponUpgradeInstantData(value: string): WeaponUpgradeInsta
   const data = parseObjectJson(value);
   return {
     name: boundedName(data.LevelName),
-    boughtIndex: integer(data.BoughtIndex, "BoughtIndex"),
-    expectedPrice: integer(data.ExpectedPrice, "ExpectedPrice"),
-    armyPower: integer(data.ArmyPower, "ArmyPower"),
-    goldCoefficient: finiteNumber(data.GoldCoefficient, "GoldCoefficient"),
-    goldExpCoefficient: finiteNumber(data.GoldExpCoefficient, "GoldExpCoefficient"),
-    discount: integer(data.discount ?? 0, "discount"),
+    boughtIndex: exactRequestJsonInteger(data.BoughtIndex, "BoughtIndex", ITEM_PRICE_MISMATCH),
+    expectedPrice: exactRequestJsonInteger(data.ExpectedPrice, "ExpectedPrice", ITEM_PRICE_MISMATCH),
+    armyPower: exactRequestJsonInteger(data.ArmyPower, "ArmyPower", ITEM_PRICE_MISMATCH),
+    goldCoefficient: exactRequestJsonFiniteNumber(data.GoldCoefficient, "GoldCoefficient", ITEM_PRICE_MISMATCH),
+    goldExpCoefficient: exactRequestJsonFiniteNumber(data.GoldExpCoefficient, "GoldExpCoefficient", ITEM_PRICE_MISMATCH),
+    discount: exactRequestJsonInteger(data.discount, "discount", ITEM_PRICE_MISMATCH),
   };
 }
 
@@ -436,8 +429,8 @@ export function parseWeaponUpgradeActivateData(value: string): WeaponUpgradeActi
   const data = parseObjectJson(value);
   return {
     name: boundedName(data.LevelName),
-    boughtIndex: integer(data.BoughtIndex, "BoughtIndex"),
-    armyPower: integer(data.ArmyPower, "ArmyPower"),
+    boughtIndex: exactRequestJsonInteger(data.BoughtIndex, "BoughtIndex", ITEM_PRICE_MISMATCH),
+    armyPower: exactRequestJsonInteger(data.ArmyPower, "ArmyPower", ITEM_PRICE_MISMATCH),
   };
 }
 

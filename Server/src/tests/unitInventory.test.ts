@@ -162,6 +162,38 @@ function equippedData(
   return JSON.stringify({ armyPower, equips });
 }
 
+test("unit request parsers preserve recovered JSON number transport", () => {
+  assert.equal(parseUnitPurchaseData(buyData()).discount, 0);
+  assert.throws(
+    () => parseUnitPurchaseData(buyData(SHOTGUNNER, { Gold: "0" })),
+    (error: unknown) => (error as { code?: number }).code === ITEM_PRICE_MISMATCH,
+  );
+  assert.throws(
+    () => parseUnitPurchaseData(buyData(SHOTGUNNER, { discount: undefined })),
+    (error: unknown) => (error as { code?: number }).code === ITEM_PRICE_MISMATCH,
+  );
+  assert.throws(
+    () => parseUnitUpgradeInstantData(upgradeInstantData(1, SHOTGUNNER, { GoldExpCoefficient: "-0.175" })),
+    (error: unknown) => (error as { code?: number }).code === ITEM_PRICE_MISMATCH,
+  );
+  assert.throws(
+    () => parseUnitEliteUpgradeData(eliteUpgradeData(SHOTGUNNER, 0, { SpentParts: "50" })),
+    (error: unknown) => (error as { code?: number }).code === UNIT_ELITE_INCORRECT_VALUES,
+  );
+  assert.throws(
+    () => parseUnitPartsToScrapsData(JSON.stringify({
+      LevelName: SHOTGUNNER,
+      PartsToConvert: "10",
+      Scraps: 10 * UNIT_PART_TO_SCRAPS_SELL_RATE,
+    })),
+    (error: unknown) => (error as { code?: number }).code === UNIT_ELITE_INCORRECT_PARTS_AMOUNT,
+  );
+  assert.throws(
+    () => parseUnitEquipData(JSON.stringify({ armyPower: "100", equips: {} })),
+    (error: unknown) => (error as { code?: number }).code === ITEM_PRICE_MISMATCH,
+  );
+});
+
 test("unit extraction preserves player, helper, and unresolved boundaries", () => {
   assert.equal(generatedUnitCatalog.schemaVersion, 1);
   assert.equal(generatedUnitCatalog.source, "Client/ExportedProject/Assets/Scenes/MainScene.unity");

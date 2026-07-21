@@ -8,6 +8,7 @@ import {
   createInitialVisualInventory,
   equipVisualState,
   markVisualShownState,
+  parseVisualPurchaseData,
   purchaseVisualState,
   VISUAL_CATEGORY_NOT_FOUND,
   VISUAL_NOT_ENOUGH_GOLD,
@@ -24,6 +25,28 @@ const NOW = 1_700_000_000;
 function purchaseData(name: string, warBucks: number, gold: number, discount = 0): string {
   return JSON.stringify({ Name: name, Warbucks: warBucks, Gold: gold, discount, StartTime: NOW });
 }
+
+test("visual purchase parser requires recovered C# integer JSON members", () => {
+  const name = "CAMOS_DEFAULT";
+  assert.equal(parseVisualPurchaseData(purchaseData(name, 0, 0)).startTime, NOW);
+  for (const field of ["Warbucks", "Gold", "discount", "StartTime"]) {
+    const data: Record<string, unknown> = {
+      Name: name,
+      Warbucks: 0,
+      Gold: 0,
+      discount: 0,
+      StartTime: NOW,
+      [field]: "0",
+    };
+    assert.throws(() => parseVisualPurchaseData(JSON.stringify(data)));
+  }
+  assert.throws(() => parseVisualPurchaseData(JSON.stringify({
+    Name: name,
+    Warbucks: 0,
+    Gold: 0,
+    StartTime: NOW,
+  })));
+});
 
 function playerDocument(): PlayerDocument {
   const player = newPlayer("visual-player", "VisualPlayer", AccountType.Guest);

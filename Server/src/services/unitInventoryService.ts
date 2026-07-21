@@ -1,5 +1,9 @@
 import { randomInt } from "node:crypto";
 import { ApiError, ApiErrorCode } from "../apiErrors";
+import {
+  exactRequestJsonFiniteNumber,
+  exactRequestJsonInteger,
+} from "./requestJsonNumberService";
 import type {
   ItemInventoryState,
   PlayerProgressionState,
@@ -321,22 +325,6 @@ function isObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
-function integer(value: unknown, field: string): number {
-  const parsed = Number(value);
-  if (!Number.isInteger(parsed)) {
-    throw new ApiError(ITEM_PRICE_MISMATCH, `${field} must be an integer.`);
-  }
-  return parsed;
-}
-
-function finiteNumber(value: unknown, field: string): number {
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed)) {
-    throw new ApiError(ITEM_PRICE_MISMATCH, `${field} must be finite.`);
-  }
-  return parsed;
-}
-
 function unitName(value: unknown): string {
   if (typeof value !== "string" || value.length < 1 || value.length > 128) {
     throw new ApiError(ITEM_PRICE_NOT_FOUND, "Unit name is invalid.");
@@ -365,11 +353,11 @@ export function parseUnitPurchaseData(value: string): UnitPurchasePayload {
   const data = parseObjectJson(value);
   return {
     name: unitName(data.Name),
-    warBucks: integer(data.Warbucks, "Warbucks"),
-    gold: integer(data.Gold, "Gold"),
-    unlockLevel: integer(data.UnlockLevel, "UnlockLevel"),
-    startTime: integer(data.StartTime, "StartTime"),
-    discount: integer(data.discount ?? 0, "discount"),
+    warBucks: exactRequestJsonInteger(data.Warbucks, "Warbucks", ITEM_PRICE_MISMATCH),
+    gold: exactRequestJsonInteger(data.Gold, "Gold", ITEM_PRICE_MISMATCH),
+    unlockLevel: exactRequestJsonInteger(data.UnlockLevel, "UnlockLevel", ITEM_PRICE_MISMATCH),
+    startTime: exactRequestJsonInteger(data.StartTime, "StartTime", ITEM_PRICE_MISMATCH),
+    discount: exactRequestJsonInteger(data.discount, "discount", ITEM_PRICE_MISMATCH),
   };
 }
 
@@ -389,12 +377,12 @@ export function parseUnitUpgradePurchaseData(value: string): UnitUpgradePurchase
   }
   return {
     name: unitName(data.LevelName),
-    boughtIndex: integer(data.BoughtIndex, "BoughtIndex"),
-    startTime: integer(data.StartTime, "StartTime"),
+    boughtIndex: exactRequestJsonInteger(data.BoughtIndex, "BoughtIndex", ITEM_PRICE_MISMATCH),
+    startTime: exactRequestJsonInteger(data.StartTime, "StartTime", ITEM_PRICE_MISMATCH),
     isSpecial: data.IsSpecial === "1",
-    discount: integer(data.discount ?? 0, "discount"),
-    deliveryTime: integer(data.DeliveryTime, "DeliveryTime"),
-    deliveryReduce: integer(data.deliveryReduce ?? 0, "deliveryReduce"),
+    discount: exactRequestJsonInteger(data.discount, "discount", ITEM_PRICE_MISMATCH),
+    deliveryTime: exactRequestJsonInteger(data.DeliveryTime, "DeliveryTime", ITEM_PRICE_MISMATCH),
+    deliveryReduce: exactRequestJsonInteger(data.deliveryReduce, "deliveryReduce", ITEM_PRICE_MISMATCH),
   };
 }
 
@@ -403,12 +391,12 @@ export function parseUnitUpgradeInstantData(value: string): UnitUpgradeInstantPa
   const data = parseObjectJson(value);
   return {
     name: unitName(data.LevelName),
-    boughtIndex: integer(data.BoughtIndex, "BoughtIndex"),
-    expectedPrice: integer(data.ExpectedPrice, "ExpectedPrice"),
-    armyPower: integer(data.ArmyPower, "ArmyPower"),
-    goldCoefficient: finiteNumber(data.GoldCoefficient, "GoldCoefficient"),
-    goldExpCoefficient: finiteNumber(data.GoldExpCoefficient, "GoldExpCoefficient"),
-    discount: integer(data.discount ?? 0, "discount"),
+    boughtIndex: exactRequestJsonInteger(data.BoughtIndex, "BoughtIndex", ITEM_PRICE_MISMATCH),
+    expectedPrice: exactRequestJsonInteger(data.ExpectedPrice, "ExpectedPrice", ITEM_PRICE_MISMATCH),
+    armyPower: exactRequestJsonInteger(data.ArmyPower, "ArmyPower", ITEM_PRICE_MISMATCH),
+    goldCoefficient: exactRequestJsonFiniteNumber(data.GoldCoefficient, "GoldCoefficient", ITEM_PRICE_MISMATCH),
+    goldExpCoefficient: exactRequestJsonFiniteNumber(data.GoldExpCoefficient, "GoldExpCoefficient", ITEM_PRICE_MISMATCH),
+    discount: exactRequestJsonInteger(data.discount, "discount", ITEM_PRICE_MISMATCH),
   };
 }
 
@@ -417,8 +405,8 @@ export function parseUnitUpgradeActivateData(value: string): UnitUpgradeActivate
   const data = parseObjectJson(value);
   return {
     name: unitName(data.LevelName),
-    boughtIndex: integer(data.BoughtIndex, "BoughtIndex"),
-    armyPower: integer(data.ArmyPower, "ArmyPower"),
+    boughtIndex: exactRequestJsonInteger(data.BoughtIndex, "BoughtIndex", ITEM_PRICE_MISMATCH),
+    armyPower: exactRequestJsonInteger(data.ArmyPower, "ArmyPower", ITEM_PRICE_MISMATCH),
   };
 }
 
@@ -434,9 +422,9 @@ export function parseUnitEliteUpgradeData(value: string): UnitEliteUpgradePayloa
     const data = parseObjectJson(value);
     return {
       name: unitName(data.LevelName),
-      boughtIndex: integer(data.BoughtIndex, "BoughtIndex"),
-      spentWarBucks: integer(data.SpentWarbucks, "SpentWarbucks"),
-      spentParts: integer(data.SpentParts, "SpentParts"),
+      boughtIndex: exactRequestJsonInteger(data.BoughtIndex, "BoughtIndex", ITEM_PRICE_MISMATCH),
+      spentWarBucks: exactRequestJsonInteger(data.SpentWarbucks, "SpentWarbucks", ITEM_PRICE_MISMATCH),
+      spentParts: exactRequestJsonInteger(data.SpentParts, "SpentParts", ITEM_PRICE_MISMATCH),
     };
   } catch (error) {
     if (error instanceof ApiError) {
@@ -469,8 +457,8 @@ export function parseUnitPartsToScrapsData(value: string): UnitPartsToScrapsPayl
     const data = parseObjectJson(value);
     return {
       name: unitName(data.LevelName),
-      partsToConvert: integer(data.PartsToConvert, "PartsToConvert"),
-      scraps: integer(data.Scraps, "Scraps"),
+      partsToConvert: exactRequestJsonInteger(data.PartsToConvert, "PartsToConvert", ITEM_PRICE_MISMATCH),
+      scraps: exactRequestJsonInteger(data.Scraps, "Scraps", ITEM_PRICE_MISMATCH),
     };
   } catch (error) {
     if (error instanceof ApiError) {
@@ -500,7 +488,7 @@ export function parseUnitEquipData(value: string): UnitEquipPayload {
     equips[unitName(name)] = { wasEquipped, equipped };
   }
   return {
-    armyPower: integer(data.armyPower, "armyPower"),
+    armyPower: exactRequestJsonInteger(data.armyPower, "armyPower", ITEM_PRICE_MISMATCH),
     equips,
   };
 }

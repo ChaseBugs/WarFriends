@@ -112,6 +112,34 @@ function upgradeInstantData(expectedPrice: number, overrides: Record<string, unk
   });
 }
 
+test("weapon request parsers preserve recovered JSON number and Index text shapes", () => {
+  assert.equal(parseWeaponPurchaseData(purchaseData()).discount, 0);
+  for (const field of ["Warbucks", "Gold", "UnlockLevel", "StartTime", "discount"]) {
+    assert.throws(
+      () => parseWeaponPurchaseData(purchaseData({ [field]: "0" })),
+      (error: unknown) => (error as { code?: number }).code === ITEM_PRICE_MISMATCH,
+    );
+  }
+  assert.throws(
+    () => parseWeaponPurchaseData(purchaseData({ discount: undefined })),
+    (error: unknown) => (error as { code?: number }).code === ITEM_PRICE_MISMATCH,
+  );
+
+  assert.equal(parseWeaponEquipData(equipData()).index, 2);
+  for (const index of [2, "02", "+2", "2.0", "2e0", "2147483648"]) {
+    assert.throws(
+      () => parseWeaponEquipData(equipData({ Index: index })),
+      (error: unknown) => (error as { code?: number }).code === ITEM_PRICE_MISMATCH,
+    );
+  }
+
+  assert.equal(parseWeaponUpgradeInstantData(upgradeInstantData(1)).goldCoefficient, 0.6325);
+  assert.throws(
+    () => parseWeaponUpgradeInstantData(upgradeInstantData(1, { GoldCoefficient: "0.6325" })),
+    (error: unknown) => (error as { code?: number }).code === ITEM_PRICE_MISMATCH,
+  );
+});
+
 test("initial item inventory matches recovered InventoryData and LevelManagerData fields", () => {
   const inventory = createInitialItemInventory();
 

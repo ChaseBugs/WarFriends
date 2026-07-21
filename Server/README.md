@@ -1165,6 +1165,13 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   Unity DLL script IDs through the recovered assemblies, and XOR-decoding both currency
   fields. Run `npm run verify:weapon-catalog` to prove that the checked-in extraction artifact
   and the runtime catalog still match the recovered 4.9.5 scene exactly.
+  The shared weapon/unit/visual request-number boundary also preserves the recovered Json.NET
+  types before this economy logic runs: C# `int` dictionary members are exact signed-Int32 JSON
+  numbers, Gold coefficient floats are finite JSON numbers, and only the explicitly stringified
+  `EquipWeapon.Index` is canonical nonnegative Int32 decimal text. Mandatory `discount` and
+  `deliveryReduce` members cannot disappear or become null-backed zero values. This rejects
+  JavaScript-coercible booleans, arrays, blanks, numeric strings, fractions, non-finite numbers,
+  and out-of-range values without changing the later source-specific negative-price handling.
 - **Weapon upgrade lifecycle**: buffered actions `73`-`75` use all 165 recovered per-level
   Google2u tables across shop and Black Market families (11,640 normal-level transitions).
   BuyWeaponUpgrade validates the old index and server-derived duration, including the recovered

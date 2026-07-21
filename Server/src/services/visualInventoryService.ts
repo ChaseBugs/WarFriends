@@ -11,6 +11,7 @@ import {
   validatedVisualInventoryState,
   validatedVisualUnixSeconds,
 } from "./visualEntitlementService";
+import { exactRequestJsonInteger } from "./requestJsonNumberService";
 
 // Exact IJEAJGCCHEF values handled by the recovered BuyDecal/EquipDecal response branches.
 export const VISUAL_NOT_ENOUGH_WARBUCKS = 100;
@@ -165,12 +166,6 @@ function objectJson(value: string): Record<string, unknown> {
   return parsed as Record<string, unknown>;
 }
 
-function integer(value: unknown, field: string): number {
-  const parsed = Number(value);
-  if (!Number.isInteger(parsed)) throw new ApiError(ApiErrorCode.UnknownAction, `${field} must be an integer.`);
-  return parsed;
-}
-
 function visualName(value: unknown): string {
   if (typeof value !== "string" || value.length < 1 || value.length > 128) {
     throw new ApiError(VISUAL_CATEGORY_NOT_FOUND, "Visual name is invalid.");
@@ -183,10 +178,10 @@ export function parseVisualPurchaseData(value: string): VisualPurchasePayload {
   const data = objectJson(value);
   return {
     name: visualName(data.Name),
-    warBucks: integer(data.Warbucks, "Warbucks"),
-    gold: integer(data.Gold, "Gold"),
-    discount: integer(data.discount ?? 0, "discount"),
-    startTime: integer(data.StartTime, "StartTime"),
+    warBucks: exactRequestJsonInteger(data.Warbucks, "Warbucks", ApiErrorCode.UnknownAction),
+    gold: exactRequestJsonInteger(data.Gold, "Gold", ApiErrorCode.UnknownAction),
+    discount: exactRequestJsonInteger(data.discount, "discount", ApiErrorCode.UnknownAction),
+    startTime: exactRequestJsonInteger(data.StartTime, "StartTime", ApiErrorCode.UnknownAction),
   };
 }
 

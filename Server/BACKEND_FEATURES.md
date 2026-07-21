@@ -327,6 +327,15 @@ both as Json.NET numbers backed by C# `int`. Only true absence selects the fallb
 Boolean, string, array, fractional, negative, unsafe, or oversized values reject before pack
 eligibility, wallet debit, inventory grant, or replay publication.
 
+Weapon, unit, and visual inventory parsers now preserve each recovered dictionary member's exact
+Json.NET transport before any catalog, wallet, ownership, delivery, conversion, or replay decision.
+C# `int` fields require signed-Int32 JSON numbers, while the weapon/unit coefficient floats require
+finite JSON numbers. The sole integer-text exception is `WeaponScreen.EquipWeapon.Index`, whose call
+site explicitly invokes `ToString()` and therefore requires canonical nonnegative Int32 decimal
+text. Mandatory discounts and delivery reductions no longer convert absence or null to zero, and
+signed numeric values still reach the feature layer so its recovered negative-value errors remain
+unchanged.
+
 The shared persisted-progression read boundary and mutation-result boundary validate all five core
 numeric fields before price comparison, publication, or the boot adapter: Gold and WarBucks retain
 safe-integer chargeback debt, while Tickets, Scraps, and level experience must be nonnegative safe
