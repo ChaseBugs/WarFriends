@@ -201,7 +201,10 @@ boundaries. A wholly absent progression may use the deterministic account fallba
 malformed, or future version in a present document fails closed until an explicit migration exists.
 The paid-VIP timeline is also validated at those boundaries. Expiry remains the exact recovered
 active-benefit predicate, while its display start must be a nonnegative safe Unix second, equal zero
-when expiry is zero, and never later than a nonzero expiry.
+when expiry is zero, and never later than a nonzero expiry. The legacy `DatabasePlayer.vipExpiration`
+fallback is independently validated at shared account lookup even when canonical progression owns a
+different current value; generation differences need not mirror, but malformed dormant authority
+must not survive authentication/gameplay use or unrelated writes.
 Any present subscription revalidation owner must be the exact 64-character lowercase hexadecimal
 HMAC-SHA256 purchase-receipt key. Absence remains valid for legacy subscription rows; arbitrary or
 malformed durable IDs fail before stale-event comparison or publication.

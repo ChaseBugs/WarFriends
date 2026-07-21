@@ -735,6 +735,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   `VipStart` is display/reminder metadata. Both are nonnegative safe Unix seconds at shared read and
   publication boundaries, with exact `0/0` for no entitlement and `VipStart <= Vip` otherwise, so
   corrupt or inverted duration metadata cannot reach client progress calculations or later writes.
+  Shared account lookup also validates the legacy `DatabasePlayer.vipExpiration` fallback even when
+  canonical progression currently masks it. The two storage generations need not be equal, but a
+  malformed dormant fallback cannot survive unrelated authenticated gameplay/profile mutations.
 - **Subscription receipt ownership**: a present private revalidation owner is the exact
   64-character lowercase hexadecimal HMAC-SHA256 purchase-receipt key generated from the Play token.
   Absence remains valid for pre-binding legacy subscriptions; arbitrary or malformed durable IDs

@@ -463,6 +463,18 @@ test("shared profile authority rejects corrupt rename price authority before unr
   }
 });
 
+test("shared profile authority rejects corrupt legacy VIP fallback even when progression is valid", () => {
+  for (const vipExpiration of [Number.NaN, Number.POSITIVE_INFINITY, -1, 1.5]) {
+    const corrupt = contractPlayer();
+    corrupt.player.vipExpiration = vipExpiration;
+    assert.equal(corrupt.progression?.vipExpiration, 0);
+    assert.throws(
+      () => validatedPlayerProfileLookup(corrupt),
+      /Stored player public identity is invalid/,
+    );
+  }
+});
+
 test("indexed player profile mirrors must match before client-visible projection", () => {
   assert.equal(validatedPlayerProfileLookup(null), null);
   assert.equal(validatedPlayerProfileLookup(contractPlayer())?.id, "player-contract");

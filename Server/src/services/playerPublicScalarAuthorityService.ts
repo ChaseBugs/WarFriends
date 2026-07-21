@@ -1,6 +1,7 @@
 import type { DatabasePlayerDTO } from "../dtos";
 import { playerLevelDefinition } from "./levelProgressionService";
 import { validatedRenameCount } from "./playerRenameAuthorityService";
+import { validatedVipExpiration } from "./vipEntitlementService";
 
 const MAX_CLIENT_INT = 2_147_483_647;
 const WAR_ARENA_CROWN_TYPES = new Set(["", "bronze", "silver", "gold", "flawless"]);
@@ -46,6 +47,11 @@ export function validatePlayerPublicScalarAuthority(player: DatabasePlayerDTO): 
   // read so an unrelated heartbeat, device update, or gameplay write cannot carry malformed price
   // authority forward until the narrower rename or boot handler finally notices it.
   validatedRenameCount(player.renameCount);
+  // Canonical accounts own VIP in progression, while imported accounts may still fall back to
+  // DatabasePlayer.vipExpiration. Do not require those two generations to mirror one another, but
+  // prove the dormant fallback as well: a valid progression deadline must not mask NaN/Infinity or
+  // negative legacy authority until a later benefit happens to read it.
+  validatedVipExpiration(player.vipExpiration);
   // `GetRealStatus` subtracts this recovered signed-int Unix second from server time. A negative,
   // fractional, non-finite, or wider value can keep a stale player online through overflow-like
   // JavaScript behavior even though the stock client could never represent the durable value.
