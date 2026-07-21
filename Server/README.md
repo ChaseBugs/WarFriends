@@ -206,7 +206,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
 - **Accounts / player**: `CreateAccount`, `CreateFullAccount`, `LoginToCustomAccount`,
   `GetPlayerData`/`GetPlayerInfo`, and player settings (name/country/status/device token).
   Login/profile snapshots and private progression use the exact DynamoDB-style attribute
-  wrappers parsed by the recovered 1.6.0 client. Human passwords use versioned salted scrypt with
+  wrappers parsed by the recovered 1.6.0 client. Their shared numeric adapter preserves the
+  recovered integer projection for legitimate finite fractional values, but rejects non-finite
+  values and unsafe projected integers instead of silently publishing a believable zero. Human
+  passwords use versioned salted scrypt with
   automatic legacy-HMAC migration; provider credentials remain separate from the rotated internal
   gameplay session token. Durable login guesses use an
   atomic MongoDB throttle keyed by an HMAC of the presented identity; active gameplay sessions

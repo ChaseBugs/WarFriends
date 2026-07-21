@@ -278,6 +278,33 @@ test("player data rejects corrupt core balances while preserving chargeback debt
   assert.throws(() => progressionForPlayer(corruptMutationRead), /Stored WarBucks balance is invalid/);
 });
 
+test("DynamoDB numeric wire projection rejects corrupt profile authority instead of emitting zero", () => {
+  const fractionalArmyPower = contractPlayer();
+  fractionalArmyPower.player.armyPower = 321.75;
+  assert.deepEqual(buildDatabasePlayer(fractionalArmyPower).ArmyPower, { N: "321" });
+
+  const corruptPublicProfile = contractPlayer();
+  corruptPublicProfile.player.reputation = Number.NaN;
+  assert.throws(
+    () => buildDatabasePlayer(corruptPublicProfile),
+    /DynamoDB numeric attribute authority is invalid/,
+  );
+
+  const corruptPrivateBoot = contractPlayer();
+  corruptPrivateBoot.player.experience = Number.POSITIVE_INFINITY;
+  assert.throws(
+    () => buildPlayerData(corruptPrivateBoot),
+    /DynamoDB numeric attribute authority is invalid/,
+  );
+
+  const unsafeProjection = contractPlayer();
+  unsafeProjection.player.sendLogsValue = Number.MAX_SAFE_INTEGER + 1;
+  assert.throws(
+    () => buildPlayerData(unsafeProjection),
+    /DynamoDB numeric attribute authority is invalid/,
+  );
+});
+
 test("progression revision authority migrates absence and rejects corrupt or non-monotonic writes", () => {
   const legacy = contractPlayer();
   delete (legacy.progression! as { revision?: number }).revision;
