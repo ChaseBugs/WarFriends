@@ -107,7 +107,11 @@ import {
   dailyRewardGoldForDay,
   validatedDailyRewardState,
 } from "../services/dailyRewardService";
-import { dailyRewardHandlers, requestedRewardDay } from "../handlers/dailyRewards";
+import {
+  dailyRewardHandlers,
+  requestedRewardDay,
+  requestedRewardDayFromRequest,
+} from "../handlers/dailyRewards";
 import {
   assignmentStateFor,
   claimAssignmentState,
@@ -1077,6 +1081,22 @@ test("daily reward claims require the recovered canonical day transport", () => 
   ]) {
     assert.throws(
       () => requestedRewardDay(value),
+      (error: unknown) => error instanceof Error
+        && "code" in error
+        && error.code === ApiErrorCode.DailyRewardWrongIndex,
+    );
+  }
+
+  assert.equal(requestedRewardDayFromRequest({ claimRweard: "1" }), 1);
+  assert.equal(requestedRewardDayFromRequest({ claimReward: 31 }), 31);
+  for (const request of [
+    {},
+    { claimRweard: undefined },
+    { claimRweard: "1", claimReward: "1" },
+    { claimRweard: "1", claimReward: "2" },
+  ]) {
+    assert.throws(
+      () => requestedRewardDayFromRequest(request),
       (error: unknown) => error instanceof Error
         && "code" in error
         && error.code === ApiErrorCode.DailyRewardWrongIndex,

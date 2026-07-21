@@ -25,6 +25,21 @@ export function requestedRewardDay(value: unknown): number {
   return parsed;
 }
 
+/**
+ * Resolve the stock typo or the replacement-client spelling without property precedence.
+ *
+ * `claimRweard` is source truth. `claimReward` is retained only for repaired JSON clients. If both
+ * are present, even with equal values, the request has two descriptions of the reward cursor and
+ * must fail before the ordered calendar claim transaction chooses one.
+ */
+export function requestedRewardDayFromRequest(req: Record<string, unknown>): number {
+  const fields = ["claimRweard", "claimReward"].filter((field) => req[field] !== undefined);
+  if (fields.length !== 1) {
+    throw new ApiError(ApiErrorCode.DailyRewardWrongIndex, "Daily reward index field is invalid.");
+  }
+  return requestedRewardDay(req[fields[0]]);
+}
+
 export const dailyRewardHandlers: Record<number, HandlerEntry> = {
   [DbAction.CheckDailyReward]: authed(async ({ player }) => {
     const result = await checkDailyReward(player!.id);
@@ -34,7 +49,7 @@ export const dailyRewardHandlers: Record<number, HandlerEntry> = {
   }),
 
   [DbAction.ClaimDailyReward]: authed(async ({ player, req }) => {
-    const day = requestedRewardDay(req.claimRweard ?? req.claimReward);
+    const day = requestedRewardDayFromRequest(req);
     const result = await claimDailyReward(player!.id, day, player!.player.level);
     return ok(DbAction.ClaimDailyReward, {
       dailyRewardData: {

@@ -1284,7 +1284,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   `dailyRewardData` calendar contract, one UTC-day unlock, ordered replay-safe claim cursors,
   and a canonical action-1002 `claimRweard` day boundary: only the recovered `int.ToString()`
   decimal from 1 through 31 or the same replacement-client JSON integer is accepted, so coercible
-  nulls, Booleans, arrays, and alternate numeric text cannot choose a reward day. Claims return
+  nulls, Booleans, arrays, and alternate numeric text cannot choose a reward day. A repaired client
+  may instead use `claimReward`, but exactly one spelling must be present; equal or conflicting
+  aliases fail before the ordered claim transaction rather than relying on property precedence. Claims return
   exact parser payloads for Gold, WarBucks, Arena Tickets, loose Bronze/Silver/Gold cards,
   and Bronze/Silver/Gold packs. All three currency branches use the shared nonnegative safe-reward
   balance guard before advancing the claim cursor, so invalid amounts, damaged wallets, or overflow
