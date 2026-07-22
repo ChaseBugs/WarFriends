@@ -77,7 +77,9 @@ export const config = {
     false,
     "GOOGLE_PLAY_PURCHASES_ENABLED",
   ),
-  googlePlayPackageName: (process.env.GOOGLE_PLAY_PACKAGE_NAME ?? "com.chillingo.warfriends.android.gplay").trim(),
+  // Preserve the exact operator value. The shared Google Play application policy rejects
+  // whitespace and malformed application IDs before any receipt or provider path can use them.
+  googlePlayPackageName: process.env.GOOGLE_PLAY_PACKAGE_NAME ?? "com.chillingo.warfriends.android.gplay",
   // Keep this stable across AUTH_SECRET/session-key rotation or migrate the receipt ledger first.
   purchaseTokenHashSecret: process.env.PURCHASE_TOKEN_HASH_SECRET ?? process.env.AUTH_SECRET ?? "change-me-in-production",
   // Subscription tokens must remain available for later Play status checks, but storing a raw

@@ -1,12 +1,64 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  googlePlayApplicationPolicy,
   googlePlaySchedulingPolicy,
   googlePlaySubscriptionRevalidationBatchSize,
   googlePlaySubscriptionRevalidationCadenceSeconds,
   googlePlaySubscriptionSchedulerIntervalSeconds,
   googlePlayVoidedPurchaseSchedulerIntervalSeconds,
 } from "../services/googlePlayPolicyService";
+
+test("Google Play application identity and worker enablement are one immutable startup policy", () => {
+  assert.equal(Object.isFrozen(googlePlayApplicationPolicy()), true);
+  assert.deepEqual(googlePlayApplicationPolicy(), {
+    purchasesEnabled: false,
+    subscriptionRevalidationEnabled: false,
+    voidedPurchaseReconciliationEnabled: false,
+    packageName: "com.chillingo.warfriends.android.gplay",
+  });
+  assert.deepEqual(googlePlayApplicationPolicy({
+    purchasesEnabled: true,
+    subscriptionRevalidationEnabled: true,
+    voidedPurchaseReconciliationEnabled: true,
+    packageName: "com.example.game_2",
+  }), {
+    purchasesEnabled: true,
+    subscriptionRevalidationEnabled: true,
+    voidedPurchaseReconciliationEnabled: true,
+    packageName: "com.example.game_2",
+  });
+});
+
+test("Google Play application policy rejects malformed or split provider authority", () => {
+  const base = {
+    purchasesEnabled: false,
+    subscriptionRevalidationEnabled: false,
+    voidedPurchaseReconciliationEnabled: false,
+    packageName: "com.example.game",
+  };
+  for (const packageName of [
+    "", "com", " com.example.game", "com.example.game ", "1com.example.game",
+    "com..game", "com.example.game-name", `com.${"a".repeat(252)}`,
+  ]) {
+    assert.throws(
+      () => googlePlayApplicationPolicy({ ...base, packageName }),
+      /Google Play application policy is invalid/,
+    );
+  }
+  assert.throws(
+    () => googlePlayApplicationPolicy({ ...base, subscriptionRevalidationEnabled: true }),
+    /Google Play application policy is invalid/,
+  );
+  assert.throws(
+    () => googlePlayApplicationPolicy({ ...base, voidedPurchaseReconciliationEnabled: true }),
+    /Google Play application policy is invalid/,
+  );
+  assert.throws(
+    () => googlePlayApplicationPolicy({ ...base, purchasesEnabled: 1 as unknown as boolean }),
+    /Google Play application policy is invalid/,
+  );
+});
 
 test("Google Play scheduling is one immutable startup policy", () => {
   assert.equal(Object.isFrozen(googlePlaySchedulingPolicy()), true);

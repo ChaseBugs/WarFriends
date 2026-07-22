@@ -152,7 +152,10 @@ Google Play purchases are fail-closed by default. To enable verified Android cur
 pack, and `subscription1` delivery, grant a service account Play Console purchase-read access, set
 `GOOGLE_APPLICATION_CREDENTIALS` to its JSON file outside this repository, and set
 `GOOGLE_PLAY_PURCHASES_ENABLED=true`. `GOOGLE_PLAY_PACKAGE_NAME` must remain the exact deployed
-application ID. Set a separate random `PURCHASE_TOKEN_HASH_SECRET` of at least 32 characters and
+application ID. It is validated once as a bounded, untrimmed dotted Java-style identifier and then
+shared by purchase delivery, durable receipt validation, subscription revalidation, and Voided
+Purchases reconciliation; dependent workers cannot be enabled while purchase verification is off.
+Set a separate random `PURCHASE_TOKEN_HASH_SECRET` of at least 32 characters and
 keep it stable across session-secret rotations; changing it requires a purchase-ledger migration.
 Set an independent `PURCHASE_TOKEN_ENCRYPTION_SECRET` of at least 32 characters and keep it stable:
 subscription tokens are AES-256-GCM encrypted with this key so the scheduler can query later Play

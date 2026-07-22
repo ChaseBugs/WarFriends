@@ -1,4 +1,3 @@
-import { config } from "../config";
 import type { PurchaseReceiptDocument, PurchaseReversibleGrant } from "../db";
 import {
   googlePlayStoreProductId,
@@ -6,6 +5,9 @@ import {
   type InAppEntitlement,
   type PackEntitlement,
 } from "./inAppCatalogService";
+import { googlePlayApplicationPolicy } from "./googlePlayPolicyService";
+
+const GOOGLE_PLAY_APPLICATION = googlePlayApplicationPolicy();
 
 const RECEIPT_KEYS = new Set([
   "_id", "platform", "playerId", "productId", "storeProductId", "orderId", "kind",
@@ -167,7 +169,7 @@ export function validatedPurchaseReceipt(receipt: PurchaseReceiptDocument): Purc
     || receipt.platform !== "google-play"
     || !boundedString(receipt.playerId, 256)
     || receipt.kind !== entitlement.kind
-    || receipt.storeProductId !== googlePlayStoreProductId(config.googlePlayPackageName, entitlement.productId)
+    || receipt.storeProductId !== googlePlayStoreProductId(GOOGLE_PLAY_APPLICATION.packageName, entitlement.productId)
     || !boundedString(receipt.orderId, 512)
     || !safeDate(receipt.purchasedAt)
     || !safeDate(receipt.verifiedAt)

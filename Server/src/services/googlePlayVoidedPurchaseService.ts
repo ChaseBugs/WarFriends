@@ -19,7 +19,10 @@ import {
   type GooglePlayVoidedPurchase,
   type GooglePlayVoidedPurchaseLister,
 } from "./googlePlayPurchaseVerifier";
-import { googlePlayVoidedPurchaseSchedulerIntervalSeconds } from "./googlePlayPolicyService";
+import {
+  googlePlayApplicationPolicy,
+  googlePlayVoidedPurchaseSchedulerIntervalSeconds,
+} from "./googlePlayPolicyService";
 import { createInitialItemInventory, itemInventoryStateFor } from "./itemInventoryService";
 import { progressionForPlayer, unixNow } from "./playerStateService";
 import { validatedPlayerAccountEnvelope } from "./playerProfileMirrorAuthorityService";
@@ -35,6 +38,7 @@ const cursorId = "google-play-voided-products" as const;
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1_000;
 const WINDOW_OVERLAP_MS = 10 * 60 * 1_000;
 const defaultLister = new GooglePlayDeveloperApiVerifier();
+const GOOGLE_PLAY_APPLICATION = googlePlayApplicationPolicy();
 const CURSOR_KEYS = new Set(["_id", "lastSuccessfulEndTime", "updatedAt"]);
 
 /** A future or drifted cursor could skip provider events, so validate it as reconciliation authority. */
@@ -275,7 +279,7 @@ export async function runGooglePlayVoidedPurchaseSweep(
   lister: GooglePlayVoidedPurchaseLister = defaultLister,
   now = unixNow(),
 ): Promise<{ revoked: number; replayed: number; unmatched: number; skipped: boolean }> {
-  if (!config.googlePlayVoidedPurchaseReconciliationEnabled) {
+  if (!GOOGLE_PLAY_APPLICATION.voidedPurchaseReconciliationEnabled) {
     return { revoked: 0, replayed: 0, unmatched: 0, skipped: true };
   }
   const interval = googlePlayVoidedPurchaseSchedulerIntervalSeconds();
@@ -296,7 +300,7 @@ export async function runGooglePlayVoidedPurchaseSweep(
     do {
       if (++pages > 100) throw new Error("Google Play voided purchase pagination exceeded the safety limit.");
       const page = await lister.listVoidedProductPurchases(
-        config.googlePlayPackageName,
+        GOOGLE_PLAY_APPLICATION.packageName,
         startTime,
         nowMillis,
         pageToken,
@@ -334,7 +338,7 @@ export async function runGooglePlayVoidedPurchaseSweep(
 }
 
 export function startGooglePlayVoidedPurchaseScheduler(): NodeJS.Timeout | null {
-  if (!config.googlePlayVoidedPurchaseReconciliationEnabled) return null;
+  if (!GOOGLE_PLAY_APPLICATION.voidedPurchaseReconciliationEnabled) return null;
   const seconds = googlePlayVoidedPurchaseSchedulerIntervalSeconds();
   const run = (): void => {
     void runGooglePlayVoidedPurchaseSweep().then((result) => {

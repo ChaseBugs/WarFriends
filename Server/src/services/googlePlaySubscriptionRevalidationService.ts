@@ -15,6 +15,7 @@ import {
   type GooglePlaySubscriptionStatusVerifier,
 } from "./googlePlayPurchaseVerifier";
 import {
+  googlePlayApplicationPolicy,
   googlePlaySubscriptionRevalidationBatchSize,
   googlePlaySubscriptionRevalidationCadenceSeconds,
   googlePlaySubscriptionSchedulerIntervalSeconds,
@@ -36,6 +37,7 @@ import {
 
 const jobId = "google-play-subscription-revalidation";
 const defaultVerifier = new GooglePlayDeveloperApiVerifier();
+const GOOGLE_PLAY_APPLICATION = googlePlayApplicationPolicy();
 
 export interface SubscriptionRevalidationTransition {
   state: PlayerProgressionState;
@@ -265,7 +267,7 @@ async function revalidateReceipt(
       config.purchaseTokenEncryptionSecret,
     );
     const status = await verifier.getSubscriptionStatus({
-      packageName: config.googlePlayPackageName,
+      packageName: GOOGLE_PLAY_APPLICATION.packageName,
       productId: receipt.productId,
       purchaseToken,
     }, now);
@@ -291,7 +293,7 @@ export async function runGooglePlaySubscriptionRevalidationSweep(
   verifier: GooglePlaySubscriptionStatusVerifier = defaultVerifier,
   now = unixNow(),
 ): Promise<{ checked: number; changed: number; failed: number; skipped: boolean }> {
-  if (!config.googlePlaySubscriptionRevalidationEnabled) {
+  if (!GOOGLE_PLAY_APPLICATION.subscriptionRevalidationEnabled) {
     return { checked: 0, changed: 0, failed: 0, skipped: true };
   }
   const interval = googlePlaySubscriptionSchedulerIntervalSeconds();
@@ -352,7 +354,7 @@ export async function runGooglePlaySubscriptionRevalidationSweep(
 }
 
 export function startGooglePlaySubscriptionRevalidationScheduler(): NodeJS.Timeout | null {
-  if (!config.googlePlaySubscriptionRevalidationEnabled) return null;
+  if (!GOOGLE_PLAY_APPLICATION.subscriptionRevalidationEnabled) return null;
   const seconds = googlePlaySubscriptionSchedulerIntervalSeconds();
   const run = (): void => {
     void runGooglePlaySubscriptionRevalidationSweep().then((result) => {

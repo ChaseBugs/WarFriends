@@ -18,7 +18,10 @@ import {
   type GooglePlayPurchaseVerifier,
   type VerifiedGooglePlayPurchase,
 } from "./googlePlayPurchaseVerifier";
-import { googlePlaySubscriptionRevalidationCadenceSeconds } from "./googlePlayPolicyService";
+import {
+  googlePlayApplicationPolicy,
+  googlePlaySubscriptionRevalidationCadenceSeconds,
+} from "./googlePlayPolicyService";
 import { progressionForPlayer, unixNow } from "./playerStateService";
 import { validatedPlayerAccountEnvelope } from "./playerProfileMirrorAuthorityService";
 import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
@@ -31,6 +34,7 @@ import {
 } from "./subscriptionBenefitService";
 
 const defaultVerifier = new GooglePlayDeveloperApiVerifier();
+const GOOGLE_PLAY_APPLICATION = googlePlayApplicationPolicy();
 
 export interface GooglePlayPurchaseInput {
   productId: string;
@@ -251,10 +255,10 @@ export async function deliverGooglePlayPurchase(
   now = unixNow(),
   allowedKinds: readonly InAppEntitlement["kind"][] = ["currency", "subscription"],
 ): Promise<PurchaseDeliveryResult> {
-  if (!config.googlePlayPurchasesEnabled) {
+  if (!GOOGLE_PLAY_APPLICATION.purchasesEnabled) {
     throw new ApiError(ApiErrorCode.InvalidInapp, "Google Play purchases are not configured.");
   }
-  if (input.packageName !== config.googlePlayPackageName) {
+  if (input.packageName !== GOOGLE_PLAY_APPLICATION.packageName) {
     throw new ApiError(ApiErrorCode.InvalidInapp, "Google Play package does not match this server.");
   }
   const entitlement = inAppEntitlement(input.productId);
