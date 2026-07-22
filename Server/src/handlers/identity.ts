@@ -24,6 +24,7 @@ import {
   exactIdentityRequestCredential,
   exactIdentityRequestDisplayName,
   exactIdentityRequestId,
+  exactIdentityRequestProof,
 } from "./identityRequestParsing";
 import { recoveredAccountCreationContext } from "./accountCreationRequestParsing";
 
@@ -86,6 +87,7 @@ function linkAction(action: DbAction, provider: IdentityProvider): HandlerEntry 
       exactIdentityRequestId(req, provider),
       exactIdentityRequestCredential(req, provider),
       exactIdentityRequestDisplayName(req, provider),
+      exactIdentityRequestProof(req, provider),
     );
     // FacebookLoginReward is tied to a successful provider link, never to a standalone
     // client-supplied RewardId. Re-linking is safe: the persisted marker makes this a no-op.
@@ -176,6 +178,7 @@ export const identityHandlers: Record<number, HandlerEntry> = {
         credential,
         context.deviceToken,
         context.locale,
+        exactIdentityRequestProof(req, "gameCenter"),
       );
       const eventAssignment = await ensureActiveEventAssignment(created.doc.id);
       return ok(
@@ -220,6 +223,7 @@ export const identityHandlers: Record<number, HandlerEntry> = {
           exactIdentityRequestId(req, "gameCenter"),
           exactIdentityRequestCredential(req, "gameCenter"),
           exactIdentityRequestDisplayName(req, "gameCenter"),
+          exactIdentityRequestProof(req, "gameCenter"),
         )
       : await unlinkIdentity(player!.id, "gameCenter");
     return ok(DbAction.RemoveOrUpdateGC, {

@@ -37,6 +37,8 @@ import { clientErrorHandlers } from "./clientErrors";
 import type { HandlerEntry } from "./types";
 import logger from "../utils/logger";
 import { exactRequestedAccountType } from "../services/accountTypeRequestService";
+import { providerForAccountType } from "../services/identityService";
+import { exactIdentityRequestProof } from "./identityRequestParsing";
 import {
   exactDatabaseAction,
   exactMinimumClientVersion,
@@ -166,12 +168,16 @@ export async function dispatch(req: RequestEnvelope): Promise<ResponseEnvelope> 
     // AccountType is only meaningful during platform login. Normal authenticated form
     // requests omit it and therefore use the guest/server token path.
     const accountType = exactRequestedAccountType(req.AccountType);
+    const loginProvider = loginAction && accountType !== undefined
+      ? providerForAccountType(accountType)
+      : null;
     const player = entry.requiresAuth
       ? await authenticate(
         authentication.playerId,
         authentication.credential,
         loginAction ? accountType : undefined,
         loginAction,
+        loginProvider ? exactIdentityRequestProof(req, loginProvider) : undefined,
       )
       : authentication.playerId && authentication.credential
         ? await findByIdOptional(authentication.playerId, authentication.credential)

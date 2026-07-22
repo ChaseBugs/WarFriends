@@ -8,6 +8,10 @@ import { findById, updatePlayerFields } from "./playerService";
 import { authenticationCredentialSecrets } from "./authSecretService";
 import { validatedPlayerProfileMirrors } from "./playerProfileMirrorAuthorityService";
 import { validatedConnectedIdentityExternalId } from "./identityExternalIdAuthorityService";
+import {
+  gameCenterIdentityPolicy,
+  verifyGameCenterIdentityOwnership,
+} from "./gameCenterIdentityProofService";
 
 export type IdentityProvider = IdentityDocument["provider"];
 
@@ -297,6 +301,7 @@ export async function linkIdentity(
   externalIdValue: string,
   credentialValue: string,
   displayName = "",
+  providerProof?: unknown,
 ): Promise<PlayerDocument> {
   const externalId = normalizeIdentityExternalId(provider, externalIdValue);
   // OAuth/platform tokens can be substantially longer than traditional passwords. Bound
@@ -305,6 +310,11 @@ export async function linkIdentity(
   // Validate before opening a transaction. The old trim/slice behavior silently changed identity
   // metadata and could make distinct overlong requests overwrite the same durable value.
   const exactDisplayName = validatedIdentityDisplayName(displayName);
+  if (provider === "gameCenter") {
+    await verifyGameCenterIdentityOwnership(externalId, providerProof);
+  } else if (providerProof !== undefined) {
+    throw new ApiError(ApiErrorCode.RequestNotAuthorized, "External account proof is invalid.");
+  }
   const now = new Date();
   try {
     return await withMongoTransaction(async (session) => {
@@ -402,6 +412,7 @@ export async function authenticateIdentity(
   provider: IdentityProvider,
   externalIdValue: string,
   credentialValue: string,
+  providerProof?: unknown,
 ): Promise<PlayerDocument | null> {
   let externalId: string;
   let credential: string;
@@ -409,6 +420,23 @@ export async function authenticateIdentity(
     externalId = normalizeIdentityExternalId(provider, externalIdValue);
     credential = validatedIdentityCredential(credentialValue);
   } catch {
+    return null;
+  }
+  if (provider === "gameCenter") {
+    try {
+      await verifyGameCenterIdentityOwnership(externalId, providerProof);
+    } catch (error) {
+      if (error instanceof ApiError && error.code === ApiErrorCode.RequestNotAuthorized) return null;
+      throw error;
+    }
+    if (gameCenterIdentityPolicy().enabled) {
+      // Live signatures are fresh per login and therefore cannot equal the HMAC of the earlier
+      // link credential. Once Apple proves the exact external ID, the current owner mirror is the
+      // authentication authority; no ephemeral signature or salt is persisted.
+      const liveOwner = await findValidatedIdentityOwner(provider, externalId);
+      return liveOwner?.player ?? null;
+    }
+  } else if (providerProof !== undefined) {
     return null;
   }
   const identity = await findIdentity(provider, externalId);

@@ -18,6 +18,12 @@ const CREDENTIAL_ALIASES: Readonly<Record<IdentityProvider, readonly string[]>> 
   gameCenter: Object.freeze(["GameCenterPassword", "gameCenterPassword"]),
 });
 
+const PROOF_ALIASES: Readonly<Record<IdentityProvider, readonly string[]>> = Object.freeze({
+  facebook: Object.freeze(["ProviderProof", "FacebookProof"]),
+  googlePlay: Object.freeze(["ProviderProof", "GooglePlayProof"]),
+  gameCenter: Object.freeze(["ProviderProof", "GameCenterProof"]),
+});
+
 function exactAliasValue(
   req: Record<string, unknown>,
   aliases: readonly string[],
@@ -48,6 +54,27 @@ export function exactIdentityRequestCredential(req: Record<string, unknown>, pro
   const value = exactAliasValue(req, CREDENTIAL_ALIASES[provider], "External account credential");
   if (value === undefined) return "";
   return validatedIdentityCredential(value);
+}
+
+/**
+ * Parse the replacement-client proof channel independently from the recovered Password field.
+ * Only Game Center has a reviewed proof contract today; accepting an unimplemented provider's
+ * proof and then falling back to its legacy HMAC would falsely advertise live verification.
+ */
+export function exactIdentityRequestProof(
+  req: Record<string, unknown>,
+  provider: IdentityProvider,
+): string | undefined {
+  const value = exactAliasValue(req, PROOF_ALIASES[provider], "External account proof");
+  if (value === undefined) return undefined;
+  if (provider !== "gameCenter"
+    || value.length === 0
+    || value.length > 8_192
+    || value.trim() !== value
+    || /[\u0000-\u001f\u007f]/u.test(value)) {
+    throw new ApiError(ApiErrorCode.RequestNotAuthorized, "External account proof is invalid.");
+  }
+  return value;
 }
 
 /**

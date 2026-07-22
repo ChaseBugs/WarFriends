@@ -41,6 +41,18 @@ export const config = {
     .split(",")
     .map((secret) => secret.trim())
     .filter(Boolean),
+  // The stock 1.6.0 client sends an ID-derived reusable GameCenterPassword, not Apple's signed
+  // identity-verification tuple. Live verification is therefore an explicit patched-client mode
+  // with separate proof transport and must never reinterpret the legacy password field.
+  gameCenterIdentityVerificationEnabled: exactEnvironmentBoolean(
+    process.env.GAME_CENTER_IDENTITY_VERIFICATION_ENABLED,
+    false,
+    "GAME_CENTER_IDENTITY_VERIFICATION_ENABLED",
+  ),
+  gameCenterBundleId: process.env.GAME_CENTER_BUNDLE_ID ?? "",
+  gameCenterPublicKeyHosts: process.env.GAME_CENTER_PUBLIC_KEY_HOSTS ?? "",
+  gameCenterProofMaxAgeSeconds: Number(process.env.GAME_CENTER_PROOF_MAX_AGE_SECONDS ?? 300),
+  gameCenterPublicKeyTimeoutMs: Number(process.env.GAME_CENTER_PUBLIC_KEY_TIMEOUT_MS ?? 5_000),
   // Current scrypt CPU/memory work factor for durable custom passwords. Stored digests retain
   // their original factor and are opportunistically upgraded after a successful explicit login.
   authScryptCost: Number(process.env.AUTH_SCRYPT_COST ?? 16_384),

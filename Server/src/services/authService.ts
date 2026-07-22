@@ -33,6 +33,7 @@ import {
   authenticationCredentialSecrets,
   isSupportedAuthenticationScryptCost,
 } from "./authSecretService";
+import { verifyGameCenterIdentityOwnership } from "./gameCenterIdentityProofService";
 
 // Auth model (BACKEND.md §2.2): id + token credential. On CreateAccount the server mints a
 // player id and an HMAC auth token derived from a server-side salt; the client stores both
@@ -381,11 +382,15 @@ export async function createGameCenterAccount(
   credentialValue: string,
   deviceToken?: string,
   locale = "en",
+  providerProof?: unknown,
 ): Promise<CreatedAccount> {
   // The platform ID is an opaque authentication identifier, not display text. Silent trimming
   // could bind a request to a different account, so the reusable service enforces the same exact
   // identity contract as the request parser before starting its account/identity transaction.
   const gameCenterId = normalizeIdentityExternalId("gameCenter", externalIdValue);
+  // Provider I/O occurs before the MongoDB transaction. The signed proof is short-lived but
+  // repeatable during its bounded window, so an aborted transaction can retry without storing it.
+  await verifyGameCenterIdentityOwnership(gameCenterId, providerProof);
   const created = await withMongoTransaction(async (session) => {
     const account = await createCustomAccount("", AccountType.GameCenter, deviceToken, {
       session,
@@ -419,6 +424,7 @@ export async function authenticate(
   token: string | undefined,
   accountType?: number,
   allowCustomPassword = false,
+  providerProof?: unknown,
 ): Promise<PlayerDocument> {
   if (!id || !token) {
     throw new ApiError(ApiErrorCode.RequestNotAuthorized, "Missing credentials.");
@@ -492,7 +498,7 @@ export async function authenticate(
   }
 
   const provider = providerForAccountType(accountType ?? AccountType.Guest);
-  const identityPlayer = provider ? await authenticateIdentity(provider, id, token) : null;
+  const identityPlayer = provider ? await authenticateIdentity(provider, id, token, providerProof) : null;
   if (identityPlayer) {
     if (loginReservation) await clearLoginAttempt(loginReservation);
     await assertPlayerNotSanctioned(identityPlayer);

@@ -26,6 +26,23 @@ leave an unreachable Recruit account. An existing identity returns recovered err
 stock `UserExistsDialog`. Session credentials and stored HMAC values are never included in that
 duplicate response.
 
+### Live Game Center ownership proof
+
+The stock 1.6.0 client computes `GameCenterPassword` from `GameCenterId + "banana"`. That reusable
+value proves no Apple session, so the server never treats it as a GameKit signature. Legacy behavior
+remains available only while the live verifier is disabled.
+
+A patched iOS client can send a separate canonical `ProviderProof` JSON value containing version 1,
+Apple's current `publicKeyUrl`, Base64 signature and salt, and the UInt64 millisecond timestamp as a
+decimal string. `GameCenterId` must contain the same persistent `teamPlayerID` signed by GameKit (or
+`gamePlayerID` for Apple Arcade). With the verifier enabled, this proof is mandatory for first
+account creation, linking/updating, and provider login. The server checks the configured bundle ID,
+exact HTTPS host allowlist, proof age, certificate lifetime/key type, full issuer chain to the Node
+runtime's trusted roots, and the RSA-SHA256 signature over player ID, bundle ID, big-endian timestamp,
+and salt. No proof bytes are stored. Existing rows whose old Game Center identifier differs from the
+patched client's scoped identifier require an explicit migration; the server does not guess that
+two identifiers belong to the same Apple player.
+
 ## Authentication lifecycle
 
 1. Account creation produces a player ID and an opaque session credential.

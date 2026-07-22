@@ -481,6 +481,29 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   account service, commits the player and identity in one transaction,
   returns separate platform/session credentials, and supplies the recovered `15400` existing-account
   profile contract. Remaining response-contract work is tracked in `BACKEND_FEATURES.md`.
+  The recovered 1.6.0 client derives `GameCenterPassword` from `GameCenterId + "banana"`; that value
+  is not an Apple ownership proof and remains only the disabled-by-default legacy credential path.
+  A patched iOS client may instead enable `GAME_CENTER_IDENTITY_VERIFICATION_ENABLED` and send
+  `ProviderProof` (or the exact agreeing alias `GameCenterProof`) as canonical JSON:
+
+  ```json
+  {"version":1,"publicKeyUrl":"https://static.gc.apple.com/public-key/current.cer","signature":"BASE64","salt":"BASE64","timestamp":"1770000000000"}
+  ```
+
+  The URL and values above show the wire shape only; the client must transmit the exact current URL
+  and tuple returned by GameKit rather than copying or hardcoding this example.
+  Configure the exact `GAME_CENTER_BUNDLE_ID`, comma-separated lower-case dotted
+  `GAME_CENTER_PUBLIC_KEY_HOSTS`, 30-600 second `GAME_CENTER_PROOF_MAX_AGE_SECONDS`, and 1000-10000ms
+  `GAME_CENTER_PUBLIC_KEY_TIMEOUT_MS`. `GameCenterId` must be the same persistent `teamPlayerID`
+  used in the GameKit signature (or `gamePlayerID` for an Apple Arcade build); the server never
+  infers the identifier from a nickname or its string format. It rejects redirects, stale/future
+  timestamps, noncanonical Base64, unconfigured hosts, expired/non-RSA certificates, and any
+  certificate that cannot build through signed AIA intermediates to a Node-trusted root. The exact
+  signed buffer is player ID UTF-8, configured bundle ID UTF-8, timestamp as big-endian UInt64, then
+  decoded salt; RSA-SHA256 verification must pass before create/link/update/login opens durable
+  identity work. Provider proof, signature, salt, and certificate bytes are never persisted.
+  Enabling this mode therefore requires a patched client; the stock client has no proof fields.
+  Facebook and Google Play still require separate reviewed live-provider proof contracts.
 - **Transport abuse boundary**: Express requests use a bounded per-address token bucket and the
   `/hub` WebSocket uses an independent continuous-refill bucket before JSON parsing. With Redis,
   both are atomic across nodes and use Redis server time; authenticated sockets share one
