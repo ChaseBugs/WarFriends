@@ -1173,14 +1173,15 @@ export type GooglePlayRtdnDisposition =
   | "voided-sweep-completed"
   | "one-time-client-verification"
   | "test"
-  | "manual-review-required";
+  | "manual-review-required"
+  | "refund-review-submitted";
 
 /**
  * Durable, token-safe inbox row for one authenticated Google Play Pub/Sub notification.
  *
  * `payloadSha256` binds an immutable Pub/Sub message ID to its exact decoded bytes. Purchase
  * tokens never appear in this document: normal tokens become the receipt HMAC, while the pending
- * refund token that a future operator workflow needs is stored only as receipt-secret-bound GCM
+ * refund token used by the protected operator workflow is stored only as receipt-secret-bound GCM
  * ciphertext. Pending rows are retried by a leased worker; terminal rows receive a TTL date.
  */
 export interface GooglePlayRtdnEventDocument extends Document {
@@ -1215,6 +1216,36 @@ export interface GooglePlayRtdnEventDocument extends Document {
 }
 
 let googlePlayRtdnEventsCollection: Collection<GooglePlayRtdnEventDocument> | null = null;
+
+export interface GooglePlayRefundReviewDocument extends Document {
+  /** The source RTDN message ID; one notification can submit only one immutable recommendation. */
+  _id: string;
+  operationId: string;
+  actor: string;
+  packageName: string;
+  orderId: string;
+  requestSha256: string;
+  encryptedRequest: {
+    version: 1;
+    iv: string;
+    authTag: string;
+    ciphertext: string;
+  };
+  refundPreference: "DECLINE" | "APPROVE" | "NEUTRAL";
+  sampleContentProvided: boolean;
+  consumptionPercentageMilliunits: number | null;
+  usageEventCount: number;
+  retentionDays: number;
+  status: "pending" | "submitted";
+  attempts: number;
+  lastErrorCode: "provider" | "configuration" | null;
+  createdAt: Date;
+  nextAttemptAt: Date | null;
+  submittedAt: Date | null;
+  expiresAt: Date | null;
+}
+
+let googlePlayRefundReviewsCollection: Collection<GooglePlayRefundReviewDocument> | null = null;
 export interface ScheduledJobLeaseDocument extends Document {
   _id: string;
   ownerId: string;
@@ -1332,6 +1363,7 @@ export async function connectMongo(): Promise<void> {
     "purchaseReconciliationCursors",
   );
   googlePlayRtdnEventsCollection = db.collection<GooglePlayRtdnEventDocument>("googlePlayRtdnEvents");
+  googlePlayRefundReviewsCollection = db.collection<GooglePlayRefundReviewDocument>("googlePlayRefundReviews");
   scheduledJobLeasesCollection = db.collection<ScheduledJobLeaseDocument>("scheduledJobLeases");
   firebasePushDeliveriesCollection = db.collection<FirebasePushDeliveryDocument>("firebasePushDeliveries");
   clientAnalyticsEventsCollection = db.collection<ClientAnalyticsEventDocument>("clientAnalyticsEvents");
@@ -1357,6 +1389,9 @@ export async function connectMongo(): Promise<void> {
   await purchaseReceiptsCollection.createIndex({ orderId: 1 }, { unique: true, sparse: true });
   await googlePlayRtdnEventsCollection.createIndex({ status: 1, nextAttemptAt: 1, _id: 1 });
   await googlePlayRtdnEventsCollection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+  await googlePlayRefundReviewsCollection.createIndex({ operationId: 1 }, { unique: true });
+  await googlePlayRefundReviewsCollection.createIndex({ status: 1, nextAttemptAt: 1, _id: 1 });
+  await googlePlayRefundReviewsCollection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
   // One scheduler query reads only due pending rows. `_id` is already the unique recipient/message
   // digest, so retries and fan-out replays cannot create a second provider delivery lifecycle.
@@ -1574,6 +1609,7 @@ export async function disconnectMongo(): Promise<void> {
   purchaseReceiptsCollection = null;
   purchaseReconciliationCursorsCollection = null;
   googlePlayRtdnEventsCollection = null;
+  googlePlayRefundReviewsCollection = null;
   scheduledJobLeasesCollection = null;
   firebasePushDeliveriesCollection = null;
   clientAnalyticsEventsCollection = null;
@@ -1661,6 +1697,10 @@ export function purchaseReconciliationCursors(): Collection<PurchaseReconciliati
 
 export function googlePlayRtdnEvents(): Collection<GooglePlayRtdnEventDocument> {
   return requireCollection("googlePlayRtdnEvents", googlePlayRtdnEventsCollection);
+}
+
+export function googlePlayRefundReviews(): Collection<GooglePlayRefundReviewDocument> {
+  return requireCollection("googlePlayRefundReviews", googlePlayRefundReviewsCollection);
 }
 
 export function scheduledJobLeases(): Collection<ScheduledJobLeaseDocument> {

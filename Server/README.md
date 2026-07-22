@@ -180,6 +180,15 @@ the exact OIDC audience, push service-account email, and full subscription resou
 reconciliation to be enabled together. The route verifies Google's JWT signature/audience and the
 exact verified email before decoding any message, binds the envelope to the configured subscription
 and Android package, and acknowledges only after a unique Pub/Sub `messageId` is durably inserted.
+Pending-refund notifications appear at authenticated `GET /admin/google-play/refund-reviews` and
+`GET /admin/google-play/refund-reviews/:messageId`. Submit a recommendation with
+`POST /admin/google-play/refund-reviews/:messageId/review`, `Authorization: Bearer <ADMIN_SECRET>`,
+`X-Admin-Actor`, and a unique `Idempotency-Key`. The exact JSON body requires
+`expectedStatus: "manual-review"`, Boolean `sampleContentProvided`, and `refundPreference` equal to
+`DECLINE`, `APPROVE`, or `NEUTRAL`; the official bounded consumption percentage and usage-event
+fields are optional. The endpoint returns `202` after sealing a new encrypted intent and `200` for
+an exact replay. A conflicting key, actor, event, or recommendation is rejected rather than
+replacing the request that Google may already have accepted.
 The server never accepts `GoldBase`, `WarbucksBase`, a price, or an amount as purchase authority.
 
 Operational metrics are available at authenticated `GET /metrics` in Prometheus text format. Send
@@ -1538,7 +1547,7 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   validated before insertion. The unique decimal `messageId` plus a SHA-256 payload binding prevents
   duplicate provider calls; a conflicting reuse is rejected. Raw purchase tokens are converted to
   the same HMAC receipt identity used by client delivery and void reconciliation. The pending-refund
-  token is the sole exception because a future operator response needs it, and it is stored only as
+  token is the sole exception because the operator response needs it, and it is stored only as
   event-bound AES-256-GCM ciphertext. Logs contain only message ID, kind, status, and retry count.
 
   A separate renewable-lease worker validates its complete selected event batch before the first
@@ -1549,8 +1558,23 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   notifications cannot identify a player and therefore never grant from RTDN: the recovered client
   purchase path still performs `products.get`, while canceled pending purchases have no grant to
   revoke. Test messages terminate as audit-only. Pending refund-review notifications are retained
-  without TTL as `manual-review-required` and cannot change entitlement until a protected operator
-  ReviewRefund/evidence workflow is implemented.
+  without TTL as `manual-review-required` until an authenticated operator seals one recommendation.
+  The bounded list/detail endpoints publish only order, reason, lifecycle, and audit summaries;
+  pending tokens, IP addresses, and consumption evidence are never decrypted for an admin read.
+  A submission requires the expected open state, exact actor and idempotency headers, the official
+  Boolean/sample/refund-preference shape, a 0-100,000 milliunit percentage when present, and at most
+  1,000 exact usage events with bounded RFC-3339 times, IP addresses, descriptions, and coarse
+  locations. The canonical evidence is SHA-256-bound and event-bound AES-256-GCM encrypted before
+  any provider I/O.
+
+  A separate renewable-lease refund worker validates the complete selected review and RTDN batch,
+  decrypts and cross-binds package/order/evidence/token authority, then calls
+  `orders.reviewrefund` sequentially. Google records the first accepted recommendation and returns
+  success for later calls, so a lost response retries only the same immutable encrypted request.
+  Provider failure advances a bounded retry cursor; success transactionally marks both the review
+  and RTDN event terminal as `refund-review-submitted` with the captured retention period. This is
+  a recommendation to Google, not local entitlement authority: an eventual provider subscription
+  status or Voided Purchases event remains responsible for any grant reversal.
 
   Google Play provider scheduling resolves once during module startup as one immutable exact
   seven-value deployment snapshot. Subscription cadence is 300-86,400 seconds and is shared by

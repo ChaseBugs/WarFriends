@@ -428,7 +428,8 @@ export function validatedGooglePlayRtdnEvent(
     && event.receiptId === null && event.productId === null && event.notificationType === null
     && event.orderId !== null && event.productType === null && event.refundType === null
     && validCiphertext(event.encryptedPendingRefundToken) && event.refundReason !== null
-    && event.disposition === "manual-review-required";
+    && ((event.status === "manual-review" && event.disposition === "manual-review-required")
+      || (event.status === "completed" && event.disposition === "refund-review-submitted"));
   const testShape = event.kind === "test"
     && event.receiptId === null && event.productId === null && event.notificationType === null
     && event.orderId === null && event.productType === null && event.refundType === null

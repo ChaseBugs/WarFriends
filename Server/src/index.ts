@@ -35,6 +35,8 @@ import { runtimeInfrastructurePolicy } from "./services/runtimeInfrastructurePol
 import { startFirebasePushDeliveryScheduler } from "./services/firebasePushDeliveryService";
 import { googlePlayRtdnRouter } from "./routes/googlePlayRtdn";
 import { startGooglePlayRtdnScheduler } from "./services/googlePlayRtdnService";
+import { adminGooglePlayRefundReviewsRouter } from "./routes/adminGooglePlayRefundReviews";
+import { startGooglePlayRefundReviewScheduler } from "./services/googlePlayRefundReviewService";
 
 const app = express();
 const publicTrafficPolicy = trafficPolicy();
@@ -101,6 +103,10 @@ app.use("/admin/diagnostics", requireAdmin, adminDiagnosticsRouter);
 // independent admin credential can inspect them; this server stores but never fetches the URL.
 app.use("/admin/replay-videos", requireAdmin, adminReplayVideosRouter);
 
+// Pending-refund recommendations are irreversible at Google after the first accepted call. Keep
+// queue reads and immutable encrypted submissions behind the independent operator credential.
+app.use("/admin/google-play/refund-reviews", requireAdmin, adminGooglePlayRefundReviewsRouter);
+
 // Sanctioned players cannot use the normal game dispatcher, but may prove their current session
 // credential to this narrowly scoped support router. It can read/create only their own appeals and
 // never returns private sanction or operator fields.
@@ -134,6 +140,7 @@ let playerLeagueSchedulerTimer: NodeJS.Timeout | null = null;
 let googlePlaySubscriptionSchedulerTimer: NodeJS.Timeout | null = null;
 let googlePlayVoidedPurchaseSchedulerTimer: NodeJS.Timeout | null = null;
 let googlePlayRtdnSchedulerTimer: NodeJS.Timeout | null = null;
+let googlePlayRefundReviewSchedulerTimer: NodeJS.Timeout | null = null;
 let squadWarSchedulerTimer: NodeJS.Timeout | null = null;
 let firebasePushDeliverySchedulerTimer: NodeJS.Timeout | null = null;
 // Let Unity's BestHTTP reuse keep-alive sockets; headersTimeout must exceed keepAliveTimeout.
@@ -193,6 +200,7 @@ async function start(): Promise<void> {
   googlePlaySubscriptionSchedulerTimer = startGooglePlaySubscriptionRevalidationScheduler();
   googlePlayVoidedPurchaseSchedulerTimer = startGooglePlayVoidedPurchaseScheduler();
   googlePlayRtdnSchedulerTimer = startGooglePlayRtdnScheduler();
+  googlePlayRefundReviewSchedulerTimer = startGooglePlayRefundReviewScheduler();
   firebasePushDeliverySchedulerTimer = startFirebasePushDeliveryScheduler();
 
   httpServer.listen(runtimeInfrastructure.listenPort, () => {
@@ -211,6 +219,7 @@ async function shutdown(signal: string): Promise<void> {
   if (googlePlaySubscriptionSchedulerTimer) clearInterval(googlePlaySubscriptionSchedulerTimer);
   if (googlePlayVoidedPurchaseSchedulerTimer) clearInterval(googlePlayVoidedPurchaseSchedulerTimer);
   if (googlePlayRtdnSchedulerTimer) clearInterval(googlePlayRtdnSchedulerTimer);
+  if (googlePlayRefundReviewSchedulerTimer) clearInterval(googlePlayRefundReviewSchedulerTimer);
   if (firebasePushDeliverySchedulerTimer) clearInterval(firebasePushDeliverySchedulerTimer);
   await pvpCoordinatorHeartbeat?.stop();
   await disconnectRedis();
