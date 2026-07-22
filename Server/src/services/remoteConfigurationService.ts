@@ -232,9 +232,35 @@ export function initializeRemoteConfiguration(): void {
   activeManifest = validateRemoteConfigurationManifest(parsed, config.remoteConfigurationSigningSecret);
 }
 
-function requestedString(fields: RequestEnvelope, key: string, fallback = ""): string {
-  const value = fields[key];
-  return typeof value === "string" ? value.trim() : fallback;
+interface RemoteConfigurationTargetingRequest {
+  variant: string;
+  language: string;
+}
+
+/**
+ * Parse the two exact targeting strings emitted by `BeanstalkServerManager.OLEBMHEAKEA`.
+ *
+ * The Fuse variant may legitimately be empty when the retired provider has no assignment, and a
+ * wildcard manifest may still target that client. Absence is different: turning a missing or
+ * malformed selector into `*` lets an incomplete request opt into a publication. Preserve exact
+ * bytes, reject controls/padding, and only lowercase the already-valid language for the manifest's
+ * explicitly case-insensitive comparison.
+ */
+function requestedTargeting(fields: RequestEnvelope): RemoteConfigurationTargetingRequest | null {
+  const variant = fields.abTestVariant;
+  const language = fields.Language;
+  if (typeof variant !== "string"
+    || variant.length > 128
+    || variant.trim() !== variant
+    || /\p{Cc}/u.test(variant)
+    || typeof language !== "string"
+    || language.length < 1
+    || language.length > 32
+    || language.trim() !== language
+    || /\p{Cc}/u.test(language)) {
+    return null;
+  }
+  return { variant, language: language.toLowerCase() };
 }
 
 function rolloutMatches(publication: RemoteConfigurationPublication, fields: RequestEnvelope): boolean {
@@ -274,17 +300,17 @@ export function selectRemoteConfiguration(
   manifest: RemoteConfigurationManifest | null = activeManifest,
 ): RemoteConfigurationPublication | null {
   if (!manifest) return null;
-  const variant = requestedString(fields, "abTestVariant", "*");
-  const language = requestedString(fields, "Language", "*").toLowerCase();
+  const targeting = requestedTargeting(fields);
+  if (!targeting) return null;
   const clientVersion = requestedNumericClientVersion(fields);
   // A malformed/conflicting numeric adapter value invalidates targeting entirely. This is
   // deliberately stricter than treating it as absent: otherwise an unbounded publication could
   // still be selected after the caller presented a bad version proof.
   if (clientVersion === null) return null;
   return manifest.publications.find((publication) => {
-    if (publication.variant !== "*" && publication.variant !== variant) return false;
+    if (publication.variant !== "*" && publication.variant !== targeting.variant) return false;
     const languages = publication.languages ?? ["*"];
-    if (!languages.some((candidate) => candidate === "*" || candidate.toLowerCase() === language)) return false;
+    if (!languages.some((candidate) => candidate === "*" || candidate.toLowerCase() === targeting.language)) return false;
     if (publication.minimumClientVersion !== undefined
       && (clientVersion === undefined || clientVersion < publication.minimumClientVersion)) return false;
     if (publication.maximumClientVersion !== undefined
@@ -299,9 +325,23 @@ function safeSegmentJson(value: unknown): string {
   return JSON.stringify(value).replaceAll(";", "\\u003b");
 }
 
-function currentSheetConfiguration(fields: RequestEnvelope): string {
-  const requested = fields.SheetConfiguraton ?? fields.SheetConfiguration ?? fields.SheetConfig ?? "0";
-  return String(requested).replaceAll(";", "").trim() || "0";
+function currentSheetConfiguration(fields: RequestEnvelope): string | null {
+  // `SheetConfiguraton` is the stock client's misspelled canonical field. The two documented
+  // replacement aliases remain compatible only when every supplied copy is an exact agreeing
+  // string. Never strip the semicolon protocol delimiter or trim a malformed value into a valid
+  // manifest/cache identity: that can make the client believe it already owns another release.
+  const supplied = [fields.SheetConfiguraton, fields.SheetConfiguration, fields.SheetConfig]
+    .filter((value) => value !== undefined);
+  if (supplied.length < 1
+    || supplied.some((value) => typeof value !== "string"
+      || value.length < 1
+      || value.length > 128
+      || value.trim() !== value
+      || !/^[A-Za-z0-9_.-]+$/u.test(value))
+    || new Set(supplied).size !== 1) {
+    return null;
+  }
+  return supplied[0] as string;
 }
 
 /** Build the exact semicolon protocol parsed by GameConfigurationManager.PrepareConfigurations. */
@@ -310,6 +350,9 @@ export function buildRemoteConfigurationResponse(
   manifest: RemoteConfigurationManifest | null = activeManifest,
 ): string {
   const current = currentSheetConfiguration(fields);
+  // The raw stock parser needs a three-segment callback even for malformed input. Return its
+  // first-boot `0` cache identity but never select or publish signed sheets for an invalid request.
+  if (current === null) return "success;0;{}";
   const publication = selectRemoteConfiguration(fields, manifest);
   if (!publication || publication.sheetConfiguration === current) return `success;${current};{}`;
 

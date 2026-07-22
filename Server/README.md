@@ -142,6 +142,11 @@ range, and deterministic player rollout targeting. A ranged publication requires
 numeric `ClientVersion`/`clientVersion` from a replacement client; conflicting aliases or malformed
 values fail targeting, and the stock client's dotted `Version` (for example `1.6.0`) is never
 coerced through `NaN` into a ranged match. Unbounded publications may still target the stock client.
+Stock targeting itself requires exact string `abTestVariant` and `Language`; the Fuse variant may
+be empty but neither selector may be missing, padded, coerced, or control-bearing. The misspelled
+`SheetConfiguraton` is canonical, while documented replacement cache aliases are accepted only when
+all supplied copies are exact and equal. An invalid cache identity receives `success;0;{}` and can
+never select sheets; the server does not trim it or delete semicolon delimiters into another release.
 The signed manifest itself uses exact root/publication/sheet keys, case-insensitively unique language
 selectors, signed-client-safe integer build bounds, and an actual finite numeric 0-100 rollout
 percentage; ignored typo fields and JavaScript-coercible policy values fail startup. See
@@ -257,7 +262,8 @@ The client (`BeanstalkServerManager`) sends form fields to a URL ending in the n
 requests use `PlayerId` and `Token`. Development tools may also send a JSON `DbAction`
 envelope. `GetConfigurations` returns the exact three-segment raw text format required by the
 recovered parser and ends after its sheet-version JSON object without an empty trailing segment;
-other implemented actions return JSON. The replacement realtime layer connects to
+malformed targeting/cache fields retain that callback shape with the zero-cache empty result but
+cannot select a publication. Other implemented actions return JSON. The replacement realtime layer connects to
 `ws://<host>/hub`.
 
 Both action copies are parsed independently as canonical nonnegative C# `int` decimals before

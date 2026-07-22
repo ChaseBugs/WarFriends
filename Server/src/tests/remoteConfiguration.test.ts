@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import type { RequestEnvelope } from "../dtos";
 import {
   buildRemoteConfigurationResponse,
   remoteConfigurationSignature,
@@ -83,6 +84,61 @@ test("current, untargeted, and pre-auth rollout clients retain bundled sheets", 
     Language: "en",
     ClientVersion: 495,
   }, rolloutManifest), null);
+});
+
+test("remote targeting rejects malformed selectors instead of widening them to wildcards", () => {
+  const manifest = {
+    ...signedManifest(),
+    publications: [{
+      ...signedManifest().publications[0]!,
+      variant: "*",
+      languages: ["*"],
+      minimumClientVersion: undefined,
+      maximumClientVersion: undefined,
+    }],
+  };
+  assert.equal(selectRemoteConfiguration({
+    DbAction: 157,
+    SheetConfiguraton: "old",
+    abTestVariant: "",
+    Language: "EN",
+  }, manifest), manifest.publications[0]);
+
+  for (const fields of [
+    { Language: "en" },
+    { abTestVariant: "economy-a" },
+    { abTestVariant: 1, Language: "en" },
+    { abTestVariant: " economy-a", Language: "en" },
+    { abTestVariant: "economy-a", Language: " en" },
+    { abTestVariant: "economy-a", Language: "en\n" },
+  ]) {
+    assert.equal(selectRemoteConfiguration({ DbAction: 157, ...fields }, manifest), null);
+  }
+});
+
+test("remote sheet cache identity remains exact across canonical and replacement aliases", () => {
+  assert.equal(buildRemoteConfigurationResponse({
+    DbAction: 157,
+    SheetConfiguraton: "release-1",
+    SheetConfiguration: "release-1",
+    abTestVariant: "",
+    Language: "en",
+  }, null), "success;release-1;{}");
+  for (const fields of [
+    {},
+    { SheetConfiguraton: 1 },
+    { SheetConfiguraton: " release-1" },
+    { SheetConfiguraton: "release-1 " },
+    { SheetConfiguraton: "release;1" },
+    { SheetConfiguraton: "release-1", SheetConfig: "release-2" },
+  ]) {
+    assert.equal(buildRemoteConfigurationResponse({
+      DbAction: 157,
+      abTestVariant: "",
+      Language: "en",
+      ...fields,
+    } as unknown as RequestEnvelope, signedManifest()), "success;0;{}");
+  }
 });
 
 test("remote publication targeting requires one canonical numeric replacement-client version", () => {
