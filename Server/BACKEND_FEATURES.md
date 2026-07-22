@@ -13,6 +13,13 @@ Status legend:
 
 ### Recovered-client gap corrections
 
+- **First-account locale now commits with the account instead of defaulting every player to
+  English.** Recovered CreateAccount and CreateGcAccount require exact `Locale` plus a finite
+  invariant-C# `UtcOffset` hint; optional DeviceToken remains an exact opaque string. Locale is
+  revalidated at the reusable account service and stored in the same player insert/identity
+  transaction. The offset is bounded diagnostics only and never calendar/reward time authority.
+  Client `StartingGold`/`StartingWarbucks` Fusebox values remain completely ignored; decoded
+  server-owned onboarding policy still owns starting currency.
 - **Provider display names now preserve their exact recovered request contract.** Facebook and
   Google Play links require canonical nonempty `Name`; Game Center links/updates retain the exact
   absent/empty name because their recovered builders send none. `PlayerName` may only be an exact

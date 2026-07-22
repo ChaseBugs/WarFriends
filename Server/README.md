@@ -306,6 +306,13 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
 
 - **Accounts / player**: `CreateAccount`, `CreateFullAccount`, `LoginToCustomAccount`,
   `GetPlayerData`/`GetPlayerInfo`, and player settings (name/country/status/device token).
+  Recovered guest and Game Center first-account requests require `Locale` and a finite bounded
+  invariant-C# `UtcOffset`; their optional DeviceToken is an exact opaque string. Locale is
+  normalized once, revalidated by the reusable account service, and committed in the same initial
+  player insert (and Game Center identity transaction), so first boot no longer silently becomes
+  English. UtcOffset remains a non-authoritative client-local diagnostic hint: server UTC owns
+  every reward day, deadline, and receipt. Optional Fusebox `StartingGold`/`StartingWarbucks`
+  request fields are never read; decoded server onboarding policy remains the only currency source.
   Login/profile snapshots and private progression use the exact DynamoDB-style attribute
   wrappers parsed by the recovered 1.6.0 client. Boot, public profile, experience/Arena leaderboard,
   durable inbox responses, Squad War member snapshots, and War Arena configuration share one

@@ -25,16 +25,12 @@ import {
   exactIdentityRequestDisplayName,
   exactIdentityRequestId,
 } from "./identityRequestParsing";
-import { exactDeviceToken } from "../services/playerSettingsService";
+import { recoveredAccountCreationContext } from "./accountCreationRequestParsing";
 
 // Platform-account actions recovered from BeanstalkServerManager. Identity records are
 // separate from player documents so uniqueness and credentials remain server-owned; the
 // familiar facebookId/googlePlayId/gameCenterId values are mirrored onto DatabasePlayer
 // only for the Unity client's connected-account UI.
-
-function optionalIdentityDeviceToken(value: unknown): string {
-  return value === undefined ? "" : exactDeviceToken(value);
-}
 
 /** Build every field read unconditionally by OGLEHLIPEFM.JLMICAJOHIK. */
 export function buildGameCenterAccountPayload(
@@ -171,13 +167,15 @@ const gameCenterExistence: HandlerEntry = open(async ({ req }) => {
 
 export const identityHandlers: Record<number, HandlerEntry> = {
   [DbAction.CreateGcAccount]: open(async ({ req }) => {
+    const context = recoveredAccountCreationContext(req);
     const gameCenterId = exactIdentityRequestId(req, "gameCenter");
     const credential = exactIdentityRequestCredential(req, "gameCenter");
     try {
       const created = await createGameCenterAccount(
         gameCenterId,
         credential,
-        optionalIdentityDeviceToken(req.DeviceToken),
+        context.deviceToken,
+        context.locale,
       );
       const eventAssignment = await ensureActiveEventAssignment(created.doc.id);
       return ok(

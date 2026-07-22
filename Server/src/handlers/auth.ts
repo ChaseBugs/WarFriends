@@ -11,6 +11,10 @@ import {
 } from "../services/eventAssignmentService";
 import { exactRequestedAccountType } from "../services/accountTypeRequestService";
 import { exactAuthenticationRequest } from "./authenticationRequestParsing";
+import {
+  optionalAccountCreationContext,
+  recoveredAccountCreationContext,
+} from "./accountCreationRequestParsing";
 
 // Account and session actions form the boot handshake the client must complete before it
 // reaches the menu. Response fields here follow OGLEHLIPEFM's recovered parsers exactly.
@@ -59,8 +63,13 @@ async function accountPayload(
 
 export const authHandlers: Record<number, HandlerEntry> = {
   [DbAction.CreateAccount]: open(async ({ req }) => {
+    const context = recoveredAccountCreationContext(req);
     const accountName = typeof req.AccountName === "string" ? req.AccountName : "";
-    const created = await createCustomAccount(accountName, AccountType.Guest, req.DeviceToken);
+    // StartingGold/StartingWarbucks are intentionally not read. Fusebox may append them, but
+    // first-boot currency comes only from the server-owned decoded tutorial policy.
+    const created = await createCustomAccount(accountName, AccountType.Guest, context.deviceToken, {
+      locale: context.locale,
+    });
     return ok(
       DbAction.CreateAccount,
       await accountPayload(created.doc, created.authToken, AccountType.Guest),
@@ -70,9 +79,15 @@ export const authHandlers: Record<number, HandlerEntry> = {
   // A full account receives a human password for future login and a separate session token
   // for gameplay requests. This preserves the two values saved by GameLoginManager.
   [DbAction.CreateFullAccount]: open(async ({ req }) => {
+    const context = optionalAccountCreationContext(req);
     const accountName = typeof req.AccountName === "string" ? req.AccountName : "";
     const requestedPassword = requestCredential(req);
-    const created = await createFullCustomAccount(accountName, requestedPassword, req.DeviceToken);
+    const created = await createFullCustomAccount(
+      accountName,
+      requestedPassword,
+      context.deviceToken,
+      context.locale,
+    );
     return ok(DbAction.CreateFullAccount, await accountPayload(created.doc, requestedPassword, AccountType.Guest));
   }),
 

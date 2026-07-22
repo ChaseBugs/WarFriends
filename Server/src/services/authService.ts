@@ -19,7 +19,7 @@ import {
   insertIdentityForNewPlayer,
   providerForAccountType,
 } from "./identityService";
-import { normalizePlayerName } from "./playerSettingsService";
+import { normalizeLocale, normalizePlayerName } from "./playerSettingsService";
 import { createInitialProgression, unixNow } from "./playerStateService";
 import {
   clearLoginAttempt,
@@ -243,6 +243,8 @@ interface CreateAccountOptions {
   deferLogging?: boolean;
   /** Optional human password hashed before the new player document becomes visible. */
   customCredential?: string;
+  /** Exact normalized locale captured by the first account-creation request. */
+  locale?: string;
 }
 
 function logCreatedAccount(created: CreatedAccount, deviceToken?: string): void {
@@ -287,6 +289,9 @@ export async function createCustomAccount(
   // intentionally replaced with a collision-resistant guest label for first-time boot.
   const resolvedName = accountName ? normalizePlayerName(accountName) : `Recruit-${id.slice(0, 6)}`;
   const player = newPlayer(id, resolvedName, accountType);
+  // Validate at the reusable service boundary too: an internal caller must not bypass the HTTP
+  // parser and persist free text that later boot/notification/profile authority will reject.
+  player.locale = normalizeLocale(options.locale ?? "en");
   const createdAtUnix = unixNow();
   // A new account is returned to public profile lookups before it necessarily sends action 29.
   // Initialize the recovered LastAction heartbeat with the same frozen boot timestamp used by
@@ -343,9 +348,13 @@ export async function createFullCustomAccount(
   accountName: string,
   credentialValue: unknown,
   deviceToken?: string,
+  locale = "en",
 ): Promise<CreatedAccount> {
   const credential = validateCustomCredential(credentialValue);
-  return createCustomAccount(accountName, AccountType.Guest, deviceToken, { customCredential: credential });
+  return createCustomAccount(accountName, AccountType.Guest, deviceToken, {
+    customCredential: credential,
+    locale,
+  });
 }
 
 /**
@@ -361,6 +370,7 @@ export async function createGameCenterAccount(
   externalIdValue: string,
   credentialValue: string,
   deviceToken?: string,
+  locale = "en",
 ): Promise<CreatedAccount> {
   const gameCenterId = externalIdValue.trim();
   const created = await withMongoTransaction(async (session) => {
@@ -368,6 +378,7 @@ export async function createGameCenterAccount(
       session,
       gameCenterId,
       deferLogging: true,
+      locale,
     });
     await insertIdentityForNewPlayer(
       account.doc.id,
