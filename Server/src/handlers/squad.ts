@@ -57,17 +57,10 @@ import {
   requestedSuggestedSquadSkill,
   requestedUpdateSquad,
 } from "./squadAdmissionParsing";
+import { requestedSquadWarRoundId } from "./squadWarRequestParsing";
 
 // Squad system — BACKEND.md §2.5. Every handler is authenticated; rank checks live in the
 // service layer.
-
-function squadWarsRoundId(req: Record<string, unknown>): string {
-  const value = typeof req.RoundId === "string" ? req.RoundId.trim() : "";
-  if (!value || value.length > 128 || !/^[\p{L}\p{N}_.:-]+$/u.test(value)) {
-    throw new ApiError(ApiErrorCode.UnknownAction, "RoundId is invalid.");
-  }
-  return value;
-}
 
 export const squadHandlers: Record<number, HandlerEntry> = {
   [DbAction.JoinSquadEvent]: authed(async ({ player }) => {
@@ -356,7 +349,7 @@ export const squadHandlers: Record<number, HandlerEntry> = {
   ),
 
   [DbAction.GetSquadWarsDivision]: authed(async ({ player, req }) => {
-    const requestedRound = squadWarsRoundId(req);
+    const requestedRound = requestedSquadWarRoundId(req);
     const model = await getSquadWarDivision(player!, requestedRound);
     const ranked = rankSquadWarDivision(model.round.entries, model.round.level);
     const squadByName = new Map(model.squads.map((squad) => [squad.name, squad]));

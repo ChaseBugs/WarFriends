@@ -635,7 +635,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
 - **Squad Wars**: the backend creates deterministic weekly UTC seasons and persistent divisions
   for all eight recovered levels, with at most 50 squads per division. `GetSquadWarsDivision`
   derives the caller's division from authenticated membership, rejects stale or foreign round
-  IDs, and returns the exact recovered `LeagueId`/`SquadWarsId`/`Items` contract. Every season row
+  IDs, and returns the exact recovered `LeagueId`/`SquadWarsId`/`Items` contract. Its request reads
+  only the recovered canonical `RoundId` field and preserves that server-authored ID byte-for-byte;
+  numeric, alias-only, padded, malformed, and control-bearing values fail before division lookup
+  instead of being trimmed or coerced into another placement authority. Every season row
   is validated before allocation, retry classification, division reads, and scheduler closure:
   exact fields, an ID bound to its UTC start second, a safe window of at least one hour, creation
   inside that window, and an exact active or terminal timestamp shape. Future durable timestamps
