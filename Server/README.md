@@ -313,6 +313,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   English. UtcOffset remains a non-authoritative client-local diagnostic hint: server UTC owns
   every reward day, deadline, and receipt. Optional Fusebox `StartingGold`/`StartingWarbucks`
   request fields are never read; decoded server onboarding policy remains the only currency source.
+  The reusable creation service validates Locale, DeviceToken, and any Game Center ID before
+  password hashing or MongoDB work. It writes the same exact token/ID into indexed and embedded
+  player mirrors; a padded or control-bearing token and a padded Game Center ID are rejected rather
+  than silently transformed into durable authentication or notification identity.
   Login/profile snapshots and private progression use the exact DynamoDB-style attribute
   wrappers parsed by the recovered 1.6.0 client. Boot, public profile, experience/Arena leaderboard,
   durable inbox responses, Squad War member snapshots, and War Arena configuration share one
@@ -445,7 +449,8 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   `Name`. Numeric, padded, control-bearing, and over-100-character names fail before transaction
   work, and the shared identity service stores the validated string without trim/slice conversion.
   Complete durable identity validation applies the same shape before login or existence results.
-  First-time `CreateGcAccount` commits the player and identity in one transaction,
+  First-time `CreateGcAccount` revalidates its opaque Game Center ID without trimming at the shared
+  account service, commits the player and identity in one transaction,
   returns separate platform/session credentials, and supplies the recovered `15400` existing-account
   profile contract. Remaining response-contract work is tracked in `BACKEND_FEATURES.md`.
 - **Transport abuse boundary**: Express requests use a bounded per-address token bucket and the

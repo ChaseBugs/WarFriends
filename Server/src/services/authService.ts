@@ -17,9 +17,10 @@ import logger from "../utils/logger";
 import {
   authenticateIdentity,
   insertIdentityForNewPlayer,
+  normalizeIdentityExternalId,
   providerForAccountType,
 } from "./identityService";
-import { normalizeLocale, normalizePlayerName } from "./playerSettingsService";
+import { exactDeviceToken, normalizeLocale, normalizePlayerName } from "./playerSettingsService";
 import { createInitialProgression, unixNow } from "./playerStateService";
 import {
   clearLoginAttempt,
@@ -278,6 +279,15 @@ export async function createCustomAccount(
   deviceToken?: string,
   options: CreateAccountOptions = {},
 ): Promise<CreatedAccount> {
+  // This function is reused below the HTTP handlers, so validate opaque client metadata here
+  // before spending password-hash work or opening a MongoDB write. In particular, preserving the
+  // exact token prevents the indexed document and embedded DatabasePlayer DTO from disagreeing
+  // when an internal caller supplies undefined, padded, overlong, or control-bearing input.
+  const exactToken = exactDeviceToken(deviceToken ?? "");
+  const exactLocale = normalizeLocale(options.locale ?? "en");
+  const exactGameCenterId = options.gameCenterId === undefined
+    ? undefined
+    : normalizeIdentityExternalId("gameCenter", options.gameCenterId);
   const id = randomUUID();
   const salt = randomBytes(16).toString("hex");
   const authToken = issueToken(id, salt);
@@ -291,14 +301,14 @@ export async function createCustomAccount(
   const player = newPlayer(id, resolvedName, accountType);
   // Validate at the reusable service boundary too: an internal caller must not bypass the HTTP
   // parser and persist free text that later boot/notification/profile authority will reject.
-  player.locale = normalizeLocale(options.locale ?? "en");
+  player.locale = exactLocale;
   const createdAtUnix = unixNow();
   // A new account is returned to public profile lookups before it necessarily sends action 29.
   // Initialize the recovered LastAction heartbeat with the same frozen boot timestamp used by
   // progression so squad/chat rosters do not immediately downgrade this Online profile Offline.
   player.lastAction = createdAtUnix;
-  player.deviceToken = deviceToken ?? "";
-  if (options.gameCenterId) player.gameCenterId = options.gameCenterId;
+  player.deviceToken = exactToken;
+  if (exactGameCenterId) player.gameCenterId = exactGameCenterId;
 
   let doc: PlayerDocument;
   try {
@@ -309,8 +319,8 @@ export async function createCustomAccount(
       authToken,
       ...(authTokenHash ? { authTokenHash } : {}),
       accountType,
-      ...(options.gameCenterId ? { gameCenterId: options.gameCenterId } : {}),
-      deviceToken,
+      ...(exactGameCenterId ? { gameCenterId: exactGameCenterId } : {}),
+      deviceToken: exactToken,
       leagueTier: player.leagueTier,
       armyPower: player.armyPower,
       experience: player.experience,
@@ -327,7 +337,7 @@ export async function createCustomAccount(
   }
 
   const created = { doc, player, authToken };
-  if (!options.deferLogging) logCreatedAccount(created, deviceToken);
+  if (!options.deferLogging) logCreatedAccount(created, exactToken || undefined);
   return created;
 }
 
@@ -372,7 +382,10 @@ export async function createGameCenterAccount(
   deviceToken?: string,
   locale = "en",
 ): Promise<CreatedAccount> {
-  const gameCenterId = externalIdValue.trim();
+  // The platform ID is an opaque authentication identifier, not display text. Silent trimming
+  // could bind a request to a different account, so the reusable service enforces the same exact
+  // identity contract as the request parser before starting its account/identity transaction.
+  const gameCenterId = normalizeIdentityExternalId("gameCenter", externalIdValue);
   const created = await withMongoTransaction(async (session) => {
     const account = await createCustomAccount("", AccountType.GameCenter, deviceToken, {
       session,
@@ -389,7 +402,7 @@ export async function createGameCenterAccount(
     );
     return account;
   });
-  logCreatedAccount(created, deviceToken);
+  logCreatedAccount(created, created.player.deviceToken || undefined);
   return created;
 }
 

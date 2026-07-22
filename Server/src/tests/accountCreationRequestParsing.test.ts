@@ -5,6 +5,8 @@ import {
   optionalAccountCreationContext,
   recoveredAccountCreationContext,
 } from "../handlers/accountCreationRequestParsing";
+import { AccountType } from "../constants";
+import { createCustomAccount, createGameCenterAccount } from "../services/authService";
 
 test("recovered account creation requires locale and finite client UTC-offset hints", () => {
   assert.deepEqual(recoveredAccountCreationContext({
@@ -54,4 +56,19 @@ test("source-unobserved full-account adapter retains explicit optional defaults"
     utcOffsetHours: -3.5,
     deviceToken: "",
   });
+});
+
+test("reusable account services reject malformed opaque metadata before persistence", async () => {
+  await assert.rejects(
+    createCustomAccount("", AccountType.Guest, " padded-token"),
+    /Invalid device token/,
+  );
+  await assert.rejects(
+    createCustomAccount("", AccountType.Guest, "line\nbreak"),
+    /Invalid device token/,
+  );
+  await assert.rejects(
+    createGameCenterAccount(" padded-game-center-id", "opaque-credential"),
+    /External account id is invalid/,
+  );
 });
