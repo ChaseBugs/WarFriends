@@ -5,12 +5,17 @@ import { resolve } from "node:path";
 import test from "node:test";
 import express from "express";
 import { apiRouter } from "../routes";
+import { CARD_PACK_NOT_FOUND, parseCardPackPurchaseData } from "../services/cardInventoryService";
 
 const CLIENT_ENDPOINT_SOURCE = resolve(
   process.cwd(),
   "../Client/ExportedProject/Assets/LegacyCompat/ServerEndpoint.cs",
 );
 const SERVER_ENV_EXAMPLE = resolve(process.cwd(), ".env.example");
+const CLIENT_CARD_MANAGER_SOURCE = resolve(
+  process.cwd(),
+  "../Client/ExportedProject/Assets/Scripts/Gameplay/CardManager.cs",
+);
 
 async function withRecoveredRouter(
   run: (baseUrl: string) => Promise<void>,
@@ -88,4 +93,55 @@ test("stock GetConfigurations form reaches action 157 and preserves its raw pars
     assert.match(response.headers.get("content-type") ?? "", /^text\/plain\b/u);
     assert.equal(await response.text(), "success;0;{}");
   });
+});
+
+test("Server accepts only the two card-pack payload shapes emitted by the untouched Client", () => {
+  const source = readFileSync(CLIENT_CARD_MANAGER_SOURCE, "utf8");
+  const threeStart = source.indexOf("public Card[] BuyThreeCards(int warbucks)");
+  const threeEnd = source.indexOf("internal int[] GetRarityCounts()", threeStart);
+  const shopStart = source.indexOf("internal Card[] BuyCardPack(");
+  const shopEnd = source.indexOf("public void CardPackBoughtEvent()", shopStart);
+  assert.ok(threeStart >= 0 && threeEnd > threeStart, "BuyThreeCards source method was not found");
+  assert.ok(shopStart >= 0 && shopEnd > shopStart, "BuyCardPack source method was not found");
+
+  const threeSource = source.slice(threeStart, threeEnd);
+  const shopSource = source.slice(shopStart, shopEnd);
+  assert.match(threeSource, /dictionary\["cards"\]\s*=\s*array2;/u);
+  assert.match(threeSource, /dictionary\["cardPack"\]/u);
+  assert.doesNotMatch(threeSource, /dictionary\["discount"\]|dictionary\["StartTime"\]/u);
+  assert.match(shopSource, /dictionary\["cards"\]\s*=\s*array;/u);
+  assert.match(shopSource, /dictionary\["cardPack"\]\s*=\s*nAME;/u);
+  assert.match(shopSource, /dictionary\["discount"\]\s*=\s*discount;/u);
+  assert.match(shopSource, /dictionary\["StartTime"\]/u);
+
+  assert.deepEqual(parseCardPackPurchaseData(JSON.stringify({
+    cards: ["AMMOCRATE", "FREEZE", "AIRSTRIKE"],
+    cardPack: "THREE_CARDS",
+  })), {
+    cards: ["AMMOCRATE", "FREEZE", "AIRSTRIKE"],
+    cardPack: "THREE_CARDS",
+    discount: 0,
+    startTime: 0,
+  });
+  assert.deepEqual(parseCardPackPurchaseData(JSON.stringify({
+    cards: ["AMMOCRATE"],
+    cardPack: "BRONZE_CARDPACK",
+    discount: 0,
+    StartTime: 1_700_000_000,
+  })), {
+    cards: ["AMMOCRATE"],
+    cardPack: "BRONZE_CARDPACK",
+    discount: 0,
+    startTime: 1_700_000_000,
+  });
+
+  assert.throws(
+    () => parseCardPackPurchaseData(JSON.stringify({
+      cards: ["AMMOCRATE", "FREEZE", "AIRSTRIKE"],
+      cardPack: "THREE_CARDS",
+      discount: 0,
+      StartTime: 1_700_000_000,
+    })),
+    (error: unknown) => (error as { code?: number }).code === CARD_PACK_NOT_FOUND,
+  );
 });

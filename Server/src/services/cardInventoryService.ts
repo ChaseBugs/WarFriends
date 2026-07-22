@@ -472,6 +472,38 @@ export function parseCardPackPurchaseData(value: string): CardPackPurchasePayloa
       startTime: optionalCardPackInteger(data.StartTime, "StartTime"),
     };
   }
+
+  // The untouched 1.6.0 client has exactly two legacy producers:
+  //
+  // - CardManager.BuyThreeCards serializes only `cards` and `cardPack`, and always names the
+  //   THREE_CARDS row.
+  // - CardManager.BuyCardPack serializes `cards`, `cardPack`, `discount`, and `StartTime`, and is
+  //   reachable only for the Bronze, Silver, and Gold shop rows.
+  //
+  // Treat those as two distinct wire contracts. Allowing a partial mixture (for example a
+  // missing StartTime) or an extra alias would give a modified caller a payload shape that the
+  // recovered client can never produce and would make JavaScript property selection part of
+  // economy authority.
+  const keys = Object.keys(data).sort();
+  const isThreeCardsShape = keys.length === 2
+    && keys[0] === "cardPack"
+    && keys[1] === "cards";
+  const isShopPackShape = keys.length === 4
+    && keys[0] === "StartTime"
+    && keys[1] === "cardPack"
+    && keys[2] === "cards"
+    && keys[3] === "discount";
+  if (!isThreeCardsShape && !isShopPackShape) {
+    throw new ApiError(CARD_PACK_NOT_FOUND, "Card-pack request shape is invalid.");
+  }
+
+  const packName = cardPackName(data.cardPack);
+  if (
+    (isThreeCardsShape && packName !== "THREE_CARDS")
+    || (isShopPackShape && packName === "THREE_CARDS")
+  ) {
+    throw new ApiError(CARD_PACK_NOT_FOUND, "Card-pack request shape does not match its source producer.");
+  }
   if (!Array.isArray(data.cards) || data.cards.some((card) => typeof card !== "string")) {
     throw new ApiError(CARD_PACK_NOT_FOUND, "Card-pack contents are invalid.");
   }
@@ -481,7 +513,7 @@ export function parseCardPackPurchaseData(value: string): CardPackPurchasePayloa
   }
   return {
     cards,
-    cardPack: cardPackName(data.cardPack),
+    cardPack: packName,
     discount: optionalCardPackInteger(data.discount, "discount"),
     startTime: optionalCardPackInteger(data.StartTime, "StartTime"),
   };

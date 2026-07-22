@@ -66,6 +66,10 @@ function packData(cardPack: string, cards: string[], discount = 0): string {
   return JSON.stringify({ cards, cardPack, discount, StartTime: NOW });
 }
 
+function threeCardsData(cards: string[]): string {
+  return JSON.stringify({ cards, cardPack: "THREE_CARDS" });
+}
+
 const GOLD_PACK_CARDS = [
   "AIRSTRIKE", "APOCALYPSE", "BIGMEDKIT", "BIGROCKET", "CLUSTERGRENADE",
   "AMMOBOX", "AMMOTHIEF", "BOOBYTRAP", "DECOY", "ELECTRICTRAPS",
@@ -884,17 +888,25 @@ test("card packs fail closed for locked level, invalid roll, unresolved cards, d
 
 test("card-pack buffered integers distinguish omitted legacy fields from malformed values", () => {
   assert.deepEqual(
-    parseCardPackPurchaseData(JSON.stringify({ cards: ["AMMOCRATE"], cardPack: "THREE_CARDS" })),
-    { cards: ["AMMOCRATE"], cardPack: "THREE_CARDS", discount: 0, startTime: 0 },
+    parseCardPackPurchaseData(JSON.stringify({
+      cards: ["AMMOCRATE", "FREEZE", "AIRSTRIKE"],
+      cardPack: "THREE_CARDS",
+    })),
+    {
+      cards: ["AMMOCRATE", "FREEZE", "AIRSTRIKE"],
+      cardPack: "THREE_CARDS",
+      discount: 0,
+      startTime: 0,
+    },
   );
   assert.deepEqual(
     parseCardPackPurchaseData(JSON.stringify({
       cards: ["AMMOCRATE"],
-      cardPack: "BRONZE_PACK",
+      cardPack: "BRONZE_CARDPACK",
       discount: 0,
       StartTime: NOW,
     })),
-    { cards: ["AMMOCRATE"], cardPack: "BRONZE_PACK", discount: 0, startTime: NOW },
+    { cards: ["AMMOCRATE"], cardPack: "BRONZE_CARDPACK", discount: 0, startTime: NOW },
   );
   assert.deepEqual(
     parseCardPackPurchaseData(JSON.stringify({
@@ -924,7 +936,9 @@ test("card-pack buffered integers distinguish omitted legacy fields from malform
       assert.throws(
         () => parseCardPackPurchaseData(JSON.stringify({
           cards: ["AMMOCRATE"],
-          cardPack: "BRONZE_PACK",
+          cardPack: "BRONZE_CARDPACK",
+          discount: 0,
+          StartTime: NOW,
           [field]: value,
         })),
         /exact nonnegative C# integer/,
@@ -933,11 +947,42 @@ test("card-pack buffered integers distinguish omitted legacy fields from malform
   }
 });
 
+test("card-pack parser accepts only the two exact payload shapes emitted by the untouched Client", () => {
+  for (const invalid of [
+    { cards: ["AMMOCRATE", "FREEZE", "AIRSTRIKE"], cardPack: "THREE_CARDS", discount: 0 },
+    { cards: ["AMMOCRATE", "FREEZE", "AIRSTRIKE"], cardPack: "THREE_CARDS", StartTime: NOW },
+    {
+      cards: ["AMMOCRATE", "FREEZE", "AIRSTRIKE"],
+      cardPack: "THREE_CARDS",
+      discount: 0,
+      StartTime: NOW,
+    },
+    { cards: ["AMMOCRATE"], cardPack: "BRONZE_CARDPACK" },
+    { cards: ["AMMOCRATE"], cardPack: "BRONZE_CARDPACK", discount: 0 },
+    { cards: ["AMMOCRATE"], cardPack: "BRONZE_CARDPACK", StartTime: NOW },
+    {
+      cards: ["AMMOCRATE"],
+      cardPack: "BRONZE_CARDPACK",
+      discount: 0,
+      StartTime: NOW,
+      Gold: 0,
+    },
+  ]) {
+    assert.throws(
+      () => parseCardPackPurchaseData(JSON.stringify(invalid)),
+      (error: unknown) => (
+        (error as { code?: number }).code === CARD_PACK_NOT_FOUND
+        && /request shape/.test((error as Error).message)
+      ),
+    );
+  }
+});
+
 test("buffered card-pack purchase is atomic, returns rollback data, and replays exactly once", () => {
   const initial = { ...createInitialProgression(NOW), warBucks: 2_000 };
   const requests = [{
     action: DbAction.BuyCardPack,
-    data: packData("THREE_CARDS", ["AMMOCRATE", "FREEZE", "AIRSTRIKE"]),
+    data: threeCardsData(["AMMOCRATE", "FREEZE", "AIRSTRIKE"]),
   }];
   const first = processAssignmentBufferState(initial, NOW, "card-pack-buffer", requests, 5);
   const firstResponses = JSON.parse(first.requestsResults) as Array<Record<string, unknown>>;
@@ -955,7 +1000,7 @@ test("buffered card-pack purchase is atomic, returns rollback data, and replays 
     initial,
     NOW,
     "invalid-card-pack-buffer",
-    [{ action: DbAction.BuyCardPack, data: packData("THREE_CARDS", ["PLAYERINVIS"]) }],
+    [{ action: DbAction.BuyCardPack, data: threeCardsData(["PLAYERINVIS"]) }],
     5,
   );
   const invalidResponse = (JSON.parse(invalid.requestsResults) as Array<Record<string, unknown>>)[0];

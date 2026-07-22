@@ -761,11 +761,14 @@ integer numbers matching their C# `int` declarations. Missing, null, Boolean, st
 fractional, non-finite, unsafe, and out-of-range values reject instead of manufacturing a card
 amount or loadout index; only exact numeric `-1` selects the no-secondary-weapon sentinel.
 
-Buffered card-pack purchases now retain both recovered payload variants. `BuyThreeCards` may omit
-`discount` and `StartTime` and derive the legacy zero values, while a standard `BuyCardPack` carries
-both as Json.NET numbers backed by C# `int`. Only true absence selects the fallback; explicit null,
-Boolean, string, array, fractional, negative, unsafe, or oversized values reject before pack
-eligibility, wallet debit, inventory grant, or replay publication.
+Buffered card-pack purchases now retain both recovered payload variants as disjoint exact contracts.
+`BuyThreeCards` contains only `cards` and `cardPack=THREE_CARDS`; a standard `BuyCardPack` contains
+exactly `cards`, a non-`THREE_CARDS` `cardPack`, `discount`, and `StartTime`, with both integers backed
+by C# `int`. Partial mixtures, extra fields, and producer/pack mismatches reject before economy
+logic. Only the exact two-field shape selects legacy zero values; explicit null, Boolean, string,
+array, fractional, negative, unsafe, or oversized values reject before pack eligibility, wallet
+debit, inventory grant, or replay publication. A cross-project regression test reads the untouched
+Client methods and proves both server parser branches remain aligned with their actual producers.
 
 Replacement clients may now request server-owned pack identities with the exact disjoint
 `ServerSelect: true` payload. Unknown keys, aliases, client-supplied `cards`, and non-Boolean forms
