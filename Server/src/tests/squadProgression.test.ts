@@ -16,8 +16,10 @@ import {
   validatedSquadProgressionSnapshot,
 } from "../services/squadProgressionService";
 import { buildDatabaseSquad } from "../services/squadWireService";
+import { VALIDATED_CARD_CATALOG } from "../services/cardCatalogAuthorityService";
 
 test("squad progression uses the exact first and final recovered 4.9.5 rows", () => {
+  assert.equal(squadLevelDefinition(1), VALIDATED_CARD_CATALOG.squadLevelDefinitions[0]);
   assert.deepEqual(squadLevelDefinition(1), {
     level: 1,
     experience: 120_000,

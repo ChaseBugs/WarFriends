@@ -514,7 +514,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   monotonic thresholds/unlocks, and exact equality with the duplicate
   `cardPoolRules.capacityBySquadLevel` array. A truncated or internally split generated artifact
   therefore stops startup rather than silently lowering maximum rank or granting a different pool
-  capacity through another consumer.
+  capacity through another consumer. The dependency-free 50-row validator is owned by the complete
+  card-catalog authority, and Squad gameplay consumes that exact frozen snapshot. It no longer
+  imports and separately accepts the raw JSON subset, so invalid provenance, cards, packs, or other
+  shared economy fields cannot coexist with an independently accepted rank table.
   Card-pool admission uses that exact rank row too; unlike the recovered UI helper, it never floors
   or clamps an invalid durable level into a believable first/final `CARDPOOLSIZE` authorization.
   A new policy-1 request transaction advances both the exact Squad revision and a strictly

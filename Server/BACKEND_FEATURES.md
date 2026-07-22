@@ -44,6 +44,10 @@ Status legend:
   and `CARDPOOLSIZE` together. Extraction and process startup require the complete exact 1-50
   sequence, monotonic thresholds/unlocks, and equality with the duplicate card-pool capacity array;
   truncation or disagreement fails closed instead of redefining maximum rank or pool authority.
+  The dependency-free row validator now feeds the complete card-artifact boundary, and Squad
+  gameplay consumes that exact frozen result instead of independently importing partial raw JSON;
+  malformed provenance, cards, packs, or shared rules therefore cannot coexist with an accepted
+  rank snapshot through a module cycle.
   New squads start with four seats. Complete Squad authority rejects
   a clamped/fractional/out-of-range rank, progress that should already have crossed a non-final
   threshold, or capacity from another row. Confirmed ranked-PvP Squad Points atomically update the

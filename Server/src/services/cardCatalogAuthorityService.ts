@@ -4,7 +4,7 @@ import {
   EXPECTED_SQUAD_LEVEL_COUNT,
   type SquadLevelDefinition,
   validatedSquadProgressionCatalog,
-} from "./squadProgressionService";
+} from "./squadProgressionCatalogAuthorityService";
 
 export interface CardDefinition {
   name: string;

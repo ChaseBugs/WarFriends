@@ -1,19 +1,10 @@
 import { ApiError, ApiErrorCode } from "../apiErrors";
-import generatedCardCatalog from "../data/cardCatalog.generated.json";
-
-export interface SquadLevelDefinition {
-  level: number;
-  experience: number;
-  size: number;
-  cardPoolSize: number;
-}
-
-interface SquadProgressionCatalog {
-  squadLevelDefinitions?: unknown;
-  cardPoolRules?: {
-    capacityBySquadLevel?: unknown;
-  };
-}
+import { VALIDATED_CARD_CATALOG } from "./cardCatalogAuthorityService";
+import type { SquadLevelDefinition } from "./squadProgressionCatalogAuthorityService";
+export {
+  EXPECTED_SQUAD_LEVEL_COUNT,
+  validatedSquadProgressionCatalog,
+} from "./squadProgressionCatalogAuthorityService";
 
 export interface SquadExperienceTransition {
   levelFrom: number;
@@ -23,66 +14,14 @@ export interface SquadExperienceTransition {
   levelsGained: number;
 }
 
-export const EXPECTED_SQUAD_LEVEL_COUNT = 50;
-
 function invalid(message: string): never {
   throw new ApiError(ApiErrorCode.InternalServerError, message);
 }
 
-/**
- * Validate the complete duplicated Squad-rank authority in the generated card artifact.
- *
- * MainScene contains exactly levels 1 through 50. Merely accepting a nonempty contiguous prefix
- * would let a truncated generated file redefine MAX_SQUAD_LEVEL at startup. CARDPOOLSIZE is also
- * emitted twice for legacy card-pool consumers, so both copies must remain identical; otherwise two
- * backend paths could authorize different capacities for the same durable Squad rank.
- */
-export function validatedSquadProgressionCatalog(catalog: unknown): readonly SquadLevelDefinition[] {
-  if (!catalog || typeof catalog !== "object" || Array.isArray(catalog)) {
-    return invalid("Squad progression catalog root is invalid.");
-  }
-  const candidate = catalog as SquadProgressionCatalog;
-  const definitions = candidate.squadLevelDefinitions;
-  const capacities = candidate.cardPoolRules?.capacityBySquadLevel;
-  if (!Array.isArray(definitions) || definitions.length !== EXPECTED_SQUAD_LEVEL_COUNT) {
-    return invalid(`Squad progression catalog must contain exactly ${EXPECTED_SQUAD_LEVEL_COUNT} rows.`);
-  }
-  if (!Array.isArray(capacities) || capacities.length !== EXPECTED_SQUAD_LEVEL_COUNT) {
-    return invalid(`Squad card-pool catalog must contain exactly ${EXPECTED_SQUAD_LEVEL_COUNT} capacities.`);
-  }
-  for (let index = 0; index < definitions.length; index += 1) {
-    const row = definitions[index] as Partial<SquadLevelDefinition> | null;
-    const previous = index > 0
-      ? definitions[index - 1] as Partial<SquadLevelDefinition> | null
-      : null;
-    if (!row
-      || typeof row !== "object"
-      || Array.isArray(row)
-      || row.level !== index + 1
-      || !Number.isSafeInteger(row.experience)
-      || (row.experience as number) < 1
-      || !Number.isSafeInteger(row.size)
-      || (row.size as number) < 1
-      || !Number.isSafeInteger(row.cardPoolSize)
-      || (row.cardPoolSize as number) < 1
-      || (previous !== null && (row.experience as number) < (previous.experience as number))
-      || (previous !== null && (row.size as number) < (previous.size as number))
-      || (previous !== null && (row.cardPoolSize as number) < (previous.cardPoolSize as number))
-      || capacities[index] !== row.cardPoolSize) {
-      return invalid(`Squad progression catalog row ${index + 1} is invalid.`);
-    }
-  }
-  // Return an owned immutable snapshot. Callers receive rows as readonly types, but freezing the
-  // actual values also prevents an accidental cast from changing rank authority after validation.
-  return Object.freeze(definitions.map((row) => Object.freeze({
-    level: (row as SquadLevelDefinition).level,
-    experience: (row as SquadLevelDefinition).experience,
-    size: (row as SquadLevelDefinition).size,
-    cardPoolSize: (row as SquadLevelDefinition).cardPoolSize,
-  })));
-}
-
-const DEFINITIONS = validatedSquadProgressionCatalog(generatedCardCatalog);
+// The complete card-catalog boundary owns the only runtime Squad progression snapshot. Consuming
+// it here prevents Squad rank logic from separately accepting a raw partial artifact that omitted
+// invalid card rows, pack prices, provenance, or other fields sharing the same generated release.
+const DEFINITIONS = VALIDATED_CARD_CATALOG.squadLevelDefinitions;
 
 function validatedDefinitions(): readonly SquadLevelDefinition[] {
   return DEFINITIONS;
