@@ -68,12 +68,18 @@ export function verifyIdentityCredentialHash(
   return { matches: false, needsUpgrade: false };
 }
 
-function normalize(value: string, label: string, maxLength: number): string {
-  const normalized = value.trim();
-  if (!normalized || normalized.length > maxLength) {
-    throw new ApiError(ApiErrorCode.RequestNotAuthorized, `${label} is invalid.`);
+export function validatedIdentityCredential(value: unknown): string {
+  // Provider credentials are opaque authentication material. Trimming or stringifying a JSON
+  // value changes which secret is hashed and can collapse distinct client inputs onto one durable
+  // digest, so require the exact bounded string emitted by the recovered form transport.
+  if (typeof value !== "string"
+    || value.length < 1
+    || value.length > 4_096
+    || value.trim() !== value
+    || /[\u0000-\u001f\u007f]/u.test(value)) {
+    throw new ApiError(ApiErrorCode.RequestNotAuthorized, "External account credential is invalid.");
   }
-  return normalized;
+  return value;
 }
 
 /**
@@ -243,7 +249,7 @@ export async function insertIdentityForNewPlayer(
   displayName = "",
 ): Promise<{ externalId: string }> {
   const externalId = normalizeIdentityExternalId(provider, externalIdValue);
-  const credential = normalize(credentialValue, "External account credential", 4096);
+  const credential = validatedIdentityCredential(credentialValue);
   const now = new Date();
   try {
     await identities().insertOne({
@@ -274,7 +280,7 @@ export async function linkIdentity(
   const externalId = normalizeIdentityExternalId(provider, externalIdValue);
   // OAuth/platform tokens can be substantially longer than traditional passwords. Bound
   // the input to control request cost while storing only its fixed-length HMAC digest.
-  const credential = normalize(credentialValue, "External account credential", 4096);
+  const credential = validatedIdentityCredential(credentialValue);
   const now = new Date();
   try {
     return await withMongoTransaction(async (session) => {
@@ -373,9 +379,14 @@ export async function authenticateIdentity(
   externalIdValue: string,
   credentialValue: string,
 ): Promise<PlayerDocument | null> {
-  const externalId = externalIdValue.trim();
-  const credential = credentialValue.trim();
-  if (!externalId || !credential) return null;
+  let externalId: string;
+  let credential: string;
+  try {
+    externalId = normalizeIdentityExternalId(provider, externalIdValue);
+    credential = validatedIdentityCredential(credentialValue);
+  } catch {
+    return null;
+  }
   const identity = await findIdentity(provider, externalId);
   // Compare fixed-length HMAC values with timingSafeEqual so credential checks do not leak
   // the first mismatching byte through response timing.

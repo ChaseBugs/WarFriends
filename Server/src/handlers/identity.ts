@@ -19,6 +19,11 @@ import {
   ensureActiveEventAssignment,
   type EventAssignmentMutationResult,
 } from "../services/eventAssignmentService";
+import {
+  exactHaveGameCenterId,
+  exactIdentityRequestCredential,
+  exactIdentityRequestId,
+} from "./identityRequestParsing";
 
 // Platform-account actions recovered from BeanstalkServerManager. Identity records are
 // separate from player documents so uniqueness and credentials remain server-owned; the
@@ -27,18 +32,6 @@ import {
 
 function text(value: unknown): string {
   return typeof value === "string" || typeof value === "number" ? String(value).trim() : "";
-}
-
-function identityId(req: Record<string, unknown>, provider: IdentityProvider): string {
-  if (provider === "facebook") return text(req.FacebookId);
-  if (provider === "googlePlay") return text(req.GooglePlayId ?? req.googlePlayId);
-  return text(req.GameCenterId ?? req.gameCenterId);
-}
-
-function identityCredential(req: Record<string, unknown>, provider: IdentityProvider): string {
-  if (provider === "facebook") return text(req.FacebookPassword);
-  if (provider === "googlePlay") return text(req.GooglePlayPassword ?? req.googlePlayPassword);
-  return text(req.GameCenterPassword ?? req.gameCenterPassword);
 }
 
 function identityName(req: Record<string, unknown>): string {
@@ -96,8 +89,8 @@ function linkAction(action: DbAction, provider: IdentityProvider): HandlerEntry 
     const updated = await linkIdentity(
       player!.id,
       provider,
-      identityId(req, provider),
-      identityCredential(req, provider),
+      exactIdentityRequestId(req, provider),
+      exactIdentityRequestCredential(req, provider),
       identityName(req),
     );
     // FacebookLoginReward is tied to a successful provider link, never to a standalone
@@ -125,7 +118,7 @@ function unlinkAction(action: DbAction, provider: IdentityProvider): HandlerEntr
 
 function tutorialExistenceAction(action: DbAction, provider: IdentityProvider): HandlerEntry {
   return open(async ({ req }) => {
-    const externalId = identityId(req, provider);
+    const externalId = exactIdentityRequestId(req, provider);
     const owner = externalId ? await findValidatedIdentityOwner(provider, externalId) : null;
     const idKey = provider === "facebook" ? "FacebookId" : provider === "googlePlay" ? "GooglePlayId" : "GameCenterId";
 
@@ -141,7 +134,7 @@ function tutorialExistenceAction(action: DbAction, provider: IdentityProvider): 
 }
 
 const facebookExistence: HandlerEntry = open(async ({ req }) => {
-  const externalId = identityId(req, "facebook");
+  const externalId = exactIdentityRequestId(req, "facebook");
   const owner = externalId ? await findValidatedIdentityOwner("facebook", externalId) : null;
   if (!owner) {
     // IJEAJGCCHEF.Success is numeric 1. For ExistFBAccount this means that no previous
@@ -160,14 +153,14 @@ const facebookExistence: HandlerEntry = open(async ({ req }) => {
     PlayerId: identity.playerId,
     FacebookId: externalId,
     FacebookName: identity.displayName || player.player.accountName,
-    FacebookPassword: identityCredential(req, "facebook"),
+    FacebookPassword: exactIdentityRequestCredential(req, "facebook"),
     facebookLevel: player.player.level,
     facebookMedals: player.player.medalsBalance,
   });
 });
 
 const gameCenterExistence: HandlerEntry = open(async ({ req }) => {
-  const externalId = identityId(req, "gameCenter");
+  const externalId = exactIdentityRequestId(req, "gameCenter");
   const owner = externalId ? await findValidatedIdentityOwner("gameCenter", externalId) : null;
   // ExistGCAccount uses the same resultMessage contract as tutorial platform checks rather
   // than Facebook's numeric AccountAlreadyCreated branch.
@@ -180,8 +173,8 @@ const gameCenterExistence: HandlerEntry = open(async ({ req }) => {
 
 export const identityHandlers: Record<number, HandlerEntry> = {
   [DbAction.CreateGcAccount]: open(async ({ req }) => {
-    const gameCenterId = identityId(req, "gameCenter");
-    const credential = identityCredential(req, "gameCenter");
+    const gameCenterId = exactIdentityRequestId(req, "gameCenter");
+    const credential = exactIdentityRequestCredential(req, "gameCenter");
     try {
       const created = await createGameCenterAccount(gameCenterId, credential, text(req.DeviceToken));
       const eventAssignment = await ensureActiveEventAssignment(created.doc.id);
@@ -219,13 +212,13 @@ export const identityHandlers: Record<number, HandlerEntry> = {
   [DbAction.RemoveOrUpdateGC]: authed(async ({ player, req }) => {
     // The client sends haveGcId=0 to remove Game Center and haveGcId=1 with fresh
     // credentials to replace it. Both branches reuse the same guarded service operations.
-    const hasGameCenter = text(req.haveGcId) === "1";
+    const hasGameCenter = exactHaveGameCenterId(req.haveGcId);
     const updated = hasGameCenter
       ? await linkIdentity(
           player!.id,
           "gameCenter",
-          identityId(req, "gameCenter"),
-          identityCredential(req, "gameCenter"),
+          exactIdentityRequestId(req, "gameCenter"),
+          exactIdentityRequestCredential(req, "gameCenter"),
           identityName(req),
         )
       : await unlinkIdentity(player!.id, "gameCenter");
@@ -240,7 +233,7 @@ export const identityHandlers: Record<number, HandlerEntry> = {
             gcID: updated.player.gameCenterId,
             // This is an echo needed by GameLoginManager.UpdatePlayerByGC, not a value read
             // back from the identity collection.
-            gcPassword: identityCredential(req, "gameCenter"),
+            gcPassword: exactIdentityRequestCredential(req, "gameCenter"),
           }
         : {}),
     });

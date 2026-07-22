@@ -414,7 +414,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   strings, including values above JavaScript's safe-integer range; malformed/out-of-range text and
   the reserved disconnected value `-1` cannot create or resolve an identity. Every shared identity
   lookup also validates the complete row: exact provider/external ID, bounded owner, canonical
-  64-character lower-case HMAC, trimmed display name, and ordered finite audit timestamps. First-time
+  64-character lower-case HMAC, trimmed display name, and ordered finite audit timestamps. Request
+  parsing keeps IDs and opaque credentials as exact strings, rejects conflicting uppercase
+  and camel-case aliases, and never converts a JSON number into an identity key. The recovered
+  `RemoveOrUpdateGC.haveGcId` selector accepts only exact string `0` or `1`, so missing or malformed
+  input cannot silently unlink a valid Game Center account. First-time
   `CreateGcAccount` commits the player and identity in one transaction,
   returns separate platform/session credentials, and supplies the recovered `15400` existing-account
   profile contract. Remaining response-contract work is tracked in `BACKEND_FEATURES.md`.
