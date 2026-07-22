@@ -177,6 +177,11 @@ export function validateRemoteConfigurationManifest(value: unknown, secret: stri
     if (new Set(languages.map((language) => language.toLowerCase())).size !== languages.length) {
       throw new Error(`publications[${publicationIndex}].languages contains duplicates.`);
     }
+    if (languages.includes("*") && languages.length !== 1) {
+      // `*` already selects every language. Allowing concrete values beside it adds no audience,
+      // but makes two semantically identical selectors look different during operator review.
+      throw new Error(`publications[${publicationIndex}].languages wildcard must stand alone.`);
+    }
     const minimumClientVersion = optionalInteger(
       entry.minimumClientVersion,
       `publications[${publicationIndex}].minimumClientVersion`,
@@ -216,6 +221,28 @@ export function validateRemoteConfigurationManifest(value: unknown, secret: stri
       rolloutSalt,
       sheets,
     };
+  });
+  const targetingEnvelopes = new Set<string>();
+  publications.forEach((publication, publicationIndex) => {
+    // Manifest order intentionally provides fallback priority for genuinely overlapping selectors
+    // (for example, an English override before a wildcard publication). An exact duplicate
+    // targeting envelope is different: it sends the same rollout bucket to two publications and
+    // lets a harmless array reorder change live balancing. Canonicalize only selection semantics,
+    // not payload identity, and fail startup before either publication can become authoritative.
+    const rolloutPercent = publication.rolloutPercent ?? 100;
+    const targetingEnvelope = stableJson({
+      variant: publication.variant ?? "*",
+      languages: [...(publication.languages ?? ["*"])].map((language) => language.toLowerCase()).sort(),
+      minimumClientVersion: publication.minimumClientVersion ?? null,
+      maximumClientVersion: publication.maximumClientVersion ?? null,
+      rolloutPercent,
+      // Salt has no selection effect at the two closed rollout boundaries.
+      rolloutSalt: rolloutPercent <= 0 || rolloutPercent >= 100 ? "" : publication.rolloutSalt ?? releaseId,
+    });
+    if (targetingEnvelopes.has(targetingEnvelope)) {
+      throw new Error(`publications[${publicationIndex}] duplicates an earlier targeting envelope.`);
+    }
+    targetingEnvelopes.add(targetingEnvelope);
   });
   return { schemaVersion: 1, releaseId, publications, signature: suppliedSignature };
 }

@@ -153,7 +153,9 @@ IDs, conflicting aliases, and upper-case explicit-login/action `Id` retain bundl
 selecting a different player's bucket.
 The signed manifest itself uses exact root/publication/sheet keys, case-insensitively unique language
 selectors, signed-client-safe integer build bounds, and an actual finite numeric 0-100 rollout
-percentage; ignored typo fields and JavaScript-coercible policy values fail startup. See
+percentage. Its language wildcard must stand alone, and semantically duplicate targeting envelopes
+fail startup while intentional specific-before-wildcard fallback overlap retains manifest-order
+priority. Ignored typo fields and JavaScript-coercible policy values fail startup. See
 `config/README.md`; unsigned or malformed publication data fails startup, while an empty path
 preserves the APK-bundled sheets.
 

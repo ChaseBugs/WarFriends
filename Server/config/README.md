@@ -180,7 +180,10 @@ HMAC, exact root/publication/sheet fields, unique sheet/row IDs and case-insensi
 selectors, column counts, signed-client-safe integer version bounds, actual finite numeric 0-100
 rollout percentage, and delimiter safety before listening. Unknown typo fields and coercible values
 such as `"50"`, `false`, or `null` are rejected even when the manifest was signed. Publications are
-evaluated in manifest order. A rollout below 100 percent requires a player ID; pre-login requests
+evaluated in manifest order, so a specific selector may intentionally precede a wider fallback.
+The language wildcard must stand alone, and two publications may not declare the same canonical
+variant/language/build/rollout targeting envelope: an exact duplicate would make a manifest reorder
+change live balancing. A rollout below 100 percent requires a player ID; pre-login requests
 retain their bundled sheets. A ranged publication also requires one canonical numeric replacement-
 client `ClientVersion`/`clientVersion`; the stock dotted `Version` is not an integer build. The same
 `sheetConfiguration` returns a three-segment no-change response.

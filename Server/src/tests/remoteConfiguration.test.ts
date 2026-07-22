@@ -258,4 +258,41 @@ test("remote manifest rejects ignored fields and JavaScript-coercible rollout au
     (value) => { value.publications[0].languages = ["en", "EN"]; },
     /languages contains duplicates/,
   );
+  mutateAndValidate(
+    (value) => { value.publications[0].languages = ["*", "en"]; },
+    /languages wildcard must stand alone/,
+  );
+});
+
+test("remote manifest rejects duplicate targeting while retaining ordered fallback overlap", () => {
+  const duplicate = JSON.parse(JSON.stringify(signedManifest())) as Record<string, any>;
+  const duplicatePublication = JSON.parse(JSON.stringify(duplicate.publications[0]));
+  duplicatePublication.sheetConfiguration = "balance-v3";
+  duplicatePublication.languages = ["KO", "EN"];
+  duplicatePublication.sheets[0].version = "43";
+  duplicate.publications.push(duplicatePublication);
+  duplicate.signature = remoteConfigurationSignature(duplicate, secret);
+  assert.throws(
+    () => validateRemoteConfigurationManifest(duplicate, secret),
+    /duplicates an earlier targeting envelope/,
+  );
+
+  // A specific selector before a wider fallback is an intentional, documented use of manifest
+  // order. It overlaps, but it does not describe the exact same target population.
+  const orderedFallback = JSON.parse(JSON.stringify(signedManifest())) as Record<string, any>;
+  const fallbackPublication = JSON.parse(JSON.stringify(orderedFallback.publications[0]));
+  fallbackPublication.sheetConfiguration = "balance-v3";
+  fallbackPublication.languages = ["*"];
+  fallbackPublication.sheets[0].version = "43";
+  orderedFallback.publications.push(fallbackPublication);
+  orderedFallback.signature = remoteConfigurationSignature(orderedFallback, secret);
+  const validated = validateRemoteConfigurationManifest(orderedFallback, secret);
+  assert.equal(validated.publications.length, 2);
+  assert.equal(selectRemoteConfiguration({
+    DbAction: 157,
+    PlayerId: "player-1",
+    abTestVariant: "economy-a",
+    Language: "en",
+    ClientVersion: 495,
+  }, validated), validated.publications[0]);
 });
