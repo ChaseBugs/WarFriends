@@ -12,6 +12,10 @@ import {
   gameCenterIdentityPolicy,
   verifyGameCenterIdentityOwnership,
 } from "./gameCenterIdentityProofService";
+import {
+  facebookIdentityPolicy,
+  verifyFacebookIdentityOwnership,
+} from "./facebookIdentityProofService";
 
 export type IdentityProvider = IdentityDocument["provider"];
 
@@ -310,7 +314,9 @@ export async function linkIdentity(
   // Validate before opening a transaction. The old trim/slice behavior silently changed identity
   // metadata and could make distinct overlong requests overwrite the same durable value.
   const exactDisplayName = validatedIdentityDisplayName(displayName);
-  if (provider === "gameCenter") {
+  if (provider === "facebook") {
+    await verifyFacebookIdentityOwnership(externalId, providerProof);
+  } else if (provider === "gameCenter") {
     await verifyGameCenterIdentityOwnership(externalId, providerProof);
   } else if (providerProof !== undefined) {
     throw new ApiError(ApiErrorCode.RequestNotAuthorized, "External account proof is invalid.");
@@ -422,7 +428,20 @@ export async function authenticateIdentity(
   } catch {
     return null;
   }
-  if (provider === "gameCenter") {
+  if (provider === "facebook") {
+    try {
+      await verifyFacebookIdentityOwnership(externalId, providerProof);
+    } catch (error) {
+      if (error instanceof ApiError && error.code === ApiErrorCode.RequestNotAuthorized) return null;
+      throw error;
+    }
+    if (facebookIdentityPolicy().enabled) {
+      // A current Meta inspection proves the signed-in Facebook user independently from the
+      // stock ID-derived password. Resolve only the validated current owner and persist no token.
+      const liveOwner = await findValidatedIdentityOwner(provider, externalId);
+      return liveOwner?.player ?? null;
+    }
+  } else if (provider === "gameCenter") {
     try {
       await verifyGameCenterIdentityOwnership(externalId, providerProof);
     } catch (error) {

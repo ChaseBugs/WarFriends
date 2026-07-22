@@ -23,8 +23,8 @@ const UUID_V4_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}
  *
  * Express always installs a generated UUID. Background workers have no inbound request, so they
  * receive a fresh generated UUID per provider call. A malformed manually installed test/tool
- * context is never forwarded to Google, and no player, message, purchase token, or URL enters the
- * header value.
+ * context is never forwarded to an external provider, and no player, message, purchase token,
+ * access token, or URL enters the header value.
  */
 export function outboundRequestHeaders(generatedId: string = randomUUID()): Readonly<{ "X-Request-ID": string }> {
   if (!UUID_V4_PATTERN.test(generatedId)) throw new Error("Generated outbound request ID is invalid.");

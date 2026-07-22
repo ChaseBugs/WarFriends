@@ -503,7 +503,25 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   decoded salt; RSA-SHA256 verification must pass before create/link/update/login opens durable
   identity work. Provider proof, signature, salt, and certificate bytes are never persisted.
   Enabling this mode therefore requires a patched client; the stock client has no proof fields.
-  Facebook and Google Play still require separate reviewed live-provider proof contracts.
+  Google Play still requires a separate reviewed live-provider proof contract.
+  The recovered Facebook integration has the same legacy boundary: `KFLKGGGJHIN` hashes the
+  Facebook ID into `FacebookPassword` even though Prime31 keeps the actual SDK user access token.
+  With `FACEBOOK_IDENTITY_VERIFICATION_ENABLED=true`, a patched client sends that token separately:
+
+  ```json
+  {"version":1,"accessToken":"CURRENT_FACEBOOK_SDK_USER_ACCESS_TOKEN"}
+  ```
+
+  Configure the exact decimal `FACEBOOK_APP_ID`, backend-only hexadecimal `FACEBOOK_APP_SECRET`,
+  reviewed `FACEBOOK_GRAPH_API_VERSION`, and 1000-10000ms `FACEBOOK_IDENTITY_TIMEOUT_MS`. The server
+  calls the versioned Meta `debug_token` endpoint with the app access token in the Authorization
+  header and accepts only a live `USER` token whose App ID and `user_id` exactly match the configured
+  app and canonical request Facebook ID. Issue time, token expiry, and optional data-access expiry
+  must be safe coherent Unix seconds. The access token and app token are never logged or persisted;
+  the recovered `Name` remains presentation metadata, not ownership authority. Network, rate-limit,
+  and provider-schema failures return a retryable server error and remove the exact login-attempt
+  reservation, while an invalid token remains a generic authorization failure. Stock 1.6.0 sends no
+  proof field and must keep this mode disabled until its request builder is patched.
 - **Transport abuse boundary**: Express requests use a bounded per-address token bucket and the
   `/hub` WebSocket uses an independent continuous-refill bucket before JSON parsing. With Redis,
   both are atomic across nodes and use Redis server time; authenticated sockets share one

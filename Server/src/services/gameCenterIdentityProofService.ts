@@ -110,6 +110,12 @@ function authorizationFailure(): never {
   throw new ApiError(ApiErrorCode.RequestNotAuthorized, "Game Center identity proof is invalid.");
 }
 
+function providerUnavailable(): never {
+  // Network and upstream service failures are retryable server failures, not evidence that the
+  // presented player proof is wrong. The login layer removes this request's throttle reservation.
+  throw new ApiError(ApiErrorCode.InternalServerError, "Game Center identity verification is temporarily unavailable.");
+}
+
 function plainRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
@@ -257,14 +263,20 @@ async function fetchIssuerCertificate(urlValue: string, timeoutMs: number): Prom
       signal: AbortSignal.timeout(timeoutMs),
     });
   } catch {
-    authorizationFailure();
+    providerUnavailable();
   }
+  if (response.status === 429 || response.status >= 500) providerUnavailable();
   if (!response.ok || response.url !== url.toString()) authorizationFailure();
   const declaredLength = response.headers.get("content-length");
   if (declaredLength !== null
     && (!/^(?:0|[1-9][0-9]{0,8})$/u.test(declaredLength)
       || Number(declaredLength) > MAX_CERTIFICATE_BYTES)) authorizationFailure();
-  const bytes = Buffer.from(await response.arrayBuffer());
+  let bytes: Buffer;
+  try {
+    bytes = Buffer.from(await response.arrayBuffer());
+  } catch {
+    providerUnavailable();
+  }
   if (bytes.length === 0 || bytes.length > MAX_CERTIFICATE_BYTES) authorizationFailure();
   return bytes;
 }
@@ -381,14 +393,20 @@ export class HttpsGameCenterPublicKeyFetcher implements GameCenterPublicKeyFetch
         signal: AbortSignal.timeout(timeoutMs),
       });
     } catch {
-      authorizationFailure();
+      providerUnavailable();
     }
+    if (response.status === 429 || response.status >= 500) providerUnavailable();
     if (!response.ok || response.url !== url) authorizationFailure();
     const declaredLength = response.headers.get("content-length");
     if (declaredLength !== null
       && (!/^(?:0|[1-9][0-9]{0,8})$/u.test(declaredLength)
         || Number(declaredLength) > MAX_CERTIFICATE_BYTES)) authorizationFailure();
-    const certificate = Buffer.from(await response.arrayBuffer());
+    let certificate: Buffer;
+    try {
+      certificate = Buffer.from(await response.arrayBuffer());
+    } catch {
+      providerUnavailable();
+    }
     if (certificate.length === 0 || certificate.length > MAX_CERTIFICATE_BYTES) authorizationFailure();
     return { certificate, cacheSeconds: cacheSeconds(response.headers.get("cache-control")) };
   }

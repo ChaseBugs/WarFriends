@@ -43,6 +43,21 @@ and salt. No proof bytes are stored. Existing rows whose old Game Center identif
 patched client's scoped identifier require an explicit migration; the server does not guess that
 two identifiers belong to the same Apple player.
 
+### Live Facebook ownership proof
+
+The recovered Facebook service exposes the current Prime31 SDK user access token, but it sends only
+an ID-derived `FacebookPassword` to the backend. That reusable hash is legacy compatibility, not
+Meta authority. A patched client can send the SDK token as version-1 `ProviderProof` JSON while the
+backend keeps the App Secret private.
+
+When enabled, the server inspects that user token through the configured versioned Meta Graph
+`debug_token` endpoint. It accepts only `is_valid=true`, `type=USER`, the exact configured App ID,
+the exact canonical Facebook ID from the request, a nonfuture issue time, a live token expiration,
+and a live or explicit-zero data-access expiration. Client `Name` is not part of this proof and
+remains presentation metadata. Neither user token nor app token is stored. A provider outage or
+malformed upstream response is a retryable server failure rather than a bad credential, so the
+exact login-attempt reservation is cleared before the client retries.
+
 ## Authentication lifecycle
 
 1. Account creation produces a player ID and an opaque session credential.

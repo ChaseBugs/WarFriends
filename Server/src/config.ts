@@ -53,6 +53,17 @@ export const config = {
   gameCenterPublicKeyHosts: process.env.GAME_CENTER_PUBLIC_KEY_HOSTS ?? "",
   gameCenterProofMaxAgeSeconds: Number(process.env.GAME_CENTER_PROOF_MAX_AGE_SECONDS ?? 300),
   gameCenterPublicKeyTimeoutMs: Number(process.env.GAME_CENTER_PUBLIC_KEY_TIMEOUT_MS ?? 5_000),
+  // Prime31 exposes a real Facebook user access token, but the stock backend request sends only an
+  // ID-derived reusable FacebookPassword. Live verification therefore needs a patched proof field.
+  facebookIdentityVerificationEnabled: exactEnvironmentBoolean(
+    process.env.FACEBOOK_IDENTITY_VERIFICATION_ENABLED,
+    false,
+    "FACEBOOK_IDENTITY_VERIFICATION_ENABLED",
+  ),
+  facebookAppId: process.env.FACEBOOK_APP_ID ?? "",
+  facebookAppSecret: process.env.FACEBOOK_APP_SECRET ?? "",
+  facebookGraphApiVersion: process.env.FACEBOOK_GRAPH_API_VERSION ?? "",
+  facebookIdentityTimeoutMs: Number(process.env.FACEBOOK_IDENTITY_TIMEOUT_MS ?? 5_000),
   // Current scrypt CPU/memory work factor for durable custom passwords. Stored digests retain
   // their original factor and are opportunistically upgraded after a successful explicit login.
   authScryptCost: Number(process.env.AUTH_SCRYPT_COST ?? 16_384),

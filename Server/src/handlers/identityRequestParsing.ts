@@ -58,8 +58,8 @@ export function exactIdentityRequestCredential(req: Record<string, unknown>, pro
 
 /**
  * Parse the replacement-client proof channel independently from the recovered Password field.
- * Only Game Center has a reviewed proof contract today; accepting an unimplemented provider's
- * proof and then falling back to its legacy HMAC would falsely advertise live verification.
+ * Facebook and Game Center have reviewed proof contracts. Accepting Google Play proof and then
+ * falling back to its legacy HMAC would falsely advertise live verification.
  */
 export function exactIdentityRequestProof(
   req: Record<string, unknown>,
@@ -67,7 +67,7 @@ export function exactIdentityRequestProof(
 ): string | undefined {
   const value = exactAliasValue(req, PROOF_ALIASES[provider], "External account proof");
   if (value === undefined) return undefined;
-  if (provider !== "gameCenter"
+  if (provider === "googlePlay"
     || value.length === 0
     || value.length > 8_192
     || value.trim() !== value

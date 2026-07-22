@@ -200,7 +200,7 @@ test("legacy mode never silently consumes a supplied ProviderProof", async () =>
   );
 });
 
-test("identity request parsing keeps proof aliases exact and Game Center-only", () => {
+test("Game Center proof aliases remain exact while Google Play proof stays closed", () => {
   const value = proof();
   assert.equal(exactIdentityRequestProof({ ProviderProof: value }, "gameCenter"), value);
   assert.equal(

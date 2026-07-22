@@ -498,7 +498,19 @@ export async function authenticate(
   }
 
   const provider = providerForAccountType(accountType ?? AccountType.Guest);
-  const identityPlayer = provider ? await authenticateIdentity(provider, id, token, providerProof) : null;
+  let identityPlayer: PlayerDocument | null;
+  try {
+    identityPlayer = provider ? await authenticateIdentity(provider, id, token, providerProof) : null;
+  } catch (error) {
+    // A provider outage is not a bad credential. Remove only this exact reservation so Facebook,
+    // Game Center, or a future live verifier cannot lock a valid player out during an outage.
+    if (loginReservation
+      && error instanceof ApiError
+      && error.code === ApiErrorCode.InternalServerError) {
+      await clearLoginAttempt(loginReservation);
+    }
+    throw error;
+  }
   if (identityPlayer) {
     if (loginReservation) await clearLoginAttempt(loginReservation);
     await assertPlayerNotSanctioned(identityPlayer);
