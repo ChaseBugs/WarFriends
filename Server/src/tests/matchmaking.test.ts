@@ -7,6 +7,7 @@ import {
   remove,
   restoreWaiting,
   validQueueEntry,
+  validQueueEntryWithin,
 } from "../services/matchmakingService";
 
 test("distributed matchmaking snapshots require the exact source-backed queue authority", () => {
@@ -41,6 +42,15 @@ test("distributed matchmaking snapshots require the exact source-backed queue au
     enqueuedAt: 1,
     trusted: true,
   }), false, "unknown fields must not survive the Redis hash boundary");
+});
+
+test("distributed matchmaking candidates must belong to one Redis-time selection window", () => {
+  const candidate = { playerId: "queue-player", armyPower: 100, leagueTier: 2, enqueuedAt: 5_000 };
+  assert.equal(validQueueEntryWithin(candidate, 4_000, 6_000), true);
+  assert.equal(validQueueEntryWithin({ ...candidate, enqueuedAt: 4_000 }, 4_000, 6_000), false);
+  assert.equal(validQueueEntryWithin({ ...candidate, enqueuedAt: 6_001 }, 4_000, 6_000), false);
+  assert.equal(validQueueEntryWithin(candidate, 6_000, 4_000), false);
+  assert.equal(validQueueEntryWithin(candidate, 4_000.5, 6_000), false);
 });
 
 test("distributed failed-admission restoration keeps one complete timestamped snapshot per player", () => {

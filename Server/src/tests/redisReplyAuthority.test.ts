@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { exactRedisIntegerReply } from "../redis";
+import { exactRedisIntegerReply, parseRedisTimeReply } from "../redis";
 import { parseDistributedRateLimitDecision } from "../services/distributedRateLimitService";
 
 test("Redis integer authority accepts only exact bounded RESP number replies", () => {
@@ -10,6 +10,23 @@ test("Redis integer authority accepts only exact bounded RESP number replies", (
     assert.equal(exactRedisIntegerReply(value, 0, 1), null);
   }
   assert.throws(() => exactRedisIntegerReply(1, 2, 1), /bounds are invalid/);
+});
+
+test("Redis TIME authority requires canonical seconds and microseconds strings", () => {
+  assert.equal(parseRedisTimeReply(["1750000000", "123456"]), 1_750_000_000_123);
+  assert.equal(parseRedisTimeReply(["0", "0"]), 0);
+  for (const malformed of [
+    [1_750_000_000, "123456"],
+    ["1750000000", 123_456],
+    ["01750000000", "123456"],
+    ["1750000000", "0123456"],
+    ["1750000000", "1000000"],
+    ["-1", "0"],
+    ["8640000000001", "0"],
+    ["1750000000"],
+  ]) {
+    assert.equal(parseRedisTimeReply(malformed), null);
+  }
 });
 
 test("distributed rate-limit replies require one coherent exact token-bucket state", () => {

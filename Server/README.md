@@ -724,10 +724,14 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   removal, and failed-admission restoration execute atomically across backend nodes. Queue writes
   first validate the exact four-field snapshot, including bounded identity, finite nonnegative
   signed-client-safe Army Power projection, a real Bronze3-through-Champion tier, and a positive
-  safe enqueue clock; complete recovery batches validate before deduplication or mutation. The Lua
+  safe enqueue clock; complete recovery batches validate before deduplication or mutation. Enqueue,
+  stale cutoff, widening, and failed-admission restoration all use one exactly parsed Redis `TIME`
+  snapshot rather than each node's wall clock. Only canonical nonnegative seconds plus 0-999999
+  microseconds inside JavaScript Date support are accepted. The Lua
   reader uses protected JSON decoding, proves the same field/type/range contract, binds the payload
   identity and timestamp to its sorted-set member and score, rejects participant IDs containing
-  controls or MongoDB dynamic-key syntax, and removes both halves of a malformed
+  controls or MongoDB dynamic-key syntax, requires every candidate time to remain inside the exact
+  `(staleBefore, now]` window even after a bounded stale-cleanup page, and removes both halves of a malformed
   transient row so it cannot block every healthy search behind it. MongoDB profile reload and the
   transactional two-player reservation remain final admission authority. `MatchFound`
   can be relayed to the opponent's node through a bounded pub/sub instruction, but that receiving

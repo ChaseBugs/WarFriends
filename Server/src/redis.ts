@@ -220,13 +220,35 @@ export function exactRedisIntegerReply(value: unknown, minimum: number, maximum:
     : null;
 }
 
-/** Read Redis server time so distributed algorithms do not depend on per-node wall clocks. */
+const MAX_JAVASCRIPT_DATE_MILLISECONDS = 8_640_000_000_000_000;
+
+/** Parse the exact two canonical decimal strings returned by the Redis TIME command. */
+export function parseRedisTimeReply(value: unknown): number | null {
+  if (!Array.isArray(value)
+    || value.length !== 2
+    || typeof value[0] !== "string"
+    || typeof value[1] !== "string"
+    || !/^(?:0|[1-9]\d*)$/u.test(value[0])
+    || !/^(?:0|[1-9]\d*)$/u.test(value[1])) return null;
+  const seconds = Number(value[0]);
+  const microseconds = Number(value[1]);
+  if (!Number.isSafeInteger(seconds)
+    || seconds < 0
+    || !Number.isSafeInteger(microseconds)
+    || microseconds < 0
+    || microseconds > 999_999) return null;
+  const milliseconds = seconds * 1_000 + Math.floor(microseconds / 1_000);
+  return Number.isSafeInteger(milliseconds) && milliseconds <= MAX_JAVASCRIPT_DATE_MILLISECONDS
+    ? milliseconds
+    : null;
+}
+
+/** Read exact Redis server time so distributed algorithms do not depend on per-node wall clocks. */
 export async function redisTimeMs(): Promise<number | undefined> {
   const client = getRedisDataClient();
   if (!client || !isRedisAvailable()) return undefined;
   try {
-    const [seconds, microseconds] = await client.time();
-    return Number(seconds) * 1_000 + Math.floor(Number(microseconds) / 1_000);
+    return parseRedisTimeReply(await client.time()) ?? undefined;
   } catch (err) {
     logger.redis.error("TIME failed", { error: (err as Error).message });
     return undefined;

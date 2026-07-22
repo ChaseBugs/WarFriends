@@ -1,6 +1,6 @@
 import logger from "../utils/logger";
 import { League, RedisKeys } from "../constants";
-import { exactRedisIntegerReply, isRedisAvailable, redisEval } from "../redis";
+import { exactRedisIntegerReply, isRedisAvailable, redisEval, redisTimeMs } from "../redis";
 import { matchmakingTimeoutSeconds } from "./multiplayerTimeoutPolicyService";
 
 // Matchmaking — pairs two waiting players for a PvP match (BACKEND.md §3). Pairing favours
@@ -175,6 +175,8 @@ for index = 1, #waiting, 2 do
       and candidateTime > 0
       and candidateTime <= 9007199254740991
       and candidateTime == enqueuedAt
+      and candidateTime > staleBefore
+      and candidateTime <= now
     if not candidateValid then
       redis.call('ZREM', queueKey, candidateId)
       redis.call('HDEL', entriesKey, candidateId)
@@ -247,6 +249,27 @@ export function validQueueEntry(value: unknown): value is QueueEntry {
     && Number(entry.enqueuedAt) > 0;
 }
 
+/**
+ * Prove a transient candidate belongs to the exact distributed selection window.
+ *
+ * Queue shape alone cannot authorize a pairing: a far-future score can survive indefinitely, and
+ * more stale rows than the bounded cleanup batch can otherwise re-enter the candidate page. Both
+ * endpoints come from one Redis TIME snapshot, so every backend node makes the same decision.
+ */
+export function validQueueEntryWithin(
+  value: unknown,
+  staleBeforeExclusive: number,
+  nowInclusive: number,
+): value is QueueEntry {
+  return Number.isSafeInteger(staleBeforeExclusive)
+    && Number.isSafeInteger(nowInclusive)
+    && staleBeforeExclusive >= 0
+    && nowInclusive > staleBeforeExclusive
+    && validQueueEntry(value)
+    && value.enqueuedAt > staleBeforeExclusive
+    && value.enqueuedAt <= nowInclusive;
+}
+
 function validatedQueueEntry(value: unknown): QueueEntry {
   if (!validQueueEntry(value)) throw new Error("Matchmaking queue entry is invalid.");
   return value;
@@ -268,9 +291,14 @@ export function buildRestoredQueueEntries(
  */
 export async function enqueueForHub(entry: Omit<QueueEntry, "enqueuedAt">): Promise<string | null> {
   if (!isRedisAvailable()) return enqueue(entry);
-  const now = Date.now();
+  // All nodes must use one coordinator clock for sorted-set scores, stale cleanup, and widening.
+  // A local wall-clock skew must not make another node's healthy row future-dated or prematurely
+  // stale. If Redis cannot provide its exact TIME tuple, distributed pairing is unavailable.
+  const now = await redisTimeMs();
+  if (now === undefined) throw new Error("Distributed matchmaking time is unavailable.");
   const full = validatedQueueEntry({ ...entry, enqueuedAt: now });
   const encoded = JSON.stringify(full);
+  const staleBefore = now - matchmakingTimeoutSeconds() * 2_000;
   const result = await redisEval(
     enqueueScript,
     [RedisKeys.matchmakingQueue, RedisKeys.matchmakingEntries],
@@ -283,14 +311,14 @@ export async function enqueueForHub(entry: Omit<QueueEntry, "enqueuedAt">): Prom
       500,
       // Give the owning node's ordinary timer a full extra window to remove and notify its player
       // before another node treats the entry as abandoned after a crash or prolonged pause.
-      now - matchmakingTimeoutSeconds() * 2_000,
+      staleBefore,
     ],
   );
   if (result === undefined) throw new Error("Distributed matchmaking coordination is unavailable.");
   if (typeof result !== "string") return null;
   try {
     const opponent = JSON.parse(result) as unknown;
-    if (!validQueueEntry(opponent) || opponent.playerId === full.playerId) return null;
+    if (!validQueueEntryWithin(opponent, staleBefore, now) || opponent.playerId === full.playerId) return null;
     logger.match.event("Distributed matchmaking paired", { a: full.playerId, b: opponent.playerId });
     return opponent.playerId;
   } catch {
@@ -317,11 +345,12 @@ export async function removeForHub(playerId: string): Promise<boolean> {
 /** Restore a failed admission batch atomically without immediately pairing its two members. */
 export async function restoreWaitingForHub(
   entries: ReadonlyArray<Omit<QueueEntry, "enqueuedAt">>,
-  now = Date.now(),
 ): Promise<number> {
   // Validate every submitted snapshot before deduplicating. Otherwise an invalid earlier duplicate
   // could be hidden by a later valid value and partially trusted at a recovery boundary.
-  if (!isRedisAvailable()) return restoreWaiting(entries, now);
+  if (!isRedisAvailable()) return restoreWaiting(entries, Date.now());
+  const now = await redisTimeMs();
+  if (now === undefined) throw new Error("Distributed matchmaking time is unavailable.");
   const distributedEntries = buildRestoredQueueEntries(entries, now);
   const result = await redisEval(
     restoreScript,
