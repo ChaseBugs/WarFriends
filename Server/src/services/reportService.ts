@@ -316,8 +316,34 @@ export function reportIsWithinDuplicateWindow(createdAt: Date, now: Date): boole
   return age >= 0 && age < DUPLICATE_WINDOW_MS;
 }
 
-function boundedString(value: unknown, maxLength: number): string {
-  return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
+function exactReportedPlayerId(value: unknown): string {
+  // Player IDs choose the durable target and the moderation deduplication key. Truncating or
+  // trimming this field could redirect an invalid request to a different real account whose ID
+  // equals the normalized prefix, so the transport must already be canonical and bounded.
+  if (typeof value !== "string"
+    || value.length < 1
+    || value.length > 128
+    || value.trim() !== value
+    || /[\u0000-\u001f\u007f]/u.test(value)) {
+    throw new ApiError(ApiErrorCode.PlayerNotFound, "Reported player is required.");
+  }
+  return value;
+}
+
+function normalizedReportMessage(value: unknown, required: boolean): string {
+  if (value === undefined && !required) return "";
+  if (typeof value !== "string"
+    || value.length > 1_000
+    // Preserve normal multiline player reports while rejecting controls that can corrupt logs,
+    // exports, or an operator UI. Newline, carriage return, and tab remain valid user text.
+    || /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/u.test(value)) {
+    throw new ApiError(ApiErrorCode.UnknownAction, "A report message is invalid.");
+  }
+  const normalized = value.trim();
+  if (required && normalized.length === 0) {
+    throw new ApiError(ApiErrorCode.UnknownAction, "A report message is required.");
+  }
+  return normalized;
 }
 
 /**
@@ -326,8 +352,8 @@ function boundedString(value: unknown, maxLength: number): string {
  * army power/rank/time values against authoritative match records when those are available.
  */
 export function normalizeReportInput(req: Record<string, unknown>, requiresMessage: boolean): PlayerReportInput {
-  const reportedPlayerId = boundedString(req.ReportedPlayerId, 128);
-  const message = boundedString(req.Message, 1000);
+  const reportedPlayerId = exactReportedPlayerId(req.ReportedPlayerId);
+  const message = normalizedReportMessage(req.Message, requiresMessage);
   // Both recovered report actions serialize an `int` with ToString(). Keep the existing bounded
   // 0-100 compatibility range, but require canonical decimal transport so missing/null/Boolean/
   // array input cannot silently become report category zero through JavaScript coercion.
@@ -336,16 +362,26 @@ export function normalizeReportInput(req: Record<string, unknown>, requiresMessa
     : typeof req.ReportType === "string" && /^(?:0|[1-9]\d*)$/.test(req.ReportType)
       ? Number(req.ReportType)
       : Number.NaN;
-  if (!reportedPlayerId) throw new ApiError(ApiErrorCode.PlayerNotFound, "Reported player is required.");
   if (!Number.isInteger(reportType) || reportType < 0 || reportType > 100) {
     throw new ApiError(ApiErrorCode.UnknownAction, "Invalid report type.");
   }
-  if (requiresMessage && !message) throw new ApiError(ApiErrorCode.UnknownAction, "A report message is required.");
 
   const evidence: Record<string, string | number> = {};
   for (const key of ["MyArmyPower", "MyRank", "OpponentArmyPower", "OpponentRank", "TimeOfMatch"] as const) {
     const value = req[key];
-    if (typeof value === "string" || typeof value === "number") evidence[key] = String(value).slice(0, 64);
+    // These fields are client claims retained only for human comparison. Omit malformed claims
+    // instead of slicing them into a different believable value; combat authority never reads
+    // this map. Recovered localized numeric strings are preserved byte-for-byte.
+    const serialized = typeof value === "string"
+      ? value
+      : typeof value === "number" && Number.isFinite(value)
+        ? String(value)
+        : "";
+    if (serialized.length > 0
+      && serialized.length <= 64
+      && !/[\u0000-\u001f\u007f]/u.test(serialized)) {
+      evidence[key] = serialized;
+    }
   }
   return { reportedPlayerId, reportType, message, evidence };
 }

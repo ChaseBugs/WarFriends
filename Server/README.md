@@ -217,6 +217,13 @@ Status and the append-only audit entry commit in one MongoDB update. Concurrent 
 both act on the same stale status, a retry cannot change its decision, and terminal reports cannot
 be reopened. Newest-first pages use `createdAt` plus `reportId` as a stable cursor tie-breaker.
 
+The recovered player-report boundary preserves account identity exactly. `ReportedPlayerId` is
+never trimmed or truncated into another possible account, required player messages are rejected
+when invalid or longer than 1000 characters rather than silently shortened, and `ReportType` accepts
+only its canonical recovered decimal form. Cheater-report combat fields remain untrusted operator
+context: a malformed, non-finite, control-bearing, or overlong claim is omitted whole and can never
+become combat or punishment authority.
+
 Player appeals use the separate `/support/moderation` boundary because the recovered stock banned
 dialog has no database appeal action. A support frontend supplies `X-Player-Id` and the current
 server-issued session token as `Authorization: Bearer <token>`; passwords and provider credentials
