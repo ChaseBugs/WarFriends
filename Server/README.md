@@ -1031,6 +1031,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   invitations and type-10 rank changes; it deliberately excludes type-27 direct messages. Complete
   fixed-shape ledger authority is validated before provider I/O and every terminal/retry transition
   compare-and-sets the selected pending snapshot.
+  Monitoring distinguishes provider calls from terminal suppression: sent delivery increments only
+  the delivered-attempt counter, a pre-provider ineligible decision increments only not-eligible
+  suppression, and a provider-proven invalid token increments its failed-attempt counter plus
+  invalid-token suppression only after retirement and terminal ledger publication. One pure tested
+  mapping prevents success and suppression labels from being swapped in individual worker branches.
   This is at-least-once delivery: a provider acceptance followed by a lost HTTP response can produce
   a duplicate wake-up, which is safe because the payload only asks Unity to reload its durable
   inbox. Configure the exact worker bounds with `FIREBASE_PUSH_SCHEDULER_INTERVAL_SECONDS` (5-3600),

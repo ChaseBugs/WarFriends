@@ -12,6 +12,7 @@ import {
   attemptOfflineInboxPush,
   FIREBASE_PUSH_MESSAGE_TYPES,
   invalidFirebaseTokenRetirement,
+  type FirebasePushAttemptResult,
   type FirebasePushTransport,
 } from "./firebasePushService";
 import { firebasePushPolicy, type FirebasePushPolicy } from "./firebasePushPolicyService";
@@ -23,6 +24,10 @@ import {
 import { withScheduledJobLease } from "./scheduledJobLeaseService";
 import { validatedInboxMessageDocument } from "./inboxMessageAuthorityService";
 import type { MessageDoc } from "./socialService";
+import type {
+  FirebasePushAttemptOutcome,
+  FirebasePushSuppressionReason,
+} from "./metricsService";
 
 const JOB_ID = "firebase-inbox-push-delivery";
 const MAXIMUM_RECORDED_ATTEMPTS = 1_000_000;
@@ -188,6 +193,33 @@ function incrementedAttempts(attempts: number): number {
   return Math.min(MAXIMUM_RECORDED_ATTEMPTS, attempts + 1);
 }
 
+export interface FirebasePushMetricDisposition {
+  attempt: FirebasePushAttemptOutcome | null;
+  suppression: FirebasePushSuppressionReason | null;
+}
+
+/**
+ * Map one provider decision to the two distinct Prometheus counter families.
+ *
+ * A delivered provider call is an attempt outcome, never a suppression. `not-eligible` performs
+ * no provider call and is only a suppression. An invalid token is both a failed provider attempt
+ * and, after token retirement plus terminal ledger publication, an invalid-token suppression.
+ * Keeping this mapping pure prevents similarly named labels from being swapped at the mutation
+ * branches, which previously made successful delivery increase the not-eligible counter.
+ */
+export function firebasePushMetricDisposition(
+  result: FirebasePushAttemptResult,
+): Readonly<FirebasePushMetricDisposition> {
+  if (result.outcome === "sent") return Object.freeze({ attempt: "delivered", suppression: null });
+  if (result.outcome === "not-eligible") {
+    return Object.freeze({ attempt: null, suppression: "not_eligible" });
+  }
+  if (result.disposition === "invalidToken") {
+    return Object.freeze({ attempt: "invalid_token", suppression: "invalid_token" });
+  }
+  return Object.freeze({ attempt: result.disposition, suppression: null });
+}
+
 async function processDelivery(
   delivery: FirebasePushDeliveryDocument,
   now: Date,
@@ -203,12 +235,8 @@ async function processDelivery(
     transport,
     pushPolicy,
   );
-  if (result.outcome === "sent") serverMetrics.firebasePushAttempt("delivered");
-  else if (result.outcome === "failed") {
-    serverMetrics.firebasePushAttempt(
-      result.disposition === "invalidToken" ? "invalid_token" : result.disposition,
-    );
-  }
+  const metricDisposition = firebasePushMetricDisposition(result);
+  if (metricDisposition.attempt) serverMetrics.firebasePushAttempt(metricDisposition.attempt);
   // The provider call may outlive a lease renewal failure. Fence every durable result after the
   // response so a former worker cannot race the node that has taken over the next sweep.
   await assertOwned();
@@ -223,7 +251,6 @@ async function processDelivery(
       lastDisposition: null,
       terminalReason: null,
     });
-    serverMetrics.firebasePushSuppressed("not_eligible");
     return "delivered";
   }
   if (result.outcome === "not-eligible") {
@@ -236,7 +263,7 @@ async function processDelivery(
       lastDisposition: null,
       terminalReason: "not-eligible",
     });
-    serverMetrics.firebasePushSuppressed("invalid_token");
+    serverMetrics.firebasePushSuppressed(metricDisposition.suppression!);
     return "suppressed";
   }
 
@@ -259,6 +286,7 @@ async function processDelivery(
       lastDisposition: null,
       terminalReason: "invalid-token",
     });
+    serverMetrics.firebasePushSuppressed(metricDisposition.suppression!);
     return "suppressed";
   }
 

@@ -196,6 +196,13 @@ compare-and-set against the selected pending snapshot. Delivery is honestly at-l
 an accepted provider request whose response is lost may be retried. Visible notification copy and a
 distinct source-backed type-27 consent category remain explicit gaps.
 
+Provider attempts and terminal suppressions now use one tested outcome mapping before metrics are
+recorded. Successful FCM delivery increments only `outcome="delivered"`; a row rejected before any
+provider call increments only `reason="not_eligible"`; and provider-proven invalid tokens increment
+the `invalid_token` attempt plus the matching suppression only after token retirement and terminal
+ledger publication. This fixes the previous swapped labels that reported successful delivery as
+not eligible and ordinary eligibility suppression as an invalid token.
+
 Live inbox delivery now covers every message family emitted by the backend. Direct/challenge and
 Squad type-3/21/28 producers publish after durable persistence. Player League type-23 and Squad War
 type-9 settlements return only newly inserted row identities from the successful transaction

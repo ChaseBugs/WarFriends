@@ -4,6 +4,7 @@ import type { FirebasePushDeliveryDocument } from "../db";
 import {
   enqueueFirebaseInboxPush,
   firebasePushDeliveryId,
+  firebasePushMetricDisposition,
   runFirebasePushDeliverySweep,
   validatedFirebasePushDelivery,
 } from "../services/firebasePushDeliveryService";
@@ -11,6 +12,44 @@ import {
   exactFirebasePushDeliveryPolicy,
   firebasePushRetryDelaySeconds,
 } from "../services/firebasePushDeliveryPolicyService";
+
+test("Firebase delivery metrics distinguish provider attempts from terminal suppressions", () => {
+  assert.deepEqual(firebasePushMetricDisposition({ outcome: "sent" }), {
+    attempt: "delivered",
+    suppression: null,
+  });
+  assert.deepEqual(firebasePushMetricDisposition({ outcome: "not-eligible" }), {
+    attempt: null,
+    suppression: "not_eligible",
+  });
+  assert.deepEqual(firebasePushMetricDisposition({
+    outcome: "failed",
+    disposition: "invalidToken",
+    attemptedToken: "expired-token",
+    error: "unregistered",
+  }), {
+    attempt: "invalid_token",
+    suppression: "invalid_token",
+  });
+  assert.deepEqual(firebasePushMetricDisposition({
+    outcome: "failed",
+    disposition: "transient",
+    attemptedToken: "live-token",
+    error: "unavailable",
+  }), {
+    attempt: "transient",
+    suppression: null,
+  });
+  assert.deepEqual(firebasePushMetricDisposition({
+    outcome: "failed",
+    disposition: "configuration",
+    attemptedToken: "live-token",
+    error: "sender mismatch",
+  }), {
+    attempt: "configuration",
+    suppression: null,
+  });
+});
 
 const POLICY = {
   schedulerIntervalSeconds: 60,
