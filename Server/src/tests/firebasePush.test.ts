@@ -3,6 +3,7 @@ import test from "node:test";
 import { PlayerStatus } from "../constants";
 import type { NotificationSettingsDTO } from "../dtos";
 import {
+  FIREBASE_PUSH_MESSAGE_TYPES,
   firebaseDataPushFor,
   firebaseFailureDisposition,
   firebaseHttpV1RequestFor,
@@ -22,6 +23,8 @@ const ALL_ENABLED: NotificationSettingsDTO = {
 };
 
 test("Firebase wake actions preserve the two recovered client data IDs", () => {
+  assert.deepEqual(FIREBASE_PUSH_MESSAGE_TYPES, [0, 1, 3, 9, 10, 11, 21, 23, 28]);
+  assert.equal(FIREBASE_PUSH_MESSAGE_TYPES.every((type) => firebaseWakeActionFor(type) !== null), true);
   assert.deepEqual(firebaseWakeActionFor(0), { id: "2", consent: "challenge" });
   assert.deepEqual(firebaseWakeActionFor(1), { id: "90", consent: "squadStatus" });
   assert.deepEqual(firebaseWakeActionFor(3), { id: "90", consent: "squadStatus" });

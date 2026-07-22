@@ -118,6 +118,17 @@ export function invalidFirebaseTokenRetirement(
 type ConsentKey = keyof NotificationSettingsDTO;
 
 /**
+ * Complete durable inbox families eligible for an offline Firebase wake.
+ *
+ * Keep this exported list shared with crash-window reconciliation. Type 27 is deliberately absent
+ * because the recovered settings have no direct-message consent category; every listed family is
+ * handled by `firebaseWakeActionFor` below.
+ */
+export const FIREBASE_PUSH_MESSAGE_TYPES = Object.freeze([
+  0, 1, 3, 9, 10, 11, 21, 23, 28,
+] as const satisfies readonly MessageDoc["messageType"][]);
+
+/**
  * Map durable inbox families to the only remote data actions recovered from
  * `PushNotificationManager.ReactToNotification`.
  *

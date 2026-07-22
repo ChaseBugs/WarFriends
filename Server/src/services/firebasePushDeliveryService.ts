@@ -10,6 +10,7 @@ import logger from "../utils/logger";
 import { serverMetrics } from "./metricsService";
 import {
   attemptOfflineInboxPush,
+  FIREBASE_PUSH_MESSAGE_TYPES,
   invalidFirebaseTokenRetirement,
   type FirebasePushTransport,
 } from "./firebasePushService";
@@ -304,7 +305,10 @@ async function recoverMissingDeliveryIntents(
   const candidates = await messages().aggregate<MessageDoc>([
     {
       $match: {
-        messageType: { $in: [0, 3, 9, 10, 11, 21, 23, 28] },
+        // Reconcile the same complete family set accepted by the live Firebase policy. Type-1
+        // invitations were previously omitted, leaving the commit-to-enqueue crash window with no
+        // durable recovery path for an offline invited player.
+        messageType: { $in: FIREBASE_PUSH_MESSAGE_TYPES },
         read: false,
         ignored: false,
         accepted: false,

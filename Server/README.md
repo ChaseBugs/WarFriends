@@ -1016,9 +1016,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   quota, service, internal, and transport failures retain the token. Each recipient/message pair is
   inserted once into `firebasePushDeliveries`; a renewable cross-node lease selects one bounded
   worker, and transient/configuration failures retry with saturating exponential backoff. The
-  worker also joins unread supported inbox rows against the ledger to recover a process crash after
-  inbox commit but before normal enqueue. Complete fixed-shape ledger authority is validated before
-  provider I/O and every terminal/retry transition compare-and-sets the selected pending snapshot.
+  worker also joins every unread push-eligible inbox family against the ledger to recover a process
+  crash after inbox commit but before normal enqueue. That shared family set includes type-1 Squad
+  invitations and type-10 rank changes; it deliberately excludes type-27 direct messages. Complete
+  fixed-shape ledger authority is validated before provider I/O and every terminal/retry transition
+  compare-and-sets the selected pending snapshot.
   This is at-least-once delivery: a provider acceptance followed by a lost HTTP response can produce
   a duplicate wake-up, which is safe because the payload only asks Unity to reload its durable
   inbox. Configure the exact worker bounds with `FIREBASE_PUSH_SCHEDULER_INTERVAL_SECONDS` (5-3600),
