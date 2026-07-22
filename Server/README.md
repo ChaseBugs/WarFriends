@@ -1469,10 +1469,13 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   JavaScript comparison behavior. `BuyThreeCards` legitimately omits `discount` and `StartTime`; only that true
   absence derives zero, while present fields must remain exact nonnegative C#-int JSON numbers and
   malformed null, Boolean, string, array, fractional, negative, unsafe, or oversized values reject
-  before economy logic. The stock client selects card identities before sending and cannot consume
-  replacement IDs on success, so identities inside the verified rarity envelope remain
-  client-selected until a nonce or client adapter is added. Run `npm run verify:card-catalog` to
-  verify the generated artifact. The complete five-field inventory snapshot is validated before
+  before economy logic. The stock client selects card identities before sending and therefore keeps
+  those identities as validation assertions. A repaired client may omit `cards` and send the exact
+  `ServerSelect: true` contract; the server then draws the complete pack from the same recovered
+  fixed/ranged rarity envelope and returns `Cards`. The enclosing `BufferId` is the durable nonce,
+  so its cached response replays the exact identities without another debit or draw. The Unity side
+  must explicitly consume the returned array; the unmodified success parser still uses its local
+  roll. Run `npm run verify:card-catalog` to verify the generated artifact. The complete five-field inventory snapshot is validated before
   read, gameplay use, recovery serialization, and every progression publication. Normal ownership
   is sparse, positive, signed-client-safe, and limited to implemented IDs. Buddy ownership is capped
   at ten exact loadout records with source-backed unit/weapon indexes and bounded legacy visual IDs;

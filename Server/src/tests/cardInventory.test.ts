@@ -793,6 +793,39 @@ test("Gold and WarBucks card packs debit source prices and add validated card co
   assert.equal(threeCards.state.gold, 31);
   assert.equal(threeCards.state.warBucks, 800);
   assert.equal(threeCards.cardInventory.cardData.AIRSTRIKE?.amount, 2);
+
+  const serverSelected = purchaseCardPackState(
+    { ...createInitialProgression(NOW), warBucks: 2_000 },
+    5,
+    {
+      serverSelect: true,
+      cardPack: "THREE_CARDS",
+      discount: 0,
+      startTime: NOW,
+    },
+    () => 0,
+  );
+  assert.equal(serverSelected.cards.length, 3);
+  assert.equal(serverSelected.state.warBucks, 800);
+  assert.equal(
+    Object.values(serverSelected.cardInventory.cardData)
+      .reduce((total, entry) => total + entry.amount, 0),
+    3,
+  );
+  assert.throws(
+    () => purchaseCardPackState(
+      { ...createInitialProgression(NOW), warBucks: 2_000 },
+      5,
+      {
+        serverSelect: true,
+        cardPack: "THREE_CARDS",
+        discount: 0,
+        startTime: NOW,
+      },
+      (upperBound) => upperBound,
+    ),
+    /Card-pack selector is invalid/,
+  );
 });
 
 test("card packs fail closed for locked level, invalid roll, unresolved cards, discount, and balance", () => {
@@ -863,6 +896,28 @@ test("card-pack buffered integers distinguish omitted legacy fields from malform
     })),
     { cards: ["AMMOCRATE"], cardPack: "BRONZE_PACK", discount: 0, startTime: NOW },
   );
+  assert.deepEqual(
+    parseCardPackPurchaseData(JSON.stringify({
+      ServerSelect: true,
+      cardPack: "THREE_CARDS",
+      discount: 0,
+      StartTime: NOW,
+    })),
+    { serverSelect: true, cardPack: "THREE_CARDS", discount: 0, startTime: NOW },
+  );
+
+  for (const invalid of [
+    { ServerSelect: false, cardPack: "THREE_CARDS" },
+    { ServerSelect: null, cardPack: "THREE_CARDS" },
+    { ServerSelect: "true", cardPack: "THREE_CARDS" },
+    { ServerSelect: true, cardPack: "THREE_CARDS", cards: ["AMMOCRATE"] },
+    { ServerSelect: true, cardPack: "THREE_CARDS", alias: true },
+  ]) {
+    assert.throws(
+      () => parseCardPackPurchaseData(JSON.stringify(invalid)),
+      /Server-selected card-pack request is invalid/,
+    );
+  }
 
   for (const value of [null, false, true, [], [0], "", "0", -1, 0.5, 2_147_483_648]) {
     for (const field of ["discount", "StartTime"] as const) {
@@ -911,4 +966,34 @@ test("buffered card-pack purchase is atomic, returns rollback data, and replays 
     JSON.parse(invalidResponse?.CardManagerData as string),
     createInitialCardInventory(),
   );
+
+  const serverRequests = [{
+    action: DbAction.BuyCardPack,
+    data: JSON.stringify({ ServerSelect: true, cardPack: "THREE_CARDS" }),
+  }];
+  const serverFirst = processAssignmentBufferState(
+    initial,
+    NOW,
+    "server-selected-card-pack-buffer",
+    serverRequests,
+    5,
+  );
+  const serverResponse = (JSON.parse(serverFirst.requestsResults) as Array<Record<string, unknown>>)[0]!;
+  assert.equal(serverResponse.Result, 1);
+  assert.equal(Array.isArray(serverResponse.Cards), true);
+  assert.equal((serverResponse.Cards as string[]).length, 3);
+  assert.equal(serverFirst.state.warBucks, 800);
+
+  const serverReplay = processAssignmentBufferState(
+    serverFirst.state,
+    NOW + 1,
+    "server-selected-card-pack-buffer",
+    serverRequests,
+    5,
+  );
+  assert.equal(serverReplay.replayed, true);
+  assert.equal(serverReplay.requestsResults, serverFirst.requestsResults);
+  assert.equal(serverReplay.state.warBucks, 800);
+  assert.deepEqual(serverReplay.state.cardInventory, serverFirst.state.cardInventory);
+  assert.equal(serverReplay.state.revision, serverFirst.state.revision);
 });

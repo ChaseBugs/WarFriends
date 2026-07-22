@@ -31,12 +31,20 @@ export const ALREADY_CRAFTING = 17601;
 export const CRAFTED_CARD_NOT_READY = 17701;
 export const MAX_PVP_CARDS_PER_MATCH = 6;
 
-export interface CardPackPurchasePayload {
+export type CardPackPurchasePayload = {
+  /** Stock 1.6.0 clients roll identities locally and send the exact resulting array. */
   cards: string[];
+  serverSelect?: false;
   cardPack: string;
   discount: number;
   startTime: number;
-}
+} | {
+  /** Repaired clients ask the server to roll identities under the outer RequestBuffer nonce. */
+  serverSelect: true;
+  cardPack: string;
+  discount: number;
+  startTime: number;
+};
 
 export interface CardInventoryMutationResult {
   state: PlayerProgressionState;
@@ -448,6 +456,22 @@ function cardPackName(value: unknown): string {
 /** Decode the exact object queued by CardManager.BuyCardPack/BuyThreeCards. */
 export function parseCardPackPurchaseData(value: string): CardPackPurchasePayload {
   const data = objectJson(value);
+  if (data.ServerSelect !== undefined) {
+    // This is an explicit replacement-client contract. The stock payload has no ServerSelect
+    // member and continues through the legacy assertion path below. Requiring the exact Boolean
+    // and an exact key set prevents null/false/string coercion, a client-supplied card array, or
+    // an unnoticed future alias from selecting the server-owned random branch.
+    const allowedKeys = new Set(["ServerSelect", "cardPack", "discount", "StartTime"]);
+    if (data.ServerSelect !== true || Object.keys(data).some((key) => !allowedKeys.has(key))) {
+      throw new ApiError(CARD_PACK_NOT_FOUND, "Server-selected card-pack request is invalid.");
+    }
+    return {
+      serverSelect: true,
+      cardPack: cardPackName(data.cardPack),
+      discount: optionalCardPackInteger(data.discount, "discount"),
+      startTime: optionalCardPackInteger(data.StartTime, "StartTime"),
+    };
+  }
   if (!Array.isArray(data.cards) || data.cards.some((card) => typeof card !== "string")) {
     throw new ApiError(CARD_PACK_NOT_FOUND, "Card-pack contents are invalid.");
   }
@@ -501,6 +525,49 @@ function validatePackContents(pack: CardPackDefinition, cards: readonly string[]
 }
 
 /**
+ * Roll one complete pack from the same recovered rarity envelope used to validate stock rolls.
+ *
+ * The outer RequestBuffer BufferId is the operation nonce: its durable response cache returns
+ * these exact identities after a lost response instead of drawing again. This helper therefore
+ * owns identity selection only; debit, inventory mutation, and replay publication remain inside
+ * the existing single progression transaction.
+ */
+function selectCardPackContents(
+  pack: CardPackDefinition,
+  choose: (upperBound: number) => number,
+): string[] {
+  const fixedPool = Object.values(CARD_CATALOG)
+    .filter((card) => card.implemented && card.rarity === pack.fixedRarity)
+    .map((card) => card.name)
+    .sort();
+  const rangedPool = Object.values(CARD_CATALOG)
+    .filter((card) => (
+      card.implemented
+      && card.rarity >= pack.guaranteedRarity
+      && card.rarity <= pack.maxRarity
+    ))
+    .map((card) => card.name)
+    .sort();
+  // THREE_CARDS has zero fixed-rarity slots, so an empty fixed pool is valid only for that
+  // source shape. Every emitted position still needs a nonempty pool before selection.
+  if ((pack.fixedRarityCount > 0 && fixedPool.length === 0) || rangedPool.length === 0) {
+    throw new ApiError(ApiErrorCode.InternalServerError, `Card pack ${pack.name} has an empty selection pool.`);
+  }
+
+  const cards: string[] = [];
+  for (let index = 0; index < pack.cardCount; index += 1) {
+    const pool = index < pack.fixedRarityCount ? fixedPool : rangedPool;
+    const selected = choose(pool.length);
+    if (!Number.isInteger(selected) || selected < 0 || selected >= pool.length) {
+      throw new ApiError(ApiErrorCode.InternalServerError, "Card-pack selector is invalid.");
+    }
+    cards.push(pool[selected]!);
+  }
+  validatePackContents(pack, cards);
+  return cards;
+}
+
+/**
  * Select and grant one server-owned card-pack reward without charging its shop price.
  *
  * Heroic missions return the selected IDs in `HeroicMissionsCompletionRewardCardPack`, so
@@ -520,34 +587,7 @@ export function grantCardPackRewardState(
   const pack = CARD_PACK_CATALOG[packName];
   if (!pack) throw new ApiError(ApiErrorCode.InternalServerError, `Reward card pack ${packName} is invalid.`);
 
-  const fixedPool = Object.values(CARD_CATALOG)
-    .filter((card) => card.implemented && card.rarity === pack.fixedRarity)
-    .map((card) => card.name)
-    .sort();
-  const rangedPool = Object.values(CARD_CATALOG)
-    .filter((card) => (
-      card.implemented
-      && card.rarity >= pack.guaranteedRarity
-      && card.rarity <= pack.maxRarity
-    ))
-    .map((card) => card.name)
-    .sort();
-  if (fixedPool.length === 0 || rangedPool.length === 0) {
-    throw new ApiError(ApiErrorCode.InternalServerError, `Reward card pack ${packName} has an empty pool.`);
-  }
-
-  const cards: string[] = [];
-  for (let index = 0; index < pack.cardCount; index += 1) {
-    const pool = index < pack.fixedRarityCount ? fixedPool : rangedPool;
-    const selected = choose(pool.length);
-    if (!Number.isInteger(selected) || selected < 0 || selected >= pool.length) {
-      throw new ApiError(ApiErrorCode.InternalServerError, "Reward card selector is invalid.");
-    }
-    cards.push(pool[selected]!);
-  }
-  // Keep this assertion beside selection so future catalog/rule changes cannot silently grant
-  // a pack shape that the already recovered purchase validator would reject.
-  validatePackContents(pack, cards);
+  const cards = selectCardPackContents(pack, choose);
 
   const cardInventory = cardInventoryStateFor(state);
   for (const id of cards) {
@@ -625,6 +665,7 @@ export function purchaseCardPackState(
   state: PlayerProgressionState,
   playerLevelIndex: number,
   payload: CardPackPurchasePayload,
+  choose: (upperBound: number) => number = (upperBound) => randomInt(upperBound),
 ): CardInventoryMutationResult {
   const pack = CARD_PACK_CATALOG[payload.cardPack];
   if (!pack) throw new ApiError(CARD_PACK_NOT_FOUND, "Card pack was not found.");
@@ -638,14 +679,17 @@ export function purchaseCardPackState(
   if (sourceLevel.index < CARD_UNLOCK_LEVEL - 1) {
     throw new ApiError(CARD_PACK_NOT_FOUND, "War Cards are not unlocked for this player level.");
   }
-  validatePackContents(pack, payload.cards);
+  const cards = payload.serverSelect === true
+    ? selectCardPackContents(pack, choose)
+    : payload.cards;
+  validatePackContents(pack, cards);
   if (state.gold < pack.priceGold || state.warBucks < pack.priceWarBucks) {
     // BuyCardPack's recovered parser groups both wallet rollback paths under code 100.
     throw new ApiError(CARD_PACK_NOT_ENOUGH_FUNDS, "Not enough currency for this card pack.");
   }
 
   const cardInventory = cardInventoryStateFor(state);
-  for (const id of payload.cards) {
+  for (const id of cards) {
     const current = cardInventory.cardData[id]?.amount ?? 0;
     if (!Number.isSafeInteger(current) || current < 0 || current === Number.MAX_SAFE_INTEGER) {
       throw new ApiError(ApiErrorCode.InternalServerError, `Card count for ${id} is invalid.`);
@@ -659,7 +703,7 @@ export function purchaseCardPackState(
     warBucks: state.warBucks - pack.priceWarBucks,
     cardInventory,
   };
-  return { state: next, cardInventory, pack, cards: [...payload.cards] };
+  return { state: next, cardInventory, pack, cards: [...cards] };
 }
 
 export function serializeCardInventory(value: CardInventoryState): string {

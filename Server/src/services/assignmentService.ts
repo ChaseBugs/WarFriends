@@ -987,9 +987,11 @@ export function processAssignmentBufferState(
 
     if (request.action === DbAction.BuyCardPack) {
       try {
-        // CardManager has already added the locally rolled cards before transport. Rebuild
-        // pack price/count/rarity rules from MainScene and add only source-valid card IDs;
-        // the request never supplies an authoritative price.
+        // Stock CardManager has already added locally rolled cards before transport, so its
+        // identities remain validation assertions. A repaired client can instead send the exact
+        // `ServerSelect: true` payload and apply the returned Cards array. The enclosing BufferId
+        // durably caches that array, making server selection retry-safe without a second nonce.
+        // Both modes rebuild price/count/rarity rules from MainScene and never trust a price.
         const result = purchaseCardPackState(
           working,
           playerLevel,
