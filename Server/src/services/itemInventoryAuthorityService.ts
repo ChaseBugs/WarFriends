@@ -5,7 +5,9 @@ import type {
   SavedArmyState,
   SavedWeaponState,
 } from "../db";
-import { WEAPON_UPGRADE_CATALOG } from "../data/weaponUpgradeCatalog.generated";
+import {
+  VALIDATED_WEAPON_UPGRADE_CATALOG as WEAPON_UPGRADE_CATALOG,
+} from "./weaponEconomyCatalogAuthorityService";
 import {
   createInitialItemInventory,
   weaponDefinitionFor,

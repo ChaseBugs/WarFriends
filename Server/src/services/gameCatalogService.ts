@@ -1,9 +1,5 @@
 import type { Collection } from "mongodb";
 import {
-  WEAPON_BLACK_MARKET_PRICES,
-  WEAPON_UPGRADE_CATALOG,
-} from "../data/weaponUpgradeCatalog.generated";
-import {
   catalogContentHash,
   validatedGameCatalogEntry,
   validatedGameCatalogRelease,
@@ -16,6 +12,10 @@ import {
   VALIDATED_UNIT_CATALOG,
   VALIDATED_UNIT_UPGRADE_CATALOG,
 } from "./unitCatalogAuthorityService";
+import {
+  VALIDATED_WEAPON_BLACK_MARKET_PRICES as WEAPON_BLACK_MARKET_PRICES,
+  VALIDATED_WEAPON_UPGRADE_CATALOG as WEAPON_UPGRADE_CATALOG,
+} from "./weaponEconomyCatalogAuthorityService";
 
 export { catalogContentHash } from "./gameCatalogAuthorityService";
 

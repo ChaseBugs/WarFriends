@@ -81,6 +81,15 @@ Status legend:
   pre-dictionary duplicate checks prevent truncated, reordered, unsafe, or colliding rows from
   changing purchase, equip, loadout, offer, or publication authority.
 
+- **Weapon upgrade and Black Market price tables now share one cross-catalog runtime authority.**
+  Startup requires all 165 weapon tables in validated shop-then-Black-Market identity order,
+  exactly 11,640 positive safe WarBucks/duration stages, and a matching validated Army Power
+  identity/index with exactly one more DPS row for every weapon. The 79 source-backed Black Market
+  tables must contain exactly 5,860 positive nondecreasing Gold prices, each with one more price
+  than upgrade transitions; `Google2u.LMG_GSh` and `Google2u.LMG_Scifi` remain explicitly closed
+  because their recovered rows contain no `WEAPONPRICE`. Every accepted stage tuple and price array
+  is deep-frozen before inventory, offer, saved-cursor, or database-catalog consumers can use it.
+
 - **Unit inventory and all three upgrade lanes now share one paired immutable runtime catalog.**
   Gameplay and database-catalog sync validate the two generated artifacts as one MainScene
   snapshot: exact shared provenance, 24 ordered player identities, three helper identities,

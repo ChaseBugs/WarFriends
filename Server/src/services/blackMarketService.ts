@@ -4,7 +4,9 @@ import type {
   BlackMarketOfferedWeaponState,
   PlayerProgressionState,
 } from "../db";
-import { WEAPON_BLACK_MARKET_PRICES } from "../data/weaponUpgradeCatalog.generated";
+import {
+  VALIDATED_WEAPON_BLACK_MARKET_PRICES as WEAPON_BLACK_MARKET_PRICES,
+} from "./weaponEconomyCatalogAuthorityService";
 import { BLACK_MARKET_WEAPON_CATALOG } from "./itemInventoryService";
 import { mutateProgression } from "./progressionMutationService";
 import {

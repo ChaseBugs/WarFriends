@@ -1549,6 +1549,14 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   tutorial-unit state is mutated.
 - **Weapon upgrade lifecycle**: buffered actions `73`-`75` use all 165 recovered per-level
   Google2u tables across shop and Black Market families (11,640 normal-level transitions).
+  Process startup validates those generated tables against the shared weapon-identity and Army
+  Power authorities before gameplay or material-catalog publication: identity order and indexes
+  must agree, every weapon must have exactly one more DPS row than upgrade transitions, and all
+  WarBucks prices/durations must be positive safe integers with source-ordered durations. The same
+  boundary requires 5,860 positive nondecreasing Gold prices across exactly the 79 Black Market
+  tables that contain `WEAPONPRICE`, with one more purchase price than upgrade transitions.
+  `Google2u.LMG_GSh` and `Google2u.LMG_Scifi` remain source-explicit omissions rather than receiving
+  a default price. Accepted stage tuples and price arrays are deep-frozen before lookup maps exist.
   BuyWeaponUpgrade validates the old index and server-derived duration, including the recovered
   float32 `ceil(source * 0.8)` reduction while a verified subscription is active, debits the
   server-owned WarBucks price. The common weapon/unit timer
