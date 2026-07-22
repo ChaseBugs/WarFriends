@@ -941,6 +941,10 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   complete bounded control-free body passes normalization and moderation before recipient lookup or
   quota reservation. Invalid or over-500-character text is rejected whole rather than truncated,
   so failed messages cannot probe account existence or consume the sender's valid-message capacity.
+  Direct read, ignore, reward-claim, and challenge-accept requests likewise require their recovered
+  exact bounded `MessageId`. The dispatcher/account alias `Id` and RequestBuffer field `ObjData`
+  cannot substitute for it or redirect which recipient-owned row is mutated; stock buffered ignore
+  continues through its separately validated request-data and durable outbox path.
   Once a direct message, challenge, kick, Squad Event notice, or War Card deposit reminder is
   durable, the `/hub` transport pushes an `InboxMessage` envelope to an authenticated recipient on
   the same node and publishes a bounded identity-only Redis hint for other nodes. Transactional

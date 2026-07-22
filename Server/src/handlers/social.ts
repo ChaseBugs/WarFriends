@@ -18,6 +18,7 @@ import { parseChallengeMessageRequest } from "./socialRequestParsing";
 import { requestedInboxPageLimit } from "../services/socialRequestCountService";
 import { publishInboxFanout } from "../services/inboxFanoutService";
 import { parseDirectMessageRequest } from "../services/directMessageRequestService";
+import { exactInboxMutationMessageId } from "../services/inboxMutationRequestService";
 
 // Player discovery and inbox handlers. Hit-list mutations remain rejected because their
 // recovered capacity semantics are ambiguous; normal/challenge messages use exact client
@@ -70,18 +71,18 @@ export const socialHandlers: Record<number, HandlerEntry> = {
   }),
 
   [DbAction.ReadMessage]: authed(async ({ player, req }) => {
-    const messageId = str(req.MessageId) || str(req.Id);
-    if (messageId) await markRead(player!.id, messageId);
+    const messageId = exactInboxMutationMessageId(req);
+    await markRead(player!.id, messageId);
     return ok(DbAction.ReadMessage);
   }),
 
   [DbAction.IgnoreMessage]: authed(async ({ player, req }) => {
-    const messageId = str(req.MessageId) || str(req.Id) || str(req.ObjData);
-    return ok(DbAction.IgnoreMessage, { Ignored: messageId ? await ignoreMessage(player!.id, messageId) : false });
+    const messageId = exactInboxMutationMessageId(req);
+    return ok(DbAction.IgnoreMessage, { Ignored: await ignoreMessage(player!.id, messageId) });
   }),
 
   [DbAction.ClaimReward]: authed(async ({ player, req }) => {
-    const result = await claimMessageReward(player!.id, str(req.MessageId) || str(req.Id));
+    const result = await claimMessageReward(player!.id, exactInboxMutationMessageId(req));
     // FABILEDDNIM reads Gold and Warbucks without ContainsKey guards. Always provide both
     // deltas, including zero Warbucks for a PlayerLeagueFinished Gold reward.
     return ok(DbAction.ClaimReward, {
@@ -92,7 +93,7 @@ export const socialHandlers: Record<number, HandlerEntry> = {
   }),
 
   [DbAction.AcceptChallenge]: authed(async ({ player, req }) => {
-    const messageId = str(req.MessageId) || str(req.Id);
-    return ok(DbAction.AcceptChallenge, { Accepted: messageId ? await acceptChallenge(player!.id, messageId) : false });
+    const messageId = exactInboxMutationMessageId(req);
+    return ok(DbAction.AcceptChallenge, { Accepted: await acceptChallenge(player!.id, messageId) });
   }),
 };
