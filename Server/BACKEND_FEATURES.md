@@ -13,6 +13,12 @@ Status legend:
 
 ### Recovered-client gap corrections
 
+- **Provider display names now preserve their exact recovered request contract.** Facebook and
+  Google Play links require canonical nonempty `Name`; Game Center links/updates retain the exact
+  absent/empty name because their recovered builders send none. `PlayerName` may only be an exact
+  agreeing duplicate when `Name` is present and can never authorize metadata alone. Request and
+  service boundaries reject numeric, padded, control-bearing, or over-100-character names rather
+  than stringifying, trimming, or slicing distinct inputs into one durable identity.
 - **Direct inventory compatibility routes no longer accept alias-only mutation authority.** The
   stock client keeps weapon/unit/visual acknowledgements, purchases, and equips inside exact
   `RequestBuffer.data`. Explicit replacement-client routes now require `LevelName`, `ObjData`, or

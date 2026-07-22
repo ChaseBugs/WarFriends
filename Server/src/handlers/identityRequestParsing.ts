@@ -3,6 +3,7 @@ import {
   normalizeIdentityExternalId,
   type IdentityProvider,
   validatedIdentityCredential,
+  validatedIdentityDisplayName,
 } from "../services/identityService";
 
 const ID_ALIASES: Readonly<Record<IdentityProvider, readonly string[]>> = Object.freeze({
@@ -47,6 +48,40 @@ export function exactIdentityRequestCredential(req: Record<string, unknown>, pro
   const value = exactAliasValue(req, CREDENTIAL_ALIASES[provider], "External account credential");
   if (value === undefined) return "";
   return validatedIdentityCredential(value);
+}
+
+/**
+ * Parse the recovered provider display-name contract without generic profile aliases.
+ *
+ * AddFacebook and AddGooglePlay send a mandatory `Name`; AddGameCenter and RemoveOrUpdateGC send
+ * no display name and therefore retain the exact empty value. `PlayerName` is accepted only as an
+ * agreeing diagnostic duplicate when canonical Name is present. It cannot become durable identity
+ * metadata alone, and numeric JSON values are never stringified into a provider name.
+ */
+export function exactIdentityRequestDisplayName(
+  req: Record<string, unknown>,
+  provider: IdentityProvider,
+): string {
+  const hasName = Object.prototype.hasOwnProperty.call(req, "Name");
+  const hasPlayerName = Object.prototype.hasOwnProperty.call(req, "PlayerName");
+  if (!hasName) {
+    if (hasPlayerName || provider !== "gameCenter") {
+      throw new ApiError(ApiErrorCode.RequestNotAuthorized, "External account display name is invalid.");
+    }
+    return "";
+  }
+
+  const displayName = validatedIdentityDisplayName(req.Name);
+  if ((provider === "facebook" || provider === "googlePlay") && displayName.length === 0) {
+    throw new ApiError(ApiErrorCode.RequestNotAuthorized, "External account display name is invalid.");
+  }
+  if (hasPlayerName) {
+    const duplicate = validatedIdentityDisplayName(req.PlayerName);
+    if (duplicate !== displayName) {
+      throw new ApiError(ApiErrorCode.RequestNotAuthorized, "External account display name is invalid.");
+    }
+  }
+  return displayName;
 }
 
 /**

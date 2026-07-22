@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   exactHaveGameCenterId,
   exactIdentityRequestCredential,
+  exactIdentityRequestDisplayName,
   exactIdentityRequestId,
 } from "../handlers/identityRequestParsing";
 
@@ -58,4 +59,34 @@ test("Game Center update selector accepts only the recovered zero-or-one string"
   for (const invalid of [undefined, null, false, true, 0, 1, "", " 0", "01", [], {}]) {
     assert.throws(() => exactHaveGameCenterId(invalid), /selector is invalid/i);
   }
+});
+
+test("provider display names require recovered Name and reject alias or conversion fallback", () => {
+  assert.equal(exactIdentityRequestDisplayName({ Name: "Игрок" }, "facebook"), "Игрок");
+  assert.equal(
+    exactIdentityRequestDisplayName({ Name: "Player", PlayerName: "Player" }, "googlePlay"),
+    "Player",
+  );
+  assert.equal(exactIdentityRequestDisplayName({}, "gameCenter"), "");
+  assert.equal(exactIdentityRequestDisplayName({ Name: "" }, "gameCenter"), "");
+
+  for (const req of [
+    {},
+    { PlayerName: "AliasOnly" },
+    { Name: 123 },
+    { Name: " padded" },
+    { Name: "line\nbreak" },
+    { Name: "unicode\u0085control" },
+    { Name: "x".repeat(101) },
+    { Name: "Canonical", PlayerName: "Different" },
+  ]) {
+    assert.throws(
+      () => exactIdentityRequestDisplayName(req, "facebook"),
+      /display name is invalid/i,
+    );
+  }
+  assert.throws(
+    () => exactIdentityRequestDisplayName({ PlayerName: "AliasOnly" }, "gameCenter"),
+    /display name is invalid/i,
+  );
 });

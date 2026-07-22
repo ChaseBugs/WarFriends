@@ -427,12 +427,18 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   strings, including values above JavaScript's safe-integer range; malformed/out-of-range text and
   the reserved disconnected value `-1` cannot create or resolve an identity. Every shared identity
   lookup also validates the complete row: exact provider/external ID, bounded owner, canonical
-  64-character lower-case HMAC, trimmed display name, and ordered finite audit timestamps. Request
+  64-character lower-case HMAC, exact bounded control-free display name, and ordered finite audit timestamps. Request
   parsing keeps IDs and opaque credentials as exact strings, rejects conflicting uppercase
   and camel-case aliases, and never converts a JSON number into an identity key. The recovered
   `RemoveOrUpdateGC.haveGcId` selector accepts only exact string `0` or `1`, so missing or malformed
-  input cannot silently unlink a valid Game Center account. First-time
-  `CreateGcAccount` commits the player and identity in one transaction,
+  input cannot silently unlink a valid Game Center account.
+  Provider display metadata follows the same exact boundary. Recovered Facebook and Google Play
+  links require a nonempty `Name`; Game Center builders send no name and store the exact empty
+  value. A diagnostic `PlayerName` may only accompany and byte-for-byte agree with canonical
+  `Name`. Numeric, padded, control-bearing, and over-100-character names fail before transaction
+  work, and the shared identity service stores the validated string without trim/slice conversion.
+  Complete durable identity validation applies the same shape before login or existence results.
+  First-time `CreateGcAccount` commits the player and identity in one transaction,
   returns separate platform/session credentials, and supplies the recovered `15400` existing-account
   profile contract. Remaining response-contract work is tracked in `BACKEND_FEATURES.md`.
 - **Transport abuse boundary**: Express requests use a bounded per-address token bucket and the

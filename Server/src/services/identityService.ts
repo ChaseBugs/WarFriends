@@ -82,6 +82,28 @@ export function validatedIdentityCredential(value: unknown): string {
   return value;
 }
 
+function identityDisplayNameIsValid(value: unknown): value is string {
+  return typeof value === "string"
+    && value.length <= 100
+    && value === value.trim()
+    && !/\p{Cc}/u.test(value);
+}
+
+/**
+ * Preserve a provider display name exactly instead of trimming, slicing, or stringifying it.
+ *
+ * Empty is the recovered Game Center/default value. Facebook and Google Play request parsing adds
+ * their stricter nonempty requirement before calling the shared link service. Keeping this generic
+ * service validator source-neutral protects internal callers and prevents two different malformed
+ * names from converging on one truncated durable identity.
+ */
+export function validatedIdentityDisplayName(value: unknown): string {
+  if (!identityDisplayNameIsValid(value)) {
+    throw new ApiError(ApiErrorCode.RequestNotAuthorized, "External account display name is invalid.");
+  }
+  return value;
+}
+
 /**
  * Normalize the provider id without losing the recovered Facebook `long` representation.
  *
@@ -146,9 +168,7 @@ export function validatedIdentityDocument(identity: IdentityDocument): IdentityD
     && identity.playerId.length > 0
     && identity.playerId.length <= 256
     && /^[0-9a-f]{64}$/u.test(identity.credentialHash)
-    && typeof identity.displayName === "string"
-    && identity.displayName.length <= 100
-    && identity.displayName === identity.displayName.trim()
+    && identityDisplayNameIsValid(identity.displayName)
     && Number.isFinite(createdAt)
     && Number.isFinite(updatedAt)
     && updatedAt >= createdAt;
@@ -250,6 +270,7 @@ export async function insertIdentityForNewPlayer(
 ): Promise<{ externalId: string }> {
   const externalId = normalizeIdentityExternalId(provider, externalIdValue);
   const credential = validatedIdentityCredential(credentialValue);
+  const exactDisplayName = validatedIdentityDisplayName(displayName);
   const now = new Date();
   try {
     await identities().insertOne({
@@ -257,7 +278,7 @@ export async function insertIdentityForNewPlayer(
       externalId,
       playerId,
       credentialHash: hashIdentityCredential(provider, externalId, credential),
-      displayName: displayName.trim().slice(0, 100),
+      displayName: exactDisplayName,
       createdAt: now,
       updatedAt: now,
     }, { session });
@@ -281,6 +302,9 @@ export async function linkIdentity(
   // OAuth/platform tokens can be substantially longer than traditional passwords. Bound
   // the input to control request cost while storing only its fixed-length HMAC digest.
   const credential = validatedIdentityCredential(credentialValue);
+  // Validate before opening a transaction. The old trim/slice behavior silently changed identity
+  // metadata and could make distinct overlong requests overwrite the same durable value.
+  const exactDisplayName = validatedIdentityDisplayName(displayName);
   const now = new Date();
   try {
     return await withMongoTransaction(async (session) => {
@@ -306,7 +330,7 @@ export async function linkIdentity(
           $set: {
             externalId,
             credentialHash: hashIdentityCredential(provider, externalId, credential),
-            displayName: displayName.trim().slice(0, 100),
+            displayName: exactDisplayName,
             updatedAt: now,
           },
           $setOnInsert: { provider, playerId, createdAt: now },

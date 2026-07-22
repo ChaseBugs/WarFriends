@@ -22,20 +22,18 @@ import {
 import {
   exactHaveGameCenterId,
   exactIdentityRequestCredential,
+  exactIdentityRequestDisplayName,
   exactIdentityRequestId,
 } from "./identityRequestParsing";
+import { exactDeviceToken } from "../services/playerSettingsService";
 
 // Platform-account actions recovered from BeanstalkServerManager. Identity records are
 // separate from player documents so uniqueness and credentials remain server-owned; the
 // familiar facebookId/googlePlayId/gameCenterId values are mirrored onto DatabasePlayer
 // only for the Unity client's connected-account UI.
 
-function text(value: unknown): string {
-  return typeof value === "string" || typeof value === "number" ? String(value).trim() : "";
-}
-
-function identityName(req: Record<string, unknown>): string {
-  return text(req.Name ?? req.PlayerName);
+function optionalIdentityDeviceToken(value: unknown): string {
+  return value === undefined ? "" : exactDeviceToken(value);
 }
 
 /** Build every field read unconditionally by OGLEHLIPEFM.JLMICAJOHIK. */
@@ -91,7 +89,7 @@ function linkAction(action: DbAction, provider: IdentityProvider): HandlerEntry 
       provider,
       exactIdentityRequestId(req, provider),
       exactIdentityRequestCredential(req, provider),
-      identityName(req),
+      exactIdentityRequestDisplayName(req, provider),
     );
     // FacebookLoginReward is tied to a successful provider link, never to a standalone
     // client-supplied RewardId. Re-linking is safe: the persisted marker makes this a no-op.
@@ -176,7 +174,11 @@ export const identityHandlers: Record<number, HandlerEntry> = {
     const gameCenterId = exactIdentityRequestId(req, "gameCenter");
     const credential = exactIdentityRequestCredential(req, "gameCenter");
     try {
-      const created = await createGameCenterAccount(gameCenterId, credential, text(req.DeviceToken));
+      const created = await createGameCenterAccount(
+        gameCenterId,
+        credential,
+        optionalIdentityDeviceToken(req.DeviceToken),
+      );
       const eventAssignment = await ensureActiveEventAssignment(created.doc.id);
       return ok(
         DbAction.CreateGcAccount,
@@ -219,7 +221,7 @@ export const identityHandlers: Record<number, HandlerEntry> = {
           "gameCenter",
           exactIdentityRequestId(req, "gameCenter"),
           exactIdentityRequestCredential(req, "gameCenter"),
-          identityName(req),
+          exactIdentityRequestDisplayName(req, "gameCenter"),
         )
       : await unlinkIdentity(player!.id, "gameCenter");
     return ok(DbAction.RemoveOrUpdateGC, {
