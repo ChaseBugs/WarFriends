@@ -50,6 +50,9 @@ test("disconnect settlement accepts only an exact expiring socket-owner observat
     [1, owner, 30_001],
     [0, owner, -2],
     [0, "", -1],
+    ["1", owner, 30_000],
+    [1, owner, "30000"],
+    [true, owner, 30_000],
   ]) {
     assert.equal(
       parsePvpSocketLivenessObservation(malformed),

@@ -474,6 +474,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   default, rejected bursts receive `RateLimited { RetryAfterSeconds }`, and repeated consecutive
   violations close with policy code `1008`. All seven HTTP/WebSocket limits resolve together once
   during module startup; an unsafe environment value stops startup before a listener accepts it.
+  Redis Lua integer replies are also exact authority boundaries: strings, Booleans, arrays,
+  fractions, out-of-range counters, and incoherent token-bucket tuples become unknown and use the
+  bounded local fallback rather than being coerced into shared capacity or a successful mutation.
 - **Bootcamp/tutorial lifecycle**: authenticated actions `119` and `120` persist one
   server-issued tutorial battle receipt and consume it only for the recovered Win end reason.
   Action `120` parses `EndReason` through the same exact nonnegative invariant-culture C# `int`
@@ -723,7 +726,8 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   signed-client-safe Army Power projection, a real Bronze3-through-Champion tier, and a positive
   safe enqueue clock; complete recovery batches validate before deduplication or mutation. The Lua
   reader uses protected JSON decoding, proves the same field/type/range contract, binds the payload
-  identity and timestamp to its sorted-set member and score, and removes both halves of a malformed
+  identity and timestamp to its sorted-set member and score, rejects participant IDs containing
+  controls or MongoDB dynamic-key syntax, and removes both halves of a malformed
   transient row so it cannot block every healthy search behind it. MongoDB profile reload and the
   transactional two-player reservation remain final admission authority. `MatchFound`
   can be relayed to the opponent's node through a bounded pub/sub instruction, but that receiving
@@ -763,7 +767,8 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   periodic recovery cancel confirmed orphans and repair only unprotected `InGame` profiles; an
   unknown Redis observation is conservatively retried. Recovery reads owner and PTTL in one Lua
   operation: only the exact coordinator with a remaining one-to-30-second lease is alive, the exact
-  missing tuple is dead, and malformed, non-expiring, overlong, or incoherent state is unknown.
+  missing tuple is dead, and malformed, non-expiring, overlong, coerced, or incoherent state is
+  unknown. RESP integer fields must be actual bounded integers; text such as `"1"` is not presence.
   Distributed `JoinMatch` writes authenticated participant membership idempotently to MongoDB. The
   request that atomically completes the assigned pair writes `roomStartedAt` once and fans a
   MongoDB-validated `MatchStart` to both nodes only after both assigned expiring Redis socket routes
@@ -806,7 +811,8 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   connected, cancels when both are offline, and waits rather than guessing when Redis is unknown.
   The liveness decision atomically reads the route and its PTTL, accepting only the exact
   instance/client UUID pair with a remaining one-to-30-second lease. A malformed, non-expiring,
-  overlong, or incoherent Redis value is unknown and cannot become proof for a forfeit reward.
+  overlong, coerced, or incoherent Redis value is unknown and cannot become proof for a forfeit
+  reward. Compare-expire/delete results likewise accept only exact numeric zero or one.
   The grace callback also binds the loser's exact disconnect timestamp inside the MongoDB reward
   transaction; a reconnect or replacement marker makes the stale callback a no-op without client
   notification or timer cleanup.

@@ -1,6 +1,6 @@
 import logger from "../utils/logger";
 import { League, RedisKeys } from "../constants";
-import { isRedisAvailable, redisEval } from "../redis";
+import { exactRedisIntegerReply, isRedisAvailable, redisEval } from "../redis";
 import { matchmakingTimeoutSeconds } from "./multiplayerTimeoutPolicyService";
 
 // Matchmaking — pairs two waiting players for a PvP match (BACKEND.md §3). Pairing favours
@@ -155,6 +155,9 @@ for index = 1, #waiting, 2 do
       and candidate.playerId == candidateId
       and string.len(candidate.playerId) > 0
       and string.len(candidate.playerId) <= 128
+      and not string.find(candidate.playerId, '%c')
+      and not string.find(candidate.playerId, '%.')
+      and not string.find(candidate.playerId, '%$')
       and type(candidate.armyPower) == 'number'
       and candidatePower ~= nil
       and candidatePower == candidatePower
@@ -229,6 +232,10 @@ export function validQueueEntry(value: unknown): value is QueueEntry {
     && typeof entry.playerId === "string"
     && entry.playerId.length > 0
     && entry.playerId.length <= 128
+    // Match rows use participant IDs as MongoDB map keys. Reject a damaged Redis candidate at the
+    // queue boundary instead of selecting it and waiting for durable admission to discover that
+    // controls, `.` or `$` cannot represent one safe participant identity.
+    && !/[\p{Cc}.$]/u.test(entry.playerId)
     && Number.isFinite(entry.armyPower)
     && Number(entry.armyPower) >= 0
     && Number.isSafeInteger(armyPowerProjection)
@@ -303,7 +310,8 @@ export async function removeForHub(playerId: string): Promise<boolean> {
     [playerId],
   );
   if (result === undefined) return removedLocally;
-  return Number(result) > 0 || removedLocally;
+  const removedFromRedis = exactRedisIntegerReply(result, 0, 1);
+  return removedFromRedis === 1 || removedLocally;
 }
 
 /** Restore a failed admission batch atomically without immediately pairing its two members. */
@@ -321,5 +329,11 @@ export async function restoreWaitingForHub(
     [JSON.stringify(distributedEntries), now],
   );
   if (result === undefined) return restoreWaiting(distributedEntries, now);
-  return Number.isInteger(Number(result)) ? Number(result) : 0;
+  const restored = exactRedisIntegerReply(result, distributedEntries.length, distributedEntries.length);
+  if (restored === null) {
+    // The script either reports the complete submitted batch or the coordination result is
+    // uncertain. Do not claim zero/some restoration and let callers continue with a split queue.
+    throw new Error("Distributed matchmaking restoration result is invalid.");
+  }
+  return restored;
 }

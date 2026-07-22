@@ -1,5 +1,5 @@
 import { RedisKeys } from "../constants";
-import { isRedisAvailable, redisEval, redisTimeMs } from "../redis";
+import { exactRedisIntegerReply, isRedisAvailable, redisEval, redisTimeMs } from "../redis";
 
 export interface DistributedRateLimitDecision {
   allowed: boolean;
@@ -32,6 +32,38 @@ redis.call('PEXPIRE', KEYS[1], math.max(1000, math.ceil(windowMs * 2)))
 return { allowed, math.floor(tokens), math.max(0, math.ceil(retryMs / 1000)) }
 `;
 
+/**
+ * Validate the complete Lua token-bucket reply before it can grant or deny shared capacity.
+ *
+ * The script emits RESP integers. Coercing strings/Booleans or clamping impossible counters would
+ * turn a damaged Redis boundary into believable rate-limit authority. Cross-field validation also
+ * proves the only two legal states: an allowed request has zero retry delay, while a denied request
+ * has no whole token remaining and a bounded positive wait.
+ */
+export function parseDistributedRateLimitDecision(
+  result: unknown,
+  capacity: number,
+  windowMs: number,
+): DistributedRateLimitDecision | null {
+  if (!Number.isSafeInteger(capacity)
+    || capacity < 1
+    || !Number.isSafeInteger(windowMs)
+    || windowMs < 1
+    || !Array.isArray(result)
+    || result.length !== 3) return null;
+  const allowed = exactRedisIntegerReply(result[0], 0, 1);
+  const remaining = exactRedisIntegerReply(result[1], 0, capacity - 1);
+  const maximumRetrySeconds = Math.max(1, Math.ceil(windowMs / capacity / 1_000));
+  const retryAfterSeconds = exactRedisIntegerReply(result[2], 0, maximumRetrySeconds);
+  if (allowed === null || remaining === null || retryAfterSeconds === null) return null;
+  if (allowed === 1) {
+    return retryAfterSeconds === 0 ? { allowed: true, remaining, retryAfterSeconds: 0 } : null;
+  }
+  return remaining === 0 && retryAfterSeconds >= 1
+    ? { allowed: false, remaining: 0, retryAfterSeconds }
+    : null;
+}
+
 /** Return null only when Redis is disabled/unavailable so the caller can use its local fallback. */
 export async function consumeDistributedToken(
   scope: string,
@@ -47,12 +79,5 @@ export async function consumeDistributedToken(
     [RedisKeys.distributedRateLimit(scope, identity)],
     [capacity, windowMs, nowMs],
   );
-  if (!Array.isArray(result) || result.length !== 3) return null;
-  const [allowed, remaining, retryAfterSeconds] = result.map(Number);
-  if (![allowed, remaining, retryAfterSeconds].every(Number.isFinite)) return null;
-  return {
-    allowed: allowed === 1,
-    remaining: Math.max(0, Math.floor(remaining)),
-    retryAfterSeconds: allowed === 1 ? 0 : Math.max(1, Math.ceil(retryAfterSeconds)),
-  };
+  return parseDistributedRateLimitDecision(result, capacity, windowMs);
 }

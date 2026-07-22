@@ -25,6 +25,9 @@ test("orphan recovery accepts only the exact expiring coordinator owner", () => 
     [1, "node-a", 30_001],
     [0, "node-a", -2],
     [0, "", -1],
+    ["1", "node-a", 30_000],
+    [1, "node-a", "30000"],
+    [true, "node-a", 30_000],
   ]) {
     assert.equal(parsePvpCoordinatorLivenessObservation(malformed, "node-a"), null);
   }

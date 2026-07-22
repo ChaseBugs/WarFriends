@@ -23,6 +23,9 @@ test("distributed matchmaking snapshots require the exact source-backed queue au
     enqueuedAt: Number.MAX_SAFE_INTEGER,
   }), true, "the recovered client truncates the finite Army Power projection to a signed int");
   assert.equal(validQueueEntry({ playerId: "", armyPower: 100, leagueTier: 2, enqueuedAt: 1 }), false);
+  assert.equal(validQueueEntry({ playerId: "player.control\n", armyPower: 100, leagueTier: 2, enqueuedAt: 1 }), false);
+  assert.equal(validQueueEntry({ playerId: "player.path", armyPower: 100, leagueTier: 2, enqueuedAt: 1 }), false);
+  assert.equal(validQueueEntry({ playerId: "player$path", armyPower: 100, leagueTier: 2, enqueuedAt: 1 }), false);
   assert.equal(validQueueEntry({ playerId: "player", armyPower: -1, leagueTier: 2, enqueuedAt: 1 }), false);
   assert.equal(validQueueEntry({ playerId: "player", armyPower: 2_147_483_648, leagueTier: 2, enqueuedAt: 1 }), false);
   assert.equal(validQueueEntry({ playerId: "player", armyPower: Number.POSITIVE_INFINITY, leagueTier: 2, enqueuedAt: 1 }), false);

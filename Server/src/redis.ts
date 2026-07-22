@@ -198,6 +198,28 @@ export async function redisEval(
   }
 }
 
+/**
+ * Parse an integer reply from a Redis Lua script without JavaScript coercion.
+ *
+ * ioredis returns RESP integer replies as JavaScript numbers. A string, Boolean, array, or
+ * fractional number therefore indicates a broken script/adapter boundary, not another valid
+ * representation of the same answer. Callers use `null` as uncertainty so malformed transient
+ * coordination can never become match presence, rate-limit capacity, or mutation success.
+ */
+export function exactRedisIntegerReply(value: unknown, minimum: number, maximum: number): number | null {
+  if (!Number.isSafeInteger(minimum)
+    || !Number.isSafeInteger(maximum)
+    || minimum > maximum) {
+    throw new Error("Redis integer reply bounds are invalid.");
+  }
+  return typeof value === "number"
+    && Number.isSafeInteger(value)
+    && value >= minimum
+    && value <= maximum
+    ? value
+    : null;
+}
+
 /** Read Redis server time so distributed algorithms do not depend on per-node wall clocks. */
 export async function redisTimeMs(): Promise<number | undefined> {
   const client = getRedisDataClient();
@@ -273,5 +295,5 @@ export async function redisReplaceSortedSet(
     [key],
     [ttlSeconds, ...entries.flatMap((entry) => [entry.score, entry.member])],
   );
-  return typeof result === "number";
+  return exactRedisIntegerReply(result, entries.length, entries.length) === entries.length;
 }

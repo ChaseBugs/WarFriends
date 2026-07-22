@@ -1,5 +1,5 @@
 import { RedisKeys } from "../constants";
-import { isRedisAvailable, redisDel, redisEval, redisSet } from "../redis";
+import { exactRedisIntegerReply, isRedisAvailable, redisDel, redisEval, redisSet } from "../redis";
 import logger from "../utils/logger";
 
 const heartbeatTtlSeconds = 30;
@@ -31,9 +31,10 @@ export function parsePvpCoordinatorLivenessObservation(
   instanceId: string,
 ): boolean | null {
   if (!Array.isArray(result) || result.length !== 3) return null;
-  const present = Number(result[0]);
+  const present = exactRedisIntegerReply(result[0], 0, 1);
   const value = result[1];
-  const ttlMilliseconds = Number(result[2]);
+  const ttlMilliseconds = exactRedisIntegerReply(result[2], -2, heartbeatTtlSeconds * 1_000);
+  if (present === null || ttlMilliseconds === null) return null;
   if (present === 0) return value === "" && ttlMilliseconds === -2 ? false : null;
   if (present !== 1
     || value !== instanceId

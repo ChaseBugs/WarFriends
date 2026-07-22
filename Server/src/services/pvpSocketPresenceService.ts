@@ -1,5 +1,5 @@
 import { RedisKeys } from "../constants";
-import { isRedisAvailable, redisEval, redisGet, redisSet } from "../redis";
+import { exactRedisIntegerReply, isRedisAvailable, redisEval, redisGet, redisSet } from "../redis";
 
 const socketPresenceTtlSeconds = 30;
 export const socketPresenceHeartbeatMs = 10_000;
@@ -64,9 +64,10 @@ export function usesDistributedPvpSocket(claimed: boolean | null): boolean {
  */
 export function parsePvpSocketLivenessObservation(result: unknown): boolean | null {
   if (!Array.isArray(result) || result.length !== 3) return null;
-  const present = Number(result[0]);
+  const present = exactRedisIntegerReply(result[0], 0, 1);
   const value = result[1];
-  const ttlMilliseconds = Number(result[2]);
+  const ttlMilliseconds = exactRedisIntegerReply(result[2], -2, socketPresenceTtlSeconds * 1_000);
+  if (present === null || ttlMilliseconds === null) return null;
   if (present === 0) {
     return value === "" && ttlMilliseconds === -2 ? false : null;
   }
@@ -87,14 +88,17 @@ export async function refreshPvpSocket(playerId: string, owner: string): Promise
     [owner, socketPresenceTtlSeconds],
   );
   if (result === undefined) return null;
-  return Number(result) === 1;
+  const refreshed = exactRedisIntegerReply(result, 0, 1);
+  return refreshed === null ? null : refreshed === 1;
 }
 
 /** Delete only this socket's route so an old close cannot remove a replacement login. */
 export async function releasePvpSocket(playerId: string, owner: string): Promise<boolean | null> {
   const result = await redisEval(compareDeleteScript, [RedisKeys.socketOfPlayer(playerId)], [owner]);
   if (result === undefined) return null;
-  if (Number(result) === 1) return true;
+  const released = exactRedisIntegerReply(result, 0, 1);
+  if (released === null) return null;
+  if (released === 1) return true;
   const current = await redisGet(RedisKeys.socketOfPlayer(playerId));
   if (current === undefined) return null;
   // A missing key means this exact socket's TTL expired before close cleanup; it is still a real
