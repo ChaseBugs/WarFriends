@@ -41,7 +41,10 @@ Status legend:
 
 - **Squad rank progression now follows the recovered 50-row table.** The card-catalog extractor
   keeps each 4.9.5 `Squads` row's one-based `LEVEL`, 64-bit `EXPERIENCE` threshold, roster `SIZE`,
-  and `CARDPOOLSIZE` together. New squads start with four seats. Complete Squad authority rejects
+  and `CARDPOOLSIZE` together. Extraction and process startup require the complete exact 1-50
+  sequence, monotonic thresholds/unlocks, and equality with the duplicate card-pool capacity array;
+  truncation or disagreement fails closed instead of redefining maximum rank or pool authority.
+  New squads start with four seats. Complete Squad authority rejects
   a clamped/fractional/out-of-range rank, progress that should already have crossed a non-final
   threshold, or capacity from another row. Confirmed ranked-PvP Squad Points atomically update the
   competitive/member totals, subtract every crossed experience threshold, unlock the target

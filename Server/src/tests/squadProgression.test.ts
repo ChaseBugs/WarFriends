@@ -7,10 +7,12 @@ import { newSquad } from "../dtos";
 import { validatedSquadDocument } from "../services/squadAuthorityService";
 import {
   applySquadExperienceState,
+  EXPECTED_SQUAD_LEVEL_COUNT,
   MAX_SQUAD_LEVEL,
   MAX_SQUAD_ROSTER_SIZE,
   migrateLegacySquadExperienceState,
   squadLevelDefinition,
+  validatedSquadProgressionCatalog,
   validatedSquadProgressionSnapshot,
 } from "../services/squadProgressionService";
 import { buildDatabaseSquad } from "../services/squadWireService";
@@ -30,6 +32,55 @@ test("squad progression uses the exact first and final recovered 4.9.5 rows", ()
     size: 60,
     cardPoolSize: 10,
   });
+});
+
+function testSquadProgressionCatalog(): Record<string, unknown> {
+  const squadLevelDefinitions = Array.from({ length: EXPECTED_SQUAD_LEVEL_COUNT }, (_, index) => ({
+    level: index + 1,
+    experience: 100 + index,
+    size: 4 + Math.floor(index / 10),
+    cardPoolSize: 3 + Math.floor(index / 10),
+  }));
+  return {
+    squadLevelDefinitions,
+    cardPoolRules: {
+      capacityBySquadLevel: squadLevelDefinitions.map((row) => row.cardPoolSize),
+    },
+  };
+}
+
+test("squad progression rejects incomplete or contradictory generated authority", () => {
+  const cases = [
+    (() => {
+      const catalog = testSquadProgressionCatalog();
+      (catalog.squadLevelDefinitions as unknown[]).pop();
+      return catalog;
+    })(),
+    (() => {
+      const catalog = testSquadProgressionCatalog();
+      ((catalog.cardPoolRules as { capacityBySquadLevel: number[] }).capacityBySquadLevel)[9] += 1;
+      return catalog;
+    })(),
+    (() => {
+      const catalog = testSquadProgressionCatalog();
+      ((catalog.squadLevelDefinitions as Array<{ size: number }>)[20]).size = 1;
+      return catalog;
+    })(),
+    (() => {
+      const catalog = testSquadProgressionCatalog();
+      ((catalog.squadLevelDefinitions as Array<{ experience: number }>)[20]).experience = Number.NaN;
+      return catalog;
+    })(),
+  ];
+
+  for (const catalog of cases) {
+    assert.throws(() => validatedSquadProgressionCatalog(catalog), (error: unknown) => (
+      typeof error === "object"
+      && error !== null
+      && "code" in error
+      && error.code === ApiErrorCode.InternalServerError
+    ));
+  }
 });
 
 test("squad experience remains within the current rank below its threshold", () => {

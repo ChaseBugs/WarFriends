@@ -510,6 +510,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   with the four-member capacity from 4.9.5 `Squads` row 1. The extracted 50-row progression table
   binds each one-based rank to `EXPERIENCE`, `SIZE`, and `CARDPOOLSIZE`; complete Squad validation
   requires current progress to remain below its next threshold and capacity to equal the same row.
+  Both extraction and runtime loading require exactly the recovered contiguous 1-50 sequence,
+  monotonic thresholds/unlocks, and exact equality with the duplicate
+  `cardPoolRules.capacityBySquadLevel` array. A truncated or internally split generated artifact
+  therefore stops startup rather than silently lowering maximum rank or granting a different pool
+  capacity through another consumer.
   Card-pool admission uses that exact rank row too; unlike the recovered UI helper, it never floors
   or clamps an invalid durable level into a believable first/final `CARDPOOLSIZE` authorization.
   A new policy-1 request transaction advances both the exact Squad revision and a strictly

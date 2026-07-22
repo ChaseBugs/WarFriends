@@ -195,6 +195,9 @@ const squadsBlock = blocks.find(({ text }) =>
 if (!squadsBlock) throw new Error("Squads card-pool rows were not found in MainScene.");
 const squadRows = flatRows(squadsBlock, ["LEVEL", "SIZE", "EXPERIENCE", "CARDPOOLSIZE"], "Squads", false)
   .sort((left, right) => left.LEVEL - right.LEVEL);
+if (squadRows.length !== 50) {
+  throw new Error(`Squads progression must contain exactly 50 rows, found ${squadRows.length}.`);
+}
 for (let index = 0; index < squadRows.length; index++) {
   const row = squadRows[index];
   if (
@@ -205,6 +208,7 @@ for (let index = 0; index < squadRows.length; index++) {
     || row.EXPERIENCE < 1
     || !Number.isInteger(row.CARDPOOLSIZE)
     || row.CARDPOOLSIZE < 1
+    || (index > 0 && row.EXPERIENCE < squadRows[index - 1].EXPERIENCE)
     || (index > 0 && row.SIZE < squadRows[index - 1].SIZE)
     || (index > 0 && row.CARDPOOLSIZE < squadRows[index - 1].CARDPOOLSIZE)
   ) {

@@ -1,7 +1,7 @@
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import generatedCardCatalog from "../data/cardCatalog.generated.json";
 
-interface SquadLevelDefinition {
+export interface SquadLevelDefinition {
   level: number;
   experience: number;
   size: number;
@@ -9,7 +9,10 @@ interface SquadLevelDefinition {
 }
 
 interface SquadProgressionCatalog {
-  squadLevelDefinitions: SquadLevelDefinition[];
+  squadLevelDefinitions?: unknown;
+  cardPoolRules?: {
+    capacityBySquadLevel?: unknown;
+  };
 }
 
 export interface SquadExperienceTransition {
@@ -20,29 +23,61 @@ export interface SquadExperienceTransition {
   levelsGained: number;
 }
 
-const DEFINITIONS = (generatedCardCatalog as unknown as SquadProgressionCatalog).squadLevelDefinitions;
+export const EXPECTED_SQUAD_LEVEL_COUNT = 50;
 
 function invalid(message: string): never {
   throw new ApiError(ApiErrorCode.InternalServerError, message);
 }
 
-function validatedDefinitions(): readonly SquadLevelDefinition[] {
-  if (!Array.isArray(DEFINITIONS) || DEFINITIONS.length === 0) {
-    return invalid("Squad progression catalog is empty.");
+/**
+ * Validate the complete duplicated Squad-rank authority in the generated card artifact.
+ *
+ * MainScene contains exactly levels 1 through 50. Merely accepting a nonempty contiguous prefix
+ * would let a truncated generated file redefine MAX_SQUAD_LEVEL at startup. CARDPOOLSIZE is also
+ * emitted twice for legacy card-pool consumers, so both copies must remain identical; otherwise two
+ * backend paths could authorize different capacities for the same durable Squad rank.
+ */
+export function validatedSquadProgressionCatalog(catalog: unknown): readonly SquadLevelDefinition[] {
+  if (!catalog || typeof catalog !== "object" || Array.isArray(catalog)) {
+    return invalid("Squad progression catalog root is invalid.");
   }
-  for (let index = 0; index < DEFINITIONS.length; index += 1) {
-    const row = DEFINITIONS[index];
+  const candidate = catalog as SquadProgressionCatalog;
+  const definitions = candidate.squadLevelDefinitions;
+  const capacities = candidate.cardPoolRules?.capacityBySquadLevel;
+  if (!Array.isArray(definitions) || definitions.length !== EXPECTED_SQUAD_LEVEL_COUNT) {
+    return invalid(`Squad progression catalog must contain exactly ${EXPECTED_SQUAD_LEVEL_COUNT} rows.`);
+  }
+  if (!Array.isArray(capacities) || capacities.length !== EXPECTED_SQUAD_LEVEL_COUNT) {
+    return invalid(`Squad card-pool catalog must contain exactly ${EXPECTED_SQUAD_LEVEL_COUNT} capacities.`);
+  }
+  for (let index = 0; index < definitions.length; index += 1) {
+    const row = definitions[index] as Partial<SquadLevelDefinition> | null;
+    const previous = index > 0
+      ? definitions[index - 1] as Partial<SquadLevelDefinition> | null
+      : null;
     if (!row
+      || typeof row !== "object"
+      || Array.isArray(row)
       || row.level !== index + 1
       || !Number.isSafeInteger(row.experience)
-      || row.experience < 1
+      || (row.experience as number) < 1
       || !Number.isSafeInteger(row.size)
-      || row.size < 1
+      || (row.size as number) < 1
       || !Number.isSafeInteger(row.cardPoolSize)
-      || row.cardPoolSize < 1) {
+      || (row.cardPoolSize as number) < 1
+      || (previous !== null && (row.experience as number) < (previous.experience as number))
+      || (previous !== null && (row.size as number) < (previous.size as number))
+      || (previous !== null && (row.cardPoolSize as number) < (previous.cardPoolSize as number))
+      || capacities[index] !== row.cardPoolSize) {
       return invalid(`Squad progression catalog row ${index + 1} is invalid.`);
     }
   }
+  return definitions as SquadLevelDefinition[];
+}
+
+const DEFINITIONS = validatedSquadProgressionCatalog(generatedCardCatalog);
+
+function validatedDefinitions(): readonly SquadLevelDefinition[] {
   return DEFINITIONS;
 }
 
