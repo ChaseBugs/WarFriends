@@ -1245,7 +1245,12 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   revision and performs no write when both denormalized Army Power copies are already current.
 - **Player visuals and decals**: `scripts/Extract-VisualCatalog.mjs` joins all four serialized
   customization categories to the 4.9.5 PlayerVisuals sheet, producing 146 playable and one
-  unresolved row. `DecalManagerData` is server-owned and boot-safe; buffered `BuyDecal`,
+  unresolved row. Entitlement checks, purchase/reward paths, and catalog sync share one startup-
+  validated snapshot requiring the exact category identities/defaults/counts, unique prefix-bound
+  assets, deterministic playable rows, the distinct unresolved row, known acquisition families,
+  and bounded numeric fields. Its rows and nested category ID arrays are deep-frozen so a duplicate,
+  truncated, split-category, non-finite, or later-mutated artifact fails closed rather than changing
+  cosmetic or duplicate-compensation authority. `DecalManagerData` is server-owned and boot-safe; buffered `BuyDecal`,
   `EquipDecal`, `DecalWasShown`, and `VisualWasShown` validate source, price, category, VIP,
   ownership, expiry, and shop eligibility. BuyDecal resolves the authenticated zero-based level
   through the exact recovered 58-row catalog before its unlock comparison, so `NaN`, fractions,

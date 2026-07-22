@@ -1,6 +1,6 @@
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import type { SavedVisualState, VisualInventoryState } from "../db";
-import generatedVisualCatalog from "../data/visualCatalog.generated.json";
+import { VALIDATED_VISUAL_CATALOG } from "./visualCatalogAuthorityService";
 
 const MAX_DATE_UNIX_SECONDS = 8_640_000_000_000;
 const SAVED_VISUAL_KEYS = ["borrowed", "bought", "expiresOn", "notificate", "parts", "showed"] as const;
@@ -18,10 +18,10 @@ interface VisualAuthorityCategory {
 }
 
 const visualDefinitions = new Map(
-  (generatedVisualCatalog.visuals as VisualAuthorityDefinition[]).map((definition) => [definition.name, definition]),
+  VALIDATED_VISUAL_CATALOG.visuals.map((definition) => [definition.name, definition as VisualAuthorityDefinition]),
 );
 const visualCategories = new Map(
-  (generatedVisualCatalog.categories as VisualAuthorityCategory[]).map((category) => [String(category.id), category]),
+  VALIDATED_VISUAL_CATALOG.categories.map((category) => [String(category.id), category as VisualAuthorityCategory]),
 );
 
 function hasExactKeys(value: object, expected: readonly string[]): boolean {

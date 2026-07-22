@@ -1,4 +1,3 @@
-import generatedVisualCatalog from "../data/visualCatalog.generated.json";
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import type {
   PlayerProgressionState,
@@ -13,6 +12,11 @@ import {
 } from "./visualEntitlementService";
 import { exactRequestJsonInteger } from "./requestJsonNumberService";
 import { playerLevelDefinition } from "./levelProgressionService";
+import {
+  type VisualCategoryDefinition,
+  type VisualDefinition,
+  VALIDATED_VISUAL_CATALOG,
+} from "./visualCatalogAuthorityService";
 
 // Exact IJEAJGCCHEF values handled by the recovered BuyDecal/EquipDecal response branches.
 export const VISUAL_NOT_ENOUGH_WARBUCKS = 100;
@@ -22,39 +26,6 @@ export const VISUAL_NOT_BOUGHT = 107;
 export const VISUAL_CATEGORY_NOT_FOUND = 108;
 export const VISUAL_ONLY_FOR_VIP = 109;
 export const VISUAL_NO_DISCOUNT_FOUND = 13601;
-
-interface VisualDefinition {
-  name: string;
-  unlockLevel: number;
-  priceWarBucks: number;
-  priceGold: number;
-  durationSeconds: number;
-  effectType: number;
-  effectValue: number;
-  categoryId: number;
-  vipOnly: boolean;
-  purchasable: string;
-  rarity: number;
-  parts: number;
-  duplicateWarBucks: number;
-}
-
-interface VisualCategoryDefinition {
-  id: number;
-  name: string;
-  prefix: string;
-  defaultId: string;
-  ids: string[];
-}
-
-interface VisualCatalogArtifact {
-  schemaVersion: number;
-  clientVersion: string;
-  source: string;
-  sourceSha256: string;
-  categories: VisualCategoryDefinition[];
-  visuals: VisualDefinition[];
-}
 
 export interface VisualPurchasePayload {
   name: string;
@@ -77,7 +48,7 @@ export interface VisualRewardResult {
   definition: VisualDefinition;
 }
 
-const artifact = generatedVisualCatalog as VisualCatalogArtifact;
+const artifact = VALIDATED_VISUAL_CATALOG;
 export const VISUAL_CATALOG: Readonly<Record<string, Readonly<VisualDefinition>>> = Object.freeze(
   Object.fromEntries(artifact.visuals.map((definition) => [definition.name, Object.freeze({ ...definition })])),
 );

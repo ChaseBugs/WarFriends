@@ -57,6 +57,14 @@ Status legend:
   refreshed Squad, and the row has no invented reward or claim lifecycle. Post-commit socket,
   Redis, and Squad-status-consented Firebase wake paths all reload the durable validated row.
 
+- **Visual economy now has one immutable runtime catalog.** Entitlement checks, mutations, and
+  database-catalog sync validate the exact 4.9.5 provenance/field set, four ordered category
+  identities/defaults/counts, all 146 ordered unique playable rows, the one distinct unresolved
+  row, prefix membership, acquisition families, and bounded numeric fields. The accepted rows and
+  nested category IDs are deep-frozen; truncation, duplicate overwrite, split-category data,
+  non-finite values, or later mutation fails before changing ownership, equipment, prices, timed
+  access, parts, duplicate compensation, or publication.
+
 ## Feature inventory
 
 | Priority | Feature | Client actions | Status | Implemented backend behavior | Required remaining work |
