@@ -65,6 +65,14 @@ Status legend:
   non-finite values, or later mutation fails before changing ownership, equipment, prices, timed
   access, parts, duplicate compensation, or publication.
 
+- **Army Power and player ranks now share one immutable runtime catalog.** Progression, equipped-
+  weapon power, and database-catalog sync require exact 4.9.5 provenance plus all 58 contiguous
+  player ranks, 11 ordered category masks with nine exact feature identities each, 165 unique
+  weapon identities/indexes, and exactly 11,805 finite nondecreasing DPS rows. The accepted nested
+  tables are deep-frozen, so truncation, duplicate overwrite, split feature masks, unsafe values,
+  non-finite DPS, or later mutation fails before changing level limits, rewards, conversion values,
+  matchmaking Army Power, or publication.
+
 ## Feature inventory
 
 | Priority | Feature | Client actions | Status | Implemented backend behavior | Required remaining work |

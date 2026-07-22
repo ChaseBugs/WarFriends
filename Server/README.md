@@ -1233,6 +1233,12 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   authority, or later in-process mutation cannot change purchases, crafting, rewards, or publication.
 - **Authoritative Army Power**: `scripts/Extract-ArmyPowerCatalog.mjs` reproduces 11,805 normal
   weapon DPS rows and all 58 player-rank `ARMYPOWER` rows from MainScene. The server independently
+  validates this artifact once for progression, power calculation, and catalog sync: exactly 58
+  contiguous rank rows, 11 ordered category masks with nine exact feature identities each, 165
+  unique weapon identities/indexes, and 11,805 finite nondecreasing DPS values are required. The
+  accepted ranks, feature rows, and per-level DPS arrays are deep-frozen, so a truncated, duplicate,
+  split-mask, unsafe, non-finite, or later-mutated snapshot stops before changing player levels,
+  rewards, conversions, matchmaking power, or publication. The server independently
   rounds equipped-unit float power, equipped-weapon float DPS, and the current zero-based rank row
   exactly where `LevelManager` does, then atomically stores their sum in both indexed and public
   player state. `UpdateArmyPower` ignores the client's claimed value and recomputes against one

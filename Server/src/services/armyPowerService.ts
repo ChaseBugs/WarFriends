@@ -1,4 +1,3 @@
-import generatedArmyPowerCatalog from "../data/armyPowerCatalog.generated.json";
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import { players, type PlayerDocument, type PlayerProgressionState } from "../db";
 import {
@@ -11,25 +10,10 @@ import { validatedPlayerAccountEnvelope } from "./playerProfileMirrorAuthoritySe
 import { playerLevelDefinition } from "./levelProgressionService";
 import { equippedUnitPower } from "./unitInventoryService";
 import { hasActiveRentalItem } from "./rentalEntitlementService";
-
-interface WeaponPowerDefinition {
-  name: string;
-  index: number;
-  powerByLevel: number[];
-}
-
-interface ArmyPowerArtifact {
-  schemaVersion: number;
-  clientVersion: string;
-  source: string;
-  sourceSha256: string;
-  rankLevels: Array<{ index: number; displayLevel: number; armyPower: number }>;
-  featureDpsCoefficients: Array<{
-    categoryMask: number;
-    dpsByFeature: Array<{ index: number; coefficient: number }>;
-  }>;
-  weapons: WeaponPowerDefinition[];
-}
+import {
+  type WeaponPowerDefinition,
+  VALIDATED_ARMY_POWER_CATALOG,
+} from "./armyPowerCatalogAuthorityService";
 
 export interface ArmyPowerBreakdown {
   unitPower: number;
@@ -46,7 +30,7 @@ export function armyPowerCacheIsCurrent(
   return document.armyPower === breakdown.total && document.player.armyPower === breakdown.total;
 }
 
-const artifact = generatedArmyPowerCatalog as ArmyPowerArtifact;
+const artifact = VALIDATED_ARMY_POWER_CATALOG;
 const WEAPON_POWER = Object.freeze(Object.fromEntries(
   artifact.weapons.map((weapon) => [weapon.name, Object.freeze({
     ...weapon,

@@ -1,5 +1,4 @@
 import type { Collection } from "mongodb";
-import generatedArmyPowerCatalog from "../data/armyPowerCatalog.generated.json";
 import generatedUnitCatalog from "../data/unitCatalog.generated.json";
 import generatedUnitUpgradeCatalog from "../data/unitUpgradeCatalog.generated.json";
 import generatedWeaponCatalog from "../data/weaponCatalog.generated.json";
@@ -14,6 +13,7 @@ import {
 } from "./gameCatalogAuthorityService";
 import { VALIDATED_CARD_CATALOG } from "./cardCatalogAuthorityService";
 import { VALIDATED_VISUAL_CATALOG } from "./visualCatalogAuthorityService";
+import { VALIDATED_ARMY_POWER_CATALOG } from "./armyPowerCatalogAuthorityService";
 
 export { catalogContentHash } from "./gameCatalogAuthorityService";
 
@@ -154,7 +154,7 @@ interface CardCatalogArtifact {
 const weapons = generatedWeaponCatalog as unknown as WeaponArtifact;
 const units = generatedUnitCatalog as unknown as UnitArtifact;
 const unitUpgrades = generatedUnitUpgradeCatalog as unknown as UnitUpgradeArtifact;
-const armyPower = generatedArmyPowerCatalog as unknown as ArmyPowerArtifact;
+const armyPower = VALIDATED_ARMY_POWER_CATALOG as unknown as ArmyPowerArtifact;
 const visuals = VALIDATED_VISUAL_CATALOG as unknown as VisualCatalogArtifact;
 // Publishing the database catalog must use the same validated immutable card snapshot as gameplay;
 // otherwise the sync CLI could accept a damaged artifact that the running server would reject.

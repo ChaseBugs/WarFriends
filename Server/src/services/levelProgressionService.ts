@@ -1,30 +1,14 @@
-import generatedArmyPowerCatalog from "../data/armyPowerCatalog.generated.json";
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import type { PlayerProgressionState } from "../db";
 import { checkedRewardBalance } from "./rewardMathService";
+import {
+  type PlayerLevelDefinition,
+  VALIDATED_ARMY_POWER_CATALOG,
+} from "./armyPowerCatalogAuthorityService";
 
-export interface PlayerLevelDefinition {
-  /** Zero-based LevelManager.GameLevel.index and DatabasePlayer.Level value. */
-  index: number;
-  /** One-based value shown by LevelManager.GameLevel.displayNumber. */
-  displayLevel: number;
-  /** XP required to leave this level; LevelManager.GameLevel.score. */
-  experience: number;
-  /** Gold granted when this level's XP threshold is crossed. */
-  rewardGold: number;
-  /** Rank contribution to LevelManager.armyPower while this level is active. */
-  armyPower: number;
-  /** WarBucks delivered per conversion unit by InAppDataManager.warbucksAmount. */
-  convertGoldToWarBucks: number;
-}
+export type { PlayerLevelDefinition } from "./armyPowerCatalogAuthorityService";
 
-interface LevelCatalogArtifact {
-  schemaVersion: number;
-  clientVersion: string;
-  rankLevels: PlayerLevelDefinition[];
-}
-
-const artifact = generatedArmyPowerCatalog as LevelCatalogArtifact;
+const artifact = VALIDATED_ARMY_POWER_CATALOG;
 export const PLAYER_LEVELS: readonly Readonly<PlayerLevelDefinition>[] = Object.freeze(
   artifact.rankLevels.map((level) => Object.freeze({ ...level })),
 );
