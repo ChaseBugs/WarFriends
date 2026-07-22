@@ -510,6 +510,8 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   with the four-member capacity from 4.9.5 `Squads` row 1. The extracted 50-row progression table
   binds each one-based rank to `EXPERIENCE`, `SIZE`, and `CARDPOOLSIZE`; complete Squad validation
   requires current progress to remain below its next threshold and capacity to equal the same row.
+  Card-pool admission uses that exact rank row too; unlike the recovered UI helper, it never floors
+  or clamps an invalid durable level into a believable first/final `CARDPOOLSIZE` authorization.
   A new policy-1 request transaction advances both the exact Squad revision and a strictly
   monotonic player-account revision. That player write serializes request creation against every
   membership transaction: a winning join makes the retried request observe membership and fail,

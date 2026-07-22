@@ -26,6 +26,7 @@ import { visualInventoryStateFor } from "./visualInventoryService";
 import { validatedCardInventoryTime } from "./cardInventoryAuthorityService";
 import { playerLevelDefinition } from "./levelProgressionService";
 import { validatedSquadDocument } from "./squadAuthorityService";
+import { squadLevelDefinition } from "./squadProgressionService";
 import { checkedPlayerReputationIncrement } from "./playerPublicScalarAuthorityService";
 
 const MAX_CONCURRENCY_RETRIES = 4;
@@ -331,12 +332,15 @@ function normalPoolCount(value: Record<string, string>): number {
   return total;
 }
 
-/** Recovered Squads.CARDPOOLSIZE lookup with the same end-row clamp as GameVariables. */
+/**
+ * Return the exact recovered `CARDPOOLSIZE` for one authoritative one-based Squad rank.
+ *
+ * GameVariables clamps this lookup because it is a presentation helper. Backend capacity is an
+ * authorization boundary: flooring a fraction or clamping damaged rank 0/500 would silently grant
+ * a believable first/final pool. Reuse the progression service's exact 50-row lookup instead.
+ */
 export function squadCardPoolCapacity(squadLevel: number): number {
-  const rows = CARD_POOL_RULES.capacityBySquadLevel;
-  if (rows.length === 0) throw new ApiError(ApiErrorCode.InternalServerError, "Squad card-pool table is empty.");
-  const index = Math.min(Math.max(Math.floor(squadLevel) - 1, 0), rows.length - 1);
-  return rows[index]!;
+  return squadLevelDefinition(squadLevel).cardPoolSize;
 }
 
 /**

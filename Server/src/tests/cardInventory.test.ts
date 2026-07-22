@@ -513,8 +513,14 @@ test("normal squad-card deposits atomically exchange inventory and enforce sourc
     ),
     (error: unknown) => (error as { code?: number }).code === CARD_NOT_FOUND,
   );
-  assert.equal(squadCardPoolCapacity(0), 3);
-  assert.equal(squadCardPoolCapacity(500), 10);
+  assert.equal(squadCardPoolCapacity(1), 3);
+  assert.equal(squadCardPoolCapacity(50), 10);
+  for (const invalidLevel of [0, 1.5, 51, 500, Number.NaN, Number.POSITIVE_INFINITY]) {
+    assert.throws(
+      () => squadCardPoolCapacity(invalidLevel),
+      (error: unknown) => (error as { code?: number }).code === ApiErrorCode.InternalServerError,
+    );
+  }
 });
 
 test("squad-card deposits reject forged ownership and contradictory deltas", () => {
