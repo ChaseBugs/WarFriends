@@ -48,6 +48,13 @@ multi-document transactions, so enable a single-node replica set for local devel
 replicated/sharded managed deployment) and include `replicaSet` in `MONGO_URL`. Health check:
 `GET /health`.
 
+The editable Unity Client defaults to `http://127.0.0.1:8080/api/`, which matches this Server's
+development `PORT=8080`. When testing an Android build over USB, run
+`adb reverse tcp:8080 tcp:8080` before launch. The Client's first connectivity probe is
+`POST /api/check.php` and succeeds only for an exact `ok` response; the next configuration request
+is a URL-encoded `POST /api/157/<dashed-version>` with a raw semicolon response. The integration
+test suite executes both stock request shapes against the real Express router.
+
 `PORT`, `MONGO_POOL_SIZE`, and `MONGO_DB_NAME` form one immutable early-startup policy: port must be
 an exact 1-65,535 integer, pool size an exact 1-1,000 integer, and the trimmed database name must be
 platform-safe and shorter than 64 UTF-8 bytes. This validation runs before MongoClient construction,

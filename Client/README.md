@@ -26,6 +26,29 @@ data back to the newer on-disk format, which 2018.4 then cannot read.
 `Assets/Scenes/SplashScene.unity` is first in Build Settings and loads
 `Assets/Scenes/MainScene.unity`.
 
+## Connect the Client to the local Server
+
+The editable Client endpoint is `http://127.0.0.1:8080/api/`, matching the Server's checked-in
+`PORT=8080` development policy. Start MongoDB/Redis and the Server as described in
+`../Server/README.md`. For an Android device connected through ADB, expose the host port before
+starting the game:
+
+```powershell
+$adb = 'C:\Program Files\Unity\Hub\Editor\2018.4.23f1\Editor\Data\PlaybackEngines\AndroidPlayer\SDK\platform-tools\adb.exe'
+& $adb reverse tcp:8080 tcp:8080
+& $adb reverse --list
+```
+
+The recovered boot flow first posts to `/api/check.php` and requires the exact body `ok`. It then
+posts URL-encoded fields to `/api/<DatabaseAction>/<dashed-version>`; configuration action 157
+expects the raw `success;<sheet-config>;<version-json>` response rather than JSON. These exact
+cross-project contracts are exercised by `Server/src/tests/clientServerIntegration.test.ts`.
+
+For a LAN or deployed Server, change the single `BaseUrl` constant in
+`ExportedProject/Assets/LegacyCompat/ServerEndpoint.cs`, keep the trailing slash and `/api/`, and
+rebuild the Client. Do not use `localhost` for a physical device without ADB reverse: it refers to
+the device itself, not the development PC.
+
 ## What was recovered
 
 - `ExportedProject/Assets/Scripts/Gameplay` and `Gameplay.FirstPass` are the active,

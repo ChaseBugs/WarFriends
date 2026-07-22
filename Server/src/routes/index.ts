@@ -63,6 +63,8 @@ async function handleEnvelope(req: Request, res: Response): Promise<void> {
 // connection as online when the response body is exactly "ok". Reachable at /check.php and,
 // under the client's localhost /api base, at /api/check.php.
 apiRouter.post("/check.php", (_req: Request, res: Response) => {
+  // Do not wrap this in JSON and do not append a newline. The recovered MoveNext state machine
+  // invokes its success callback only when BestHTTP.DataAsText is exactly the two characters "ok".
   res.type("text/plain").send("ok");
 });
 
