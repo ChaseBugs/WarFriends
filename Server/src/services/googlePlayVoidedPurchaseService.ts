@@ -1,6 +1,4 @@
-import { createHmac } from "crypto";
 import type { Filter } from "mongodb";
-import { config } from "../config";
 import {
   players,
   purchaseReceipts,
@@ -32,6 +30,7 @@ import { cardInventoryStateFor } from "./cardInventoryService";
 import { createInitialVisualInventory, visualInventoryStateFor } from "./visualInventoryService";
 import { validatedVipExpiration } from "./vipEntitlementService";
 import { validatedPurchaseReceipt } from "./purchaseReceiptAuthorityService";
+import { googlePlayPurchaseTokenReceiptId } from "./googlePlayPurchaseTokenIdentityService";
 
 const jobId = "google-play-voided-products";
 const cursorId = "google-play-voided-products" as const;
@@ -64,13 +63,6 @@ export function validatedPurchaseReconciliationCursor(
     throw new Error("Stored purchase-reconciliation cursor authority is invalid.");
   }
   return cursor;
-}
-
-function receiptIdForToken(token: string): string {
-  return createHmac("sha256", config.purchaseTokenHashSecret)
-    .update("google-play-purchase\0", "utf8")
-    .update(token, "utf8")
-    .digest("hex");
 }
 
 function checkedSubtract(current: number, amount: number, field: string): number {
@@ -207,7 +199,7 @@ export function applyVoidedOneTimePurchaseState(
 }
 
 async function reconcileVoidedPurchase(event: GooglePlayVoidedPurchase, now: number): Promise<"revoked" | "replayed" | "unmatched"> {
-  const receiptId = receiptIdForToken(event.purchaseToken);
+  const receiptId = googlePlayPurchaseTokenReceiptId(event.purchaseToken);
   return withMongoTransaction(async (session) => {
     const receipt = await purchaseReceipts().findOne({ _id: receiptId }, { session });
     if (!receipt) return "unmatched";

@@ -1,4 +1,3 @@
-import { createHmac } from "crypto";
 import type { ClientSession, Filter } from "mongodb";
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import { config } from "../config";
@@ -27,6 +26,7 @@ import { validatedPlayerAccountEnvelope } from "./playerProfileMirrorAuthoritySe
 import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
 import { encryptPurchaseToken } from "./purchaseTokenCryptoService";
 import { validatedPurchaseReceipt } from "./purchaseReceiptAuthorityService";
+import { googlePlayPurchaseTokenReceiptId } from "./googlePlayPurchaseTokenIdentityService";
 import { applyPackEntitlementState } from "./packPurchaseService";
 import {
   validatedSubscription,
@@ -209,13 +209,6 @@ export function applyPurchaseEntitlementState(
   };
 }
 
-function purchaseTokenKey(token: string): string {
-  return createHmac("sha256", config.purchaseTokenHashSecret)
-    .update("google-play-purchase\0", "utf8")
-    .update(token, "utf8")
-    .digest("hex");
-}
-
 function progressionFilter(player: PlayerDocument): Filter<PlayerDocument> {
   const rawRevision = player.progression?.revision;
   if (!player.progression) return { id: player.id, progression: { $exists: false } };
@@ -283,7 +276,7 @@ export async function deliverGooglePlayPurchase(
     throw error;
   }
 
-  const receiptId = purchaseTokenKey(input.purchaseToken);
+  const receiptId = googlePlayPurchaseTokenReceiptId(input.purchaseToken);
   try {
     return await withMongoTransaction(async (session) => {
       const existing = await purchaseReceipts().findOne({ _id: receiptId }, { session });

@@ -173,6 +173,13 @@ subscription tokens are AES-256-GCM encrypted with this key so the scheduler can
 state without storing replayable plaintext. Subscription revalidation and one-time Voided
 Purchases reconciliation default to purchase enablement and poll every five minutes; cadence,
 batch, and independent emergency-disable controls are documented in `.env.example`.
+For lower-latency provider changes, create an authenticated Google Cloud Pub/Sub push subscription
+whose endpoint is `POST /providers/google-play/rtdn`, then set `GOOGLE_PLAY_RTDN_ENABLED=true` plus
+the exact OIDC audience, push service-account email, and full subscription resource from
+`.env.example`. RTDN requires purchase verification, subscription revalidation, and voided-purchase
+reconciliation to be enabled together. The route verifies Google's JWT signature/audience and the
+exact verified email before decoding any message, binds the envelope to the configured subscription
+and Android package, and acknowledges only after a unique Pub/Sub `messageId` is durably inserted.
 The server never accepts `GoldBase`, `WarbucksBase`, a price, or an amount as purchase authority.
 
 Operational metrics are available at authenticated `GET /metrics` in Prometheus text format. Send
@@ -1524,13 +1531,35 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   terminal response that omits a new expiry preserves the receipt's last verified expiry as audit
   context instead of deleting the original entitlement boundary.
 
+  Authenticated Google Play RTDN is a durable wake-up path, never entitlement authority. The exact
+  Pub/Sub envelope accepts one mutually exclusive version-1.0 subscription, one-time product,
+  voided-purchase, pending-refund-review, or test notification. Package, event time, canonical
+  Base64/UTF-8 JSON, nested field shape, notification integers, and the configured subscription are
+  validated before insertion. The unique decimal `messageId` plus a SHA-256 payload binding prevents
+  duplicate provider calls; a conflicting reuse is rejected. Raw purchase tokens are converted to
+  the same HMAC receipt identity used by client delivery and void reconciliation. The pending-refund
+  token is the sole exception because a future operator response needs it, and it is stored only as
+  event-bound AES-256-GCM ciphertext. Logs contain only message ID, kind, status, and retry count.
+
+  A separate renewable-lease worker validates its complete selected event batch before the first
+  provider call. Subscription notifications, including subscription voids, target the existing
+  receipt and call `subscriptionsv2.get`; one-time voids wake the fully paginated Voided Purchases
+  API sweep. Lost responses and busy leases retain the event with bounded exponential retry, while
+  every terminal transition is compare-and-set and receives the configured TTL. One-time purchase
+  notifications cannot identify a player and therefore never grant from RTDN: the recovered client
+  purchase path still performs `products.get`, while canceled pending purchases have no grant to
+  revoke. Test messages terminate as audit-only. Pending refund-review notifications are retained
+  without TTL as `manual-review-required` and cannot change entitlement until a protected operator
+  ReviewRefund/evidence workflow is implemented.
+
   Google Play provider scheduling resolves once during module startup as one immutable exact
-  four-value deployment snapshot. Subscription cadence is 300-86,400 seconds and is shared by
+  seven-value deployment snapshot. Subscription cadence is 300-86,400 seconds and is shared by
   initial receipt creation, successful checks, and retry caps; its scheduler interval is
   30-3,600 seconds and its batch is 1-1,000 receipts. The voided-purchase scheduler interval is
-  60-3,600 seconds. Every setting must be an exact safe integer. Fractional, non-finite, negative,
-  or out-of-range values stop startup instead of being rounded, clamped, independently re-read, or
-  used to produce a durable invalid revalidation date.
+  60-3,600 seconds. RTDN polls every 10-3,600 seconds, selects 1-1,000 events, and retains terminal
+  deduplication rows for 30-365 days. Every setting must be an exact safe integer. Fractional,
+  non-finite, negative, or out-of-range values stop startup instead of being rounded, clamped,
+  independently re-read, or used to produce a durable invalid revalidation date.
 
   Every shared background-job lease is validated before acquisition and after its MongoDB
   compare-and-set: exact fields, bounded job ID, UUID owner, safe ordered dates, and a duration from

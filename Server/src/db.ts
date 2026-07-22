@@ -1165,6 +1165,56 @@ export interface PurchaseReconciliationCursorDocument extends Document {
 }
 
 let purchaseReconciliationCursorsCollection: Collection<PurchaseReconciliationCursorDocument> | null = null;
+
+export type GooglePlayRtdnKind = "subscription" | "one-time-product" | "voided-purchase" | "pending-refund-review" | "test";
+export type GooglePlayRtdnDisposition =
+  | "subscription-revalidated"
+  | "subscription-unmatched"
+  | "voided-sweep-completed"
+  | "one-time-client-verification"
+  | "test"
+  | "manual-review-required";
+
+/**
+ * Durable, token-safe inbox row for one authenticated Google Play Pub/Sub notification.
+ *
+ * `payloadSha256` binds an immutable Pub/Sub message ID to its exact decoded bytes. Purchase
+ * tokens never appear in this document: normal tokens become the receipt HMAC, while the pending
+ * refund token that a future operator workflow needs is stored only as receipt-secret-bound GCM
+ * ciphertext. Pending rows are retried by a leased worker; terminal rows receive a TTL date.
+ */
+export interface GooglePlayRtdnEventDocument extends Document {
+  _id: string;
+  payloadSha256: string;
+  subscription: string;
+  packageName: string;
+  kind: GooglePlayRtdnKind;
+  eventTime: Date;
+  receivedAt: Date;
+  /** Immutable policy captured at insertion so later deploy changes do not corrupt old rows. */
+  retentionDays: number;
+  status: "pending" | "completed" | "manual-review";
+  attempts: number;
+  nextAttemptAt: Date | null;
+  completedAt: Date | null;
+  expiresAt: Date | null;
+  disposition: GooglePlayRtdnDisposition | null;
+  receiptId: string | null;
+  productId: string | null;
+  notificationType: number | null;
+  orderId: string | null;
+  productType: 1 | 2 | null;
+  refundType: 1 | 2 | null;
+  encryptedPendingRefundToken: {
+    version: 1;
+    iv: string;
+    authTag: string;
+    ciphertext: string;
+  } | null;
+  refundReason: number | null;
+}
+
+let googlePlayRtdnEventsCollection: Collection<GooglePlayRtdnEventDocument> | null = null;
 export interface ScheduledJobLeaseDocument extends Document {
   _id: string;
   ownerId: string;
@@ -1281,6 +1331,7 @@ export async function connectMongo(): Promise<void> {
   purchaseReconciliationCursorsCollection = db.collection<PurchaseReconciliationCursorDocument>(
     "purchaseReconciliationCursors",
   );
+  googlePlayRtdnEventsCollection = db.collection<GooglePlayRtdnEventDocument>("googlePlayRtdnEvents");
   scheduledJobLeasesCollection = db.collection<ScheduledJobLeaseDocument>("scheduledJobLeases");
   firebasePushDeliveriesCollection = db.collection<FirebasePushDeliveryDocument>("firebasePushDeliveries");
   clientAnalyticsEventsCollection = db.collection<ClientAnalyticsEventDocument>("clientAnalyticsEvents");
@@ -1304,6 +1355,8 @@ export async function connectMongo(): Promise<void> {
   // support/refund audits without ever storing or logging the raw Play purchase token.
   await purchaseReceiptsCollection.createIndex({ playerId: 1, purchasedAt: -1 });
   await purchaseReceiptsCollection.createIndex({ orderId: 1 }, { unique: true, sparse: true });
+  await googlePlayRtdnEventsCollection.createIndex({ status: 1, nextAttemptAt: 1, _id: 1 });
+  await googlePlayRtdnEventsCollection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
   // One scheduler query reads only due pending rows. `_id` is already the unique recipient/message
   // digest, so retries and fan-out replays cannot create a second provider delivery lifecycle.
@@ -1520,6 +1573,7 @@ export async function disconnectMongo(): Promise<void> {
   gameCatalogReleasesCollection = null;
   purchaseReceiptsCollection = null;
   purchaseReconciliationCursorsCollection = null;
+  googlePlayRtdnEventsCollection = null;
   scheduledJobLeasesCollection = null;
   firebasePushDeliveriesCollection = null;
   clientAnalyticsEventsCollection = null;
@@ -1603,6 +1657,10 @@ export function purchaseReceipts(): Collection<PurchaseReceiptDocument> {
 
 export function purchaseReconciliationCursors(): Collection<PurchaseReconciliationCursorDocument> {
   return requireCollection("purchaseReconciliationCursors", purchaseReconciliationCursorsCollection);
+}
+
+export function googlePlayRtdnEvents(): Collection<GooglePlayRtdnEventDocument> {
+  return requireCollection("googlePlayRtdnEvents", googlePlayRtdnEventsCollection);
 }
 
 export function scheduledJobLeases(): Collection<ScheduledJobLeaseDocument> {

@@ -33,6 +33,8 @@ import { validateAuthenticationSecretConfiguration } from "./services/authSecret
 import { trafficPolicy } from "./services/trafficPolicyService";
 import { runtimeInfrastructurePolicy } from "./services/runtimeInfrastructurePolicyService";
 import { startFirebasePushDeliveryScheduler } from "./services/firebasePushDeliveryService";
+import { googlePlayRtdnRouter } from "./routes/googlePlayRtdn";
+import { startGooglePlayRtdnScheduler } from "./services/googlePlayRtdnService";
 
 const app = express();
 const publicTrafficPolicy = trafficPolicy();
@@ -104,6 +106,10 @@ app.use("/admin/replay-videos", requireAdmin, adminReplayVideosRouter);
 // never returns private sanction or operator fields.
 app.use("/support/moderation", supportModerationRouter);
 
+// Google Cloud Pub/Sub calls this provider-only surface with an OIDC Bearer token. It is outside
+// the recovered gameplay dispatcher and acknowledges only after durable message-ID deduplication.
+app.use("/providers/google-play/rtdn", googlePlayRtdnRouter);
+
 app.use(apiRouter);
 
 app.use((req: Request, res: Response) => {
@@ -127,6 +133,7 @@ let pvpOrphanRecoveryTimer: NodeJS.Timeout | null = null;
 let playerLeagueSchedulerTimer: NodeJS.Timeout | null = null;
 let googlePlaySubscriptionSchedulerTimer: NodeJS.Timeout | null = null;
 let googlePlayVoidedPurchaseSchedulerTimer: NodeJS.Timeout | null = null;
+let googlePlayRtdnSchedulerTimer: NodeJS.Timeout | null = null;
 let squadWarSchedulerTimer: NodeJS.Timeout | null = null;
 let firebasePushDeliverySchedulerTimer: NodeJS.Timeout | null = null;
 // Let Unity's BestHTTP reuse keep-alive sockets; headersTimeout must exceed keepAliveTimeout.
@@ -185,6 +192,7 @@ async function start(): Promise<void> {
   squadWarSchedulerTimer = startSquadWarScheduler();
   googlePlaySubscriptionSchedulerTimer = startGooglePlaySubscriptionRevalidationScheduler();
   googlePlayVoidedPurchaseSchedulerTimer = startGooglePlayVoidedPurchaseScheduler();
+  googlePlayRtdnSchedulerTimer = startGooglePlayRtdnScheduler();
   firebasePushDeliverySchedulerTimer = startFirebasePushDeliveryScheduler();
 
   httpServer.listen(runtimeInfrastructure.listenPort, () => {
@@ -202,6 +210,7 @@ async function shutdown(signal: string): Promise<void> {
   if (squadWarSchedulerTimer) clearInterval(squadWarSchedulerTimer);
   if (googlePlaySubscriptionSchedulerTimer) clearInterval(googlePlaySubscriptionSchedulerTimer);
   if (googlePlayVoidedPurchaseSchedulerTimer) clearInterval(googlePlayVoidedPurchaseSchedulerTimer);
+  if (googlePlayRtdnSchedulerTimer) clearInterval(googlePlayRtdnSchedulerTimer);
   if (firebasePushDeliverySchedulerTimer) clearInterval(firebasePushDeliverySchedulerTimer);
   await pvpCoordinatorHeartbeat?.stop();
   await disconnectRedis();

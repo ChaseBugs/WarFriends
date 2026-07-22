@@ -353,6 +353,44 @@ export async function runGooglePlaySubscriptionRevalidationSweep(
   return { ...(leased.result ?? { checked: 0, changed: 0, failed: 0 }), skipped: false };
 }
 
+/**
+ * Revalidate the exact receipt named by an authenticated RTDN purchase-token HMAC.
+ *
+ * RTDN contains no complete entitlement state, so this path deliberately reuses the normal
+ * subscriptionsv2 verifier and the same singleton lease as the periodic sweep. A missing receipt
+ * is not an error: Play may publish before the recovered client submits the purchase, and that
+ * later client request performs its own provider verification. A token that resolves to a
+ * one-time receipt is contradictory provider evidence and fails closed for operator review.
+ */
+export async function runGooglePlaySubscriptionRevalidationForReceipt(
+  receiptId: string,
+  verifier: GooglePlaySubscriptionStatusVerifier = defaultVerifier,
+  now = unixNow(),
+): Promise<{ found: boolean; checked: boolean; changed: boolean; failed: boolean; skipped: boolean }> {
+  if (!/^[0-9a-f]{64}$/u.test(receiptId)) {
+    throw new Error("Google Play subscription receipt identity is invalid.");
+  }
+  if (!GOOGLE_PLAY_APPLICATION.subscriptionRevalidationEnabled) {
+    return { found: false, checked: false, changed: false, failed: false, skipped: true };
+  }
+  const interval = googlePlaySubscriptionSchedulerIntervalSeconds();
+  const leased = await withScheduledJobLease(jobId, Math.max(300_000, interval * 2_000), async (lease) => {
+    await lease.assertOwned();
+    const receipt = await purchaseReceipts().findOne({ _id: receiptId });
+    if (!receipt) return { found: false, checked: false, changed: false, failed: false };
+    validatedPurchaseReceipt(receipt);
+    if (receipt.kind !== "subscription") {
+      throw new Error("Google Play RTDN subscription token identifies a non-subscription receipt.");
+    }
+    const result = await revalidateReceipt(receipt, verifier, now, lease.assertOwned);
+    return { found: true, ...result };
+  });
+  if (!leased.ran) {
+    return { found: false, checked: false, changed: false, failed: false, skipped: true };
+  }
+  return { ...(leased.result ?? { found: false, checked: false, changed: false, failed: false }), skipped: false };
+}
+
 export function startGooglePlaySubscriptionRevalidationScheduler(): NodeJS.Timeout | null {
   if (!GOOGLE_PLAY_APPLICATION.subscriptionRevalidationEnabled) return null;
   const seconds = googlePlaySubscriptionSchedulerIntervalSeconds();

@@ -109,6 +109,20 @@ export const config = {
   ),
   googlePlayVoidedPurchaseSchedulerIntervalSeconds:
     Number(process.env.GOOGLE_PLAY_VOIDED_PURCHASE_SCHEDULER_INTERVAL_SECONDS ?? 300),
+  // Pub/Sub RTDN is an authenticated wake-up path, not purchase authority. Keep it opt-in until
+  // the exact push audience, OIDC service account, and subscription resource are provisioned.
+  googlePlayRtdnEnabled: exactEnvironmentBoolean(
+    process.env.GOOGLE_PLAY_RTDN_ENABLED,
+    false,
+    "GOOGLE_PLAY_RTDN_ENABLED",
+  ),
+  googlePlayRtdnAudience: process.env.GOOGLE_PLAY_RTDN_AUDIENCE ?? "",
+  googlePlayRtdnServiceAccountEmail: process.env.GOOGLE_PLAY_RTDN_SERVICE_ACCOUNT_EMAIL ?? "",
+  googlePlayRtdnSubscription: process.env.GOOGLE_PLAY_RTDN_SUBSCRIPTION ?? "",
+  googlePlayRtdnSchedulerIntervalSeconds:
+    Number(process.env.GOOGLE_PLAY_RTDN_SCHEDULER_INTERVAL_SECONDS ?? 30),
+  googlePlayRtdnBatchSize: Number(process.env.GOOGLE_PLAY_RTDN_BATCH_SIZE ?? 100),
+  googlePlayRtdnRetentionDays: Number(process.env.GOOGLE_PLAY_RTDN_RETENTION_DAYS ?? 90),
 
   // The recovered Android client consumes Firebase data messages, not server-authored display
   // copy. Keep delivery disabled until ADC identifies a service account allowed to send for the
