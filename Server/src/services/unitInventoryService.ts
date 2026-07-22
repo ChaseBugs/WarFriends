@@ -9,8 +9,14 @@ import type {
   PlayerProgressionState,
   SavedArmyState,
 } from "../db";
-import generatedUnitCatalog from "../data/unitCatalog.generated.json";
-import generatedUnitUpgradeCatalog from "../data/unitUpgradeCatalog.generated.json";
+import {
+  VALIDATED_UNIT_CATALOG,
+  VALIDATED_UNIT_UPGRADE_CATALOG,
+  type UnitDefinition,
+  type UnitEliteUpgradeLevel,
+  type UnitUpgradeDefinition,
+  type UnitUpgradeLevel,
+} from "./unitCatalogAuthorityService";
 import {
   ITEM_ALREADY_MAXIMUM_UPGRADE,
   ITEM_ALREADY_UPGRADING,
@@ -101,81 +107,10 @@ export function checkedUnitPartsReward(current: number, reward: number): number 
  * separately recovered tutorial transition.
  */
 
-export interface UnitDefinition {
-  /** Google2u component type used by ArmyScreen as Name/LevelName. */
-  name: string;
-  /** Position in LevelManager.behaviours; stable identity for this client build. */
-  index: number;
-  roster: "player" | "additional";
-  behaviourType: string;
-  upgradeType: string;
-  tutorialUnit: boolean;
-  /** LevelBehaviour.UnitType used by ActiveUnitsManager's four deployment categories. */
-  deploymentType: 0 | 1 | 2 | 3;
-  /** False for mechanical units, which share an additional three-unit global cap. */
-  isSoldier: boolean;
-  /** Display level echoed in BuyUnit.UnlockLevel. */
-  unlockLevel: number;
-  /** Zero-based LevelManager.levelNumber gate used by UpgradeSlots.canBuy. */
-  canBuyLevelIndex: number;
-  warBucks: number;
-  gold: number;
-  deliverySeconds: number;
-  /** Initial SavedArmySlots.tier, not an upgrade count. */
-  startingTier: number;
-  /** Source-sheet display level retained for later upgrade/promotion recovery. */
-  startingLevel: number;
-  /** Absolute source-table row at which the special-slot subtable begins. */
-  startingSpecial: number;
-  /** Absolute source-table row at which elite-part upgrades begin. */
-  startingElite: number;
-  unitType: number;
-  clientId: number;
-  /** Display-level requirements for promotions into tiers 2 through 6. */
-  unlockTierLevels: readonly number[];
-}
+export type { UnitDefinition } from "./unitCatalogAuthorityService";
 
-interface GeneratedUnitArtifact {
-  catalog: UnitDefinition[];
-}
-
-interface UnitUpgradeLevel {
-  /** Absolute row in the recovered Google2u table, retained for extraction audits. */
-  sourceIndex: number;
-  /** Tier digit after removing the slot prefix from the table's encoded Tier field. */
-  tier: number;
-  /** UpgradeSlot.id: zero for normal power and one for the special ability. */
-  slot: 0 | 1;
-  warBucks: number;
-  deliverySeconds: number;
-  /** Float value read by UpgradeSlot/UpgradeSlotSpecial.GetArmyPower. */
-  armyPower: number;
-}
-
-interface UnitEliteUpgradeLevel {
-  /** Absolute STARTINGELITE-based row retained for source audits. */
-  sourceIndex: number;
-  /** Exact unit-specific elite parts consumed by UpgradeEliteSlot. */
-  parts: number;
-  /** WarBucks cost; the first elite purchase is zero in the recovered tables. */
-  warBucks: number;
-  /** Float value included only after SavedArmySlots.eliteSlot becomes positive. */
-  armyPower: number;
-}
-
-interface UnitUpgradeDefinition {
-  name: string;
-  normalLevels: readonly UnitUpgradeLevel[];
-  specialLevels: readonly UnitUpgradeLevel[];
-  eliteLevels: readonly UnitEliteUpgradeLevel[];
-}
-
-interface GeneratedUnitUpgradeArtifact {
-  catalog: UnitUpgradeDefinition[];
-}
-
-const extractedRows = (generatedUnitCatalog as GeneratedUnitArtifact).catalog;
-const extractedUpgradeRows = (generatedUnitUpgradeCatalog as GeneratedUnitUpgradeArtifact).catalog;
+const extractedRows = VALIDATED_UNIT_CATALOG.catalog;
+const extractedUpgradeRows = VALIDATED_UNIT_UPGRADE_CATALOG.catalog;
 const UNIT_UPGRADE_CATALOG: Readonly<Record<string, UnitUpgradeDefinition>> = Object.freeze(
   Object.fromEntries(
     extractedUpgradeRows.map((row) => [

@@ -81,6 +81,17 @@ Status legend:
   pre-dictionary duplicate checks prevent truncated, reordered, unsafe, or colliding rows from
   changing purchase, equip, loadout, offer, or publication authority.
 
+- **Unit inventory and all three upgrade lanes now share one paired immutable runtime catalog.**
+  Gameplay and database-catalog sync validate the two generated artifacts as one MainScene
+  snapshot: exact shared provenance, 24 ordered player identities, three helper identities,
+  18 ordered unresolved rows, source-backed tutorial/helper sentinels, unique bounded IDs, and
+  all 4,124 normal, 684 special, and 216 Elite rows. Each lane must be contiguous from the owning
+  unit's `startingSpecial`/`startingElite` offsets, retain its recovered slot/tier ordering, and
+  contain safe prices, durations, parts, and finite nondecreasing Army Power. Every accepted row,
+  tier-gate array, and nested lane is frozen before lookup maps are built, so artifact truncation,
+  cross-file digest drift, duplicate overwrite, malformed sentinels, or later mutation fails before
+  purchase, upgrade, equip, Army Power, rental, achievement, or publication authority changes.
+
 ## Feature inventory
 
 | Priority | Feature | Client actions | Status | Implemented backend behavior | Required remaining work |

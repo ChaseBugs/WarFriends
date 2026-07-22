@@ -1621,7 +1621,15 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   `LevelManager.behaviours` and `additionalBehaviours` arrays through each behaviour's
   `UpgradeSlots` GameObject to the `Google2u.ArmyUpgrades` master row. The checked-in artifact
   records 24 player-roster units, three non-purchasable turret helpers, and 18 newer table rows
-  that have no LevelManager object in this client. Buffered `BuyUnit`/`ActivateUnit` now supports
+  that have no LevelManager object in this client. Process startup validates that identity artifact
+  together with the upgrade artifact as one immutable MainScene snapshot before constructing any
+  gameplay or sync lookup. It requires matching provenance, exact ordered row families, unique
+  bounded IDs, the recovered tutorial/helper sentinel shapes, and contiguous normal/special/Elite
+  ranges derived from each player's `startingSpecial` and `startingElite` offsets. All 4,124 normal,
+  684 special, and 216 Elite rows must retain safe prices, durations, parts, tier/slot ordering, and
+  finite nondecreasing Army Power; every accepted nested row is frozen. A truncated or mismatched
+  artifact therefore stops startup instead of silently changing unit economy or publishing a split
+  database catalog. Buffered `BuyUnit`/`ActivateUnit` now supports
   the 23 non-tutorial player rows with exact XOR-decoded Gold/WarBucks prices, zero-based level
   gates, display unlock checks, initial tier state, atomic wallet/ownership writes, Unity rollback
   fields, and `BufferId` replay protection. All supported rows have `DELIVERTIME=0`, so BuyUnit

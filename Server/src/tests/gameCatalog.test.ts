@@ -42,7 +42,10 @@ test("material database joins every recovered gameplay inventory family", () => 
   assert.equal(catalog.clientVersion, GAME_CATALOG_CLIENT_VERSION);
   assert.match(catalog.catalogRevision, /^[0-9a-f]{64}$/);
   assert.equal(catalog.entries.length, 531);
-  assert.equal(catalog.sources.length, 5);
+  // All five generated families now bind the same current MainScene digest. Release provenance
+  // therefore conserves three unique source triples (schema versions 1, 2, and 4), rather than
+  // retaining duplicate triples that differed only because the unit artifacts had a stale hash.
+  assert.equal(catalog.sources.length, 3);
   assert.equal(catalog.entries.every((entry) => catalog.sources.some((source) =>
     source.path === entry.source
     && source.sha256 === entry.sourceSha256

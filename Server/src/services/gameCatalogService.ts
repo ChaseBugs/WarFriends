@@ -1,6 +1,4 @@
 import type { Collection } from "mongodb";
-import generatedUnitCatalog from "../data/unitCatalog.generated.json";
-import generatedUnitUpgradeCatalog from "../data/unitUpgradeCatalog.generated.json";
 import {
   WEAPON_BLACK_MARKET_PRICES,
   WEAPON_UPGRADE_CATALOG,
@@ -14,6 +12,10 @@ import { VALIDATED_CARD_CATALOG } from "./cardCatalogAuthorityService";
 import { VALIDATED_VISUAL_CATALOG } from "./visualCatalogAuthorityService";
 import { VALIDATED_ARMY_POWER_CATALOG } from "./armyPowerCatalogAuthorityService";
 import { VALIDATED_WEAPON_CATALOG } from "./weaponCatalogAuthorityService";
+import {
+  VALIDATED_UNIT_CATALOG,
+  VALIDATED_UNIT_UPGRADE_CATALOG,
+} from "./unitCatalogAuthorityService";
 
 export { catalogContentHash } from "./gameCatalogAuthorityService";
 
@@ -152,8 +154,10 @@ interface CardCatalogArtifact {
 }
 
 const weapons = VALIDATED_WEAPON_CATALOG as unknown as WeaponArtifact;
-const units = generatedUnitCatalog as unknown as UnitArtifact;
-const unitUpgrades = generatedUnitUpgradeCatalog as unknown as UnitUpgradeArtifact;
+// Unit identity and its three upgrade lanes are one recovered authority snapshot. The paired
+// validator rejects cross-artifact drift before the sync builder can publish mismatched rows.
+const units = VALIDATED_UNIT_CATALOG as unknown as UnitArtifact;
+const unitUpgrades = VALIDATED_UNIT_UPGRADE_CATALOG as unknown as UnitUpgradeArtifact;
 const armyPower = VALIDATED_ARMY_POWER_CATALOG as unknown as ArmyPowerArtifact;
 const visuals = VALIDATED_VISUAL_CATALOG as unknown as VisualCatalogArtifact;
 // Publishing the database catalog must use the same validated immutable card snapshot as gameplay;
