@@ -1,4 +1,3 @@
-import { ApiError, ApiErrorCode } from "../apiErrors";
 import { DbAction } from "../dbActions";
 import { ok } from "../dtos";
 import {
@@ -7,17 +6,13 @@ import {
   parseVisualPurchaseData,
   purchaseVisualState,
   serializeVisualInventory,
-  VISUAL_CATALOG,
 } from "../services/visualInventoryService";
 import { mutateProgression } from "../services/progressionMutationService";
+import {
+  requestedDirectVisualName,
+  requestedDirectVisualPurchase,
+} from "./inventoryRequestParsing";
 import { authed, type HandlerEntry } from "./types";
-
-function visualName(value: unknown): string {
-  if (typeof value !== "string" || value.length < 1 || value.length > 128) {
-    throw new ApiError(ApiErrorCode.UnknownAction, "Visual name is invalid.");
-  }
-  return value;
-}
 
 /**
  * Direct routes retained for old/diagnostic client paths.
@@ -28,8 +23,7 @@ function visualName(value: unknown): string {
  */
 export const visualHandlers: Record<number, HandlerEntry> = {
   [DbAction.BuyDecal]: authed(async ({ player, req }) => {
-    const raw = req.ObjData ?? req.Data ?? req.data;
-    if (typeof raw !== "string") throw new ApiError(ApiErrorCode.UnknownAction, "Visual purchase data is missing.");
+    const raw = requestedDirectVisualPurchase(req);
     const payload = parseVisualPurchaseData(raw);
     const result = await mutateProgression(player!.id, (state, now) =>
       // Read VIP from the same optimistic progression snapshot as the Gold debit. A purchase
@@ -52,7 +46,7 @@ export const visualHandlers: Record<number, HandlerEntry> = {
   }),
 
   [DbAction.EquipDecal]: authed(async ({ player, req }) => {
-    const name = visualName(req.DecalId ?? req.Name ?? req.Data ?? req.data);
+    const name = requestedDirectVisualName(req);
     const result = await mutateProgression(player!.id, (state, now) => equipVisualState(state, now, name));
     return ok(DbAction.EquipDecal, {
       DecalManagerData: serializeVisualInventory(result.visualInventory),
@@ -60,22 +54,16 @@ export const visualHandlers: Record<number, HandlerEntry> = {
   }),
 
   [DbAction.DecalWasShown]: authed(async ({ player, req }) => {
-    const candidate = req.DecalId ?? req.Name ?? req.Data ?? req.data;
-    if (typeof candidate !== "string" || !VISUAL_CATALOG[candidate]) {
-      // Action 108 is a legacy impression route. Some recovered call sites do not contain a
-      // visual ID, so accepting those as telemetry preserves compatibility without mutating
-      // ownership, notification state, expiry, or equipment.
-      return ok(DbAction.DecalWasShown, { Ignored: true });
-    }
-    const name = visualName(candidate);
-    const result = await mutateProgression(player!.id, (state) => markVisualShownState(state, name));
-    return ok(DbAction.DecalWasShown, {
-      DecalManagerData: serializeVisualInventory(result.visualInventory),
-    });
+    // The only recovered direct action-108 builder carries unrelated impression fields, while
+    // current visual notification acknowledgement is buffered action 191. Do not reinterpret a
+    // diagnostic DecalId/Name/Data property as visual authority on this ambiguous legacy route.
+    void player;
+    void req;
+    return ok(DbAction.DecalWasShown, { Ignored: true });
   }),
 
   [DbAction.VisualWasShown]: authed(async ({ player, req }) => {
-    const name = visualName(req.DecalId ?? req.Name ?? req.Data ?? req.data);
+    const name = requestedDirectVisualName(req);
     const result = await mutateProgression(player!.id, (state) => markVisualShownState(state, name));
     return ok(DbAction.VisualWasShown, {
       DecalManagerData: serializeVisualInventory(result.visualInventory),

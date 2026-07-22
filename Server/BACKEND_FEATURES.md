@@ -13,6 +13,12 @@ Status legend:
 
 ### Recovered-client gap corrections
 
+- **Direct inventory compatibility routes no longer accept alias-only mutation authority.** The
+  stock client keeps weapon/unit/visual acknowledgements, purchases, and equips inside exact
+  `RequestBuffer.data`. Explicit replacement-client routes now require `LevelName`, `ObjData`, or
+  `DecalId` as their canonical outer field; legacy `Name`/`Data`/`data` values may only accompany
+  and exactly duplicate it. Ambiguous direct action 108 remains acknowledged telemetry and cannot
+  mark a visual shown merely because a caller supplies a visual-looking alias.
 - **Player profile mutations now use the exact recovered request boundary.** Action 29 mutates
   only from `PlayerStatus`; a diagnostic `Status` field can only be an agreeing duplicate and
   malformed, conflicting, or Status-only heartbeats retain callback-safe `Time` without refreshing

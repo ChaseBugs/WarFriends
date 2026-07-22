@@ -1,4 +1,3 @@
-import { ApiError, ApiErrorCode } from "../apiErrors";
 import { DbAction } from "../dbActions";
 import { ok } from "../dtos";
 import {
@@ -7,14 +6,8 @@ import {
 } from "../services/itemInventoryService";
 import { mutateProgression } from "../services/progressionMutationService";
 import { markUnitShownState } from "../services/unitInventoryService";
+import { requestedDirectInventoryName } from "./inventoryRequestParsing";
 import { authed, type HandlerEntry } from "./types";
-
-function inventoryName(value: unknown): string {
-  if (typeof value !== "string" || value.length < 1 || value.length > 128) {
-    throw new ApiError(ApiErrorCode.UnknownAction, "Inventory item name is invalid.");
-  }
-  return value;
-}
 
 /**
  * Direct compatibility routes for the two notification acknowledgements.
@@ -25,7 +18,7 @@ function inventoryName(value: unknown): string {
  */
 export const inventoryImpressionHandlers: Record<number, HandlerEntry> = {
   [DbAction.WeaponWasShown]: authed(async ({ player, req }) => {
-    const name = inventoryName(req.LevelName ?? req.Name ?? req.Data ?? req.data);
+    const name = requestedDirectInventoryName(req);
     const result = await mutateProgression(
       player!.id,
       (state) => markWeaponShownState(state, player!.player.level, name),
@@ -38,7 +31,7 @@ export const inventoryImpressionHandlers: Record<number, HandlerEntry> = {
   }),
 
   [DbAction.ArmyUnitWasShown]: authed(async ({ player, req }) => {
-    const name = inventoryName(req.LevelName ?? req.Name ?? req.Data ?? req.data);
+    const name = requestedDirectInventoryName(req);
     const result = await mutateProgression(
       player!.id,
       (state) => markUnitShownState(state, player!.player.level, name),

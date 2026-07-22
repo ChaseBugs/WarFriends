@@ -1327,6 +1327,12 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   four-slot equipment, notification state, rollback data, and `BufferId` replay protection are
   atomic. Re-equipping the current category item and replaying an already-cleared visual badge
   acknowledgement preserve exact state identity instead of creating false inventory revisions.
+  Direct replacement-client routes are a separate outer contract: BuyDecal requires `ObjData`,
+  EquipDecal/VisualWasShown require `DecalId`, and weapon/unit acknowledgement requires
+  `LevelName`. `Name`, `Data`, and `data` may only be exact agreeing duplicates and cannot authorize
+  a direct mutation alone. Recovered direct action 108 has no trustworthy visual identity, so it
+  remains callback-safe telemetry even when a diagnostic caller supplies a visual-looking alias;
+  the current visual badge mutation remains buffered action 191.
   One shared `DecalManagerData` authority boundary validates the exact root/saved/slot shapes,
   source-catalog visual identities, catalog-bounded part counters, all four recovered category
   slots, category-correct equipped IDs, and the helmet-only previous-head value at progression
