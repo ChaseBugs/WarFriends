@@ -29,6 +29,11 @@ Status legend:
   analytics, support logs, and client errors with bounded query-bound cursors and complete row
   validation. Exact UUID detail lookup resolves the `LogId` returned by stock action 166 without
   scanning global pages; application-time expiry and family validation run before any bytes leave.
+- **Ranked PvP cannot settle an unstarted pairing.** The complete two-player `joinedPlayerIds` set
+  and one-time `roomStartedAt` marker are one durable gameplay boundary. Disconnect/result/used-card
+  reports, relayed card play/delivery evidence, and finished reward authority require that proof in
+  the complete document validator and mutation compare-and-set filters. Pre-start timeout or player
+  cancellation remains a valid no-reward terminal path.
 - **The replay-publication operator consumer is implemented.** Admin-Bearer-only list and exact
   detail endpoints expose reviewed action-3000 receipt metadata. Global or player-filtered cursors
   use the unique descending creation-time/video-ID tuple; every selected row is fully revalidated

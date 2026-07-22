@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { distributedRoomJoinState, type MatchDoc } from "../services/matchService";
+import {
+  distributedRoomJoinState,
+  hasStartedMatchAuthority,
+  type MatchDoc,
+} from "../services/matchService";
 
 function match(joinedPlayerIds?: string[]): MatchDoc {
   return {
@@ -27,4 +31,17 @@ test("distributed room starts only after both distinct assigned players join", (
     joinedPlayerIds: ["b", "a"],
     ready: true,
   });
+});
+
+test("gameplay authority requires both durable joins and the one-time room-start marker", () => {
+  assert.equal(hasStartedMatchAuthority(match()), false);
+  assert.equal(hasStartedMatchAuthority(match(["a", "b"])), false);
+  assert.equal(hasStartedMatchAuthority({
+    ...match(["a"]),
+    roomStartedAt: new Date(),
+  }), false);
+  assert.equal(hasStartedMatchAuthority({
+    ...match(["a", "b"]),
+    roomStartedAt: new Date(),
+  }), true);
 });

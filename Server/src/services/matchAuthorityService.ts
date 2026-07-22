@@ -267,6 +267,22 @@ export function validatedMatchDocument(match: MatchDoc, now = new Date()): Match
     invalid("Stored match room-start authority is invalid.");
   }
 
+  // Joining the assigned room is the server-owned boundary between a cancellable pairing and
+  // an actual battle. Result reports and card relay rows are client-originated evidence, so they
+  // must never create that boundary themselves. Requiring the one-time room-start marker here
+  // also protects non-HTTP callers and old/damaged MongoDB rows before any evidence is consumed.
+  const hasGameplayEvidence = [
+    match.disconnectedAt,
+    match.resultReports,
+    match.usedCardsReports,
+    match.relayedCardPlays,
+    match.relayedCardDeliveries,
+  ].some((value) => value !== undefined
+    && (!plainRecord(value) || Object.keys(value).length > 0));
+  if (hasGameplayEvidence && match.roomStartedAt === undefined) {
+    invalid("Stored match gameplay evidence exists before room start.");
+  }
+
   validateParticipantMap(match.disconnectedAt, participantIds, (value) => {
     if (!safeDate(value)
       || !match.roomStartedAt
@@ -331,7 +347,8 @@ export function validatedMatchDocument(match: MatchDoc, now = new Date()): Match
   }
 
   if (match.state === "finished") {
-    if (typeof match.winnerId !== "string"
+    if (match.roomStartedAt === undefined
+      || typeof match.winnerId !== "string"
       || !participantIds.has(match.winnerId)
       || !plainRecord(match.rewardReceipts)
       || Object.keys(match.rewardReceipts).length !== participantIds.size

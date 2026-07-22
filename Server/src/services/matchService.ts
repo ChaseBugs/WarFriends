@@ -210,7 +210,7 @@ export interface BothPlayersDisconnectedAuthority {
 export function completeBothPlayersDisconnectedAuthority(
   match: MatchDoc,
 ): BothPlayersDisconnectedAuthority | null {
-  if (match.state !== "active") return null;
+  if (match.state !== "active" || !hasStartedMatchAuthority(match)) return null;
   const playerIds = match.players.map((participant) => participant.playerId);
   const disconnectedAt = match.disconnectedAt ?? {};
   const keys = Object.keys(disconnectedAt);
@@ -235,6 +235,7 @@ export function matchesBothPlayersDisconnectedAuthority(
   const authorityIds = Object.keys(authority.disconnectedAt);
   const currentIds = Object.keys(match.disconnectedAt ?? {});
   return match.state === "active"
+    && hasStartedMatchAuthority(match)
     && authorityIds.length === expectedIds.length
     && currentIds.length === expectedIds.length
     && expectedIds.every((playerId) => {
@@ -1331,6 +1332,20 @@ export function distributedRoomJoinState(match: MatchDoc): {
 }
 
 /**
+ * Prove that the durable pairing crossed the backend-owned room-start boundary.
+ *
+ * A timestamp alone is insufficient because a damaged or manually edited row could contain one
+ * without both authenticated participant admissions. Conversely, both joins without the
+ * compare-and-set timestamp are still a pre-start pairing that may be cancelled safely.
+ */
+export function hasStartedMatchAuthority(match: MatchDoc): boolean {
+  const { ready } = distributedRoomJoinState(match);
+  return ready
+    && match.roomStartedAt instanceof Date
+    && Number.isFinite(match.roomStartedAt.getTime());
+}
+
+/**
  * Durably admit one authenticated assigned participant to a distributed PvP room.
  *
  * `$addToSet` makes reconnect/retry joins idempotent. Once all immutable participants are present,
@@ -1415,9 +1430,11 @@ export async function markMatchParticipantDisconnected(matchId: string, playerId
     {
       matchId,
       state: "active",
-      roomStartedAt: { $exists: true },
+      // Repeat the exact room-start snapshot observed above. Merely checking that a timestamp
+      // exists would let a concurrently damaged admission array acquire disconnect authority.
+      roomStartedAt: current.roomStartedAt,
+      joinedPlayerIds: current.joinedPlayerIds,
       "players.playerId": playerId,
-      joinedPlayerIds: playerId,
     },
     { $set: { [path]: disconnectedAt } },
     { returnDocument: "after" },
@@ -1433,6 +1450,7 @@ export function matchesParticipantDisconnectMarker(
 ): boolean {
   const current = match.disconnectedAt?.[playerId];
   return match.state === "active"
+    && hasStartedMatchAuthority(match)
     && match.players.some((participant) => participant.playerId === playerId)
     && expectedDisconnectedAt instanceof Date
     && Number.isFinite(expectedDisconnectedAt.getTime())
@@ -1460,8 +1478,15 @@ export async function clearMatchParticipantDisconnected(
   const cleared = await matches().updateOne(
     // Compare the exact marker read above. A socket can reconnect and disconnect again while this
     // request is awaiting MongoDB; an existence-only filter would erase that newer disconnect and
-    // prevent its own grace timer from ever resolving.
-    { matchId, state: "active", [path]: observedDisconnectedAt },
+    // prevent its own grace timer from ever resolving. The frozen room-start snapshot keeps this
+    // reconnect mutation behind the same complete gameplay boundary as the original marker.
+    {
+      matchId,
+      state: "active",
+      roomStartedAt: current.roomStartedAt,
+      joinedPlayerIds: current.joinedPlayerIds,
+      [path]: observedDisconnectedAt,
+    },
     { $unset: { [path]: "" } },
   );
   return cleared.modifiedCount === 1;
@@ -1599,7 +1624,10 @@ export async function recordRelayedCardPlay(
   const path = `relayedCardPlays.${playerId}`;
   for (let attempt = 0; attempt < 4; attempt += 1) {
     const match = await getMatch(matchId);
-    if (!match || match.state !== "active" || !match.players.some((player) => player.playerId === playerId)) {
+    if (!match
+      || match.state !== "active"
+      || !hasStartedMatchAuthority(match)
+      || !match.players.some((player) => player.playerId === playerId)) {
       throw new ApiError(CARD_NOT_FOUND, "CardPlayed sender is not in an active match.");
     }
     const existing = match.relayedCardPlays?.[playerId] ?? [];
@@ -1618,6 +1646,8 @@ export async function recordRelayedCardPlay(
       {
         matchId,
         state: "active",
+        roomStartedAt: match.roomStartedAt,
+        joinedPlayerIds: match.joinedPlayerIds,
         "players.playerId": playerId,
         [path]: existing.length === 0 ? { $exists: false } : existing,
       },
@@ -1649,7 +1679,10 @@ export async function markRelayedCardDelivered(
   cardId: string,
 ): Promise<boolean> {
   const match = await getMatch(matchId);
-  if (!match || match.state !== "active" || !match.players.some((participant) => participant.playerId === playerId)) {
+  if (!match
+    || match.state !== "active"
+    || !hasStartedMatchAuthority(match)
+    || !match.players.some((participant) => participant.playerId === playerId)) {
     return false;
   }
   if (match.relayedCardPlays?.[playerId]?.[sequence] !== cardId) return false;
@@ -1669,6 +1702,8 @@ export async function markRelayedCardDelivered(
     {
       matchId,
       state: "active",
+      roomStartedAt: match.roomStartedAt,
+      joinedPlayerIds: match.joinedPlayerIds,
       "players.playerId": playerId,
       [`relayedCardPlays.${playerId}.${sequence}`]: cardId,
       [path]: existing === undefined ? { $exists: false } : existing,
@@ -1759,7 +1794,7 @@ export async function reportMatchResult(
   if (!match.players.some((player) => player.playerId === winnerId)) return { status: "invalid" };
   const existingTerminal = terminalMatchReportResult(match, winnerId);
   if (existingTerminal) return existingTerminal;
-  if (match.state !== "active") return { status: "invalid" };
+  if (match.state !== "active" || !hasStartedMatchAuthority(match)) return { status: "invalid" };
 
   const authoritativeCards = requireRelayedCardEvidence
     ? validateRelayedCardReport(
@@ -1785,7 +1820,13 @@ export async function reportMatchResult(
   });
 
   await matches().updateOne(
-    { matchId, state: "active", "players.playerId": reporterId },
+    {
+      matchId,
+      state: "active",
+      roomStartedAt: match.roomStartedAt,
+      joinedPlayerIds: match.joinedPlayerIds,
+      "players.playerId": reporterId,
+    },
     {
       $set: {
         [`resultReports.${reporterId}`]: winnerId,
@@ -1877,6 +1918,7 @@ export function matchesDisconnectForfeitAuthority(
 ): boolean {
   const observed = match.disconnectedAt?.[authority.disconnectedPlayerId];
   return match.state === "active"
+    && hasStartedMatchAuthority(match)
     && winnerId !== authority.disconnectedPlayerId
     && match.players.some((participant) => participant.playerId === winnerId)
     && match.players.some((participant) => participant.playerId === authority.disconnectedPlayerId)
@@ -1911,6 +1953,12 @@ export async function settleResult(
       rewarded: false,
       rewards: completed.rewardReceipts,
     };
+  }
+  // Do not load live-event policy or open a reward transaction for a pairing that never crossed
+  // the durable room-start boundary. This is an inexpensive outer guard; the transaction repeats
+  // it against the authoritative reload so a concurrent/damaged state cannot bypass it.
+  if (!completed || !hasStartedMatchAuthority(completed)) {
+    return { matchId, winnerId, rewarded: false };
   }
   if (disconnectForfeitAuthority
     && (!completed || !matchesDisconnectForfeitAuthority(completed, winnerId, disconnectForfeitAuthority))) {
@@ -1970,7 +2018,9 @@ export async function settleResult(
         unknown: false,
       };
     }
-    if (match.state !== "active" || !match.players.some((participant) => participant.playerId === winnerId)) {
+    if (match.state !== "active"
+      || !hasStartedMatchAuthority(match)
+      || !match.players.some((participant) => participant.playerId === winnerId)) {
       return {
         result: { matchId, winnerId, rewarded: false },
         grants: [] as CoreGrant[],
@@ -2077,7 +2127,12 @@ export async function settleResult(
       ...(squadWarsAvailable ? { squadWarProjection: squadWarParticipants } : {}),
     }, settlementTime);
     const finish = await matches().updateOne(
-      { matchId, state: "active" },
+      {
+        matchId,
+        state: "active",
+        roomStartedAt: match.roomStartedAt,
+        joinedPlayerIds: match.joinedPlayerIds,
+      },
       {
         $set: {
           state: "finished",

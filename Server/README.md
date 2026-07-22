@@ -820,7 +820,13 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   result consensus, moderation correlation, restart recovery, cancellation, and settlement. It
   requires one UUID, exactly two distinct bounded server snapshots, participant-only unique joined/
   disconnect/report/card maps, safe ordered dates, and mutually consistent active, cancelled, or
-  finished fields. A finished row must retain two exact participant reward receipts whose safe
+  finished fields. The complete two-player join set and the one-time `roomStartedAt` marker form
+  one indivisible gameplay boundary: disconnect markers, result and used-card reports, relayed card
+  evidence/delivery, and every finished reward row require both. Card/result mutations and the
+  terminal update repeat that proof in their MongoDB compare-and-set filters, so a direct service
+  call, stale read, timestamp-only row, or pre-start pairing cannot manufacture settlement. A
+  no-reward join-timeout or participant cancellation remains valid before that boundary. A
+  finished row must retain two exact participant reward receipts whose safe
   counters, VIP component multipliers, streak/league/level/lootbox/rental state, winner, reports,
   and optional participant-complete Squad Event/War projections agree. Projected successors are
   validated before writes. Only an absent legacy `rentalSettled` marker may enter the existing

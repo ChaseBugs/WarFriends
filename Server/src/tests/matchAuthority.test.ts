@@ -148,6 +148,13 @@ test("disconnect forfeit authority binds the exact loser marker", () => {
     disconnectedPlayerId: "player-b",
     disconnectedAt,
   }), false);
+  assert.equal(matchesDisconnectForfeitAuthority({
+    ...disconnected,
+    joinedPlayerIds: undefined,
+  }, "player-a", {
+    disconnectedPlayerId: "player-b",
+    disconnectedAt,
+  }), false);
 });
 
 test("reconnect clearing binds the disconnect generation observed by durable join", () => {
@@ -157,6 +164,10 @@ test("reconnect clearing binds the disconnect generation observed by durable joi
   assert.equal(matchesParticipantDisconnectMarker(disconnected, "player-b", new Date(observed.getTime() + 1)), false);
   assert.equal(matchesParticipantDisconnectMarker(disconnected, "player-a", observed), false);
   assert.equal(matchesParticipantDisconnectMarker(activeMatch(), "player-b", observed), false);
+  assert.equal(matchesParticipantDisconnectMarker({
+    ...disconnected,
+    roomStartedAt: undefined,
+  }, "player-b", observed), false);
 });
 
 test("both-offline cancellation requires both exact durable disconnect markers", () => {
@@ -173,6 +184,10 @@ test("both-offline cancellation requires both exact durable disconnect markers",
     disconnectedAt: { "player-a": playerA, "player-b": new Date(playerB.getTime() + 1) },
   }), authority), false);
   assert.equal(matchesBothPlayersDisconnectedAuthority(activeMatch(), authority), false);
+  assert.equal(completeBothPlayersDisconnectedAuthority({
+    ...disconnected,
+    roomStartedAt: undefined,
+  }), null);
 });
 
 test("ranked-match authority rejects unsafe dynamic identities and contradictory lifecycle state", () => {
@@ -220,6 +235,48 @@ test("ranked-match authority rejects unsafe dynamic identities and contradictory
     }), NOW),
     /terminal authority/,
   );
+});
+
+test("ranked-match authority keeps gameplay evidence behind the durable room-start boundary", () => {
+  const unstarted = activeMatch({
+    joinedPlayerIds: undefined,
+    roomStartedAt: undefined,
+    relayedCardPlays: undefined,
+    relayedCardDeliveries: undefined,
+  });
+  assert.equal(validatedMatchDocument(unstarted, NOW), unstarted);
+
+  for (const evidence of [
+    { disconnectedAt: { "player-a": STARTED_AT } },
+    { resultReports: { "player-a": "player-a" } },
+    { usedCardsReports: { "player-a": [] } },
+    { relayedCardPlays: { "player-a": ["CARD_A"] } },
+    { relayedCardDeliveries: { "player-a": [] } },
+  ] satisfies Array<Partial<MatchDoc>>) {
+    assert.throws(
+      () => validatedMatchDocument({ ...unstarted, ...evidence }, NOW),
+      /gameplay evidence exists before room start/,
+    );
+  }
+
+  assert.throws(
+    () => validatedMatchDocument({
+      ...unstarted,
+      state: "finished",
+      winnerId: "player-a",
+      rewardReceipts: { "player-a": reward(), "player-b": reward() },
+      endedAt: ENDED_AT,
+    }, NOW),
+    /finished-match authority/,
+  );
+
+  // Join timeout and participant cancellation remain valid terminal outcomes before battle start.
+  assert.doesNotThrow(() => validatedMatchDocument({
+    ...unstarted,
+    state: "cancelled",
+    cancelReason: "join_timeout",
+    endedAt: ENDED_AT,
+  }, NOW));
 });
 
 test("finished ranked-match receipts reject forged multipliers and conflicting reports", () => {
