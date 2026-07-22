@@ -43,6 +43,8 @@ The recovered boot flow first posts to `/api/check.php` and requires the exact b
 posts URL-encoded fields to `/api/<DatabaseAction>/<dashed-version>`; configuration action 157
 expects the raw `success;<sheet-config>;<version-json>` response rather than JSON. These exact
 cross-project contracts are exercised by `Server/src/tests/clientServerIntegration.test.ts`.
+From the `Server` directory, `npm run smoke:client-bootstrap` also executes the real guest-account
+and authenticated `GetPlayerData` boot sequence against an isolated temporary MongoDB database.
 
 For a LAN or deployed Server, change the single `BaseUrl` constant in
 `ExportedProject/Assets/LegacyCompat/ServerEndpoint.cs`, keep the trailing slash and `/api/`, and

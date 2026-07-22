@@ -21,6 +21,8 @@ cp .env.example .env      # adjust MONGO_URL / REDIS_URL if needed
 npm install
 npm run dev               # ts-node-dev, watch mode
 # or: npm run build && npm start
+# optional disposable MongoDB-backed Client boot handshake:
+npm run smoke:client-bootstrap
 # build first removes only generated dist/ output, preventing stale renamed modules/tests
 # optional explicit catalog publication: npm run sync:catalog
 # read-only legacy squad/player integrity scan: npm run audit:squads
@@ -54,6 +56,11 @@ development `PORT=8080`. When testing an Android build over USB, run
 `POST /api/check.php` and succeeds only for an exact `ok` response; the next configuration request
 is a URL-encoded `POST /api/157/<dashed-version>` with a raw semicolon response. The integration
 test suite executes both stock request shapes against the real Express router.
+`npm run smoke:client-bootstrap` goes further: it starts the built Server on a free loopback port,
+uses a uniquely named temporary MongoDB database, executes the recovered connectivity,
+configuration, guest-account, and authenticated `GetPlayerData` sequence, then stops the child
+Server and drops only that generated test database. Redis and external providers are disabled for
+this disposable check.
 
 `PORT`, `MONGO_POOL_SIZE`, and `MONGO_DB_NAME` form one immutable early-startup policy: port must be
 an exact 1-65,535 integer, pool size an exact 1-1,000 integer, and the trimmed database name must be
@@ -308,8 +315,8 @@ client continues to send its dotted build in the separate `Version` field.
 
 ```bash
 # Create a guest account (DatabaseAction 118) using the recovered BestHTTP shape
-curl -X POST localhost:8080/PC/8b004c04-6921-4613-9815-e63b42db4a7c/118/1-6-0 \
-  -d 'requestId=118&Version=1.6.0&Os=android&DeviceToken=dev-A'
+curl -X POST localhost:8080/api/118/4-9-5 \
+  -d 'requestId=118&Version=4.9.5.2&Os=android&UtcOffset=0&Locale=en'
 # Response includes id, Token, Password, AccountType, typed Player, and typed PlayerData.
 # Replay PlayerId + Token on every authenticated action.
 ```
