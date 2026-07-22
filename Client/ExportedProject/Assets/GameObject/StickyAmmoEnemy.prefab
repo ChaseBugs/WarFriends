@@ -118,7 +118,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1593929760817221}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 109033741, guid: 06dd3d5416bf43ea368cc39ff96e6d5a, type: 3}
+  m_Script: {fileID: 11500000, guid: 8702082173e26d34c9e0127faeeab338, type: 3}
   m_Name:
   m_EditorClassIdentifier:
   LMHLNILLNAM: 0
@@ -210,7 +210,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1593929760817221}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: -1321415838, guid: 06dd3d5416bf43ea368cc39ff96e6d5a, type: 3}
+  m_Script: {fileID: 11500000, guid: 9f92f63ffecc66f46bd3287481087cd7, type: 3}
   m_Name:
   m_EditorClassIdentifier:
   mMaxHealth:
@@ -243,7 +243,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1593929760817221}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: -558665505, guid: 06dd3d5416bf43ea368cc39ff96e6d5a, type: 3}
+  m_Script: {fileID: 11500000, guid: 73f82e819e3fe1f4bb8671652b63c203, type: 3}
   m_Name:
   m_EditorClassIdentifier:
   DDGFDCBJJOA: {fileID: 0}
@@ -261,7 +261,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1593929760817221}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 750185800, guid: a6a460bc9cda68a8c89553f1ec5be757, type: 3}
+  m_Script: {fileID: 11500000, guid: 4b0872ceccb35494b8ff45fe920588cc, type: 3}
   m_Name:
   m_EditorClassIdentifier:
   ownerId: 0
@@ -384,7 +384,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1593929760817221}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: -1226274423, guid: 06dd3d5416bf43ea368cc39ff96e6d5a, type: 3}
+  m_Script: {fileID: 11500000, guid: 7b9b670eea987d54aaab7b0aeba98be9, type: 3}
   m_Name:
   m_EditorClassIdentifier:
   AOJFOOFBCMB: {fileID: 114365974595751276}
@@ -397,7 +397,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1593929760817221}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 963486333, guid: 06dd3d5416bf43ea368cc39ff96e6d5a, type: 3}
+  m_Script: {fileID: 11500000, guid: 5a3598e9abaf3824d8ea33c8db59d0ff, type: 3}
   m_Name:
   m_EditorClassIdentifier:
   AOJFOOFBCMB: {fileID: 114365974595751276}

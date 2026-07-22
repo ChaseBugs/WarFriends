@@ -350,7 +350,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1739815510169348}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: -1464225290, guid: 06dd3d5416bf43ea368cc39ff96e6d5a, type: 3}
+  m_Script: {fileID: 11500000, guid: 22832a609141c8f41b0188d1f5ae4571, type: 3}
   m_Name:
   m_EditorClassIdentifier:
   musicMenu: {fileID: 82102751897908813}
@@ -842,7 +842,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1739815510169348}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: -1140229346, guid: 06dd3d5416bf43ea368cc39ff96e6d5a, type: 3}
+  m_Script: {fileID: 11500000, guid: 77dc5891d494a104fb8ae5138577d23a, type: 3}
   m_Name:
   m_EditorClassIdentifier:
   GDJACGNGKDH:

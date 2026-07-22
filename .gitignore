@@ -121,6 +121,9 @@ InitTestScene*.unity*
 *.obb
 *.apks
 **/[Aa]uxiliary[Ff]iles/
+Client/DecompiledScripts/
+Client/SourceRuntime/
+Client-Decompiled-Mono-1.6.0/
 
 # AssetRipper/local tooling output
 Recovery/

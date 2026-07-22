@@ -1,8 +1,8 @@
 # WarFriends Backend Rebuild Specification
 
 > How to build a private server so the recovered client can play **PvP** and use the
-> **Squad** system again. Every claim here is grounded in the decompiled 1.6.0 client
-> (`Client-Decompiled-Mono-1.6.0/`). Items that still need reverse-engineering are marked
+> **Squad** system again. Every claim here is grounded in the active recovered 1.6.0 C# source
+> (`Client/ExportedProject/Assets/Scripts/Gameplay*`). Items that still need reverse-engineering are marked
 > **⚠ RE-NEEDED** — do not invent them, extract them from the client/assemblies.
 
 ---
@@ -134,7 +134,7 @@ value is one operation the server must handle. Grouped by subsystem:
 `UpdateAnalytics 179`, `SendCrashReport 141`, `SendLog 166`, `Test 167`,
 and the `Debug*` values (94, 134, 147, 159, 162, 204, 205, 210, 1010–1015).
 
-> The full numeric list is in `Client-Decompiled-Mono-1.6.0/.../DatabaseAction.cs`. The
+> The full numeric list is in `Client/ExportedProject/Assets/Scripts/Gameplay/DatabaseAction.cs`. The
 > numeric action is carried in the URL and repeated as the `requestId` form field;
 > unknown state-changing actions must return an explicit error.
 

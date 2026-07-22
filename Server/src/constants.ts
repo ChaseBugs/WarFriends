@@ -1,5 +1,5 @@
 // Client-side enums the server must mirror on the wire. Values come from the recovered
-// client (Client-Decompiled-Mono-1.6.0). The client's Newtonsoft.Json has no
+// client (Client/ExportedProject/Assets/Scripts/Gameplay). The client's Newtonsoft.Json has no
 // StringEnumConverter, so enums (de)serialize as their underlying integers — keep these
 // numeric and in sync with the client.
 

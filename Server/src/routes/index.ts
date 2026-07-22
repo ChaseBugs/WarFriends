@@ -59,6 +59,13 @@ async function handleEnvelope(req: Request, res: Response): Promise<void> {
   res.json(response);
 }
 
+// BeanstalkServerManager.CheckIsOnline posts to <base-dir>/check.php and only treats the
+// connection as online when the response body is exactly "ok". Reachable at /check.php and,
+// under the client's localhost /api base, at /api/check.php.
+apiRouter.post("/check.php", (_req: Request, res: Response) => {
+  res.type("text/plain").send("ok");
+});
+
 apiRouter.post("/pc", handleEnvelope);
 apiRouter.post("/PC", handleEnvelope);
 apiRouter.post("/warfriends", handleEnvelope);

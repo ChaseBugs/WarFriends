@@ -1,0 +1,521 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using WarFriends.Legacy;
+
+[AddComponentMenu("Path-o-logical/PoolManager/SpawnPool")]
+public sealed class SpawnPool : MonoBehaviour, IList<Transform>, ICollection<Transform>, IEnumerable<Transform>, IEnumerable
+{
+	public string poolName = string.Empty;
+
+	public bool matchPoolScale;
+
+	public bool matchPoolLayer;
+
+	public bool dontReparent;
+
+	public bool dontDestroyOnLoad;
+
+	public bool logMessages;
+
+	public List<PrefabPool> _perPrefabPoolOptions = new List<PrefabPool>();
+
+	public Dictionary<object, bool> prefabsFoldOutStates = new Dictionary<object, bool>();
+
+	[HideInInspector]
+	public float maxParticleDespawnTime = 60f;
+
+	public PrefabsDict prefabs = new PrefabsDict();
+
+	public Dictionary<object, bool> _editorListItemStates = new Dictionary<object, bool>();
+
+	private List<PrefabPool> _prefabPools = new List<PrefabPool>();
+
+	internal List<Transform> _spawned = new List<Transform>();
+
+	public Transform group { get; private set; }
+
+	public Dictionary<string, PrefabPool> prefabPools
+	{
+		get
+		{
+			Dictionary<string, PrefabPool> dictionary = new Dictionary<string, PrefabPool>();
+			foreach (PrefabPool prefabPool in _prefabPools)
+			{
+				dictionary[prefabPool.prefabGO.name] = prefabPool;
+			}
+			return dictionary;
+		}
+	}
+
+	public Transform this[int index]
+	{
+		get
+		{
+			return _spawned[index];
+		}
+		set
+		{
+			throw new NotImplementedException("Read-only.");
+		}
+	}
+
+	public int Count => _spawned.Count;
+
+	public bool IsReadOnly
+	{
+		get
+		{
+			throw new NotImplementedException();
+		}
+	}
+
+	private void Awake()
+	{
+		if (dontDestroyOnLoad)
+		{
+			SingletonSupport.DontDestroyOnLoadIfPlaying((UnityEngine.Object)base.gameObject);
+		}
+		group = base.transform;
+		if (poolName == string.Empty)
+		{
+			poolName = group.name.Replace("Pool", string.Empty);
+			poolName = poolName.Replace("(Clone)", string.Empty);
+		}
+		if (logMessages)
+		{
+			Debug.Log($"SpawnPool {poolName}: Initializing..");
+		}
+		foreach (PrefabPool perPrefabPoolOption in _perPrefabPoolOptions)
+		{
+			if (perPrefabPoolOption.prefab == null)
+			{
+				Debug.LogWarning($"Initialization Warning: Pool '{poolName}' contains a PrefabPool with no prefab reference. Skipping.");
+				continue;
+			}
+			perPrefabPoolOption.inspectorInstanceConstructor();
+			CreatePrefabPool(perPrefabPoolOption);
+		}
+		PoolManager.Pools.Add(this);
+	}
+
+	private void OnDestroy()
+	{
+		if (logMessages)
+		{
+			Debug.Log($"SpawnPool {poolName}: Destroying...");
+		}
+		PoolManager.Pools.Remove(this);
+		StopAllCoroutines();
+		_spawned.Clear();
+		foreach (PrefabPool prefabPool in _prefabPools)
+		{
+			prefabPool.SelfDestruct();
+		}
+		_prefabPools.Clear();
+		prefabs._Clear();
+	}
+
+	public void CreatePrefabPool(PrefabPool prefabPool)
+	{
+		if (GetPrefab(prefabPool.prefab) == null && 0 == 0)
+		{
+			prefabPool.spawnPool = this;
+			_prefabPools.Add(prefabPool);
+			prefabs._Add(prefabPool.prefab.name, prefabPool.prefab);
+		}
+		if (!prefabPool.preloaded)
+		{
+			if (logMessages)
+			{
+				Debug.Log($"SpawnPool {poolName}: Preloading {prefabPool.preloadAmount} {prefabPool.prefab.name}");
+			}
+			prefabPool.PreloadInstances();
+		}
+	}
+
+	public void Add(Transform instance, string prefabName, bool despawn, bool parent)
+	{
+		foreach (PrefabPool prefabPool in _prefabPools)
+		{
+			if (prefabPool.prefabGO == null)
+			{
+				Debug.LogError("Unexpected Error: PrefabPool.prefabGO is null");
+				return;
+			}
+			if (prefabPool.prefabGO.name == prefabName)
+			{
+				prefabPool.AddUnpooled(instance, despawn);
+				if (logMessages)
+				{
+					Debug.Log($"SpawnPool {poolName}: Adding previously unpooled instance {instance.name}");
+				}
+				if (parent)
+				{
+					instance.parent = group;
+				}
+				if (!despawn)
+				{
+					_spawned.Add(instance);
+				}
+				return;
+			}
+		}
+		Debug.LogError($"SpawnPool {poolName}: PrefabPool {prefabName} not found.");
+	}
+
+	public void Add(Transform item)
+	{
+		string message = "Use SpawnPool.Spawn() to properly add items to the pool.";
+		throw new NotImplementedException(message);
+	}
+
+	public void Remove(Transform item)
+	{
+		string message = "Use Despawn() to properly manage items that should remain in the pool but be deactivated.";
+		throw new NotImplementedException(message);
+	}
+
+	public Transform Spawn(Transform prefab, Vector3 pos, Quaternion rot)
+	{
+		Transform transform;
+		foreach (PrefabPool prefabPool2 in _prefabPools)
+		{
+			if (prefabPool2.prefabGO == prefab.gameObject)
+			{
+				transform = prefabPool2.SpawnInstance(pos, rot);
+				if (transform == null)
+				{
+					return null;
+				}
+				if (!dontReparent && transform.parent != group)
+				{
+					transform.parent = group;
+				}
+				_spawned.Add(transform);
+				return transform;
+			}
+		}
+		PrefabPool prefabPool = new PrefabPool(prefab);
+		CreatePrefabPool(prefabPool);
+		transform = prefabPool.SpawnInstance(pos, rot);
+		transform.parent = group;
+		_spawned.Add(transform);
+		return transform;
+	}
+
+	public Transform Spawn(Transform prefab, Vector3 pos, Quaternion rot, Transform parent)
+	{
+		Transform transform = Spawn(prefab, pos, rot);
+		transform.parent = parent;
+		return transform;
+	}
+
+	public Transform Spawn(Transform prefab)
+	{
+		return Spawn(prefab, Vector3.zero, Quaternion.identity);
+	}
+
+	public Transform Spawn(Transform prefab, Transform parent)
+	{
+		Transform transform = Spawn(prefab, Vector3.zero, Quaternion.identity);
+		transform.parent = parent;
+		return transform;
+	}
+
+	public Transform Spawn(string prefabName)
+	{
+		Transform prefab = prefabs[prefabName];
+		return Spawn(prefab, Vector3.zero, Quaternion.identity);
+	}
+
+	public Transform Spawn(string prefabName, Transform parent)
+	{
+		Transform prefab = prefabs[prefabName];
+		Transform transform = Spawn(prefab, Vector3.zero, Quaternion.identity);
+		transform.parent = parent;
+		return transform;
+	}
+
+	public Transform Spawn(string prefabName, Vector3 pos, Quaternion rot)
+	{
+		Transform prefab = prefabs[prefabName];
+		return Spawn(prefab, pos, rot);
+	}
+
+	public Transform Spawn(string prefabName, Vector3 pos, Quaternion rot, Transform parent)
+	{
+		Transform prefab = prefabs[prefabName];
+		Transform transform = Spawn(prefab, pos, rot);
+		transform.parent = parent;
+		return transform;
+	}
+
+	public ParticleSystem Spawn(ParticleSystem prefab, Vector3 pos, Quaternion quat)
+	{
+		Transform transform = Spawn(prefab.transform, pos, quat);
+		if (transform == null)
+		{
+			return null;
+		}
+		ParticleSystem component = transform.GetComponent<ParticleSystem>();
+		StartCoroutine(ListenForEmitDespawn(component));
+		return component;
+	}
+
+	public ParticleEmitterCompat Spawn(ParticleEmitterCompat prefab, Vector3 pos, Quaternion quat)
+	{
+		Transform transform = Spawn(((Component)(object)prefab).transform, pos, quat);
+		if (transform == null)
+		{
+			return null;
+		}
+		// Legacy ParticleAnimator.autodestruct no longer exists in Unity 2018. A pooled
+		// ParticleSystem must use StopAction.None so finishing emission does not destroy the
+		// instance before PoolManager can return it to the inactive pool.
+		ParticleSystem component = transform.GetComponent<ParticleSystem>();
+		if (component != null)
+		{
+			ParticleSystem.MainModule main = component.main;
+			main.stopAction = ParticleSystemStopAction.None;
+		}
+		ParticleEmitterCompat component2 = transform.GetComponent<ParticleEmitterCompat>();
+		component2.emit = true;
+		StartCoroutine(ListenForEmitDespawn(component2));
+		return component2;
+	}
+
+	public ParticleEmitterCompat Spawn(ParticleEmitterCompat prefab, Vector3 pos, Quaternion quat, string colorPropertyName, Color color)
+	{
+		Transform transform = Spawn(((Component)(object)prefab).transform, pos, quat);
+		if (transform == null)
+		{
+			return null;
+		}
+		// Preserve the pooled object when the modern ParticleSystem finishes, matching the
+		// old ParticleAnimator.autodestruct=false contract used by this overload.
+		ParticleSystem component = transform.GetComponent<ParticleSystem>();
+		if (component != null)
+		{
+			ParticleSystem.MainModule main = component.main;
+			main.stopAction = ParticleSystemStopAction.None;
+		}
+		ParticleEmitterCompat component2 = transform.GetComponent<ParticleEmitterCompat>();
+		((Component)(object)component2).GetComponent<Renderer>().material.SetColor(colorPropertyName, color);
+		component2.emit = true;
+		StartCoroutine(ListenForEmitDespawn(component2));
+		return component2;
+	}
+
+	public void Despawn(Transform instance)
+	{
+		bool flag = false;
+		foreach (PrefabPool prefabPool in _prefabPools)
+		{
+			if (prefabPool._spawned.Contains(instance))
+			{
+				flag = prefabPool.DespawnInstance(instance);
+				break;
+			}
+			if (prefabPool._despawned.Contains(instance))
+			{
+				Debug.LogError($"SpawnPool {poolName}: {instance.name} has already been despawned. You cannot despawn something more than once!");
+				return;
+			}
+		}
+		if (!flag)
+		{
+			Debug.LogError($"SpawnPool {poolName}: {instance.name} not found in SpawnPool");
+		}
+		else
+		{
+			_spawned.Remove(instance);
+		}
+	}
+
+	public void Despawn(Transform instance, Transform parent)
+	{
+		instance.parent = parent;
+		Despawn(instance);
+	}
+
+	public void Despawn(Transform instance, float seconds)
+	{
+		StartCoroutine(DoDespawnAfterSeconds(instance, seconds, useParent: false, null));
+	}
+
+	public void Despawn(Transform instance, float seconds, Transform parent)
+	{
+		StartCoroutine(DoDespawnAfterSeconds(instance, seconds, useParent: true, parent));
+	}
+
+	private IEnumerator DoDespawnAfterSeconds(Transform instance, float seconds, bool useParent, Transform parent)
+	{
+		GameObject go = instance.gameObject;
+		while (seconds > 0f)
+		{
+			yield return null;
+			if (!go.activeInHierarchy)
+			{
+				yield break;
+			}
+			seconds -= Time.deltaTime;
+		}
+		if (useParent)
+		{
+			Despawn(instance, parent);
+		}
+		else
+		{
+			Despawn(instance);
+		}
+	}
+
+	public void DespawnAll()
+	{
+		List<Transform> list = new List<Transform>(_spawned);
+		foreach (Transform item in list)
+		{
+			Despawn(item);
+		}
+	}
+
+	public bool IsSpawned(Transform instance)
+	{
+		return _spawned.Contains(instance);
+	}
+
+	public Transform GetPrefab(Transform prefab)
+	{
+		foreach (PrefabPool prefabPool in _prefabPools)
+		{
+			if (prefabPool.prefabGO == null)
+			{
+				Debug.LogError($"SpawnPool {poolName}: PrefabPool.prefabGO is null");
+			}
+			if (prefabPool.prefabGO == prefab.gameObject)
+			{
+				return prefabPool.prefab;
+			}
+		}
+		return null;
+	}
+
+	public GameObject GetPrefab(GameObject prefab)
+	{
+		foreach (PrefabPool prefabPool in _prefabPools)
+		{
+			if (prefabPool.prefabGO == null)
+			{
+				Debug.LogError($"SpawnPool {poolName}: PrefabPool.prefabGO is null");
+			}
+			if (prefabPool.prefabGO == prefab)
+			{
+				return prefabPool.prefabGO;
+			}
+		}
+		return null;
+	}
+
+	private IEnumerator ListenForEmitDespawn(ParticleEmitterCompat emitter)
+	{
+		yield return null;
+		yield return new WaitForEndOfFrame();
+		float safetimer = 0f;
+		while (emitter.particleCount > 0)
+		{
+			safetimer += Time.deltaTime;
+			if (safetimer > maxParticleDespawnTime)
+			{
+				Debug.LogWarning($"SpawnPool {poolName}: Timed out while listening for all particles to die. Waited for {maxParticleDespawnTime}sec.");
+			}
+			yield return null;
+		}
+		emitter.emit = false;
+		Despawn(((Component)(object)emitter).transform);
+	}
+
+	private IEnumerator ListenForEmitDespawn(ParticleSystem emitter)
+	{
+		yield return new WaitForSeconds(emitter.startDelay + 0.25f);
+		float safetimer = 0f;
+		while (emitter.IsAlive(withChildren: true))
+		{
+			if (!PoolManagerUtils.activeInHierarchy(emitter.gameObject))
+			{
+				emitter.Clear(withChildren: true);
+				yield break;
+			}
+			safetimer += Time.deltaTime;
+			if (safetimer > maxParticleDespawnTime)
+			{
+				Debug.LogWarning($"SpawnPool {poolName}: Timed out while listening for all particles to die. Waited for {maxParticleDespawnTime}sec.");
+			}
+			yield return null;
+		}
+		Despawn(emitter.transform);
+	}
+
+	public override string ToString()
+	{
+		List<string> list = new List<string>();
+		foreach (Transform item in _spawned)
+		{
+			list.Add(item.name);
+		}
+		return string.Join(", ", list.ToArray());
+	}
+
+	public bool Contains(Transform item)
+	{
+		string message = "Use IsSpawned(Transform instance) instead.";
+		throw new NotImplementedException(message);
+	}
+
+	public void CopyTo(Transform[] array, int arrayIndex)
+	{
+		_spawned.CopyTo(array, arrayIndex);
+	}
+
+	public IEnumerator<Transform> GetEnumerator()
+	{
+		foreach (Transform item in _spawned)
+		{
+			yield return item;
+		}
+	}
+
+	IEnumerator IEnumerable.GetEnumerator()
+	{
+		foreach (Transform item in _spawned)
+		{
+			yield return item;
+		}
+	}
+
+	public int IndexOf(Transform item)
+	{
+		throw new NotImplementedException();
+	}
+
+	public void Insert(int index, Transform item)
+	{
+		throw new NotImplementedException();
+	}
+
+	public void RemoveAt(int index)
+	{
+		throw new NotImplementedException();
+	}
+
+	public void Clear()
+	{
+		throw new NotImplementedException();
+	}
+
+	bool ICollection<Transform>.Remove(Transform item)
+	{
+		throw new NotImplementedException();
+	}
+}

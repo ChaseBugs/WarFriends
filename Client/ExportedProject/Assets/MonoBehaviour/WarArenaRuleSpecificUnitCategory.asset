@@ -9,7 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: -1265497073, guid: da3348191866a384b95001cc2c6d51b2, type: 3}
+  m_Script: {fileID: 11500000, guid: ecf3da564d69c898319cd10f48381f41, type: 3}
   m_Name: WarArenaRuleSpecificUnitCategory
   m_EditorClassIdentifier:
   data:

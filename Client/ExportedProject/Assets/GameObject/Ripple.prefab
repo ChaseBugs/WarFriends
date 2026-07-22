@@ -60,7 +60,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1851954417007276}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: -976533545, guid: da3348191866a384b95001cc2c6d51b2, type: 3}
+  m_Script: {fileID: 11500000, guid: 54686d3fb8e1e0a1b99c2ee3c3c5c5be, type: 3}
   m_Name:
   m_EditorClassIdentifier:
   mRippleParticleSystem: {fileID: 198281087966308274}
@@ -73,7 +73,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1851954417007276}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: -1267949273, guid: a6a460bc9cda68a8c89553f1ec5be757, type: 3}
+  m_Script: {fileID: 11500000, guid: 6188f03e46379c346b8e1c0ef663cc30, type: 3}
   m_Name:
   m_EditorClassIdentifier:
   showInPanelTool: 1

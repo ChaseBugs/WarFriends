@@ -116,6 +116,9 @@ app.use("/support/moderation", supportModerationRouter);
 // the recovered gameplay dispatcher and acknowledges only after durable message-ID deduplication.
 app.use("/providers/google-play/rtdn", googlePlayRtdnRouter);
 
+// The recovered 1.6.0 client (DJOJPKGADMP.NPDIBOLPACA localhost mode) posts to
+// <base>/api/<action>/<version>, so the same dispatcher router is also mounted under /api.
+app.use("/api", apiRouter);
 app.use(apiRouter);
 
 app.use((req: Request, res: Response) => {

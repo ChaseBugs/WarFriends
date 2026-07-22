@@ -1,0 +1,28 @@
+{
+    "name": "WarFriends.ResourceCompatibility",
+    "references": [
+        "WarFriends.LegacyCompat",
+        "WarFriends.ResourceCompatibility.FirstPass"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "autoReferenced": true,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "AWSSDK.Core.dll",
+        "AWSSDK.CognitoIdentity.dll",
+        "AWSSDK.MobileAnalytics.dll",
+        "AWSSDK.Pinpoint.dll",
+        "Facebook.Unity.dll",
+        "Firebase.App.dll",
+        "Firebase.DynamicLinks.dll",
+        "Firebase.Messaging.dll",
+        "GoogleMobileAds.Common.dll",
+        "GoogleMobileAds.Core.dll",
+        "GoogleMobileAds.dll",
+        "Newtonsoft.Json.dll",
+        "Photon3Unity3D.dll",
+        "P31RestKit.dll"
+    ]
+}

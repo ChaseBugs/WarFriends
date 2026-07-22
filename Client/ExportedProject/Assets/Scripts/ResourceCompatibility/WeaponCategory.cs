@@ -1,0 +1,22 @@
+using System;
+
+[Flags]
+public enum WeaponCategory
+{
+	None = 0,
+	AssaultRifle = 1,
+	SMG = 2,
+	LMG = 4,
+	SniperRifle = 8,
+	RocketLauncher = 0x10,
+	Shotgun = 0x20,
+	Grenade = 0x40,
+	Pistol = 0x80,
+	Minigun = 0x100,
+	GrenadeLauncher = 0x200,
+	PulseRifle = 0x400,
+	Primary = 0x107,
+	Special = 0x428,
+	Explosive = 0x250,
+	Any = -1
+}

@@ -9,7 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: -709410506, guid: da3348191866a384b95001cc2c6d51b2, type: 3}
+  m_Script: {fileID: 11500000, guid: fdc15004c2d4bb52f66f02317ff2be63, type: 3}
   m_Name: WarArenaRuleRandomWeaponPreset
   m_EditorClassIdentifier:
   data:

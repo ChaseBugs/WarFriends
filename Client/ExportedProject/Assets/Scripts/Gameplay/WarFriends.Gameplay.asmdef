@@ -1,0 +1,21 @@
+{
+    "name": "WarFriends.Gameplay",
+    "references": [
+        "WarFriends.LegacyCompat",
+        "WarFriends.Gameplay.FirstPass"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "autoReferenced": true,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "AWSSDK.Core.dll",
+        "AWSSDK.MobileAnalytics.dll",
+        "AWSSDK.CognitoIdentity.dll",
+        "Newtonsoft.Json.dll",
+        "Photon3Unity3D.dll",
+        "Firebase.Messaging.dll",
+        "P31RestKit.dll"
+    ]
+}

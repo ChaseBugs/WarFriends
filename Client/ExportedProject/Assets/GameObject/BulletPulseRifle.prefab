@@ -147,7 +147,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1021098699856611}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 489049270, guid: da3348191866a384b95001cc2c6d51b2, type: 3}
+  m_Script: {fileID: 11500000, guid: 7fc2e6516db8d13869f9911eec00c1e1, type: 3}
   m_Name:
   m_EditorClassIdentifier:
   LMHLNILLNAM: 0
@@ -205,7 +205,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1021098699856611}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 1923299495, guid: da3348191866a384b95001cc2c6d51b2, type: 3}
+  m_Script: {fileID: 11500000, guid: 43cf32520ebd3f61d8fdf37b71bac825, type: 3}
   m_Name:
   m_EditorClassIdentifier:
   mZangyMaterial: {fileID: 2100000, guid: a86c930e4e221fe449aeb1a1ea7a8cf4, type: 2}
@@ -267,7 +267,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1021098699856611}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: -457121004, guid: 06dd3d5416bf43ea368cc39ff96e6d5a, type: 3}
+  m_Script: {fileID: 11500000, guid: 5f15982d7fc188549abd141542c5edb5, type: 3}
   m_Name:
   m_EditorClassIdentifier:
   CICEFCEFFPB: 0.2

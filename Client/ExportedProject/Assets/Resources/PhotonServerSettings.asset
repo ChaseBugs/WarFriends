@@ -9,7 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 1880604398, guid: a6a460bc9cda68a8c89553f1ec5be757, type: 3}
+  m_Script: {fileID: 11500000, guid: 6e279aa5c393ca847800938289802b29, type: 3}
   m_Name: PhotonServerSettings
   m_EditorClassIdentifier:
   AppID: 6519f781-1ea7-421f-85d0-c9bb516e923d

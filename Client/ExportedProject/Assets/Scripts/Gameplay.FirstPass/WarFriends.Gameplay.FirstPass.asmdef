@@ -1,0 +1,17 @@
+{
+    "name": "WarFriends.Gameplay.FirstPass",
+    "references": [
+        "WarFriends.LegacyCompat"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "autoReferenced": true,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Photon3Unity3D.dll",
+        "P31RestKit.dll",
+        "Newtonsoft.Json.dll",
+        "JsonFx.Json.dll"
+    ]
+}

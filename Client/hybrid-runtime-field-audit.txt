@@ -29,10 +29,10 @@ component=GameController path=Managers/Game Controllers
   CBAPHFGNLLH =GameControllerTutorial:GameControllerTutorial
   MBPKLMKBJAB =GameControllerWarArena:GameControllerWararena
   MNMLNIMFMJP =None
-  ALPBOGHGLGK =<destroyed-or-missing>
+  ALPBOGHGLGK =AudioClip:LOST_SOUND
   KKHKAJPNDEC =<null>
   KMJGIGDJKMH =
-  JIMEEFOHFCC =<destroyed-or-missing>
+  JIMEEFOHFCC =AudioClip:YOUWIN
   FHABFFKPODN =PlayerController:Player
 
 component=GameVariables path=GameVariables
@@ -47,8 +47,8 @@ component=LevelBehaviourManager path=Managers/Level Behaviour Manager
 
 component=LevelManager path=Managers/Levels Manager
   weaponLevelsSetups =list(count=211, nulls=18, null_indices=176;177;178;179;180;181;182;183, null_object_members=0.JMFBJIJINKN;1.JMFBJIJINKN;2.JMFBJIJINKN;3.JMFBJIJINKN;4.JMFBJIJINKN;5.JMFBJIJINKN;6.JMFBJIJINKN;7.JMFBJIJINKN;8.JMFBJIJINKN;9.JMFBJIJINKN;10.JMFBJIJINKN;11.JMFBJIJINKN)
-  behaviours =list(count=41, nulls=17, null_indices=24;25;26;27;28;29;30;31, null_object_members=0.BMNHHCCBAAN;0.LMNPOINIJBD;0.KHKAAGCIJPO;1.BMNHHCCBAAN;1.LMNPOINIJBD;1.KHKAAGCIJPO;2.BMNHHCCBAAN;2.LMNPOINIJBD;2.KHKAAGCIJPO;3.BMNHHCCBAAN;3.LMNPOINIJBD;3.KHKAAGCIJPO)
-  additionalBehaviours =list(count=5, nulls=2, null_indices=3;4)
+  behaviours =list(count=24, nulls=0, null_object_members=0.BMNHHCCBAAN;0.LMNPOINIJBD;0.KHKAAGCIJPO;1.BMNHHCCBAAN;1.LMNPOINIJBD;1.KHKAAGCIJPO;2.BMNHHCCBAAN;2.LMNPOINIJBD;2.KHKAAGCIJPO;3.BMNHHCCBAAN;3.LMNPOINIJBD;3.KHKAAGCIJPO)
+  additionalBehaviours =list(count=3, nulls=0)
   levelExperience =0
   experience =7500
   levels =list(count=58, nulls=0)
@@ -159,7 +159,7 @@ component=ReminderManager path=Managers/Remainder Manager
   data =<null>
 
 component=ScoreManager path=Managers/Score Manager
-  LDAAJEFHFAH =<destroyed-or-missing>
+  LDAAJEFHFAH =AudioClip:CRATE_INCOMING
   DMDMFCENCOJ =1.1
   FJPNILFKIAB =0.075
   KFPGCFFPIJK =False

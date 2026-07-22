@@ -28,8 +28,8 @@ The documentation distinguishes three states:
 
 ## Authoritative references
 
-- `Client-Decompiled-Mono-1.6.0`: readable C# caller and response-contract reference.
-- `Client/ExportedProject`: recovered 4.9.5 scenes, serialized Google2u tables, and assets.
+- `Client/ExportedProject/Assets/Scripts/Gameplay*`: readable recovered 1.6.0 C# caller and response-contract reference.
+- `Client/ExportedProject`: recovered 4.9.5 scenes, serialized Google2u tables, assets, and active source runtime.
 - `Server/src`: current backend implementation.
 - `Server/BACKEND_FEATURES.md`: detailed action-by-action implementation tracker.
 - `BACKEND.md`: original backend reconstruction specification.

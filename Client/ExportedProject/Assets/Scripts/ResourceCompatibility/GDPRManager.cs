@@ -1,0 +1,59 @@
+using System.Collections.Generic;
+
+public class GDPRManager : Singleton<GDPRManager>
+{
+	public enum HEFHLEOPCPE
+	{
+		MKJDEKAAFDO,
+		CCIKKCJKNFK,
+		OBDHNOHBHLA,
+		HNNCEFDECEO,
+		HGOKEJCIGCG,
+		BLLADNPMHCB,
+		CIIFHPIOJHO,
+		GEICNDFCJFF,
+		MPOPPNEGDCA,
+		HMNGFIKOPAO,
+		NDMGCFBEKPP,
+		AHJDNCOKDAM,
+		EHFGEPPIKBD,
+		ALHDOINILFO,
+		LAIJLPLIFGG,
+		BIDICAEAFJN,
+		MENKNBIFHIJ,
+		NFNPKLELMAP,
+		AAGNICNCCPM,
+		CNEBCADLAMA,
+		CDAIGAGGJEA,
+		JFCDINHIPGD,
+		HBEPKKIFCMB,
+		HBIOMHMAHBB,
+		DIONOJDPFCE,
+		MMMNMMIKNJC,
+		NDNEPOLHNKN
+	}
+
+	public DJHCOHGFEJE OMPEJFMDPBP;
+
+	private List<HOPENDPOGOD> JNLEHMGOGGE;
+
+	protected override void Start()
+	{
+	}
+
+	private void LOHMGGPFOLL()
+	{
+	}
+
+	private void HCOCHDHHLPC(GameController.ALOAMODMHMO DFEHIADKKNO)
+	{
+	}
+
+	private void Update()
+	{
+	}
+
+	private void PGFBEKJJJND()
+	{
+	}
+}

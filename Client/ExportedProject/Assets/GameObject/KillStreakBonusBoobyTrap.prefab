@@ -40,7 +40,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1395727072835930}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 946875026, guid: 06dd3d5416bf43ea368cc39ff96e6d5a, type: 3}
+  m_Script: {fileID: 11500000, guid: 621a911f1ec186c45ac6c37240edda76, type: 3}
   m_Name:
   m_EditorClassIdentifier:
   BNPNCOKKPNK: ID_BONUS-BOOBY_TRAP

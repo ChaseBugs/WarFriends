@@ -1,8 +1,8 @@
 /**
  * DbAction — the client's server-operation catalog.
  *
- * Source of truth: the recovered client enum
- *   Client-Decompiled-Mono-1.6.0/.../DatabaseAction.cs
+ * Source of truth: the active recovered client enum
+ *   Client/ExportedProject/Assets/Scripts/Gameplay/DatabaseAction.cs
  *
  * BestHTTP puts the integer in the request URL and the `requestId` form field. The rebuilt
  * server also accepts `DbAction` in JSON for tooling. Keep the numeric values EXACTLY in
