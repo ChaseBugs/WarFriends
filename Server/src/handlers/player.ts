@@ -8,8 +8,6 @@ import { buildDatabasePlayer, buildPlayerStateResponse, progressionForPlayer, un
 import { recomputePlayerArmyPower } from "../services/armyPowerService";
 import {
   ensurePlayerNameAvailable,
-  exactDeviceToken,
-  normalizeCountry,
   normalizeLocale,
   normalizePlayerName,
   notificationSettingsEqual,
@@ -30,7 +28,12 @@ import {
   ensureActiveEventAssignment,
 } from "../services/eventAssignmentService";
 import { isSquadWarProcessing } from "../services/squadWarService";
-import { exactPlayerStatus, exactRenamePaymentFlag } from "./playerRequestParsing";
+import {
+  exactRenamePaymentFlag,
+  requestedDeviceRegistration,
+  requestedPlayerCountry,
+  requestedPlayerStatus,
+} from "./playerRequestParsing";
 
 // Player profile and settings handlers. GetPlayerData is the client's primary state fetch
 // after login. Mutations validate and persist only their own fields, which prevents a stale
@@ -82,7 +85,7 @@ export const playerHandlers: Record<number, HandlerEntry> = {
 
   [DbAction.SetPlayerStatus]: authed(async ({ player, req }) => {
     const reportedAt = unixNow();
-    const status = exactPlayerStatus(req.PlayerStatus !== undefined ? req.PlayerStatus : req.Status);
+    const status = requestedPlayerStatus(req);
     // HOCGNAKEHNB, the recovered action-29 callback, reads Time unconditionally whenever the
     // response is not an explicit offline envelope. Preserve that wire field even for a rejected
     // enum, but do not refresh durable LastAction for an invalid heartbeat.
@@ -96,15 +99,12 @@ export const playerHandlers: Record<number, HandlerEntry> = {
   }),
 
   [DbAction.UpdateDeviceToken]: authed(async ({ player, req }) => {
+    // The recovered caller always submits one complete registration tuple. Parse both values
+    // before constructing the write so a malformed locale cannot commit a valid token first.
+    const registration = requestedDeviceRegistration(req);
     const fields: Parameters<typeof updatePlayerFields>[1] = {};
-    if (req.DeviceToken !== undefined) {
-      const deviceToken = exactDeviceToken(req.DeviceToken);
-      if (player!.player.deviceToken !== deviceToken) fields.deviceToken = deviceToken;
-    }
-    if (req.Locale !== undefined) {
-      const locale = normalizeLocale(req.Locale);
-      if (player!.player.locale !== locale) fields.locale = locale;
-    }
+    if (player!.player.deviceToken !== registration.deviceToken) fields.deviceToken = registration.deviceToken;
+    if (player!.player.locale !== registration.locale) fields.locale = registration.locale;
     if (Object.keys(fields).length > 0) {
       // Device registration sends token and locale together. Publish their changed subset in one
       // MongoDB update so a reconnect neither writes twice nor leaves a half-refreshed profile if
@@ -145,9 +145,7 @@ export const playerHandlers: Record<number, HandlerEntry> = {
   }),
 
   [DbAction.ChangePlayerCountry]: authed(async ({ player, req }) => {
-    // The recovered 1.6.0 client sends NewCountryCode, not Country. Retaining Country as a
-    // compatibility alias helps diagnostics and newer adapters without weakening validation.
-    const country = normalizeCountry(req.NewCountryCode ?? req.Country);
+    const country = requestedPlayerCountry(req);
     if (player!.player.country !== country) {
       player!.player.country = country;
       await updatePlayerFields(player!.id, { country });

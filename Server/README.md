@@ -375,6 +375,12 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   name, password digest, and rotated session atomically with a stale-session guard.
   Repeated status, country, language, device-registration, and notification-setting values are
   exact no-ops; token and locale changes from one device-registration request publish together.
+  Profile mutation requests preserve the recovered field boundary: action 29 mutates only from
+  `PlayerStatus` (a diagnostic `Status` duplicate must agree and cannot act alone), action 196
+  requires `NewCountryCode` (an optional `Country` duplicate must normalize identically), and
+  action 13 requires `DeviceToken` plus `Locale` as one fully validated tuple before either value
+  is written. Invalid status reports retain the recovered callback-safe `Time` response without
+  refreshing durable presence; incomplete registration and country requests fail before mutation.
   Action 13 treats its FCM token as an opaque credential: empty is the exact unregister sentinel,
   while a nonempty value must already be trimmed, control-free, and no longer than 4096 characters.
   Malformed values are rejected rather than trimmed or truncated into a different unusable token,

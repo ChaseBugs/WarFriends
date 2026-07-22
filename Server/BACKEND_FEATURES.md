@@ -13,6 +13,13 @@ Status legend:
 
 ### Recovered-client gap corrections
 
+- **Player profile mutations now use the exact recovered request boundary.** Action 29 mutates
+  only from `PlayerStatus`; a diagnostic `Status` field can only be an agreeing duplicate and
+  malformed, conflicting, or Status-only heartbeats retain callback-safe `Time` without refreshing
+  durable presence. Action 196 requires `NewCountryCode`, with `Country` permitted only as an
+  agreeing duplicate. Action 13 validates `DeviceToken` and `Locale` together before constructing
+  its one changed-subset write, so an incomplete or malformed pair cannot partially refresh the
+  stored profile.
 - **Loyalty is not a backend action in recovered 1.6.0.** Its only concrete occurrence is the
   `InappScreen.MPJAFCCIOEO.Loyalty` presentation-tab enum and tab-selection UI. There is no Loyalty
   `DbAction`, request builder, durable DTO field, response parser, or balancing table in the
