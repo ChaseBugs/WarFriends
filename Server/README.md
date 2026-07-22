@@ -936,6 +936,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   storage margin. The
   complete recipient account is validated before a message targets it, rather than trusting an
   ID-only index projection.
+  Replacement direct messages use only `ToPlayerId` for their recipient; the common `PlayerId`
+  remains exclusively the authenticated actor. `Message`/`Body`/`Text` aliases must agree, and the
+  complete bounded control-free body passes normalization and moderation before recipient lookup or
+  quota reservation. Invalid or over-500-character text is rejected whole rather than truncated,
+  so failed messages cannot probe account existence or consume the sender's valid-message capacity.
   Once a direct message, challenge, kick, Squad Event notice, or War Card deposit reminder is
   durable, the `/hub` transport pushes an `InboxMessage` envelope to an authenticated recipient on
   the same node and publishes a bounded identity-only Redis hint for other nodes. Transactional

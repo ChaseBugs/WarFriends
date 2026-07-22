@@ -15,7 +15,6 @@ import {
   progressionForPlayer,
 } from "./playerStateService";
 import { integerNumberAttribute as numberAttribute } from "./dynamoNumberAttributeService";
-import { requireModeratedText } from "./textModerationService";
 import { checkedRewardBalance } from "./rewardMathService";
 import { validatedCoreProgressionBalances } from "./coreProgressionAuthorityService";
 import { progressionRevisionForRead } from "./progressionRevisionAuthorityService";
@@ -26,6 +25,10 @@ import { validatedChallengeMessage } from "./challengeMessageAuthorityService";
 import { challengeTtlSeconds } from "./challengePolicyService";
 import { validatedInboxMessageDocument } from "./inboxMessageAuthorityService";
 import { reserveOutgoingMessageSlot } from "./outgoingMessageRateLimitService";
+import {
+  exactDirectMessageTarget,
+  normalizedDirectMessageBody,
+} from "./directMessageRequestService";
 import { buildDatabaseSquad } from "./squadWireService";
 import { nextSquadUpdatedAt, validatedSquadDocument } from "./squadAuthorityService";
 
@@ -173,17 +176,21 @@ export function challengeIsExpired(message: Pick<MessageDoc, "messageType" | "ex
 }
 
 export async function sendMessage(fromPlayerId: string, fromName: string, toPlayerId: string, body: string): Promise<MessageDoc> {
-  const recipient = await players().findOne({ id: toPlayerId });
+  // Validate every caller before recipient lookup or rate reservation. An invalid/prohibited body
+  // must not probe account existence, consume a valid sender's fixed-window capacity, or be sliced
+  // into a different durable message. The handler already parses this boundary; repeating the pure
+  // proof here protects jobs/tests and future producers that call the service directly.
+  const exactTarget = exactDirectMessageTarget(toPlayerId);
+  const normalizedBody = normalizedDirectMessageBody(body);
+  const recipient = await players().findOne({ id: exactTarget });
   if (!recipient) throw new ApiError(ApiErrorCode.PlayerNotFound, "Recipient not found.");
   // A durable inbox row targets the complete account, not merely an indexed ID. Refuse damaged
   // profile/credential mirrors rather than publishing messages to an unusable recipient.
   validatedPlayerAccountEnvelope(recipient);
-  if (toPlayerId === fromPlayerId) throw new ApiError(ApiErrorCode.UnknownAction, "A player cannot message themselves.");
+  if (exactTarget === fromPlayerId) throw new ApiError(ApiErrorCode.UnknownAction, "A player cannot message themselves.");
   const createdAt = new Date();
   await reserveOutgoingMessageSlot(fromPlayerId, createdAt);
-  const normalizedBody = body.trim().slice(0, 500);
-  requireModeratedText(normalizedBody, "Message");
-  const doc = buildDirectMessage(fromPlayerId, fromName, toPlayerId, normalizedBody, createdAt);
+  const doc = buildDirectMessage(fromPlayerId, fromName, exactTarget, normalizedBody, createdAt);
   await messages().insertOne(doc);
   return doc;
 }
