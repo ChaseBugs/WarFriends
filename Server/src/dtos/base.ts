@@ -5,11 +5,11 @@
 export interface RequestEnvelope {
   /** Normalized action integer (from route, requestId, or DbAction). */
   DbAction: number;
-  /** Player id (absent for CreateAccount / first login). */
+  /** Session requests use PlayerId/id; explicit login uses Id (JSON adapters may mirror aliases). */
   id?: string;
   Id?: string;
   PlayerId?: string;
-  /** Credential the client stores after account creation and replays on login. */
+  /** Ordinary requests use Token/token; account creation and explicit login use Password/password. */
   password?: string;
   token?: string;
   Token?: string;

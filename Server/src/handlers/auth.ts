@@ -10,13 +10,16 @@ import {
   ensureActiveEventAssignment,
 } from "../services/eventAssignmentService";
 import { exactRequestedAccountType } from "../services/accountTypeRequestService";
+import { exactAuthenticationRequest } from "./authenticationRequestParsing";
 
 // Account and session actions form the boot handshake the client must complete before it
 // reaches the menu. Response fields here follow OGLEHLIPEFM's recovered parsers exactly.
 
 function requestCredential(req: RequestEnvelope): string {
-  const value = req.Password ?? req.password ?? req.Token ?? req.token;
-  return typeof value === "string" && value !== "null" ? value : "";
+  // CreateFullAccount and LoginToCustomAccount both send the dedicated Password field. A Token
+  // alias is not equivalent: accepting it here would make response metadata and custom-password
+  // creation disagree with the dispatcher's recovered login boundary.
+  return exactAuthenticationRequest(req, "login").credential ?? "";
 }
 
 function requestedAccountType(req: RequestEnvelope, player: PlayerDocument): AccountType {

@@ -353,6 +353,13 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   maximum attempts must be an exact integer from 2-100, the attempt window from 60-86,400 seconds,
   and lockout from 60-604,800 seconds. Fractional, non-finite, or out-of-range values stop startup
   instead of being rounded, clamped, or replaced by defaults.
+  The dispatcher preserves the recovered authentication envelopes instead of searching every
+  identity-shaped field. Explicit `LoginToCustomAccount` uses `Id` plus `Password`; ordinary
+  authenticated requests use the common `PlayerId` plus `Token` fields added by
+  `BeanstalkServerManager`. Matching documented JSON aliases are accepted, but conflicting aliases
+  fail before lookup. Ordinary actions never fall back to `Id` or `Password`: those names are also
+  legitimate product/message/Squad and account-mutation payload fields, and treating them as
+  credentials would let a missing or rotated session token cross an unrelated action boundary.
   Raw full-document reloads inside Army Power refresh, Daily Missions, Instant Battle, PvP
   settlement, inbox reward claims, and Player League allocation/settlement repeat the same account
   proof before calculating or publishing economy and indexed-profile changes. Authentication proves

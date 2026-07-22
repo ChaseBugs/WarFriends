@@ -42,6 +42,7 @@ import {
   exactMinimumClientVersion,
   replacementClientVersionIsAllowed,
 } from "./requestEnvelopeParsing";
+import { exactAuthenticationRequest } from "./authenticationRequestParsing";
 
 // Evaluate the deployment gate while the dispatcher module loads. Invalid policy must stop server
 // startup before one node silently accepts clients that another node rejects during a rolling deploy.
@@ -156,30 +157,24 @@ export async function dispatch(req: RequestEnvelope): Promise<ResponseEnvelope> 
     }
 
     // Attach the player: required handlers authenticate strictly; others attach best-effort.
-    const id = [req.PlayerId, req.id, req.Id].find((value): value is string => typeof value === "string" && value !== "null");
-    // LoginToCustomAccount is the one route where the durable human/provider password is
-    // the primary credential. All gameplay routes prefer Token so a stale Password field
-    // cannot silently bypass a rotated session. The authentication service separately gates
-    // custom-password hash checks to this exact action.
-    const credentialCandidates = action === DbAction.LoginToCustomAccount
-      ? [req.Password, req.password, req.Token, req.token]
-      : [req.Token, req.token, req.Password, req.password];
-    const token = credentialCandidates.find(
-      (value): value is string => typeof value === "string" && value !== "null",
-    );
+    // The recovered form builder emits two deliberately different envelopes: Id + Password for
+    // LoginToCustomAccount, and PlayerId + Token for ordinary gameplay. Parse those contracts
+    // separately so an action-specific Id or a new-password payload cannot become session proof.
+    const loginAction = action === DbAction.LoginToCustomAccount;
+    const authentication = exactAuthenticationRequest(req, loginAction ? "login" : "session");
 
     // AccountType is only meaningful during platform login. Normal authenticated form
     // requests omit it and therefore use the guest/server token path.
     const accountType = exactRequestedAccountType(req.AccountType);
     const player = entry.requiresAuth
       ? await authenticate(
-        id,
-        token,
-        action === DbAction.LoginToCustomAccount ? accountType : undefined,
-        action === DbAction.LoginToCustomAccount,
+        authentication.playerId,
+        authentication.credential,
+        loginAction ? accountType : undefined,
+        loginAction,
       )
-      : id && token
-        ? await findByIdOptional(id, token)
+      : authentication.playerId && authentication.credential
+        ? await findByIdOptional(authentication.playerId, authentication.credential)
         : null;
 
     return await entry.handler({ req, player });
