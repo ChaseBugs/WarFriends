@@ -1249,6 +1249,12 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   Run `npm run verify:army-power` to compare the
   generated catalog with the recovered scene. Action `192` confirms the source progression
   revision and performs no write when both denormalized Army Power copies are already current.
+- **Weapon catalog authority**: normal inventory, Black Market inventory, Buddy-card weapon proof,
+  and catalog sync now share one validated, deep-frozen extraction snapshot. Startup requires all
+  84 ordered shop rows, 81 ordered Black Market rows, both nine-row unresolved families, globally
+  unique resolved indexes/names, exactly four starter weapons, one-bit categories, bounded prices
+  and level gates, zero source delivery time, and exact unresolved evidence. Duplicate or truncated
+  rows therefore fail before `Object.fromEntries` can silently replace a weapon definition.
 - **Player visuals and decals**: `scripts/Extract-VisualCatalog.mjs` joins all four serialized
   customization categories to the 4.9.5 PlayerVisuals sheet, producing 146 playable and one
   unresolved row. Entitlement checks, purchase/reward paths, and catalog sync share one startup-

@@ -73,6 +73,14 @@ Status legend:
   non-finite DPS, or later mutation fails before changing level limits, rewards, conversion values,
   matchmaking Army Power, or publication.
 
+- **Weapon inventory now shares one immutable runtime identity/price catalog.** Shop purchases,
+  Black Market inventory, Buddy-card loadout validation, and database-catalog sync require 84
+  ordered unique shop rows, 81 ordered unique Black Market rows, nine ordered unresolved rows per
+  family, globally unique resolved indexes/names, exactly four starters, one-bit categories, bounded
+  prices/level gates, zero recovered delivery time, and exact unresolved evidence. Deep freezing and
+  pre-dictionary duplicate checks prevent truncated, reordered, unsafe, or colliding rows from
+  changing purchase, equip, loadout, offer, or publication authority.
+
 ## Feature inventory
 
 | Priority | Feature | Client actions | Status | Implemented backend behavior | Required remaining work |

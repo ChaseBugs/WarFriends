@@ -1,7 +1,6 @@
 import type { Collection } from "mongodb";
 import generatedUnitCatalog from "../data/unitCatalog.generated.json";
 import generatedUnitUpgradeCatalog from "../data/unitUpgradeCatalog.generated.json";
-import generatedWeaponCatalog from "../data/weaponCatalog.generated.json";
 import {
   WEAPON_BLACK_MARKET_PRICES,
   WEAPON_UPGRADE_CATALOG,
@@ -14,6 +13,7 @@ import {
 import { VALIDATED_CARD_CATALOG } from "./cardCatalogAuthorityService";
 import { VALIDATED_VISUAL_CATALOG } from "./visualCatalogAuthorityService";
 import { VALIDATED_ARMY_POWER_CATALOG } from "./armyPowerCatalogAuthorityService";
+import { VALIDATED_WEAPON_CATALOG } from "./weaponCatalogAuthorityService";
 
 export { catalogContentHash } from "./gameCatalogAuthorityService";
 
@@ -151,7 +151,7 @@ interface CardCatalogArtifact {
   packs: Array<Record<string, unknown>>;
 }
 
-const weapons = generatedWeaponCatalog as unknown as WeaponArtifact;
+const weapons = VALIDATED_WEAPON_CATALOG as unknown as WeaponArtifact;
 const units = generatedUnitCatalog as unknown as UnitArtifact;
 const unitUpgrades = generatedUnitUpgradeCatalog as unknown as UnitUpgradeArtifact;
 const armyPower = VALIDATED_ARMY_POWER_CATALOG as unknown as ArmyPowerArtifact;

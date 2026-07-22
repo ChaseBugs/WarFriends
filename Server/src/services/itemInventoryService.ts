@@ -7,7 +7,6 @@ import type {
   PlayerProgressionState,
   SavedWeaponState,
 } from "../db";
-import generatedWeaponCatalog from "../data/weaponCatalog.generated.json";
 import {
   WEAPON_BLACK_MARKET_PRICES,
   WEAPON_UPGRADE_CATALOG,
@@ -28,6 +27,7 @@ import {
   exactRequestJsonFiniteNumber,
   exactRequestJsonInteger,
 } from "./requestJsonNumberService";
+import { VALIDATED_WEAPON_CATALOG } from "./weaponCatalogAuthorityService";
 
 /**
  * Recovered weapon ownership and loadout logic.
@@ -214,7 +214,7 @@ const RECOVERED_WEAPON_ROWS: readonly WeaponDefinition[] = [
 ];
 
 export const WEAPON_CATALOG: Readonly<Record<string, WeaponDefinition>> = Object.freeze(
-  Object.fromEntries(RECOVERED_WEAPON_ROWS.map((definition) => [definition.name, definition])),
+  Object.fromEntries(VALIDATED_WEAPON_CATALOG.catalog.map((definition) => [definition.name, definition])),
 );
 
 /**
@@ -223,7 +223,7 @@ export const WEAPON_CATALOG: Readonly<Record<string, WeaponDefinition>> = Object
  * Black Market offer as a discount on WEAPON_CATALOG would grant the wrong client object.
  */
 export const BLACK_MARKET_WEAPON_CATALOG: Readonly<Record<string, WeaponDefinition>> = Object.freeze(
-  Object.fromEntries(generatedWeaponCatalog.blackMarketCatalog.map((definition) => [
+  Object.fromEntries(VALIDATED_WEAPON_CATALOG.blackMarketCatalog.map((definition) => [
     definition.name,
     Object.freeze({ ...definition, starterOwned: false }),
   ])),
