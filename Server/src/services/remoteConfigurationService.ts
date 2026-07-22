@@ -263,12 +263,36 @@ function requestedTargeting(fields: RequestEnvelope): RemoteConfigurationTargeti
   return { variant, language: language.toLowerCase() };
 }
 
+/**
+ * Resolve the stable account identity used only for a partial rollout bucket.
+ *
+ * The recovered common form builder always sends `PlayerId`; before login it sends the literal
+ * sentinel `null`, which is not an account and must not receive a deterministic player rollout.
+ * JSON tooling may use the documented lower-case `id` alias, but every supplied copy must remain
+ * exact and agree. Upper-case `Id` belongs to explicit-login and action-specific contracts, so it
+ * must never silently become remote-balancing identity.
+ */
+function requestedRolloutPlayerId(fields: RequestEnvelope): string | null {
+  const supplied = [fields.PlayerId, fields.id].filter((value) => value !== undefined);
+  if (supplied.length < 1
+    || supplied.some((value) => typeof value !== "string"
+      || value.length < 1
+      || value.length > 256
+      || value.trim() !== value
+      || /\p{Cc}/u.test(value)
+      || value === "null"
+      || value === "nullId")
+    || new Set(supplied).size !== 1) {
+    return null;
+  }
+  return supplied[0] as string;
+}
+
 function rolloutMatches(publication: RemoteConfigurationPublication, fields: RequestEnvelope): boolean {
   const percent = publication.rolloutPercent ?? 100;
   if (percent >= 100) return true;
   if (percent <= 0) return false;
-  const playerId = [fields.PlayerId, fields.id, fields.Id]
-    .find((value): value is string => typeof value === "string" && value.length > 0);
+  const playerId = requestedRolloutPlayerId(fields);
   if (!playerId) return false;
   const digest = createHash("sha256")
     .update(publication.rolloutSalt ?? "", "utf8")

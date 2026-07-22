@@ -147,6 +147,10 @@ be empty but neither selector may be missing, padded, coerced, or control-bearin
 `SheetConfiguraton` is canonical, while documented replacement cache aliases are accepted only when
 all supplied copies are exact and equal. An invalid cache identity receives `success;0;{}` and can
 never select sheets; the server does not trim it or delete semicolon delimiters into another release.
+For a rollout below 100 percent, hashing uses only one exact non-sentinel `PlayerId` or its agreeing
+lower-case JSON `id` adapter. The common builder's pre-login literal `null`, padded/control-bearing
+IDs, conflicting aliases, and upper-case explicit-login/action `Id` retain bundled sheets instead of
+selecting a different player's bucket.
 The signed manifest itself uses exact root/publication/sheet keys, case-insensitively unique language
 selectors, signed-client-safe integer build bounds, and an actual finite numeric 0-100 rollout
 percentage; ignored typo fields and JavaScript-coercible policy values fail startup. See

@@ -181,6 +181,46 @@ test("remote publication targeting requires one canonical numeric replacement-cl
   }, unbounded), null);
 });
 
+test("partial remote rollout binds only one exact non-sentinel player identity", () => {
+  const base = signedManifest();
+  const manifest = {
+    ...base,
+    publications: [{
+      ...base.publications[0]!,
+      minimumClientVersion: undefined,
+      maximumClientVersion: undefined,
+      rolloutPercent: 50,
+    }],
+  };
+  const fields = {
+    DbAction: 157,
+    SheetConfiguraton: "old",
+    abTestVariant: "economy-a",
+    Language: "en",
+  };
+  const eligible = Array.from({ length: 1_000 }, (_, index) => `player-${index}`)
+    .find((playerId) => selectRemoteConfiguration({ ...fields, PlayerId: playerId }, manifest) !== null);
+  assert.ok(eligible, "test fixture must find a player in the deterministic 50 percent bucket");
+  assert.equal(selectRemoteConfiguration({ ...fields, PlayerId: eligible }, manifest), manifest.publications[0]);
+  assert.equal(selectRemoteConfiguration({ ...fields, id: eligible }, manifest), manifest.publications[0]);
+  assert.equal(selectRemoteConfiguration({ ...fields, PlayerId: eligible, id: eligible }, manifest), manifest.publications[0]);
+
+  for (const identity of [
+    { PlayerId: "null" },
+    { PlayerId: "nullId" },
+    { PlayerId: ` ${eligible}` },
+    { PlayerId: `${eligible}\n` },
+    { PlayerId: 123 },
+    { Id: eligible },
+    { PlayerId: eligible, id: "another-player" },
+  ]) {
+    assert.equal(selectRemoteConfiguration({
+      ...fields,
+      ...identity,
+    } as unknown as RequestEnvelope, manifest), null);
+  }
+});
+
 test("remote manifest rejects tampering and row delimiters that would corrupt the stock parser", () => {
   const manifest = signedManifest();
   assert.throws(
