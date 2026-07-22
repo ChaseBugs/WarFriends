@@ -132,7 +132,10 @@ export function firebaseWakeActionFor(
   switch (messageType) {
     case 0: return { id: "2", consent: "challenge" };
     case 1:
-    case 3: return { id: "90", consent: "squadStatus" };
+    case 3:
+    // A Squad rank change is durable Squad status, while action 90 remains only the recovered
+    // generic inbox-refresh wake. Reuse the player's explicit squadStatus consent.
+    case 10: return { id: "90", consent: "squadStatus" };
     case 9:
     case 11:
     case 21:

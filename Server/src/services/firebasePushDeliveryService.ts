@@ -304,7 +304,7 @@ async function recoverMissingDeliveryIntents(
   const candidates = await messages().aggregate<MessageDoc>([
     {
       $match: {
-        messageType: { $in: [0, 3, 9, 11, 21, 23, 28] },
+        messageType: { $in: [0, 3, 9, 10, 11, 21, 23, 28] },
         read: false,
         ignored: false,
         accepted: false,

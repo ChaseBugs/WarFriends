@@ -1,9 +1,10 @@
 import { SquadRank } from "../constants";
 import { CARD_CATALOG, CARD_POOL_RULES } from "./cardInventoryService";
 import { PLAYER_LEVELS } from "./levelProgressionService";
+import { MAX_SQUAD_LEVEL } from "./squadProgressionService";
 import type { MessageDoc } from "./socialService";
 
-const STANDARD_MESSAGE_TYPES = new Set([3, 21, 27, 28]);
+const STANDARD_MESSAGE_TYPES = new Set([3, 10, 21, 27, 28]);
 const MESSAGE_KEYS = new Set([
   "_id", "messageId", "toPlayerId", "fromPlayerId", "fromName", "body", "messageType",
   "payload", "otherPlayerJson", "read", "ignored", "accepted", "acceptedAt", "createdAt",
@@ -14,6 +15,7 @@ const KICK_KEYS = new Set([
   "AdminName", "AdminId", "AdminLevel", "KickedPlayerDepositedCards",
 ]);
 const DEPOSIT_KEYS = new Set(["PlayerName", "Level", "SquadId", "SquadRank", "AdminPlayerId"]);
+const SQUAD_LEVEL_UP_KEYS = new Set(["Level", "SquadId"]);
 const UUID_PATTERN = "[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}";
 const MAX_RETURNED_CARDS = Math.max(...CARD_POOL_RULES.capacityBySquadLevel);
 
@@ -119,6 +121,31 @@ function validateDepositReminder(message: MessageDoc): void {
     || (message.idempotencyKey !== undefined && message.idempotencyKey !== expectedKey)) invalid();
 }
 
+function validateSquadLevelUp(message: MessageDoc): void {
+  const payload = message.payload;
+  const priorLevel = payload.Level;
+  const squadId = payload.SquadId;
+  // KGALJDLJCEH parses Level.N and the real HDCCFKAHHOP override passes Level + 1 to
+  // SetAppearance_SquadLevelUp. Persist the prior one-based level so the stock client renders
+  // the newly reached rank and compares the correct before/after roster/card-pool unlocks.
+  const reachedLevel = Number.isSafeInteger(priorLevel) ? (priorLevel as number) + 1 : 0;
+  const idMatch = new RegExp(
+    `^SquadLevelUp-(${UUID_PATTERN})-${reachedLevel}-${unixSeconds(message)}$`,
+    "u",
+  ).exec(message.messageId);
+  if (!exactKeys(payload, SQUAD_LEVEL_UP_KEYS)
+    || !Number.isSafeInteger(priorLevel)
+    || (priorLevel as number) < 1
+    || (priorLevel as number) >= MAX_SQUAD_LEVEL
+    || !boundedText(squadId, 24)
+    || message.fromPlayerId !== `squad:${squadId}`
+    || message.fromName !== squadId
+    || message.body !== "Your squad reached a new level."
+    || !idMatch
+    || message.idempotencyKey
+      !== `squad-level-up:${idMatch?.[1]}:${squadId}:${reachedLevel}:${message.toPlayerId}`) invalid();
+}
+
 /**
  * Validate the complete non-rewarding inbox rows emitted by this backend.
  *
@@ -133,7 +160,9 @@ export function validatedStandardInboxMessage(message: MessageDoc, now?: Date): 
     || !boundedText(message.messageId, 256)
     || !boundedText(message.toPlayerId, 160)
     || !boundedText(message.fromPlayerId, 160)
-    || message.toPlayerId === message.fromPlayerId
+    // Type 10 has no sender field on the recovered wire. Its validator instead binds the
+    // internal audit identity to `squad:<SquadId>`, so no client/player assertion is trusted.
+    || (message.messageType !== 10 && message.toPlayerId === message.fromPlayerId)
     || !boundedText(message.fromName, 64)
     || !message.payload || typeof message.payload !== "object" || Array.isArray(message.payload)
     || message.otherPlayerJson !== ""
@@ -151,6 +180,7 @@ export function validatedStandardInboxMessage(message: MessageDoc, now?: Date): 
     || (now !== undefined && (!safeDate(now) || message.createdAt.getTime() > now.getTime()))) invalid();
 
   if (message.messageType === 3) validateKick(message);
+  else if (message.messageType === 10) validateSquadLevelUp(message);
   else if (message.messageType === 21) validateSquadEvent(message);
   else if (message.messageType === 27) validateDirectMessage(message);
   else validateDepositReminder(message);

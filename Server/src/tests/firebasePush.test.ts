@@ -25,6 +25,7 @@ test("Firebase wake actions preserve the two recovered client data IDs", () => {
   assert.deepEqual(firebaseWakeActionFor(0), { id: "2", consent: "challenge" });
   assert.deepEqual(firebaseWakeActionFor(1), { id: "90", consent: "squadStatus" });
   assert.deepEqual(firebaseWakeActionFor(3), { id: "90", consent: "squadStatus" });
+  assert.deepEqual(firebaseWakeActionFor(10), { id: "90", consent: "squadStatus" });
   assert.deepEqual(firebaseWakeActionFor(9), { id: "90", consent: "squadEvents" });
   assert.deepEqual(firebaseWakeActionFor(11), { id: "90", consent: "squadEvents" });
   assert.deepEqual(firebaseWakeActionFor(21), { id: "90", consent: "squadEvents" });
@@ -47,6 +48,10 @@ test("Firebase data pushes require offline status, a token, and matching consent
     playerLeague: false,
   }), null);
   assert.equal(firebaseDataPushFor(28, PlayerStatus.Offline, "device-token", {
+    ...ALL_ENABLED,
+    squadStatus: false,
+  }), null);
+  assert.equal(firebaseDataPushFor(10, PlayerStatus.Offline, "device-token", {
     ...ALL_ENABLED,
     squadStatus: false,
   }), null);

@@ -1374,9 +1374,9 @@ export async function connectMongo(): Promise<void> {
   // Only expiring message types carry expiresAt. MongoDB's TTL monitor removes stale
   // challenges asynchronously; read/accept filters enforce expiry immediately meanwhile.
   await messagesCollection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
-  // Squad-event notifications use a deterministic idempotency key. A unique sparse index
-  // prevents simultaneous retries from inserting duplicate message-center entries while
-  // remaining compatible with all legacy message rows, which do not have this field.
+  // Server-generated Squad/reward notifications use deterministic idempotency keys. A unique
+  // sparse index prevents simultaneous retries from inserting duplicate message-center entries
+  // while remaining compatible with all legacy message rows, which do not have this field.
   await messagesCollection.createIndex({ idempotencyKey: 1 }, { unique: true, sparse: true });
   // One recipient can hold only one live invitation to the same Squad. Decline/accept make the
   // row terminal and release this partial key, allowing a later manager to send a new generation.

@@ -48,8 +48,11 @@ Status legend:
   roster size, and publish the remainder through the `LevelExperience` field actually consumed by
   `AANECPGDMGM`/`SquadStatsContent`. Startup migration 012 rolls the previous never-advanced
   counter forward idempotently and aborts before its first write if a recovered capacity cannot
-  contain an existing roster. The recovered type-10 Squad-level-up notification remains explicit
-  follow-up work; no message reward or payload has been invented in this increment.
+  contain an existing roster. Every real rank transition now inserts one deterministic match-bound type-10
+  row per current member and crossed rank inside the same match transaction. Its exact recovered
+  `Level.N` stores the prior rank because `KGALJDLJCEH.HDCCFKAHHOP` adds one, `SquadId.S` binds the
+  refreshed Squad, and the row has no invented reward or claim lifecycle. Post-commit socket,
+  Redis, and Squad-status-consented Firebase wake paths all reload the durable validated row.
 
 ## Feature inventory
 

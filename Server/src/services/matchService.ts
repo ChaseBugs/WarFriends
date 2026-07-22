@@ -76,6 +76,7 @@ import {
   publishInboxFanouts,
   type InboxFanoutReference,
 } from "./inboxFanoutService";
+import { insertSquadLevelUpMessages } from "./squadLevelUpMessageService";
 
 export { validatedMatchDocument } from "./matchAuthorityService";
 
@@ -846,6 +847,8 @@ interface CoreGrant {
   won: boolean;
   squadName: string;
   squadPoints: number;
+  /** Type-10 rows inserted with this participant's Squad rank transition. */
+  inboxFanouts: InboxFanoutReference[];
   reward: MatchPlayerReward;
 }
 
@@ -1194,6 +1197,7 @@ async function settlePlayerCore(
     { session },
   );
   if (update.modifiedCount !== 1) throw new Error(`Concurrent settlement rejected player ${playerId}.`);
+  let inboxFanouts: InboxFanoutReference[] = [];
   if (squadPoints > 0) {
     // The squad leaderboard total and embedded member contribution are not a best-effort cache:
     // both are client-visible economy/progression state. Updating them inside the match
@@ -1242,12 +1246,24 @@ async function settlePlayerCore(
     if (squadUpdate.modifiedCount !== 1) {
       throw new Error(`Concurrent squad-point settlement rejected player ${playerId}.`);
     }
+    // The notification is part of the same transaction as the rank and match receipt. A crash
+    // cannot leave an advanced Squad without its durable type-10 rows, while socket/Firebase
+    // delivery remains a best-effort post-commit presentation concern.
+    inboxFanouts = await insertSquadLevelUpMessages(
+      session,
+      activeSquad!,
+      squadProgression.levelFrom,
+      squadProgression.levelTo,
+      settledAt,
+      battleId,
+    );
   }
   return {
     playerId,
     won,
     squadName,
     squadPoints,
+    inboxFanouts,
     reward: {
       baseWarBucks,
       warBucks,
@@ -2003,7 +2019,7 @@ export async function settleResult(
     const rewardReceipts = Object.fromEntries(
       grants.map((grant) => [grant.playerId, grant.reward]),
     );
-    const inboxFanouts: InboxFanoutReference[] = [];
+    const inboxFanouts: InboxFanoutReference[] = grants.flatMap((grant) => grant.inboxFanouts);
     const eventParticipants: Array<{
       playerId: string;
       squadId: string;
@@ -2091,8 +2107,9 @@ export async function settleResult(
 
   if (transaction.unknown) logger.match.error("Result for unknown match", { matchId });
   if (!transaction.result.rewarded) return transaction.result;
-  // Squad Event type-11 rows were inserted inside the same atomic match/economy transaction.
-  // Announce only the final committed attempt; the recipient still claims Gold through action 91.
+  // Squad Event type-11 and Squad rank type-10 rows were inserted inside the same atomic
+  // match/economy transaction. Announce only the final committed attempt; type 10 is
+  // presentation-only while type 11 retains its recipient-owned action-91 Gold claim.
   await publishInboxFanouts(transaction.inboxFanouts);
   logger.match.event("Match settled", { matchId, winnerId });
   return transaction.result;

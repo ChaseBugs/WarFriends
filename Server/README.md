@@ -625,9 +625,12 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   64-bit `LevelExperience`, subtracts every crossed rank threshold, and publishes the target row's
   roster capacity. `AANECPGDMGM` receives that progress through `LevelExperience` instead of the
   former hard-coded zero, so `SquadStatsContent` renders the real rank bar and card-pool/roster
-  unlocks follow the same source row. A crash therefore cannot commit the immutable reward receipt
-  while losing one of those client-visible counters, and a finished-match retry cannot count the
-  battle again. Lifetime Experience and Squad Points are checked against their storage bounds and
+  unlocks follow the same source row. Each crossed rank also creates a deterministic match-UUID-bound type-10 row
+  for every current member in that transaction. The recovered `KGALJDLJCEH` parser requires only
+  `Level.N` and `SquadId.S`; its real virtual appearance callback adds one to Level, so the server
+  stores the prior one-based rank and does not attach an invented reward or claim. A crash therefore
+  cannot commit the immutable reward receipt while losing one of those client-visible counters or
+  notifications, and a finished-match retry cannot count the battle again. Lifetime Experience and Squad Points are checked against their storage bounds and
   written as literal precomputed successors rather than unchecked MongoDB `$add` expressions. The
   canonical progression and complete projected account, including root mirrors, league identity,
   Army Power, presence, and audit time, are proven before the first participant write. Match
@@ -961,11 +964,11 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   Every supported durable row is routed through its complete family validator before pagination,
   read/ignore mutation, or DynamoDB serialization. The recovered `HHFHFANGCEJ` constructor parses
   the last dash-separated `MessageId` segment with `Convert.ToInt32`, so challenge, kick, Squad
-  Event, direct type-27, card-deposit, Squad War, Squad Event reward, and Player League IDs now end
+  Event, Squad level-up, direct type-27, card-deposit, Squad War, Squad Event reward, and Player League IDs now end
   in the same positive Int32-safe creation Unix second. The previous challenge-millisecond,
   bare-UUID, and reward text-final forms are rejected because the stock client cannot deserialize
-  them. Types 3/21/27/28 additionally bind exact lifecycle flags, recovered payload fields,
-  sender/recipient and squad relationships, source-valid returned-card IDs, retry identities, and
+  them. Types 3/10/21/27/28 additionally bind exact lifecycle flags, recovered payload fields,
+  sender/recipient or server-owned Squad identity, source-valid returned-card IDs, retry identities, and
   non-future creation. Recipient plus message ID is unique because stock read/ignore/accept carries
   no stronger row identity; an identical concurrent challenge replays its winner, while a different
   same-second challenge collision asks the sender to retry. Read and ignore validate both the stored row and projected successor inside
@@ -990,8 +993,9 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   and ignored. Canonical safe-integer strings remain the explicit legacy DynamoDB-number migration,
   and only an absent older idempotency key is optional; malformed or extra authority fails closed.
   Player League type-23 and Squad War type-9 settlements return only newly inserted message
-  identities from their successful MongoDB transaction attempt. Squad Event type-11 identities
-  bubble through the enclosing PvP/economy transaction. After commit, those references are
+  identities from their successful MongoDB transaction attempt. Squad Event type-11 and
+  presentation-only Squad-level type-10 identities bubble through the enclosing PvP/economy
+  transaction. After commit, those references are
   announced sequentially through the same local/Redis inbox fan-out, avoiding both an uncommitted
   reward notice and an unbounded division-close burst. A live `InboxMessage` remains presentation
   only: action `91` is still the sole atomic Gold-claim boundary.
@@ -1002,8 +1006,8 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   nonempty mirrored device token, and the matching recovered consent setting before calling FCM.
   Its data-only payload contains exactly the client-consumed `id`: action `2` for challenges and
   action `90` for supported system-inbox families. Challenge, Squad status, Squad Event, and Player
-  League switches gate their respective rows; type-28 uses Squad status because the recovered local
-  reminder uses `SQUAD_INFO`. Direct type-27 messages are not pushed because no distinct recovered
+  League switches gate their respective rows; type-10 is a Squad rank/status change, while type-28
+  uses Squad status because the recovered local reminder uses `SQUAD_INFO`. Direct type-27 messages are not pushed because no distinct recovered
   consent mapping exists. No title, body, reward, or ownership assertion crosses FCM, and provider
   failure never rolls back or marks the MongoDB row. The normal inbox read remains recovery.
   Structured HTTP v1 failures retire a token only for `UNREGISTERED` or FCM-specific

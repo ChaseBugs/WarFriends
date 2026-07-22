@@ -39,7 +39,7 @@ type LocalDelivery = (recipientPlayerId: string, messageId: string) => void | Pr
 let localDelivery: LocalDelivery | null = null;
 
 /** Every inbox family for which `toClientMessage` has a recovered, validated wire projection. */
-const LIVE_INBOX_MESSAGE_TYPES: readonly MessageDoc["messageType"][] = [0, 1, 3, 9, 11, 21, 23, 27, 28];
+const LIVE_INBOX_MESSAGE_TYPES: readonly MessageDoc["messageType"][] = [0, 1, 3, 9, 10, 11, 21, 23, 27, 28];
 
 function boundedIdentity(value: unknown, maximumLength: number): value is string {
   return typeof value === "string"

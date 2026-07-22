@@ -60,10 +60,10 @@ export interface MessageDoc {
   body: string;
   /**
    * Recovered inbox enum values currently emitted by this backend:
-   * Challenge(0), SquadInvitation(1), SquadDemotion/kick(3), SquadWarEnd(9), SquadEventTierReward(11), InformSquadLeaderAboutEvent(21),
+   * Challenge(0), SquadInvitation(1), SquadDemotion/kick(3), SquadWarEnd(9), SquadLevelUp(10), SquadEventTierReward(11), InformSquadLeaderAboutEvent(21),
    * PlayerLeagueFinished(23), InGameMessage(27), and DepositWarcards(28).
    */
-  messageType: 0 | 1 | 3 | 9 | 11 | 21 | 23 | 27 | 28;
+  messageType: 0 | 1 | 3 | 9 | 10 | 11 | 21 | 23 | 27 | 28;
   payload: Record<string, string | number>;
   otherPlayerJson: string;
   read: boolean;
@@ -683,6 +683,12 @@ export function toClientMessage(doc: MessageDoc): Record<string, DynamoValue> {
     wire.KickedPlayerDepositedCards = {
       S: String(doc.payload.KickedPlayerDepositedCards ?? "[]"),
     };
+  } else if (doc.messageType === 10) {
+    // KGALJDLJCEH requires exactly these two family-specific attributes. Level is the prior
+    // one-based rank because its actual virtual appearance callback adds one before displaying
+    // the reached level and comparing unlocked roster/card-pool capacity.
+    wire.Level = messageNumberAttribute(doc.payload.Level, 0);
+    wire.SquadId = { S: String(doc.payload.SquadId ?? "") };
   } else if (doc.messageType === 28) {
     // BOAFLMMKCGB does not parse the generic Title/Text fields. It constructs a lightweight
     // DatabasePlayer directly from these five DynamoDB attributes and uses that player in the
