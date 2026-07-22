@@ -6,6 +6,7 @@ import test from "node:test";
 import express from "express";
 import { apiRouter } from "../routes";
 import { CARD_PACK_NOT_FOUND, parseCardPackPurchaseData } from "../services/cardInventoryService";
+import { parseRestorePackInputs, validateRefundPackNotice } from "../handlers/purchases";
 
 const CLIENT_ENDPOINT_SOURCE = resolve(
   process.cwd(),
@@ -15,6 +16,10 @@ const SERVER_ENV_EXAMPLE = resolve(process.cwd(), ".env.example");
 const CLIENT_CARD_MANAGER_SOURCE = resolve(
   process.cwd(),
   "../Client/ExportedProject/Assets/Scripts/Gameplay/CardManager.cs",
+);
+const CLIENT_ANDROID_PURCHASE_SOURCE = resolve(
+  process.cwd(),
+  "../Client/ExportedProject/Assets/Scripts/Gameplay/PLIABAOLHBE.cs",
 );
 
 async function withRecoveredRouter(
@@ -144,4 +149,34 @@ test("Server accepts only the two card-pack payload shapes emitted by the untouc
     })),
     (error: unknown) => (error as { code?: number }).code === CARD_PACK_NOT_FOUND,
   );
+});
+
+test("Server preserves the exact Android pack restore and refund notice dictionaries", () => {
+  const source = readFileSync(CLIENT_ANDROID_PURCHASE_SOURCE, "utf8");
+  assert.match(source, /dictionary\.Add\("Value1",\s*inAppsRow\.NAME\);/u);
+  assert.match(source, /dictionary\.Add\("Value2",\s*item3\.purchaseToken\);/u);
+  assert.match(source, /dictionary\.Add\("Value3",\s*item3\.packageName\);/u);
+  assert.match(source, /dictionary\.Add\("Value4",\s*item3\.orderId\);/u);
+  assert.match(source, /dictionary\.Add\("inappId",\s*inAppsRow2\.NAME\);/u);
+  assert.match(source, /dictionary\.Add\("purchaseToken",\s*item4\.purchaseToken\);/u);
+  assert.match(source, /dictionary\.Add\("packageName",\s*item4\.packageName\);/u);
+  assert.match(source, /dictionary\.Add\("orderId",\s*item4\.orderId\);/u);
+
+  assert.deepEqual(parseRestorePackInputs(JSON.stringify([{
+    Value1: "valuepackaf",
+    Value2: "opaque-token",
+    Value3: "com.chillingo.warfriends.android.gplay",
+    Value4: "GPA.restore",
+  }])), [{
+    productId: "valuepackaf",
+    purchaseToken: "opaque-token",
+    packageName: "com.chillingo.warfriends.android.gplay",
+    orderId: "GPA.restore",
+  }]);
+  assert.doesNotThrow(() => validateRefundPackNotice(JSON.stringify([{
+    inappId: "valuepackaf",
+    purchaseToken: "opaque-token",
+    packageName: "com.chillingo.warfriends.android.gplay",
+    orderId: "GPA.refund",
+  }])));
 });

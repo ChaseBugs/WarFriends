@@ -14,6 +14,8 @@ import type { InAppEntitlement } from "../services/inAppCatalogService";
 import { authed, type HandlerEntry } from "./types";
 
 const MAX_RESTORE_PACKS = 50;
+const RESTORE_ENTRY_KEYS = ["Value1", "Value2", "Value3", "Value4"] as const;
+const REFUND_ENTRY_KEYS = ["inappId", "orderId", "packageName", "purchaseToken"] as const;
 
 type DirectPurchaseKind = Extract<InAppEntitlement["kind"], "currency" | "subscription">;
 
@@ -52,6 +54,11 @@ function restoreEntry(value: unknown): GooglePlayPurchaseInput {
     throw new ApiError(ApiErrorCode.InvalidInapp, "Restore pack entry is invalid.");
   }
   const entry = value as Record<string, unknown>;
+  const keys = Object.keys(entry).sort();
+  if (keys.length !== RESTORE_ENTRY_KEYS.length
+    || keys.some((key, index) => key !== RESTORE_ENTRY_KEYS[index])) {
+    throw new ApiError(ApiErrorCode.InvalidInapp, "Restore pack entry shape is invalid.");
+  }
   // RestorePacks uses Value1..Value4 because the original C# path serializes Tuple-like
   // dictionaries instead of the named BuyPack form. Normalize to the same strict proof parser
   // so both endpoints have identical length, whitespace, and required-field validation.
@@ -74,13 +81,37 @@ export function parseRestorePackInputs(value: unknown): GooglePlayPurchaseInput[
   } catch {
     throw new ApiError(ApiErrorCode.InvalidInapp, "Packs restore payload is invalid JSON.");
   }
-  if (!Array.isArray(parsed) || parsed.length > MAX_RESTORE_PACKS) {
+  // PLIABAOLHBE calls this action only after collecting at least one missing durable pack.
+  // Empty lists and over-sized batches are therefore not stock-client requests.
+  if (!Array.isArray(parsed) || parsed.length < 1 || parsed.length > MAX_RESTORE_PACKS) {
     throw new ApiError(ApiErrorCode.InvalidInapp, "Packs restore payload has an invalid number of entries.");
   }
   return parsed.map(restoreEntry);
 }
 
-function validateRefundPackNotice(value: unknown): void {
+function refundNoticeEntry(value: unknown): void {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new ApiError(ApiErrorCode.InvalidInapp, "Refund pack entry is invalid.");
+  }
+  const entry = value as Record<string, unknown>;
+  const keys = Object.keys(entry).sort();
+  if (keys.length !== REFUND_ENTRY_KEYS.length
+    || keys.some((key, index) => key !== REFUND_ENTRY_KEYS[index])) {
+    throw new ApiError(ApiErrorCode.InvalidInapp, "Refund pack entry shape is invalid.");
+  }
+  // RefundPack remains a non-authoritative device notice, but validate the exact same bounded
+  // opaque strings as purchase proof so malformed input cannot become an unbounded diagnostics
+  // channel. These values are deliberately discarded after validation; only provider void data
+  // can revoke an entitlement.
+  parseGooglePlayPurchaseInput({
+    ProductId: entry.inappId,
+    PurchaseToken: entry.purchaseToken,
+    PackageName: entry.packageName,
+    OrderId: entry.orderId,
+  });
+}
+
+export function validateRefundPackNotice(value: unknown): void {
   if (typeof value !== "string" || value.length < 2 || value.length > 256_000) {
     throw new ApiError(ApiErrorCode.InvalidInapp, "Refund pack payload is invalid.");
   }
@@ -90,11 +121,10 @@ function validateRefundPackNotice(value: unknown): void {
   } catch {
     throw new ApiError(ApiErrorCode.InvalidInapp, "Refund pack payload is invalid JSON.");
   }
-  if (!Array.isArray(parsed) || parsed.length > MAX_RESTORE_PACKS || parsed.some((item) => (
-    !item || typeof item !== "object" || Array.isArray(item)
-  ))) {
-    throw new ApiError(ApiErrorCode.InvalidInapp, "Refund pack payload has invalid entries.");
+  if (!Array.isArray(parsed) || parsed.length < 1 || parsed.length > MAX_RESTORE_PACKS) {
+    throw new ApiError(ApiErrorCode.InvalidInapp, "Refund pack payload has an invalid number of entries.");
   }
+  parsed.forEach(refundNoticeEntry);
 }
 
 async function currentPlayerData(playerId: string, now: number): Promise<Record<string, unknown>> {

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { ApiError } from "../apiErrors";
-import { parseRestorePackInputs } from "../handlers/purchases";
+import { parseRestorePackInputs, validateRefundPackNotice } from "../handlers/purchases";
 import { parseGoogleProductPurchase } from "../services/googlePlayPurchaseVerifier";
 import { inAppEntitlement, type PackEntitlement } from "../services/inAppCatalogService";
 import { itemInventoryStateFor } from "../services/itemInventoryService";
@@ -203,5 +203,42 @@ test("RestorePacks parser normalizes the recovered Value1 through Value4 diction
     orderId: "GPA.restore",
   }]);
   assert.throws(() => parseRestorePackInputs("not-json"), ApiError);
+  assert.throws(() => parseRestorePackInputs("[]"), ApiError);
   assert.throws(() => parseRestorePackInputs(JSON.stringify(new Array(51).fill({}))), ApiError);
+  for (const invalid of [
+    { Value1: "valuepackaf", Value2: "opaque-token", Value3: PACKAGE },
+    { Value1: "valuepackaf", Value2: "opaque-token", Value3: PACKAGE, Value4: "GPA.restore", Alias: "x" },
+    { value1: "valuepackaf", Value2: "opaque-token", Value3: PACKAGE, Value4: "GPA.restore" },
+  ]) {
+    assert.throws(() => parseRestorePackInputs(JSON.stringify([invalid])), ApiError);
+  }
+});
+
+test("RefundPack accepts only the exact non-authoritative Android notice shape", () => {
+  assert.doesNotThrow(() => validateRefundPackNotice(JSON.stringify([{
+    inappId: "valuepackaf",
+    purchaseToken: "opaque-token",
+    packageName: PACKAGE,
+    orderId: "GPA.refund",
+  }])));
+
+  for (const invalid of [
+    [],
+    [{ inappId: "valuepackaf", purchaseToken: "opaque-token", packageName: PACKAGE }],
+    [{
+      inappId: "valuepackaf",
+      purchaseToken: "opaque-token",
+      packageName: PACKAGE,
+      orderId: "GPA.refund",
+      ProductId: "valuepackaf",
+    }],
+    [{
+      inappId: " valuepackaf",
+      purchaseToken: "opaque-token",
+      packageName: PACKAGE,
+      orderId: "GPA.refund",
+    }],
+  ]) {
+    assert.throws(() => validateRefundPackNotice(JSON.stringify(invalid)), ApiError);
+  }
 });
