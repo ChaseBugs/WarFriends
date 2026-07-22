@@ -1,5 +1,4 @@
 import { ApiError, ApiErrorCode } from "../apiErrors";
-import generatedCardCatalog from "../data/cardCatalog.generated.json";
 import generatedWeaponCatalog from "../data/weaponCatalog.generated.json";
 import type {
   CardInventoryState,
@@ -7,13 +6,11 @@ import type {
   SavedCardState,
   SavedVisualSlotState,
 } from "../db";
+import { VALIDATED_CARD_CATALOG } from "./cardCatalogAuthorityService";
 
 const MAX_CLIENT_INTEGER = 2_147_483_647;
 const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f]/;
-const cardArtifact = generatedCardCatalog as {
-  cards: Array<{ name: string; implemented: boolean }>;
-  cardPoolRules: { maximumBuddyCards: number };
-};
+const cardArtifact = VALIDATED_CARD_CATALOG;
 const weaponArtifact = generatedWeaponCatalog as { catalog: Array<{ index: number }> };
 const implementedCardIds = new Set(cardArtifact.cards.filter((card) => card.implemented).map((card) => card.name));
 const weaponIndexes = new Set(weaponArtifact.catalog.map((weapon) => weapon.index));

@@ -72,7 +72,14 @@ export function validatedSquadProgressionCatalog(catalog: unknown): readonly Squ
       return invalid(`Squad progression catalog row ${index + 1} is invalid.`);
     }
   }
-  return definitions as SquadLevelDefinition[];
+  // Return an owned immutable snapshot. Callers receive rows as readonly types, but freezing the
+  // actual values also prevents an accidental cast from changing rank authority after validation.
+  return Object.freeze(definitions.map((row) => Object.freeze({
+    level: (row as SquadLevelDefinition).level,
+    experience: (row as SquadLevelDefinition).experience,
+    size: (row as SquadLevelDefinition).size,
+    cardPoolSize: (row as SquadLevelDefinition).cardPoolSize,
+  })));
 }
 
 const DEFINITIONS = validatedSquadProgressionCatalog(generatedCardCatalog);

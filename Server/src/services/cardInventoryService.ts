@@ -1,6 +1,5 @@
 import { randomInt } from "node:crypto";
 import { hasActiveSubscription } from "./subscriptionBenefitService";
-import generatedCardCatalog from "../data/cardCatalog.generated.json";
 import { ApiError, ApiErrorCode } from "../apiErrors";
 import type { CardCraftingState, CardInventoryState, PlayerProgressionState } from "../db";
 import {
@@ -13,6 +12,13 @@ import {
   validatedCardInventoryState,
 } from "./cardInventoryAuthorityService";
 import { playerLevelDefinition } from "./levelProgressionService";
+import {
+  type CardDefinition,
+  type CardPackDefinition,
+  VALIDATED_CARD_CATALOG,
+} from "./cardCatalogAuthorityService";
+
+export type { CardDefinition, CardPackDefinition } from "./cardCatalogAuthorityService";
 
 export const CARD_PACK_NOT_FOUND = 112;
 export const CARD_PACK_NOT_ENOUGH_FUNDS = 100;
@@ -24,53 +30,6 @@ export const WITHDRAW_NOT_YET_AVAILABLE = 17502;
 export const ALREADY_CRAFTING = 17601;
 export const CRAFTED_CARD_NOT_READY = 17701;
 export const MAX_PVP_CARDS_PER_MATCH = 6;
-
-export interface CardDefinition {
-  name: string;
-  rarity: number;
-  fromMission: number;
-  implemented: boolean;
-}
-
-export interface CardPackDefinition {
-  name: string;
-  priceGold: number;
-  priceWarBucks: number;
-  enumValue: number;
-  cardCount: number;
-  fixedRarity: number;
-  fixedRarityCount: number;
-  guaranteedRarity: number;
-  maxRarity: number;
-}
-
-interface CardCatalogArtifact {
-  schemaVersion: number;
-  clientVersion: string;
-  source: string;
-  sourceSha256: string;
-  unlockLevel: number;
-  craftingRules: {
-    inputCount: number;
-    bronzeToSilverMinutes: number;
-    silverToGoldMinutes: number;
-  };
-  cardPoolRules: {
-    withdrawCooldownMinutes: number;
-    buddyDepositCooldownMinutes: number;
-    maximumBuddyCards: number;
-    reputationPoints: {
-      bronze: number;
-      silver: number;
-      gold: number;
-      buddy: number;
-    };
-    capacityBySquadLevel: number[];
-  };
-  cards: CardDefinition[];
-  unresolvedRows: CardDefinition[];
-  packs: CardPackDefinition[];
-}
 
 export interface CardPackPurchasePayload {
   cards: string[];
@@ -99,7 +58,7 @@ export interface CardCraftingMutationResult {
   cardId?: string;
 }
 
-const artifact = generatedCardCatalog as CardCatalogArtifact;
+const artifact = VALIDATED_CARD_CATALOG;
 export const CARD_UNLOCK_LEVEL = artifact.unlockLevel;
 export const CARD_CATALOG: Readonly<Record<string, Readonly<CardDefinition>>> = Object.freeze(
   Object.fromEntries(artifact.cards.map((card) => [card.name, Object.freeze({ ...card })])),
@@ -107,8 +66,8 @@ export const CARD_CATALOG: Readonly<Record<string, Readonly<CardDefinition>>> = 
 export const CARD_PACK_CATALOG: Readonly<Record<string, Readonly<CardPackDefinition>>> = Object.freeze(
   Object.fromEntries(artifact.packs.map((pack) => [pack.name, Object.freeze({ ...pack })])),
 );
-export const CARD_CRAFTING_RULES = Object.freeze({ ...artifact.craftingRules });
-export const CARD_POOL_RULES = Object.freeze({ ...artifact.cardPoolRules });
+export const CARD_CRAFTING_RULES = artifact.craftingRules;
+export const CARD_POOL_RULES = artifact.cardPoolRules;
 
 /** New accounts begin with the exact empty CardManagerData wire shape. */
 export function createInitialCardInventory(): CardInventoryState {

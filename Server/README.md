@@ -1225,6 +1225,12 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   identities before atomically replacing the release. Provenance identity includes path, schema,
   and digest because checked-in extraction artifacts can record different snapshots of the same
   source path; the former path/schema-only map silently omitted the unit artifact's recorded digest.
+  The card artifact has an additional shared startup boundary used by gameplay and catalog sync:
+  it requires exact 4.9.5 provenance and fields, all 58 ordered unique playable cards, 25 ordered
+  unique unresolved rows, four recovered pack identities/counts, bounded economy/rule values, and
+  the complete matching 50-row Squad snapshot. The accepted result is deep-frozen, including nested
+  reputation rules and capacity arrays, so truncation, duplicate-key overwrite, inconsistent pool
+  authority, or later in-process mutation cannot change purchases, crafting, rewards, or publication.
 - **Authoritative Army Power**: `scripts/Extract-ArmyPowerCatalog.mjs` reproduces 11,805 normal
   weapon DPS rows and all 58 player-rank `ARMYPOWER` rows from MainScene. The server independently
   rounds equipped-unit float power, equipped-weapon float DPS, and the current zero-based rank row

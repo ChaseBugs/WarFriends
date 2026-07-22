@@ -1,16 +1,9 @@
 import { ApiError, ApiErrorCode } from "../apiErrors";
-import generatedCardCatalog from "../data/cardCatalog.generated.json";
 import type { CardCraftingState } from "../db";
+import { VALIDATED_CARD_CATALOG } from "./cardCatalogAuthorityService";
 
 const MAX_CLIENT_UNIX_SECONDS = 2_147_483_647;
-const artifact = generatedCardCatalog as {
-  craftingRules: {
-    inputCount: number;
-    bronzeToSilverMinutes: number;
-    silverToGoldMinutes: number;
-  };
-  cards: Array<{ name: string; rarity: number; implemented: boolean }>;
-};
+const artifact = VALIDATED_CARD_CATALOG;
 const cardDefinitions = new Map(artifact.cards.map((card) => [card.name, card]));
 
 function authorityError(): never {

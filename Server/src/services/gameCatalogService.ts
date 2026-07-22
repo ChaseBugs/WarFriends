@@ -4,7 +4,6 @@ import generatedUnitCatalog from "../data/unitCatalog.generated.json";
 import generatedUnitUpgradeCatalog from "../data/unitUpgradeCatalog.generated.json";
 import generatedWeaponCatalog from "../data/weaponCatalog.generated.json";
 import generatedVisualCatalog from "../data/visualCatalog.generated.json";
-import generatedCardCatalog from "../data/cardCatalog.generated.json";
 import {
   WEAPON_BLACK_MARKET_PRICES,
   WEAPON_UPGRADE_CATALOG,
@@ -14,6 +13,7 @@ import {
   validatedGameCatalogEntry,
   validatedGameCatalogRelease,
 } from "./gameCatalogAuthorityService";
+import { VALIDATED_CARD_CATALOG } from "./cardCatalogAuthorityService";
 
 export { catalogContentHash } from "./gameCatalogAuthorityService";
 
@@ -156,7 +156,9 @@ const units = generatedUnitCatalog as unknown as UnitArtifact;
 const unitUpgrades = generatedUnitUpgradeCatalog as unknown as UnitUpgradeArtifact;
 const armyPower = generatedArmyPowerCatalog as unknown as ArmyPowerArtifact;
 const visuals = generatedVisualCatalog as unknown as VisualCatalogArtifact;
-const cards = generatedCardCatalog as unknown as CardCatalogArtifact;
+// Publishing the database catalog must use the same validated immutable card snapshot as gameplay;
+// otherwise the sync CLI could accept a damaged artifact that the running server would reject.
+const cards = VALIDATED_CARD_CATALOG as unknown as CardCatalogArtifact;
 
 function requiredName(row: Record<string, unknown>, family: string): string {
   if (typeof row.name !== "string" || row.name.length === 0) {
