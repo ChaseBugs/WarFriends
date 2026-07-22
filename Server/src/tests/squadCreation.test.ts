@@ -5,6 +5,7 @@ import { SquadRank } from "../constants";
 import {
   exactSquadInteger,
   requestedAcceptSquadJoinRequest,
+  requestedCreateSquad,
   requestedDirectSquadChatTimestamp,
   requestedDirectSquadJoin,
   requestedDeclineSquadJoinRequest,
@@ -19,6 +20,7 @@ import {
   requestedSquadMembersRead,
   requestedSquadRead,
   requestedSuggestedSquadSkill,
+  requestedUpdateSquad,
 } from "../handlers/squadAdmissionParsing";
 import {
   SQUAD_CREATE_BASE_WARBUCKS_COST,
@@ -66,6 +68,7 @@ test("squad admission settings reject coercion and preserve exact recovered inte
   assert.equal(requestedSquadJoinPolicy({ JoinPolicy: "2" }), 2);
   assert.equal(requestedSquadJoinPolicy({ IsPublic: "1" }), 0);
   assert.equal(requestedSquadJoinPolicy({ IsPublic: false }), 1);
+  assert.equal(requestedSquadJoinPolicy({ JoinPolicy: "0", IsPublic: "1" }), 0);
   assert.equal(validatedSquadJoinPolicy(undefined, 0), 0);
   assert.equal(validatedSquadJoinPolicy(2), 2);
   assert.equal(validatedSquadRequiredMedals(undefined, 0), 0);
@@ -85,6 +88,65 @@ test("squad admission settings reject coercion and preserve exact recovered inte
   }
   for (const value of [null, "", "yes", "true", "false", " true ", "TRUE", 0, 1, 2, {}, []]) {
     assert.throws(() => requestedSquadJoinPolicy({ IsPublic: value }), /exact stock 0\/1 flag/);
+  }
+  assert.throws(
+    () => requestedSquadJoinPolicy({ JoinPolicy: "1", IsPublic: "1" }),
+    /join-policy fields conflict/,
+  );
+  assert.throws(() => requestedSquadJoinPolicy({}, true), /join policy is required/);
+});
+
+test("Squad creation and settings updates bind their complete recovered action fields", () => {
+  assert.deepEqual(
+    requestedCreateSquad({
+      SquadId: "Alpha Squad",
+      IsPublic: "1",
+      Icon: "emblem-1",
+      Message: "Ready to fight",
+      SkillRequirement: "120",
+    }),
+    {
+      squadId: "Alpha Squad",
+      description: "Ready to fight",
+      emblem: { id: "emblem-1" },
+      joinPolicy: 0,
+      requiredMedals: 120,
+    },
+  );
+  assert.deepEqual(
+    requestedUpdateSquad({ IsPublic: "0", RequiredMedals: "200" }),
+    { description: undefined, joinPolicy: 1, requiredMedals: 200 },
+  );
+
+  for (const request of [
+    { SquadName: "Alpha Squad", IsPublic: "1", Icon: "emblem-1", SkillRequirement: "0" },
+    { SquadId: "Alpha Squad", Icon: "emblem-1", SkillRequirement: "0" },
+    { SquadId: "Alpha Squad", IsPublic: "1", SkillRequirement: "0" },
+    { SquadId: "Alpha Squad", IsPublic: "1", Icon: "null", SkillRequirement: "0" },
+    { SquadId: "Alpha Squad", IsPublic: "1", Icon: "emblem-1", RequiredMedals: "0" },
+    { SquadId: "Alpha Squad", IsPublic: "1", Icon: "emblem-1", SkillRequirement: "-1" },
+    { SquadId: "Alpha Squad", JoinPolicy: "1", IsPublic: "1", Icon: "emblem-1", SkillRequirement: "0" },
+    { SquadId: "Alpha Squad", IsPublic: "1", Icon: "emblem-1", SkillRequirement: "0", Message: "x".repeat(251) },
+  ]) {
+    assert.throws(
+      () => requestedCreateSquad(request),
+      /(field is invalid|required|Icon|SkillRequirement|conflict|Message)/,
+    );
+  }
+
+  for (const request of [
+    {},
+    { IsPublic: "1" },
+    { RequiredMedals: "0" },
+    { IsPublic: "1", SkillRequirement: "0" },
+    { IsPublic: "1", RequiredMedals: "-1" },
+    { JoinPolicy: "1", IsPublic: "1", RequiredMedals: "0" },
+    { IsPublic: "1", RequiredMedals: "0", Message: false },
+  ]) {
+    assert.throws(
+      () => requestedUpdateSquad(request),
+      /(required|RequiredMedals|conflict|Message)/,
+    );
   }
 });
 

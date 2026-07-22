@@ -505,12 +505,18 @@ Implemented backend paths (deployment-gated checks are called out explicitly):
   `Member`, `Veteran`, `Leader`, and `Coleader`. Creation uses the exact decoded linear
   `25 * (count + 1)` WarBucks price; a shared signed-client count/price validator runs at
   progression read/publication, mutation, and boot, and wallet, revision, and the next count validate before the atomic
-  squad/debit write. Create and update treat admission settings as exact assertions at both
-  the HTTP adapter and service boundary: join policy accepts only integers 0 through 2,
-  required medals accepts only a nonnegative C# signed `int`, and the legacy `IsPublic`
-  projection accepts only exact Boolean representations. Decimal form values are canonical and
+  squad/debit write. Creation, unique-name checking, and leader-event notification require the
+  exact recovered `SquadId` rather than borrowing names from join, rename, or generic `Id` fields.
+  Action 37 also requires its complete `Icon`, `IsPublic`, and `SkillRequirement` payload before
+  any transaction; action 131 requires `IsPublic` and `RequiredMedals` while deriving the mutable
+  Squad only from authenticated membership. Create and update treat those admission settings as
+  exact assertions at both the HTTP adapter and service boundary: join policy accepts only integers
+  0 through 2, required medals accepts only a nonnegative C# signed `int`, and the legacy `IsPublic`
+  projection accepts only exact Boolean representations. A replacement `JoinPolicy` may accompany
+  `IsPublic` only when both map to the same policy. Decimal form values are canonical and
   client-width-bound; padding, plus signs, leading zeros, alternate negative zero, fractions,
-  exponents, and oversized values fail, while Boolean text is neither trimmed nor case-folded.
+  exponents, oversized values, missing mandatory creation/update fields, and conflicting policy
+  aliases fail before mutation, while Boolean text is neither trimmed nor case-folded.
   Action `101` retains its legacy `GetSquadsByExperience` name, but the recovered all-time screen
   sorts and displays wire `Skill`, which this backend projects from authoritative `squadPoints`.
   The global page is therefore admitted by `(squadPoints descending, squad name ascending)` through

@@ -32,15 +32,28 @@ export function exactSquadInteger(value: unknown, field: string, fallback?: numb
 }
 
 /** Resolve the current JoinPolicy field or its older inverse IsPublic projection exactly. */
-export function requestedSquadJoinPolicy(req: Record<string, unknown>): number | undefined {
-  if (req.JoinPolicy !== undefined) return exactSquadInteger(req.JoinPolicy, "JoinPolicy");
-  if (req.IsPublic === undefined) return undefined;
-
+export function requestedSquadJoinPolicy(
+  req: Record<string, unknown>,
+  required = false,
+): number | undefined {
+  const joinPolicy = req.JoinPolicy === undefined
+    ? undefined
+    : exactSquadInteger(req.JoinPolicy, "JoinPolicy");
   // Both recovered callers build IsPublic manually with the same literal "0"/"1" form
   // contract as the match lifecycle flags. The server stores the newer JoinPolicy enum, whose
   // value 0 means open and value 1 means request-only, so preserve the legacy inverse mapping
   // only after the transport itself has been validated.
-  return exactBinaryBoolean(req.IsPublic, "IsPublic") ? 0 : 1;
+  const legacyPolicy = req.IsPublic === undefined
+    ? undefined
+    : (exactBinaryBoolean(req.IsPublic, "IsPublic") ? 0 : 1);
+  if (joinPolicy !== undefined && legacyPolicy !== undefined && joinPolicy !== legacyPolicy) {
+    throw new ApiError(ApiErrorCode.UnknownAction, "Squad join-policy fields conflict.");
+  }
+  const policy = joinPolicy ?? legacyPolicy;
+  if (required && policy === undefined) {
+    throw new ApiError(ApiErrorCode.UnknownAction, "Squad join policy is required.");
+  }
+  return policy;
 }
 
 const SQUAD_CHAT_TIMESTAMP_FIELDS = [
@@ -117,6 +130,78 @@ function requestedExistingSquadId(value: unknown, action: string): string {
     throw new ApiError(ApiErrorCode.UnknownAction, `${action} squad field is invalid.`);
   }
   return value;
+}
+
+function requestedSquadDescription(value: unknown, action: string): string | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== "string" || value.length > 250 || /\p{Cc}/u.test(value)) {
+    throw new ApiError(ApiErrorCode.UnknownAction, `${action} Message is invalid.`);
+  }
+  return value;
+}
+
+function requestedSquadIcon(value: unknown, action: string): Record<string, unknown> {
+  if (typeof value !== "string"
+    || value === "null"
+    || value.length < 1
+    || value.length > 128
+    || value.trim() !== value
+    || /\p{Cc}/u.test(value)) {
+    throw new ApiError(ApiErrorCode.UnknownAction, `${action} Icon is invalid.`);
+  }
+  return { id: value };
+}
+
+function requestedNonnegativeSquadInteger(value: unknown, field: string): number {
+  const parsed = exactSquadInteger(value, field);
+  if (parsed < 0) throw new ApiError(ApiErrorCode.UnknownAction, `${field} is invalid.`);
+  return parsed;
+}
+
+export interface CreateSquadRequestInput {
+  squadId: string;
+  description?: string;
+  emblem: Record<string, unknown>;
+  joinPolicy: number;
+  requiredMedals: number;
+}
+
+/**
+ * Parse the complete action-37 payload emitted by BeanstalkServerManager.CMNMPMOKFLN.
+ *
+ * Creation is an economy mutation and publishes a new admission policy. Missing policy, medal,
+ * emblem, or identity fields must not turn into an open/default Squad after the WarBucks debit.
+ * Fields from JoinSquad, UpdateSquad, or older generic adapters are not aliases for this action.
+ */
+export function requestedCreateSquad(req: Record<string, unknown>): CreateSquadRequestInput {
+  return {
+    squadId: requestedExistingSquadId(req.SquadId, "Squad creation"),
+    description: requestedSquadDescription(req.Message, "Squad creation"),
+    emblem: requestedSquadIcon(req.Icon, "Squad creation"),
+    joinPolicy: requestedSquadJoinPolicy(req, true)!,
+    requiredMedals: requestedNonnegativeSquadInteger(req.SkillRequirement, "SkillRequirement"),
+  };
+}
+
+export interface UpdateSquadRequestInput {
+  description?: string;
+  joinPolicy: number;
+  requiredMedals: number;
+}
+
+/**
+ * Parse action 131 as the recovered current-membership settings mutation.
+ *
+ * UpdateSquadInfo always submits IsPublic and RequiredMedals, and intentionally omits Message when
+ * the text is empty. Requiring both policy scalars prevents a partial or malformed request from
+ * being acknowledged after changing only whichever field happened to parse first.
+ */
+export function requestedUpdateSquad(req: Record<string, unknown>): UpdateSquadRequestInput {
+  return {
+    description: requestedSquadDescription(req.Message, "Squad update"),
+    joinPolicy: requestedSquadJoinPolicy(req, true)!,
+    requiredMedals: requestedNonnegativeSquadInteger(req.RequiredMedals, "RequiredMedals"),
+  };
 }
 
 export interface DirectSquadJoinInput {

@@ -178,6 +178,14 @@ membership. Action 42 has client UI listeners but no recovered outbound call and
 response-only, so it cannot act as an alternate generic-alias kick endpoint. The parent feature
 remains Partial only for the explicit geography and production-audit gaps in the table above.
 
+Squad creation, name availability, leader-event notification, and settings updates now parse their
+own complete recovered fields instead of sharing a generic Squad-name/target fallback. Actions 37,
+41, and 160 require their exact `SquadId`; creation additionally requires `Icon`, `IsPublic` (or an
+equivalent nonconflicting replacement `JoinPolicy`), and `SkillRequirement`, while update requires
+its recovered policy and `RequiredMedals`. Missing fields cannot become a default open Squad after
+the creation debit, and two policy representations cannot select different admission behavior by
+alias precedence.
+
 ### Firebase offline inbox wake-up — Partial
 
 Optional Firebase HTTP v1 delivery uses Google ADC under exact immutable enablement, project-ID,

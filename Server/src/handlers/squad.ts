@@ -40,8 +40,8 @@ import {
 import { rankSquadWarDivision } from "../services/squadWarContract";
 import { publishInboxFanout } from "../services/inboxFanoutService";
 import {
-  exactSquadInteger,
   requestedAcceptSquadJoinRequest,
+  requestedCreateSquad,
   requestedGlobalSquadDirectory,
   requestedDirectSquadChatTimestamp,
   requestedDirectSquadJoin,
@@ -55,29 +55,11 @@ import {
   requestedSquadMembersRead,
   requestedSquadRead,
   requestedSuggestedSquadSkill,
-  requestedSquadJoinPolicy,
+  requestedUpdateSquad,
 } from "./squadAdmissionParsing";
 
 // Squad system — BACKEND.md §2.5. Every handler is authenticated; rank checks live in the
 // service layer.
-
-function squadName(req: Record<string, unknown>): string {
-  const name = req.SquadName ?? req.SquadId ?? req.NewSquadId ?? req.Name;
-  return typeof name === "string" ? name : "";
-}
-
-function targetId(req: Record<string, unknown>): string {
-  const id =
-    req.TargetPlayerId ??
-    req.PlayerToPromoteId ??
-    req.PlayerToKickId ??
-    req.PlayerToJoin ??
-    req.PlayerToInviteId ??
-    req.SquadMemberId ??
-    req.Id ??
-    req.id;
-  return typeof id === "string" ? id : "";
-}
 
 function squadWarsRoundId(req: Record<string, unknown>): string {
   const value = typeof req.RoundId === "string" ? req.RoundId.trim() : "";
@@ -85,13 +67,6 @@ function squadWarsRoundId(req: Record<string, unknown>): string {
     throw new ApiError(ApiErrorCode.UnknownAction, "RoundId is invalid.");
   }
   return value;
-}
-
-function emblem(req: Record<string, unknown>): Record<string, unknown> | undefined {
-  if (typeof req.Icon === "string") return { id: req.Icon };
-  return req.Emblem && typeof req.Emblem === "object" && !Array.isArray(req.Emblem)
-    ? (req.Emblem as Record<string, unknown>)
-    : undefined;
 }
 
 export const squadHandlers: Record<number, HandlerEntry> = {
@@ -120,7 +95,10 @@ export const squadHandlers: Record<number, HandlerEntry> = {
   }),
 
   [DbAction.InformSquadLeaderAboutEvent]: authed(async ({ player, req }) => {
-    const name = squadName(req) || player!.player.squadName;
+    // The recovered caller sends its current SquadId. Keep it as an assertion that the event came
+    // from the same Squad snapshot instead of silently replacing an absent/foreign alias with the
+    // authenticated profile's membership.
+    const name = requestedSquadRead(req, "Squad leader event");
     const message = await informSquadLeaderAboutEvent(player!.id, name);
     if (message) await publishInboxFanout(message.toPlayerId, message.messageId);
     return ok(DbAction.InformSquadLeaderAboutEvent, {
@@ -130,7 +108,7 @@ export const squadHandlers: Record<number, HandlerEntry> = {
   }),
 
   [DbAction.CheckUniqueSquadName]: authed(async ({ req }) => {
-    const available = await isNameAvailable(squadName(req));
+    const available = await isNameAvailable(requestedSquadRead(req, "Squad name availability"));
     // EBDNFFCCKEP reads IsUnique from the CheckUniqueSquadName response and then emits the
     // local UniqueSquadNameSuccess/Failure event itself. Changing the response action or
     // returning only Available bypasses that callback and leaves the creation dialog waiting.
@@ -138,16 +116,13 @@ export const squadHandlers: Record<number, HandlerEntry> = {
   }),
 
   [DbAction.CreateSquad]: authed(async ({ player, req }) => {
+    const input = requestedCreateSquad(req);
     try {
-      const result = await createSquad(player!.id, squadName(req), {
-        description: typeof req.Message === "string" ? req.Message : undefined,
-        emblem: emblem(req),
-        joinPolicy: requestedSquadJoinPolicy(req),
-        requiredMedals: exactSquadInteger(
-          req.RequiredMedals !== undefined ? req.RequiredMedals : req.SkillRequirement,
-          "RequiredMedals",
-          0,
-        ),
+      const result = await createSquad(player!.id, input.squadId, {
+        description: input.description,
+        emblem: input.emblem,
+        joinPolicy: input.joinPolicy,
+        requiredMedals: input.requiredMedals,
       });
       return ok(DbAction.CreateSquad, {
         Squad: buildDatabaseSquad(result.squad),
@@ -415,12 +390,11 @@ export const squadHandlers: Record<number, HandlerEntry> = {
 
   [DbAction.UpdateSquad]: authed(async ({ player, req }) => {
     // UpdateSquadInfo emits no Squad identity. Bind the mutation to authenticated membership.
+    const input = requestedUpdateSquad(req);
     const squad = await updateSquad(player!.id, player!.player.squadName, {
-      description: typeof req.Message === "string" ? req.Message : undefined,
-      joinPolicy: requestedSquadJoinPolicy(req),
-      requiredMedals: req.RequiredMedals === undefined
-        ? undefined
-        : exactSquadInteger(req.RequiredMedals, "RequiredMedals"),
+      description: input.description,
+      joinPolicy: input.joinPolicy,
+      requiredMedals: input.requiredMedals,
     });
     return ok(DbAction.UpdateSquad, { Squad: buildDatabaseSquad(squad) });
   }),
