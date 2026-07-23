@@ -3227,7 +3227,17 @@ public class BeanstalkServerManager : Singleton<BeanstalkServerManager>
 
 	public DateTime currentDateTime => MEJMLNDFDBP.LAEDFBJFGBP(currentTimestamp);
 
-	public int currentTimestamp => FBBKCGLIIOB.CEKEMOGEJBC();
+	public int currentTimestamp
+	{
+		get
+		{
+			if (FBBKCGLIIOB == null)
+			{
+				EHKKAOLJMCF();
+			}
+			return (FBBKCGLIIOB != null) ? FBBKCGLIIOB.CEKEMOGEJBC() : 0;
+		}
+	}
 
 	public int timestampPlayerDataLoaded => FBBKCGLIIOB.GFEABIMBHPG();
 
@@ -3261,7 +3271,15 @@ public class BeanstalkServerManager : Singleton<BeanstalkServerManager>
 
 	public string appLink => BDJLFKHICIL.DMCHEIIADFO();
 
-	public bool shouldGetMessages => Singleton<GameController>.instance.gameState == GameController.AEMPHGEIJNH.Menu && GameLoginManager.instance.data.isDeviceRegistered && !Singleton<GameController>.instance.isTutorial && isPlayerDataLoaded;
+	public bool shouldGetMessages
+	{
+		get
+		{
+			GameController gameController = UnityEngine.Object.FindObjectOfType<GameController>();
+			GameLoginManager gameLoginManager = UnityEngine.Object.FindObjectOfType<GameLoginManager>();
+			return (object)gameController != null && (object)gameLoginManager != null && (object)gameLoginManager.data != null && gameController.gameState == GameController.AEMPHGEIJNH.Menu && gameLoginManager.data.isDeviceRegistered && !gameController.isTutorial && isPlayerDataLoaded;
+		}
+	}
 
 	public event Action<DatabaseAction> DataLoaded
 	{
@@ -3696,6 +3714,10 @@ public class BeanstalkServerManager : Singleton<BeanstalkServerManager>
 	internal void FIENLGKEFEP(PlayerStatus CKCJBIIPEOG)
 	{
 		PushNotificationManager.instance.ScheduleLapsedPlayerNotifications();
+		if (Singleton.applicationIsQuitting)
+		{
+			return;
+		}
 		List<Tuple<string, string>> list = new List<Tuple<string, string>>();
 		int num = (int)CKCJBIIPEOG;
 		list.Add(new Tuple<string, string>("PlayerStatus", num.ToString(CultureInfo.InvariantCulture)));
@@ -4741,7 +4763,7 @@ public class BeanstalkServerManager : Singleton<BeanstalkServerManager>
 		}
 		else
 		{
-			UnityEngine.Debug.LogError("NO Fuseboxx Config Value during GETPLAYERDATA!");
+			UnityEngine.Debug.Log("Fuseboxx configuration is unavailable; continuing with local defaults.");
 		}
 		LoadingDialog.ShowLoading(Localization.Localize("ID_DOWNLOADINGDATA"), DMDICGADGCG: false, BGOHKCCLDJP: true);
 		StartCoroutine(RadicalRoutine.Run(HBFJFGANDPE(DatabaseAction.GetPlayerData, list2)));

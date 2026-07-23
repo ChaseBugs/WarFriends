@@ -2960,24 +2960,20 @@ public class SelectFriendsDialog : GuiElementSingle<SelectFriendsDialog>, PAIIOK
 	public override void InitEvents()
 	{
 		base.InitEvents();
-		UIEventListener uIEventListener = UIEventListener.Get(LJNPCHFCGCN.gameObject);
-		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(KJBCLKMGCDL));
-		UIEventListener uIEventListener2 = UIEventListener.Get(JHAHPFJPDEJ.gameObject);
-		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(EFECKBPEIHH));
-		UIInputChat fIAPALMLLKD = FIAPALMLLKD;
-		fIAPALMLLKD.onSubmit = (UIInput.OnSubmit)Delegate.Combine(fIAPALMLLKD.onSubmit, new UIInput.OnSubmit(LIAKPKPKGPN));
-		UIEventListener uIEventListener3 = UIEventListener.Get(NOHDFMODCEG.gameObject);
-		uIEventListener3.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener3.onClick, new UIEventListener.VoidDelegate(PMFJNJCICOF));
-		UIEventListener uIEventListener4 = UIEventListener.Get(PALJKEPBEEP.gameObject);
-		uIEventListener4.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener4.onClick, new UIEventListener.VoidDelegate(LEOIEBHKMPH));
-		UIEventListener uIEventListener5 = UIEventListener.Get(IIFECPMJEBP.gameObject);
-		uIEventListener5.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener5.onClick, new UIEventListener.VoidDelegate(EFMDKOGDNCA));
-		UIEventListener uIEventListener6 = UIEventListener.Get(KHFOHBMDEBJ);
-		uIEventListener6.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener6.onClick, new UIEventListener.VoidDelegate(BHPHFADPDDO));
-		UIEventListener uIEventListener7 = UIEventListener.Get(DGBFJNCGAFG);
-		uIEventListener7.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener7.onClick, new UIEventListener.VoidDelegate(HEMPGCPOEBL));
+		if (LJNPCHFCGCN != null) UIEventListener.Get(LJNPCHFCGCN.gameObject).onClick += KJBCLKMGCDL;
+		if (JHAHPFJPDEJ != null) UIEventListener.Get(JHAHPFJPDEJ.gameObject).onClick += EFECKBPEIHH;
+		if (FIAPALMLLKD != null) FIAPALMLLKD.onSubmit += LIAKPKPKGPN;
+		if (NOHDFMODCEG != null) UIEventListener.Get(NOHDFMODCEG.gameObject).onClick += PMFJNJCICOF;
+		if (PALJKEPBEEP != null) UIEventListener.Get(PALJKEPBEEP.gameObject).onClick += LEOIEBHKMPH;
+		if (IIFECPMJEBP != null) UIEventListener.Get(IIFECPMJEBP.gameObject).onClick += EFMDKOGDNCA;
+		if (KHFOHBMDEBJ != null) UIEventListener.Get(KHFOHBMDEBJ).onClick += BHPHFADPDDO;
+		if (DGBFJNCGAFG != null) UIEventListener.Get(DGBFJNCGAFG).onClick += HEMPGCPOEBL;
 		foreach (UIButton item in EIGENHGGBEB)
 		{
+			if (item == null)
+			{
+				continue;
+			}
 			UIEventListener uIEventListener8 = UIEventListener.Get(item.gameObject);
 			uIEventListener8.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener8.onClick, new UIEventListener.VoidDelegate(EKOFHHFAPCI));
 		}

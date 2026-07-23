@@ -1738,7 +1738,7 @@ public class LPDEOBOCICH
 		}
 		if (dictionary == null)
 		{
-			UnityEngine.Debug.LogError("Fuseboxx: No Dictionary with configuration found!");
+			// Retired Fusebox configuration is optional; local defaults were selected above.
 			return;
 		}
 		foreach (KeyValuePair<string, string> item in dictionary)
@@ -1866,14 +1866,11 @@ public class LPDEOBOCICH
 		case DatabaseAction.TutorialEnded:
 		case DatabaseAction.CreateGcAccount:
 			DGHBDJCLCFL = true;
-			if (EAGNEKLJGKA)
-			{
-				GameConfigurationManager.instance.GetConfigurations(EFNPANFNCKC());
-			}
-			else
-			{
-				GameConfigurationManager.instance.StartCoroutine(MCFJPLGLOMF());
-			}
+			// Fusebox is retired/optional in this recovered runtime. Waiting for its
+			// callback blocked the stock configuration request for a hard-coded 40s.
+			// EFNPANFNCKC already selects the cached local variant when Fusebox is absent,
+			// so request the authoritative server configuration immediately.
+			GameConfigurationManager.instance.GetConfigurations(EFNPANFNCKC());
 			break;
 		}
 	}

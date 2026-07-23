@@ -260,6 +260,10 @@ public class Background : GuiElementSingle<Background>
 
 	private UITweener BKBKDDHJFGM(UISprite GMPADNOGGNL, float AFCMOEFDCHO)
 	{
+		if (GMPADNOGGNL == null)
+		{
+			return null;
+		}
 		if (GMPADNOGGNL.gameObject.activeSelf)
 		{
 			GMPADNOGGNL.alpha = AFCMOEFDCHO;
@@ -296,8 +300,11 @@ public class Background : GuiElementSingle<Background>
 			{
 				UITweener uITweener = MNLLFNFFCIC(NNJBEDJPGEH, DJCJDJGMAHO);
 				uITweener.onFinished = (UITweener.OnFinished)Delegate.Combine(uITweener.onFinished, new UITweener.OnFinished(CEEMIKFEJMK));
-				FFPLNCHHFDP.gameObject.SetActive(value: true);
-				FFPLNCHHFDP.Play();
+				if (FFPLNCHHFDP != null)
+				{
+					FFPLNCHHFDP.Stop();
+					FFPLNCHHFDP.gameObject.SetActive(value: false);
+				}
 			}
 			else
 			{
@@ -332,22 +339,22 @@ public class Background : GuiElementSingle<Background>
 			{
 				IBCDMOOPLNN.SetActive(LGMALHPGKOK != NKHJBLBAAEB.Picture);
 			}
-			if (NNJBEDJPGEH.gameObject.activeSelf)
+			if (NNJBEDJPGEH != null && NNJBEDJPGEH.gameObject.activeSelf)
 			{
 				TweenAlpha.Begin(NNJBEDJPGEH.gameObject, 1739f, DJCJDJGMAHO).onFinished = null;
 				NNJBEDJPGEH.alpha = DJCJDJGMAHO;
 			}
-			if (AKDJBKCNJHM.gameObject.activeSelf)
+			if (AKDJBKCNJHM != null && AKDJBKCNJHM.gameObject.activeSelf)
 			{
 				TweenAlpha.Begin(AKDJBKCNJHM.gameObject, 1956f, GJLPBLDGCOP).onFinished = null;
 				AKDJBKCNJHM.alpha = GJLPBLDGCOP;
 			}
-			if (DIGDNLFGMPA.gameObject.activeSelf)
+			if (DIGDNLFGMPA != null && DIGDNLFGMPA.gameObject.activeSelf)
 			{
 				TweenAlpha.Begin(DIGDNLFGMPA.gameObject, 1433f, PDEDFBAJOBG).onFinished = null;
 				DIGDNLFGMPA.alpha = PDEDFBAJOBG;
 			}
-			if (EBJMJALEKNH.gameObject.activeSelf)
+			if (EBJMJALEKNH != null && EBJMJALEKNH.gameObject.activeSelf)
 			{
 				TweenAlpha.Begin(EBJMJALEKNH.gameObject, 1617f, HLKLIHENKAF).onFinished = null;
 				EBJMJALEKNH.alpha = HLKLIHENKAF;
@@ -735,8 +742,13 @@ public class Background : GuiElementSingle<Background>
 			{
 				UITweener uITweener = BKBKDDHJFGM(NNJBEDJPGEH, DJCJDJGMAHO);
 				uITweener.onFinished = (UITweener.OnFinished)Delegate.Combine(uITweener.onFinished, new UITweener.OnFinished(BEOEJIIMLBL));
-				FFPLNCHHFDP.gameObject.SetActive(value: true);
-				FFPLNCHHFDP.Play();
+				// The recovered particle material renders as cyan streak noise over every
+				// menu. Keep the static Classic background and suppress only that effect.
+				if (FFPLNCHHFDP != null)
+				{
+					FFPLNCHHFDP.Stop(withChildren: true, ParticleSystemStopBehavior.StopEmittingAndClear);
+					FFPLNCHHFDP.gameObject.SetActive(value: false);
+				}
 			}
 			else
 			{
@@ -771,22 +783,22 @@ public class Background : GuiElementSingle<Background>
 			{
 				IBCDMOOPLNN.SetActive(LGMALHPGKOK == NKHJBLBAAEB.Classic);
 			}
-			if (NNJBEDJPGEH.gameObject.activeSelf)
+			if (NNJBEDJPGEH != null && NNJBEDJPGEH.gameObject.activeSelf)
 			{
 				TweenAlpha.Begin(NNJBEDJPGEH.gameObject, 996f, DJCJDJGMAHO).onFinished = null;
 				NNJBEDJPGEH.alpha = DJCJDJGMAHO;
 			}
-			if (AKDJBKCNJHM.gameObject.activeSelf)
+			if (AKDJBKCNJHM != null && AKDJBKCNJHM.gameObject.activeSelf)
 			{
 				TweenAlpha.Begin(AKDJBKCNJHM.gameObject, 344f, GJLPBLDGCOP).onFinished = null;
 				AKDJBKCNJHM.alpha = GJLPBLDGCOP;
 			}
-			if (DIGDNLFGMPA.gameObject.activeSelf)
+			if (DIGDNLFGMPA != null && DIGDNLFGMPA.gameObject.activeSelf)
 			{
 				TweenAlpha.Begin(DIGDNLFGMPA.gameObject, 704f, PDEDFBAJOBG).onFinished = null;
 				DIGDNLFGMPA.alpha = PDEDFBAJOBG;
 			}
-			if (EBJMJALEKNH.gameObject.activeSelf)
+			if (EBJMJALEKNH != null && EBJMJALEKNH.gameObject.activeSelf)
 			{
 				TweenAlpha.Begin(EBJMJALEKNH.gameObject, 379f, HLKLIHENKAF).onFinished = null;
 				EBJMJALEKNH.alpha = HLKLIHENKAF;
@@ -809,8 +821,14 @@ public class Background : GuiElementSingle<Background>
 			{
 				UITweener uITweener = MNLLFNFFCIC(NNJBEDJPGEH, DJCJDJGMAHO);
 				uITweener.onFinished = (UITweener.OnFinished)Delegate.Combine(uITweener.onFinished, new UITweener.OnFinished(FCOIIMAJECF));
-				FFPLNCHHFDP.gameObject.SetActive(value: true);
-				FFPLNCHHFDP.Play();
+				// The recovered particle material renders as cyan streak noise across all
+				// menu screens. Preserve the Classic background without that decoration.
+				if (FFPLNCHHFDP != null)
+				{
+					FFPLNCHHFDP.Stop();
+					FFPLNCHHFDP.Clear(withChildren: true);
+					FFPLNCHHFDP.gameObject.SetActive(value: false);
+				}
 			}
 			else
 			{
@@ -845,22 +863,22 @@ public class Background : GuiElementSingle<Background>
 			{
 				IBCDMOOPLNN.SetActive(LGMALHPGKOK != NKHJBLBAAEB.Picture);
 			}
-			if (NNJBEDJPGEH.gameObject.activeSelf)
+			if (NNJBEDJPGEH != null && NNJBEDJPGEH.gameObject.activeSelf)
 			{
 				TweenAlpha.Begin(NNJBEDJPGEH.gameObject, 438f, DJCJDJGMAHO).onFinished = null;
 				NNJBEDJPGEH.alpha = DJCJDJGMAHO;
 			}
-			if (AKDJBKCNJHM.gameObject.activeSelf)
+			if (AKDJBKCNJHM != null && AKDJBKCNJHM.gameObject.activeSelf)
 			{
 				TweenAlpha.Begin(AKDJBKCNJHM.gameObject, 54f, GJLPBLDGCOP).onFinished = null;
 				AKDJBKCNJHM.alpha = GJLPBLDGCOP;
 			}
-			if (DIGDNLFGMPA.gameObject.activeSelf)
+			if (DIGDNLFGMPA != null && DIGDNLFGMPA.gameObject.activeSelf)
 			{
 				TweenAlpha.Begin(DIGDNLFGMPA.gameObject, 330f, PDEDFBAJOBG).onFinished = null;
 				DIGDNLFGMPA.alpha = PDEDFBAJOBG;
 			}
-			if (EBJMJALEKNH.gameObject.activeSelf)
+			if (EBJMJALEKNH != null && EBJMJALEKNH.gameObject.activeSelf)
 			{
 				TweenAlpha.Begin(EBJMJALEKNH.gameObject, 1437f, HLKLIHENKAF).onFinished = null;
 				EBJMJALEKNH.alpha = HLKLIHENKAF;
@@ -876,15 +894,24 @@ public class Background : GuiElementSingle<Background>
 			if (LGMALHPGKOK == NKHJBLBAAEB.Classic)
 			{
 				UITweener uITweener = BKBKDDHJFGM(NNJBEDJPGEH, DJCJDJGMAHO);
-				uITweener.onFinished = (UITweener.OnFinished)Delegate.Combine(uITweener.onFinished, (UITweener.OnFinished)delegate
+				if (uITweener != null)
 				{
-					if (IBCDMOOPLNN != null)
+					uITweener.onFinished = (UITweener.OnFinished)Delegate.Combine(uITweener.onFinished, (UITweener.OnFinished)delegate
 					{
-						IBCDMOOPLNN.SetActive(value: false);
-					}
-				});
-				FFPLNCHHFDP.gameObject.SetActive(value: true);
-				FFPLNCHHFDP.Play();
+						if (IBCDMOOPLNN != null)
+						{
+							IBCDMOOPLNN.SetActive(value: false);
+						}
+					});
+				}
+				// The recovered particle material renders as cyan streak noise across all
+				// menu screens. Preserve the Classic background without that decoration.
+				if (FFPLNCHHFDP != null)
+				{
+					FFPLNCHHFDP.Stop();
+					FFPLNCHHFDP.Clear(withChildren: true);
+					FFPLNCHHFDP.gameObject.SetActive(value: false);
+				}
 			}
 			else
 			{
@@ -893,14 +920,17 @@ public class Background : GuiElementSingle<Background>
 				{
 					IBCDMOOPLNN.SetActive(value: true);
 				}
-				FFPLNCHHFDP.Stop();
-				FFPLNCHHFDP.gameObject.SetActive(value: false);
+				if (FFPLNCHHFDP != null)
+				{
+					FFPLNCHHFDP.Stop();
+					FFPLNCHHFDP.gameObject.SetActive(value: false);
+				}
 			}
 			if (LGMALHPGKOK == NKHJBLBAAEB.Picture)
 			{
-				PGJMPLLJIFK(DIGDNLFGMPA);
-				PGJMPLLJIFK(EBJMJALEKNH);
-				PGJMPLLJIFK(AKDJBKCNJHM);
+				if (DIGDNLFGMPA != null) PGJMPLLJIFK(DIGDNLFGMPA);
+				if (EBJMJALEKNH != null) PGJMPLLJIFK(EBJMJALEKNH);
+				if (AKDJBKCNJHM != null) PGJMPLLJIFK(AKDJBKCNJHM);
 			}
 			else
 			{
@@ -911,30 +941,30 @@ public class Background : GuiElementSingle<Background>
 		}
 		else
 		{
-			NNJBEDJPGEH.gameObject.SetActive(LGMALHPGKOK == NKHJBLBAAEB.Classic);
-			AKDJBKCNJHM.gameObject.SetActive(LGMALHPGKOK == NKHJBLBAAEB.Overlay);
-			DIGDNLFGMPA.gameObject.SetActive(LGMALHPGKOK != NKHJBLBAAEB.Picture);
-			EBJMJALEKNH.gameObject.SetActive(LGMALHPGKOK != NKHJBLBAAEB.Picture);
+			if (NNJBEDJPGEH != null) NNJBEDJPGEH.gameObject.SetActive(LGMALHPGKOK == NKHJBLBAAEB.Classic);
+			if (AKDJBKCNJHM != null) AKDJBKCNJHM.gameObject.SetActive(LGMALHPGKOK == NKHJBLBAAEB.Overlay);
+			if (DIGDNLFGMPA != null) DIGDNLFGMPA.gameObject.SetActive(LGMALHPGKOK != NKHJBLBAAEB.Picture);
+			if (EBJMJALEKNH != null) EBJMJALEKNH.gameObject.SetActive(LGMALHPGKOK != NKHJBLBAAEB.Picture);
 			if (IBCDMOOPLNN != null)
 			{
 				IBCDMOOPLNN.SetActive(LGMALHPGKOK != NKHJBLBAAEB.Classic);
 			}
-			if (NNJBEDJPGEH.gameObject.activeSelf)
+			if (NNJBEDJPGEH != null && NNJBEDJPGEH.gameObject.activeSelf)
 			{
 				TweenAlpha.Begin(NNJBEDJPGEH.gameObject, 0f, DJCJDJGMAHO).onFinished = null;
 				NNJBEDJPGEH.alpha = DJCJDJGMAHO;
 			}
-			if (AKDJBKCNJHM.gameObject.activeSelf)
+			if (AKDJBKCNJHM != null && AKDJBKCNJHM.gameObject.activeSelf)
 			{
 				TweenAlpha.Begin(AKDJBKCNJHM.gameObject, 0f, GJLPBLDGCOP).onFinished = null;
 				AKDJBKCNJHM.alpha = GJLPBLDGCOP;
 			}
-			if (DIGDNLFGMPA.gameObject.activeSelf)
+			if (DIGDNLFGMPA != null && DIGDNLFGMPA.gameObject.activeSelf)
 			{
 				TweenAlpha.Begin(DIGDNLFGMPA.gameObject, 0f, PDEDFBAJOBG).onFinished = null;
 				DIGDNLFGMPA.alpha = PDEDFBAJOBG;
 			}
-			if (EBJMJALEKNH.gameObject.activeSelf)
+			if (EBJMJALEKNH != null && EBJMJALEKNH.gameObject.activeSelf)
 			{
 				TweenAlpha.Begin(EBJMJALEKNH.gameObject, 0f, HLKLIHENKAF).onFinished = null;
 				EBJMJALEKNH.alpha = HLKLIHENKAF;

@@ -65,6 +65,44 @@ public class MainScreen : GuiScreenSingle<MainScreen>
 
 	private bool FFILANCOOKD;
 
+	// The recovered local runtime has no supported social-provider or real-money store backend.
+	// Keep those panels out of the Main screen instead of showing incomplete overlapping offers.
+	private void ApplyRecoveredFeatureVisibility()
+	{
+		Transform[] childTransforms = GetComponentsInChildren<Transform>(includeInactive: true);
+		foreach (Transform childTransform in childTransforms)
+		{
+			if (childTransform != null && childTransform != transform && childTransform.name == "Transition Button")
+			{
+				childTransform.gameObject.SetActive(value: false);
+			}
+		}
+		UITexture[] componentsInChildren = GetComponentsInChildren<UITexture>(includeInactive: true);
+		foreach (UITexture uITexture in componentsInChildren)
+		{
+			if (uITexture != null && uITexture.gameObject.name.IndexOf("Glow", StringComparison.OrdinalIgnoreCase) >= 0 && (uITexture.mainTexture == null || uITexture.mainTexture.name == "whiteRectangle"))
+			{
+				uITexture.gameObject.SetActive(value: false);
+			}
+		}
+		if (HIPDGKKHODB != null)
+		{
+			HIPDGKKHODB.gameObject.SetActive(value: false);
+		}
+		if (HKDNDFJANDG != null)
+		{
+			HKDNDFJANDG.gameObject.SetActive(value: false);
+		}
+		if (IKHHOCDLIAA != null)
+		{
+			IKHHOCDLIAA.SetActive(value: false);
+		}
+		if (HGBBAABGMLG != null)
+		{
+			HGBBAABGMLG.gameObject.SetActive(value: false);
+		}
+	}
+
 	[CompilerGenerated]
 	private static Action<ConfirmDialog, bool> LGJCBPOPCPA;
 
@@ -188,11 +226,10 @@ public class MainScreen : GuiScreenSingle<MainScreen>
 	public override void InitEvents()
 	{
 		base.InitEvents();
+		ApplyRecoveredFeatureVisibility();
 		Singleton<BeanstalkServerManager>.instance.DataLoaded += PMMMGCGNEBM;
 		Singleton<BeanstalkServerManager>.instance.AfterPlayerDataLoaded += PHGFBJFFFPH;
 		MNJLIJGDDPM.InitEvents();
-		HIPDGKKHODB.InitEvents();
-		HKDNDFJANDG.InitEvents();
 		KDABKEGLDEE.InitEvents();
 		BEPFJDAJBJO.InitEvents();
 	}
@@ -211,44 +248,20 @@ public class MainScreen : GuiScreenSingle<MainScreen>
 
 	protected override void AGIKPOLCGNF()
 	{
+		ApplyRecoveredFeatureVisibility();
 		MNJLIJGDDPM.InitControls();
-		HIPDGKKHODB.InitControls();
 		DHNNCMHLOEM.InitControls();
-		HKDNDFJANDG.InitControls();
 		IFEEGCIBFII.InitControls();
 		KDABKEGLDEE.InitControls();
 		BEPFJDAJBJO.InitControls();
 		HGBBAABGMLG.InitControls();
 		UIEventListener uIEventListener = UIEventListener.Get(AMHDJLIKNBH.gameObject);
 		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(PGGPCAACBOI));
-		UIEventListener uIEventListener2 = UIEventListener.Get(JFCNBCDIEBL);
-		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(JFEBFMNJLBJ));
-		UIEventListener uIEventListener3 = UIEventListener.Get(IKHHOCDLIAA);
-		uIEventListener3.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener3.onClick, (UIEventListener.VoidDelegate)delegate
+		if (JFCNBCDIEBL != null && JFCNBCDIEBL.activeSelf)
 		{
-			if (GameLoginManager.instance.data.currentPlayer.isGooglePlayConnected && Singleton<GooglePlayGameService>.instance.isLoggedIn)
-			{
-				Singleton<GooglePlayGameService>.instance.ShowAchievementsUI();
-			}
-			else if (GameLoginManager.instance.data.currentPlayer.isGooglePlayConnected)
-			{
-				FFILANCOOKD = true;
-				GameLoginManager.instance.LoginToGoogle();
-			}
-			else
-			{
-				GameLoginManager.instance.LoginToGoogle();
-			}
-		});
-		Singleton<GooglePlayGameService>.instance.LoggedIn += OnGooglePlayGameServiceLoggedIn;
-		Singleton<GooglePlayGameService>.instance.LoggedInFromInit += delegate
-		{
-			CEMOIHDAEIE();
-		};
-		Singleton<GooglePlayGameService>.instance.LoggedOut += delegate
-		{
-			CEMOIHDAEIE();
-		};
+			UIEventListener uIEventListener2 = UIEventListener.Get(JFCNBCDIEBL);
+			uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(JFEBFMNJLBJ));
+		}
 		Singleton<NotificationManager>.instance.UnitDelivered += KAKGALGJJAC;
 		Singleton<NotificationManager>.instance.WeaponDelivered += KAKGALGJJAC;
 	}
@@ -288,14 +301,11 @@ public class MainScreen : GuiScreenSingle<MainScreen>
 
 	public override void InitGUIValues()
 	{
+		ApplyRecoveredFeatureVisibility();
 		MNJLIJGDDPM.InitGuiValues();
 		BODKDINCDJD();
-		HIPDGKKHODB.InitGuiValues();
-		HGBBAABGMLG.InitGUIValues();
 		DHNNCMHLOEM.InitGuiValues();
 		IFEEGCIBFII.InitGuiValues();
-		HKDNDFJANDG.InitGUIValues();
-		CEMOIHDAEIE();
 		KDABKEGLDEE.InitGuiValues();
 		BEPFJDAJBJO.InitGuiValues();
 		if (Singleton<BeanstalkServerManager>.instance.isPlayerDataLoaded)
@@ -348,9 +358,9 @@ public class MainScreen : GuiScreenSingle<MainScreen>
 
 	public override void AnimateShow(bool JODEPBNLLAO)
 	{
+		ApplyRecoveredFeatureVisibility();
 		base.AnimateShow(JODEPBNLLAO);
 		BEPFJDAJBJO.AnimateShow();
-		HIPDGKKHODB.AnimateShow();
 	}
 
 	public virtual void MGBLKIEGMBG()
@@ -367,6 +377,14 @@ public class MainScreen : GuiScreenSingle<MainScreen>
 
 	private void BODKDINCDJD()
 	{
+		if (UnityEngine.Object.FindObjectOfType<DailyRewardMonthScreen>() == null)
+		{
+			if (JFCNBCDIEBL != null)
+			{
+				JFCNBCDIEBL.SetActive(value: false);
+			}
+			return;
+		}
 		if (Singleton<GameController>.instance.isTutorial)
 		{
 			JFCNBCDIEBL.SetActive(value: false);
@@ -448,8 +466,12 @@ public class MainScreen : GuiScreenSingle<MainScreen>
 
 	private void JFEBFMNJLBJ(GameObject KHAHPAKDIKE)
 	{
-		GuiScreenSingle<DailyRewardMonthScreen>.instance.KKHPKKGGMPO = false;
-		Singleton<GuiManager>.instance.ShowGui(GuiScreenSingle<DailyRewardMonthScreen>.instance);
+		DailyRewardMonthScreen dailyRewardMonthScreen = UnityEngine.Object.FindObjectOfType<DailyRewardMonthScreen>();
+		if (dailyRewardMonthScreen != null)
+		{
+			dailyRewardMonthScreen.KKHPKKGGMPO = false;
+			Singleton<GuiManager>.instance.ShowGui(dailyRewardMonthScreen);
+		}
 	}
 
 	[CompilerGenerated]
@@ -461,7 +483,6 @@ public class MainScreen : GuiScreenSingle<MainScreen>
 	public override void DoBeforeHide()
 	{
 		base.DoBeforeHide();
-		HIPDGKKHODB.DoBeforeHide();
 	}
 
 	[CompilerGenerated]

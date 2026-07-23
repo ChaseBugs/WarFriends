@@ -767,8 +767,13 @@ public class TutorialDialog : GuiElementSingle<TutorialDialog>, PAIIOKBBHBC
 	public override void InitEvents()
 	{
 		base.InitEvents();
-		UIEventListener uIEventListener = UIEventListener.Get(CCFFNAKFPPE);
-		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(CCHDCEDFNNB));
+		// Some recovered MainScene variants do not contain the optional tutorial close target.
+		// The dialog remains usable through its scripted tutorial progression without it.
+		if (CCFFNAKFPPE != null)
+		{
+			UIEventListener uIEventListener = UIEventListener.Get(CCFFNAKFPPE);
+			uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(CCHDCEDFNNB));
+		}
 	}
 
 	public void ReshowTutorialDialogAfterError()
@@ -781,7 +786,7 @@ public class TutorialDialog : GuiElementSingle<TutorialDialog>, PAIIOKBBHBC
 
 	public virtual void EGNPMLEJLMJ()
 	{
-		if (CCFFNAKFPPE.activeSelf)
+		if (CCFFNAKFPPE != null && CCFFNAKFPPE.activeSelf)
 		{
 			GJMMMBECGKP(CCFFNAKFPPE);
 		}

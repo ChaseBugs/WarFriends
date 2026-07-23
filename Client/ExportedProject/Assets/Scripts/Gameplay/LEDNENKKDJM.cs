@@ -2251,12 +2251,8 @@ public class LEDNENKKDJM
 		case IJEAJGCCHEF.LoginFailure:
 			Singleton<BeanstalkServerManager>.instance.UserLoggedOut();
 			Singleton<BeanstalkServerManager>.instance.CancelAllRequests();
-			ConfirmDialog.ShowAlert(delegate
-			{
-				Debug.Log("Delete QuickPlay Data");
-				GameLoginManager.instance.DeletePlayerAccount();
-				GameLoginManager.Relog();
-			}, Localization.Localize("ID_CONFIRM_LOGINFAILURE"), Localization.Localize("ID_CONFIRM_LOGINFAILURE_TEXT"));
+			GameLoginManager.instance.DeletePlayerAccount();
+			GameLoginManager.instance.ShowManualLogin();
 			break;
 		case IJEAJGCCHEF.AccountBanned:
 		{
@@ -2311,6 +2307,11 @@ public class LEDNENKKDJM
 			break;
 		case IJEAJGCCHEF.OldToken:
 		case IJEAJGCCHEF.UnAuthorizedAction:
+			if (GameLoginManager.instance.IsManualLoginVisible)
+			{
+				Singleton<BeanstalkServerManager>.instance.CancelAllRequests();
+				break;
+			}
 			if (Singleton<GameController>.instance.isInMenuOrWait)
 			{
 				Singleton<BeanstalkServerManager>.instance.UserLoggedOut();

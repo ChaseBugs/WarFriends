@@ -3,6 +3,7 @@ import { players, type PlayerProgressionState } from "../db";
 import { findById } from "./playerService";
 import { progressionForPlayer, unixNow } from "./playerStateService";
 import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
+import { progressionStateForStorage } from "./progressionStorageService";
 
 const MAX_CONCURRENCY_RETRIES = 4;
 
@@ -43,7 +44,8 @@ export async function mutateProgression<T extends ProgressionMutation>(
     // enter either the MongoDB filter or replacement document. The shared proof accepts a
     // multi-step RequestBuffer revision while rejecting non-monotonic revisions and any produced
     // core balance that underflowed, overflowed, or became non-integral/non-finite.
-    validatedProgressionSuccessor(state, result.state);
+    const canonicalState = progressionStateForStorage(result.state);
+    validatedProgressionSuccessor(state, canonicalState);
     const rawRevision = player.progression?.revision;
     const progressionFilter = player.progression
       ? rawRevision === undefined
@@ -53,7 +55,6 @@ export async function mutateProgression<T extends ProgressionMutation>(
 
     // `dogTags` was an early count-based reconstruction field. Omitting it from every full
     // replacement turns any successful progression write into a one-way schema migration.
-    const { dogTags: _legacyDogTags, ...canonicalState } = result.state;
     const update = await players().updateOne(
       { id: playerId, ...progressionFilter },
       { $set: { progression: canonicalState, updatedAt: new Date() } },

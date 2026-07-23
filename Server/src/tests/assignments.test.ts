@@ -19,6 +19,7 @@ import {
 } from "../services/requestBufferAuthorityService";
 import { validatedAssignmentState } from "../services/assignmentAuthorityService";
 import { validatedProgressionSuccessor } from "../services/progressionPublicationAuthorityService";
+import { recoveredGetPlayerDataBuffers } from "../handlers/getPlayerDataRequestParsing";
 
 const NOW = Date.UTC(2026, 6, 19, 12, 0, 0) / 1_000;
 
@@ -58,6 +59,42 @@ test("assignment requests require canonical integers and contiguous RequestBuffe
     assert.throws(
       () => bufferedRequests(JSON.stringify({ 0: entry })),
       /entry shape is invalid/,
+    );
+  }
+});
+
+test("GetPlayerData restores the exact RequestBufferManager snapshot before Client clear", () => {
+  const id = "01784723999";
+  const buffers = recoveredGetPlayerDataBuffers(JSON.stringify({
+    [id]: {
+      alreadySent: true,
+      id,
+      requestCount: 2,
+      requests: {
+        0: { action: DbAction.MessageWasShown, data: "message-1" },
+        1: { action: DbAction.WeaponWasShown, data: "Rifle_M4" },
+      },
+    },
+  }));
+  assert.deepEqual(buffers, [{
+    id,
+    requests: [
+      { action: DbAction.MessageWasShown, data: "message-1" },
+      { action: DbAction.WeaponWasShown, data: "Rifle_M4" },
+    ],
+  }]);
+  assert.deepEqual(recoveredGetPlayerDataBuffers("{}"), []);
+  assert.deepEqual(recoveredGetPlayerDataBuffers(undefined), []);
+
+  for (const snapshot of [
+    { [id]: { alreadySent: false, id, requestCount: 0, requests: {} } },
+    { [id]: { alreadySent: true, id: `${id}-other`, requestCount: 0, requests: {} } },
+    { [id]: { alreadySent: true, id, requestCount: 1, requests: {} } },
+    { [id]: { alreadySent: true, id, requestCount: 0, requests: {}, extra: 1 } },
+  ]) {
+    assert.throws(
+      () => recoveredGetPlayerDataBuffers(JSON.stringify(snapshot)),
+      /RequestBuffer (snapshot|count)/,
     );
   }
 });

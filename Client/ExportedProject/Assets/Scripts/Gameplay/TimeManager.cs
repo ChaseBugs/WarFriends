@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using WarFriends.Legacy;
 
+[RequireComponent(typeof(PhotonView), typeof(TimeTweener))]
 public class TimeManager : Core_BaseScript
 {
 	public enum HICMJEBLEDA

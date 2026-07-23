@@ -2060,6 +2060,14 @@ public class GameLoginManager : InGameSerializedObjectGeneric<GameLoginManager.L
 
 	private string loginAccessToken = string.Empty;
 
+	private bool manualLoginVisible;
+
+	private string manualLoginId = string.Empty;
+
+	private string manualLoginPassword = string.Empty;
+
+	private string manualLoginMessage = "Enter your account ID and password.";
+
 	public string playerId;
 
 	public bool changeGCAfterTutorialInProgress;
@@ -2099,6 +2107,69 @@ public class GameLoginManager : InGameSerializedObjectGeneric<GameLoginManager.L
 
 	public string accessToken => loginAccessToken;
 
+	public bool IsManualLoginVisible => manualLoginVisible;
+
+	public void ShowManualLogin()
+	{
+		acountDataDownloadingInProgress = false;
+		manualLoginVisible = true;
+		manualLoginPassword = string.Empty;
+		manualLoginMessage = "Enter your account ID and password, or create a new account.";
+		Singleton<BeanstalkServerManager>.instance.CancelAllRequests();
+		Singleton<BeanstalkServerManager>.instance.ResetSending();
+		LoadingDialog.Hide();
+		if (DialogManager.instance != null)
+		{
+			DialogManager.instance.HideAllDialogs();
+		}
+	}
+
+	private void OnGUI()
+	{
+		if (!manualLoginVisible)
+		{
+			return;
+		}
+		GUI.depth = -1000;
+		Color color = GUI.color;
+		GUI.color = new Color(0f, 0f, 0f, 0.72f);
+		GUI.Box(new Rect(0f, 0f, Screen.width, Screen.height), GUIContent.none);
+		GUI.color = color;
+		float width = Mathf.Min(560f, Screen.width - 40f);
+		float height = 330f;
+		Rect position = new Rect((Screen.width - width) * 0.5f, (Screen.height - height) * 0.5f, width, height);
+		GUI.ModalWindow(90495, position, DrawManualLoginWindow, "WARFRIENDS ACCOUNT");
+	}
+
+	private void DrawManualLoginWindow(int windowId)
+	{
+		GUI.Label(new Rect(30f, 42f, 500f, 28f), manualLoginMessage);
+		GUI.Label(new Rect(30f, 82f, 110f, 28f), "ACCOUNT ID");
+		manualLoginId = GUI.TextField(new Rect(145f, 80f, 375f, 32f), manualLoginId, 256);
+		GUI.Label(new Rect(30f, 130f, 110f, 28f), "PASSWORD");
+		manualLoginPassword = GUI.PasswordField(new Rect(145f, 128f, 375f, 32f), manualLoginPassword, '*', 4096);
+		if (GUI.Button(new Rect(30f, 190f, 235f, 48f), "LOGIN"))
+		{
+			if (string.IsNullOrEmpty(manualLoginId) || string.IsNullOrEmpty(manualLoginPassword))
+			{
+				manualLoginMessage = "Both account ID and password are required.";
+			}
+			else
+			{
+				manualLoginVisible = false;
+				acountDataDownloadingInProgress = true;
+				LoadingDialog.ShowLoading(Localization.Localize("ID_LOADING"));
+				Singleton<BeanstalkServerManager>.instance.ADHFEBMEPLO(manualLoginId, manualLoginPassword, AccountType.Guest);
+			}
+		}
+		if (GUI.Button(new Rect(285f, 190f, 235f, 48f), "CREATE NEW"))
+		{
+			manualLoginVisible = false;
+			CreateNewAccount(gamecenter: false);
+		}
+		GUI.Label(new Rect(30f, 260f, 490f, 45f), "New users: CREATE NEW generates a server account. Save the returned account ID for later login.");
+	}
+
 	public bool acountDataDownloadingInProgress
 	{
 		get
@@ -2126,7 +2197,14 @@ public class GameLoginManager : InGameSerializedObjectGeneric<GameLoginManager.L
 
 	public bool canSendLogs => data.currentPlayer != null && data.currentPlayer.canPlayerSendLogs;
 
-	public static DatabasePlayer currentPlayer => instance.data.currentPlayer;
+	public static DatabasePlayer currentPlayer
+	{
+		get
+		{
+			GameLoginManager gameLoginManager = UnityEngine.Object.FindObjectOfType<GameLoginManager>();
+			return ((object)gameLoginManager != null && (object)gameLoginManager.data != null) ? gameLoginManager.data.currentPlayer : null;
+		}
+	}
 
 	public static DatabasePlayer generatedCurrentPlayer
 	{
@@ -2176,7 +2254,7 @@ public class GameLoginManager : InGameSerializedObjectGeneric<GameLoginManager.L
 		}
 	}
 
-	public bool IsLoggedToFacebook => mFacebookService.MEDEIMEPMFM();
+	public bool IsLoggedToFacebook => GameLauncher.SocialIntegrationsEnabled && mFacebookService.MEDEIMEPMFM();
 
 	public event Action DeviceRegistered;
 
@@ -2235,8 +2313,11 @@ public class GameLoginManager : InGameSerializedObjectGeneric<GameLoginManager.L
 		base.Awake();
 		mFacebookService = new KFLKGGGJHIN();
 		mICloudService = new ILEOBPDCGJB();
-		Singleton<GooglePlayGameService>.instance.LoggedIn += GoogleLoggedIn;
-		Singleton<GooglePlayGameService>.instance.LoggedOutExternaly += GoogleLoggedOutExternaly;
+		if (GameLauncher.SocialIntegrationsEnabled)
+		{
+			Singleton<GooglePlayGameService>.instance.LoggedIn += GoogleLoggedIn;
+			Singleton<GooglePlayGameService>.instance.LoggedOutExternaly += GoogleLoggedOutExternaly;
+		}
 		Singleton<BeanstalkServerManager>.instance.DataLoaded += OnDataLoaded;
 		Singleton<BeanstalkServerManager>.instance.AfterPlayerDataLoaded += OnAfterPlayerDataLoaded;
 	}
@@ -2250,6 +2331,10 @@ public class GameLoginManager : InGameSerializedObjectGeneric<GameLoginManager.L
 
 	public void CheckGpgsOnTutorialStart()
 	{
+		if (!GameLauncher.SocialIntegrationsEnabled)
+		{
+			return;
+		}
 		if (Singleton<GooglePlayGameService>.instance.isLoggedIn && string.IsNullOrEmpty(askGpgsId))
 		{
 			GoogleLoggedIn(success: true);
@@ -2315,7 +2400,7 @@ public class GameLoginManager : InGameSerializedObjectGeneric<GameLoginManager.L
 
 	internal bool HasGcName()
 	{
-		return !string.IsNullOrEmpty(Singleton<GameCenterProvider>.instance.PJIOKCKLBJH);
+		return GameLauncher.SocialIntegrationsEnabled && !string.IsNullOrEmpty(Singleton<GameCenterProvider>.instance.PJIOKCKLBJH);
 	}
 
 	private void OnDataLoaded(DatabaseAction action)
@@ -2364,7 +2449,7 @@ public class GameLoginManager : InGameSerializedObjectGeneric<GameLoginManager.L
 
 	private void OnAfterPlayerDataLoaded()
 	{
-		if (!Singleton<GameController>.instance.isTutorial && mFacebookService != null)
+		if (GameLauncher.SocialIntegrationsEnabled && !Singleton<GameController>.instance.isTutorial && mFacebookService != null)
 		{
 			mFacebookService.FNFKPACOCBJ();
 		}
@@ -2377,6 +2462,11 @@ public class GameLoginManager : InGameSerializedObjectGeneric<GameLoginManager.L
 
 	public void LoginToFacebook(Action<bool> callback)
 	{
+		if (!GameLauncher.SocialIntegrationsEnabled)
+		{
+			callback?.Invoke(false);
+			return;
+		}
 		if (callback != null)
 		{
 			mFacebookService.FFKHLHBDMLD += callback;
@@ -2386,16 +2476,28 @@ public class GameLoginManager : InGameSerializedObjectGeneric<GameLoginManager.L
 
 	public void LoginToFacebook()
 	{
+		if (!GameLauncher.SocialIntegrationsEnabled)
+		{
+			return;
+		}
 		mFacebookService.KLIKHGMGGNP();
 	}
 
 	public void LoginToGoogle()
 	{
+		if (!GameLauncher.SocialIntegrationsEnabled)
+		{
+			return;
+		}
 		Singleton<GooglePlayGameService>.instance.LogIn();
 	}
 
 	public void AfterTutorialLoginToFacebook()
 	{
+		if (!GameLauncher.SocialIntegrationsEnabled)
+		{
+			return;
+		}
 		mFacebookService.ANDPGGEINKL();
 	}
 
@@ -2404,6 +2506,10 @@ public class GameLoginManager : InGameSerializedObjectGeneric<GameLoginManager.L
 		UnityEngine.Debug.Log("GLM: After tutorial GC check");
 		changeGCAfterTutorialInProgress = false;
 		needGCchange = false;
+		if (!GameLauncher.SocialIntegrationsEnabled)
+		{
+			return;
+		}
 		if (data.currentPlayer.isFacebookConnected)
 		{
 			return;
@@ -2488,7 +2594,7 @@ public class GameLoginManager : InGameSerializedObjectGeneric<GameLoginManager.L
 
 	public bool CheckFacebookAfterTutorial()
 	{
-		return mFacebookService.PJENNBPCGHO();
+		return GameLauncher.SocialIntegrationsEnabled && mFacebookService.PJENNBPCGHO();
 	}
 
 	public void LogoutFromGooglePlay(bool clientOnly)
@@ -3111,7 +3217,7 @@ public class GameLoginManager : InGameSerializedObjectGeneric<GameLoginManager.L
 		if (data.playerAccount == null)
 		{
 			UnityEngine.Debug.Log("GLM: RegisterOrLogin -  playerAccount == NULL");
-			CreateNewAccount(Singleton<GameCenterProvider>.instance.LCMAHPKKGOA);
+			ShowManualLogin();
 			return;
 		}
 		if (data.isDeviceRegistered && !string.IsNullOrEmpty(loginAccessToken))
@@ -3254,8 +3360,22 @@ public class GameLoginManager : InGameSerializedObjectGeneric<GameLoginManager.L
 
 	public void UpdatePlayerLeagueAndMedals(int beginnersLeague, string league, int globalMedals, int leagueMedals, int remainingMatches)
 	{
+		if (string.IsNullOrEmpty(league))
+		{
+			data.currentPlayer.leagueId = string.Empty;
+			data.currentPlayer.leagueDivision = string.Empty;
+			UpdatePlayerLeagueAndMedals(beginnersLeague, data.currentPlayer.leagueTier, globalMedals, leagueMedals, remainingMatches);
+			return;
+		}
 		string[] array = league.Split('-');
-		League normalLeague = (League)Convert.ToInt32(array[0]);
+		int result;
+		if (!int.TryParse(array[0], out result))
+		{
+			UnityEngine.Debug.LogWarning("Ignoring malformed LeagueId: " + league);
+			UpdatePlayerLeagueAndMedals(beginnersLeague, data.currentPlayer.leagueTier, globalMedals, leagueMedals, remainingMatches);
+			return;
+		}
+		League normalLeague = (League)result;
 		string leagueDivision = array[array.Length - 1];
 		data.currentPlayer.leagueId = league;
 		data.currentPlayer.leagueDivision = leagueDivision;

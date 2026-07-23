@@ -183,12 +183,14 @@ export const ACHIEVEMENT_DEFINITIONS: Readonly<Record<number, readonly Achieveme
  * Purchases count only rows whose display unlock level is above three, exactly matching
  * `StatsManager.weaponsPurchased` and `unitsPurchased`; this excludes the starter loadout and
  * tutorial Assaulter. Upgrade counters are sums of the stored normal `boughtIndex`, not events,
- * special slots, promotions, or Elite parts. The visual counter starts with the four scene
- * category defaults, which explains why the recovered 7/14/29 server targets correspond to the
- * platform achievement labels for 3/10/25 collected pieces. Every later permanent bought or
- * parts-completed visual counts regardless of whether it came from the shop, an assignment, or a
- * lootbox. Temporary power bands and borrowed rentals are deliberately excluded because they are
- * not durable collected equipment and must not unlock permanent rewards.
+ * special slots, promotions, or Elite parts. The visual counter reproduces PlayerVisual.isBought:
+ * the four category defaults plus every non-power-band shop row that is intrinsically bought by
+ * its immutable zero-price/default predicate. In the recovered catalog that adds the free
+ * CAMOS_GIRLBLONDE row, so a new stock client truthfully reports five visuals during its first
+ * achievement evaluation. Every later permanent bought or parts-completed visual counts regardless
+ * of whether it came from the shop, an assignment, or a lootbox. Temporary power bands and borrowed
+ * rentals are deliberately excluded because they are not durable collected equipment and must not
+ * unlock permanent rewards.
  */
 function snapshotAchievementValues(state: PlayerProgressionState): Readonly<Record<number, number>> {
   const cardCounters = validatedCardLifecycleCounters(state);
@@ -215,6 +217,15 @@ function snapshotAchievementValues(state: PlayerProgressionState): Readonly<Reco
 
   const visuals = visualInventoryStateFor(state).visuals;
   const collectedVisuals = new Set(VISUAL_CATEGORY_DEFAULT_IDS);
+  for (const definition of Object.values(VISUAL_CATALOG)) {
+    // PlayerVisualCategoryPowerBands overrides isBought with its timer, so only its category
+    // default is intrinsically owned. Other categories use PlayerVisual.isBought, whose two
+    // catalog-only branches are a free shop row and the recovered isDefault predicate.
+    if (definition.categoryId === 3 || definition.purchasable !== "shop") continue;
+    const isFreeShopVisual = definition.priceGold === 0 && definition.priceWarBucks === 0;
+    const isClientDefault = definition.parts === 0 && definition.duplicateWarBucks === 0;
+    if (isFreeShopVisual || isClientDefault) collectedVisuals.add(definition.name);
+  }
   for (const [name, saved] of Object.entries(visuals)) {
     const definition = VISUAL_CATALOG[name];
     if (!definition || definition.categoryId === 3 || saved.borrowed) continue;

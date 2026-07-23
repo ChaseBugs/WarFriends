@@ -1426,6 +1426,16 @@ public class LevelManager : DatabaseSerializedObjectGeneric<LevelManager.LevelMa
 	public void Init()
 	{
 		UnityEngine.Debug.Log("LevelManager: Init");
+		if (weaponLevelsSetups == null)
+		{
+			weaponLevelsSetups = new List<WeaponLevelsSetup>();
+		}
+		else
+		{
+			// Recovered scenes can retain placeholder weapon objects whose Google2u table or
+			// upgrade slot was not serialized. They cannot participate in weapon progression.
+			weaponLevelsSetups.RemoveAll((WeaponLevelsSetup weapon) => weapon == null || !weapon.HasRecoveredWeaponData());
+		}
 		levels = new List<GameLevel>();
 		for (int i = 0; i < levelsSheet.Rows.Count; i++)
 		{

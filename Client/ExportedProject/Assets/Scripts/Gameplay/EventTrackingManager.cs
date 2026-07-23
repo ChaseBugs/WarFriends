@@ -4459,7 +4459,9 @@ public class EventTrackingManager : Singleton<EventTrackingManager>
 	{
 		base.Start();
 		GCIKLMJEFHP.EHKKAOLJMCF();
-		EMLMEPDGPCC = new MDPPHKCKBGH(base.gameObject);
+		// The retired AWS Mobile Analytics client emits forbidden UnityWebRequest headers and
+		// is not gameplay authority. Leave it disabled; every caller already treats it as optional.
+		EMLMEPDGPCC = null;
 	}
 
 	internal void KBJBMDDDDNF()

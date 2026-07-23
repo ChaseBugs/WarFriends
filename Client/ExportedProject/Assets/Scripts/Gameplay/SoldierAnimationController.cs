@@ -237,8 +237,28 @@ public class SoldierAnimationController : Core_BaseScript, TimeScaleIgnorable
 
 	private void AGDGIOGPBCK(string BIHAIAKHHNI, float EFBHBIJMGFO)
 	{
+		if (LOFOBBMNNCD == null)
+		{
+			return;
+		}
+		AnimationState animationState = string.IsNullOrEmpty(BIHAIAKHHNI) ? null : LOFOBBMNNCD[BIHAIAKHHNI];
+		if (animationState == null && BIHAIAKHHNI != "idle")
+		{
+			animationState = LOFOBBMNNCD["idle"];
+		}
+		if (animationState == null)
+		{
+			foreach (AnimationState item in LOFOBBMNNCD)
+			{
+				animationState = item;
+				break;
+			}
+		}
+		if (animationState == null)
+		{
+			return;
+		}
 		LOFOBBMNNCD.Stop();
-		AnimationState animationState = LOFOBBMNNCD[BIHAIAKHHNI];
 		animationState.enabled = true;
 		animationState.weight = 1f;
 		animationState.normalizedTime = EFBHBIJMGFO;

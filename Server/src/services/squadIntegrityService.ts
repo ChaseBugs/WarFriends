@@ -4,8 +4,10 @@ import { progressionForPlayer } from "./playerStateService";
 import { validatedProgressionSuccessor } from "./progressionPublicationAuthorityService";
 import { validatedPlayerPrivateAccountFields } from "./playerProfileMirrorAuthorityService";
 import { reclaimDepositedCardsForDepartureState } from "./squadCardPoolService";
+import { validatedSquadDocument } from "./squadAuthorityService";
 
 export type SquadIntegrityIssueCode =
+  | "INVALID_SQUAD_AUTHORITY"
   | "DUPLICATE_ROSTER_ENTRY"
   | "MULTIPLE_SQUAD_MEMBERSHIPS"
   | "MISSING_ROSTER_PLAYER"
@@ -60,6 +62,7 @@ const VALID_MEMBER_RANKS = new Set<SquadRank>([
 export function inspectSquadIntegrity(
   squadDocuments: readonly SquadDocument[],
   playerDocuments: readonly PlayerDocument[],
+  observedAt = new Date(),
 ): SquadIntegrityReport {
   const issues: SquadIntegrityIssue[] = [];
   const repairs: SquadIntegrityPlayerRepair[] = [];
@@ -68,6 +71,18 @@ export function inspectSquadIntegrity(
   const blockedSquads = new Set<string>();
 
   for (const squad of squadDocuments) {
+    try {
+      validatedSquadDocument(squad, observedAt);
+    } catch (error) {
+      blockedSquads.add(squad.name);
+      issues.push({
+        code: "INVALID_SQUAD_AUTHORITY",
+        subject: typeof squad.name === "string" ? squad.name : "<invalid-squad>",
+        message: error instanceof Error ? error.message : String(error),
+        repairable: false,
+      });
+    }
+    if (!Array.isArray(squad.members)) continue;
     const seen = new Set<string>();
     for (const member of squad.members) {
       if (seen.has(member.playerId)) {

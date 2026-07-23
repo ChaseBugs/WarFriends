@@ -2451,6 +2451,18 @@ public class PlayerController : MainGameEntity, TimeScaleIgnorable, NKMKCCDCHCL,
 		{
 			return;
 		}
+		if ((object)FEHCCGEGPLH == null)
+		{
+			FEHCCGEGPLH = GetComponent<PhotonView>();
+		}
+		if ((object)OGMBJPKOPCB == null && (object)FEHCCGEGPLH != null && FEHCCGEGPLH.isMine)
+		{
+			OGMBJPKOPCB = this;
+		}
+		if ((object)OGMBJPKOPCB == null)
+		{
+			return;
+		}
 		base.Update();
 		if (JDNNOGPNJLO == KKPHPLOEACG.HidingBehindShield && (NGCDDPCAGJB.position - DJODBMGLPDE).sqrMagnitude > 0.2f)
 		{

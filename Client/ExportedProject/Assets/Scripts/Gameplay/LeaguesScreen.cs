@@ -894,12 +894,23 @@ public class LeaguesScreen : GuiScreenSingle<LeaguesScreen>
 	public override void InitEvents()
 	{
 		base.InitEvents();
-		BMNDININJCE.gameObject.SetActive(value: false);
-		JFGEOAAOOCE.gameObject.SetActive(value: false);
-		LLGAADAGPJM.gameObject.SetActive(value: false);
-		BMNDININJCE.InitEvents();
-		JFGEOAAOOCE.InitEvents();
-		LLGAADAGPJM.InitEvents();
+		// Recovered scene variants may omit one of the retired league tabs. Initialize only
+		// the tab components that are actually present so the remaining leaderboard works.
+		if (BMNDININJCE != null)
+		{
+			BMNDININJCE.gameObject.SetActive(value: false);
+			BMNDININJCE.InitEvents();
+		}
+		if (JFGEOAAOOCE != null)
+		{
+			JFGEOAAOOCE.gameObject.SetActive(value: false);
+			JFGEOAAOOCE.InitEvents();
+		}
+		if (LLGAADAGPJM != null)
+		{
+			LLGAADAGPJM.gameObject.SetActive(value: false);
+			LLGAADAGPJM.InitEvents();
+		}
 	}
 
 	private void JBMHHEJPADG(bool PDPDGCNHCFN)

@@ -252,6 +252,7 @@ public class GameShootableEntity : Core_BaseScript, KMHCMCBGFFC
 	{
 		get
 		{
+			ResolveOwnerFromGameObject();
 			return MHAMIMGNJND;
 		}
 		set
@@ -310,18 +311,7 @@ public class GameShootableEntity : Core_BaseScript, KMHCMCBGFFC
 	{
 		CDKBFIGEBOA = base.transform;
 		FEHCCGEGPLH = GetComponent<PhotonView>();
-		if (owner == null)
-		{
-			Core_BaseScript[] components = GetComponents<Core_BaseScript>();
-			Core_BaseScript[] array = components;
-			foreach (Core_BaseScript core_BaseScript in array)
-			{
-				if (core_BaseScript is NKMKCCDCHCL)
-				{
-					MHAMIMGNJND = core_BaseScript as NKMKCCDCHCL;
-				}
-			}
-		}
+		ResolveOwnerFromGameObject();
 		mTransform = base.transform;
 		if (targets == null || targets.Count == 0)
 		{
@@ -387,10 +377,6 @@ public class GameShootableEntity : Core_BaseScript, KMHCMCBGFFC
 			{
 				UnityEngine.Debug.LogError("Should not happened");
 			}
-		}
-		else
-		{
-			UnityEngine.Debug.LogError("Game shoootable entitiy without owner");
 		}
 	}
 
@@ -1494,6 +1480,7 @@ public class GameShootableEntity : Core_BaseScript, KMHCMCBGFFC
 
 	private void OnEnable()
 	{
+		ResolveOwnerFromGameObject();
 		if (owner != null)
 		{
 			if (CHPGDNCPNCF.TryGetValue(owner.GetType(), out var value))
@@ -1505,9 +1492,22 @@ public class GameShootableEntity : Core_BaseScript, KMHCMCBGFFC
 			value.Add(this);
 			CHPGDNCPNCF[owner.GetType()] = value;
 		}
-		else
+	}
+
+	private void ResolveOwnerFromGameObject()
+	{
+		if (MHAMIMGNJND != null)
 		{
-			UnityEngine.Debug.LogError("Game shoootable entitiy without owner");
+			return;
+		}
+		Core_BaseScript[] components = GetComponents<Core_BaseScript>();
+		foreach (Core_BaseScript component in components)
+		{
+			if (component is NKMKCCDCHCL)
+			{
+				MHAMIMGNJND = component as NKMKCCDCHCL;
+				return;
+			}
 		}
 	}
 

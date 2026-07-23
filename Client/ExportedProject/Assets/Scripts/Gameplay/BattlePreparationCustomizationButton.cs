@@ -550,7 +550,7 @@ public class BattlePreparationCustomizationButton : Core_BaseScript
 		PlayerVisual playerVisual = CamosManager.instance.EquippedPlayerVisual(3);
 		if (!playerVisual.isEmptyPowerBand)
 		{
-			LHDFFKGJFFA.SetActive(value: false);
+			if (LHDFFKGJFFA != null) LHDFFKGJFFA.SetActive(value: false);
 			DPHDJEAHODH.SetActive(value: true);
 			JAJCFNOIBPM.spriteName = playerVisual.icon;
 			EPKDEDPGOLM.text = playerVisual.decalTypeName;
@@ -558,7 +558,7 @@ public class BattlePreparationCustomizationButton : Core_BaseScript
 			HPFACGCBKCK.spriteName = playerVisual.decalMiniIcon;
 			HPFACGCBKCK.color = playerVisual.decalMiniIconColor;
 			HPFACGCBKCK.MakePixelPerfect();
-			MIIKHEMFJPA.repositionNow = true;
+			if (MIIKHEMFJPA != null) MIIKHEMFJPA.repositionNow = true;
 			FGIMNJOOAOB = playerVisual;
 			if (FGIMNJOOAOB.tryOutVisual)
 			{
@@ -575,7 +575,7 @@ public class BattlePreparationCustomizationButton : Core_BaseScript
 		else
 		{
 			PlayerVisual unlockedVisualWithNotification = Singleton<NotificationManager>.instance.GetUnlockedVisualWithNotification();
-			if (unlockedVisualWithNotification != null)
+			if (unlockedVisualWithNotification != null && LHDFFKGJFFA != null && MKBJGHBJNFH != null && JOCDKJHGILG != null && IKEKFPIFKIK != null)
 			{
 				LHDFFKGJFFA.SetActive(value: true);
 				DPHDJEAHODH.SetActive(value: false);
@@ -587,7 +587,7 @@ public class BattlePreparationCustomizationButton : Core_BaseScript
 			}
 			else
 			{
-				LHDFFKGJFFA.SetActive(value: false);
+				if (LHDFFKGJFFA != null) LHDFFKGJFFA.SetActive(value: false);
 				DPHDJEAHODH.SetActive(value: false);
 			}
 		}
@@ -668,16 +668,30 @@ public class BattlePreparationCustomizationButton : Core_BaseScript
 
 	public void InitControls()
 	{
-		UIEventListener uIEventListener = UIEventListener.Get(BPHNCEEJCNB.gameObject);
+		// The recovered MainScene lost the serialized click target. The component is
+		// attached to the complete customization button, so its own GameObject is the
+		// safe canonical fallback.
+		if (BPHNCEEJCNB == null)
+		{
+			BPHNCEEJCNB = gameObject;
+		}
+		UIEventListener uIEventListener = UIEventListener.Get(BPHNCEEJCNB);
 		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, (UIEventListener.VoidDelegate)delegate
 		{
 			Singleton<GuiManager>.instance.ShowGui(GuiScreenSingle<CamosScreen>.instance);
 		});
-		IKEKFPIFKIK.onReposition = delegate
+		if (IKEKFPIFKIK != null)
 		{
-			float val = 0f - IKEKFPIFKIK.padding.x - (MKBJGHBJNFH.transform.parent.localPosition.x - IKEKFPIFKIK.padding.x) / 2f;
-			IKEKFPIFKIK.transform.localPosition = IKEKFPIFKIK.transform.localPosition.ReplaceX(val);
-		};
+			IKEKFPIFKIK.onReposition = delegate
+			{
+				if (MKBJGHBJNFH == null || MKBJGHBJNFH.transform.parent == null)
+				{
+					return;
+				}
+				float val = 0f - IKEKFPIFKIK.padding.x - (MKBJGHBJNFH.transform.parent.localPosition.x - IKEKFPIFKIK.padding.x) / 2f;
+				IKEKFPIFKIK.transform.localPosition = IKEKFPIFKIK.transform.localPosition.ReplaceX(val);
+			};
+		}
 	}
 
 	private void EOOKFIHGDJO(int IDLMJLCFMJG)

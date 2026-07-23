@@ -1480,8 +1480,14 @@ public class LeagueArcGuiElement : Core_BaseScript
 
 	public void LFBJBEFBOGM()
 	{
-		CAAINGOCKOL.gameObject.SetActive(value: true);
-		MCFJILHJJEE.gameObject.SetActive(value: true);
+		if (CAAINGOCKOL != null)
+		{
+			CAAINGOCKOL.gameObject.SetActive(value: true);
+		}
+		if (MCFJILHJJEE != null)
+		{
+			MCFJILHJJEE.gameObject.SetActive(value: true);
+		}
 	}
 
 	private void FCCOJNDHEIP(League BMNDININJCE, int GEIONCLKAGF)
@@ -1622,6 +1628,10 @@ public class LeagueArcGuiElement : Core_BaseScript
 
 	public void SetGlow(int CJLGKBLPDHI, int BBBEPJKPOBE, League LFEHIJBBOGC, bool AJNINHIKAFC = false)
 	{
+		if (CAAINGOCKOL == null || MCFJILHJJEE == null)
+		{
+			return;
+		}
 		bool flag = false;
 		bool flag2 = false;
 		if (BBBEPJKPOBE > (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.NotEnoughPlayersForPlayerLeague).FLOATVALUE)
@@ -1922,8 +1932,14 @@ public class LeagueArcGuiElement : Core_BaseScript
 
 	public void HideGlow()
 	{
-		CAAINGOCKOL.gameObject.SetActive(value: false);
-		MCFJILHJJEE.gameObject.SetActive(value: false);
+		if (CAAINGOCKOL != null)
+		{
+			CAAINGOCKOL.gameObject.SetActive(value: false);
+		}
+		if (MCFJILHJJEE != null)
+		{
+			MCFJILHJJEE.gameObject.SetActive(value: false);
+		}
 	}
 
 	public void CAHKIJAEOIK()

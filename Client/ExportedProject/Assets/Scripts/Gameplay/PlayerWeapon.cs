@@ -1735,6 +1735,10 @@ public class PlayerWeapon : Core_BaseScript, TimeScaleIgnorable
 		[CompilerGenerated]
 		get
 		{
+			if ((object)_003CPPHPMJNFBDM_003Ek__BackingField == null)
+			{
+				_003CPPHPMJNFBDM_003Ek__BackingField = GetComponentInParent<PlayerController>();
+			}
 			return _003CPPHPMJNFBDM_003Ek__BackingField;
 		}
 		[CompilerGenerated]

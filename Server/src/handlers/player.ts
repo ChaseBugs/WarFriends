@@ -34,29 +34,42 @@ import {
   requestedPlayerCountry,
   requestedPlayerStatus,
 } from "./playerRequestParsing";
+import { recoveredGetPlayerDataBuffers } from "./getPlayerDataRequestParsing";
+import { executeRecoveredRequestBuffer } from "../services/recoveredRequestBufferService";
 
 // Player profile and settings handlers. GetPlayerData is the client's primary state fetch
 // after login. Mutations validate and persist only their own fields, which prevents a stale
 // profile request from overwriting progression written concurrently by match or squad logic.
 
 export const playerHandlers: Record<number, HandlerEntry> = {
-  [DbAction.GetPlayerData]: authed(async ({ player }) => {
+  [DbAction.GetPlayerData]: authed(async ({ player, req }) => {
     // GetPlayerData does not deserialize DatabasePlayer. The recovered callback requires
     // Time and PlayerData, then reads league/profile aliases beside that map. Returning the
     // profile alone looked plausible in diagnostics but failed during actual Unity boot.
-    const rental = await ensureRentalOffer(player!.id, player!.player.level);
+    const pendingBuffers = recoveredGetPlayerDataBuffers(req.Buffers);
+    for (const buffer of pendingBuffers) {
+      await executeRecoveredRequestBuffer(player!, buffer.id, buffer.requests);
+    }
+    // Each buffer owns an optimistic progression transaction. Reload once after the complete
+    // replay set so PlayerData reflects every successful queued mutation before Unity clears its
+    // local buffers. Stored BufferId receipts make an action-34 transport retry idempotent.
+    const currentPlayer = pendingBuffers.length > 0 ? await findById(player!.id) : player!;
+    if (!currentPlayer) {
+      throw new ApiError(ApiErrorCode.InternalServerError, "Player disappeared while restoring request buffers.");
+    }
+    const rental = await ensureRentalOffer(currentPlayer.id, currentPlayer.player.level);
     // Rental is an outer GetPlayerData field, not part of the Dynamo-style PlayerData map.
     // EGPLNLMMADN reads it directly and always opens this boot variant as a free trial.
-    const vipCards = await ensureDailyVipCards(player!.id);
+    const vipCards = await ensureDailyVipCards(currentPlayer.id);
     // This is the separate EventAssignmentManager calendar, not Squad Events. With no reviewed
     // deployment schedule the service returns null and the feature remains completely hidden.
     // When active, initialization is persisted before its config/state are exposed together.
-    const eventAssignment = await ensureActiveEventAssignment(player!.id);
+    const eventAssignment = await ensureActiveEventAssignment(currentPlayer.id);
     const squadWarsProcessing = await isSquadWarProcessing();
     // ensureDailyVipCards reloads after the rental transition and returns the newest complete
     // progression snapshot. Building PlayerData from rental.state here would omit the newly
     // committed cards and make the popup disagree with CardManagerData after this response.
-    const projected = { ...player!, progression: eventAssignment?.state ?? vipCards.state };
+    const projected = { ...currentPlayer, progression: eventAssignment?.state ?? vipCards.state };
     return ok(DbAction.GetPlayerData, {
       ...buildPlayerStateResponse(projected),
       ...(eventAssignment ? {

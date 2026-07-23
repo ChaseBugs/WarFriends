@@ -110,6 +110,10 @@ public class InputController : Singleton<InputController>
 
 	protected void Update()
 	{
+		if (mRawSwipeInput == null)
+		{
+			mRawSwipeInput = new RawSwipeInputController();
+		}
 		mRawSwipeInput.Update();
 		mIsTapStarted = false;
 		mSwipeEnded = false;

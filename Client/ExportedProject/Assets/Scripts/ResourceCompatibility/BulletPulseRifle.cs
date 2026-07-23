@@ -45,10 +45,6 @@ public class BulletPulseRifle : BulletBase
 
 	private int DGHAMHCFOOA;
 
-	protected new LineTrailRenderer BBDCJNKKNKB;
-
-	protected new Transform APAECJDOAIL;
-
 	public AnimationCurve KJEHAJLLEAI;
 
 	public float LAOOPCJMFFD;

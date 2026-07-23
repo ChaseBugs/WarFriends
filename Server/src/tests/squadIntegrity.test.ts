@@ -35,7 +35,7 @@ function squadDocument(name: string, founderId: string): SquadDocument {
       name: `Player-${founderId}`,
       rank: SquadRank.Leader,
       squadPoints: 0,
-      joinedAt: NOW,
+      joinedAt: NOW * 1_000,
       lastSeenChatTimestamp: 0,
     }],
     createdAt: new Date(NOW * 1_000),
@@ -89,12 +89,27 @@ test("integrity audit reports broken founder and leader rosters for manual resol
     name: member.player.accountName,
     rank: SquadRank.Member,
     squadPoints: 0,
-    joinedAt: NOW,
+    joinedAt: NOW * 1_000,
     lastSeenChatTimestamp: 0,
   }];
   const report = inspectSquadIntegrity([squad], [member]);
 
   assert.equal(report.issues.some((issue) => issue.code === "FOUNDER_NOT_IN_ROSTER" && !issue.repairable), true);
   assert.equal(report.issues.some((issue) => issue.code === "INVALID_LEADER_SET" && !issue.repairable), true);
+  assert.equal(report.repairs.length, 0);
+});
+
+test("integrity audit rejects a squad missing required durable admission fields", () => {
+  const leader = playerDocument("legacy-leader");
+  const squad = squadDocument("Legacy", leader.id);
+  delete (squad as Partial<SquadDocument>).requiredMedals;
+  delete (squad as Partial<SquadDocument>).invitedPlayerIds;
+
+  const report = inspectSquadIntegrity([squad], [leader], new Date(NOW * 1_000));
+
+  assert.equal(
+    report.issues.some((issue) => issue.code === "INVALID_SQUAD_AUTHORITY" && !issue.repairable),
+    true,
+  );
   assert.equal(report.repairs.length, 0);
 });

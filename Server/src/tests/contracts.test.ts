@@ -36,6 +36,7 @@ import {
   validateProgressionRevisionAdvance,
 } from "../services/progressionRevisionAuthorityService";
 import { validatedProgressionSuccessor } from "../services/progressionPublicationAuthorityService";
+import { progressionStateForStorage } from "../services/progressionStorageService";
 import { validatedProgressionSchemaVersion } from "../services/progressionSchemaAuthorityService";
 import { MAX_APPLICATION_UNIX_SECONDS } from "../services/applicationTimeAuthorityService";
 import {
@@ -140,6 +141,7 @@ import { buildDatabaseSquad, buildSquadWarsDivision } from "../services/squadWir
 import { buildPlayerLeaderboardItem } from "../services/leaderboardService";
 import {
   customCredentialHashNeedsUpgrade,
+  explicitLoginShouldRotateSession,
   hashCustomCredential,
   playerCredentialMatches,
 } from "../services/authService";
@@ -764,6 +766,25 @@ test("progression revision authority migrates absence and rejects corrupt or non
   assert.throws(
     () => validatedProgressionSuccessor(current, { ...current, revision: 1, gold: Number.NaN }),
     /Stored Gold balance is invalid/,
+  );
+});
+
+test("progression storage omits optional undefined fields instead of persisting BSON null", () => {
+  const state = createInitialProgression(1_000);
+  const withOptionalFields = {
+    ...state,
+    revision: 1,
+    tutorialBattle: undefined,
+    rental: undefined,
+    nestedDiagnostic: { retained: 1, omitted: undefined },
+  } as typeof state & { nestedDiagnostic: { retained: number; omitted?: undefined } };
+  const stored = progressionStateForStorage(withOptionalFields);
+  assert.equal(Object.prototype.hasOwnProperty.call(stored, "tutorialBattle"), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(stored, "rental"), false);
+  assert.deepEqual((stored as unknown as { nestedDiagnostic: unknown }).nestedDiagnostic, { retained: 1 });
+  assert.throws(
+    () => progressionStateForStorage({ ...state, collectedRewards: { bad: [undefined] } } as unknown as typeof state),
+    /is undefined/,
   );
 });
 
@@ -1736,6 +1757,7 @@ test("boot state contains every field read unconditionally by GetPlayerData", ()
   assert.equal(response.Skill, 77);
   assert.equal(response.MedalsBalance, 55);
   assert.ok(response.PlayerData);
+  assert.deepEqual(response.VideoFeed, { FeaturedVideos: "{}", RecentVideos: "{}" });
 });
 
 test("custom login returns distinct session and provider credentials", async () => {
@@ -1768,6 +1790,21 @@ test("custom password login works while gameplay routes still require the sessio
   assert.equal(await playerCredentialMatches(player, password, true), true);
   assert.equal(await playerCredentialMatches(player, "wrong-password", true), false);
   assert.equal(customCredentialHashNeedsUpgrade(player.authTokenHash), true);
+});
+
+test("guest bootstrap credential remains valid until a durable custom password exists", () => {
+  assert.equal(explicitLoginShouldRotateSession({
+    accountType: AccountType.Guest,
+    authTokenHash: undefined,
+  }), false);
+  assert.equal(explicitLoginShouldRotateSession({
+    accountType: AccountType.Guest,
+    authTokenHash: "scrypt$v1$16384$8$1$0123456789abcdef0123456789abcdef$" + "a".repeat(64),
+  }), true);
+  assert.equal(explicitLoginShouldRotateSession({
+    accountType: AccountType.Facebook,
+    authTokenHash: undefined,
+  }), true);
 });
 
 test("new custom passwords use salted memory-hard hashes", async () => {

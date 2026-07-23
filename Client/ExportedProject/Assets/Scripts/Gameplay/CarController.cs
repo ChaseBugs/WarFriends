@@ -338,7 +338,7 @@ public class CarController : MonoBehaviour
 		{
 			Wheel wheel = wheels[i];
 			ref Vector3 reference = ref HNPJAENIMIC[i];
-			reference = wheel.IMACDBHDNAK.transform.localPosition;
+			reference = (wheel.IMACDBHDNAK != null) ? wheel.IMACDBHDNAK.localPosition : wheel.transform.localPosition;
 		}
 		MBKLNBLNDGA = GetComponent<Rigidbody>();
 		LBLEICFBBLG();

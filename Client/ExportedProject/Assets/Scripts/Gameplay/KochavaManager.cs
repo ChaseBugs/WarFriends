@@ -3,6 +3,10 @@ using UnityEngine;
 
 public class KochavaManager : MonoBehaviour
 {
+	// The retired native attribution SDK is optional and unavailable in the recovered Editor
+	// runtime. It must never interrupt account creation or durable player-state parsing.
+	public const bool Enabled = false;
+
 	public static string PAFGHABDNCN;
 
 	public static string ELCIEKKEKLI()
@@ -84,7 +88,7 @@ public class KochavaManager : MonoBehaviour
 
 	public static void LinkPlayer(string EJBEDLHIKDG)
 	{
-		if (!string.IsNullOrEmpty(EJBEDLHIKDG))
+		if (Enabled && !string.IsNullOrEmpty(EJBEDLHIKDG))
 		{
 			Kochava.IdentityLink("playerId", EJBEDLHIKDG);
 		}
@@ -188,8 +192,11 @@ public class KochavaManager : MonoBehaviour
 
 	private void Start()
 	{
-		Kochava.AttributionCallback attributionCallback = CNJIMKOKHNE;
-		Kochava.SetAttributionCallback(attributionCallback);
+		if (Enabled)
+		{
+			Kochava.AttributionCallback attributionCallback = CNJIMKOKHNE;
+			Kochava.SetAttributionCallback(attributionCallback);
+		}
 	}
 
 	private static void AJPHKALFEBD(string NDPMDKGJAFH)

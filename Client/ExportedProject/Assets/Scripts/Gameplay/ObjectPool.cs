@@ -1857,11 +1857,21 @@ public class ObjectPool : Core_BaseScript
 
 	public virtual PoolableObject Instantiate(PoolableObject CJPPIMEJOED, Vector3 MPHCNMDIPAI, Quaternion OOMCGGAFJNH)
 	{
+		if (CJPPIMEJOED == null)
+		{
+			UnityEngine.Debug.LogWarning("ObjectPool ignored a null prefab request.");
+			return null;
+		}
 		if (!DPDPFOGOCMM)
 		{
 			EHKKAOLJMCF();
 		}
-		int dFHAAIFFLOE = APCGDLEHGKL[CJPPIMEJOED];
+		int dFHAAIFFLOE;
+		if (APCGDLEHGKL == null || !APCGDLEHGKL.TryGetValue(CJPPIMEJOED, out dFHAAIFFLOE))
+		{
+			UnityEngine.Debug.LogWarning("ObjectPool ignored an unregistered prefab request: " + CJPPIMEJOED.name);
+			return null;
+		}
 		return Instantiate(dFHAAIFFLOE, MPHCNMDIPAI, OOMCGGAFJNH);
 	}
 

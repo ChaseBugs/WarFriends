@@ -10,6 +10,10 @@ using WarFriends.Legacy;
 
 public class PushNotificationManager : InGameSerializedObjectGeneric<PushNotificationManager.PushNotificationData>
 {
+	// Firebase configuration and native binaries are not part of the recovered local runtime.
+	// Push delivery is optional and must not interrupt account creation or player-data parsing.
+	public const bool RemotePushEnabled = false;
+
 	public enum BAIMJGGJNHF
 	{
 		SQUAD_INFO,
@@ -164,7 +168,12 @@ public class PushNotificationManager : InGameSerializedObjectGeneric<PushNotific
 
 	internal void ScheduleLapsedPlayerNotifications()
 	{
-		Constants constants = Singleton<GameVariables>.instance.constants;
+		GameVariables gameVariables = UnityEngine.Object.FindObjectOfType<GameVariables>();
+		if ((object)gameVariables == null || (object)gameVariables.constants == null || (object)gameVariables.packsDefinition == null)
+		{
+			return;
+		}
+		Constants constants = gameVariables.constants;
 		int[] array = new int[3]
 		{
 			(int)(float)constants.GetRow(Constants.rowIds.LapsedPlayerInterval1).FLOATVALUE,
@@ -173,7 +182,7 @@ public class PushNotificationManager : InGameSerializedObjectGeneric<PushNotific
 		};
 		for (int i = 1; i <= 3; i++)
 		{
-			PacksRow row = Singleton<GameVariables>.instance.packsDefinition.GetRow(i.ToString("'lapsed_player_'0"));
+			PacksRow row = gameVariables.packsDefinition.GetRow(i.ToString("'lapsed_player_'0"));
 			int num = MEJMLNDFDBP.LJDADOKBBNA(row.WARBUCKS);
 			int num2 = MEJMLNDFDBP.LJDADOKBBNA(row.GOLD);
 			int num3 = MEJMLNDFDBP.LJDADOKBBNA(row.GOLDCARDS);
@@ -526,6 +535,11 @@ public class PushNotificationManager : InGameSerializedObjectGeneric<PushNotific
 
 	public void EnablePushNotifications(string databaseDeviceToken)
 	{
+		if (!RemotePushEnabled)
+		{
+			data.failedToRegister = false;
+			return;
+		}
 		Debug.Log("#Notifications# Database Token = " + databaseDeviceToken + ", my device token = " + data.deviceToken);
 		if (string.IsNullOrEmpty(data.deviceToken))
 		{
@@ -563,10 +577,23 @@ public class PushNotificationManager : InGameSerializedObjectGeneric<PushNotific
 
 	private void ScheduleNotification(string notificationKey, string message, int seconds, BAIMJGGJNHF channel, int badgeNum = 1, bool absoluteTime = false)
 	{
+		if ((object)data == null)
+		{
+			data = new PushNotificationData();
+		}
+		if (data.localNotifications == null)
+		{
+			data.localNotifications = new Dictionary<string, LocalNotificationData>();
+		}
+		BeanstalkServerManager beanstalkServerManager = UnityEngine.Object.FindObjectOfType<BeanstalkServerManager>();
+		if (!absoluteTime && (object)beanstalkServerManager == null)
+		{
+			return;
+		}
 		CancelLocalNotification(notificationKey, save: false);
 		data.localNotifications[notificationKey] = new LocalNotificationData
 		{
-			deadline = ((!absoluteTime) ? (Singleton<BeanstalkServerManager>.instance.currentTimestamp + seconds) : seconds),
+			deadline = ((!absoluteTime) ? (beanstalkServerManager.currentTimestamp + seconds) : seconds),
 			message = message,
 			channel = channel,
 			badgeNumber = badgeNum

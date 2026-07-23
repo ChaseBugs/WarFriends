@@ -906,14 +906,26 @@ public class DeathMatchUnitsGuiElement : GuiElement
 	public override void InitEvents()
 	{
 		base.InitEvents();
-		Singleton<SpawningManagerDeathMatch>.instance.ArmyChanged += FLFLOMCEDKI;
-		Singleton<SpawningManagerDeathMatch>.instance.RandomArmySent += FBMGOCJADHC;
 		SpawningManagerDeathMatch spawningManagerDeathMatch = Singleton<SpawningManagerDeathMatch>.instance;
-		spawningManagerDeathMatch.AFNJHEFNIOD = (Action<SpawningManagerDeathMatch.ArmyUnitDefinition>)Delegate.Combine(spawningManagerDeathMatch.AFNJHEFNIOD, new Action<SpawningManagerDeathMatch.ArmyUnitDefinition>(AFNJHEFNIOD));
-		Singleton<GameController>.instance.GameStarted += MLDDKLFPFPF;
-		foreach (DeathMatchGuiCard item in INIKAAAIPCK)
+		if (spawningManagerDeathMatch != null)
 		{
-			item.Init(this);
+			spawningManagerDeathMatch.ArmyChanged += FLFLOMCEDKI;
+			spawningManagerDeathMatch.RandomArmySent += FBMGOCJADHC;
+			spawningManagerDeathMatch.AFNJHEFNIOD = (Action<SpawningManagerDeathMatch.ArmyUnitDefinition>)Delegate.Combine(spawningManagerDeathMatch.AFNJHEFNIOD, new Action<SpawningManagerDeathMatch.ArmyUnitDefinition>(AFNJHEFNIOD));
+		}
+		if (Singleton<GameController>.instance != null)
+		{
+			Singleton<GameController>.instance.GameStarted += MLDDKLFPFPF;
+		}
+		if (INIKAAAIPCK != null)
+		{
+			foreach (DeathMatchGuiCard item in INIKAAAIPCK)
+			{
+				if (item != null)
+				{
+					item.Init(this);
+				}
+			}
 		}
 	}
 

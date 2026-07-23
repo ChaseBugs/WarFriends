@@ -44,7 +44,11 @@ import {
   exactMinimumClientVersion,
   replacementClientVersionIsAllowed,
 } from "./requestEnvelopeParsing";
-import { exactAuthenticationRequest } from "./authenticationRequestParsing";
+import {
+  exactAuthenticationRequest,
+  isRecoveredPreAccountSessionPlaceholder,
+} from "./authenticationRequestParsing";
+import { validatedRequestBufferId } from "../services/requestBufferAuthorityService";
 
 // Evaluate the deployment gate while the dispatcher module loads. Invalid policy must stop server
 // startup before one node silently accepts clients that another node rejects during a rolling deploy.
@@ -158,12 +162,42 @@ export async function dispatch(req: RequestEnvelope): Promise<ResponseEnvelope> 
       return { DbAction: action, ...apiError(90, `Action ${dbActionName(action)} is not implemented.`) };
     }
 
+    // RequestBuffer captures its common authentication fields when the delayed request object is
+    // created. On first registration the stock client can therefore send one old buffer with the
+    // pre-account missing/missing or `null`/`null` snapshot after the new session already exists.
+    // There is no player authority in that envelope, so never execute its nested actions. Acknowledge only a valid
+    // transport ID with an empty result list: OGLEHLIPEFM then removes the stale local buffer
+    // without entering the UnAuthorizedAction -> OldToken -> Relog loop.
+    if (action === DbAction.SendRequestBuffer
+      && isRecoveredPreAccountSessionPlaceholder(req)) {
+      const bufferId = validatedRequestBufferId(req.BufferId);
+      return ok(action, {
+        BufferId: bufferId,
+        RequestsResults: "[]",
+        DiscardedPreAccountBuffer: true,
+      });
+    }
+
     // Attach the player: required handlers authenticate strictly; others attach best-effort.
     // The recovered form builder emits two deliberately different envelopes: Id + Password for
     // LoginToCustomAccount, and PlayerId + Token for ordinary gameplay. Parse those contracts
     // separately so an action-specific Id or a new-password payload cannot become session proof.
     const loginAction = action === DbAction.LoginToCustomAccount;
     const authentication = exactAuthenticationRequest(req, loginAction ? "login" : "session");
+
+    // A recovered menu-start race can dispatch GetPlayerData before GameLoginManager has restored
+    // either common session field. Returning UnAuthorizedAction here is unsafe for the stock
+    // client: it aliases that result to OldToken, relogs with the same absent credentials, and
+    // repeats forever. With no presented authority there is nothing to refresh, so use the exact
+    // LoginFailure result that clears the unusable local account and opens ManualLogin instead.
+    // Partially supplied, malformed, and genuinely invalid credentials retain the strict
+    // authentication path below and never gain this compatibility treatment.
+    if (entry.requiresAuth
+      && !loginAction
+      && authentication.playerId === undefined
+      && authentication.credential === undefined) {
+      return { DbAction: action, ...apiError(ApiErrorCode.LoginFailure, "Missing credentials.") };
+    }
 
     // AccountType is only meaningful during platform login. Normal authenticated form
     // requests omit it and therefore use the guest/server token path.
@@ -186,6 +220,12 @@ export async function dispatch(req: RequestEnvelope): Promise<ResponseEnvelope> 
     return await entry.handler({ req, player });
   } catch (err) {
     if (err instanceof ApiError) {
+      // A rejected explicit login is not an expired gameplay session. The stock client treats
+      // UnAuthorizedAction as OldToken and immediately relogs, creating an endless request loop.
+      if (action === DbAction.LoginToCustomAccount
+        && err.code === ApiErrorCode.RequestNotAuthorized) {
+        return { DbAction: action, ...apiError(ApiErrorCode.LoginFailure, "Invalid credentials.") };
+      }
       return { DbAction: action, ...apiError(err.code, err.message), ...(err.details ?? {}) };
     }
     const message = err instanceof Error ? err.message : String(err);

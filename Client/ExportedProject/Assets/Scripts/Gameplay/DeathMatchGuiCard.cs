@@ -598,24 +598,54 @@ public class DeathMatchGuiCard : Core_BaseScript
 	public void Init(DeathMatchUnitsGuiElement HNFNINFCBEJ)
 	{
 		MHAMIMGNJND = HNFNINFCBEJ;
-		IMOHHDEDEKJ.alpha = 0f;
+		if (IMOHHDEDEKJ != null)
+		{
+			IMOHHDEDEKJ.alpha = 0f;
+		}
 		DDBBFBHJCOO = base.transform.localPosition.ReplaceY(-260f);
-		KJNDFJNAMKB = PCKJMMKNDMJ.transform.localPosition.ReplaceY(-19.5f);
+		if (PCKJMMKNDMJ != null)
+		{
+			KJNDFJNAMKB = PCKJMMKNDMJ.transform.localPosition.ReplaceY(-19.5f);
+		}
 		PNFNJKJLPIP = true;
 		DNNABAADFCE = false;
-		PIHOEDNBMIB.alpha = 0f;
-		CFKLKCHACOK.alpha = 0f;
-		CFKLKCHACOK.transform.localScale = CFKLKCHACOK.transform.localScale.ReplaceY(250f);
-		foreach (UISprite item in GBEAABECPCK)
+		if (PIHOEDNBMIB != null)
 		{
-			item.gameObject.SetActive(value: false);
+			PIHOEDNBMIB.alpha = 0f;
 		}
-		MCLAGMFDMMA.gameObject.SetActive(value: false);
-		foreach (UISprite item2 in PHLFPMFMGEE)
+		if (CFKLKCHACOK != null)
 		{
-			item2.enabled = false;
+			CFKLKCHACOK.alpha = 0f;
+			CFKLKCHACOK.transform.localScale = CFKLKCHACOK.transform.localScale.ReplaceY(250f);
 		}
-		CNLKHBCLDFG.enabled = false;
+		if (GBEAABECPCK != null)
+		{
+			foreach (UISprite item in GBEAABECPCK)
+			{
+				if (item != null)
+				{
+					item.gameObject.SetActive(value: false);
+				}
+			}
+		}
+		if (MCLAGMFDMMA != null)
+		{
+			MCLAGMFDMMA.SetActive(value: false);
+		}
+		if (PHLFPMFMGEE != null)
+		{
+			foreach (UISprite item2 in PHLFPMFMGEE)
+			{
+				if (item2 != null)
+				{
+					item2.enabled = false;
+				}
+			}
+		}
+		if (CNLKHBCLDFG != null)
+		{
+			CNLKHBCLDFG.enabled = false;
+		}
 	}
 
 	[SpecialName]

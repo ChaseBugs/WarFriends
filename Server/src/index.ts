@@ -37,6 +37,7 @@ import { googlePlayRtdnRouter } from "./routes/googlePlayRtdn";
 import { startGooglePlayRtdnScheduler } from "./services/googlePlayRtdnService";
 import { adminGooglePlayRefundReviewsRouter } from "./routes/adminGooglePlayRefundReviews";
 import { startGooglePlayRefundReviewScheduler } from "./services/googlePlayRefundReviewService";
+import { parseRecoveredMultipartForm } from "./middleware/recoveredMultipartForm";
 
 const app = express();
 const publicTrafficPolicy = trafficPolicy();
@@ -75,6 +76,9 @@ app.use(compression({ threshold: 1024 }));
 app.use(express.json({ strict: false, limit: "2mb" }));
 // BestHTTP's AddField API posts the recovered client's requests as form fields.
 app.use(express.urlencoded({ extended: false, limit: "2mb" }));
+// BestHTTP automatically changes AddField requests to multipart when one value exceeds 256 bytes.
+// RequestBuffer action 98 always crosses that boundary once its JSON contains real work.
+app.use(parseRecoveredMultipartForm);
 
 app.get("/health", (_req, res) => {
   res.json({

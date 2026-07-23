@@ -1,0 +1,38 @@
+GUIStuff/UIRoot/2D Camera/GUIScreen Lobby/Bottom Right Anchor/Fight Buttons/Left Anchor/Tutorial Text Position
+  active=False localPosition=(38.0, -88.0, 0.0) position=(49.1, -0.7, 3.0) localScale=(1.0, 1.0, 1.0) lossyScale=(0.0, 0.0, 0.0)
+  UnityEngine.Transform
+GUIStuff/UIRoot/2D Camera/GUIScreen Main/Bottom Right Anchor/Next Button Panel
+  active=True localPosition=(0.0, 0.0, -2.0) position=(49.8, -0.8, 3.0) localScale=(1.0, 1.0, 1.0) lossyScale=(0.0, 0.0, 0.0)
+  UnityEngine.Transform
+  UIPanel
+  TweenAlpha
+GUIStuff/UIRoot/2D Camera/GUIScreen Main/Bottom Right Anchor/Next Button Panel/Next Button
+  active=True localPosition=(-308.0, 133.0, 0.0) position=(49.3, -0.6, 3.0) localScale=(1.0, 1.0, 1.0) lossyScale=(0.0, 0.0, 0.0)
+  UnityEngine.Transform
+  UnityEngine.BoxCollider
+  UIButton
+  UIButtonScale
+  UIButtonSound
+  UIButtonSetter width=544
+  UIEventListener
+GUIStuff/UIRoot/2D Camera/GUIScreen Main/Bottom Right Anchor/Next Button Panel/Next Button/Left Button Anchor
+  active=True localPosition=(-272.0, 0.0, 0.0) position=(49.0, -0.6, 3.0) localScale=(1.0, 1.0, 1.0) lossyScale=(0.0, 0.0, 0.0)
+  UnityEngine.Transform
+GUIStuff/UIRoot/2D Camera/GUIScreen Main/Bottom Right Anchor/Next Button Panel/Next Button/Left Button Anchor/Tutorial Text Position
+  active=True localPosition=(544.0, 13.0, 0.0) position=(49.7, -0.6, 3.0) localScale=(1.0, 1.0, 1.0) lossyScale=(0.0, 0.0, 0.0)
+  UnityEngine.Transform
+GUIStuff/UIRoot/2D Camera/GUIScreen Prepare for Battle/Bottom Right Anchor/Player vs Player Button Small/Left Button Anchor
+  active=False localPosition=(-220.0, 0.0, 0.0) position=(49.1, -0.6, 3.0) localScale=(1.0, 1.0, 1.0) lossyScale=(0.0, 0.0, 0.0)
+  UnityEngine.Transform
+GUIStuff/UIRoot/2D Camera/GUIScreen Prepare for Battle/Bottom Right Anchor/Player vs Player Button/Left Button Anchor
+  active=False localPosition=(-438.0, 0.0, 0.0) position=(48.5, -0.6, 3.0) localScale=(1.0, 1.0, 1.0) lossyScale=(0.0, 0.0, 0.0)
+  UnityEngine.Transform
+GUIStuff/UIRoot/2D Camera/GUIScreen Prepare for Battle/Bottom Right Anchor/Player vs Player Button/Left Button Anchor/Tutorial Text Position
+  active=False localPosition=(876.0, -108.0, 0.0) position=(49.7, -0.8, 3.0) localScale=(1.0, 1.0, 1.0) lossyScale=(0.0, 0.0, 0.0)
+  UnityEngine.Transform
+GUIStuff/UIRoot/2D Camera/Tutorial Overlay/Go To Battle
+  active=True localPosition=(923.3, -576.5, -1.0) position=(49.7, -0.6, -31.1) localScale=(27.0, 27.0, 1.0) lossyScale=(0.0, 0.0, 0.0)
+  UnityEngine.Transform
+  UILabel pivot=Right depth=31 text=GO TO BATTLE!
+  TweenAlpha
+  TweenColor

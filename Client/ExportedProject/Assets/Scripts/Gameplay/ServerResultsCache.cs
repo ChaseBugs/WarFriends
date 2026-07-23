@@ -763,7 +763,7 @@ public class ServerResultsCache : Singleton<ServerResultsCache>
 		Singleton<GameController>.instance.GameStarted += MHEJCAKADHG;
 		Singleton<BeanstalkServerManager>.instance.ErrorReceived += delegate
 		{
-			UnityEngine.Debug.LogError("Clearing Waitlist cache...");
+			UnityEngine.Debug.Log("Clearing Waitlist cache...");
 			NNBFAIAJNCD.Clear();
 		};
 	}

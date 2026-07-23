@@ -1356,7 +1356,25 @@ public class OGLEHLIPEFM
 				return IJEAJGCCHEF.Success;
 			}
 			AIJKOENIJFL = (Dictionary<string, object>)JsonConvert.DeserializeObject(EENKJBCCPBG, typeof(Dictionary<string, object>));
-			int num2 = Convert.ToInt32(AIJKOENIJFL["Result"]);
+			object value;
+			int num2;
+			if (AIJKOENIJFL == null)
+			{
+				throw new JsonException("Server response was not a JSON object.");
+			}
+			if (AIJKOENIJFL.TryGetValue("Result", out value))
+			{
+				num2 = Convert.ToInt32(value);
+			}
+			else if (AIJKOENIJFL.TryGetValue("Code", out value) && Convert.ToInt32(value) == 10)
+			{
+				// HTTP rate-limit middleware uses a transport error envelope rather than a DbAction result.
+				num2 = (int)IJEAJGCCHEF.ThroughputExceededException;
+			}
+			else
+			{
+				num2 = (int)IJEAJGCCHEF.ServerError;
+			}
 			if (num2 > 10)
 			{
 				Debug.Log(string.Concat("Beanstalk: ", bDAJADMCBLN.MHLAAHNPMFG, " failure. Server response = ", EENKJBCCPBG));
@@ -1459,7 +1477,8 @@ public class OGLEHLIPEFM
 						goto end_IL_01db;
 					case DatabaseAction.CheckDailyReward:
 						Debug.Log("daily reward chacked");
-						if (AIJKOENIJFL.ContainsKey("dailyRewardData") && Singleton<DailyRewardManager>.instance.DailyRewardDataLoaded((JToken)AIJKOENIJFL["dailyRewardData"]) && !GuiScreenSingle<DailyRewardMonthScreen>.instance.isShowed)
+						DailyRewardMonthScreen dailyRewardMonthScreen = UnityEngine.Object.FindObjectOfType<DailyRewardMonthScreen>();
+						if (AIJKOENIJFL.ContainsKey("dailyRewardData") && Singleton<DailyRewardManager>.instance.DailyRewardDataLoaded((JToken)AIJKOENIJFL["dailyRewardData"]) && (dailyRewardMonthScreen == null || !dailyRewardMonthScreen.isShowed))
 						{
 							DailyRewardManager.MGANBPBIOBK lNAIDLKGCFN = Singleton<DailyRewardManager>.instance.LNAIDLKGCFN;
 							int lIJBBLBLPLG = lNAIDLKGCFN.LIJBBLBLPLG + lNAIDLKGCFN.NHKKNKEAEOE * 100;
@@ -5362,7 +5381,7 @@ public class OGLEHLIPEFM
 		}
 		else
 		{
-			Debug.LogError("NO Video Feed found!");
+			Debug.Log("Video Feed is unavailable; continuing with an empty local feed.");
 		}
 		if (AIJKOENIJFL.ContainsKey("Scraps"))
 		{

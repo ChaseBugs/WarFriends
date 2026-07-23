@@ -2588,6 +2588,7 @@ public class GameVariables : Singleton<GameVariables>
 		base.Awake();
 		Singleton<BeanstalkServerManager>.instance.PlayerDataLoaded -= NFNILBDPNFF;
 		Singleton<BeanstalkServerManager>.instance.PlayerDataLoaded += NFNILBDPNFF;
+		CAOGFCFGFPD.Clear();
 		CAOGFCFGFPD.Add(League.NoLeague, new Tuple<string, string>(Localization.Localize("ID_LEAGUE0"), "bronze3"));
 		CAOGFCFGFPD.Add(League.Bronze3, new Tuple<string, string>(Localization.Localize("ID_LEAGUE1"), "bronze3"));
 		CAOGFCFGFPD.Add(League.Bronze2, new Tuple<string, string>(Localization.Localize("ID_LEAGUE2"), "bronze2"));

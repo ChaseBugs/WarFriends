@@ -364,7 +364,8 @@ namespace Google2u
 			}
 			else
 			{
-				Debug.LogError(in_RowString + " is not stored in translate dictionary.");
+				// Later resource-only visual IDs are expected to be absent from the recovered
+				// 1.6 gameplay table. The caller supplies a compatibility row for these IDs.
 			}
 			return result;
 		}

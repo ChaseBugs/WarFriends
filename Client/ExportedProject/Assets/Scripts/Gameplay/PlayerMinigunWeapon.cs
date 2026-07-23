@@ -56,12 +56,21 @@ public class PlayerMinigunWeapon : PlayerWeapon
 		set
 		{
 			base.isActiveWeapon = value;
-			if (!isActiveWeapon && base.playerController.isCurrentPlayer)
+			PlayerController playerController = base.playerController;
+			if ((object)playerController == null)
+			{
+				ACHMJPNAIOC = false;
+				return;
+			}
+			if (!isActiveWeapon && playerController.isCurrentPlayer)
 			{
 				Singleton<SniperScope>.instance.Hide();
-				OBAEJHOENFD.StopMotor();
+				if ((object)OBAEJHOENFD != null)
+				{
+					OBAEJHOENFD.StopMotor();
+				}
 			}
-			if (isActiveWeapon && base.playerController.isCurrentPlayer)
+			if (isActiveWeapon && playerController.isCurrentPlayer)
 			{
 				Singleton<SniperScope>.instance.SetScope(IGABBABGBFC);
 			}

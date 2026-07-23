@@ -88,6 +88,19 @@ public class BattlePreparationScreen : GuiScreenSingle<BattlePreparationScreen>
 
 	private int FBEFHCCLHDC;
 
+	private void ApplyRecoveredVisualCleanup()
+	{
+		UITexture[] textures = GetComponentsInChildren<UITexture>(includeInactive: true);
+		foreach (UITexture texture in textures)
+		{
+			if (texture != null && texture.gameObject.name.IndexOf("Glow", StringComparison.OrdinalIgnoreCase) >= 0 &&
+				(texture.mainTexture == null || texture.mainTexture.name == "whiteRectangle"))
+			{
+				texture.gameObject.SetActive(value: false);
+			}
+		}
+	}
+
 	public int widthOfMiddleButton
 	{
 		get
@@ -191,6 +204,7 @@ public class BattlePreparationScreen : GuiScreenSingle<BattlePreparationScreen>
 
 	protected override void AGIKPOLCGNF()
 	{
+		ApplyRecoveredVisualCleanup();
 		Singleton<EventTrackingManager>.instance.RewardVideoPreloaded += JCACODEJOHH;
 		Singleton<EventTrackingManager>.instance.AdLimitsChanged += JCACODEJOHH;
 		WarArena.instance.WarArenaDataChanged += MNHNBPICDII;
@@ -213,6 +227,7 @@ public class BattlePreparationScreen : GuiScreenSingle<BattlePreparationScreen>
 		JKAHMFMIBNK();
 		EDKHNBINPON();
 		EAHIKNPGCLC.InitControls();
+		ApplyRecoveredVisualCleanup();
 	}
 
 	public virtual void HKENNEJCGFE()
@@ -362,6 +377,7 @@ public class BattlePreparationScreen : GuiScreenSingle<BattlePreparationScreen>
 
 	public override void InitGUIValues()
 	{
+		ApplyRecoveredVisualCleanup();
 		base.previousScreen = GuiScreenSingle<MainScreen>.instance;
 		if (!Singleton<BeanstalkServerManager>.instance.isPlayerDataLoaded)
 		{
@@ -384,6 +400,7 @@ public class BattlePreparationScreen : GuiScreenSingle<BattlePreparationScreen>
 			ReminderManager.instance.ShowDailyAssignmentsReminder();
 		}
 		EAHIKNPGCLC.InitGuiValues();
+		ApplyRecoveredVisualCleanup();
 	}
 
 	public override void DoAfterHide()

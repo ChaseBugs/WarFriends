@@ -1967,6 +1967,10 @@ public abstract class WeaponLevelsSetup : Core_BaseScript
 
 	public void Init()
 	{
+		if (MGAGEKAAJOL == null)
+		{
+			return;
+		}
 		MGAGEKAAJOL.owner = this;
 		MGAGEKAAJOL.mMaxPower = -1;
 	}
@@ -1987,9 +1991,22 @@ public abstract class WeaponLevelsSetup : Core_BaseScript
 	{
 		if (string.IsNullOrEmpty(DEBAMAJABPP))
 		{
-			DEBAMAJABPP = LIEFNEPEIJO.GetType().ToString();
+			if (LIEFNEPEIJO == null)
+			{
+				LIEFNEPEIJO = GetComponent<Google2uComponentBase>();
+			}
+			DEBAMAJABPP = ((LIEFNEPEIJO != null) ? LIEFNEPEIJO.GetType().ToString() : (GetType().ToString() + ":" + base.gameObject.name));
 		}
 		return DEBAMAJABPP;
+	}
+
+	internal bool HasRecoveredWeaponData()
+	{
+		if (LIEFNEPEIJO == null)
+		{
+			LIEFNEPEIJO = GetComponent<Google2uComponentBase>();
+		}
+		return LIEFNEPEIJO != null && MGAGEKAAJOL != null;
 	}
 
 	protected override void Awake()

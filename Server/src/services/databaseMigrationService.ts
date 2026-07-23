@@ -1,8 +1,13 @@
 import { randomUUID } from "crypto";
 import type { Db, Document } from "mongodb";
 import { mongoDatabase } from "../db";
+import type { PlayerDocument, PlayerProgressionState } from "../db";
 import logger from "../utils/logger";
 import { migrateLegacySquadExperienceState } from "./squadProgressionService";
+import { progressionForPlayer } from "./playerStateService";
+import { SquadRank } from "../constants";
+import { nextSquadUpdatedAt, validatedSquadDocument } from "./squadAuthorityService";
+import type { SquadDocument } from "../db";
 
 /**
  * Versioned database migrations for rolling deployments.
@@ -237,6 +242,251 @@ const migrations: readonly DatabaseMigration[] = [
         );
         if (result.matchedCount !== 1) {
           throw new MigrationHistoryError(`Squad ${String(row.name)} changed during progression migration.`);
+        }
+      }
+    },
+  },
+  {
+    id: "20260723_013_progression_null_cleanup",
+    checksum: "sha256:d2a2d014b2b3bcb248fa69e36c4730df013286f4b6dee5187e23ab7632fc59c8",
+    description: "Remove BSON nulls accidentally written for absent optional progression fields.",
+    up: async (db) => {
+      const optionalFields = [
+        "dogTags", "vipExpiration", "subscription", "subscriptionAuthorityReceiptId",
+        "tutorialFinished", "tutorialBattle", "warcardsTutorialFinished",
+        "warcardsTutorialBattle", "featureIntroductions", "matchesToNextLootboxes",
+        "collectedRewards", "vipDailyCards", "dailyReward", "assignments", "dailyMissions",
+        "eventAssignment", "itemInventory", "visualInventory", "cardInventory", "cardCrafting",
+        "warCardsPlayed", "pvpWinStreak", "goldCardsCrafted", "warArena", "achievements",
+        "starterAssignments", "lastSeenSquadChatTimestamp", "pendingMessageIgnores",
+        "squadCreationsCount", "instantBattle", "videoAdRewards", "warBucksConversion",
+        "blackMarket", "rental", "processedRequestBuffers",
+      ] as const satisfies readonly (keyof PlayerProgressionState)[];
+      const collection = db.collection<PlayerDocument>("players");
+      const nullSelectors = optionalFields.map((field) => ({
+        [`progression.${field}`]: { $type: 10 },
+      }));
+      const rows = await collection.find({ $or: nullSelectors }).toArray();
+      const plans = rows.map((row) => {
+        if (!row.progression || typeof row.progression !== "object" || Array.isArray(row.progression)) {
+          throw new MigrationHistoryError(`Player ${row.id} has invalid progression during null cleanup.`);
+        }
+        const repaired = { ...row.progression } as PlayerProgressionState & Record<string, unknown>;
+        const fields = optionalFields.filter((field) => repaired[field] === null);
+        for (const field of fields) delete repaired[field];
+        // Plan and validate every complete successor before the first write. This migration
+        // repairs only the driver-created null/absence ambiguity; unrelated corruption remains
+        // fail-closed for explicit operator inspection.
+        progressionForPlayer({ ...row, progression: repaired });
+        return { row, fields };
+      });
+
+      for (const { row, fields } of plans) {
+        if (fields.length === 0) continue;
+        const unset: Record<string, ""> = Object.fromEntries(
+          fields.map((field): [string, ""] => [`progression.${field}`, ""]),
+        );
+        const stillNull = fields.map((field) => ({ [`progression.${field}`]: { $type: 10 } }));
+        const result = await collection.updateOne(
+          { _id: row._id, updatedAt: row.updatedAt, $and: stillNull },
+          { $unset: unset },
+        );
+        if (result.matchedCount !== 1) {
+          throw new MigrationHistoryError(`Player ${row.id} changed during progression null cleanup.`);
+        }
+      }
+    },
+  },
+  {
+    id: "20260723_014_legacy_squad_rank_repair",
+    checksum: "sha256:8b2f46216088bfd85dd57b7370ac169a02852c5eb7ac4248f76a2bc98c47458b",
+    description: "Realign legacy Founder and no-Squad ranks to the recovered Client enum.",
+    up: async (db) => {
+      const now = new Date();
+      const squadCollection = db.collection<SquadDocument>("squads");
+      const playerCollection = db.collection<PlayerDocument>("players");
+      const validateRankMirror = (
+        player: PlayerDocument,
+        squadName: string,
+        rank: SquadRank,
+      ): void => {
+        if (!player
+          || !player.player
+          || typeof player.id !== "string"
+          || player.id.length < 1
+          || player.id.length > 256
+          || player.player.id !== player.id
+          || player.squadName !== squadName
+          || player.player.squadName !== squadName
+          || player.player.squadRank !== rank
+          || !(player.createdAt instanceof Date)
+          || !(player.updatedAt instanceof Date)
+          || !Number.isSafeInteger(player.createdAt.getTime())
+          || !Number.isSafeInteger(player.updatedAt.getTime())
+          || player.createdAt.getTime() < 0
+          || player.createdAt.getTime() > player.updatedAt.getTime()
+          || player.updatedAt.getTime() > now.getTime()) {
+          throw new MigrationHistoryError(`Player ${player?.id ?? "<missing>"} has ambiguous Squad rank mirrors.`);
+        }
+      };
+      const legacySquads = await squadCollection.find({
+        "members.rank": SquadRank.Coleader,
+      }).toArray();
+      const squadPlans: Array<{
+        current: SquadDocument;
+        repaired: SquadDocument;
+        founder: PlayerDocument;
+        repairedFounder: PlayerDocument;
+      }> = [];
+
+      for (const squad of legacySquads) {
+        const founder = squad.members.find((member) => member.playerId === squad.founderId);
+        const leaders = squad.members.filter((member) => member.rank === SquadRank.Leader);
+        // Rank 3 is a legitimate current Coleader. Repair only the exact initial reconstruction
+        // shape: the founder alone carries old Founder=3 and there is no recovered Leader=2.
+        if (!founder || founder.rank !== SquadRank.Coleader || leaders.length !== 0) continue;
+        const repaired: SquadDocument = {
+          ...squad,
+          // These two required fields did not exist in the initial reconstruction that wrote
+          // Founder=3. Supply only their source-compatible empty defaults when truly absent;
+          // an explicitly malformed value remains corruption and fails validation below.
+          requiredMedals: squad.requiredMedals === undefined ? 0 : squad.requiredMedals,
+          invitedPlayerIds: squad.invitedPlayerIds === undefined ? [] : squad.invitedPlayerIds,
+          members: squad.members.map((member) => member.playerId === squad.founderId
+            ? { ...member, rank: SquadRank.Leader }
+            : member),
+          updatedAt: nextSquadUpdatedAt(squad, now),
+        };
+        validatedSquadDocument(repaired, now);
+
+        const founderPlayer = await playerCollection.findOne({ id: squad.founderId });
+        if (!founderPlayer
+          || founderPlayer.squadName !== squad.name
+          || founderPlayer.player.squadName !== squad.name
+          || (founderPlayer.player.squadRank !== SquadRank.Coleader
+            && founderPlayer.player.squadRank !== SquadRank.Leader)) {
+          throw new MigrationHistoryError(`Legacy founder mirror for Squad ${squad.name} is ambiguous.`);
+        }
+        const repairedFounder: PlayerDocument = {
+          ...founderPlayer,
+          updatedAt: founderPlayer.player.squadRank === SquadRank.Leader
+            ? founderPlayer.updatedAt
+            : new Date(Math.max(now.getTime(), founderPlayer.updatedAt.getTime() + 1)),
+          player: { ...founderPlayer.player, squadRank: SquadRank.Leader },
+        };
+        // Old development rows can have unrelated pre-contract identity fields. This migration
+        // changes only the exact duplicated Squad mirror tuple, so validate that tuple and its
+        // optimistic dates without normalizing or authorizing any unrelated profile field.
+        validateRankMirror(founderPlayer, squad.name, founderPlayer.player.squadRank);
+        validateRankMirror(repairedFounder, squad.name, SquadRank.Leader);
+        squadPlans.push({ current: squad, repaired, founder: founderPlayer, repairedFounder });
+      }
+
+      const detachedPlayers = await playerCollection.find({
+        squadName: "",
+        "player.squadName": "",
+        "player.squadRank": SquadRank.Member,
+      }).toArray();
+      const detachedPlans = detachedPlayers.map((player) => {
+        const repaired: PlayerDocument = {
+          ...player,
+          updatedAt: new Date(Math.max(now.getTime(), player.updatedAt.getTime() + 1)),
+          player: { ...player.player, squadRank: SquadRank.None },
+        };
+        validateRankMirror(player, "", SquadRank.Member);
+        validateRankMirror(repaired, "", SquadRank.None);
+        return { current: player, repaired };
+      });
+
+      // All successors are proven before the first write. Each compare-and-set remains
+      // idempotent if startup stops between the player mirror and Squad roster updates.
+      for (const { current, repaired } of detachedPlans) {
+        const result = await playerCollection.updateOne(
+          {
+            _id: current._id,
+            updatedAt: current.updatedAt,
+            squadName: "",
+            "player.squadName": "",
+            "player.squadRank": SquadRank.Member,
+          },
+          { $set: { "player.squadRank": SquadRank.None, updatedAt: repaired.updatedAt } },
+        );
+        if (result.matchedCount !== 1) {
+          throw new MigrationHistoryError(`Detached player ${current.id} changed during rank repair.`);
+        }
+      }
+
+      for (const plan of squadPlans) {
+        if (plan.founder.player.squadRank === SquadRank.Coleader) {
+          const playerResult = await playerCollection.updateOne(
+            {
+              id: plan.founder.id,
+              updatedAt: plan.founder.updatedAt,
+              squadName: plan.current.name,
+              "player.squadName": plan.current.name,
+              "player.squadRank": SquadRank.Coleader,
+            },
+            { $set: { "player.squadRank": SquadRank.Leader, updatedAt: plan.repairedFounder.updatedAt } },
+          );
+          if (playerResult.matchedCount !== 1) {
+            throw new MigrationHistoryError(`Founder ${plan.founder.id} changed during rank repair.`);
+          }
+        }
+        const squadResult = await squadCollection.updateOne(
+          { name: plan.current.name, updatedAt: plan.current.updatedAt, members: plan.current.members },
+          { $set: { members: plan.repaired.members, updatedAt: plan.repaired.updatedAt } },
+        );
+        if (squadResult.matchedCount !== 1) {
+          throw new MigrationHistoryError(`Squad ${plan.current.name} changed during founder rank repair.`);
+        }
+      }
+    },
+  },
+  {
+    id: "20260723_015_legacy_squad_admission_defaults",
+    checksum: "sha256:b4ffb232164e224524a109030879c73c91e9f8c6a39a10cd6540d6cf2f0a796e",
+    description: "Add missing source-compatible Squad admission defaults after the legacy rank repair.",
+    up: async (db) => {
+      const now = new Date();
+      const squadCollection = db.collection<SquadDocument>("squads");
+      const candidates = await squadCollection.find({
+        $or: [
+          { requiredMedals: { $exists: false } },
+          { invitedPlayerIds: { $exists: false } },
+        ],
+      }).toArray();
+      const plans = candidates.map((current) => {
+        const missingRequiredMedals = !Object.prototype.hasOwnProperty.call(current, "requiredMedals");
+        const missingInvitedPlayerIds = !Object.prototype.hasOwnProperty.call(current, "invitedPlayerIds");
+        const repaired: SquadDocument = {
+          ...current,
+          requiredMedals: missingRequiredMedals ? 0 : current.requiredMedals,
+          invitedPlayerIds: missingInvitedPlayerIds ? [] : current.invitedPlayerIds,
+          updatedAt: nextSquadUpdatedAt(current, now),
+        };
+        // Validate every complete successor before the first write. An explicitly present null,
+        // malformed admission value, or any unrelated damaged authority remains fail-closed.
+        validatedSquadDocument(repaired, now);
+        return { current, repaired, missingRequiredMedals, missingInvitedPlayerIds };
+      });
+
+      for (const plan of plans) {
+        const filter: Document = {
+          _id: plan.current._id,
+          updatedAt: plan.current.updatedAt,
+          ...(plan.missingRequiredMedals
+            ? { requiredMedals: { $exists: false } }
+            : { requiredMedals: plan.current.requiredMedals }),
+          ...(plan.missingInvitedPlayerIds
+            ? { invitedPlayerIds: { $exists: false } }
+            : { invitedPlayerIds: plan.current.invitedPlayerIds }),
+        };
+        const set: Document = { updatedAt: plan.repaired.updatedAt };
+        if (plan.missingRequiredMedals) set.requiredMedals = plan.repaired.requiredMedals;
+        if (plan.missingInvitedPlayerIds) set.invitedPlayerIds = plan.repaired.invitedPlayerIds;
+        const result = await squadCollection.updateOne(filter, { $set: set });
+        if (result.matchedCount !== 1) {
+          throw new MigrationHistoryError(`Squad ${plan.current.name} changed during admission-default repair.`);
         }
       }
     },

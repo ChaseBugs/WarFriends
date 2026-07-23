@@ -208,6 +208,21 @@ async function rotateAuthenticatedSession(
 }
 
 /**
+ * The stock client persists CreateAccount's guest Password as the same opaque value returned in
+ * Token. Until the player creates a real custom password there is no second durable credential:
+ * rotating that token during LoginToCustomAccount invalidates both the already-built gameplay
+ * request and the password that GameLoginManager will use for the next relog.
+ *
+ * Custom-password accounts and provider accounts do have independent durable proof, so their
+ * explicit logins retain normal session rotation.
+ */
+export function explicitLoginShouldRotateSession(
+  player: Pick<PlayerDocument, "accountType" | "authTokenHash">,
+): boolean {
+  return player.accountType !== AccountType.Guest || typeof player.authTokenHash === "string";
+}
+
+/**
  * Validate a direct WarFriends credential without conflating gameplay sessions and human
  * passwords. A custom account normally stores both values. The old nested ternary checked
  * `authToken` first and therefore never examined `authTokenHash`, making a valid saved
@@ -448,7 +463,9 @@ export async function authenticate(
     // its brute-force reservation first so repeated banned-login retries cannot create a false
     // credential lock that survives after the sanction ends.
     await assertPlayerNotSanctioned(doc);
-    if (allowCustomPassword) await rotateAuthenticatedSession(doc, { allowConcurrentWinner: false });
+    if (allowCustomPassword && explicitLoginShouldRotateSession(doc)) {
+      await rotateAuthenticatedSession(doc, { allowConcurrentWinner: false });
+    }
     logger.auth.login(id, true, { playerId: id });
     return doc;
   }

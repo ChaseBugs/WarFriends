@@ -3836,7 +3836,12 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 
 	protected void OnFailedToConnectToPhoton()
 	{
-		UnityEngine.Debug.LogError("OnFailedToConnectToPhoton: ");
+		if (!GameLauncher.ExternalMultiplayerEnabled)
+		{
+			PhotonNetwork.offlineMode = true;
+			return;
+		}
+		UnityEngine.Debug.LogWarning("OnFailedToConnectToPhoton: ");
 		if (CHFJHNBKLBJ == null)
 		{
 			return;
@@ -3909,6 +3914,11 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 
 	public static void ConnectToPhotonSafe(CloudRegionCode? GJBFKKOAMPA = null)
 	{
+		if (!GameLauncher.ExternalMultiplayerEnabled)
+		{
+			PhotonNetwork.offlineMode = true;
+			return;
+		}
 		switch (Singleton<BeanstalkServerManager>.instance.environment)
 		{
 		case DatabaseEnvironment.Production:

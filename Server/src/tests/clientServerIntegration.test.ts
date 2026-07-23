@@ -4,9 +4,11 @@ import { createServer, type Server } from "node:http";
 import { resolve } from "node:path";
 import test from "node:test";
 import express from "express";
+import { DbAction } from "../dbActions";
 import { apiRouter } from "../routes";
 import { CARD_PACK_NOT_FOUND, parseCardPackPurchaseData } from "../services/cardInventoryService";
 import { parseRestorePackInputs, validateRefundPackNotice } from "../handlers/purchases";
+import { parseRecoveredMultipartForm } from "../middleware/recoveredMultipartForm";
 
 const CLIENT_ENDPOINT_SOURCE = resolve(
   process.cwd(),
@@ -27,9 +29,11 @@ async function withRecoveredRouter(
 ): Promise<void> {
   const app = express();
 
-  // BestHTTP.AddField uses application/x-www-form-urlencoded for the stock request path. Mount
-  // exactly as production does so this test detects a body-parser or /api prefix regression.
+  // BestHTTP.AddField uses URL encoding for short values and automatically switches to multipart
+  // when one value exceeds 256 characters. Mount both production parsers so this test detects a
+  // body-parser or /api prefix regression.
   app.use(express.urlencoded({ extended: false, limit: "2mb" }));
+  app.use(parseRecoveredMultipartForm);
   app.use("/api", apiRouter);
 
   const server = createServer(app);
@@ -97,6 +101,64 @@ test("stock GetConfigurations form reaches action 157 and preserves its raw pars
     assert.equal(response.status, 200);
     assert.match(response.headers.get("content-type") ?? "", /^text\/plain\b/u);
     assert.equal(await response.text(), "success;0;{}");
+  });
+});
+
+test("stock authenticated action without both session fields opens manual login instead of relogging", async () => {
+  await withRecoveredRouter(async (baseUrl) => {
+    const form = new URLSearchParams({
+      SheetConfig: "0",
+      requestId: String(DbAction.GetPlayerData),
+      Version: "4.9.5.2",
+      Os: "android",
+    });
+    const response = await fetch(`${baseUrl}/${DbAction.GetPlayerData}/4-9-5`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: form,
+    });
+
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), {
+      DbAction: DbAction.GetPlayerData,
+      Result: 3_001,
+      Code: 3_001,
+      Message: "Missing credentials.",
+    });
+  });
+});
+
+test("stock long RequestBuffer multipart form preserves the transport ID and auth snapshot", async () => {
+  await withRecoveredRouter(async (baseUrl) => {
+    const bufferId = "01784723999";
+    const requests = JSON.stringify(Object.fromEntries(
+      Array.from({ length: 19 }, (_, index) => [index, {
+        databaseAction: 104,
+        objData: `weapon-impression-${index}`,
+      }]),
+    ));
+    assert.ok(requests.length > 256, "fixture must select BestHTTP's multipart form implementation");
+
+    const form = new FormData();
+    form.set("SheetConfig", "0");
+    form.set("requestId", "98");
+    form.set("Version", "4.9.5.2");
+    form.set("Os", "android");
+    form.set("Token", "null");
+    form.set("PlayerId", "null");
+    form.set("BufferId", bufferId);
+    form.set("Count", "19");
+    form.set("Requests", requests);
+
+    const response = await fetch(`${baseUrl}/98/4-9-5`, { method: "POST", body: form });
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), {
+      DbAction: 98,
+      Result: 1,
+      BufferId: bufferId,
+      RequestsResults: "[]",
+      DiscardedPreAccountBuffer: true,
+    });
   });
 });
 

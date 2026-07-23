@@ -2,16 +2,13 @@ import { ApiError, ApiErrorCode } from "../apiErrors";
 import { DbAction } from "../dbActions";
 import { ok } from "../dtos";
 import {
-  acknowledgeBufferedMessageIgnores,
   claimAssignment,
   claimAssignmentMegaReward,
   getOrCreateAssignments,
-  processAssignmentBuffer,
   serializeAssignmentData,
   skipAssignment,
   type BufferedRequestInput,
 } from "../services/assignmentService";
-import { ignoreMessage } from "../services/socialService";
 import {
   claimStarterAssignment,
   completeStarterAssignments,
@@ -24,6 +21,7 @@ import {
 } from "../services/eventAssignmentService";
 import { validatedRequestBufferId } from "../services/requestBufferAuthorityService";
 import { exactMatchInteger } from "./matchRequestParsing";
+import { executeRecoveredRequestBuffer } from "../services/recoveredRequestBufferService";
 
 /**
  * Assignment form fields and RequestBuffer integer members originate from C# `int` values.
@@ -240,24 +238,7 @@ export const assignmentHandlers: Record<number, HandlerEntry> = {
     // Buffered item purchases need the authenticated profile level for the recovered
     // CANBEBOUGHT gate. Passing it from the loaded player prevents a request payload from
     // choosing its own unlock level while preserving one atomic buffer transaction.
-    const result = await processAssignmentBuffer(
-      player!.id,
-      id,
-      requests,
-      player!.player.level,
-      player!.progression?.vipExpiration ?? player!.player.vipExpiration,
-      player!.player.leagueTier,
-    );
-    const pendingMessageIgnores = result.state.pendingMessageIgnores ?? [];
-    if (pendingMessageIgnores.length > 0) {
-      // Action 12 is idempotent and recipient-filtered in socialService. Drain every durable
-      // outbox entry before acknowledging the HTTP request, then clear exactly those IDs from
-      // progression. If either database step fails, the uncleared entry survives for retry.
-      for (const messageId of pendingMessageIgnores) {
-        await ignoreMessage(player!.id, messageId);
-      }
-      await acknowledgeBufferedMessageIgnores(player!.id, pendingMessageIgnores);
-    }
+    const result = await executeRecoveredRequestBuffer(player!, id, requests);
     return ok(DbAction.SendRequestBuffer, {
       BufferId: id,
       RequestsResults: result.requestsResults,

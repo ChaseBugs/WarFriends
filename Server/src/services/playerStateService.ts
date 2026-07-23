@@ -631,10 +631,9 @@ export function buildPlayerStateResponse(player: PlayerDocument, now = unixNow()
     player.player.skill,
     player.id,
   );
-  return {
+  const response: Record<string, unknown> = {
     Time: currentTime,
     BeginnersLeague: player.player.beginnersLeague,
-    LeagueId: player.player.leagueId,
     Skill: player.player.skill,
     MedalsBalance: player.player.medalsBalance,
     PlacementMatchesRequired: player.player.remainingMatches,
@@ -646,8 +645,14 @@ export function buildPlayerStateResponse(player: PlayerDocument, now = unixNow()
     UtcOffset: 0,
     DeviceToken: player.player.deviceToken,
     PlayerData: buildPlayerData(player, currentTime),
+    // The stock boot parser expects this field even when no curated content is configured.
+    VideoFeed: { FeaturedVideos: "{}", RecentVideos: "{}" },
     // JLMICAJOHIK/EGPLNLMMADN both log an error and leave the Arena closed when this key is
     // absent. The value is the Dynamo-style document consumed by IKPLPPFFDNI, not a string.
     WarArenaConfig: warArenaConfiguration(currentTime),
   };
+  // The recovered client splits a present LeagueId and parses its first segment as an integer.
+  // Empty means beginner/placement state and must therefore be represented by omission.
+  if (player.player.leagueId) response.LeagueId = player.player.leagueId;
+  return response;
 }

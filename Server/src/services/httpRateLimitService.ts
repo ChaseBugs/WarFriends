@@ -134,7 +134,9 @@ export function createHttpRateLimitMiddleware(
           retryAfterSeconds: decision.retryAfterSeconds,
           distributed: Boolean(distributed),
         });
-        res.status(429).json({ Code: 10, Message: "Too many requests. Try again later." });
+        // The recovered Unity parser requires Result on every database response. Keep the
+        // transport Code for replacement clients while mapping this condition to its stock enum.
+        res.status(429).json({ Result: 99999, Code: 10, Message: "Too many requests. Try again later." });
       })
       .catch(next);
   };

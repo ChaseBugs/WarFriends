@@ -600,11 +600,20 @@ public class VideoReplay : GuiElement
 	public override void InitEvents()
 	{
 		base.InitEvents();
-		Singleton<Recording>.instance.Changed += AAEPACOGFHH;
-		UIEventListener uIEventListener = UIEventListener.Get(DKNGPGMGBLI);
-		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(MDKCDOIHFPF));
-		UIEventListener uIEventListener2 = UIEventListener.Get(BPNBIHABMLL);
-		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(CEGCEOEPLAP));
+		if (Singleton<Recording>.instance != null)
+		{
+			Singleton<Recording>.instance.Changed += AAEPACOGFHH;
+		}
+		if (DKNGPGMGBLI != null)
+		{
+			UIEventListener uIEventListener = UIEventListener.Get(DKNGPGMGBLI);
+			uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(MDKCDOIHFPF));
+		}
+		if (BPNBIHABMLL != null)
+		{
+			UIEventListener uIEventListener2 = UIEventListener.Get(BPNBIHABMLL);
+			uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(CEGCEOEPLAP));
+		}
 	}
 
 	private void BNMEGCKJKBL(GameObject KHAHPAKDIKE)

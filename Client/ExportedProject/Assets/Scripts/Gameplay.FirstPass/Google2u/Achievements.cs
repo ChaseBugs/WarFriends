@@ -62,17 +62,18 @@ namespace Google2u
 			playWarcardsInASingleBattle_1,
 			stealEnemyCrates_1,
 			stealEnemyCrates_2,
-			stealEnemyCrates_3
+			stealEnemyCrates_3,
+			firstSquadWar_1
 		}
 
-		public string[] rowNames = new string[55]
+		public string[] rowNames = new string[56]
 		{
 			"acquireUnits_1", "acquireUnits_2", "acquireUnits_3", "acquireWeapons_1", "acquireWeapons_2", "acquireWeapons_3", "winRankedBattles_1", "winRankedBattles_2", "winRankedBattles_3", "winArenaBattles_1",
 			"winArenaBattles_2", "winArenaBattles_3", "becomeAFlawlessHero_1", "becomeAFlawlessHero_2", "becomeAFlawlessHero_3", "completeMissions_1", "completeMissions_2", "completeMissions_3", "deploySoldierUnits_1", "deploySoldierUnits_2",
 			"deploySoldierUnits_3", "deployVehicles_1", "deployVehicles_2", "deployVehicles_3", "playWarcards_1", "playWarcards_2", "playWarcards_3", "trainSoldierUnitsTimes_1", "trainSoldierUnitsTimes_2", "trainSoldierUnitsTimes_3",
 			"upgradeVehiclesTimes_1", "upgradeVehiclesTimes_2", "upgradeVehiclesTimes_3", "upgradeWeaponsTimes_1", "upgradeWeaponsTimes_2", "upgradeWeaponsTimes_3", "completeAssignments_1", "completeAssignments_2", "completeAssignments_3", "getToLeague_1",
 			"getToLeague_2", "getToLeague_3", "earnSquadPoints_1", "earnSquadPoints_2", "earnSquadPoints_3", "collectCosmeticItems_1", "collectCosmeticItems_2", "collectCosmeticItems_3", "claimDailyRewards_1", "claimDailyRewards_2",
-			"claimDailyRewards_3", "playWarcardsInASingleBattle_1", "stealEnemyCrates_1", "stealEnemyCrates_2", "stealEnemyCrates_3"
+			"claimDailyRewards_3", "playWarcardsInASingleBattle_1", "stealEnemyCrates_1", "stealEnemyCrates_2", "stealEnemyCrates_3", "firstSquadWar_1"
 		};
 
 		public Dictionary<string, int> namesToIndex = new Dictionary<string, int>
@@ -131,7 +132,8 @@ namespace Google2u
 			{ "playWarcardsInASingleBattle_1", 51 },
 			{ "stealEnemyCrates_1", 52 },
 			{ "stealEnemyCrates_2", 53 },
-			{ "stealEnemyCrates_3", 54 }
+			{ "stealEnemyCrates_3", 54 },
+			{ "firstSquadWar_1", 55 }
 		};
 
 		public List<AchievementsRow> Rows = new List<AchievementsRow>();

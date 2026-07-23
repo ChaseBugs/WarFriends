@@ -203,6 +203,14 @@ test("inventory achievement groups preserve source tiers and derive StatsManager
     ],
   );
 
+  const initialAchievements = achievementStateFor(createInitialProgression(NOW));
+  assert.equal(initialAchievements.data.find((group) => group.id === 15)?.value, 5);
+  assert.doesNotThrow(() => validateAchievementProgressState(createInitialProgression(NOW), 15, 5));
+  assert.throws(
+    () => validateAchievementProgressState(createInitialProgression(NOW), 15, 6),
+    (error: unknown) => (error as { code?: number }).code === ACHIEVEMENT_REWARD_NOT_FOUND,
+  );
+
   const state = createInitialProgression(NOW);
   state.warCardsPlayed = 5;
   const weapons = Object.values({ ...WEAPON_CATALOG, ...BLACK_MARKET_WEAPON_CATALOG })
@@ -280,11 +288,11 @@ test("inventory achievement groups preserve source tiers and derive StatsManager
   const achievements = achievementStateFor(state);
   assert.deepEqual(
     [0, 1, 8, 9, 10, 11, 15].map((id) => achievements.data.find((group) => group.id === id)?.value),
-    [8, 5, 5, 10, 1, 15, 7],
+    [8, 5, 5, 10, 1, 15, 8],
   );
-  assert.doesNotThrow(() => validateAchievementProgressState(state, 15, 7));
+  assert.doesNotThrow(() => validateAchievementProgressState(state, 15, 8));
   assert.throws(
-    () => validateAchievementProgressState(state, 15, 8),
+    () => validateAchievementProgressState(state, 15, 9),
     (error: unknown) => (error as { code?: number }).code === ACHIEVEMENT_REWARD_NOT_FOUND,
   );
 
@@ -303,7 +311,7 @@ test("inventory achievement groups preserve source tiers and derive StatsManager
     value: 29,
     progress: [{ claimed: false }, { claimed: false }, { claimed: false }],
   };
-  assert.equal(achievementStateFor(reversed).data.find((group) => group.id === 15)?.value, 4);
+  assert.equal(achievementStateFor(reversed).data.find((group) => group.id === 15)?.value, 5);
 });
 
 test("Arena achievement definitions preserve exact Ticket and Scraps rewards", () => {

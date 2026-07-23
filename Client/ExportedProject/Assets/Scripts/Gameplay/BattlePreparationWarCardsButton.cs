@@ -795,13 +795,15 @@ public class BattlePreparationWarCardsButton : Core_BaseScript
 		int warcardsUnlockLevel = LevelManager.instance.warcardsUnlockLevel;
 		bool isWarcardsLocked = LevelManager.instance.isWarcardsLocked;
 		IHPHGPJDAEK.color = ((!isWarcardsLocked) ? Color.white : Colours.grayMax);
-		IIDMNPDCLIE.gameObject.SetActive(isWarcardsLocked);
+		// IIDMNPDCLIE is an optional decorative lock/glow sprite and is absent from
+		// the recovered scene. The real lock icon and label remain authoritative.
+		if (IIDMNPDCLIE != null) IIDMNPDCLIE.gameObject.SetActive(isWarcardsLocked);
 		LPPNDCMLBEH.gameObject.SetActive(isWarcardsLocked);
 		FHEDNNJEEAN.gameObject.SetActive(isWarcardsLocked);
 		IPCAJDLBCJA.enabled = isWarcardsLocked;
-		for (int i = 0; i < CKGIGPMFMAE.Length; i++)
+		for (int i = 0; CKGIGPMFMAE != null && i < CKGIGPMFMAE.Length; i++)
 		{
-			CKGIGPMFMAE[i].color = ((!isWarcardsLocked) ? Color.white : Colours.grayLockedCards);
+			if (CKGIGPMFMAE[i] != null) CKGIGPMFMAE[i].color = ((!isWarcardsLocked) ? Color.white : Colours.grayLockedCards);
 		}
 		if (isWarcardsLocked)
 		{
@@ -3160,13 +3162,15 @@ public class BattlePreparationWarCardsButton : Core_BaseScript
 		int warcardsUnlockLevel = LevelManager.instance.warcardsUnlockLevel;
 		bool isWarcardsLocked = LevelManager.instance.isWarcardsLocked;
 		IHPHGPJDAEK.color = ((!isWarcardsLocked) ? Color.white : Colours.grayMax);
-		IIDMNPDCLIE.gameObject.SetActive(isWarcardsLocked);
+		// The decorative lock glow was not serialized in the recovered scene.
+		// The real lock sprite and unlock label below remain available.
+		if (IIDMNPDCLIE != null) IIDMNPDCLIE.gameObject.SetActive(isWarcardsLocked);
 		LPPNDCMLBEH.gameObject.SetActive(isWarcardsLocked);
 		FHEDNNJEEAN.gameObject.SetActive(isWarcardsLocked);
 		IPCAJDLBCJA.enabled = !isWarcardsLocked;
-		for (int i = 0; i < CKGIGPMFMAE.Length; i++)
+		for (int i = 0; CKGIGPMFMAE != null && i < CKGIGPMFMAE.Length; i++)
 		{
-			CKGIGPMFMAE[i].color = ((!isWarcardsLocked) ? Color.white : Colours.grayLockedCards);
+			if (CKGIGPMFMAE[i] != null) CKGIGPMFMAE[i].color = ((!isWarcardsLocked) ? Color.white : Colours.grayLockedCards);
 		}
 		if (isWarcardsLocked)
 		{

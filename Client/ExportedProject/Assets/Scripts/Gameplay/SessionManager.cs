@@ -758,7 +758,15 @@ public class SessionManager : Singleton<SessionManager>
 
 	public bool schedulingOrInProgressAnyUpdate => IMKILHFKDEP != MFGMKAJDCAI.None || !gcAuthenticated || MHMDPINDGBI || NBEMOMKJDFL;
 
-	private bool AKFIJOIODPB => !GameLoginManager.instance.data.isDeviceRegistered || Singleton<GameController>.instance.isTutorialInProgressOrPlaned || GameLoginManager.instance.acountDataDownloadingInProgress;
+	private bool AKFIJOIODPB
+	{
+		get
+		{
+			GameLoginManager gameLoginManager = UnityEngine.Object.FindObjectOfType<GameLoginManager>();
+			GameController gameController = UnityEngine.Object.FindObjectOfType<GameController>();
+			return (object)gameLoginManager == null || (object)gameLoginManager.data == null || !gameLoginManager.data.isDeviceRegistered || (object)gameController == null || gameController.isTutorialInProgressOrPlaned || gameLoginManager.acountDataDownloadingInProgress;
+		}
+	}
 
 	private bool MGIKLEDLHBP => !GameLoginManager.instance.acountDataDownloadingInProgress && Singleton<GameController>.instance.isInMenuOrWait && !Singleton<BeanstalkServerManager>.instance.loadingPlayerData;
 
@@ -1324,9 +1332,11 @@ public class SessionManager : Singleton<SessionManager>
 
 	private new void OnApplicationQuit()
 	{
-		if (GameLoginManager.instance.data.isDeviceRegistered)
+		GameLoginManager gameLoginManager = UnityEngine.Object.FindObjectOfType<GameLoginManager>();
+		BeanstalkServerManager beanstalkServerManager = UnityEngine.Object.FindObjectOfType<BeanstalkServerManager>();
+		if ((object)gameLoginManager != null && (object)gameLoginManager.data != null && gameLoginManager.data.isDeviceRegistered && (object)beanstalkServerManager != null)
 		{
-			Singleton<BeanstalkServerManager>.instance.FIENLGKEFEP(PlayerStatus.Offline);
+			beanstalkServerManager.FIENLGKEFEP(PlayerStatus.Offline);
 		}
 	}
 

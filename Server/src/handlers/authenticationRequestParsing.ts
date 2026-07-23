@@ -7,6 +7,25 @@ export interface AuthenticationRequestCredentials {
   credential?: string;
 }
 
+/**
+ * The recovered form builder snapshots `PlayerId` and `Token` when it creates an HTTP request.
+ * A RequestBuffer queued before first-account creation can therefore be sent later with either
+ * both fields omitted or the exact `null`/`null` sentinels, depending on which recovered HTTP path
+ * serialized it. This predicate recognizes only those two no-authority snapshots; aliases or a
+ * partially supplied session are not the same case and must continue through strict authentication.
+ */
+export function isRecoveredPreAccountSessionPlaceholder(
+  req: Record<string, unknown>,
+): boolean {
+  if (Object.prototype.hasOwnProperty.call(req, "id")
+    || Object.prototype.hasOwnProperty.call(req, "token")) return false;
+
+  const hasPlayerId = Object.prototype.hasOwnProperty.call(req, "PlayerId");
+  const hasToken = Object.prototype.hasOwnProperty.call(req, "Token");
+  return (!hasPlayerId && !hasToken)
+    || (req.PlayerId === "null" && req.Token === "null");
+}
+
 function invalidAuthenticationField(label: string): never {
   throw new ApiError(ApiErrorCode.RequestNotAuthorized, `${label} is invalid.`);
 }

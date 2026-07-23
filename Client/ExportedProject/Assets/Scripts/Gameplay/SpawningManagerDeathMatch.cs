@@ -2429,9 +2429,18 @@ public class SpawningManagerDeathMatch : Singleton<SpawningManagerDeathMatch>
 
 	private void DNMGKFDLLBJ()
 	{
+		if (HCEDGKDKKIG == null)
+		{
+			HCEDGKDKKIG = new List<ArmyUnit>();
+			return;
+		}
 		for (int i = 0; i < HCEDGKDKKIG.Count; i++)
 		{
 			ArmyUnit armyUnit = HCEDGKDKKIG[i];
+			if (armyUnit == null || armyUnit.behaviour == null || armyUnit.behaviour.upgradeSlots == null || armyUnit.behaviour.upgradeSlots.armyUpgradesRow == null || string.IsNullOrEmpty(armyUnit.behaviour.upgradeSlots.armyUpgradesRow.SPAWNS))
+			{
+				continue;
+			}
 			armyUnit.index = i;
 			string[] array = armyUnit.behaviour.upgradeSlots.armyUpgradesRow.SPAWNS.Split(' ');
 			armyUnit.unitsCounts = new List<ArmyUnitDefinition>();
@@ -2448,6 +2457,10 @@ public class SpawningManagerDeathMatch : Singleton<SpawningManagerDeathMatch>
 		int num = 0;
 		foreach (ArmyUnit item in HCEDGKDKKIG)
 		{
+			if (item == null || item.unitsCounts == null)
+			{
+				continue;
+			}
 			foreach (ArmyUnitDefinition unitsCount in item.unitsCounts)
 			{
 				unitsCount.index = num;

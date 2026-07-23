@@ -644,10 +644,16 @@ public class InAppDataManager : DatabaseSerializedObjectGeneric<InAppDataManager
 			{
 				string nAME = inAppsRow.NAME;
 				int iEALLELGOBM = ((!isWarbucksForGold) ? inAppsRow.AMOUNT : GetWarbucksForGoldAmount(nAME));
-				InappDefinition inappDefinition = InappDefinition.DJFKKLHNAAM(nAME, iEALLELGOBM);
+				InappDefinition inappDefinition;
 				if (isWarbucksForGold)
 				{
-					inappDefinition.goldPrice = GetWarbucksForGoldPrice(nAME);
+					int warbucksForGoldPrice = GetWarbucksForGoldPrice(nAME);
+					inappDefinition = InappDefinition.OEJAHIFDJJP(nAME, iEALLELGOBM, warbucksForGoldPrice);
+					inappDefinition.goldPrice = warbucksForGoldPrice;
+				}
+				else
+				{
+					inappDefinition = InappDefinition.DJFKKLHNAAM(nAME, iEALLELGOBM);
 				}
 				warbucksInAppDefinitions.Add(inappDefinition);
 			}

@@ -1993,8 +1993,16 @@ public class IntroductionDeals : Core_BaseScript
 
 	public void InitGuiValues()
 	{
+		if (IFDPIFMKOIA == null)
+		{
+			return;
+		}
 		foreach (IntroductionDealsItem iFDPIFMKOIum in IFDPIFMKOIA)
 		{
+			if (iFDPIFMKOIum == null)
+			{
+				continue;
+			}
 			iFDPIFMKOIum.gameObject.SetActive(value: true);
 			iFDPIFMKOIum.InitGuiValues();
 		}
@@ -2058,8 +2066,16 @@ public class IntroductionDeals : Core_BaseScript
 	public void InitControls()
 	{
 		AMGIODLLPHF();
+		if (IFDPIFMKOIA == null)
+		{
+			return;
+		}
 		foreach (IntroductionDealsItem iFDPIFMKOIum in IFDPIFMKOIA)
 		{
+			if (iFDPIFMKOIum == null)
+			{
+				continue;
+			}
 			iFDPIFMKOIum.gameObject.SetActive(value: true);
 			iFDPIFMKOIum.InitControls();
 		}
@@ -2470,8 +2486,16 @@ public class IntroductionDeals : Core_BaseScript
 
 	public void InitEvents()
 	{
+		if (IFDPIFMKOIA == null)
+		{
+			return;
+		}
 		foreach (IntroductionDealsItem iFDPIFMKOIum in IFDPIFMKOIA)
 		{
+			if (iFDPIFMKOIum == null)
+			{
+				continue;
+			}
 			iFDPIFMKOIum.gameObject.SetActive(value: true);
 			iFDPIFMKOIum.InitEvents();
 		}

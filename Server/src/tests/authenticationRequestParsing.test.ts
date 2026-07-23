@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { exactAuthenticationRequest } from "../handlers/authenticationRequestParsing";
+import {
+  exactAuthenticationRequest,
+  isRecoveredPreAccountSessionPlaceholder,
+} from "../handlers/authenticationRequestParsing";
 
 test("ordinary actions authenticate only with the recovered PlayerId and Token envelope", () => {
   assert.deepEqual(
@@ -73,4 +76,22 @@ test("missing and form null sentinels cannot become authentication authority", (
     () => exactAuthenticationRequest({ PlayerId: "player-a", Token: "null" }, "session"),
     /Session credential is invalid/u,
   );
+});
+
+test("only the two recovered unauthenticated envelopes identify a pre-account request snapshot", () => {
+  assert.equal(isRecoveredPreAccountSessionPlaceholder({}), true);
+  assert.equal(
+    isRecoveredPreAccountSessionPlaceholder({ PlayerId: "null", Token: "null" }),
+    true,
+  );
+  for (const request of [
+    { PlayerId: "null", Token: "token" },
+    { PlayerId: "player-a", Token: "null" },
+    { PlayerId: "null" },
+    { Token: "null" },
+    { PlayerId: "null", Token: "null", id: "player-a" },
+    { PlayerId: "null", Token: "null", token: "session-token" },
+  ]) {
+    assert.equal(isRecoveredPreAccountSessionPlaceholder(request), false);
+  }
 });

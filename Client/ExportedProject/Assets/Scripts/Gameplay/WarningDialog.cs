@@ -636,16 +636,19 @@ public class WarningDialog : GuiElementSingle<WarningDialog>, PAIIOKBBHBC
 		base.gameObject.SetActive(value: true);
 		oDLENIGMPGG.HAMKIKMJHDP = KBJEOEEOEFG / 15f;
 		oDLENIGMPGG.MCKAJNJBCMH = base.transform.localPosition.z;
-		TweenAlpha.Begin(JAJHGPMOGFH.gameObject, KBJEOEEOEFG, 0.005f, 1f);
+		if (JAJHGPMOGFH != null) TweenAlpha.Begin(JAJHGPMOGFH.gameObject, KBJEOEEOEFG, 0.005f, 1f);
 		TweenPosition tweenPosition = TweenPosition.Begin(base.gameObject, oDLENIGMPGG.HAMKIKMJHDP * 6f, new Vector3(0f, -4f * BFPOEEACIKA, oDLENIGMPGG.MCKAJNJBCMH), new Vector3(0f, -4f * BFPOEEACIKA, oDLENIGMPGG.MCKAJNJBCMH));
 		tweenPosition.onFinished = oDLENIGMPGG.LJCDGJKCNEC;
 		TweenAlpha.Begin(base.gameObject, oDLENIGMPGG.HAMKIKMJHDP, 0.005f, 1f).onFinished = null;
 		oDLENIGMPGG.IHPFHCOLJCL = new Vector3(3425f, 1356f, 1f);
 		oDLENIGMPGG.JOFJBFEPFJD = new Vector3(2740f, 1017f, 1f);
-		TweenAlpha.Begin(JFCNMPHDKHC.gameObject, oDLENIGMPGG.HAMKIKMJHDP * 6f, 0f, 0.84f);
-		TweenScale tweenScale = TweenScale.Begin(PEJFFMLEHFA.gameObject, oDLENIGMPGG.HAMKIKMJHDP * 11f, Vector3.one, Vector3.one);
-		tweenScale.onFinished = oDLENIGMPGG.EJLGBICBIFK;
-		TweenAlpha.Begin(PEJFFMLEHFA.gameObject, oDLENIGMPGG.HAMKIKMJHDP * 9f, 0f, 0f).onFinished = oDLENIGMPGG.HONCMBHEKDP;
+		if (JFCNMPHDKHC != null) TweenAlpha.Begin(JFCNMPHDKHC.gameObject, oDLENIGMPGG.HAMKIKMJHDP * 6f, 0f, 0.84f);
+		if (PEJFFMLEHFA != null)
+		{
+			TweenScale tweenScale = TweenScale.Begin(PEJFFMLEHFA.gameObject, oDLENIGMPGG.HAMKIKMJHDP * 11f, Vector3.one, Vector3.one);
+			tweenScale.onFinished = oDLENIGMPGG.EJLGBICBIFK;
+			TweenAlpha.Begin(PEJFFMLEHFA.gameObject, oDLENIGMPGG.HAMKIKMJHDP * 9f, 0f, 0f).onFinished = oDLENIGMPGG.HONCMBHEKDP;
+		}
 	}
 
 	public static WarningDialog GGGGDLPGADC()
@@ -965,7 +968,7 @@ public class WarningDialog : GuiElementSingle<WarningDialog>, PAIIOKBBHBC
 	{
 		CAOABBOEIGI = false;
 		bool flag = GameLoginManager.instance.canSendLogs || EDOOELDFDCH;
-		Debug.LogError("WarningDialog - Can send logs: " + flag);
+		Debug.Log("WarningDialog - Can send logs: " + flag);
 		EMFCKKPAJMJ.SetActive(flag);
 		if (flag)
 		{
@@ -1344,16 +1347,19 @@ public class WarningDialog : GuiElementSingle<WarningDialog>, PAIIOKBBHBC
 
 	private void DBPABFGAKKE(float KBJEOEEOEFG)
 	{
-		TweenAlpha.Begin(JAJHGPMOGFH.gameObject, KBJEOEEOEFG, 0.005f);
-		TweenAlpha.Begin(JFCNMPHDKHC.gameObject, KBJEOEEOEFG, 0f);
-		TweenScale.Begin(PEJFFMLEHFA.gameObject, KBJEOEEOEFG, Vector3.one).onFinished = null;
-		TweenAlpha.Begin(PEJFFMLEHFA.gameObject, KBJEOEEOEFG, 0f);
+		if (JAJHGPMOGFH != null) TweenAlpha.Begin(JAJHGPMOGFH.gameObject, KBJEOEEOEFG, 0.005f);
+		if (JFCNMPHDKHC != null) TweenAlpha.Begin(JFCNMPHDKHC.gameObject, KBJEOEEOEFG, 0f);
+		if (PEJFFMLEHFA != null)
+		{
+			TweenScale.Begin(PEJFFMLEHFA.gameObject, KBJEOEEOEFG, Vector3.one).onFinished = null;
+			TweenAlpha.Begin(PEJFFMLEHFA.gameObject, KBJEOEEOEFG, 0f);
+		}
 		TweenAlpha.Begin(base.gameObject, KBJEOEEOEFG, 0.005f).onFinished = delegate
 		{
 			HideDialog();
 			CAOABBOEIGI = false;
 		};
-		if (NKBNBEPKPGN)
+		if (NKBNBEPKPGN && DialogBackground.instance != null)
 		{
 			DialogBackground.instance.HideBackground(KBJEOEEOEFG);
 		}

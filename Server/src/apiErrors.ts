@@ -13,6 +13,8 @@ export const ApiErrorCode = {
   PlayerNotFound: 3_002,
   /** IJEAJGCCHEF.AccountBanned; its error callback consumes accountId/accountName/seconds. */
   AccountBanned: 3_003,
+  /** IJEAJGCCHEF.LoginFailure; returns the stock account chooser instead of relogging forever. */
+  LoginFailure: 3_001,
   OpponentNotFound: 51,
   SquadNotFound: 60,
   /** IJEAJGCCHEF.SquadnameTaken; the stock create dialog handles this exact code. */

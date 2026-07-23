@@ -12,6 +12,12 @@ using WarFriends.Legacy;
 
 public class GameLauncher : Core_BaseScript
 {
+	// The recovered social SDKs no longer have supported provider configuration. Keep them
+	// completely outside the startup critical path so guest/server login remains available.
+	public const bool SocialIntegrationsEnabled = false;
+
+	public const bool ExternalMultiplayerEnabled = false;
+
 	[Serializable]
 	public class LogoScale
 	{
@@ -6447,8 +6453,20 @@ public class GameLauncher : Core_BaseScript
 		UnityEngine.Debug.Log("Terms: First init.");
 		OODBNBKNOKB();
 		ALJKAAMHHLB.POPONJAMPDF("GameLauncher.Awake InitTerms");
-		Singleton<GameCenterProvider>.instance.Authenticated += OnGcAuthenticated;
-		Singleton<GooglePlayGameService>.instance.LoggedInFromInit += OnGooglePlayAuthenticated;
+		if (SocialIntegrationsEnabled)
+		{
+			Singleton<GameCenterProvider>.instance.Authenticated += OnGcAuthenticated;
+			Singleton<GooglePlayGameService>.instance.LoggedInFromInit += OnGooglePlayAuthenticated;
+		}
+		else
+		{
+			// Treat unavailable providers as completed optional startup work. This allows the
+			// already-loading MainScene to activate without Google Play/Game Center callbacks.
+			NFCFELCNIJI = true;
+			ICPEJCOLIGF = true;
+			GAHJNDNPKHG = true;
+			UnityEngine.Debug.Log("Social integrations disabled; continuing with guest/server login.");
+		}
 		foreach (LogoScale item in IIKEPMLCOHP)
 		{
 			if (Screen.width == item.width && Screen.height == item.height)
@@ -6539,11 +6557,14 @@ public class GameLauncher : Core_BaseScript
 	{
 		NFCFELCNIJI = true;
 		UnityEngine.Debug.Log("Terms: On Age Verification Criteria Met " + NLEGAOONJEI);
-		Singleton<GooglePlayGameService>.instance.Init();
-		InvokeAfter(delegate
+		if (SocialIntegrationsEnabled)
 		{
-			Singleton<GameCenterProvider>.instance.Authenticate();
-		}, (!BFDNFPCCGOF) ? 0.5f : 3f);
+			Singleton<GooglePlayGameService>.instance.Init();
+			InvokeAfter(delegate
+			{
+				Singleton<GameCenterProvider>.instance.Authenticate();
+			}, (!BFDNFPCCGOF) ? 0.5f : 3f);
+		}
 	}
 
 	protected virtual void LCJJMCMCAFJ()

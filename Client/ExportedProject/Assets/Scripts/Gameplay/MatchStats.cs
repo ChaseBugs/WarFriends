@@ -208,13 +208,26 @@ public class MatchStats
 			weaponTypeKills[key] = 0;
 		}
 		allGainedRibbons = new Dictionary<SkillShot.SkillShotType, int>();
-		foreach (LevelBehaviour behaviour in LevelManager.instance.behaviours)
+		LevelManager levelManager = LevelManager.instance;
+		if (levelManager == null)
 		{
+			return;
+		}
+		foreach (LevelBehaviour behaviour in levelManager.behaviours)
+		{
+			if (behaviour == null)
+			{
+				continue;
+			}
 			unitsDeployedSpecific[behaviour.indexInLevelsManager] = 0;
 			unitsSpawnedSpecific[behaviour.indexInLevelsManager] = 0;
 		}
-		foreach (WeaponLevelsSetup weaponLevelsSetup in LevelManager.instance.weaponLevelsSetups)
+		foreach (WeaponLevelsSetup weaponLevelsSetup in levelManager.weaponLevelsSetups)
 		{
+			if (weaponLevelsSetup == null)
+			{
+				continue;
+			}
 			weaponKills[weaponLevelsSetup.indexInLevelManager] = 0;
 		}
 	}

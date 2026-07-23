@@ -1079,7 +1079,13 @@ export interface FriendlyBattleDocument {
 }
 
 const runtimeInfrastructure = runtimeInfrastructurePolicy();
-const client = new MongoClient(config.mongoUrl, { maxPoolSize: runtimeInfrastructure.mongoPoolSize });
+// Optional authority is represented by field absence throughout the validators. Without this
+// option the Node driver converts a JavaScript `undefined` nested in a full replacement into BSON
+// null, turning a valid transition into corrupt durable state on the next read.
+const client = new MongoClient(config.mongoUrl, {
+  maxPoolSize: runtimeInfrastructure.mongoPoolSize,
+  ignoreUndefined: true,
+});
 
 let db: Db | null = null;
 let playersCollection: Collection<PlayerDocument> | null = null;

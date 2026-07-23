@@ -1765,10 +1765,13 @@ public class WeaponInventory : Core_BaseScript
 		COHKHNALDPH.owner = NPHCOBMHFND;
 		foreach (PlayerWeapon item in KCGKDDDNONB)
 		{
-			if ((object)item != null && (object)item.weapon != null)
+			if ((object)item != null)
 			{
-				item.weapon.owner = NPHCOBMHFND;
 				item.playerController = NPHCOBMHFND;
+				if ((object)item.weapon != null)
+				{
+					item.weapon.owner = NPHCOBMHFND;
+				}
 			}
 		}
 	}
@@ -1882,6 +1885,10 @@ public class WeaponInventory : Core_BaseScript
 		}
 		foreach (PlayerWeapon item2 in KCGKDDDNONB)
 		{
+			if ((object)item2 == null)
+			{
+				continue;
+			}
 			item2.gameObject.SetActive(value: false);
 			item2.isActiveWeapon = false;
 		}

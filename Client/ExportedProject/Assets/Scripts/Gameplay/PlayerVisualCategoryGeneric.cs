@@ -924,7 +924,8 @@ public class PlayerVisualCategoryGeneric<T> : PlayerVisualCategory where T : Pla
 			current.row = row;
 			if (current.row == null)
 			{
-				UnityEngine.Debug.LogError("Player visual Error: id not find: " + current.id);
+				// Preserve the visible recovered object with a neutral compatibility row when its
+				// later resource ID has no 1.6 gameplay-table entry.
 				PlayerVisualsRow row2 = new PlayerVisualsRow("Name", "1", "0", "0", "0", "0", "0", "0", "0", "FALSE", "shop", "0", "0", "0");
 				current.row = row2;
 			}
