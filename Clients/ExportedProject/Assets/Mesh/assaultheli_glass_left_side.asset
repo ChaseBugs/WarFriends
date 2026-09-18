@@ -1,0 +1,130 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!43 &4300000
+Mesh:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_Name: assaultheli_glass_left_side
+  m_SubMeshes:
+  - serializedVersion: 2
+    firstByte: 0
+    indexCount: 78
+    topology: 0
+    firstVertex: 0
+    vertexCount: 21
+    localAABB:
+      m_Center: {x: 0.23172897, y: 0.53577495, z: -0.4994734}
+      m_Extent: {x: 0.036066145, y: 0.1836967, z: 0.1443147}
+  m_Shapes:
+    vertices: []
+    shapes: []
+    channels: []
+    fullWeights: []
+  m_BindPose: []
+  m_BoneNameHashes:
+  m_RootBoneNameHash: 0
+  m_MeshCompression: 3
+  m_IsReadable: 0
+  m_KeepVertices: 1
+  m_KeepIndices: 1
+  m_IndexBuffer:
+  m_Skin: []
+  m_VertexData:
+    m_CurrentChannels: 0
+    m_VertexCount: 0
+    m_Channels:
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    m_DataSize: 0
+    _typelessdata:
+  m_CompressedMesh:
+    m_Vertices:
+      m_NumItems: 63
+      m_Range: 1.3632598
+      m_Start: -0.6437881
+      m_Data: 88be6f8aa7ab2be1a7f9528c5afa26a88a1d04ab5c1b62e7fe87dcf93f2a7be64f8ca6a16733ead5bdac2af11ca65e7c03a7f1aa81e9ba3548daef0494724cc0a36b0370e8eb1c8c1a312483b61f0d
+      m_BitSize: 10
+    m_UV:
+      m_NumItems: 42
+      m_Range: 0.29778445
+      m_Start: 0.16460855
+      m_Data: 2e3d855cb1b3c89327ca49eabbfe36bf8f8c739270129cc825592160031c007a20b372ba3d
+      m_BitSize: 7
+    m_Normals:
+      m_NumItems: 42
+      m_Range: 1.379089
+      m_Start: -0.38145098
+      m_Data: b8ca8378ea737ef54f721ccbf4eb6fbee41bfec203fcb01bfcc35fb8c81f3b09
+      m_BitSize: 6
+    m_Tangents:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data:
+      m_BitSize: 0
+    m_Weights:
+      m_NumItems: 0
+      m_Data:
+      m_BitSize: 0
+    m_NormalSigns:
+      m_NumItems: 21
+      m_Data: 200718
+      m_BitSize: 1
+    m_TangentSigns:
+      m_NumItems: 0
+      m_Data:
+      m_BitSize: 0
+    m_FloatColors:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data:
+      m_BitSize: 0
+    m_BoneIndices:
+      m_NumItems: 0
+      m_Data:
+      m_BitSize: 0
+    m_Triangles:
+      m_NumItems: 78
+      m_Data: 208800c620818c628000e62070401a431535d22245ad421663abb1e6987bec4106238b240612a29422b435979a00d10428
+      m_BitSize: 5
+    m_UVInfo: 5
+  m_LocalAABB:
+    m_Center: {x: 0.23172897, y: 0.53577495, z: -0.4994734}
+    m_Extent: {x: 0.036066145, y: 0.1836967, z: 0.1443147}
+  m_MeshUsageFlags: 0
+  m_BakedConvexCollisionMesh:
+  m_BakedTriangleCollisionMesh:
+  m_MeshOptimized: 1

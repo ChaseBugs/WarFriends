@@ -1,0 +1,146 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!43 &4300000
+Mesh:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_Name: mortar_upgrade_lighter
+  m_SubMeshes:
+  - serializedVersion: 2
+    firstByte: 0
+    indexCount: 30
+    topology: 0
+    firstVertex: 0
+    vertexCount: 16
+    localAABB:
+      m_Center: {x: -0.068991475, y: -0.4152738, z: 0.05949714}
+      m_Extent: {x: 0.012436105, y: 0.017176226, z: 0.016922778}
+  m_Shapes:
+    vertices: []
+    shapes: []
+    channels: []
+    fullWeights: []
+  m_BindPose:
+  - e00: -1.5186905E-16
+    e01: 1.0169553
+    e02: 6.506051E-07
+    e03: 0.41337645
+    e10: 0.0065106084
+    e11: 6.505918E-07
+    e12: -1.0169344
+    e13: -0.005644226
+    e20: -1.0169343
+    e21: 4.1652055E-09
+    e22: -0.0065106084
+    e23: -0.0008834998
+    e30: 0
+    e31: 0
+    e32: 0
+    e33: 1
+  m_BoneNameHashes: a2bf2d7c
+  m_RootBoneNameHash: 2083372962
+  m_MeshCompression: 3
+  m_IsReadable: 0
+  m_KeepVertices: 1
+  m_KeepIndices: 1
+  m_IndexBuffer:
+  m_Skin: []
+  m_VertexData:
+    m_CurrentChannels: 0
+    m_VertexCount: 0
+    m_Channels:
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    m_DataSize: 0
+    _typelessdata:
+  m_CompressedMesh:
+    m_Vertices:
+      m_NumItems: 48
+      m_Range: 0.50886995
+      m_Start: -0.43245003
+      m_Data: cd02003dbd4188ef2e03f74b4bc3eec21280fdb1390cef2e03f78f1bc1ffcd0200bdbb0cdc9f6e11ead31b84f8e346f0ffb1390c2f2c01d8a75b84fa
+      m_BitSize: 10
+    m_UV:
+      m_NumItems: 32
+      m_Range: 0.7797586
+      m_Start: 0.20591272
+      m_Data: 07fd00f600fd07f609fd09f610ff10fd09ff12fd10f612f610fd09f609fd10f6
+      m_BitSize: 8
+    m_Normals:
+      m_NumItems: 32
+      m_Range: 1.8367025
+      m_Start: -0.8448621
+      m_Data: 1ef06f7702424b705477a2321e702773f96f033aa0033aa0
+      m_BitSize: 6
+    m_Tangents:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data:
+      m_BitSize: 0
+    m_Weights:
+      m_NumItems: 16
+      m_Data: ffffffffffffffffffff
+      m_BitSize: 5
+    m_NormalSigns:
+      m_NumItems: 16
+      m_Data: c6fe
+      m_BitSize: 1
+    m_TangentSigns:
+      m_NumItems: 0
+      m_Data:
+      m_BitSize: 0
+    m_FloatColors:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data:
+      m_BitSize: 0
+    m_BoneIndices:
+      m_NumItems: 16
+      m_Data:
+      m_BitSize: 0
+    m_Triangles:
+      m_NumItems: 30
+      m_Data: 100213344035644768a997abdccedf
+      m_BitSize: 4
+    m_UVInfo: 5
+  m_LocalAABB:
+    m_Center: {x: -0.068991475, y: -0.4152738, z: 0.05949714}
+    m_Extent: {x: 0.012436105, y: 0.017176226, z: 0.016922778}
+  m_MeshUsageFlags: 1
+  m_BakedConvexCollisionMesh:
+  m_BakedTriangleCollisionMesh:
+  m_MeshOptimized: 1

@@ -1,0 +1,130 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!43 &4300000
+Mesh:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_Name: assaultheli_rotor_back
+  m_SubMeshes:
+  - serializedVersion: 2
+    firstByte: 0
+    indexCount: 114
+    topology: 0
+    firstVertex: 0
+    vertexCount: 32
+    localAABB:
+      m_Center: {x: 0.04317088, y: 1.0430813E-07, z: 2.2724271E-07}
+      m_Extent: {x: 0.043170888, y: 0.25409, z: 0.03159555}
+  m_Shapes:
+    vertices: []
+    shapes: []
+    channels: []
+    fullWeights: []
+  m_BindPose: []
+  m_BoneNameHashes:
+  m_RootBoneNameHash: 0
+  m_MeshCompression: 3
+  m_IsReadable: 0
+  m_KeepVertices: 1
+  m_KeepIndices: 1
+  m_IndexBuffer:
+  m_Skin: []
+  m_VertexData:
+    m_CurrentChannels: 0
+    m_VertexCount: 0
+    m_Channels:
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    m_DataSize: 0
+    _typelessdata:
+  m_CompressedMesh:
+    m_Vertices:
+      m_NumItems: 96
+      m_Range: 0.50818
+      m_Start: -0.2540899
+      m_Data: fffd9762ab2902f85f8a00b6fa5f8aad0268dd7f005ad7aa75fffd67dd7fff59f75fabd6fdd76a8a00b60aa0756dae765c9ba959e8a76a0afa09c0806d06005c9b003cd8269538b669657a7e56599f9ffff3d7a6ff3fb6f93f7c71c6795f9c8e1d18679c09c6e9587d773a56df9d71de77a76307de196782
+      m_BitSize: 10
+    m_UV:
+      m_NumItems: 64
+      m_Range: 0.41981822
+      m_Start: 0.10636033
+      m_Data: 094043d100241410050430514c000680419168181a02268279601e5801d68175f80abe82efe08ff80bfe05afa169f0129a8466c16b681abc
+      m_BitSize: 7
+    m_Normals:
+      m_NumItems: 64
+      m_Range: 1.9996954
+      m_Start: -0.99984777
+      m_Data: e027e7e02f7f320882b2010220201b722e835c3cc1b77c33dc33399c333d7773cf1c3cc58ddc344ddc38b223cb7223c7
+      m_BitSize: 6
+    m_Tangents:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data:
+      m_BitSize: 0
+    m_Weights:
+      m_NumItems: 0
+      m_Data:
+      m_BitSize: 0
+    m_NormalSigns:
+      m_NumItems: 32
+      m_Data: 0fe446c6
+      m_BitSize: 1
+    m_TangentSigns:
+      m_NumItems: 0
+      m_Data:
+      m_BitSize: 0
+    m_FloatColors:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data:
+      m_BitSize: 0
+    m_BoneIndices:
+      m_NumItems: 0
+      m_Data:
+      m_BitSize: 0
+    m_Triangles:
+      m_NumItems: 114
+      m_Data: 20880006114190620a29e6a001064a490d95166bee31c71e848d3518a36b2ebe17a19cb44a2aabb5534e7b2f9df4d67a2dce1aef8cf9c69deb8ebbe7dbe7cd7dff3e7f9dfdd7bf03
+      m_BitSize: 5
+    m_UVInfo: 5
+  m_LocalAABB:
+    m_Center: {x: 0.04317088, y: 1.0430813E-07, z: 2.2724271E-07}
+    m_Extent: {x: 0.043170888, y: 0.25409, z: 0.03159555}
+  m_MeshUsageFlags: 0
+  m_BakedConvexCollisionMesh:
+  m_BakedTriangleCollisionMesh:
+  m_MeshOptimized: 1

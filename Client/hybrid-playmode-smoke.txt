@@ -1,8 +1,0 @@
-duration_seconds=65.3
-scene_history=SplashScene -> MainScene
-managed_error_count=0
-main_scene_seconds=9.21
-player_data_seconds=9.84
-after_player_data_seconds=9.87
-main_visible_seconds=10.72
-error_samples:

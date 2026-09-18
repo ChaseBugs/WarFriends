@@ -1,0 +1,23 @@
+{
+  "Package": "E:\\Github\\Mobile\\War friends\\bf96d555b094d74baedd9c3cc87ee3bf1503545934.apk",
+  "OutputRoot": "E:\\Github\\Mobile\\War friends\\Clients\\WarFriends",
+  "ExportedProject": "E:\\Github\\Mobile\\War friends\\Clients\\WarFriends\\ExportedProject",
+  "PreparedAndroidRoot": "E:\\Github\\Mobile\\War friends\\Clients\\WarFriends\\_staging\\android-root",
+  "ExportRan": true,
+  "ScriptingBackend": "Mono",
+  "UnityVersion": "5.2.5f1",
+  "Abi": "armeabi-v7a",
+  "SourceArchives": [
+    "bf96d555b094d74baedd9c3cc87ee3bf1503545934.apk",
+    "main.14008.com.chillingo.warfriends.android.gplay.obb"
+  ],
+  "RejoinedSplits": 24,
+  "Collections": 0,
+  "Decompiled": 33,
+  "Warnings": [
+    "Requested ABI 'arm64-v8a' is not in the package; using 'armeabi-v7a'."
+  ],
+  "Succeeded": true,
+  "StartedUtc": "2026-09-18T07:35:43.3104398Z",
+  "FinishedUtc": "2026-09-18T07:37:23.2993265Z"
+}

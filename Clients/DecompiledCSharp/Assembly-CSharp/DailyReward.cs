@@ -1,0 +1,19 @@
+public enum DailyReward
+{
+	Warbucks,
+	Gold,
+	BronzeCards,
+	SilverCards,
+	GoldCards,
+	BronzeCard,
+	SilverCard,
+	GoldCard,
+	PowerBand,
+	Vip,
+	ParticularCards,
+	BronzeCardpack,
+	SilverCardpack,
+	GoldCardpack,
+	Customization,
+	ArenaTickets
+}

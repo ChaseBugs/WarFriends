@@ -1,0 +1,2765 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!74 &7400000
+AnimationClip:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_Name: bazooka_shoot_right
+  m_Legacy: 1
+  m_Compressed: 1
+  m_UseHighQualityCurve: 1
+  m_RotationCurves: []
+  m_CompressedRotationCurves:
+  - m_Path: weapon_dummy_02
+    m_Times:
+      m_NumItems: 23
+      m_Data: 600c320619838c41c6208210430605
+      m_BitSize: 5
+    m_Values:
+      m_NumItems: 23
+      m_Data: ff686492a7d8a3919f5822919f98a1909f886190bf786190ef082291ff882392ff686492ff686492ff686492dfb82a901739b28a6952e332c1116551f910e66e51b0e686c1ef6697612f27a0f96e279fd94e679ad94e679ad94e679a
+    m_Slopes:
+      m_NumItems: 92
+      m_Range: 8.377841
+      m_Start: -1.3437712
+      m_Data: 059224c590248a9024ca91288ca2280eb32c8ec42c8bb42c4aa32c8aa22808883ccc3e740f8fbc073cf10048fd4004e542d2b884c180c6c14c08a30cc9a2188aa2288aa228
+      m_BitSize: 6
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  - m_Path: weapon_dummy
+    m_Times:
+      m_NumItems: 22
+      m_Data: 608c33c818640c32061184183228
+      m_BitSize: 5
+    m_Values:
+      m_NumItems: 22
+      m_Data: 9f7d227b97ed217977ede17867ed21787f4d2278b0481e26a8a89e269f7d227b9f7d227b9f7d227b083aa42ee01beb49e938b1682a96677e4a13e690e250639e2a6fe0a62a6edeaaf24ddea74a4edfa34a4edfa34a4edfa3
+    m_Slopes:
+      m_NumItems: 88
+      m_Range: 12.079798
+      m_Start: -5.2727118
+      m_Data: 9ba66d9aa669dab6691cb7719ec7795dd775dbd66ddbc66ddbb66d9c9a861aafcb8fbdff8569efc0d6d28245be47f5a58ec58d15c6795ec7615dc765dbb66ddbb66d
+      m_BitSize: 6
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  - m_Path: assault
+    m_Times:
+      m_NumItems: 2
+      m_Data: 802e
+      m_BitSize: 7
+    m_Values:
+      m_NumItems: 2
+      m_Data: fcf75fdafcf75fda
+    m_Slopes:
+      m_NumItems: 8
+      m_Range: 0
+      m_Start: 0
+      m_Data:
+      m_BitSize: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  - m_Path: global_move
+    m_Times:
+      m_NumItems: 2
+      m_Data: 802e
+      m_BitSize: 7
+    m_Values:
+      m_NumItems: 2
+      m_Data: fcf7dfd9fcf7dfd9
+    m_Slopes:
+      m_NumItems: 8
+      m_Range: 0
+      m_Start: 0
+      m_Data:
+      m_BitSize: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  - m_Path: global_move/cartoon_guyHub001
+    m_Times:
+      m_NumItems: 13
+      m_Data: c08f41c630c8904101
+      m_BitSize: 5
+    m_Values:
+      m_NumItems: 13
+      m_Data: 6d6ea1276d6ea1276d6ea127d5cc242a05aba82f45a9ac37fc233043ba25ac5cbc26b6726427f67d7c07f67e7c07f67e7c07f67e
+    m_Slopes:
+      m_NumItems: 52
+      m_Range: 7.0536804
+      m_Start: -3.3516746
+      m_Data: 9ee7799ee77911c88641c99b40fbb3c2dccbc78ddf93ade29a0bbe1cd98d1dd87d9ee7799ee779
+      m_BitSize: 6
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  - m_Path: global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1
+    m_Times:
+      m_NumItems: 17
+      m_Data: 304333344373eca40d
+      m_BitSize: 4
+    m_Values:
+      m_NumItems: 17
+      m_Data: 4b37a180436761833bb7e18833d7a18b33d7618a33d7618a3bb7e187436721834b37a1804b37a1804b37a1807be7207fdb47607cab07607b9b17607b9b17607b9b17607b
+    m_Slopes:
+      m_NumItems: 68
+      m_Range: 1.8231454
+      m_Start: -0.85456383
+      m_Data: 1c987659f96f59f96fdc47765d8779df367de20580a2057cdf36799ee779a2b679ae767d60967994d77599e7759ee7799ee779
+      m_BitSize: 6
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  - m_Path: global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2
+    m_Times:
+      m_NumItems: 18
+      m_Data: 600c320619838c33d23a8302
+      m_BitSize: 5
+    m_Values:
+      m_NumItems: 18
+      m_Data: 0b359d79f3345d7abb045d7b9b041d7c9bf4dc7b9bf4dc7bbb045d7bf3241d7a0b359d790b359d790b359d79dbd59d7b6b561e7d73979f7ff316e0804b26a0814b26a0814b26a081
+    m_Slopes:
+      m_NumItems: 72
+      m_Range: 3.1860447
+      m_Start: -1.2048373
+      m_Data: 139659cbc54dcbc549d39559d885611c66696546756546751c6669188661a3a6717fe88d7fe8815ea7614096550e9659188661188661
+      m_BitSize: 6
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  - m_Path: global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002
+    m_Times:
+      m_NumItems: 16
+      m_Data: 600c320619e31cd58e89
+      m_BitSize: 5
+    m_Values:
+      m_NumItems: 16
+      m_Data: 4b971e773317df740b27a071fbc62070fb86e070fb86e07013f71f7233071f754b971e774b971e7783671e7bd307df81bb975f849b575f849b575f849b575f84
+    m_Slopes:
+      m_NumItems: 64
+      m_Range: 1.492718
+      m_Start: -0.6968875
+      m_Data: 173a714b3f68cb5f641899711e167aa4447e2f3087af508763757a24777a736783a6ca7ad1f675d8d6755dd7755dd775
+      m_BitSize: 6
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  - m_Path: global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine
+    m_Times:
+      m_NumItems: 17
+      m_Data: 600c628821639031281914
+      m_BitSize: 5
+    m_Values:
+      m_NumItems: 17
+      m_Data: a329a17bbb19617be3896177f3896177fb19e179eb19617ad319617bd319617bd319617b73d9607ba358207bcbd79f7903889f792b799d7b63291d7c63291d7c63291d7c
+    m_Slopes:
+      m_NumItems: 68
+      m_Range: 3.8208709
+      m_Start: -3.0790386
+      m_Data: f33ccfbabdc6b9bdc6765ccb726ccfef5cd3f13ccff33ccf683cd74e2be7c00adf1f0bcf7f3bcfbf5bc7394ccbf33ccff33ccf
+      m_BitSize: 6
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  - m_Path: global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003
+    m_Times:
+      m_NumItems: 17
+      m_Data: 600c628821639031281914
+      m_BitSize: 5
+    m_Values:
+      m_NumItems: 17
+      m_Data: abf99f7ac3e99f7aeb59e076fb59e07603fa9f79f3e9df79d3e99f7ad3e99f7ad3e99f7a7309e07ba3f81f7fd397df8103c81f8233c9208163f9608063f9608063f96080
+    m_Slopes:
+      m_NumItems: 68
+      m_Range: 3.8346457
+      m_Start: -3.0912719
+      m_Data: f33ccfbbbdc6babdc6755ccb716ccfef4cd3f13ccff33ccf275dd70ebde7c0ebdf609cd3bf3dcf7f1dc7392dcbf33ccff33ccf
+      m_BitSize: 6
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  - m_Path: global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone
+    m_Times:
+      m_NumItems: 7
+      m_Data: 80421984b202
+      m_BitSize: 6
+    m_Values:
+      m_NumItems: 7
+      m_Data: 8bf809788bf809788bf809788bb8097815f11dd905f11dd805f11dd8
+    m_Slopes:
+      m_NumItems: 28
+      m_Range: 0.42209372
+      m_Start: -0.3439772
+      m_Data: f44ffff33ccff33ccf2ef0066ef002f33ccff33ccf
+      m_BitSize: 6
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  - m_Path: global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1
+    m_Times:
+      m_NumItems: 16
+      m_Data: c03010c3400c03310cc430bc
+      m_BitSize: 6
+    m_Values:
+      m_NumItems: 16
+      m_Data: 63761b2b6345155e6345155e4bd5d64f4bc556508315174ae355d83c3b565a3063761b2b63761b2b63761b2bcb451a31aba4583d0b0458440b0458440b045844
+    m_Slopes:
+      m_NumItems: 64
+      m_Range: 9.246384
+      m_Start: -3.2744946
+      m_Data: 8af093caf093d6b64cd5b64cd92555dd764860283c1d8840982651966559cfb45d40535ac063520fc555966559966559
+      m_BitSize: 6
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  - m_Path: global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2
+    m_Times:
+      m_NumItems: 16
+      m_Data: c03010c3400c03310cc470ac
+      m_BitSize: 6
+    m_Values:
+      m_NumItems: 16
+      m_Data: 18078eb4769534997695349976f6b49d66f6b49d1e1734a4def8b3aec8760cb418078eb418078eb418078eb410a70db408e70cb308974cb208974cb208974cb2
+    m_Slopes:
+      m_NumItems: 64
+      m_Range: 8.772457
+      m_Start: -5.5043435
+      m_Data: 0038440038442ebaae2ebaaeacc9b6b879db3ffbd7389cb3ecdaa2288aa2e7699ee5499ae5499ae7699e288aa2288aa2
+      m_BitSize: 6
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  - m_Path: global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm
+    m_Times:
+      m_NumItems: 15
+      m_Data: c03010c3700cc43010c3f002
+      m_BitSize: 6
+    m_Values:
+      m_NumItems: 15
+      m_Data: 3b5ca68da37ce999cb9ce89d9beca8989bece898937c28974bbca68f3b5ca68d3b5ca68d3b5ca68d5bbc24948bbca19f9b2ca0a59b2ca0a59b2ca0a5
+    m_Slopes:
+      m_NumItems: 60
+      m_Range: 4.258976
+      m_Start: -2.167723
+      m_Data: ad5d332fcc2b1ee7919c78995fe78ddb75a51a66a19ed78920088264b57a29f06328e05762a56e200882200882
+      m_BitSize: 6
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  - m_Path: global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyLArmCollarbone
+    m_Times:
+      m_NumItems: 9
+      m_Data: 80420d03310c2f
+      m_BitSize: 6
+    m_Values:
+      m_NumItems: 9
+      m_Data: 2bd735742bd735742bd735742bd7357463373677810f5fd9e9cf5fd8e9cf5fd8e9cf5fd8
+    m_Slopes:
+      m_NumItems: 36
+      m_Range: 1.396459
+      m_Start: -0.29086077
+      m_Data: 8de2404dd3344dd3341fc5297f880bfe9703ded4214dd3344dd334
+      m_BitSize: 6
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  - m_Path: global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyLArmCollarbone/cartoon_guyLArm1
+    m_Times:
+      m_NumItems: 15
+      m_Data: c03010c3700cc43010c3f002
+      m_BitSize: 6
+    m_Values:
+      m_NumItems: 15
+      m_Data: e3a59f6903c55d6ccb24de730bc5de781b959e743bc5de72c3755f6be3a59f69e3a59f69e3a59f696b06a1658b17635f33e8635d33e8635d33e8635d
+    m_Slopes:
+      m_NumItems: 60
+      m_Range: 5.3482623
+      m_Start: -2.017309
+      m_Data: c4c345c0634659976adf966d1c0665a00669e006655a5661188661e42765fdaa683fca5c26575d188661188661
+      m_BitSize: 6
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  - m_Path: global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyLArmCollarbone/cartoon_guyLArm1/cartoon_guyLArm2
+    m_Times:
+      m_NumItems: 16
+      m_Data: c03010c3400c03310cc430bc
+      m_BitSize: 6
+    m_Values:
+      m_NumItems: 16
+      m_Data: c0f4a9337536704eddd5f0526d36b04eadf6af4c45372f487d582d3f68142b37c0f4a933c0f4a933c0f4a93378d42a36f843ec3a75f8ec3d75f8ec3d75f8ec3d
+    m_Slopes:
+      m_NumItems: 64
+      m_Range: 7.767641
+      m_Start: -4.1343856
+      m_Data: c790ef03c0ff61288aa8e971e8e971f08b55b32d456c5c5de4d979a2288a5f57929aa5a299a5a69e4792a2288aa2288a
+      m_BitSize: 6
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  - m_Path: global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyLArmCollarbone/cartoon_guyLArm1/cartoon_guyLArm2/cartoon_guyLArmPalm
+    m_Times:
+      m_NumItems: 16
+      m_Data: c03010c3400c03310cc430bc
+      m_BitSize: 6
+    m_Values:
+      m_NumItems: 16
+      m_Data: 2f099d7e5ff92a807f196b7d4f09a87d4729a87e4779667e47a9627e37d99e7e2f099d7e2f099d7e2f099d7ed7d81d813f681f85ef57e086ef57e086ef57e086
+    m_Slopes:
+      m_NumItems: 64
+      m_Range: 10.160105
+      m_Start: -3.5883985
+      m_Data: d97f71da5f7195434d94734d96745596614d1560519571595664599665595286594cb7554ca759537659966559966559
+      m_BitSize: 6
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  - m_Path: global_move/cartoon_guyHub001/cartoon_guyLLeg1
+    m_Times:
+      m_NumItems: 20
+      m_Data: 600c320619838c41c6318a0c0a
+      m_BitSize: 5
+    m_Values:
+      m_NumItems: 20
+      m_Data: a16d1890a16d1890696c1991e12a1b90810a5c8da98a1b8f892b1a91e10cd990a16d1890a16d1890a16d189081ec598ed18b1b89c9cb1c81c14b5e7e296b1f86416aa094716a6097716a6097716a6097
+    m_Slopes:
+      m_NumItems: 80
+      m_Range: 4.612118
+      m_Start: -2.5657
+      m_Data: e3388e54989680578fcb4777e1588a7089a5ff3999fe79852d098ae3388ed5c882cc68635a593b630947e0b8a2d897cea458bae5389ee3388ee3388e
+      m_BitSize: 6
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  - m_Path: global_move/cartoon_guyHub001/cartoon_guyLLeg1/cartoon_guyLLeg2
+    m_Times:
+      m_NumItems: 19
+      m_Data: 600c320631640c3286336450
+      m_BitSize: 5
+    m_Values:
+      m_NumItems: 19
+      m_Data: fb15a4c3fb15a4c3fb25a4c4e3b5e3bccb05e3b1db7523b9f30564c2fb15a4c3fb15a4c3fb15a4c33b56e4c86b3624ca83c6e3c7bba663c85b57e3ce630763cc53e722ca53e722ca53e722ca
+    m_Slopes:
+      m_NumItems: 76
+      m_Range: 4.11463
+      m_Start: -2.1879127
+      m_Data: a2188aa238829f57a55c06cc20b89566fa4ba5695b61088e611886e9b872aee8726af7996be79d2d688625188ee0b79d20e891611886612886
+      m_BitSize: 6
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  - m_Path: global_move/cartoon_guyHub001/cartoon_guyLLeg1/cartoon_guyLLeg2/cartoon_guyLLegAnkle
+    m_Times:
+      m_NumItems: 20
+      m_Data: 600c320619838c41c6318a0c0a
+      m_BitSize: 5
+    m_Values:
+      m_NumItems: 20
+      m_Data: 2e0e42b42e0e42b4c6ee40bbee2f3ecc9ed0bcd636b03dd0568f3fc37e6e41b82eee41b42eee41b42eee41b4d66e3fb3868fbcb306f0b9b32e70b9afce2f3cb00e4f40bcf64e41bef64e41bef64e41be
+    m_Slopes:
+      m_NumItems: 80
+      m_Range: 6.0439215
+      m_Start: -2.8270187
+      m_Data: 5dd775e3169a2ee5eef054ff20178a11b918cdb900d2582ddab7615dd775e4c5712ac47529e47964d56d5cc869590992da18921cf8815dd7755dd775
+      m_BitSize: 6
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  - m_Path: global_move/cartoon_guyHub001/cartoon_guyRLeg1
+    m_Times:
+      m_NumItems: 23
+      m_Data: 600c320619838c41c6208210430605
+      m_BitSize: 5
+    m_Values:
+      m_NumItems: 23
+      m_Data: 91301a6491301a6419cfda6359cd5b64090d5c6529ed9b64116e1b64a18fda6391301a6491301a6491301a6469139a6589141b6ef1149c7bf1b25c8679f01c8ba1ae1d8aa9ed5e85894d6080696ee17bb98ee17bb98ee17bb98ee17b
+    m_Slopes:
+      m_NumItems: 92
+      m_Range: 7.9069977
+      m_Start: -4.18877
+      m_Data: 61188696488649888a12688a60288aa9f881b4c88574d88568088a611886f7178eff57aaad98da9579e2c059c2c158964c987259b862a4986aa73882a41886611886611886
+      m_BitSize: 6
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  - m_Path: global_move/cartoon_guyHub001/cartoon_guyRLeg1/cartoon_guyRLeg2
+    m_Times:
+      m_NumItems: 22
+      m_Data: 600c320619838c41c62082283228
+      m_BitSize: 5
+    m_Values:
+      m_NumItems: 22
+      m_Data: 2b95dd9e2b95dd9e3be51ca733f59ca523e55d9a33455da23bc59ca83305dda42b95dd9e2b95dd9e2b95dd9e5bf5df7fb3f5df7f0bf6df7f83c65e9beb16deb343079ec183471ec8e3175fc1eb275fbdeb275fbdeb275fbd
+    m_Slopes:
+      m_NumItems: 88
+      m_Range: 9.721458
+      m_Start: -3.6368742
+      m_Data: 18866198e55998d559d7e668175661192556d8955d970669573665188661da0770de077420866921c562a2f4476155371f76425dd65119166d185665188661188661
+      m_BitSize: 6
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  - m_Path: global_move/cartoon_guyHub001/cartoon_guyRLeg1/cartoon_guyRLeg2/cartoon_guyRLegAnkle
+    m_Times:
+      m_NumItems: 23
+      m_Data: 600c320619838c41c6208210430605
+      m_BitSize: 5
+    m_Values:
+      m_NumItems: 23
+      m_Data: fa2a3947fa2a3947daaab8440a0a383a6a093831d20938367a4ab840eacab846fa2ab947fa2ab947fa2ab947a2eb3e3e7a6dbe403aefba42c2d0b64f1ad1b456a290b558c24fb85ae24ebb5be28dbe59b2cd3e57b2cd3e57b2cd3e57
+    m_Slopes:
+      m_NumItems: 92
+      m_Range: 5.7828574
+      m_Start: -2.3935008
+      m_Data: 9aa66959865dd0b5244b0600986659e5f6ba26d7ba1f178edbb66d9aa669617a3933da453f4482fc41baad32d2d9e599cce87d48ca75cba96d958755d8965d9aa6699aa669
+      m_BitSize: 6
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  m_PositionCurves:
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 0
+        value: {x: 0.24339479, y: 0.29560813, z: -0.06606514}
+        inSlope: {x: -0.064943805, y: 0.106079906, z: 1.1321605}
+        outSlope: {x: -0.064942904, y: 0.106081136, z: 1.1322045}
+        tangentMode: 0
+      - time: 0.03333378
+        value: {x: 0.2392702, y: 0.30208033, z: 0.009364686}
+        inSlope: {x: -0.046084244, y: 0.077151805, z: 1.6532856}
+        outSlope: {x: -0.04607539, y: 0.0771471, z: 1.6535972}
+        tangentMode: 0
+      - time: 0.0666666
+        value: {x: 0.24032208, y: 0.30075195, z: 0.04415917}
+        inSlope: {x: -0.07258794, y: -0.039264936, z: 0.84645253}
+        outSlope: {x: -0.07259837, y: -0.039243694, z: 0.8462927}
+        tangentMode: 0
+      - time: 0.10000038
+        value: {x: 0.2344303, y: 0.29946384, z: 0.06578411}
+        inSlope: {x: -0.16089311, y: -0.011058225, z: 0.47708377}
+        outSlope: {x: -0.16092578, y: -0.011060409, z: 0.47717333}
+        tangentMode: 0
+      - time: 0.1333332
+        value: {x: 0.22959568, y: 0.3000146, z: 0.07596551}
+        inSlope: {x: -0.13408896, y: 0.026390951, z: -0.06664089}
+        outSlope: {x: -0.13406712, y: 0.026390813, z: -0.06668798}
+        tangentMode: 0
+      - time: 0.16666698
+        value: {x: 0.22549264, y: 0.30122298, z: 0.06133811}
+        inSlope: {x: -0.073686026, y: 0.03263253, z: -0.90067697}
+        outSlope: {x: -0.07369757, y: 0.032644, z: -0.90093994}
+        tangentMode: 0
+      - time: 0.19999981
+        value: {x: 0.22468333, y: 0.30219027, z: 0.015919322}
+        inSlope: {x: 0.14510489, y: -0.034753192, z: -1.5178738}
+        outSlope: {x: 0.14510347, y: -0.034757946, z: -1.5175749}
+        tangentMode: 0
+      - time: 0.23333359
+        value: {x: 0.23516645, y: 0.2989059, z: -0.03983521}
+        inSlope: {x: 0.2810527, y: -0.0987248, z: -1.2298231}
+        outSlope: {x: 0.28110477, y: -0.09875065, z: -1.2299813}
+        tangentMode: 0
+      - time: 0.2666664
+        value: {x: 0.2434203, y: 0.29560828, z: -0.06606921}
+        inSlope: {x: 0.123855785, y: -0.049483087, z: -0.3936421}
+        outSlope: {x: 0.12380494, y: -0.04946881, z: -0.39350224}
+        tangentMode: 0
+      - time: 0.3000002
+        value: {x: 0.2434203, y: 0.29560828, z: -0.066069186}
+        inSlope: {x: -1.7844259E-06, y: -2.3856282E-06, z: 4.1665025E-06}
+        outSlope: {x: -1.2500983E-05, y: 7.142938E-06, z: 6.0720604E-06}
+        tangentMode: 0
+      - time: 0.33333302
+        value: {x: 0.2434203, y: 0.29560828, z: -0.06606921}
+        inSlope: {x: 0.5430251, y: -0.326431, z: -0.2585807}
+        outSlope: {x: 0.5429972, y: -0.32641694, z: -0.25855634}
+        tangentMode: 0
+      - time: 0.3666668
+        value: {x: 0.27962163, y: 0.27384648, z: -0.08330766}
+        inSlope: {x: 1.1492876, y: -0.94038904, z: 0.16492245}
+        outSlope: {x: 1.1494715, y: -0.9405799, z: 0.16506585}
+        tangentMode: 0
+      - time: 0.39999962
+        value: {x: 0.320038, y: 0.23291665, z: -0.055073466}
+        inSlope: {x: 0.6813939, y: -0.9084096, z: 1.3673378}
+        outSlope: {x: 0.6811132, y: -0.90809697, z: 1.367042}
+        tangentMode: 0
+      - time: 0.4333334
+        value: {x: 0.32503128, y: 0.21330415, z: 0.007832977}
+        inSlope: {x: -0.4202038, y: -0.31725356, z: 1.9497055}
+        outSlope: {x: -0.42020884, y: -0.31724757, z: 1.9497017}
+        tangentMode: 0
+      - time: 0.46666718
+        value: {x: 0.29202455, y: 0.21176688, z: 0.07490361}
+        inSlope: {x: -1.5041835, y: -0.05613505, z: 1.8108166}
+        outSlope: {x: -1.504678, y: -0.05614468, z: 1.8112706}
+        tangentMode: 0
+      - time: 0.5
+        value: {x: 0.22474763, y: 0.2095621, z: 0.12855957}
+        inSlope: {x: -2.1486444, y: -0.070543, z: 1.2259953}
+        outSlope: {x: -2.1483383, y: -0.07053397, z: 1.2257478}
+        tangentMode: 0
+      - time: 0.5333338
+        value: {x: 0.14880402, y: 0.20706464, z: 0.15661947}
+        inSlope: {x: -2.1288168, y: -0.07497565, z: 0.55297303}
+        outSlope: {x: -2.1293135, y: -0.07499727, z: 0.5530559}
+        tangentMode: 0
+      - time: 0.5666666
+        value: {x: 0.08282169, y: 0.2045634, z: 0.16542572}
+        inSlope: {x: -1.6732988, y: -0.064478084, z: 0.1243656}
+        outSlope: {x: -1.6729709, y: -0.0644617, z: 0.12432759}
+        tangentMode: 0
+      - time: 0.6000004
+        value: {x: 0.037272982, y: 0.20276703, z: 0.16490805}
+        inSlope: {x: -1.0367802, y: -0.028766146, z: -0.051892366}
+        outSlope: {x: -1.0369581, y: -0.028768238, z: -0.05191621}
+        tangentMode: 0
+      - time: 0.6333332
+        value: {x: 0.0137013905, y: 0.20264554, z: 0.16196579}
+        inSlope: {x: -0.4468351, y: 0.030601276, z: -0.09495857}
+        outSlope: {x: -0.44671613, y: 0.030596389, z: -0.09493824}
+        tangentMode: 0
+      - time: 0.666667
+        value: {x: 0.0074916705, y: 0.20480703, z: 0.15857892}
+        inSlope: {x: -0.019203452, y: 0.09658262, z: -0.10912873}
+        outSlope: {x: -0.019173574, y: 0.09661278, z: -0.109152414}
+        tangentMode: 0
+      - time: 0.6999998
+        value: {x: 0.012421189, y: 0.2090847, z: 0.15469047}
+        inSlope: {x: 0.07397694, y: 0.06418975, z: -0.058347024}
+        outSlope: {x: 0.07394219, y: 0.06416333, z: -0.058325846}
+        tangentMode: 0
+      - time: 0.7333336
+        value: {x: 0.012421229, y: 0.20908464, z: 0.15469046}
+        inSlope: {x: -4.1055324E-07, y: -1.4047383E-06, z: 9.3628E-08}
+        outSlope: {x: -2.2054037E-07, y: 2.598802E-06, z: -1.2874801E-06}
+        tangentMode: 0
+      - time: 0.9333334
+        value: {x: 0.012421189, y: 0.2090847, z: 0.15469047}
+        inSlope: {x: 1.04082026E-16, y: -0, z: 4.163281E-16}
+        outSlope: {x: -2.4569448E-05, y: 2.4402527E-05, z: 1.1901745E-05}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: weapon_dummy_02
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 0
+        value: {x: 0.22473244, y: 0.2263123, z: 0.009119784}
+        inSlope: {x: -0.012147826, y: -0.0055788443, z: 1.1416914}
+        outSlope: {x: -0.012147046, y: -0.005582302, z: 1.1417361}
+        tangentMode: 0
+      - time: 0.03333378
+        value: {x: 0.22409916, y: 0.22533259, z: 0.08522382}
+        inSlope: {x: 0.0382039, y: -0.040233593, z: 1.6667984}
+        outSlope: {x: 0.03822224, y: -0.04024614, z: 1.6671132}
+        tangentMode: 0
+      - time: 0.0666666
+        value: {x: 0.22727928, y: 0.22362995, z: 0.12024507}
+        inSlope: {x: 0.07387351, y: -0.04837157, z: 0.8449726}
+        outSlope: {x: 0.0738576, y: -0.048361626, z: 0.8448111}
+        tangentMode: 0
+      - time: 0.10000038
+        value: {x: 0.22902286, y: 0.22210845, z: 0.14154449}
+        inSlope: {x: 0.023256319, y: -0.016149322, z: 0.471412}
+        outSlope: {x: 0.023256658, y: -0.016144644, z: 0.47150093}
+        tangentMode: 0
+      - time: 0.1333332
+        value: {x: 0.22882952, y: 0.22255331, z: 0.1516733}
+        inSlope: {x: -0.010627908, y: -0.05154319, z: -0.10515654}
+        outSlope: {x: -0.010625338, y: -0.051546726, z: -0.10520246}
+        tangentMode: 0
+      - time: 0.16666698
+        value: {x: 0.2283144, y: 0.21867202, z: 0.13453093}
+        inSlope: {x: -0.037506673, y: -0.09974954, z: -0.9608526}
+        outSlope: {x: -0.03752007, y: -0.09977272, z: -0.96113026}
+        tangentMode: 0
+      - time: 0.19999981
+        value: {x: 0.22632892, y: 0.21590331, z: 0.08761529}
+        inSlope: {x: -0.052426226, y: 0.036018264, z: -1.5077847}
+        outSlope: {x: -0.05241469, y: 0.03603282, z: -1.5074766}
+        tangentMode: 0
+      - time: 0.23333359
+        value: {x: 0.22481994, y: 0.2210742, z: 0.03403089}
+        inSlope: {x: -0.02356404, y: 0.15613934, z: -1.17749}
+        outSlope: {x: -0.023564197, y: 0.15617098, z: -1.1776414}
+        tangentMode: 0
+      - time: 0.2666664
+        value: {x: 0.22475804, y: 0.22631249, z: 0.009115617}
+        inSlope: {x: -0.00092600845, y: 0.078605086, z: -0.37385422}
+        outSlope: {x: -0.0009256478, y: 0.07857227, z: -0.37372217}
+        tangentMode: 0
+      - time: 0.3000002
+        value: {x: 0.22475804, y: 0.22631247, z: 0.0091156205}
+        inSlope: {x: 1.788088E-06, y: 9.770789E-08, z: 3.5039993E-06}
+        outSlope: {x: -1.1884584E-06, y: 6.4531955E-06, z: 1.0641682E-05}
+        tangentMode: 0
+      - time: 0.33333302
+        value: {x: 0.22475804, y: 0.22631249, z: 0.0091156205}
+        inSlope: {x: 0.12256213, y: -0.2700043, z: -0.4298509}
+        outSlope: {x: 0.122553825, y: -0.2699882, z: -0.4298194}
+        tangentMode: 0
+      - time: 0.3666668
+        value: {x: 0.23292871, y: 0.20831248, z: -0.019540722}
+        inSlope: {x: 0.29478985, y: -0.7478752, z: -0.42908013}
+        outSlope: {x: 0.29484496, y: -0.7480302, z: -0.42906412}
+        tangentMode: 0
+      - time: 0.39999962
+        value: {x: 0.2444105, y: 0.17645463, z: -0.019488486}
+        inSlope: {x: 0.0916711, y: -0.6708959, z: 0.2175867}
+        outSlope: {x: 0.091600336, y: -0.6706547, z: 0.21754855}
+        tangentMode: 0
+      - time: 0.4333334
+        value: {x: 0.23903541, y: 0.16360034, z: -0.0050367326}
+        inSlope: {x: -0.2725434, y: -0.19221467, z: 0.5428221}
+        outSlope: {x: -0.27254143, y: -0.1922132, z: 0.54282045}
+        tangentMode: 0
+      - time: 0.46666718
+        value: {x: 0.22624138, y: 0.16364035, z: 0.016698776}
+        inSlope: {x: -0.665357, y: -0.0077964994, z: 0.7519185}
+        outSlope: {x: -0.6655715, y: -0.007798717, z: 0.75213736}
+        tangentMode: 0
+      - time: 0.5
+        value: {x: 0.19467668, y: 0.16308072, z: 0.045093335}
+        inSlope: {x: -1.1031502, y: -0.019674528, z: 0.7560621}
+        outSlope: {x: -1.1030115, y: -0.01967239, z: 0.7559324}
+        tangentMode: 0
+      - time: 0.5333338
+        value: {x: 0.15270853, y: 0.1623291, z: 0.06709365}
+        inSlope: {x: -1.2533062, y: -0.020151604, z: 0.51492244}
+        outSlope: {x: -1.2536113, y: -0.020156117, z: 0.51502484}
+        tangentMode: 0
+      - time: 0.5666666
+        value: {x: 0.1111202, y: 0.16173744, z: 0.0794227}
+        inSlope: {x: -1.1088234, y: -0.006637577, z: 0.2453872}
+        outSlope: {x: -1.1086134, y: -0.0066351006, z: 0.24532545}
+        tangentMode: 0
+      - time: 0.6000004
+        value: {x: 0.07880107, y: 0.16188681, z: 0.083448745}
+        inSlope: {x: -0.77692866, y: 0.024096644, z: 0.037639413}
+        outSlope: {x: -0.7770722, y: 0.024103025, z: 0.037634607}
+        tangentMode: 0
+      - time: 0.6333332
+        value: {x: 0.059323598, y: 0.16334394, z: 0.08193211}
+        inSlope: {x: -0.41471276, y: 0.065266624, z: -0.09506285}
+        outSlope: {x: -0.41461197, y: 0.06525626, z: -0.09505099}
+        tangentMode: 0
+      - time: 0.666667
+        value: {x: 0.051160052, y: 0.16623741, z: 0.07711201}
+        inSlope: {x: -0.121309765, y: 0.10255158, z: -0.16462418}
+        outSlope: {x: -0.121313594, y: 0.10257613, z: -0.16466309}
+        tangentMode: 0
+      - time: 0.6999998
+        value: {x: 0.051236127, y: 0.17018093, z: 0.07095697}
+        inSlope: {x: 0.001144828, y: 0.059173755, z: -0.092359185}
+        outSlope: {x: 0.0011413124, y: 0.059148762, z: -0.092323475}
+        tangentMode: 0
+      - time: 0.7333336
+        value: {x: 0.05123612, y: 0.17018089, z: 0.07095698}
+        inSlope: {x: -1.01292486E-07, y: -2.0962925E-06, z: 4.979208E-07}
+        outSlope: {x: -3.2187003E-07, y: -2.0742737E-06, z: 6.4374007E-07}
+        tangentMode: 0
+      - time: 0.9333334
+        value: {x: 0.051236127, y: 0.17018093, z: 0.07095697}
+        inSlope: {x: 2.0816405E-16, y: 8.326562E-16, z: 2.0816405E-16}
+        outSlope: {x: -1.1159524E-05, y: 1.6068516E-05, z: 1.666348E-05}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: weapon_dummy
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 0
+        value: {x: -0, y: 0, z: 2.0861626E-09}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      - time: 0.9333334
+        value: {x: -0, y: 0, z: 2.0861626E-09}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 0
+        value: {x: 0.30246404, y: -0.08103612, z: 0.09177532}
+        inSlope: {x: 5.1499205E-06, y: -1.2874801E-06, z: 6.4374007E-07}
+        outSlope: {x: 4.1961107E-06, y: 1.9255824E-06, z: -1.2874433E-06}
+        tangentMode: 0
+      - time: 0.03333378
+        value: {x: 0.30246413, y: -0.08103614, z: 0.09177534}
+        inSlope: {x: 4.1961107E-06, y: -0.18732104, z: -1.2874433E-06}
+        outSlope: {x: 2.5749603E-06, y: -0.18739119, z: 6.4374007E-07}
+        tangentMode: 0
+      - time: 0.0666666
+        value: {x: 0.3024641, y: -0.09352438, z: 0.091775335}
+        inSlope: {x: 2.5749603E-06, y: -0.5352778, z: 6.4374007E-07}
+        outSlope: {x: 3.885729E-15, y: -0.53521496, z: 9.714322E-16}
+        tangentMode: 0
+      - time: 0.10000038
+        value: {x: 0.3024641, y: -0.11671683, z: 0.091775335}
+        inSlope: {x: 1.6653124E-15, y: -0.53519475, z: 4.163281E-16}
+        outSlope: {x: 3.88584E-15, y: -0.53529716, z: 9.7146E-16}
+        tangentMode: 0
+      - time: 0.1333332
+        value: {x: 0.3024641, y: -0.12920506, z: 0.091775335}
+        inSlope: {x: 1.6653601E-15, y: -0.07448783, z: 4.1634001E-16}
+        outSlope: {x: 3.885729E-15, y: -0.07442687, z: 9.714322E-16}
+        tangentMode: 0
+      - time: 0.16666698
+        value: {x: 0.3024641, y: -0.12167864, z: 0.091775335}
+        inSlope: {x: 1.6653124E-15, y: 0.36125937, z: 4.163281E-16}
+        outSlope: {x: 3.88584E-15, y: 0.36135885, z: 9.7146E-16}
+        tangentMode: 0
+      - time: 0.19999981
+        value: {x: 0.3024641, y: -0.10512061, z: 0.091775335}
+        inSlope: {x: 1.6653601E-15, y: 0.49683988, z: 4.1634001E-16}
+        outSlope: {x: 3.885729E-15, y: 0.49673292, z: 9.714322E-16}
+        tangentMode: 0
+      - time: 0.23333359
+        value: {x: 0.3024641, y: -0.088562556, z: 0.091775335}
+        inSlope: {x: 1.6653124E-15, y: 0.3612641, z: 4.163281E-16}
+        outSlope: {x: 3.88584E-15, y: 0.36131203, z: 9.7146E-16}
+        tangentMode: 0
+      - time: 0.2666664
+        value: {x: 0.3024641, y: -0.081036136, z: 0.091775335}
+        inSlope: {x: 1.6653601E-15, y: 0.112934515, z: 4.1634001E-16}
+        outSlope: {x: 3.885729E-15, y: 0.11289506, z: 9.714322E-16}
+        tangentMode: 0
+      - time: 0.3000002
+        value: {x: 0.3024641, y: -0.081036136, z: 0.091775335}
+        inSlope: {x: 1.6653124E-15, y: 5.9940305E-07, z: 4.163281E-16}
+        outSlope: {x: 1.4291101E-05, y: -1.4866254E-06, z: -5.967929E-07}
+        tangentMode: 0
+      - time: 0.33333302
+        value: {x: 0.3024641, y: -0.081036136, z: 0.091775335}
+        inSlope: {x: -0.47757402, y: 0.11789233, z: -0.024741668}
+        outSlope: {x: -0.4775479, y: 0.11788477, z: -0.024739416}
+        tangentMode: 0
+      - time: 0.3666668
+        value: {x: 0.27062616, y: -0.07317688, z: 0.090126}
+        inSlope: {x: -1.0587593, y: 0.26980543, z: -0.03883334}
+        outSlope: {x: -1.0589306, y: 0.2698484, z: -0.03883504}
+        tangentMode: 0
+      - time: 0.39999962
+        value: {x: 0.23188123, y: -0.06304939, z: 0.089186646}
+        inSlope: {x: -1.2090484, y: 0.32404715, z: -0.01411781}
+        outSlope: {x: -1.2087425, y: 0.32396585, z: -0.014110652}
+        tangentMode: 0
+      - time: 0.4333334
+        value: {x: 0.19003996, y: -0.05157819, z: 0.089185245}
+        inSlope: {x: -1.2530113, y: 0.33470884, z: -0.016753487}
+        outSlope: {x: -1.253009, y: 0.33470848, z: -0.016754314}
+        tangentMode: 0
+      - time: 0.5
+        value: {x: 0.10898655, y: -0.030458618, z: 0.08709336}
+        inSlope: {x: -1.1121002, y: 0.29163662, z: -0.02516824}
+        outSlope: {x: -1.1119236, y: 0.29159075, z: -0.025162775}
+        tangentMode: 0
+      - time: 0.6000004
+        value: {x: 0.021557834, y: -0.007065137, z: 0.08599854}
+        inSlope: {x: -0.5872789, y: 0.16429968, z: 0.006221068}
+        outSlope: {x: -0.5873934, y: 0.16433226, z: 0.0062226397}
+        tangentMode: 0
+      - time: 0.6333332
+        value: {x: 0.0054914216, y: -0.0024399569, z: 0.08641586}
+        inSlope: {x: -0.38416454, y: 0.115024045, z: 0.018378595}
+        outSlope: {x: -0.38407937, y: 0.11499936, z: 0.018377163}
+        tangentMode: 0
+      - time: 0.666667
+        value: {x: -0.004047634, y: 0.00060154026, z: 0.08722365}
+        inSlope: {x: -0.19420606, y: 0.06893168, z: 0.029734079}
+        outSlope: {x: -0.1942306, y: 0.06894243, z: 0.029743524}
+        tangentMode: 0
+      - time: 0.6999998
+        value: {x: -0.0074558407, y: 0.002155557, z: 0.0883982}
+        inSlope: {x: -0.05113861, y: 0.023318022, z: 0.017624523}
+        outSlope: {x: -0.05112237, y: 0.0233099, z: 0.017618898}
+        tangentMode: 0
+      - time: 0.7333336
+        value: {x: -0.0074558407, y: 0.0021555573, z: 0.0883982}
+        inSlope: {x: 1.4748605E-07, y: -8.4613326E-08, z: 5.2508453E-10}
+        outSlope: {x: -0, y: 1.00584385E-08, z: 9.7146E-16}
+        tangentMode: 0
+      - time: 0.9333334
+        value: {x: -0.0074558407, y: 0.002155557, z: 0.0883982}
+        inSlope: {x: -0, y: -3.4694006E-17, z: 4.163281E-16}
+        outSlope: {x: -1.1532486E-06, y: -2.836633E-07, z: 3.0948417E-05}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 0
+        value: {x: 1.66893E-08, y: -0.00994292, z: 2.0861626E-09}
+        inSlope: {x: -1.252153E-07, y: -1.6242512E-07, z: 1.2407899E-23}
+        outSlope: {x: -1.2517094E-07, y: -1.6093041E-07, z: 7.419033E-12}
+        tangentMode: 0
+      - time: 0.03333378
+        value: {x: 1.66893E-08, y: -0.009942918, z: 2.0861626E-09}
+        inSlope: {x: 1.2516526E-07, y: -1.6093041E-07, z: -5.006681E-07}
+        outSlope: {x: 1.2521993E-07, y: -5.0664703E-08, z: -5.0090244E-07}
+        tangentMode: 0
+      - time: 0.0666666
+        value: {x: 2.5033952E-08, y: -0.009942922, z: -3.1292437E-08}
+        inSlope: {x: 2.503848E-07, y: -5.0664703E-08, z: -5.008616E-07}
+        outSlope: {x: 2.5034217E-07, y: 1.6242048E-07, z: -5.006785E-07}
+        tangentMode: 0
+      - time: 0.10000038
+        value: {x: 3.33786E-08, y: -0.009942918, z: -3.1292437E-08}
+        inSlope: {x: -1.7170035E-12, y: 3.1143009E-07, z: 5.0066575E-07}
+        outSlope: {x: -5.1712846E-11, y: 3.6210372E-07, z: 5.0091336E-07}
+        tangentMode: 0
+      - time: 0.1333332
+        value: {x: 2.5033952E-08, y: -0.00994291, z: 2.0861626E-09}
+        inSlope: {x: -1.252214E-07, y: 2.1308983E-07, z: 1.9102381E-10}
+        outSlope: {x: -1.2516776E-07, y: -1.013265E-07, z: -8.467425E-12}
+        tangentMode: 0
+      - time: 0.16666698
+        value: {x: 2.5033952E-08, y: -0.009942918, z: -3.1292437E-08}
+        inSlope: {x: -1.2516804E-07, y: -1.013265E-07, z: 2.8300537E-12}
+        outSlope: {x: -1.2522496E-07, y: -1.6093502E-07, z: 2.1754806E-10}
+        tangentMode: 0
+      - time: 0.19999981
+        value: {x: 1.66893E-08, y: -0.009942916, z: 2.0861626E-09}
+        inSlope: {x: -4.958119E-11, y: -1.6093502E-07, z: 2.1761912E-10}
+        outSlope: {x: -7.9704066E-13, y: -1.5049969E-07, z: 3.1497936E-12}
+        tangentMode: 0
+      - time: 0.23333359
+        value: {x: 2.5033952E-08, y: -0.009942922, z: -3.1292437E-08}
+        inSlope: {x: 1.2517015E-07, y: -1.4900672E-09, z: -8.431898E-12}
+        outSlope: {x: 1.2517006E-07, y: 1.01329405E-07, z: 1.9098828E-10}
+        tangentMode: 0
+      - time: 0.2666664
+        value: {x: 2.5033952E-08, y: -0.009942913, z: 2.0861626E-09}
+        inSlope: {x: -5.3254215E-12, y: 1.01329405E-07, z: 5.009131E-07}
+        outSlope: {x: -0, y: -6.0714514E-17, z: 5.0066984E-07}
+        tangentMode: 0
+      - time: 0.3666668
+        value: {x: 2.5033952E-08, y: -0.00994291, z: 1.8775463E-08}
+        inSlope: {x: -0, y: -9.834637E-08, z: 1.190605E-11}
+        outSlope: {x: 1.9147644E-12, y: -1.01329405E-07, z: -8.6709924E-11}
+        tangentMode: 0
+      - time: 0.39999962
+        value: {x: 2.5033952E-08, y: -0.009942918, z: 2.0861626E-09}
+        inSlope: {x: -1.2517232E-07, y: -1.01329405E-07, z: -2.5046967E-07}
+        outSlope: {x: -1.2515721E-07, y: -1.8214353E-16, z: -2.5033137E-07}
+        tangentMode: 0
+      - time: 0.4333334
+        value: {x: 1.66893E-08, y: -0.009942918, z: 2.0861626E-09}
+        inSlope: {x: -7.871465E-12, y: -7.8061524E-17, z: 9.3882285E-08}
+        outSlope: {x: 7.871465E-12, y: -1.8214353E-16, z: 9.388425E-08}
+        tangentMode: 0
+      - time: 0.46666718
+        value: {x: 2.5033952E-08, y: -0.009942918, z: 8.34465E-09}
+        inSlope: {x: 1.2515721E-07, y: -7.8061524E-17, z: 4.6932364E-08}
+        outSlope: {x: 1.2517212E-07, y: 2.1308983E-07, z: 4.692078E-08}
+        tangentMode: 0
+      - time: 0.5
+        value: {x: 2.5033952E-08, y: -0.00994291, z: 5.2154063E-09}
+        inSlope: {x: -2.4121516E-12, y: 3.6210372E-07, z: -9.3895096E-08}
+        outSlope: {x: -0, y: 9.834637E-08, z: -9.388E-08}
+        tangentMode: 0
+      - time: 0.5333338
+        value: {x: 2.5033952E-08, y: -0.009942913, z: 2.0861626E-09}
+        inSlope: {x: -0, y: -1.9967287E-07, z: 1.564703E-08}
+        outSlope: {x: 5.8228092E-12, y: -1.6093502E-07, z: 1.567649E-08}
+        tangentMode: 0
+      - time: 0.5666666
+        value: {x: 2.5033952E-08, y: -0.009942912, z: 6.258488E-09}
+        inSlope: {x: -1.2516985E-07, y: -1.6093502E-07, z: 2.3918766E-11}
+        outSlope: {x: -1.2517391E-07, y: 1.6093041E-07, z: -1.9901812E-12}
+        tangentMode: 0
+      - time: 0.6000004
+        value: {x: 1.66893E-08, y: -0.009942913, z: 2.0861626E-09}
+        inSlope: {x: 2.4312672E-12, y: 1.6093041E-07, z: -4.6935945E-08}
+        outSlope: {x: 5.1712846E-11, y: -6.071625E-17, z: -4.6932616E-08}
+        tangentMode: 0
+      - time: 0.6333332
+        value: {x: 2.5033952E-08, y: -0.009942913, z: 3.129244E-09}
+        inSlope: {x: 1.252214E-07, y: -2.6021251E-17, z: 1.5654184E-08}
+        outSlope: {x: 1.2516776E-07, y: -1.9222243E-07, z: 1.5646004E-08}
+        tangentMode: 0
+      - time: 0.666667
+        value: {x: 2.5033952E-08, y: -0.0099429125, z: 3.129244E-09}
+        inSlope: {x: 1.2516804E-07, y: -3.4123204E-07, z: 3.911513E-09}
+        outSlope: {x: 1.2522055E-07, y: -5.0664703E-08, z: 3.913158E-09}
+        tangentMode: 0
+      - time: 0.6999998
+        value: {x: 3.33786E-08, y: -0.009942917, z: 3.3900143E-09}
+        inSlope: {x: 1.2522085E-07, y: -5.0664703E-08, z: 3.913158E-09}
+        outSlope: {x: 1.2516712E-07, y: -8.0465206E-08, z: 3.9114587E-09}
+        tangentMode: 0
+      - time: 0.7333336
+        value: {x: 3.33786E-08, y: -0.009942916, z: 3.3900143E-09}
+        inSlope: {x: -9.910163E-13, y: -8.0465206E-08, z: -6.205509E-14}
+        outSlope: {x: 4.632282E-22, y: -1.3877998E-16, z: 2.5734254E-13}
+        tangentMode: 0
+      - time: 0.9333334
+        value: {x: 3.33786E-08, y: -0.009942917, z: 3.3900143E-09}
+        inSlope: {x: 1.9852071E-22, y: -7.8061524E-17, z: 2.4815089E-23}
+        outSlope: {x: 2.9805093E-12, y: 1.11757224E-07, z: 5.790187E-23}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 0
+        value: {x: -0.079487085, y: 2.6077032E-10, z: 3.33786E-08}
+        inSlope: {x: 6.4374007E-07, y: 1.8775401E-07, z: 1.8310398E-10}
+        outSlope: {x: 8.940578E-07, y: 1.8776727E-07, z: -2.3705518E-11}
+        tangentMode: 0
+      - time: 0.03333378
+        value: {x: -0.079487085, y: 1.2777746E-08, z: 0}
+        inSlope: {x: 2.0861348E-06, y: -1.2517413E-07, z: -5.00642E-07}
+        outSlope: {x: 2.4915119E-06, y: -1.253188E-07, z: -5.006857E-07}
+        tangentMode: 0
+      - time: 0.1333332
+        value: {x: -0.079487085, y: 2.6077032E-10, z: 0}
+        inSlope: {x: 1.2874801E-06, y: -2.5039571E-07, z: 5.0068064E-07}
+        outSlope: {x: -1.4571482E-15, y: -2.5033867E-07, z: 5.006817E-07}
+        tangentMode: 0
+      - time: 0.16666698
+        value: {x: -0.079487085, y: -8.08388E-09, z: 3.33786E-08}
+        inSlope: {x: -6.244922E-16, y: 1.7159371E-13, z: -1.4828826E-12}
+        outSlope: {x: 1.2874801E-06, y: 5.899744E-11, z: -2.1754806E-10}
+        tangentMode: 0
+      - time: 0.19999981
+        value: {x: -0.0794871, y: 2.6077032E-10, z: 0}
+        inSlope: {x: 1.2874801E-06, y: -1.2511613E-07, z: -2.1761912E-10}
+        outSlope: {x: -3.9338548E-07, y: -1.2516665E-07, z: -4.7321484E-13}
+        tangentMode: 0
+      - time: 0.23333359
+        value: {x: -0.079487085, y: -1.642853E-08, z: 3.33786E-08}
+        inSlope: {x: 7.986915E-07, y: -1.2517205E-07, z: 1.0013551E-06}
+        outSlope: {x: -1.2874801E-06, y: -1.2512231E-07, z: 1.0015524E-06}
+        tangentMode: 0
+      - time: 0.2666664
+        value: {x: -0.07948706, y: -8.08388E-09, z: 6.67572E-08}
+        inSlope: {x: -1.2874801E-06, y: 1.2523356E-07, z: 5.008707E-07}
+        outSlope: {x: -1.9428645E-15, y: 1.2516745E-07, z: 5.006696E-07}
+        tangentMode: 0
+      - time: 0.3000002
+        value: {x: -0.07948706, y: -8.08388E-09, z: 6.67572E-08}
+        inSlope: {x: -8.326562E-16, y: -1.1508862E-12, z: -5.100918E-12}
+        outSlope: {x: -1.94292E-15, y: 7.8067636E-13, z: 1.2490822E-11}
+        tangentMode: 0
+      - time: 0.33333302
+        value: {x: -0.07948706, y: -8.08388E-09, z: 6.67572E-08}
+        inSlope: {x: -8.3268003E-16, y: -3.129285E-08, z: -5.006856E-07}
+        outSlope: {x: 1.2874433E-06, y: -3.1291794E-08, z: -5.006596E-07}
+        tangentMode: 0
+      - time: 0.3666668
+        value: {x: -0.079487085, y: -1.0170043E-08, z: 3.33786E-08}
+        inSlope: {x: 1.2874433E-06, y: -1.2517057E-07, z: -1.251716E-06}
+        outSlope: {x: -6.4374007E-07, y: -1.252068E-07, z: -1.2519586E-06}
+        tangentMode: 0
+      - time: 0.4333334
+        value: {x: -0.079487085, y: 2.6077032E-10, z: 0}
+        inSlope: {x: 6.4372165E-07, y: 6.258661E-07, z: 2.503708E-07}
+        outSlope: {x: -6.4372165E-07, y: 6.2588003E-07, z: 2.5033975E-07}
+        tangentMode: 0
+      - time: 0.46666718
+        value: {x: -0.07948708, y: 2.5294721E-08, z: 0}
+        inSlope: {x: -6.4372165E-07, y: -1.5599579E-11, z: -3.128673E-08}
+        outSlope: {x: 1.2874801E-06, y: -1.7226102E-10, z: -3.130872E-08}
+        tangentMode: 0
+      - time: 0.5
+        value: {x: -0.07948709, y: 2.6077032E-10, z: -2.0861626E-09}
+        inSlope: {x: 1.2874801E-06, y: -3.130608E-07, z: -1.0869827E-11}
+        outSlope: {x: -1.2874433E-06, y: -3.1291847E-07, z: 1.0251217E-12}
+        tangentMode: 0
+      - time: 0.8999996
+        value: {x: -0.079487085, y: -1.8253923E-09, z: -1.0430813E-09}
+        inSlope: {x: -6.2451003E-16, y: -6.2039497E-24, z: -6.2039497E-24}
+        outSlope: {x: -1.4571482E-15, y: -1.4475468E-23, z: -1.4475468E-23}
+        tangentMode: 0
+      - time: 0.9333334
+        value: {x: -0.079487085, y: -1.8253923E-09, z: -1.0430813E-09}
+        inSlope: {x: -6.244922E-16, y: -6.203772E-24, z: -6.203772E-24}
+        outSlope: {x: -1.4571482E-15, y: -6.385474E-13, z: -3.4147785E-13}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 0
+        value: {x: -0.079487085, y: -5.2154064E-10, z: 0}
+        inSlope: {x: -1.2874801E-06, y: -2.5033864E-07, z: 5.007737E-07}
+        outSlope: {x: 1.2874433E-06, y: -2.5034652E-07, z: 5.0069207E-07}
+        tangentMode: 0
+      - time: 0.03333378
+        value: {x: -0.0794871, y: -1.721084E-08, z: 1.66893E-08}
+        inSlope: {x: 1.2874433E-06, y: -5.0065864E-07, z: -6.2050864E-12}
+        outSlope: {x: -1.2874801E-06, y: -5.008182E-07, z: -1.0841734E-10}
+        tangentMode: 0
+      - time: 0.0666666
+        value: {x: -0.079487085, y: -3.3900143E-08, z: 0}
+        inSlope: {x: -1.2874801E-06, y: 2.5025423E-07, z: -2.5043693E-07}
+        outSlope: {x: 1.2874433E-06, y: 2.5034873E-07, z: -2.5033853E-07}
+        tangentMode: 0
+      - time: 0.10000038
+        value: {x: -0.0794871, y: -5.2154064E-10, z: 0}
+        inSlope: {x: 1.2874433E-06, y: 1.0013275E-06, z: 1.2516543E-07}
+        outSlope: {x: -1.2874801E-06, y: 1.0015971E-06, z: 1.2523884E-07}
+        tangentMode: 0
+      - time: 0.1333332
+        value: {x: -0.079487085, y: 3.285706E-08, z: 8.34465E-09}
+        inSlope: {x: -1.2874801E-06, y: 1.7535326E-10, z: -2.502926E-07}
+        outSlope: {x: -1.4571482E-15, y: -6.5816697E-12, z: -2.5034166E-07}
+        tangentMode: 0
+      - time: 0.16666698
+        value: {x: -0.079487085, y: -5.2154064E-10, z: -1.66893E-08}
+        inSlope: {x: -6.244922E-16, y: -5.006683E-07, z: -3.755019E-07}
+        outSlope: {x: -1.4571901E-15, y: -5.007005E-07, z: -3.7552067E-07}
+        tangentMode: 0
+      - time: 0.19999981
+        value: {x: -0.079487085, y: -5.2154064E-10, z: -1.66893E-08}
+        inSlope: {x: -6.2451003E-16, y: 5.007005E-07, z: 2.5035453E-07}
+        outSlope: {x: -1.4571482E-15, y: 5.006677E-07, z: 2.5033475E-07}
+        tangentMode: 0
+      - time: 0.23333359
+        value: {x: -0.079487085, y: 3.285706E-08, z: 0}
+        inSlope: {x: -6.244922E-16, y: -2.5033E-07, z: 2.5033995E-07}
+        outSlope: {x: -1.2874801E-06, y: -2.5062664E-07, z: 2.5034032E-07}
+        tangentMode: 0
+      - time: 0.2666664
+        value: {x: -0.07948706, y: -1.721084E-08, z: 0}
+        inSlope: {x: -1.2874801E-06, y: -7.51359E-07, z: -1.0508732E-11}
+        outSlope: {x: -1.9428645E-15, y: -7.510048E-07, z: -0}
+        tangentMode: 0
+      - time: 0.3000002
+        value: {x: -0.07948706, y: -1.721084E-08, z: 0}
+        inSlope: {x: -8.326562E-16, y: 6.6566305E-12, z: -0}
+        outSlope: {x: -8.9408337E-07, y: -1.2490822E-11, z: -6.201001E-12}
+        tangentMode: 0
+      - time: 0.9333334
+        value: {x: -0.079487085, y: 1.564622E-09, z: 1.0430813E-09}
+        inSlope: {x: -6.244922E-16, y: -0, z: 6.203772E-24}
+        outSlope: {x: -1.4571482E-15, y: 6.563107E-13, z: 4.8335137E-13}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 0
+        value: {x: -0, y: 0, z: 0}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      - time: 0.9333334
+        value: {x: -0, y: 0, z: 0}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 0
+        value: {x: -0.15236624, y: -1.66893E-08, z: 0}
+        inSlope: {x: -2.5749603E-06, y: -9.9263194E-23, z: -8.684316E-11}
+        outSlope: {x: 2.5748866E-06, y: -1.1061937E-11, z: 2.3092332E-11}
+        tangentMode: 0
+      - time: 0.03333378
+        value: {x: -0.15236627, y: -1.66893E-08, z: 1.66893E-08}
+        inSlope: {x: 2.5748866E-06, y: 7.510021E-07, z: -5.006809E-07}
+        outSlope: {x: -2.5749603E-06, y: 7.514012E-07, z: -5.0103455E-07}
+        tangentMode: 0
+      - time: 0.0666666
+        value: {x: -0.15236624, y: 3.33786E-08, z: -3.33786E-08}
+        inSlope: {x: -2.5749603E-06, y: -2.5006656E-07, z: -2.5061883E-07}
+        outSlope: {x: 1.2874433E-06, y: -2.503728E-07, z: -2.5032185E-07}
+        tangentMode: 0
+      - time: 0.10000038
+        value: {x: -0.15236625, y: -3.33786E-08, z: 0}
+        inSlope: {x: 1.2874433E-06, y: -5.0064335E-07, z: 5.006535E-07}
+        outSlope: {x: 2.0981154E-06, y: -5.0049647E-07, z: 5.00684E-07}
+        tangentMode: 0
+      - time: 0.1333332
+        value: {x: -0.1523662, y: 0, z: 0}
+        inSlope: {x: 2.0981154E-06, y: 1.0015829E-06, z: -1.5253099E-11}
+        outSlope: {x: 7.8677095E-07, y: 1.0013547E-06, z: -0}
+        tangentMode: 0
+      - time: 0.16666698
+        value: {x: -0.15236624, y: 3.33786E-08, z: 0}
+        inSlope: {x: -1.597383E-06, y: -6.8637484E-13, z: -0}
+        outSlope: {x: -5.0068667E-07, y: -1.9971033E-10, z: -9.069862E-12}
+        tangentMode: 0
+      - time: 0.19999981
+        value: {x: -0.15236625, y: 0, z: 0}
+        inSlope: {x: -2.8849088E-06, y: -5.009002E-07, z: 2.503412E-07}
+        outSlope: {x: -3.0993968E-07, y: -5.0067143E-07, z: 2.5033427E-07}
+        tangentMode: 0
+      - time: 0.33333302
+        value: {x: -0.15236627, y: 0, z: 0}
+        inSlope: {x: 2.8849088E-06, y: 2.504632E-07, z: 2.5022257E-07}
+        outSlope: {x: -2.5748866E-06, y: 2.5033665E-07, z: 2.5030786E-07}
+        tangentMode: 0
+      - time: 0.3666668
+        value: {x: -0.15236624, y: 0, z: 3.33786E-08}
+        inSlope: {x: -2.5748866E-06, y: 1.8775002E-07, z: 2.7357306E-11}
+        outSlope: {x: 2.5749603E-06, y: 1.8782269E-07, z: -1.7391723E-10}
+        tangentMode: 0
+      - time: 0.39999962
+        value: {x: -0.15236627, y: 1.2516976E-08, z: 0}
+        inSlope: {x: 2.5749603E-06, y: 8.4497166E-11, z: -5.009395E-07}
+        outSlope: {x: 2.0980553E-06, y: 5.5756424E-12, z: -5.0066643E-07}
+        tangentMode: 0
+      - time: 0.666667
+        value: {x: -0.15236624, y: 0, z: 0}
+        inSlope: {x: -2.5748866E-06, y: -6.258374E-08, z: 2.2261895E-13}
+        outSlope: {x: 2.5749603E-06, y: -6.257849E-08, z: -2.2674655E-12}
+        tangentMode: 0
+      - time: 0.9333334
+        value: {x: -0.15236627, y: 1.0430813E-09, z: 0}
+        inSlope: {x: -1.2489844E-15, y: -3.4147785E-13, z: -0}
+        outSlope: {x: -2.9142965E-15, y: 3.4147785E-13, z: -4.0103497E-13}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 0
+        value: {x: -1.66893E-08, y: -3.8594006E-08, z: -0.031628318}
+        inSlope: {x: 5.007646E-07, y: 9.506496E-12, z: -5.215486E-07}
+        outSlope: {x: 5.006848E-07, y: -1.4607144E-11, z: -6.0199875E-07}
+        tangentMode: 0
+      - time: 0.03333378
+        value: {x: -0, y: -3.8594006E-08, z: -0.031628344}
+        inSlope: {x: 5.00662E-07, y: 1.0013365E-06, z: -5.9602687E-09}
+        outSlope: {x: 5.0082963E-07, y: 1.0018524E-06, z: 2.6822482E-08}
+        tangentMode: 0
+      - time: 0.0666666
+        value: {x: 1.66893E-08, y: 2.8163194E-08, z: -0.031628337}
+        inSlope: {x: -5.0059424E-07, y: 3.644614E-10, z: 9.209058E-07}
+        outSlope: {x: -5.007026E-07, y: -3.535258E-11, z: 9.268397E-07}
+        tangentMode: 0
+      - time: 0.10000038
+        value: {x: -3.33786E-08, y: -3.8594006E-08, z: -0.031628303}
+        inSlope: {x: -2.5031716E-07, y: -5.006411E-07, z: 6.2882043E-07}
+        outSlope: {x: -2.501134E-07, y: -5.004755E-07, z: 2.9504756E-07}
+        tangentMode: 0
+      - time: 0.1333332
+        value: {x: -0, y: -5.2154063E-09, z: -0.031628314}
+        inSlope: {x: 2.136148E-10, y: 5.00902E-07, z: -5.990358E-07}
+        outSlope: {x: -6.723776E-12, y: 5.006748E-07, z: -9.834637E-08}
+        tangentMode: 0
+      - time: 0.16666698
+        value: {x: -3.33786E-08, y: -5.2154063E-09, z: -0.03162831}
+        inSlope: {x: -5.006682E-07, y: -5.006703E-07, z: 1.9967287E-07}
+        outSlope: {x: -5.0070076E-07, y: -5.0091836E-07, z: 1.01329405E-07}
+        tangentMode: 0
+      - time: 0.19999981
+        value: {x: -3.33786E-08, y: -3.8594006E-08, z: -0.031628303}
+        inSlope: {x: 5.006994E-07, y: 5.004823E-07, z: 1.01329405E-07}
+        outSlope: {x: 5.006695E-07, y: 5.0066825E-07, z: -4.163281E-16}
+        tangentMode: 0
+      - time: 0.23333359
+        value: {x: -0, y: 2.8163194E-08, z: -0.031628303}
+        inSlope: {x: 5.006799E-07, y: 1.0013621E-06, z: -9.714322E-16}
+        outSlope: {x: 5.0068064E-07, y: 1.0013614E-06, z: -4.1634001E-16}
+        tangentMode: 0
+      - time: 0.2666664
+        value: {x: -0, y: 2.8163194E-08, z: -0.031628303}
+        inSlope: {x: -2.1017464E-11, y: -4.217704E-11, z: -9.7146E-16}
+        outSlope: {x: -0, y: 2.316075E-22, z: -4.163281E-16}
+        tangentMode: 0
+      - time: 0.3000002
+        value: {x: -0, y: 2.8163194E-08, z: -0.031628303}
+        inSlope: {x: -0, y: 9.9260355E-23, z: -9.714322E-16}
+        outSlope: {x: 1.2402002E-11, y: 2.4768477E-11, z: -4.1634001E-16}
+        tangentMode: 0
+      - time: 0.33333302
+        value: {x: -0, y: 2.8163194E-08, z: -0.031628303}
+        inSlope: {x: -5.006857E-07, y: -1.0013717E-06, z: -9.7146E-16}
+        outSlope: {x: -5.006455E-07, y: -1.0012911E-06, z: -2.443759E-07}
+        tangentMode: 0
+      - time: 0.3666668
+        value: {x: -3.33786E-08, y: -3.8594006E-08, z: -0.031628285}
+        inSlope: {x: -2.5036232E-07, y: -5.007243E-07, z: -8.404144E-07}
+        outSlope: {x: -2.5025224E-07, y: -5.0050113E-07, z: -6.079764E-07}
+        tangentMode: 0
+      - time: 0.39999962
+        value: {x: -1.66893E-08, y: -5.2154063E-09, z: -0.031628337}
+        inSlope: {x: 2.5048254E-07, y: 3.7579417E-07, z: -6.079764E-07}
+        outSlope: {x: 2.503235E-07, y: 3.7551166E-07, z: -5.960385E-07}
+        tangentMode: 0
+      - time: 0.4333334
+        value: {x: -1.66893E-08, y: -1.3560057E-08, z: -0.031628337}
+        inSlope: {x: -5.006834E-07, y: 1.2515122E-07, z: 5.960385E-07}
+        outSlope: {x: -5.0072106E-07, y: 1.2519108E-07, z: 8.046506E-08}
+        tangentMode: 0
+      - time: 0.46666718
+        value: {x: -5.0067904E-08, y: 3.129244E-09, z: -0.03162831}
+        inSlope: {x: 2.7275238E-11, y: -1.6169848E-11, z: -2.1755419E-07}
+        outSlope: {x: 2.3881885E-10, y: -1.1924789E-10, z: 3.606136E-07}
+        tangentMode: 0
+      - time: 0.5
+        value: {x: -1.66893E-08, y: -1.3560057E-08, z: -0.031628307}
+        inSlope: {x: 2.5052137E-07, y: -1.2526083E-07, z: 6.258583E-08}
+        outSlope: {x: 2.5032963E-07, y: -1.2516394E-07, z: -3.635834E-07}
+        tangentMode: 0
+      - time: 0.5333338
+        value: {x: -3.33786E-08, y: -5.2154063E-09, z: -0.03162832}
+        inSlope: {x: -5.00652E-07, y: 1.877424E-07, z: -3.635834E-07}
+        outSlope: {x: -5.0081803E-07, y: 1.8778792E-07, z: -2.592842E-07}
+        tangentMode: 0
+      - time: 0.5666666
+        value: {x: -5.0067904E-08, y: -1.0430813E-09, z: -0.031628318}
+        inSlope: {x: 2.5025471E-07, y: -1.5626574E-08, z: 3.874357E-08}
+        outSlope: {x: 2.503511E-07, y: -1.5648915E-08, z: -2.592768E-07}
+        tangentMode: 0
+      - time: 0.6000004
+        value: {x: -1.66893E-08, y: -6.258488E-09, z: -0.03162831}
+        inSlope: {x: 7.509922E-07, y: -3.1289776E-08, z: 3.874246E-08}
+        outSlope: {x: 7.5113013E-07, y: -3.1272368E-08, z: -1.6093502E-07}
+        tangentMode: 0
+      - time: 0.8999996
+        value: {x: -1.66893E-08, y: -1.4472753E-08, z: -0.031628307}
+        inSlope: {x: -9.9263194E-23, y: -4.9631597E-23, z: -3.1225502E-16}
+        outSlope: {x: -2.316075E-22, y: -1.1580375E-22, z: -7.285741E-16}
+        tangentMode: 0
+      - time: 0.9333334
+        value: {x: -1.66893E-08, y: -1.4472753E-08, z: -0.031628307}
+        inSlope: {x: -9.9260355E-23, y: -4.9630177E-23, z: -3.122461E-16}
+        outSlope: {x: -2.316075E-22, y: -2.8379946E-12, z: -7.285741E-16}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 0
+        value: {x: -0.042964835, y: 6.258488E-09, z: -1.66893E-08}
+        inSlope: {x: -1.9669837E-07, y: -9.559788E-12, z: -7.7274485E-11}
+        outSlope: {x: -2.0861329E-07, y: -7.356862E-12, z: 8.200974E-12}
+        tangentMode: 0
+      - time: 0.03333378
+        value: {x: -0.042964876, y: 6.258488E-09, z: 0}
+        inSlope: {x: -8.046518E-07, y: 5.006681E-07, z: 5.006551E-07}
+        outSlope: {x: -3.159096E-07, y: 5.0092615E-07, z: 5.0080587E-07}
+        tangentMode: 0
+      - time: 0.0666666
+        value: {x: -0.04296485, y: 3.963709E-08, z: 1.66893E-08}
+        inSlope: {x: 2.8014594E-07, y: 1.8198201E-10, z: 8.4941006E-11}
+        outSlope: {x: -4.470289E-07, y: -1.5250174E-11, z: -7.8737745E-12}
+        tangentMode: 0
+      - time: 0.10000038
+        value: {x: -0.04296485, y: 6.258488E-09, z: 0}
+        inSlope: {x: -1.0430674E-06, y: -5.006554E-07, z: -2.5032782E-07}
+        outSlope: {x: 5.185684E-07, y: -5.0068405E-07, z: -2.50342E-07}
+        tangentMode: 0
+      - time: 0.3666668
+        value: {x: -0.042964827, y: 6.258488E-09, z: 0}
+        inSlope: {x: 6.496819E-07, y: 6.258459E-08, z: -0}
+        outSlope: {x: -6.497005E-07, y: 6.260286E-08, z: 4.75991E-12}
+        tangentMode: 0
+      - time: 0.39999962
+        value: {x: -0.042964842, y: 1.0430813E-08, z: 0}
+        inSlope: {x: -1.2457559E-06, y: 2.5037204E-07, z: -2.503437E-07}
+        outSlope: {x: 6.4372165E-07, y: 2.5031815E-07, z: -2.503145E-07}
+        tangentMode: 0
+      - time: 0.4333334
+        value: {x: -0.042964853, y: 2.2947788E-08, z: -1.66893E-08}
+        inSlope: {x: 6.4372165E-07, y: -6.2573385E-08, z: -1.6382411E-11}
+        outSlope: {x: -3.2186082E-07, y: -6.259845E-08, z: 1.64357E-11}
+        tangentMode: 0
+      - time: 0.5
+        value: {x: -0.042964853, y: -2.0861626E-09, z: 0}
+        inSlope: {x: 3.2187003E-07, y: -6.262336E-08, z: -2.5034342E-07}
+        outSlope: {x: 3.2186082E-07, y: -6.258249E-08, z: -2.5035393E-07}
+        tangentMode: 0
+      - time: 0.6333332
+        value: {x: -0.042964853, y: 5.2154063E-09, z: 0}
+        inSlope: {x: -2.0265881E-07, y: 7.823727E-09, z: -2.5034032E-07}
+        outSlope: {x: -6.4372165E-07, y: 7.822949E-09, z: -2.5034157E-07}
+        tangentMode: 0
+      - time: 0.9333334
+        value: {x: -0.042964853, y: 9.3877315E-09, z: 1.66893E-08}
+        inSlope: {x: -1.1795963E-15, y: 7.444527E-23, z: 9.9260355E-23}
+        outSlope: {x: -9.020442E-16, y: 2.3770224E-12, z: 2.316075E-22}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 0
+        value: {x: -0.06292472, y: 4.172325E-08, z: -3.33786E-08}
+        inSlope: {x: 4.0531762E-07, y: 2.5046404E-07, z: 5.0068616E-07}
+        outSlope: {x: -4.470289E-07, y: 2.5033333E-07, z: 5.0070787E-07}
+        tangentMode: 0
+      - time: 0.03333378
+        value: {x: -0.06292472, y: 3.33786E-08, z: 0}
+        inSlope: {x: -1.0430674E-06, y: -1.2515622E-07, z: -1.9104105E-11}
+        outSlope: {x: -2.0265881E-07, y: -1.2515976E-07, z: -2.2849805E-10}
+        tangentMode: 0
+      - time: 0.0666666
+        value: {x: -0.062924735, y: 3.33786E-08, z: -3.33786E-08}
+        inSlope: {x: -2.0265881E-07, y: -2.5033657E-07, z: -2.50534E-07}
+        outSlope: {x: -7.986915E-07, y: -2.5034527E-07, z: -2.5033424E-07}
+        tangentMode: 0
+      - time: 0.10000038
+        value: {x: -0.06292476, y: 1.66893E-08, z: -1.66893E-08}
+        inSlope: {x: 3.9338548E-07, y: -2.5032992E-07, z: 7.5099524E-07}
+        outSlope: {x: 4.0531762E-07, y: -2.5033148E-07, z: 7.512655E-07}
+        tangentMode: 0
+      - time: 0.1333332
+        value: {x: -0.06292472, y: 1.66893E-08, z: 1.66893E-08}
+        inSlope: {x: 4.0531762E-07, y: -2.5033276E-07, z: -2.501572E-07}
+        outSlope: {x: -4.05306E-07, y: -2.5034012E-07, z: -2.5034757E-07}
+        tangentMode: 0
+      - time: 0.16666698
+        value: {x: -0.06292476, y: 0, z: -3.33786E-08}
+        inSlope: {x: -4.05306E-07, y: -2.5033492E-07, z: -5.006677E-07}
+        outSlope: {x: 4.0531762E-07, y: -2.5034797E-07, z: -5.0060146E-07}
+        tangentMode: 0
+      - time: 0.23333359
+        value: {x: -0.06292472, y: 1.2516976E-08, z: 1.66893E-08}
+        inSlope: {x: -4.163281E-16, y: 3.755074E-07, z: 5.8785967E-12}
+        outSlope: {x: -4.0531762E-07, y: 3.75582E-07, z: -1.9084617E-10}
+        tangentMode: 0
+      - time: 0.2666664
+        value: {x: -0.06292476, y: 2.5033952E-08, z: -1.66893E-08}
+        inSlope: {x: -4.0531762E-07, y: 1.8782647E-07, z: -5.009132E-07}
+        outSlope: {x: -8.326562E-16, y: 1.8775145E-07, z: -5.006698E-07}
+        tangentMode: 0
+      - time: 0.3000002
+        value: {x: -0.06292476, y: 2.5033952E-08, z: -1.66893E-08}
+        inSlope: {x: -1.9428645E-15, y: -1.5575777E-12, z: 4.603545E-12}
+        outSlope: {x: -8.3268003E-16, y: 3.1227054E-12, z: -3.1227054E-12}
+        tangentMode: 0
+      - time: 0.33333302
+        value: {x: -0.06292476, y: 2.5033952E-08, z: -1.66893E-08}
+        inSlope: {x: -1.94292E-15, y: -1.251714E-07, z: 1.251714E-07}
+        outSlope: {x: 4.470289E-07, y: -1.2516576E-07, z: 1.2516048E-07}
+        tangentMode: 0
+      - time: 0.3666668
+        value: {x: -0.06292476, y: 1.66893E-08, z: -8.34465E-09}
+        inSlope: {x: 1.0430674E-06, y: -3.7551334E-07, z: 6.0240784E-12}
+        outSlope: {x: 2.0265881E-07, y: -3.7559832E-07, z: -4.7939454E-11}
+        tangentMode: 0
+      - time: 0.46666718
+        value: {x: -0.06292475, y: 1.66893E-08, z: -1.66893E-08}
+        inSlope: {x: -6.0199875E-07, y: 6.258341E-08, z: -5.0064773E-07}
+        outSlope: {x: 4.7684527E-08, y: 6.258592E-08, z: -5.0081337E-07}
+        tangentMode: 0
+      - time: 0.5
+        value: {x: -0.06292476, y: 1.66893E-08, z: -3.33786E-08}
+        inSlope: {x: 1.2397956E-06, y: -1.0639652E-12, z: -8.225866E-11}
+        outSlope: {x: 1.0490277E-06, y: 2.316075E-22, z: 1.1550783E-11}
+        tangentMode: 0
+      - time: 0.5333338
+        value: {x: -0.06292473, y: 1.66893E-08, z: -1.66893E-08}
+        inSlope: {x: 1.0490277E-06, y: 9.9260355E-23, z: 2.5032077E-07}
+        outSlope: {x: -6.4374007E-07, y: 2.316141E-22, z: 2.503428E-07}
+        tangentMode: 0
+      - time: 0.7666664
+        value: {x: -0.06292472, y: 1.66893E-08, z: -8.34465E-09}
+        inSlope: {x: -4.1634001E-16, y: 9.9263194E-23, z: -1.251138E-07}
+        outSlope: {x: -9.714322E-16, y: 2.316075E-22, z: -1.2516018E-07}
+        tangentMode: 0
+      - time: 0.8000002
+        value: {x: -0.06292472, y: 1.66893E-08, z: -2.5033952E-08}
+        inSlope: {x: -4.163281E-16, y: 9.9260355E-23, z: -8.847026E-12}
+        outSlope: {x: -9.7146E-16, y: 2.316141E-22, z: 9.148839E-11}
+        tangentMode: 0
+      - time: 0.833333
+        value: {x: -0.06292472, y: 1.66893E-08, z: -8.34465E-09}
+        inSlope: {x: -4.1634001E-16, y: 9.9263194E-23, z: 2.5046327E-07}
+        outSlope: {x: -9.714322E-16, y: 2.316075E-22, z: 2.5033412E-07}
+        tangentMode: 0
+      - time: 0.9333334
+        value: {x: -0.06292472, y: 1.66893E-08, z: -8.34465E-09}
+        inSlope: {x: -4.163281E-16, y: 9.9260355E-23, z: -4.9630177E-23}
+        outSlope: {x: -9.714322E-16, y: 2.316075E-22, z: 3.866811E-12}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 0
+        value: {x: -0.07172309, y: 0, z: 0}
+        inSlope: {x: -4.1634001E-16, y: -0, z: -0}
+        outSlope: {x: -6.4372165E-07, y: -0, z: -0}
+        tangentMode: 0
+      - time: 0.0666666
+        value: {x: -0.07172307, y: 0, z: 0}
+        inSlope: {x: -6.4374007E-07, y: 2.503395E-07, z: -5.00679E-07}
+        outSlope: {x: -2.5033617E-07, y: 2.5034737E-07, z: -5.006901E-07}
+        tangentMode: 0
+      - time: 0.10000038
+        value: {x: -0.07172308, y: 1.66893E-08, z: -3.33786E-08}
+        inSlope: {x: -1.4424131E-06, y: -5.2710904E-12, z: -5.0065927E-07}
+        outSlope: {x: 1.0371368E-06, y: -1.1465386E-10, z: -5.0070463E-07}
+        tangentMode: 0
+      - time: 0.1333332
+        value: {x: -0.0717231, y: 0, z: -3.33786E-08}
+        inSlope: {x: -1.5497427E-07, y: -1.0310737E-10, z: 5.006961E-07}
+        outSlope: {x: -4.857161E-16, y: 3.828886E-12, z: 5.0068024E-07}
+        tangentMode: 0
+      - time: 0.16666698
+        value: {x: -0.0717231, y: 1.66893E-08, z: 0}
+        inSlope: {x: -2.0816405E-16, y: 1.2516635E-07, z: 5.0066984E-07}
+        outSlope: {x: -3.9339673E-07, y: 1.2512065E-07, z: 5.0066416E-07}
+        tangentMode: 0
+      - time: 0.19999981
+        value: {x: -0.07172309, y: 8.34465E-09, z: 0}
+        inSlope: {x: 7.987143E-07, y: -1.252294E-07, z: 5.0066416E-07}
+        outSlope: {x: -6.4372165E-07, y: -1.2516816E-07, z: 5.0066853E-07}
+        tangentMode: 0
+      - time: 0.23333359
+        value: {x: -0.07172308, y: 8.34465E-09, z: 3.33786E-08}
+        inSlope: {x: -6.4372165E-07, y: -1.251678E-07, z: 7.0790426E-12}
+        outSlope: {x: -1.4571901E-15, y: -1.2521404E-07, z: -1.9104157E-10}
+        tangentMode: 0
+      - time: 0.2666664
+        value: {x: -0.07172308, y: 0, z: 0}
+        inSlope: {x: -6.2451003E-16, y: -2.5039404E-07, z: -5.009132E-07}
+        outSlope: {x: -1.4571482E-15, y: -2.5033128E-07, z: -5.006698E-07}
+        tangentMode: 0
+      - time: 0.46666718
+        value: {x: -0.0717231, y: -1.66893E-08, z: 0}
+        inSlope: {x: 2.0861348E-06, y: -5.0065023E-07, z: -0}
+        outSlope: {x: 1.5497427E-07, y: -5.0082673E-07, z: -0}
+        tangentMode: 0
+      - time: 0.5
+        value: {x: -0.07172308, y: -3.33786E-08, z: 0}
+        inSlope: {x: -1.0371368E-06, y: 2.5025707E-07, z: -0}
+        outSlope: {x: 6.4372165E-07, y: 2.503656E-07, z: -0}
+        tangentMode: 0
+      - time: 0.5333338
+        value: {x: -0.07172309, y: 0, z: 0}
+        inSlope: {x: 6.4372165E-07, y: 2.5031144E-07, z: -0}
+        outSlope: {x: -9.7146E-16, y: 2.5023454E-07, z: -5.960479E-12}
+        tangentMode: 0
+      - time: 0.9333334
+        value: {x: -0.071723096, y: 0, z: -8.34465E-09}
+        inSlope: {x: -4.163281E-16, y: -0, z: -4.9630177E-23}
+        outSlope: {x: -9.714322E-16, y: -0, z: -1.134988E-12}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 0
+        value: {x: -1.16825106E-07, y: 4.172325E-09, z: 0.031628307}
+        inSlope: {x: -2.504296E-07, y: 1.0017213E-06, z: 5.215486E-07}
+        outSlope: {x: -2.503388E-07, y: 1.0013457E-06, z: 6.0199875E-07}
+        tangentMode: 0
+      - time: 0.03333378
+        value: {x: -1.16825106E-07, y: 4.172325E-09, z: 0.031628333}
+        inSlope: {x: -4.839087E-12, y: 5.00682E-07, z: 5.9602696E-09}
+        outSlope: {x: 1.3066725E-11, y: 5.009737E-07, z: -5.9604393E-09}
+        tangentMode: 0
+      - time: 0.0666666
+        value: {x: -1.16825106E-07, y: 3.7550926E-08, z: 0.031628307}
+        inSlope: {x: -2.5033827E-07, y: -1.0011763E-06, z: -6.02016E-07}
+        outSlope: {x: -2.5035223E-07, y: -1.0014091E-06, z: -6.198801E-07}
+        tangentMode: 0
+      - time: 0.10000038
+        value: {x: -1.335144E-07, y: -6.2584874E-08, z: 0.03162831}
+        inSlope: {x: 5.006723E-07, y: 3.5727032E-11, z: -2.384158E-08}
+        outSlope: {x: 5.0100766E-07, y: 6.2350297E-10, z: -3.2187003E-07}
+        tangentMode: 0
+      - time: 0.1333332
+        value: {x: -8.34465E-08, y: 3.7550926E-08, z: 0.031628314}
+        inSlope: {x: 5.009747E-07, y: 1.50266E-06, z: -3.2187003E-07}
+        outSlope: {x: 5.006717E-07, y: 1.5020212E-06, z: 6.0199875E-07}
+        tangentMode: 0
+      - time: 0.16666698
+        value: {x: -1.0013581E-07, y: 3.7550926E-08, z: 0.03162834}
+        inSlope: {x: -7.510048E-07, y: -5.0066797E-07, z: 5.9602687E-09}
+        outSlope: {x: -7.5123154E-07, y: -5.00882E-07, z: -2.8312616E-07}
+        tangentMode: 0
+      - time: 0.19999981
+        value: {x: -1.335144E-07, y: 4.172325E-09, z: 0.0316283}
+        inSlope: {x: -2.505312E-07, y: -5.0088187E-07, z: 1.4901605E-08}
+        outSlope: {x: -2.503364E-07, y: -5.006715E-07, z: -5.3643487E-07}
+        tangentMode: 0
+      - time: 0.23333359
+        value: {x: -1.16825106E-07, y: 4.172325E-09, z: 0.03162834}
+        inSlope: {x: 2.5034285E-07, y: 1.6548319E-12, z: 5.960361E-08}
+        outSlope: {x: 2.503391E-07, y: 5.7903526E-23, z: 9.536896E-08}
+        tangentMode: 0
+      - time: 0.2666664
+        value: {x: -1.16825106E-07, y: 4.172325E-09, z: 0.03162832}
+        inSlope: {x: -1.1077176E-11, y: 2.4815799E-23, z: -5.0068655E-07}
+        outSlope: {x: -9.2643E-22, y: 5.790187E-23, z: 4.857161E-16}
+        tangentMode: 0
+      - time: 0.3000002
+        value: {x: -1.16825106E-07, y: 4.172325E-09, z: 0.03162832}
+        inSlope: {x: -3.9704142E-22, y: 2.4815089E-23, z: 2.0816405E-16}
+        outSlope: {x: -4.255861E-12, y: 5.7903526E-23, z: 4.8573E-16}
+        tangentMode: 0
+      - time: 0.33333302
+        value: {x: -1.16825106E-07, y: 4.172325E-09, z: 0.03162832}
+        inSlope: {x: 2.5034367E-07, y: 2.4815799E-23, z: 2.0817001E-16}
+        outSlope: {x: 2.5031613E-07, y: 5.790187E-23, z: -4.2616747E-07}
+        tangentMode: 0
+      - time: 0.3666668
+        value: {x: -1.0013581E-07, y: 4.172325E-09, z: 0.031628307}
+        inSlope: {x: -2.5032674E-07, y: 2.4815089E-23, z: -7.241867E-07}
+        outSlope: {x: -2.5051867E-07, y: 2.3943879E-12, z: -7.2420744E-07}
+        tangentMode: 0
+      - time: 0.39999962
+        value: {x: -1.335144E-07, y: 4.172325E-09, z: 0.03162829}
+        inSlope: {x: -2.5058233E-07, y: -1.2517192E-07, z: -4.2617967E-07}
+        outSlope: {x: -2.5035743E-07, y: -1.2515233E-07, z: -7.450479E-08}
+        tangentMode: 0
+      - time: 0.4333334
+        value: {x: -1.16825106E-07, y: -4.172325E-09, z: 0.03162829}
+        inSlope: {x: -2.5031196E-07, y: 2.5033103E-07, z: 8.1955295E-07}
+        outSlope: {x: -2.5037622E-07, y: 2.5037116E-07, z: 3.8444458E-07}
+        tangentMode: 0
+      - time: 0.46666718
+        value: {x: -1.502037E-07, y: 2.0861625E-08, z: 0.03162834}
+        inSlope: {x: -2.5030118E-07, y: -2.3373345E-11, z: 8.6425324E-08}
+        outSlope: {x: -2.502577E-07, y: -1.6902098E-10, z: 1.9371815E-07}
+        tangentMode: 0
+      - time: 0.5
+        value: {x: -1.335144E-07, y: -4.172325E-09, z: 0.031628318}
+        inSlope: {x: 7.5111353E-07, y: -3.7564544E-07, z: -7.0036515E-07}
+        outSlope: {x: 7.510506E-07, y: -3.7550913E-07, z: -1.9967287E-07}
+        tangentMode: 0
+      - time: 0.5333338
+        value: {x: -1.0013581E-07, y: -4.172325E-09, z: 0.031628314}
+        inSlope: {x: -2.5034765E-07, y: 1.2516179E-07, z: 9.834637E-08}
+        outSlope: {x: -2.5071517E-07, y: 1.2522261E-07, z: -1.6093502E-07}
+        tangentMode: 0
+      - time: 0.5666666
+        value: {x: -1.502037E-07, y: 4.172325E-09, z: 0.031628318}
+        inSlope: {x: 2.5005343E-07, y: 1.8780018E-07, z: -1.6093502E-07}
+        outSlope: {x: 2.5036934E-07, y: 1.8775481E-07, z: 4.857161E-16}
+        tangentMode: 0
+      - time: 0.6000004
+        value: {x: -8.34465E-08, y: 8.34465E-09, z: 0.031628318}
+        inSlope: {x: 1.0013121E-06, y: 7.822944E-08, z: 2.0816405E-16}
+        outSlope: {x: 1.001388E-06, y: 7.823915E-08, z: -1.6093502E-07}
+        tangentMode: 0
+      - time: 0.6333332
+        value: {x: -8.34465E-08, y: 9.3877315E-09, z: 0.031628318}
+        inSlope: {x: -5.00712E-07, y: 4.2188453E-12, z: -1.6093502E-07}
+        outSlope: {x: -5.006806E-07, y: -4.853941E-13, z: -2.2351445E-07}
+        tangentMode: 0
+      - time: 0.666667
+        value: {x: -1.16825106E-07, y: 8.34465E-09, z: 0.031628318}
+        inSlope: {x: 3.1881626E-12, y: 2.3468997E-08, z: -5.215337E-07}
+        outSlope: {x: 2.003143E-10, y: 2.3489877E-08, z: -1.01329405E-07}
+        tangentMode: 0
+      - time: 0.6999998
+        value: {x: -8.34465E-08, y: 1.0952354E-08, z: 0.03162831}
+        inSlope: {x: 5.009007E-07, y: -9.386174E-08, z: -1.01329405E-07}
+        outSlope: {x: 5.0067126E-07, y: -9.387515E-08, z: 7.285741E-16}
+        tangentMode: 0
+      - time: 0.7333336
+        value: {x: -8.34465E-08, y: 2.0861626E-09, z: 0.03162831}
+        inSlope: {x: -1.1219321E-12, y: -1.98523E-12, z: 3.122461E-16}
+        outSlope: {x: 8.234961E-12, y: 5.4448286E-11, z: 7.2859503E-16}
+        tangentMode: 0
+      - time: 0.7666664
+        value: {x: -8.34465E-08, y: 1.0952354E-08, z: 0.03162831}
+        inSlope: {x: -2.5034197E-07, y: 9.839801E-09, z: 3.1225502E-16}
+        outSlope: {x: -2.503275E-07, y: 9.7822666E-09, z: 7.285741E-16}
+        tangentMode: 0
+      - time: 0.8000002
+        value: {x: -1.0013581E-07, y: 2.7380884E-09, z: 0.03162831}
+        inSlope: {x: -8.353384E-12, y: -5.0444835E-12, z: 3.122461E-16}
+        outSlope: {x: 9.0777844E-11, y: 4.4910648E-11, z: 7.2859503E-16}
+        tangentMode: 0
+      - time: 0.833333
+        value: {x: -8.34465E-08, y: 1.0952354E-08, z: 0.03162831}
+        inSlope: {x: 2.5046256E-07, y: 1.2327493E-07, z: 3.1225502E-16}
+        outSlope: {x: 2.5033336E-07, y: 1.2321141E-07, z: 7.285741E-16}
+        tangentMode: 0
+      - time: 0.8666668
+        value: {x: -8.34465E-08, y: 1.0952354E-08, z: 0.03162831}
+        inSlope: {x: -3.971526E-12, y: -1.7371344E-12, z: 3.122461E-16}
+        outSlope: {x: -1.8529128E-21, y: 2.316141E-22, z: 7.2859503E-16}
+        tangentMode: 0
+      - time: 0.9333334
+        value: {x: -8.34465E-08, y: 1.0952354E-08, z: 0.03162831}
+        inSlope: {x: -7.9408284E-22, y: 9.9260355E-23, z: 3.122461E-16}
+        outSlope: {x: 9.079904E-12, y: 2.235149E-12, z: 7.285741E-16}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyLArmCollarbone
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 0
+        value: {x: -0.042964853, y: 5.2154063E-09, z: -6.67572E-08}
+        inSlope: {x: -1.1796301E-15, y: 1.0015377E-06, z: 2.503425E-07}
+        outSlope: {x: -9.020442E-16, y: 1.0013988E-06, z: 2.5035393E-07}
+        tangentMode: 0
+      - time: 0.03333378
+        value: {x: -0.042964853, y: 3.8594006E-08, z: -5.0067904E-08}
+        inSlope: {x: -1.1795963E-15, y: -1.0013489E-06, z: -9.552053E-12}
+        outSlope: {x: -1.2517167E-07, y: -1.0020456E-06, z: -1.0811535E-10}
+        tangentMode: 0
+      - time: 0.0666666
+        value: {x: -0.042964857, y: -6.15418E-08, z: -6.67572E-08}
+        inSlope: {x: -7.212272E-07, y: -1.0019177E-06, z: -2.504367E-07}
+        outSlope: {x: 5.185536E-07, y: -1.0013439E-06, z: -2.5033708E-07}
+        tangentMode: 0
+      - time: 0.10000038
+        value: {x: -0.04296487, y: -2.8163194E-08, z: -6.67572E-08}
+        inSlope: {x: -7.748492E-08, y: 1.5019857E-06, z: -8.601005E-13}
+        outSlope: {x: 4.4704169E-07, y: 1.5025103E-06, z: -9.264564E-22}
+        tangentMode: 0
+      - time: 0.1333332
+        value: {x: -0.04296487, y: 3.8594006E-08, z: -6.67572E-08}
+        inSlope: {x: 1.0430972E-06, y: 3.6600403E-10, z: -3.9705278E-22}
+        outSlope: {x: 2.02653E-07, y: -1.5066857E-11, z: -9.2643E-22}
+        tangentMode: 0
+      - time: 0.16666698
+        value: {x: -0.042964853, y: -2.8163194E-08, z: -6.67572E-08}
+        inSlope: {x: 2.02653E-07, y: -5.006653E-07, z: -3.9704142E-22}
+        outSlope: {x: 3.2187003E-07, y: -5.0046486E-07, z: -9.087626E-12}
+        tangentMode: 0
+      - time: 0.19999981
+        value: {x: -0.042964857, y: 5.2154063E-09, z: -6.67572E-08}
+        inSlope: {x: 3.2187003E-07, y: 2.3563448E-10, z: 2.5033998E-07}
+        outSlope: {x: -3.2186082E-07, y: 4.3193314E-12, z: 2.5033418E-07}
+        tangentMode: 0
+      - time: 0.23333359
+        value: {x: -0.042964853, y: -2.8163194E-08, z: -5.0067904E-08}
+        inSlope: {x: -3.2186082E-07, y: 5.0066467E-07, z: 3.0954382E-12}
+        outSlope: {x: 6.4374007E-07, y: 5.010623E-07, z: -9.5467495E-11}
+        tangentMode: 0
+      - time: 0.2666664
+        value: {x: -0.04296486, y: 3.8594006E-08, z: -6.67572E-08}
+        inSlope: {x: 6.4374007E-07, y: 1.001805E-06, z: -2.5045645E-07}
+        outSlope: {x: -9.714322E-16, y: 1.0013396E-06, z: -2.5033424E-07}
+        tangentMode: 0
+      - time: 0.3000002
+        value: {x: -0.04296486, y: 3.8594006E-08, z: -6.67572E-08}
+        inSlope: {x: -4.163281E-16, y: -9.20709E-12, z: 1.9820326E-12}
+        outSlope: {x: -9.7146E-16, y: 1.2490822E-11, z: -9.264564E-22}
+        tangentMode: 0
+      - time: 0.33333302
+        value: {x: -0.04296486, y: 3.8594006E-08, z: -6.67572E-08}
+        inSlope: {x: -4.1634001E-16, y: -5.006856E-07, z: -3.9705278E-22}
+        outSlope: {x: 6.4372165E-07, y: -5.0065114E-07, z: -9.2643E-22}
+        tangentMode: 0
+      - time: 0.3666668
+        value: {x: -0.04296487, y: 5.2154063E-09, z: -6.67572E-08}
+        inSlope: {x: 6.4372165E-07, y: -6.2587E-07, z: -3.9704142E-22}
+        outSlope: {x: -9.7146E-16, y: -6.2589373E-07, z: -9.264564E-22}
+        tangentMode: 0
+      - time: 0.4333334
+        value: {x: -0.04296487, y: 9.3877315E-09, z: -6.67572E-08}
+        inSlope: {x: -4.163281E-16, y: 2.5035388E-07, z: -3.9704142E-22}
+        outSlope: {x: -1.9669274E-07, y: 2.5034583E-07, z: -5.9610186E-12}
+        tangentMode: 0
+      - time: 0.46666718
+        value: {x: -0.04296486, y: 1.3560057E-08, z: -6.67572E-08}
+        inSlope: {x: 3.9934574E-07, y: -6.2582956E-08, z: 2.5033253E-07}
+        outSlope: {x: -3.2187003E-07, y: -6.264216E-08, z: 2.5046967E-07}
+        tangentMode: 0
+      - time: 0.5
+        value: {x: -0.042964857, y: 5.2154063E-09, z: -5.0067904E-08}
+        inSlope: {x: -3.2187003E-07, y: -1.2521386E-07, z: 8.651452E-11}
+        outSlope: {x: 3.2186082E-07, y: -1.2516819E-07, z: -1.2474477E-11}
+        tangentMode: 0
+      - time: 0.5333338
+        value: {x: -0.04296486, y: 5.2154063E-09, z: -6.67572E-08}
+        inSlope: {x: 3.2186082E-07, y: -6.2585265E-08, z: -2.5032196E-07}
+        outSlope: {x: -9.7146E-16, y: -6.2617254E-08, z: -2.5034367E-07}
+        tangentMode: 0
+      - time: 0.5666666
+        value: {x: -0.04296486, y: 1.0430813E-09, z: -6.67572E-08}
+        inSlope: {x: -4.1634001E-16, y: 3.126965E-08, z: 4.255861E-12}
+        outSlope: {x: -9.714322E-16, y: 3.1295443E-08, z: 2.550459E-12}
+        tangentMode: 0
+      - time: 0.6000004
+        value: {x: -0.04296486, y: 7.301569E-09, z: -6.67572E-08}
+        inSlope: {x: -4.163281E-16, y: 4.6935273E-08, z: -2.503348E-07}
+        outSlope: {x: -9.7146E-16, y: 4.6918615E-08, z: -2.5045688E-07}
+        tangentMode: 0
+      - time: 0.6333332
+        value: {x: -0.04296486, y: 4.172325E-09, z: -8.34465E-08}
+        inSlope: {x: -4.1634001E-16, y: -2.3490209E-08, z: -9.6462276E-11}
+        outSlope: {x: -9.714322E-16, y: -2.3468699E-08, z: 2.6691182E-12}
+        tangentMode: 0
+      - time: 0.666667
+        value: {x: -0.04296486, y: 5.736947E-09, z: -6.67572E-08}
+        inSlope: {x: -4.163281E-16, y: 2.7380256E-08, z: 2.503332E-07}
+        outSlope: {x: -3.2187003E-07, y: 2.738269E-08, z: 2.5034052E-07}
+        tangentMode: 0
+      - time: 0.6999998
+        value: {x: -0.042964857, y: 5.9977174E-09, z: -6.67572E-08}
+        inSlope: {x: -3.2187003E-07, y: 3.912324E-09, z: -9.656068E-12}
+        outSlope: {x: -4.163281E-16, y: 3.911486E-09, z: -9.2643E-22}
+        tangentMode: 0
+      - time: 0.9333334
+        value: {x: -0.042964857, y: 5.9977174E-09, z: -6.67572E-08}
+        inSlope: {x: -9.714322E-16, y: -0, z: -3.9704142E-22}
+        outSlope: {x: -4.163281E-16, y: -1.1175745E-12, z: -9.2643E-22}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyLArmCollarbone/cartoon_guyLArm1
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 0
+        value: {x: -0.06292473, y: 1.66893E-08, z: 1.66893E-08}
+        inSlope: {x: -3.2187003E-07, y: -5.0087027E-07, z: -9.790718E-12}
+        outSlope: {x: 6.4372165E-07, y: -5.0068206E-07, z: -7.303572E-12}
+        tangentMode: 0
+      - time: 0.03333378
+        value: {x: -0.062924735, y: 1.66893E-08, z: 1.66893E-08}
+        inSlope: {x: 6.4372165E-07, y: 3.7549424E-07, z: 5.0066825E-07}
+        outSlope: {x: 2.0265881E-07, y: 3.7569433E-07, z: 5.0090193E-07}
+        tangentMode: 0
+      - time: 0.0666666
+        value: {x: -0.06292472, y: 4.172325E-08, z: 5.0067904E-08}
+        inSlope: {x: 2.0265881E-07, y: 1.3637992E-10, z: 5.0086015E-07}
+        outSlope: {x: 6.4372165E-07, y: -1.1748489E-11, z: 5.006795E-07}
+        tangentMode: 0
+      - time: 0.10000038
+        value: {x: -0.06292473, y: 1.66893E-08, z: 5.0067904E-08}
+        inSlope: {x: 6.4372165E-07, y: -3.7549134E-07, z: -5.006653E-07}
+        outSlope: {x: -3.2187003E-07, y: -3.7549202E-07, z: -5.008918E-07}
+        tangentMode: 0
+      - time: 0.1333332
+        value: {x: -0.06292473, y: 1.66893E-08, z: 1.66893E-08}
+        inSlope: {x: -3.2187003E-07, y: -5.006693E-07, z: -5.0087164E-07}
+        outSlope: {x: -4.857161E-16, y: -5.006807E-07, z: -5.0067337E-07}
+        tangentMode: 0
+      - time: 0.19999981
+        value: {x: -0.062924735, y: 0, z: 1.66893E-08}
+        inSlope: {x: 6.4374007E-07, y: 1.1781724E-10, z: 9.9263194E-23}
+        outSlope: {x: -3.2186082E-07, y: 3.4357833E-12, z: 2.316075E-22}
+        tangentMode: 0
+      - time: 0.23333359
+        value: {x: -0.06292473, y: -1.66893E-08, z: 1.66893E-08}
+        inSlope: {x: -3.2186082E-07, y: 7.5100564E-07, z: 9.9260355E-23}
+        outSlope: {x: -4.8573E-16, y: 7.514181E-07, z: 1.5190925E-11}
+        tangentMode: 0
+      - time: 0.2666664
+        value: {x: -0.06292473, y: 5.0067904E-08, z: 1.66893E-08}
+        inSlope: {x: -2.0817001E-16, y: 5.0111055E-07, z: -5.0068405E-07}
+        outSlope: {x: 6.4372165E-07, y: 5.0068445E-07, z: -5.006554E-07}
+        tangentMode: 0
+      - time: 0.3000002
+        value: {x: -0.062924735, y: 1.66893E-08, z: -1.66893E-08}
+        inSlope: {x: 6.4372165E-07, y: -2.4350685E-11, z: -1.5445572E-11}
+        outSlope: {x: -6.4374007E-07, y: 1.9497022E-10, z: 1.6979318E-10}
+        tangentMode: 0
+      - time: 0.33333302
+        value: {x: -0.06292473, y: 5.0067904E-08, z: 1.66893E-08}
+        inSlope: {x: -6.4374007E-07, y: 2.4072988E-10, z: 1.001612E-06}
+        outSlope: {x: -4.857161E-16, y: 1.9104105E-11, z: 1.0013101E-06}
+        tangentMode: 0
+      - time: 0.3666668
+        value: {x: -0.06292473, y: 1.66893E-08, z: 5.0067904E-08}
+        inSlope: {x: -2.0816405E-16, y: -5.0070787E-07, z: 1.6792743E-11}
+        outSlope: {x: -3.9935716E-07, y: -5.0067257E-07, z: -1.7302904E-10}
+        tangentMode: 0
+      - time: 0.39999962
+        value: {x: -0.062924735, y: 1.66893E-08, z: 1.66893E-08}
+        inSlope: {x: 1.9669837E-07, y: -2.5031684E-07, z: -5.0093934E-07}
+        outSlope: {x: 4.05306E-07, y: -2.5032259E-07, z: -5.006663E-07}
+        tangentMode: 0
+      - time: 0.5333338
+        value: {x: -0.062924735, y: 0, z: 0}
+        inSlope: {x: 7.2120656E-07, y: -1.2515846E-07, z: 2.5034348E-07}
+        outSlope: {x: -1.9669837E-07, y: -1.2516846E-07, z: 2.505713E-07}
+        tangentMode: 0
+      - time: 0.5666666
+        value: {x: -0.06292473, y: 0, z: 3.33786E-08}
+        inSlope: {x: 3.9935716E-07, y: -6.258177E-08, z: 2.5052776E-07}
+        outSlope: {x: -6.4372165E-07, y: -6.258626E-08, z: 2.5032736E-07}
+        tangentMode: 0
+      - time: 0.6000004
+        value: {x: -0.06292472, y: -4.172325E-09, z: 1.66893E-08}
+        inSlope: {x: -6.4372165E-07, y: -6.258241E-08, z: 9.069601E-12}
+        outSlope: {x: 1.9669837E-07, y: -6.2589415E-08, z: 1.1457393E-10}
+        tangentMode: 0
+      - time: 0.6333332
+        value: {x: -0.06292473, y: -4.172325E-09, z: 3.33786E-08}
+        inSlope: {x: -3.9935716E-07, y: 9.387953E-08, z: 1.02920845E-10}
+        outSlope: {x: 6.4372165E-07, y: 9.387772E-08, z: -3.3796514E-12}
+        tangentMode: 0
+      - time: 0.666667
+        value: {x: -0.062924735, y: 2.0861626E-09, z: 1.66893E-08}
+        inSlope: {x: 6.4372165E-07, y: 3.1291666E-08, z: -2.503339E-07}
+        outSlope: {x: -4.8573E-16, y: 3.1264324E-08, z: -2.5034115E-07}
+        tangentMode: 0
+      - time: 0.9333334
+        value: {x: -0.062924735, y: -2.0861626E-09, z: 1.66893E-08}
+        inSlope: {x: -2.0816405E-16, y: -1.2407544E-23, z: 9.9260355E-23}
+        outSlope: {x: 4.470289E-07, y: -6.829557E-13, z: 2.316075E-22}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyLArmCollarbone/cartoon_guyLArm1/cartoon_guyLArm2
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 0
+        value: {x: -0.07172309, y: 0, z: 0}
+        inSlope: {x: -4.1634001E-16, y: -0, z: 3.755996E-07}
+        outSlope: {x: -9.714322E-16, y: -0, z: 3.7551155E-07}
+        tangentMode: 0
+      - time: 0.0666666
+        value: {x: -0.071723096, y: 0, z: 1.66893E-08}
+        inSlope: {x: 2.7299345E-06, y: -5.00679E-07, z: -1.2512712E-07}
+        outSlope: {x: 2.4914407E-06, y: -5.0069474E-07, z: -1.2517765E-07}
+        tangentMode: 0
+      - time: 0.10000038
+        value: {x: -0.07172306, y: -3.33786E-08, z: 0}
+        inSlope: {x: 1.2993638E-06, y: 1.0542181E-11, z: -1.2516124E-07}
+        outSlope: {x: -1.299401E-06, y: 2.0816592E-10, z: -1.251164E-07}
+        tangentMode: 0
+      - time: 0.1333332
+        value: {x: -0.071723096, y: 0, z: 8.34465E-09}
+        inSlope: {x: -2.4915119E-06, y: 5.008868E-07, z: 6.264038E-08}
+        outSlope: {x: -6.4372165E-07, y: 5.0067314E-07, z: 6.258358E-08}
+        tangentMode: 0
+      - time: 0.39999962
+        value: {x: -0.07172307, y: 0, z: 0}
+        inSlope: {x: -1.0371368E-06, y: 5.006874E-07, z: -2.503437E-07}
+        outSlope: {x: -1.0490277E-06, y: 5.00629E-07, z: -2.5031946E-07}
+        tangentMode: 0
+      - time: 0.4333334
+        value: {x: -0.071723096, y: 3.33786E-08, z: -1.66893E-08}
+        inSlope: {x: -1.0490277E-06, y: 3.2764822E-11, z: -2.503554E-07}
+        outSlope: {x: 1.0490277E-06, y: -2.2157267E-11, z: -2.5034927E-07}
+        tangentMode: 0
+      - time: 0.46666718
+        value: {x: -0.07172307, y: 0, z: -1.66893E-08}
+        inSlope: {x: 1.0490277E-06, y: -1.0012952E-06, z: 5.006616E-07}
+        outSlope: {x: -2.5034333E-07, y: -1.0016267E-06, z: 5.0092603E-07}
+        tangentMode: 0
+      - time: 0.5
+        value: {x: -0.07172308, y: -3.33786E-08, z: 1.66893E-08}
+        inSlope: {x: -1.4424544E-06, y: -1.6412652E-10, z: 2.5051241E-07}
+        outSlope: {x: 1.2874433E-06, y: 2.3705518E-11, z: 2.5032608E-07}
+        tangentMode: 0
+      - time: 0.5333338
+        value: {x: -0.071723096, y: 0, z: 0}
+        inSlope: {x: 1.2874433E-06, y: 5.00642E-07, z: -2.503176E-07}
+        outSlope: {x: -9.7146E-16, y: 5.006857E-07, z: -2.503369E-07}
+        tangentMode: 0
+      - time: 0.8000002
+        value: {x: -0.07172309, y: 0, z: 8.34465E-09}
+        inSlope: {x: -4.163281E-16, y: -0, z: 3.910242E-12}
+        outSlope: {x: -9.7146E-16, y: -0, z: -4.561985E-11}
+        tangentMode: 0
+      - time: 0.9333334
+        value: {x: -0.07172309, y: 0, z: 0}
+        inSlope: {x: -4.163281E-16, y: -0, z: -0}
+        outSlope: {x: -9.714322E-16, y: -0, z: -0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyLArmCollarbone/cartoon_guyLArm1/cartoon_guyLArm2/cartoon_guyLArmPalm
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 0
+        value: {x: 5.0067904E-08, y: 0, z: 0.030753838}
+        inSlope: {x: -2.504306E-07, y: 1.2517266E-07, z: -7.450692E-08}
+        outSlope: {x: -2.503409E-07, y: 1.2517621E-07, z: 7.450479E-08}
+        tangentMode: 0
+      - time: 0.03333378
+        value: {x: 5.0067904E-08, y: 7.301569E-09, z: 0.030753838}
+        inSlope: {x: 1.2516341E-07, y: -1.564974E-08, z: -8.1955295E-07}
+        outSlope: {x: 1.2521964E-07, y: -1.5694674E-08, z: -1.3321837E-06}
+        tangentMode: 0
+      - time: 0.0666666
+        value: {x: 5.8412553E-08, y: -1.0430813E-09, z: 0.03075377}
+        inSlope: {x: 2.5038509E-07, y: -2.5038784E-07, z: -1.0341561E-06}
+        outSlope: {x: 2.5034265E-07, y: -2.5034294E-07, z: -1.1175722E-06}
+        tangentMode: 0
+      - time: 0.10000038
+        value: {x: 6.67572E-08, y: -9.3877315E-09, z: 0.03075377}
+        inSlope: {x: -1.5038435E-12, y: 6.2585364E-08, z: 3.7252403E-07}
+        outSlope: {x: -4.6387425E-11, y: 6.266361E-08, z: 7.033454E-07}
+        tangentMode: 0
+      - time: 0.1333332
+        value: {x: 5.8412553E-08, y: 3.129244E-09, z: 0.030753804}
+        inSlope: {x: -2.5039145E-07, y: 1.8783064E-07, z: 1.07289836E-07}
+        outSlope: {x: -2.5033796E-07, y: 1.8775292E-07, z: 4.1722892E-08}
+        tangentMode: 0
+      - time: 0.16666698
+        value: {x: 5.0067904E-08, y: 3.129244E-09, z: 0.03075377}
+        inSlope: {x: 1.0775237E-12, y: -1.5645944E-07, z: 6.377614E-07}
+        outSlope: {x: 4.9652244E-11, y: -1.5652444E-07, z: 3.635935E-07}
+        tangentMode: 0
+      - time: 0.19999981
+        value: {x: 5.8412553E-08, y: -7.301569E-09, z: 0.030753838}
+        inSlope: {x: 1.2522418E-07, y: -1.878182E-07, z: -2.32462E-07}
+        outSlope: {x: 1.2516712E-07, y: -1.8775152E-07, z: -2.8907832E-07}
+        tangentMode: 0
+      - time: 0.23333359
+        value: {x: 5.8412553E-08, y: -9.3877315E-09, z: 0.03075377}
+        inSlope: {x: -1.2516853E-07, y: 9.387613E-08, z: -5.870976E-07}
+        outSlope: {x: -1.252178E-07, y: 9.392533E-08, z: -4.1425878E-07}
+        tangentMode: 0
+      - time: 0.2666664
+        value: {x: 5.0067904E-08, y: -1.0430813E-09, z: 0.030753804}
+        inSlope: {x: -1.2522291E-07, y: 1.2522436E-07, z: 4.798245E-07}
+        outSlope: {x: -1.2516712E-07, y: 1.2516745E-07, z: 5.215337E-07}
+        tangentMode: 0
+      - time: 0.3000002
+        value: {x: 5.0067904E-08, y: -1.0430813E-09, z: 0.030753804}
+        inSlope: {x: 9.910163E-13, y: -1.1264617E-12, z: 2.2351445E-07}
+        outSlope: {x: -2.1279304E-12, y: 3.1005005E-12, z: -2.2352084E-07}
+        tangentMode: 0
+      - time: 0.33333302
+        value: {x: 5.0067904E-08, y: -1.0430813E-09, z: 0.030753804}
+        inSlope: {x: 1.2517184E-07, y: -1.2517143E-07, z: -5.215486E-07}
+        outSlope: {x: 1.2516048E-07, y: -1.2516055E-07, z: -7.0332527E-07}
+        tangentMode: 0
+      - time: 0.3666668
+        value: {x: 5.8412553E-08, y: -9.3877315E-09, z: 0.03075377}
+        inSlope: {x: 6.0240784E-12, y: -5.953025E-12, z: -1.0728677E-07}
+        outSlope: {x: -4.1839882E-11, y: 5.296138E-11, z: 2.0265881E-07}
+        tangentMode: 0
+      - time: 0.39999962
+        value: {x: 5.0067904E-08, y: -1.0430813E-09, z: 0.030753788}
+        inSlope: {x: -2.5040737E-07, y: -3.7545254E-07, z: 2.0265881E-07}
+        outSlope: {x: -2.5032688E-07, y: -3.7547218E-07, z: -0}
+        tangentMode: 0
+      - time: 0.4333334
+        value: {x: 4.172325E-08, y: -3.442168E-08, z: 0.030753788}
+        inSlope: {x: -1.2517471E-07, y: -5.0071316E-07, z: -0}
+        outSlope: {x: -1.2517734E-07, y: -5.0069104E-07, z: 1.6093041E-07}
+        tangentMode: 0
+      - time: 0.46666718
+        value: {x: 4.172325E-08, y: -3.442168E-08, z: 0.030753786}
+        inSlope: {x: 3.754968E-07, y: 6.258231E-07, z: 1.6093041E-07}
+        outSlope: {x: 3.7568503E-07, y: 6.261512E-07, z: -1.6093502E-07}
+        tangentMode: 0
+      - time: 0.5
+        value: {x: 6.67572E-08, y: 7.301569E-09, z: 0.030753788}
+        inSlope: {x: 3.7563845E-07, y: 4.383098E-07, z: -1.6093502E-07}
+        outSlope: {x: 3.7551027E-07, y: 4.3808154E-07, z: -2.6225692E-07}
+        tangentMode: 0
+      - time: 0.5333338
+        value: {x: 6.67572E-08, y: -5.2154063E-09, z: 0.03075378}
+        inSlope: {x: -2.5032853E-07, y: -9.3859526E-08, z: -2.6225692E-07}
+        outSlope: {x: -2.5046356E-07, y: -9.383383E-08, z: -9.834918E-08}
+        tangentMode: 0
+      - time: 0.5666666
+        value: {x: 5.0067904E-08, y: 1.0430813E-09, z: 0.030753786}
+        inSlope: {x: -9.1204176E-11, y: 7.861954E-09, z: 1.9967858E-07}
+        outSlope: {x: 8.3496534E-12, y: 7.820176E-09, z: -3.2186082E-07}
+        tangentMode: 0
+      - time: 0.6000004
+        value: {x: 6.67572E-08, y: -4.6938657E-09, z: 0.03075379}
+        inSlope: {x: 1.2515997E-07, y: -6.2581236E-08, z: -3.2186082E-07}
+        outSlope: {x: 1.2511451E-07, y: -6.2576405E-08, z: 1.6093502E-07}
+        tangentMode: 0
+      - time: 0.6333332
+        value: {x: 5.8412553E-08, y: -3.129244E-09, z: 0.030753788}
+        inSlope: {x: -5.6039763E-11, y: 3.9127226E-08, z: 1.6093502E-07}
+        outSlope: {x: 7.6986274E-13, y: 3.9115406E-08, z: -9.834637E-08}
+        tangentMode: 0
+      - time: 0.666667
+        value: {x: 6.67572E-08, y: -2.0861626E-09, z: 0.030753791}
+        inSlope: {x: 2.503347E-07, y: -1.5645996E-08, z: 1.9967287E-07}
+        outSlope: {x: 2.5039557E-07, y: -1.5658776E-08, z: -3.8445586E-07}
+        tangentMode: 0
+      - time: 0.6999998
+        value: {x: 7.510185E-08, y: -4.172325E-09, z: 0.030753793}
+        inSlope: {x: 4.6529537E-11, y: -3.130563E-08, z: -6.8248363E-07}
+        outSlope: {x: 1.5113042E-12, y: -3.12919E-08, z: -4.619298E-07}
+        tangentMode: 0
+      - time: 0.7333336
+        value: {x: 6.67572E-08, y: -4.172325E-09, z: 0.030753784}
+        inSlope: {x: -1.8992553E-12, y: 1.5646137E-08, z: -1.6391054E-07}
+        outSlope: {x: 4.8231138E-11, y: 1.5652676E-08, z: 1.6391523E-07}
+        tangentMode: 0
+      - time: 0.7666664
+        value: {x: 7.510185E-08, y: -3.129244E-09, z: 0.030753793}
+        inSlope: {x: 1.2522844E-07, y: 6.4641057E-12, z: 4.6194302E-07}
+        outSlope: {x: 1.2516668E-07, y: 3.039084E-13, z: 9.714322E-16}
+        tangentMode: 0
+      - time: 0.8000002
+        value: {x: 7.510185E-08, y: -4.172325E-09, z: 0.030753793}
+        inSlope: {x: -1.985763E-12, y: -1.5646739E-08, z: 4.163281E-16}
+        outSlope: {x: 1.3896847E-21, y: -1.5646142E-08, z: 9.7146E-16}
+        tangentMode: 0
+      - time: 0.9333334
+        value: {x: 7.510185E-08, y: -4.172325E-09, z: 0.030753793}
+        inSlope: {x: 5.9556217E-22, y: -2.4815089E-23, z: 4.163281E-16}
+        outSlope: {x: 5.1065137E-12, y: -3.7256366E-13, z: -2.2351445E-07}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001/cartoon_guyLLeg1
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 0
+        value: {x: -0.055959463, y: 0, z: -6.67572E-08}
+        inSlope: {x: 6.4374007E-07, y: -0, z: 5.003403E-07}
+        outSlope: {x: 4.470289E-07, y: -0, z: 5.007559E-07}
+        tangentMode: 0
+      - time: 0.03333378
+        value: {x: -0.055959463, y: 0, z: 3.33786E-08}
+        inSlope: {x: 1.0430674E-06, y: -0, z: 1.0012664E-06}
+        outSlope: {x: 7.748714E-08, y: -0, z: 1.0011548E-06}
+        tangentMode: 0
+      - time: 0.0666666
+        value: {x: -0.055959452, y: 0, z: 0}
+        inSlope: {x: -5.185684E-07, y: -0, z: -5.0089864E-07}
+        outSlope: {x: -2.02653E-07, y: -0, z: -5.0067484E-07}
+        tangentMode: 0
+      - time: 0.23333359
+        value: {x: -0.055959444, y: 8.34465E-09, z: 0}
+        inSlope: {x: -1.3649282E-06, y: 1.2517167E-07, z: -5.0067314E-07}
+        outSlope: {x: -2.0265881E-07, y: 1.2512244E-07, z: -5.0087135E-07}
+        tangentMode: 0
+      - time: 0.2666664
+        value: {x: -0.055959463, y: 0, z: -3.33786E-08}
+        inSlope: {x: -2.0265881E-07, y: -1.252335E-07, z: -5.008921E-07}
+        outSlope: {x: -1.4571482E-15, y: -1.2516745E-07, z: -5.0067E-07}
+        tangentMode: 0
+      - time: 0.3000002
+        value: {x: -0.055959463, y: 0, z: -3.33786E-08}
+        inSlope: {x: -6.244922E-16, y: 1.1264617E-12, z: 4.106172E-12}
+        outSlope: {x: 4.4704169E-07, y: 7.7512514E-13, z: -1.2490822E-11}
+        tangentMode: 0
+      - time: 0.33333302
+        value: {x: -0.055959463, y: 0, z: -3.33786E-08}
+        inSlope: {x: 1.0430972E-06, y: -3.1292856E-08, z: 5.006856E-07}
+        outSlope: {x: 7.748492E-08, y: -3.1290124E-08, z: 5.0064915E-07}
+        tangentMode: 0
+      - time: 0.3666668
+        value: {x: -0.055959452, y: -2.0861626E-09, z: 0}
+        inSlope: {x: -5.185536E-07, y: -1.4815949E-12, z: 5.007006E-07}
+        outSlope: {x: 6.4374007E-07, y: 1.0869827E-11, z: 5.006773E-07}
+        tangentMode: 0
+      - time: 0.6333332
+        value: {x: -0.05595946, y: 0, z: 0}
+        inSlope: {x: -6.2451003E-16, y: 6.258508E-08, z: -1.432476E-12}
+        outSlope: {x: -1.4571482E-15, y: 6.258501E-08, z: -2.0685398E-13}
+        tangentMode: 0
+      - time: 0.9333334
+        value: {x: -0.05595946, y: 0, z: 4.172325E-09}
+        inSlope: {x: -6.244922E-16, y: -5.3571544E-12, z: -2.625243E-12}
+        outSlope: {x: -1.4571482E-15, y: 5.3571544E-12, z: 1.3659114E-12}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001/cartoon_guyLLeg1/cartoon_guyLLeg2
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 0
+        value: {x: -0.045951627, y: -4.172325E-09, z: 0}
+        inSlope: {x: 6.4374007E-07, y: -6.26088E-08, z: -1.9243283E-10}
+        outSlope: {x: -1.4571482E-15, y: -6.2586416E-08, z: 3.888109E-11}
+        tangentMode: 0
+      - time: 0.03333378
+        value: {x: -0.045951627, y: -4.172325E-09, z: 3.33786E-08}
+        inSlope: {x: -6.244922E-16, y: 1.251661E-07, z: -5.006936E-07}
+        outSlope: {x: -3.2187003E-07, y: 1.252286E-07, z: -5.0114306E-07}
+        tangentMode: 0
+      - time: 0.0666666
+        value: {x: -0.045951623, y: 4.172325E-09, z: -3.33786E-08}
+        inSlope: {x: -3.2187003E-07, y: 6.2630455E-08, z: -5.010561E-07}
+        outSlope: {x: 6.4372165E-07, y: 6.2582444E-08, z: -5.006637E-07}
+        tangentMode: 0
+      - time: 0.10000038
+        value: {x: -0.04595163, y: 0, z: 0}
+        inSlope: {x: 6.4372165E-07, y: -6.258139E-08, z: 1.0013212E-06}
+        outSlope: {x: -6.2451E-16, y: -6.259076E-08, z: 1.001618E-06}
+        tangentMode: 0
+      - time: 0.1333332
+        value: {x: -0.04595163, y: 0, z: 3.33786E-08}
+        inSlope: {x: 1.31841E-15, y: 1.2517208E-07, z: -5.0050494E-07}
+        outSlope: {x: -6.4372165E-07, y: 1.2517002E-07, z: -5.0068894E-07}
+        tangentMode: 0
+      - time: 0.16666698
+        value: {x: -0.045951623, y: 8.34465E-09, z: -3.33786E-08}
+        inSlope: {x: -6.4372165E-07, y: 1.2516749E-07, z: -5.006673E-07}
+        outSlope: {x: 3.2187003E-07, y: 1.2517751E-07, z: -5.005012E-07}
+        tangentMode: 0
+      - time: 0.19999981
+        value: {x: -0.045951627, y: 8.34465E-09, z: 0}
+        inSlope: {x: 3.2187003E-07, y: -1.8776024E-07, z: 1.0016004E-06}
+        outSlope: {x: 3.2186082E-07, y: -1.8775135E-07, z: 1.0013413E-06}
+        tangentMode: 0
+      - time: 0.23333359
+        value: {x: -0.04595163, y: -4.172325E-09, z: 3.33786E-08}
+        inSlope: {x: 3.2186082E-07, y: -3.1292328E-07, z: 5.006783E-07}
+        outSlope: {x: -6.2451E-16, y: -3.1297313E-07, z: 5.006812E-07}
+        tangentMode: 0
+      - time: 0.2666664
+        value: {x: -0.04595163, y: -1.2516976E-08, z: 3.33786E-08}
+        inSlope: {x: 1.31841E-15, y: -1.2521502E-07, z: -2.0875354E-11}
+        outSlope: {x: -6.244921E-16, y: -1.251675E-07, z: 4.63215E-22}
+        tangentMode: 0
+      - time: 0.33333302
+        value: {x: -0.04595163, y: -1.2516976E-08, z: 3.33786E-08}
+        inSlope: {x: 1.0430972E-06, y: 4.3810016E-07, z: 1.9852639E-22}
+        outSlope: {x: 7.748492E-08, y: 4.3806628E-07, z: -7.68868E-12}
+        tangentMode: 0
+      - time: 0.3666668
+        value: {x: -0.04595162, y: 1.66893E-08, z: 3.33786E-08}
+        inSlope: {x: -5.185536E-07, y: 3.129437E-07, z: -5.006767E-07}
+        outSlope: {x: 6.4374007E-07, y: 3.1288238E-07, z: -5.008509E-07}
+        tangentMode: 0
+      - time: 0.39999962
+        value: {x: -0.045951627, y: 8.34465E-09, z: 0}
+        inSlope: {x: 6.4374007E-07, y: -2.504233E-07, z: -5.0091256E-07}
+        outSlope: {x: -4.470289E-07, y: -2.5032872E-07, z: -5.0066666E-07}
+        tangentMode: 0
+      - time: 0.666667
+        value: {x: -0.04595163, y: 4.172325E-09, z: 0}
+        inSlope: {x: 3.2186082E-07, y: -1.5646306E-08, z: -3.129219E-08}
+        outSlope: {x: -3.2187003E-07, y: -1.5691597E-08, z: -3.1319843E-08}
+        tangentMode: 0
+      - time: 0.9333334
+        value: {x: -0.045951627, y: -3.129244E-09, z: -4.172325E-09}
+        inSlope: {x: -6.244922E-16, y: 1.3126215E-12, z: 1.3659114E-12}
+        outSlope: {x: -1.4571482E-15, y: -2.1905075E-12, z: 1.3126215E-12}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001/cartoon_guyLLeg1/cartoon_guyLLeg2/cartoon_guyLLegAnkle
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 0
+        value: {x: 1.66893E-08, y: -2.0861626E-09, z: -0.030753823}
+        inSlope: {x: -2.5033853E-07, y: 2.5038352E-07, z: 1.3709304E-07}
+        outSlope: {x: -2.5035393E-07, y: 2.5034606E-07, z: 3.099398E-07}
+        tangentMode: 0
+      - time: 0.0666666
+        value: {x: 1.66893E-08, y: -2.0861626E-09, z: -0.030753773}
+        inSlope: {x: 3.7560656E-07, y: -1.565109E-07, z: -7.450692E-08}
+        outSlope: {x: 3.7551092E-07, y: -1.5646356E-07, z: -4.857161E-16}
+        tangentMode: 0
+      - time: 0.10000038
+        value: {x: 2.5033952E-08, y: -4.172325E-09, z: -0.030753773}
+        inSlope: {x: -7.895799E-13, y: 1.5645892E-07, z: -2.0816405E-16}
+        outSlope: {x: -5.1712846E-11, y: 1.5654699E-07, z: -4.8573E-16}
+        tangentMode: 0
+      - time: 0.1333332
+        value: {x: 1.66893E-08, y: 8.34465E-09, z: -0.030753773}
+        inSlope: {x: -1.252214E-07, y: 6.2657485E-08, z: -2.0817001E-16}
+        outSlope: {x: -1.2516797E-07, y: 6.2582586E-08, z: 2.2351445E-07}
+        tangentMode: 0
+      - time: 0.19999981
+        value: {x: 8.34465E-09, y: -4.172325E-09, z: -0.03075374}
+        inSlope: {x: 1.2512079E-07, y: -3.1313007E-08, z: 1.07289836E-07}
+        outSlope: {x: 1.2516655E-07, y: -3.129175E-08, z: -1.0728677E-07}
+        tangentMode: 0
+      - time: 0.23333359
+        value: {x: 2.5033952E-08, y: -2.0861626E-09, z: -0.030753773}
+        inSlope: {x: 1.251718E-07, y: 1.5646108E-07, z: -7.0332527E-07}
+        outSlope: {x: 1.2512231E-07, y: 1.5651045E-07, z: -5.215486E-07}
+        tangentMode: 0
+      - time: 0.2666664
+        value: {x: 1.66893E-08, y: 6.258488E-09, z: -0.030753773}
+        inSlope: {x: -1.2523356E-07, y: 1.2522179E-07, z: -2.2352084E-07}
+        outSlope: {x: -1.251675E-07, y: 1.2516745E-07, z: -4.857161E-16}
+        tangentMode: 0
+      - time: 0.5
+        value: {x: 1.66893E-08, y: 0, z: -0.030753786}
+        inSlope: {x: 3.7559707E-07, y: 6.258466E-08, z: 5.2452884E-07}
+        outSlope: {x: 3.755151E-07, y: 6.258663E-08, z: -6.258404E-08}
+        tangentMode: 0
+      - time: 0.5333338
+        value: {x: 2.5033952E-08, y: 4.172325E-09, z: -0.030753788}
+        inSlope: {x: -1.4290597E-12, y: 1.2516466E-07, z: -3.6060328E-07}
+        outSlope: {x: -6.6200684E-11, y: 1.2520455E-07, z: -3.874357E-08}
+        tangentMode: 0
+      - time: 0.5666666
+        value: {x: 1.66893E-08, y: 8.34465E-09, z: -0.030753793}
+        inSlope: {x: 1.2512112E-07, y: -6.256356E-08, z: 2.592842E-07}
+        outSlope: {x: 1.2517987E-07, y: -6.258777E-08, z: -2.592768E-07}
+        tangentMode: 0
+      - time: 0.6000004
+        value: {x: 3.33786E-08, y: 0, z: -0.030753788}
+        inSlope: {x: -1.251734E-07, y: -1.6427914E-07, z: 3.874246E-08}
+        outSlope: {x: -1.2533236E-07, y: -1.6430386E-07, z: -1.6093502E-07}
+        tangentMode: 0
+      - time: 0.6333332
+        value: {x: 8.34465E-09, y: -2.6077032E-09, z: -0.030753786}
+        inSlope: {x: -2.5049124E-07, y: -2.3480519E-08, z: -1.6093502E-07}
+        outSlope: {x: -2.503352E-07, y: -2.3468774E-08, z: 3.2186082E-07}
+        tangentMode: 0
+      - time: 0.666667
+        value: {x: 1.66893E-08, y: -1.564622E-09, z: -0.03075379}
+        inSlope: {x: 2.5033452E-07, y: -7.823152E-09, z: 3.2186082E-07}
+        outSlope: {x: 2.503913E-07, y: -7.833091E-09, z: -6.2287796E-07}
+        tangentMode: 0
+      - time: 0.6999998
+        value: {x: 2.5033952E-08, y: -3.129244E-09, z: -0.030753797}
+        inSlope: {x: 1.2521623E-07, y: -7.833091E-09, z: -3.2485025E-07}
+        outSlope: {x: 1.2516782E-07, y: -7.823044E-09, z: 2.6225692E-07}
+        tangentMode: 0
+      - time: 0.7333336
+        value: {x: 2.5033952E-08, y: -2.0861626E-09, z: -0.030753791}
+        inSlope: {x: -2.8048302E-13, y: 1.564633E-08, z: 2.6225692E-07}
+        outSlope: {x: -0, y: 1.5645805E-08, z: 2.592842E-07}
+        tangentMode: 0
+      - time: 0.9333334
+        value: {x: 2.5033952E-08, y: -3.129244E-09, z: -0.030753797}
+        inSlope: {x: -0, y: -0, z: -3.122461E-16}
+        outSlope: {x: 2.269976E-12, y: -6.829557E-13, z: 2.2351445E-07}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001/cartoon_guyRLeg1
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 0
+        value: {x: -0.055959497, y: -8.34465E-09, z: 4.172325E-09}
+        inSlope: {x: -2.0817001E-16, y: 2.503388E-07, z: 2.4815799E-23}
+        outSlope: {x: -4.857161E-16, y: 2.503502E-07, z: -3.678431E-12}
+        tangentMode: 0
+      - time: 0.03333378
+        value: {x: -0.055959497, y: 8.34465E-09, z: 4.172325E-09}
+        inSlope: {x: -2.0816405E-16, y: 2.5032452E-07, z: 2.5033404E-07}
+        outSlope: {x: -4.4704169E-07, y: 2.5034888E-07, z: 2.5047518E-07}
+        tangentMode: 0
+      - time: 0.0666666
+        value: {x: -0.055959497, y: 8.34465E-09, z: 2.0861625E-08}
+        inSlope: {x: -1.0430972E-06, y: -1.2517597E-07, z: -2.502481E-07}
+        outSlope: {x: -7.986915E-07, y: -1.2517259E-07, z: -2.503551E-07}
+        tangentMode: 0
+      - time: 0.19999981
+        value: {x: -0.055959478, y: -8.34465E-09, z: 2.0861625E-08}
+        inSlope: {x: 4.0531762E-07, y: 6.2508384E-08, z: 2.504408E-07}
+        outSlope: {x: -8.5233495E-07, y: 6.258272E-08, z: 2.5033478E-07}
+        tangentMode: 0
+      - time: 0.23333359
+        value: {x: -0.05595951, y: 8.34465E-09, z: 2.0861625E-08}
+        inSlope: {x: -1.4483734E-06, y: 1.2517239E-07, z: -2.5033762E-07}
+        outSlope: {x: -3.9339673E-07, y: 1.2512244E-07, z: -2.5043568E-07}
+        tangentMode: 0
+      - time: 0.33333302
+        value: {x: -0.055959497, y: 0, z: 4.172325E-09}
+        inSlope: {x: -2.0817001E-16, y: 1.2517143E-07, z: 2.503428E-07}
+        outSlope: {x: 3.9934574E-07, y: 1.2515966E-07, z: 2.50321E-07}
+        tangentMode: 0
+      - time: 0.3666668
+        value: {x: -0.05595949, y: 8.34465E-09, z: 2.0861625E-08}
+        inSlope: {x: -1.9669274E-07, y: -6.257861E-08, z: 1.16573634E-11}
+        outSlope: {x: -6.02016E-07, y: -6.265217E-08, z: -8.438659E-11}
+        tangentMode: 0
+      - time: 0.46666718
+        value: {x: -0.055959478, y: 0, z: 4.172325E-09}
+        inSlope: {x: -1.0430674E-06, y: -1.8774396E-07, z: 1.564489E-07}
+        outSlope: {x: -2.0265881E-07, y: -1.8782082E-07, z: 1.5648402E-07}
+        tangentMode: 0
+      - time: 0.9333334
+        value: {x: -0.055959497, y: -3.911555E-10, z: 4.172325E-09}
+        inSlope: {x: -6.4372165E-07, y: -3.8285252E-13, z: -1.3659114E-12}
+        outSlope: {x: 6.4372165E-07, y: 1.0234814E-12, z: 5.790187E-23}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001/cartoon_guyRLeg1/cartoon_guyRLeg2
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 0
+        value: {x: -0.04595141, y: 4.9546363E-09, z: -1.66893E-08}
+        inSlope: {x: -5.2452884E-07, y: -4.6917933E-08, z: 2.5016487E-07}
+        outSlope: {x: 1.2516809E-07, y: -4.6943445E-08, z: 2.5038543E-07}
+        tangentMode: 0
+      - time: 0.03333378
+        value: {x: -0.045951407, y: -2.0861626E-09, z: 3.33786E-08}
+        inSlope: {x: 7.2120656E-07, y: -1.0560482E-07, z: -3.540338E-11}
+        outSlope: {x: 7.748714E-08, y: -1.0561485E-07, z: -3.4868536E-10}
+        tangentMode: 0
+      - time: 0.0666666
+        value: {x: -0.045951393, y: -2.0861626E-09, z: -1.66893E-08}
+        inSlope: {x: -5.185684E-07, y: 3.1295034E-08, z: -2.506313E-07}
+        outSlope: {x: -2.02653E-07, y: 3.1291997E-08, z: -2.5031986E-07}
+        tangentMode: 0
+      - time: 0.19999981
+        value: {x: -0.045951404, y: -8.34465E-09, z: -1.66893E-08}
+        inSlope: {x: -1.9669837E-07, y: -1.447602E-07, z: -2.50441E-07}
+        outSlope: {x: -9.238596E-07, y: -1.447244E-07, z: -2.5033478E-07}
+        tangentMode: 0
+      - time: 0.33333302
+        value: {x: -0.04595141, y: 8.08388E-09, z: 0}
+        inSlope: {x: -6.2451003E-16, y: -1.8384569E-07, z: -0}
+        outSlope: {x: 4.470289E-07, y: -1.8383125E-07, z: -0}
+        tangentMode: 0
+      - time: 0.9333334
+        value: {x: -0.045951415, y: -4.172325E-09, z: 0}
+        inSlope: {x: -6.244922E-16, y: -1.4358988E-12, z: -3.1292387E-08}
+        outSlope: {x: -1.4571482E-15, y: 2.003393E-12, z: -3.1295052E-08}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001/cartoon_guyRLeg1/cartoon_guyRLeg2/cartoon_guyRLegAnkle
+  m_ScaleCurves:
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 9.536743E-07
+        value: {x: 1.0000004, y: 0.9999977, z: 1.0000103}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      - time: 0.93333435
+        value: {x: 1.0000004, y: 0.9999977, z: 1.0000103}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: weapon_dummy_02
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 9.536743E-07
+        value: {x: 0.99999195, y: 0.99999547, z: 0.99999136}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      - time: 0.93333435
+        value: {x: 0.99999195, y: 0.99999547, z: 0.99999136}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: weapon_dummy
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 9.536743E-07
+        value: {x: 1, y: 1, z: 1}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      - time: 0.93333435
+        value: {x: 1, y: 1, z: 1}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: assault
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 9.536743E-07
+        value: {x: 0.99999994, y: 0.99999994, z: 0.99999994}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      - time: 0.93333435
+        value: {x: 0.99999994, y: 0.99999994, z: 0.99999994}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 9.536743E-07
+        value: {x: 1, y: 1, z: 1.0000002}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      - time: 0.93333435
+        value: {x: 1, y: 1, z: 1.0000002}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 9.536743E-07
+        value: {x: 0.99999994, y: 1, z: 0.99999964}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      - time: 0.93333435
+        value: {x: 0.99999994, y: 1, z: 0.99999964}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 9.536743E-07
+        value: {x: 1.0049188, y: 1.0000001, z: 1.0000002}
+        inSlope: {x: -0.043827966, y: 1.4304873E-05, z: 1.6987096E-05}
+        outSlope: {x: -0.043827966, y: 1.4304873E-05, z: 1.6987096E-05}
+        tangentMode: 0
+      - time: 0.06666756
+        value: {x: 1.0018485, y: 0.9999996, z: 1.0000002}
+        inSlope: {x: 0.039191313, y: -9.834737E-06, z: -4.4704166E-06}
+        outSlope: {x: 0.039191313, y: -9.834737E-06, z: -4.4704166E-06}
+        tangentMode: 0
+      - time: 0.20000076
+        value: {x: 1.0026082, y: 0.99999934, z: 0.9999994}
+        inSlope: {x: -0.03193035, y: 3.5763844E-06, z: -1.788141E-06}
+        outSlope: {x: -0.03193035, y: 3.5763844E-06, z: -1.788141E-06}
+        tangentMode: 0
+      - time: 0.33333397
+        value: {x: 1.0049192, y: 0.99999934, z: 0.9999994}
+        inSlope: {x: -0.037087303, y: 2.6821733E-06, z: 1.7881155E-06}
+        outSlope: {x: -0.037087303, y: 2.6821733E-06, z: 1.7881155E-06}
+        tangentMode: 0
+      - time: 0.5333338
+        value: {x: 0.99864936, y: 1.0000001, z: 0.99999994}
+        inSlope: {x: 0.017020386, y: 8.940731E-06, z: 3.5763333E-06}
+        outSlope: {x: 0.017020386, y: 8.940731E-06, z: 3.5763333E-06}
+        tangentMode: 0
+      - time: 0.93333435
+        value: {x: 1.0001063, y: 1.0000004, z: 1.0000002}
+        inSlope: {x: -4.2916E-05, y: 0, z: 0}
+        outSlope: {x: -4.2916E-05, y: 0, z: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 9.536743E-07
+        value: {x: 0.99523365, y: 0.9998996, z: 0.99997306}
+        inSlope: {x: 0.04254674, y: 0.00061959954, z: 0.0003576332}
+        outSlope: {x: 0.04254674, y: 0.00061959954, z: 0.0003576332}
+        tangentMode: 0
+      - time: 0.10000038
+        value: {x: 0.99569666, y: 0.99974674, z: 0.9999694}
+        inSlope: {x: -0.041331597, y: -0.0023791587, z: -0.0002440896}
+        outSlope: {x: -0.041331597, y: -0.0023791587, z: -0.0002440896}
+        tangentMode: 0
+      - time: 0.23333359
+        value: {x: 0.9974192, y: 0.9999226, z: 0.99999446}
+        inSlope: {x: -0.03423888, y: 0.00021995456, z: -0.00037550568}
+        outSlope: {x: -0.03423888, y: 0.00021995456, z: -0.00037550568}
+        tangentMode: 0
+      - time: 0.40000057
+        value: {x: 0.9997181, y: 0.9999986, z: 0.9999967}
+        inSlope: {x: 0.05276104, y: 0.00051052024, z: 0.00039875586}
+        outSlope: {x: 0.05276104, y: 0.00051052024, z: 0.00039875586}
+        tangentMode: 0
+      - time: 0.76666737
+        value: {x: 0.99989456, y: 0.99999976, z: 0.99999946}
+        inSlope: {x: -3.5763844E-06, y: -6.2586596E-06, z: -9.834712E-06}
+        outSlope: {x: -3.5763844E-06, y: -6.2586596E-06, z: -9.834712E-06}
+        tangentMode: 0
+      - time: 0.93333435
+        value: {x: 0.99989456, y: 0.99999976, z: 0.99999946}
+        inSlope: {x: 7.5103E-05, y: 0, z: 0}
+        outSlope: {x: 7.5103E-05, y: 0, z: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 9.536743E-07
+        value: {x: 0.99999994, y: 1.0000001, z: 1}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      - time: 0.93333435
+        value: {x: 0.99999994, y: 1.0000001, z: 1}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 9.536743E-07
+        value: {x: 1.0000001, y: 1.0000001, z: 0.99999994}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      - time: 0.93333435
+        value: {x: 1.0000001, y: 1.0000001, z: 0.99999994}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 9.536743E-07
+        value: {x: 1.0000001, y: 1.0000004, z: 0.9999999}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      - time: 0.93333435
+        value: {x: 1.0000001, y: 1.0000004, z: 0.9999999}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 9.536743E-07
+        value: {x: 0.99999994, y: 0.9999994, z: 0.99999976}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      - time: 0.93333435
+        value: {x: 0.99999994, y: 0.9999994, z: 0.99999976}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 9.536743E-07
+        value: {x: 0.9999989, y: 0.9999998, z: 0.9999983}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      - time: 0.93333435
+        value: {x: 0.9999989, y: 0.9999998, z: 0.9999983}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 9.536743E-07
+        value: {x: 0.9999958, y: 0.9999936, z: 0.99999124}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      - time: 0.93333435
+        value: {x: 0.9999958, y: 0.9999936, z: 0.99999124}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 9.536743E-07
+        value: {x: 0.99999964, y: 0.9999997, z: 0.99999976}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      - time: 0.93333435
+        value: {x: 0.99999964, y: 0.9999997, z: 0.99999976}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyLArmCollarbone
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 9.536743E-07
+        value: {x: 1.0000001, y: 0.99999994, z: 1.0000002}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      - time: 0.93333435
+        value: {x: 1.0000001, y: 0.99999994, z: 1.0000002}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyLArmCollarbone/cartoon_guyLArm1
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 9.536743E-07
+        value: {x: 0.9999991, y: 0.99999535, z: 0.999998}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      - time: 0.93333435
+        value: {x: 0.9999991, y: 0.99999535, z: 0.999998}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyLArmCollarbone/cartoon_guyLArm1/cartoon_guyLArm2
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 9.536743E-07
+        value: {x: 1, y: 0.9999978, z: 1.0000105}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      - time: 0.93333435
+        value: {x: 1, y: 0.9999978, z: 1.0000105}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyLArmCollarbone/cartoon_guyLArm1/cartoon_guyLArm2/cartoon_guyLArmPalm
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 9.536743E-07
+        value: {x: 0.99999994, y: 1, z: 0.99999946}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      - time: 0.93333435
+        value: {x: 0.99999994, y: 1, z: 0.99999946}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001/cartoon_guyLLeg1
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 9.536743E-07
+        value: {x: 0.9999999, y: 1, z: 0.9999995}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      - time: 0.93333435
+        value: {x: 0.9999999, y: 1, z: 0.9999995}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001/cartoon_guyLLeg1/cartoon_guyLLeg2
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 9.536743E-07
+        value: {x: 0.9999999, y: 1.0000001, z: 0.99999994}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      - time: 0.93333435
+        value: {x: 0.9999999, y: 1.0000001, z: 0.99999994}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001/cartoon_guyLLeg1/cartoon_guyLLeg2/cartoon_guyLLegAnkle
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 9.536743E-07
+        value: {x: 1.0000001, y: 1, z: 0.99999994}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      - time: 0.93333435
+        value: {x: 1.0000001, y: 1, z: 0.99999994}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001/cartoon_guyRLeg1
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 9.536743E-07
+        value: {x: 1.0000001, y: 1, z: 0.99999803}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      - time: 0.93333435
+        value: {x: 1.0000001, y: 1, z: 0.99999803}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001/cartoon_guyRLeg1/cartoon_guyRLeg2
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 9.536743E-07
+        value: {x: 1.000001, y: 0.99999994, z: 0.9999992}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      - time: 0.93333435
+        value: {x: 1.000001, y: 0.99999994, z: 0.9999992}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+    path: global_move/cartoon_guyHub001/cartoon_guyRLeg1/cartoon_guyRLeg2/cartoon_guyRLegAnkle
+  m_FloatCurves: []
+  m_PPtrCurves: []
+  m_SampleRate: 30
+  m_WrapMode: 1
+  m_Bounds:
+    m_Center: {x: 0.13629955, y: 0.25541314, z: 0.08605331}
+    m_Extent: {x: 0.24305177, y: 0.25905755, z: 0.19605866}
+  m_ClipBindingConstant:
+    genericBindings: []
+    pptrCurveMapping: []
+  m_AnimationClipSettings:
+    serializedVersion: 2
+    m_StartTime: 0
+    m_StopTime: 1
+    m_OrientationOffsetY: 0
+    m_Level: 0
+    m_CycleOffset: 0
+    m_LoopTime: 0
+    m_LoopBlend: 0
+    m_LoopBlendOrientation: 0
+    m_LoopBlendPositionY: 0
+    m_LoopBlendPositionXZ: 0
+    m_KeepOriginalOrientation: 0
+    m_KeepOriginalPositionY: 1
+    m_KeepOriginalPositionXZ: 0
+    m_HeightFromFeet: 0
+    m_Mirror: 0
+  m_EditorCurves: []
+  m_EulerEditorCurves: []
+  m_HasGenericRootTransform: 0
+  m_HasMotionFloatCurves: 0
+  m_GenerateMotionCurves: 0
+  m_Events: []

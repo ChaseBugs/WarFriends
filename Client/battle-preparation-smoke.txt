@@ -1,5 +1,0 @@
-screen_activated=True
-elapsed_seconds=27.4
-errors:
-[Error] we dont have best regions for player
-UnityEngine.Debug:LogError(Object) PhotonConnectionManager:get_bestRegionsSorted() (at Assets/Scripts/Gameplay/PhotonConnectionManager.cs:3491) GameControllerDeathMatch:StartRandomMatchMaking(Single) (at Assets/Scripts/Gameplay/GameControllerDeathMatch.cs:235) PlayerVsPlayerButton:PvPClick(GameObject) (at Assets/Scripts/Gameplay/PlayerVsPlayerButton.cs:1121) UIEventListener:OnClick() (at Assets/Scripts/Gameplay.FirstPass/UIEventListener.cs:56) UnityEngine.GameObject:SendMessage(String, Object, SendMessageOptions) UICamera:Notify(GameObject, String, Object) (at Assets/Scripts/Gameplay.FirstPass/UICamera.cs:503) UICamera:ProcessTouch(Boolean, Boolean) (at Assets/Scripts/Gameplay.FirstPass/UICamera.cs:968) UICamera:ProcessMouse() (at Assets/Scripts/Gameplay.FirstPass/UICamera.cs:744) UICamera:Update() (at Assets/Scripts/Gameplay.FirstPass/UICamera.cs:604) 

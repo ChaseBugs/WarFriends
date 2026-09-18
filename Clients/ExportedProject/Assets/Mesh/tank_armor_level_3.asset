@@ -1,0 +1,130 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!43 &4300000
+Mesh:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_Name: tank_armor_level_3
+  m_SubMeshes:
+  - serializedVersion: 2
+    firstByte: 0
+    indexCount: 96
+    topology: 0
+    firstVertex: 0
+    vertexCount: 40
+    localAABB:
+      m_Center: {x: 0.4965999, y: 0.4981578, z: -0.7747982}
+      m_Extent: {x: 0.10912047, y: 0.042251885, z: 0.24581033}
+  m_Shapes:
+    vertices: []
+    shapes: []
+    channels: []
+    fullWeights: []
+  m_BindPose: []
+  m_BoneNameHashes:
+  m_RootBoneNameHash: 0
+  m_MeshCompression: 3
+  m_IsReadable: 0
+  m_KeepVertices: 1
+  m_KeepIndices: 1
+  m_IndexBuffer:
+  m_Skin: []
+  m_VertexData:
+    m_CurrentChannels: 0
+    m_VertexCount: 0
+    m_Channels:
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    m_DataSize: 0
+    _typelessdata:
+  m_CompressedMesh:
+    m_Vertices:
+      m_NumItems: 120
+      m_Range: 1.626329
+      m_Start: -1.0206085
+      m_Data: ba5bffc3ffcbdff2bff53fe8befc2dbac30ec0ffb00360b7f53fd80d3b00ba07ef92ddcbdf6277f02efd1fbc4bbac30ec0ffa193a07be824fc0f3b0076874e82ddb003f07ff02ee91e7a4dff875e93eec1bb6477f02ed91d7a4dff878ecdffc1bbf47fe835fdbffc2dff87bec7ffd6fff07fe824fc0f3b007607ef92dda1636377e835d9bdfc2d7687be87ddd6ff6077e824d80d3b00
+      m_BitSize: 10
+    m_UV:
+      m_NumItems: 80
+      m_Range: 0.93454456
+      m_Start: -0.16533566
+      m_Data: 75f66be46bf675e475ff6bff7ff67fff75d27fe47fd26bd25dfb59fe59fb5dfe59fe5dfe6bd275d06bd075d27fd27fd061df64d261d165e461ed67f65dfa62ff07d204df04d108e404ed0af600fa05ff
+      m_BitSize: 8
+    m_Normals:
+      m_NumItems: 80
+      m_Range: 1.999748
+      m_Start: -0.999874
+      m_Data: a00ffe9f0ffea0fee9a00feae0fffddf0ffea0f009a0f009a0000aa0099aa0099a9ff9993ff8833ff8833ff8833ff883000880000880000880000880
+      m_BitSize: 6
+    m_Tangents:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data:
+      m_BitSize: 0
+    m_Weights:
+      m_NumItems: 0
+      m_Data:
+      m_BitSize: 0
+    m_NormalSigns:
+      m_NumItems: 40
+      m_Data: 0000fc0000
+      m_BitSize: 1
+    m_TangentSigns:
+      m_NumItems: 0
+      m_Data:
+      m_BitSize: 0
+    m_FloatColors:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data:
+      m_BitSize: 0
+    m_BoneIndices:
+      m_NumItems: 0
+      m_Data:
+      m_BitSize: 0
+    m_Triangles:
+      m_NumItems: 96
+      m_Data: 4020004340000221148401108781040332244032004682240ab2044ce3304fc338100345d24449d5644d95754d58a6615bc66d18d76d1de775de078622388623198e25599a64799a
+      m_BitSize: 6
+    m_UVInfo: 5
+  m_LocalAABB:
+    m_Center: {x: 0.4965999, y: 0.4981578, z: -0.7747982}
+    m_Extent: {x: 0.10912047, y: 0.042251885, z: 0.24581033}
+  m_MeshUsageFlags: 0
+  m_BakedConvexCollisionMesh:
+  m_BakedTriangleCollisionMesh:
+  m_MeshOptimized: 1

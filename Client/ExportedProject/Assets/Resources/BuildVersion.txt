@@ -1,1 +1,0 @@
-com.chillingo.warfriends.android.gplay;4.9.5;4090502;4.9.5.2

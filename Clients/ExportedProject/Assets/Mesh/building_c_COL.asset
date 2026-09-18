@@ -1,0 +1,130 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!43 &4300000
+Mesh:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_Name: building_c_COL
+  m_SubMeshes:
+  - serializedVersion: 2
+    firstByte: 0
+    indexCount: 324
+    topology: 0
+    firstVertex: 0
+    vertexCount: 77
+    localAABB:
+      m_Center: {x: 0.20952493, y: 0.87926114, z: 0.61555403}
+      m_Extent: {x: 1.4980016, y: 0.9568752, z: 2.5697088}
+  m_Shapes:
+    vertices: []
+    shapes: []
+    channels: []
+    fullWeights: []
+  m_BindPose: []
+  m_BoneNameHashes:
+  m_RootBoneNameHash: 0
+  m_MeshCompression: 3
+  m_IsReadable: 0
+  m_KeepVertices: 1
+  m_KeepIndices: 1
+  m_IndexBuffer:
+  m_Skin: []
+  m_VertexData:
+    m_CurrentChannels: 0
+    m_VertexCount: 0
+    m_Channels:
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    m_DataSize: 0
+    _typelessdata:
+  m_CompressedMesh:
+    m_Vertices:
+      m_NumItems: 231
+      m_Range: 5.1394176
+      m_Start: -1.9541548
+      m_Data: 85cabb059d3e6e41e7ac5b14dae21685ca8b49a13e62e2a98f98782a2f269ecadba4a73e3659a88f4d162a6f9385b68849b62d6292ad8f9864ebe3ddd9b67877a13e165aa88f7717dae2dd85e6a97aa179165a68615b145a98ead9165643b685a9ae6c61cb676b97eacadab5fcaa8561bfaa5dd8235218f688d8853d9d2daa4ea78faa1792a7ea85f8a87ab676d5e0ac5d14385b1805a2da1580a8850540678bff17d2e2ff85b4a87a213efe4fa78fff236257008814164021856d41678b5bd0e9630285f89840213e6e41678b0914d2e21685b4984021b36e4127ad06d0d92b00745abb059df26e5148af001462ed1685d06a009db56a5b08afe11652abb674f21a6e21d6164aa7b585d2696ba174ca5b68a1f2165a88ad8516a267a18514863a
+      m_BitSize: 10
+    m_UV:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data:
+      m_BitSize: 0
+    m_Normals:
+      m_NumItems: 154
+      m_Range: 1.9104359
+      m_Start: -0.9222971
+      m_Data: b687a228657bb647a7b6677bb6677b6c6e7b3c152f711cc7f162db3cca53b6e77b288ff2767dd3f0fc7bb637d2a5e7d99e875228ea799efd7bb717cfa537d2f1e21ddee1d971ec799eedd52815c79eedd9f1e21ddee11df311a3e9ea799eeaf95e301fdee901b1e9f9e98a529e677bdee1795e0d
+      m_BitSize: 6
+    m_Tangents:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data:
+      m_BitSize: 0
+    m_Weights:
+      m_NumItems: 0
+      m_Data:
+      m_BitSize: 0
+    m_NormalSigns:
+      m_NumItems: 77
+      m_Data: 008fbdfe1f7c0000fe1f
+      m_BitSize: 1
+    m_TangentSigns:
+      m_NumItems: 0
+      m_Data:
+      m_BitSize: 0
+    m_FloatColors:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data:
+      m_BitSize: 0
+    m_BoneIndices:
+      m_NumItems: 0
+      m_Data:
+      m_BitSize: 0
+    m_Triangles:
+      m_NumItems: 324
+      m_Data: 80800030081006004261403014080703c27040240c8a044281581418834283517034148ec2a3e1503c1c0f4883d180441e0ac923c2804c260fc904f29050261549a4429154148b4a4431b1301896c1e462a15c26178ce592c15c3419cd26a3e16c3a1ccda5a3e978381f4fe703f25c28215188321251462451a684c96c4a989209633a9d4ca8132a25528542aa5568c56aad542d954be452915c2252cb9542bd522f580a164bc52c9653ca8239c92cb1814536900564b34060460bd06a32dbec6693c962b71bce36c3d166365c2e50130472399d40a0db09763c010fc0eb01783b1fcff703ee7440df2e07d40585c320515814128b44a391183c0687c6e0b1623c5690c64a12791c2a9595e32259512e2bccce85f9e9b09817d62504
+      m_BitSize: 7
+    m_UVInfo: 0
+  m_LocalAABB:
+    m_Center: {x: 0.20952493, y: 0.87926114, z: 0.61555403}
+    m_Extent: {x: 1.4980016, y: 0.9568752, z: 2.5697088}
+  m_MeshUsageFlags: 4
+  m_BakedConvexCollisionMesh:
+  m_BakedTriangleCollisionMesh:
+  m_MeshOptimized: 1

@@ -1,0 +1,130 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!43 &4300000
+Mesh:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_Name: vehicle_1_icecream_COL
+  m_SubMeshes:
+  - serializedVersion: 2
+    firstByte: 0
+    indexCount: 222
+    topology: 0
+    firstVertex: 0
+    vertexCount: 40
+    localAABB:
+      m_Center: {x: 5.066395E-07, y: 0.14380045, z: 0.0641568}
+      m_Extent: {x: 0.3661954, y: 0.4185869, z: 0.6738347}
+  m_Shapes:
+    vertices: []
+    shapes: []
+    channels: []
+    fullWeights: []
+  m_BindPose: []
+  m_BoneNameHashes:
+  m_RootBoneNameHash: 0
+  m_MeshCompression: 3
+  m_IsReadable: 0
+  m_KeepVertices: 1
+  m_KeepIndices: 1
+  m_IndexBuffer:
+  m_Skin: []
+  m_VertexData:
+    m_CurrentChannels: 0
+    m_VertexCount: 0
+    m_Channels:
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    m_DataSize: 0
+    _typelessdata:
+  m_CompressedMesh:
+    m_Vertices:
+      m_NumItems: 120
+      m_Range: 1.3476694
+      m_Start: -0.6096779
+      m_Data: c2d80680abb651b0ad6d00bc631b05ae664881b2b6b9a0ec872eb89a630bef6448c13b39b6e06a96a3bc93e528ae86bdce3b61aff3aade0b290b7641efe8bd90ac7a63cf8eded8b30376fcb2821d3f3bb6c52fab6df12b9ba52fcaf6b889b260634f0dd805510336f6d464e94bb9b6fdafac6dd8e762dbffd4f4b809351fba408d6d2e50631bf6b9f8f3bf30fe00b0ad3f0094ebcfff
+      m_BitSize: 10
+    m_UV:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data:
+      m_BitSize: 0
+    m_Normals:
+      m_NumItems: 80
+      m_Range: 1.872292
+      m_Start: -0.936146
+      m_Data: cc7ceaf38ce96a2aefbcaaea555ae96d2dd56a5cc5abcfb794bff6544fadeb8aede7fe97ffdaaf432bac4039cfb2ceccc03aa8cddee8088880377883
+      m_BitSize: 6
+    m_Tangents:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data:
+      m_BitSize: 0
+    m_Weights:
+      m_NumItems: 0
+      m_Data:
+      m_BitSize: 0
+    m_NormalSigns:
+      m_NumItems: 40
+      m_Data: 00007eea98
+      m_BitSize: 1
+    m_TangentSigns:
+      m_NumItems: 0
+      m_Data:
+      m_BitSize: 0
+    m_FloatColors:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data:
+      m_BitSize: 0
+    m_BoneIndices:
+      m_NumItems: 0
+      m_Data:
+      m_BitSize: 0
+    m_Triangles:
+      m_NumItems: 222
+      m_Data: 402000434004035104851010467118c44120c4801c48a21c8971284ab230cac22c8dc3348cf3380d0445cee34490144d91345151454d95455dcc73298c726186824554763dd9136556466912d46890b649d23655d3c66d5a675556e7595e767958e65d5df5715ac335cb027221b8844b922021228622182283288e20078e1b3756e3576da3380023f08d2200905ff79140499a25600282709a1d790adde97582271405e6150606
+      m_BitSize: 6
+    m_UVInfo: 0
+  m_LocalAABB:
+    m_Center: {x: 5.066395E-07, y: 0.14380045, z: 0.0641568}
+    m_Extent: {x: 0.3661954, y: 0.4185869, z: 0.6738347}
+  m_MeshUsageFlags: 4
+  m_BakedConvexCollisionMesh:
+  m_BakedTriangleCollisionMesh:
+  m_MeshOptimized: 1

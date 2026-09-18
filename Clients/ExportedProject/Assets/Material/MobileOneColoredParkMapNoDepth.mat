@@ -1,0 +1,293 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_Name: MobileOneColoredParkMapNoDepth
+  m_Shader: {fileID: 4800000, guid: b3fb07bfb77aeed4ab62e2146ab6e2a1, type: 3}
+  m_ShaderKeywords: _ENABLECUSTOMFOG_ON _ENABLEREFLECTIONS_ON _USEREFLECTIONS_ON
+  m_LightmapFlags: 5
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  m_SavedProperties:
+    serializedVersion: 2
+    m_TexEnvs:
+      data:
+        first:
+          name: _NormalTexture
+        second:
+          m_Texture: {fileID: 2800000, guid: 27802d9d4e408f340950be1721974705, type: 3}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+      data:
+        first:
+          name: _ReflectionTex
+        second:
+          m_Texture: {fileID: 0}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+    m_Floats:
+      data:
+        first:
+          name: _BumpScale
+        second: 1
+      data:
+        first:
+          name: _Cull
+        second: 2
+      data:
+        first:
+          name: _Cutoff
+        second: 0.5
+      data:
+        first:
+          name: _Density
+        second: 1.74
+      data:
+        first:
+          name: _DepthFade
+        second: 10
+      data:
+        first:
+          name: _DepthTransparency
+        second: 1.5
+      data:
+        first:
+          name: _DetailNormalMapScale
+        second: 1
+      data:
+        first:
+          name: _DistanceVisibility
+        second: 0
+      data:
+        first:
+          name: _Distortion
+        second: 0.8
+      data:
+        first:
+          name: _DstBlend
+        second: 0
+      data:
+        first:
+          name: _EmissionIntensity
+        second: 1.12
+      data:
+        first:
+          name: _EnableCustomFog
+        second: 1.278023
+      data:
+        first:
+          name: _EnableReflections
+        second: 0.6
+      data:
+        first:
+          name: _Fade
+        second: 1
+      data:
+        first:
+          name: _FoamBlend
+        second: 0.01
+      data:
+        first:
+          name: _FoamContrast
+        second: 0
+      data:
+        first:
+          name: _FoamIntensity
+        second: 409.52
+      data:
+        first:
+          name: _FoamSpeed
+        second: -63.2
+      data:
+        first:
+          name: _FoamTiling
+        second: 20
+      data:
+        first:
+          name: _FoamVisibility
+        second: 0
+      data:
+        first:
+          name: _FogDistance
+        second: 1000
+      data:
+        first:
+          name: _FogFade
+        second: 1
+      data:
+        first:
+          name: _Gain
+        second: 3.5
+      data:
+        first:
+          name: _Gloss
+        second: 4.6
+      data:
+        first:
+          name: _Glossiness
+        second: 0.5
+      data:
+        first:
+          name: _Intensity
+        second: 0
+      data:
+        first:
+          name: _InvFade
+        second: 1
+      data:
+        first:
+          name: _LightWrapping
+        second: 2
+      data:
+        first:
+          name: _Metallic
+        second: 0
+      data:
+        first:
+          name: _Mode
+        second: 0
+      data:
+        first:
+          name: _NormalTiling
+        second: 20
+      data:
+        first:
+          name: _OcclusionStrength
+        second: 1
+      data:
+        first:
+          name: _Offset
+        second: 0.04
+      data:
+        first:
+          name: _Parallax
+        second: 0.02
+      data:
+        first:
+          name: _ReflectionIntensity
+        second: 0.6
+      data:
+        first:
+          name: _Reflectionintensity
+        second: 1
+      data:
+        first:
+          name: _Refraction
+        second: 0.653
+      data:
+        first:
+          name: _ShallowDeepBlend
+        second: 5.3
+      data:
+        first:
+          name: _Shininess
+        second: 0.7
+      data:
+        first:
+          name: _ShoreFade
+        second: 0.3
+      data:
+        first:
+          name: _ShoreTransparency
+        second: 0
+      data:
+        first:
+          name: _SkinnedMesh
+        second: 0
+      data:
+        first:
+          name: _Specular
+        second: 4
+      data:
+        first:
+          name: _SrcBlend
+        second: 1
+      data:
+        first:
+          name: _UVSec
+        second: 0
+      data:
+        first:
+          name: _UseReflections
+        second: 1
+      data:
+        first:
+          name: _WaterLevel
+        second: 22
+      data:
+        first:
+          name: _WaveSpeed
+        second: 120
+      data:
+        first:
+          name: _WindQuality
+        second: 0
+      data:
+        first:
+          name: _ZWrite
+        second: 1
+    m_Colors:
+      data:
+        first:
+          name: _AmbientColor
+        second: {r: 0.318231, g: 0.55151904, b: 0.8014706, a: 0.2}
+      data:
+        first:
+          name: _Color
+        second: {r: 0.17597057, g: 0.5299298, b: 0.772, a: 0.497}
+      data:
+        first:
+          name: _DeepWaterColor
+        second: {r: 0.15073529, g: 0.21772875, b: 0.30147058, a: 1}
+      data:
+        first:
+          name: _EmisColor
+        second: {r: 1, g: 1, b: 1, a: 0.091}
+      data:
+        first:
+          name: _Emission
+        second: {r: 0, g: 0, b: 0, a: 0}
+      data:
+        first:
+          name: _EmissionColor
+        second: {r: 0, g: 0, b: 0, a: 1}
+      data:
+        first:
+          name: _EmissiveColor
+        second: {r: 0, g: 0, b: 0, a: 1}
+      data:
+        first:
+          name: _FoamColor
+        second: {r: 0, g: 1, b: 0, a: 1}
+      data:
+        first:
+          name: _FogColor
+        second: {r: 1, g: 1, b: 1, a: 1}
+      data:
+        first:
+          name: _HueVariation
+        second: {r: 1, g: 0.5, b: 0, a: 0.1}
+      data:
+        first:
+          name: _MainColor
+        second: {r: 0, g: 0.4627451, b: 1, a: 1}
+      data:
+        first:
+          name: _ShallowWaterColor
+        second: {r: 0.15073529, g: 0.21772875, b: 0.30147058, a: 1}
+      data:
+        first:
+          name: _SpecColor
+        second: {r: 0.12543254, g: 0.43148765, b: 0.85294116, a: 0}
+      data:
+        first:
+          name: _SpecularColor
+        second: {r: 0.14987321, g: 0.7887509, b: 0.8862069, a: 1}
+      data:
+        first:
+          name: _TintColor
+        second: {r: 0.5, g: 0.5, b: 0.5, a: 0.054}

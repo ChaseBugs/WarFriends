@@ -1,0 +1,60 @@
+using System;
+
+namespace UnityEngine.Networking;
+
+internal struct ChannelPacket(int packetSize, bool isReliable)
+{
+	private int m_Position = 0;
+
+	private byte[] m_Buffer = new byte[packetSize];
+
+	private bool m_IsReliable = isReliable;
+
+	public void Reset()
+	{
+		m_Position = 0;
+	}
+
+	public bool IsEmpty()
+	{
+		return m_Position == 0;
+	}
+
+	public void Write(byte[] bytes, int numBytes)
+	{
+		Array.Copy(bytes, 0, m_Buffer, m_Position, numBytes);
+		m_Position += numBytes;
+	}
+
+	public bool HasSpace(int numBytes)
+	{
+		return m_Position + numBytes <= m_Buffer.Length;
+	}
+
+	public bool SendToTransport(NetworkConnection conn, int channelId)
+	{
+		bool result = true;
+		if (!conn.TransportSend(m_Buffer, (ushort)m_Position, channelId, out var error) && (!m_IsReliable || error != 4))
+		{
+			if (LogFilter.logError)
+			{
+				Debug.LogError("Failed to send internal buffer channel:" + channelId + " bytesToSend:" + m_Position);
+			}
+			result = false;
+		}
+		if (error != 0)
+		{
+			if (m_IsReliable && error == 4)
+			{
+				return false;
+			}
+			if (LogFilter.logError)
+			{
+				Debug.LogError("Send Error: " + error + " channel:" + channelId + " bytesToSend:" + m_Position);
+			}
+			result = false;
+		}
+		m_Position = 0;
+		return result;
+	}
+}
