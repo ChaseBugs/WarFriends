@@ -15,6 +15,7 @@ public sealed class NetworkWorker : BackgroundService
     private readonly BattleTickets tickets;
     private readonly string serverId;
     private readonly IPEndPoint bind;
+    private readonly MatchRouter? match;
     private readonly Channel<Datagram> incoming = Channel.CreateBounded<Datagram>(new BoundedChannelOptions(512) { SingleReader = true, SingleWriter = true, FullMode = BoundedChannelFullMode.Wait });
     private readonly Dictionary<ulong, Session> sessions = [];
     private readonly Dictionary<ulong, long> closed = [];
@@ -36,6 +37,15 @@ public sealed class NetworkWorker : BackgroundService
         int port = int.Parse(config["Battle:Port"] ?? "30000", System.Globalization.CultureInfo.InvariantCulture);
         if (port is < 1 or > 65535 || !System.Text.RegularExpressions.Regex.IsMatch(serverId, @"\A[a-zA-Z0-9-]{1,64}\z")) throw new InvalidOperationException("Invalid battle endpoint configuration.");
         bind = new IPEndPoint(IPAddress.Parse(config["Battle:BindAddress"] ?? "127.0.0.1"), port);
+        string? manifestPath = config["Battle:MatchManifestPath"];
+        string? manifestDirectory = config["Battle:MatchManifestDirectory"];
+        if (!string.IsNullOrEmpty(manifestPath) && !string.IsNullOrEmpty(manifestDirectory)) throw new InvalidDataException("Choose a single manifest or a manifest directory.");
+        if (!string.IsNullOrEmpty(manifestPath) || !string.IsNullOrEmpty(manifestDirectory))
+        {
+            var files = !string.IsNullOrEmpty(manifestPath) ? new[] { manifestPath } : Directory.EnumerateFiles(manifestDirectory!, "*.json").Take(33).Order(StringComparer.Ordinal).ToArray();
+            var maps = string.IsNullOrEmpty(config["Battle:ContentPath"]) ? null : RecoveredBattleMap.Load(config["Battle:ContentPath"]!);
+            match = new MatchRouter(files.Select(MatchManifest.Read), serverId, config["Battle:SigningKey"]!, maps);
+        }
     }
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -43,7 +53,7 @@ public sealed class NetworkWorker : BackgroundService
         socket.Bind(bind);
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
         Task receive = Receive(socket, linked.Token);
-        logger.LogInformation("Protobuf UDP listening at {Endpoint}; {Rate} Hz, connectivity only", bind, TickRate);
+        logger.LogInformation("Protobuf UDP listening at {Endpoint}; {Rate} Hz; prototype match configured: {Match}", bind, TickRate, match != null);
         long previous = Stopwatch.GetTimestamp();
         double accumulator = 0;
         try
@@ -59,6 +69,7 @@ public sealed class NetworkWorker : BackgroundService
                 {
                     accumulator -= 1.0 / TickRate;
                     tick++;
+                    match?.Advance(tick);
                     for (int i = 0; i < 128 && incoming.Reader.TryRead(out var datagram); i++) await Handle(socket, datagram, stoppingToken);
                     long unix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
                     foreach (ulong id in sessions.Where(x => x.Value.Expires <= unix).Select(x => x.Key).ToArray()) sessions.Remove(id);
@@ -90,6 +101,19 @@ public sealed class NetworkWorker : BackgroundService
         Packet? packet = PacketCodec.ReadUntrusted(d.Bytes);
         if (packet == null) return;
         long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        if (match != null && (packet.BodyCase is Packet.BodyOneofCase.MatchHello or Packet.BodyOneofCase.MatchCommand or Packet.BodyOneofCase.MatchReply || match.Owns(packet.SessionId)))
+        {
+            // Connectivity sessions cannot become match participants, even with
+            // colliding IDs. Match keys and tickets use a separate signing domain.
+            if (sessions.ContainsKey(packet.SessionId) || closed.ContainsKey(packet.SessionId)) return;
+            byte[]? response = match.Handle(packet, d.Bytes, d.Endpoint, now);
+            if (response != null)
+            {
+                try { await socket.SendToAsync(response, SocketFlags.None, d.Endpoint, ct); }
+                catch (SocketException e) { logger.LogDebug("Match UDP send failed: {Code}", e.SocketErrorCode); }
+            }
+            return;
+        }
         if (packet.BodyCase == Packet.BodyOneofCase.Hello && !sessions.ContainsKey(packet.SessionId))
         {
             if (sessions.Count + closed.Count >= 128 || closed.ContainsKey(packet.SessionId)) return;

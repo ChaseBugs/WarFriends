@@ -48,6 +48,47 @@ dotnet run --project Server/src/War.BattleServer --no-launch-profile
 
 Protobuf endpoints: POST `/v1/accounts/register`, POST `/v1/accounts/login`, GET `/v1/player`, POST `/v1/network/connect`. Use `Content-Type: application/x-protobuf`; authenticated calls require `Authorization: Bearer <token>`. See `protocol/war.proto` and `War.Client`. These endpoints do not implement the stock client's legacy PHP/JSON contracts or its full PlayerData.
 
+## Legacy channel for the recovered 1.4.0 client
+
+The recovered Unity client speaks its own channel, served from `src/War.Backend/Legacy/` at
+`POST /index_09_25_2015.php` (a form POST whose `requestId` selects the action) and `GET|POST
+/check.php`. It runs alongside `/v1`, which stays the new protobuf API.
+
+Implemented: the boot chain — reachability, `GetConfigurations` (157), `CreateAccount` (118),
+`LoginToCustomAccount` (30), `GetPlayerData` (34), `GetAllMessages` (5) and `SetPlayerStatus` (29) —
+claim-then-apply idempotent replay of the client's buffered request queue (`SendRequestBuffer` 98,
+and the `Buffers` field `GetPlayerData` carries for anything the client never got an ack for) for 5
+of its 27 buffered actions: `WeaponWasShown` (104), `ArmyUnitWasShown` (105), `VisualWasShown`
+(191), `EquipWeapon` (116), `UpdateEquippedUnits` (1003) — and 6 catalog-free profile/presence
+actions: `UpdateDeviceToken` (13), `ChangeLanguage` (150), `ChangePlayerCountry` (196),
+`UpdateSettings` (165), `ChangePlayerName` (139, free first rename only), `GetPlayerInfo` (170).
+Every other action returns `ServerMaintenance` and logs, because a hollow `Success` would send the
+client into a handler that indexes response keys it did not receive — most remaining actions need
+the Google2u price/reward/unlock sheets first. See `todo_list.md` for the complete Backend/Battle
+Server checklist. This is not a playable game backend: no battles, squads, leagues, arena, or real
+purchases.
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File Server/scripts/LegacySmoke.ps1 -MongoExecutable 'C:\Program Files\MongoDB\Server\8.3\bin\mongod.exe'
+```
+
+Verified on Windows against live MongoDB: **75 assertions** covering the exact wire shapes the
+shipped client parses — the DynamoDB AttributeValue encoding of `Player`/`PlayerData`, bare
+top-level `Result`/`Time`, the `"ok"` probe body, the semicolon-delimited configuration stream,
+session rotation, rejection of stale/forged/cross-bound tokens, buffered-request idempotency
+(replaying the same buffer id/index returns the recorded result rather than re-applying it, for
+both the direct `SendRequestBuffer` path and buffers carried on `GetPlayerData`), and the
+`GetPlayerInfo` case where the client indexes a top-level response key directly and so requires an
+explicit JSON `null` rather than an omitted key for an unknown player.
+`docs/CLIENT_COMMUNICATION.md`
+records the evidence for each shape.
+
+To point the client at this server, change only the host in its `BeanstalkUrlCreator`; the paths
+already match. Configure starter state under `Legacy:Starter` — it is authoritative, and the
+client's own `StartingGold`/`StartingWarbucks` assertions are discarded. Serving the legacy channel
+over plain HTTP requires `Legacy__AllowInsecureHttp=true` and logs a warning; it exposes
+credentials and session tokens, so use it only on an isolated offline network.
+
 ## Linux without containers
 
 Install the .NET 10 runtime and MongoDB natively. A Linux smoke script is provided:

@@ -30,6 +30,108 @@ The recovered enum contains **175 named actions**. [LEGACY_ACTIONS.md](LEGACY_AC
 
 `LoadPlayerData()` calls `DatabaseSerializedObject.LoadObjects()` and consumes Dynamo-style typed values such as `Gold.N`, `WarBucks.N`, `Level.N`, dog-tag fields, and serialized `S` strings. It also triggers inventory, tutorial, calendar, notification, and UI initialization. A small replacement `PlayerProfile` is **not** a compatible stock-client boot response. The new `/v1` protobuf account API is deliberately separate and currently used by the new SDK/smoke clients only.
 
+### Implemented: the legacy boot chain
+
+`War.Backend/Legacy/` now serves the recovered client's own channel at `/check.php` and
+`/index_09_25_2015.php`, alongside — not replacing — the new `/v1` protobuf API. Only the host in
+`BeanstalkUrlCreator` needs repointing; the paths match what the shipped client requests.
+
+Shapes established from the client's parsers and locked in by `scripts/LegacySmoke.ps1`
+(**75 assertions**, run against live MongoDB):
+
+- Top-level response keys are **bare JSON**, because `ServerResponseHandler` reads them with
+  `Convert.ToInt32`/`ToString` straight off a `Dictionary<string, object>`. Wrapping `Result` or
+  `Time` in an AttributeValue breaks the client.
+- `Player` and `PlayerData` are **DynamoDB AttributeValue JSON** (`{"Id":{"S":…},"Level":{"N":…}}`),
+  proven by `StringParser.ParseString(key, databaseType, dict)` evaluating
+  `dict[key][databaseType]`. `N` is emitted as a string, DynamoDB's real wire shape.
+- Each of the **16** `DatabaseSerializedObjectGeneric<T>` subsystems loads its own blob from
+  `PlayerData` keyed by `typeof(T).Name`, with a JSON document escaped inside an `S` string.
+  A **missing key is not an error**: `Load` falls through to `LoadEmpty()`, an
+  `Activator.CreateInstance` default. Omission is therefore the correct encoding of "new account",
+  and no starter blob is synthesised.
+- Mandatory keys, indexed without a presence check: `CreateAccount` needs `Player`, `Token`,
+  `Password`, `PlayerData`, `Time`; `LoginToCustomAccount` needs `Player`, `AccountType`, `Token`,
+  `Password` (and **not** `PlayerData` — the client follows up with `GetPlayerData`);
+  `GetPlayerData` needs `Time` and `PlayerData`; `GetAllMessages` needs `Items` even when empty.
+  Every other key in these responses is `ContainsKey`-guarded and may be omitted.
+- **Client dispatch quirk:** the failure branch triggers only on `Result > 10`, so
+  `SameFacebookAlreadyCreated` (3) and `AccountAlreadyCreated` (4) reach the *success* handler.
+  `LegacyResponse.Failure` refuses to emit a sub-11 code for this reason.
+- `check.php` must return exactly `ok`. It is a reachability probe: no session, no rewards.
+- `GetConfigurations` is not JSON — `success;<version>;<versionsJson>` leaves the client on its
+  shipped Google2u sheets.
+
+Authority held server-side: the guest `Password` and `Token` are server-generated (PBKDF2-SHA256,
+600k iterations; the token is stored hashed and rotated on every login, and is bound to its
+`PlayerId`). The client's `StartingGold`/`StartingWarbucks` arrive on an unauthenticated action
+from a Fuseboxx payload and are logged and discarded; `Legacy:Starter` is the authority. Actions
+outside the boot chain return `ServerMaintenance` and log, rather than a hollow `Success` that
+would send the client into a handler indexing keys that are not there.
+
+Offline deployment: `Regions` is never emitted, because it deserializes to a
+`Dictionary<CloudRegionCode, int>` of Photon Cloud region pings and no Photon is reachable. The
+client's null guard leaves `bestRegions` null, which is the accurate representation. Plain-HTTP
+serving is opt-in via `Legacy:AllowInsecureHttp` and logs a warning; it is not a default.
+
+### Implemented: buffered request replay
+
+`RequestBufferManager`/`RequestBuffer` are the client's own offline queue: UI actions are appended
+locally, `Save()`d, and sent as a batch either via `SendRequestBuffer` (98) or, for anything still
+unacknowledged, attached to the next `GetPlayerData` (34) as the `Buffers` field. `War.Backend/Legacy/LegacyBuffer.cs`
+and `War.Persistence/LegacyBufferStore.cs` implement both paths.
+
+- **Wire shapes differ from the boot chain.** `ProcessBuffer` reads `RequestsResults`/`BufferId`
+  with the single-argument `ParseString` (a bare `ToString()`), and each result entry with
+  `ParseIntToken`/`ParseLongToken` — so buffer results are **plain JSON, not DynamoDB
+  AttributeValues**. `RequestsResults` itself is a JSON array serialized into a string field.
+- **On success the client needs only `ActionId`/`Result`.** Every other field
+  `ProcessBuffer` reads on a request's success branch is `!= null`-guarded; the rollback fields
+  (`LevelName`, `Weapon`, `InventoryData`, `data`, …) are read only on that action's specific
+  failure code, and must carry the authoritative state for the client to revert to.
+- **Idempotency is claim-then-apply**, keyed by player + buffer id + request index per
+  `Server/AGENTS.md`. `LegacyBufferStore.TryClaim` pushes a null-result placeholder conditional on
+  the index being absent; `Complete` fills in the result afterward. A crash between the two leaves
+  the index claimed-but-unresolved, and replay reports a failure rather than risk re-granting —
+  see the remarks on `LegacyBufferProcessor` for why that direction of error is preferred.
+- **Implemented actions are the five whose effect needs no catalog data**: `WeaponWasShown` (104),
+  `ArmyUnitWasShown` (105), `VisualWasShown` (191), `EquipWeapon` (116), `UpdateEquippedUnits`
+  (1003). The other 22 buffered actions are gold/warbucks/scraps economy or cosmetic-catalog
+  purchases; they need the price/reward tables from the client's Google2u sheets, which are not yet
+  imported, and return `ServerMaintenance` rather than a fabricated success. Granting an unpriced
+  purchase would be worse than refusing it.
+- `PlayerState.cs` models the three blobs these five actions touch — `LevelManagerData`,
+  `InventoryData`, `DecalManagerData` — field-for-field against the client's POCOs, explicit
+  `JsonPropertyName`s included (`equippedID`'s casing is not a typo). The other 13 subsystem blobs
+  remain opaque strings, unread and unwritten by buffer processing, until an implemented action
+  needs to mutate one.
+
+### Implemented: profile and presence
+
+Six catalog-free actions from the `Server_guide.md` "Profile/settings/presence" domain:
+`UpdateDeviceToken` (13), `ChangeLanguage` (150), `ChangePlayerCountry` (196), `UpdateSettings`
+(165), `ChangePlayerName` (139), `GetPlayerInfo` (170). See `todo_list.md` for the full checklist
+this fits into.
+
+- `ChangePlayerName` reproduces `PlayerAnalytics.renameGoldPrice` exactly: free while
+  `RenameCount == 0`, else `2^(RenameCount-1) * Constants.rowIds.SecondRenameGoldCost`. That row
+  value has not been extracted yet, so a priced rename returns `ServerMaintenance` rather than a
+  guessed price — never free, never charged an invented amount. The shift is capped at 30, not the
+  client's 31, because the client's own `int` arithmetic overflows negative at 31; reproducing that
+  would let a high rename count buy a name for negative gold, so the cap is a deliberate safety
+  deviation from the source, not new gameplay logic.
+- `GetPlayerInfo` surfaces a real, source-verified subtlety: `OnGetPlayerInfo` reads
+  `mResponse["PlayerInfo"]` as a **direct index on the top-level response `Dictionary<string,
+  object>`**, not through `ContainsKey` or a nested `JToken` (which never throws on a missing key).
+  A genuine .NET dictionary throws `KeyNotFoundException` on a missing key even though the caller
+  immediately compares the result to `null` — so an unknown player id must still emit
+  `"PlayerInfo": null` as an explicit key, never an omitted one. This is the one boot/profile
+  response key discovered so far where "guarded with `!= null`" does **not** mean "safe to omit"
+  the way it does for every `PlayerData`/nested-`JToken` field. `DeviceToken` is withheld from this
+  projection since it has no use to a third party and the client's reader never requires it.
+- `ChangePlayerCountry` has no case at all in the client's response switch — nothing reads the
+  body, so a bare `Result` is the entire contract.
+
 ## Photon realtime and chat channels
 
 Core Photon types occur in **98 gameplay source files**. The inventory finds **165 `[PunRPC]`/`[RPC]` method definitions**, **173 literal `.RPC()` calls**, **35 `OnPhotonSerializeView` occurrences** (definitions and calls), and **398 PhotonView attachments** in scenes/prefabs. Dynamic calls through `PhotonCachedRPC` require separate review; these counts are not all possible runtime messages.
@@ -56,7 +158,7 @@ Core Photon types occur in **98 gameplay source files**. The inventory finds **1
 ## Required migration sequence
 
 1. Prove the new SDK and protobuf HTTP/UDP admission path (implemented outside gameplay).
-2. Define complete typed account/bootstrap DTOs from all 1.4.0 loaders and provide authoritative starter/catalog state. Replace the HTTP adapter/parser together, preserving callback order and buffered rollback semantics.
+2. Define complete typed account/bootstrap DTOs from all 1.4.0 loaders and provide authoritative starter/catalog state. Replace the HTTP adapter/parser together, preserving callback order and buffered rollback semantics. **Partly done** — see [Implemented: the legacy boot chain](#implemented-the-legacy-boot-chain), [Implemented: buffered request replay](#implemented-buffered-request-replay) and [Implemented: profile and presence](#implemented-profile-and-presence), and the full checklist in `todo_list.md`. The transport, envelope, AttributeValue encoding, session authority, the boot actions (`check.php`, 157, 118, 30, 34, 5, 29), claim-then-apply idempotent replay of 5 of the 27 buffered actions (104, 105, 191, 116, 1003), and 6 catalog-free profile actions (13, 139, 150, 165, 170, 196) are served and covered by `scripts/LegacySmoke.ps1` (75 assertions). Still outstanding: the remaining ~157 actions; the 22 economy/cosmetic-catalog buffered actions, which need the Google2u price/reward sheets before they can grant anything real; the catalog/starter *content* beyond scalar balances; and the tutorial handoff (`BattleId`, 119, 120).
 3. Add a backend-owned two-player allocation, participant-bound tickets, and a battle state machine. The current connectivity grant does not represent a match.
 4. Map the 398 view attachments into stable entity bindings. Replace room/ownership/offline lifecycle calls before touching individual combat RPCs.
 5. Implement cover movement, weapons/ammo/cooldowns, hit validation, damage, unit AI and War Cards server-side. Convert each RPC into either a client command or server event; do not create an unrestricted generic RPC relay.

@@ -1,0 +1,9 @@
+{
+  "War.Client.dll": "119a06012cb914316269230fe33c34c9da260eac4af242328a8d6e622f663907",
+  "War.Shared.dll": "132e6751b7f2162582f887fd1e62aa34d63309d7a0673b5683ef27ce0c7f711b",
+  "Google.Protobuf.dll": "47f3d4534309a33fec7241e995151935628e54511142515a647d67d74710d67a",
+  "System.Memory.dll": "41b5e1a4c59abdb1ce1467f58c3d9fd06d39dff4fc61d500a2410fece8037f4b",
+  "System.Buffers.dll": "9444b5a41a816b193c033bec199d74cdfc8298ed8300a3c39a4e953dec137494",
+  "System.Runtime.CompilerServices.Unsafe.dll": "1ad2dd7225d5162a0fd3a3b337a1949448520e3130a4bc8e010ec02f76097500",
+  "System.Numerics.Vectors.dll": "2324ee5a35674269225e2aa20957ce8830dbca0cffb918bd593f7a3222dee480"
+}

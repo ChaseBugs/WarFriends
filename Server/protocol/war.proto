@@ -28,5 +28,63 @@ message Packet {
   uint32 version = 1; uint64 session_id = 2; uint64 sequence = 3;
   // Admission/ping uses sequenced delivery. Reliable gameplay channels are a later milestone.
   uint64 ack = 4; fixed32 ack_bits = 5;
-  oneof body { ClientHello hello = 10; ServerHello welcome = 11; Ping ping = 12; Pong pong = 13; Disconnect disconnect = 14; }
+  oneof body {
+    ClientHello hello = 10; ServerHello welcome = 11; Ping ping = 12; Pong pong = 13; Disconnect disconnect = 14;
+    MatchHello match_hello = 20; MatchCommand match_command = 21; MatchReply match_reply = 22;
+  }
+}
+
+// Battle-host milestone 1. These are new DTOs, not legacy action/RPC IDs.
+// No command accepts damage, health, ownership, prices or rewards.
+message MatchAdmission {
+  string match_id = 1; string player_id = 2; string server_id = 3;
+  string manifest_hash = 4; uint64 session_id = 5;
+  int64 issued_unix_seconds = 6; int64 expires_unix_seconds = 7;
+  uint64 connection_generation = 8;
+}
+message MatchHello { string ticket = 1; string match_id = 2; }
+// Delivered through a trusted allocator/control channel, never a public UDP request.
+message MatchConnectionGrant {
+  string host = 1; uint32 port = 2; string ticket = 3; bytes session_key = 4;
+  uint64 session_id = 5; string match_id = 6; string player_id = 7;
+  string manifest_hash = 8; int64 expires_unix_seconds = 9;
+}
+enum BattlePhase {
+  BATTLE_PHASE_UNSPECIFIED = 0; BATTLE_PHASE_WAITING = 1;
+  BATTLE_PHASE_COUNTDOWN = 2; BATTLE_PHASE_RUNNING = 3;
+  BATTLE_PHASE_ENDED = 4; BATTLE_PHASE_ABORTED = 5;
+}
+message ReadyCommand { string manifest_hash = 1; }
+message FireCommand { float target_x = 1; float target_y = 2; float target_z = 3; }
+message ReloadCommand {}
+message ForfeitCommand {}
+message PollMatch {}
+message MoveCoverCommand { int32 direction = 1; }
+message MatchCommand {
+  // Stop-and-wait per participant. Retry identical command_id with a NEW packet
+  // sequence. Poll uses id zero and does not advance the mutation sequence.
+  uint64 command_id = 1;
+  oneof intent {
+    ReadyCommand ready = 10; FireCommand fire = 11; ReloadCommand reload = 12;
+    ForfeitCommand forfeit = 13; PollMatch poll = 14; MoveCoverCommand move_cover = 15;
+  }
+}
+message BattlePlayerState {
+  string player_id = 1; bool admitted = 2; bool ready = 3;
+  int32 clip_ammo = 4; int32 reserve_ammo = 5;
+  uint64 reload_end_tick = 6; uint64 next_fire_tick = 7;
+  uint64 shots_fired = 8; uint64 last_command_id = 9;
+  int32 cover_index = 10; float position_x = 11; float position_y = 12; float position_z = 13;
+  bool moving = 14; uint64 move_end_tick = 15; string last_geometry_hit = 16;
+}
+message MatchSnapshot {
+  string match_id = 1; string manifest_hash = 2; BattlePhase phase = 3;
+  uint64 server_tick = 4; uint64 start_tick = 5; uint64 end_tick = 6;
+  repeated BattlePlayerState players = 7;
+  string winner_player_id = 8; string terminal_reason = 9;
+  // Prototype result only: cannot be used as a reward/settlement receipt.
+  bool reward_eligible = 10;
+}
+message MatchReply {
+  uint64 command_id = 1; string code = 2; MatchSnapshot snapshot = 3;
 }
