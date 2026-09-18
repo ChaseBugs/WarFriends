@@ -1,0 +1,32 @@
+syntax = "proto3";
+package war.v1;
+option csharp_namespace = "War.Protocol";
+
+// New protocol: these numbers are NOT legacy DatabaseAction IDs.
+message RegisterRequest { string username = 1; string password = 2; string locale = 3; }
+message LoginRequest { string username = 1; string password = 2; }
+message PlayerProfile { string player_id = 1; string display_name = 2; string locale = 3; int64 revision = 4; }
+message AccountSession { string access_token = 1; int64 expires_unix_seconds = 2; PlayerProfile player = 3; }
+message ErrorResponse { string code = 1; string message = 2; }
+message ConnectionRequest { string protocol = 1; }
+message ConnectionGrant {
+  string host = 1; uint32 port = 2; string ticket = 3;
+  bytes session_key = 4; uint64 session_id = 5; int64 expires_unix_seconds = 6;
+}
+// Signed by backend, verified by battle server. Never includes the session key.
+message TicketClaims {
+  string player_id = 1; string server_id = 2; uint64 session_id = 3;
+  int64 issued_unix_seconds = 4; int64 expires_unix_seconds = 5;
+  string purpose = 6;
+}
+message ClientHello { string ticket = 1; }
+message ServerHello { uint32 tick_rate = 1; string server_id = 2; }
+message Ping { uint64 client_time = 1; }
+message Pong { uint64 client_time = 1; uint64 server_tick = 2; }
+message Disconnect { string reason = 1; }
+message Packet {
+  uint32 version = 1; uint64 session_id = 2; uint64 sequence = 3;
+  // Admission/ping uses sequenced delivery. Reliable gameplay channels are a later milestone.
+  uint64 ack = 4; fixed32 ack_bits = 5;
+  oneof body { ClientHello hello = 10; ServerHello welcome = 11; Ping ping = 12; Pong pong = 13; Disconnect disconnect = 14; }
+}

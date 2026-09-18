@@ -1,5 +1,12 @@
 # WarFriends repository guidance
 
+## Current server rebuild — 2026-09-19
+
+- The owner explicitly started a fresh server in the empty `Server` folder. Its active architecture is now .NET 10 ASP.NET Core plus a separate battle Worker, MongoDB, protobuf, and native Windows/Linux deployment without Docker. Follow the accepted overrides at the top of `BACKEND_DESIGN.md` and `Server/README.md`.
+- Use the active recovered 1.4.0 `Clients/ExportedProject` communication contracts for this rebuild. The legacy HTTP transport posts `requestId` to `index_09_25_2015.php`; do not impose older `/<action>/<version>` assumptions on it. `Server/docs/CLIENT_COMMUNICATION.md` records evidence and the Photon replacement sequence.
+- Historical TypeScript server completeness statements and npm/test filenames below describe an earlier implementation, not files or coverage in this new .NET solution. Retain their authority/idempotency principles where relevant, but do not claim those features exist in the fresh server. Current verification is the .NET protocol test executable and native Mongo-backed smoke scripts.
+- The new server and SDK have no Photon dependency. The old Unity runtime still does: remove its SDKs/components only after migrating room, ownership, serialization, RPC, offline, and chat behavior and reauditing assets. This checkpoint has not modified the owner's Unity library work.
+
 ## Recovered-client sources
 
 - `Clients/ExportedProject` is the current recovered **WarFriends 1.4.0 Android** client. It is a Mono/AssetRipper reconstruction, not the original developer project. Treat it as version-specific evidence: do not silently replace the existing 1.6.0 or 4.9.5 contract evidence with it when versions disagree.
